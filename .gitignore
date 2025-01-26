@@ -1,0 +1,64 @@
+# Flutter/Dart related
+.dart_tool/
+.packages
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.flutter-versions
+.melos/
+.melos_tool/
+
+# IntelliJ/Android Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Linux
+*.swp
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Flutter Generated
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/.symlinks/
+ios/Pods/
+ios/Runner.xcworkspace/
+ios/Flutter/App.framework
+ios/Flutter/Generated.xcconfig
+
+# Xcode Specific
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcworkspacedata
+!*.xcsettings
+!*.xccheckout
+*.xcuserstate
+*.xcuserdata
+
+# Android Specific
+**/android/**/local.properties
+**/android/**/build/
+
+# Web
+web/.dart_tool/
+web/.packages
+web/.flutter-plugins
+
+# Firebase
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+
+# Generated translations
+intl_translation_*.json
