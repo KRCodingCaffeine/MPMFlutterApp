@@ -9,6 +9,7 @@ import 'package:mpm/view/condition_about/contact_view.dart';
 import 'package:mpm/view/condition_about/privacy_policy_view.dart';
 import 'package:mpm/view/condition_about/terms&condition_view.dart';
 import 'package:mpm/view/dashboard_view.dart';
+import 'package:mpm/view/forms_down.dart';
 import 'package:mpm/view/language_view.dart';
 import 'package:mpm/view/login_view.dart';
 import 'package:mpm/view/otp_view.dart';
@@ -39,6 +40,8 @@ class RoutePages {
         return _buildRoute(PesidentalAdressView(),settings);
         case RouteNames.dashboard:
         return _buildRoute(DashboardView(),settings);
+      case RouteNames.forms:
+        return _buildRoute(FormsDownloadView(), settings);
      case RouteNames.newMember:
         return _buildRoute(NewMemberView(),settings);
         case RouteNames.newMember2:
