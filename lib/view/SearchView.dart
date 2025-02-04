@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mpm/utils/color_helper.dart';
+import 'package:mpm/utils/color_resources.dart';
 
 class SearchView extends StatefulWidget {
   const SearchView({super.key});
@@ -9,8 +11,7 @@ class SearchView extends StatefulWidget {
 
 class _SearchViewState extends State<SearchView> {
   final TextEditingController _searchController = TextEditingController();
-  final String defaultProfile =
-      "assets/images/user3.png";
+  final String defaultProfile = "assets/images/user3.png";
 
   List<Map<String, String>> members = [
     {
@@ -51,8 +52,8 @@ class _SearchViewState extends State<SearchView> {
     setState(() {
       filteredMembers = members
           .where((member) =>
-      member["name"]!.toLowerCase().contains(query.toLowerCase()) ||
-          member["mobile"]!.contains(query))
+              member["name"]!.toLowerCase().contains(query.toLowerCase()) ||
+              member["mobile"]!.contains(query))
           .toList();
     });
   }
@@ -61,10 +62,6 @@ class _SearchViewState extends State<SearchView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: const Text('Search Member'),
-        backgroundColor: Colors.white54,
-      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -116,12 +113,12 @@ class _SearchViewState extends State<SearchView> {
 
   /// **Reusable method to build a member card with navigation**
   Widget _buildMemberCard(
-      BuildContext context, {
-        required String lmcode,
-        required String name,
-        required String mobile,
-        required String profileImage,
-      }) {
+    BuildContext context, {
+    required String lmcode,
+    required String name,
+    required String mobile,
+    required String profileImage,
+  }) {
     return InkWell(
       onTap: () {
         // Navigate to MemberDetailPage on tap
@@ -152,14 +149,20 @@ class _SearchViewState extends State<SearchView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Name and LM Code in the same row
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
                     Row(
                       children: [
                         Text(
-                          name,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          "Mobile: $mobile",
+                          style:
+                              TextStyle(fontSize: 14, color: Colors.grey[600]),
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -167,16 +170,11 @@ class _SearchViewState extends State<SearchView> {
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFFDC3545), // Red color
+                            color: Color(0xFFe61428), // Red color
                           ),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "Mobile: $mobile",
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                    ),
+                    )
                   ],
                 ),
               ),

@@ -13,7 +13,7 @@ class Images {
   static const String state = 'assets/images/capitol.png';
   static const String pin = 'assets/images/pin.png';
   static const String docs = 'assets/images/docs.png';
-  static const String user = 'assets/images/user.png';
+  static const String user = 'assets/images/user.svg';
   static const String blood = 'assets/images/blood.png';
   static const String occupation = 'assets/images/occuption.png';
   static const String qualification = 'assets/images/qualification.png';

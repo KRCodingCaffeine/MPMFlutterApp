@@ -78,8 +78,8 @@ class _AppDrawerState extends State<AppDrawer> {
                               Text(
                                 lmCode, // Display Lm code (logged-in member code)
                                 style: const TextStyle(
-                                  fontSize: 10, // Adjusted font size for ID
-                                  color: Colors.black,
+                                  fontSize: 8,
+                                  color: Colors.white,
                                 ),
                               ),
                             ],
@@ -145,6 +145,18 @@ class _AppDrawerState extends State<AppDrawer> {
               },
             ),
             ListTile(
+              leading: Icon(Icons.file_copy),
+              title: Text('Forms Download'),
+              onTap: () {
+                Navigator.pushNamed(context, RouteNames.forms);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.account_balance),
+              title: Text('Government Scheme'),
+              onTap: () {},
+            ),
+            ListTile(
               leading: Icon(Icons.info),
               title: Text('About Us'),
               onTap: () {
@@ -171,18 +183,6 @@ class _AppDrawerState extends State<AppDrawer> {
               onTap: () {
                 Navigator.pushNamed(context, RouteNames.termandcondition);
               },
-            ),
-            ListTile(
-              leading: Icon(Icons.file_download),
-              title: Text('Forms Download'),
-              onTap: () {
-                Navigator.pushNamed(context, RouteNames.forms);
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.account_balance),
-              title: Text('Government Scheme'),
-              onTap: () {},
             ),
             ListTile(
               leading: Icon(Icons.logout),

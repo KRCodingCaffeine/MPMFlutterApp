@@ -7,11 +7,10 @@ import 'package:mpm/utils/AppDrawer.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/view/SearchView.dart';
 import 'package:mpm/view/home_view.dart';
 import 'package:mpm/view/login_view.dart';
 import 'package:mpm/view/profile%20view/profile_view.dart';
-
-import 'package:mpm/view/search_view.dart';
 import 'package:mpm/view_model/controller/dashboard/dashboardcontroller.dart';
 import 'package:mpm/view_model/controller/login/logincontroller.dart';
 
@@ -41,21 +40,24 @@ class _DashboardViewState extends State<DashboardView> {
   @override
   Widget build(BuildContext context) {
     return Obx(
-          () => Scaffold(
+      () => Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
-          backgroundColor: ColorHelperClass.getColorFromHex("#DC3545"),
+          backgroundColor:
+              ColorHelperClass.getColorFromHex(ColorResources.logo_color),
           title: const Text(
-            'Maheshwari Pragati Manda',
+            'Maheshwari Pragati Mandal',
             style: TextStyle(color: Colors.white),
           ),
-
+          iconTheme: const IconThemeData(
+              color: Colors.white), // Set drawer icon color to white
         ),
         drawer: AppDrawer(),
         body: pages[controller.currentIndex.value],
         bottomNavigationBar: BottomNavigationBar(
           backgroundColor: Color(0xFFFFFFFF), // White background
-          selectedItemColor: ColorHelperClass.getColorFromHex("#DC3545"),
+          selectedItemColor:
+              ColorHelperClass.getColorFromHex(ColorResources.red_color),
           unselectedItemColor: Colors.grey,
           currentIndex: controller.currentIndex.value,
           onTap: (index) {
