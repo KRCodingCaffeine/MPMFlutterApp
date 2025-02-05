@@ -76,7 +76,6 @@ flutter:
   assets:
      - assets/images/
      - assets/fonts/
-     - assets/forms/
      - assets/webview_page.html
 
 
