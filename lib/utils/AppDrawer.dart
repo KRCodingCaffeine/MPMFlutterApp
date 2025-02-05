@@ -138,15 +138,14 @@ class _AppDrawerState extends State<AppDrawer> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.person_add_alt_1),
-              title: Text('Make New Member'),
+              leading: Icon(Icons.share),
+              title: Text('Share App'),
               onTap: () {
-                Navigator.pushNamed(context, RouteNames.newMember);
               },
             ),
             ListTile(
               leading: Icon(Icons.file_copy),
-              title: Text('Forms Download'),
+              title: Text('Forms'),
               onTap: () {
                 Navigator.pushNamed(context, RouteNames.forms);
               },
@@ -154,7 +153,9 @@ class _AppDrawerState extends State<AppDrawer> {
             ListTile(
               leading: Icon(Icons.account_balance),
               title: Text('Government Scheme'),
-              onTap: () {},
+              onTap: () {
+                Navigator.pushNamed(context, RouteNames.gov_scheme);
+              },
             ),
             ListTile(
               leading: Icon(Icons.info),

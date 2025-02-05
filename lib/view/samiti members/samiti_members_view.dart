@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/route/route_name.dart';
+import 'package:mpm/utils/color_helper.dart';
+import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view_model/controller/samiti/SamitiController.dart';
 
 
@@ -27,26 +29,29 @@ class _SamitiMembersViewPageState extends State<SamitiMembersViewPage> {
       appBar: AppBar(
         title: const Text(
           'Samiti Members',
-          style: TextStyle(color: Colors.black),
+          style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: Colors.white54,
-        iconTheme: const IconThemeData(color: Colors.black),
+        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: Obx(() {
-        if (controller.loading.value) {
-          return Center(child: CircularProgressIndicator(color: Colors.pink,));
-        }
-        if (controller.getSamitidata.value == null) {
-          return Center(child: Text("No data available"));
-        }
-        return ListView(
-          children: controller.getSamitidata.value!.entries.map((entry) {
-            String title = entry.key;
-            List<dynamic> items = entry.value;
-            return _buildExpansionTile(title, items);
-          }).toList(),
-        );
-      })
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Obx(() {
+          if (controller.loading.value) {
+            return Center(child: CircularProgressIndicator(color: Colors.pink,));
+          }
+          if (controller.getSamitidata.value == null) {
+            return Center(child: Text("No data available"));
+          }
+          return ListView(
+            children: controller.getSamitidata.value!.entries.map((entry) {
+              String title = entry.key;
+              List<dynamic> items = entry.value;
+              return _buildExpansionTile(title, items);
+            }).toList(),
+          );
+        }),
+      )
 
     );
   }

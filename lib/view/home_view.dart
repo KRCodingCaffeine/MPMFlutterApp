@@ -1,4 +1,4 @@
-import 'dart:async'; // Import the timer
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -17,14 +17,15 @@ class HomeView extends StatefulWidget {
 class _HomeViewState extends State<HomeView> {
   final regiController = Get.put(NewMemberController());
 
-  // ScrollController to manage horizontal scroll
   final ScrollController _scrollController = ScrollController();
-  late Timer _timer; // Timer to trigger automatic scroll
+  late Timer _timer;
   late double screenWidth;
 
   final List<Map<String, dynamic>> gridItems = [
-    {'icon': Images.user, 'label': 'Make New Member'},
-    {'icon': Images.discount, 'label': 'Discounts'},
+    {'icon': Images.makenewmember, 'label': 'Make New Member'},
+    {'icon': Images.user, 'label': 'My Profile'},
+    {'icon': Images.samiti, 'label': 'Samiti Members'},
+    {'icon': Images.discount, 'label': 'Discounts & Offers'},
   ];
 
   final List<Map<String, dynamic>> bhawanItems = [
@@ -54,27 +55,20 @@ class _HomeViewState extends State<HomeView> {
   void initState() {
     super.initState();
 
-    // Using addPostFrameCallback to defer accessing MediaQuery until after the widget is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Access the context after the frame has been rendered
-      double screenWidth = MediaQuery.of(context).size.width * 0.8;
-
-      // Start automatic scrolling with smooth animation
-      _timer = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
+      screenWidth = MediaQuery.of(context).size.width * 0.7;
+      _timer = Timer.periodic(const Duration(seconds: 2), (Timer timer) {
         if (_scrollController.hasClients) {
           final double maxScroll = _scrollController.position.maxScrollExtent;
           final double currentScroll = _scrollController.offset;
 
-          // If we've reached the end of the list, reset to the beginning
-          if (currentScroll == maxScroll) {
-            _scrollController.jumpTo(0); // Reset to the beginning of the list
+          if (currentScroll >= maxScroll) {
+            _scrollController.jumpTo(0);
           } else {
             _scrollController.animateTo(
-              currentScroll +
-                  screenWidth, // Scroll by screenWidth (80% of screen)
-              duration: const Duration(
-                  milliseconds: 1500), // Longer duration for smoother scroll
-              curve: Curves.easeInOut, // Smoother curve for the scroll
+              currentScroll + screenWidth,
+              duration: const Duration(milliseconds: 1500),
+              curve: Curves.easeInOut,
             );
           }
         }
@@ -84,8 +78,8 @@ class _HomeViewState extends State<HomeView> {
 
   @override
   void dispose() {
-    _timer.cancel(); // Cancel the timer when the widget is disposed
-    _scrollController.dispose(); // Dispose the scroll controller
+    _timer.cancel();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -98,68 +92,70 @@ class _HomeViewState extends State<HomeView> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Membership Review Notice
-          Container(
-            margin: const EdgeInsets.all(16.0),
+          // Membership Notice
+          Padding(
             padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.error, color: Color(0xFFe61428)),
-                const SizedBox(width: 10),
-                const Expanded(
-                  child: Text(
-                    "Your membership is currently under review for approval.",
-                    style: TextStyle(color: Colors.black),
+            child: Container(
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.error, color: Color(0xFFe61428)),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text(
+                      "Your membership is currently under review for approval.",
+                      style: TextStyle(color: Colors.black),
+                    ),
                   ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    // Handle close action
-                  },
-                  child: const Icon(Icons.close, color: Colors.grey),
-                ),
-              ],
+                  GestureDetector(
+                    onTap: () {},
+                    child: const Icon(Icons.close, color: Colors.grey),
+                  ),
+                ],
+              ),
             ),
           ),
 
-          // Spacing between Membership Notice and GridView
-          const SizedBox(height: 16),
-
-          // Grid View (Takes available space)
+          // Grid View
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
                 itemCount: gridItems.length,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2, // Number of columns
-                  crossAxisSpacing: 10, // Space between columns
-                  mainAxisSpacing: 10, // Space between rows
-                  childAspectRatio: 1,
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 1.2, // Better spacing for text
                 ),
+                physics: const NeverScrollableScrollPhysics(),
                 itemBuilder: (context, index) {
                   final item = gridItems[index];
                   return GestureDetector(
                     onTap: () {
-                      if (item['label'] == "Family Member") {
-                        regiController.isRelation.value = true;
-                        Navigator.pushNamed(context, RouteNames.newMember);
-                      } else if (item['label'] == "Make New Member") {
+                      if (item['label'] == "Make New Member") {
                         regiController.isRelation.value = false;
                         Navigator.pushNamed(context, RouteNames.newMember);
+                      }
+                      if (item['label'] == "My Profile") {
+                        regiController.isRelation.value = false;
+                        Navigator.pushNamed(context, RouteNames.profile);
+                      }
+                      if (item['label'] == "Samiti Members") {
+                        regiController.isRelation.value = false;
+                        Navigator.pushNamed(
+                            context, RouteNames.samitimemberview);
                       }
                     },
                     child: Card(
                       color: Colors.white,
                       elevation: 4.0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0),
+                        borderRadius: BorderRadius.circular(10.0),
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -185,46 +181,43 @@ class _HomeViewState extends State<HomeView> {
             ),
           ),
 
-          // Spacer pushes the next widgets to the bottom
-          const Spacer(),
-
           // Maheswari Bhavans Title
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                "Maheswari Bhavans",
-                style: TextStyleClass.black12style.copyWith(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+            child: Text(
+              "Maheswari Bhavans",
+              style: TextStyleClass.black12style.copyWith(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),
 
-          // Horizontal ListView (Fixed at bottom)
+          // Horizontal ListView
           SizedBox(
-            height: 180, // Adjust height as needed
-            child: ListView(
-              scrollDirection: Axis.horizontal,
+            height: 180,
+            child: ListView.builder(
               controller: _scrollController,
-              padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
-              children: bhawanItems.map((item) {
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: bhawanItems.length,
+              itemBuilder: (context, index) {
+                final item = bhawanItems[index];
                 return _buildBhawanCard(item["title"], item["imagePath"]);
-              }).toList(),
+              },
             ),
           ),
+          const SizedBox(height: 20),
         ],
       ),
     );
   }
 
-  // Helper function to build a Bhawan Card
+  // Bhawan Card
   Widget _buildBhawanCard(String title, String imagePath) {
     return Container(
-      width: screenWidth, // Fixed width for each card
-      margin: const EdgeInsets.only(right: 16.0), // Adds spacing between cards
+      width: screenWidth,
+      margin: const EdgeInsets.only(right: 16.0),
       child: Card(
         color: Colors.white,
         elevation: 4.0,
@@ -234,12 +227,12 @@ class _HomeViewState extends State<HomeView> {
         child: Padding(
           padding: const EdgeInsets.all(10.0),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Text Column (Left Side)
+              // Left: Text
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       title,
@@ -248,34 +241,30 @@ class _HomeViewState extends State<HomeView> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     ElevatedButton.icon(
                       onPressed: () {},
-                      icon: Icon(Icons.info, color: Colors.black), // Optional: Set icon color to black
-                      label: const Text(
-                        "Know More",
-                        style: TextStyle(color: Colors.black), // Set text color to black
-                      ),
+                      icon: const Icon(Icons.info, color: Colors.black),
+                      label: const Text("Know More",
+                          style: TextStyle(color: Colors.black)),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey[100], // Light grey background
+                        backgroundColor: Colors.grey[100],
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.0),
                         ),
-                        foregroundColor: Colors.black, // Ensures text & icon color is black
                       ),
                     ),
                   ],
                 ),
               ),
 
-              // Square Image (Right Side)
+              // Right: Image
               ClipRRect(
-                borderRadius:
-                    BorderRadius.circular(8.0), // Rounded corners for image
+                borderRadius: BorderRadius.circular(8.0),
                 child: Image.asset(
-                  imagePath, // Dynamic image path
-                  width: 100, // Fixed width
-                  height: 100, // Fixed height
+                  imagePath,
+                  width: 100,
+                  height: 100,
                   fit: BoxFit.cover,
                 ),
               ),

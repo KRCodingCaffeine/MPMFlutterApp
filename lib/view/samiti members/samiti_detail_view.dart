@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mpm/utils/color_helper.dart';
+import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view_model/controller/samiti/SamitiController.dart';
 
 class SamitiDetailPage extends StatefulWidget {
@@ -57,8 +59,9 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: Text(controller.samitiName.value.toString()),
-        backgroundColor: Colors.white54,
+        title: Text(controller.samitiName.value.toString(), style: TextStyle(color: Colors.white),),
+        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
