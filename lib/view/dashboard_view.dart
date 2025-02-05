@@ -34,7 +34,7 @@ class _DashboardViewState extends State<DashboardView> {
   final List<Widget> pages = [
     const HomeView(),
     const SearchView(),
-    const ProfileView(), // Ensure this matches the 3rd tab
+    // const ProfileView(), // Ensure this matches the 3rd tab
   ];
 
   @override
@@ -74,10 +74,10 @@ class _DashboardViewState extends State<DashboardView> {
               icon: Icon(Icons.search),
               label: "Search",
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: "Profile",
-            ),
+            // BottomNavigationBarItem(
+            //   icon: Icon(Icons.person),
+            //   label: "Profile",
+            // ),
           ],
         ),
       ),

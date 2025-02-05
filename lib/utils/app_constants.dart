@@ -2,6 +2,7 @@ class AppConstants {
   static const String appName = 'MPM';
   static const String logincon = 'We will send you a Confirmation Code';
   static const String welcome_mpm = 'Welcome to MPM';
+  static const String new_member = 'Make New Member';
   static const String enter_mobile = 'Enter Your Mobile Number';
   static const String continues = 'Continue';
   static const String back = 'Back';

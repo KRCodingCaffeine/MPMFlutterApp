@@ -12,6 +12,8 @@ class RouteNames {
   static const String residentailinfo="residentailinfo";
   static const String dashboard="dashboard";
   static const String forms = "forms_down";
+  static const String gov_scheme = "gov_scheme";
+  static const String profile = "profile_view";
   static const String newMember="new_mnber";
   static const String newMember2="new_mnber2";
   static const String aboutUs="about_us";
