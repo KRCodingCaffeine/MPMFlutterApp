@@ -10,6 +10,7 @@ import 'package:mpm/view/forms_down.dart';
 import 'package:mpm/view/gov_scheme.dart';
 import 'package:mpm/view/language_view.dart';
 import 'package:mpm/view/login_view.dart';
+import 'package:mpm/view/member_otp_view.dart';
 import 'package:mpm/view/otp_view.dart';
 import 'package:mpm/view/personal_view.dart';
 import 'package:mpm/view/pesidental_adress_view.dart';
@@ -25,49 +26,51 @@ class RoutePages {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case RouteNames.splash_screen:
-        return _buildRoute(SplashView(), settings);
+        return _buildRoute(const SplashView(), settings);
       case RouteNames.login_screen:
         return _buildRoute(LoginPage(), settings);
       case RouteNames.language_screen:
         return _buildRoute(LanguageSelectionPage(), settings);
       case RouteNames.otp_screen:
-        return _buildRoute(OTPScreen(), settings);
+        return _buildRoute(const OTPScreen(), settings);
+      case RouteNames.member_otp_screen:
+        return _buildRoute(const MemberOtpView(), settings);
       case RouteNames.registration_screen:
-        return _buildRoute(RegisterView(), settings);
+        return _buildRoute(const RegisterView(), settings);
       case RouteNames.personalinfo:
-        return _buildRoute(PersonalView(), settings);
+        return _buildRoute(const PersonalView(), settings);
       case RouteNames.residentailinfo:
-        return _buildRoute(PesidentalAdressView(), settings);
+        return _buildRoute(const PesidentalAdressView(), settings);
       case RouteNames.dashboard:
-        return _buildRoute(DashboardView(), settings);
+        return _buildRoute(const DashboardView(), settings);
       case RouteNames.forms:
-        return _buildRoute(FormsDownloadView(), settings);
+        return _buildRoute(const FormsDownloadView(), settings);
       case RouteNames.gov_scheme:
         return _buildRoute(GovSchemeView(), settings);
       case RouteNames.profile:
-        return _buildRoute(ProfileView(), settings);
+        return _buildRoute(const ProfileView(), settings);
       case RouteNames.newMember:
-        return _buildRoute(NewMemberView(), settings);
+        return _buildRoute(const NewMemberView(), settings);
       case RouteNames.newMember2:
-        return _buildRoute(NewMemberResidental(), settings);
+        return _buildRoute(const NewMemberResidental(), settings);
       case RouteNames.aboutUs:
-        return _buildRoute(AboutViewPage(), settings);
+        return _buildRoute(const AboutViewPage(), settings);
       case RouteNames.contactUs:
-        return _buildRoute(ContactViewPage(), settings);
-      case RouteNames.pravacypolicy:
-        return _buildRoute(PrivacyPolicyViewPage(), settings);
+        return _buildRoute(const ContactViewPage(), settings);
+      case RouteNames.privacypolicy:
+        return _buildRoute(const PrivacyPolicyViewPage(), settings);
       case RouteNames.termandcondition:
-        return _buildRoute(TermsconditionViewPage(), settings);
+        return _buildRoute(const TermsconditionViewPage(), settings);
       case RouteNames.samitimemberview:
-        return _buildRoute(SamitiMembersViewPage(), settings);
+        return _buildRoute(const SamitiMembersViewPage(), settings);
       case RouteNames.samitimemberdetails:
         return _buildRoute(SamitiDetailPage(), settings);
       case RouteNames.searchmember:
-        return _buildRoute(SearchView(), settings);
+        return _buildRoute(const SearchView(), settings);
 
       default:
         return MaterialPageRoute(builder: (context) {
-          return Scaffold(
+          return const Scaffold(
             body: Center(
               child: Text("No Routes Declare"),
             ),

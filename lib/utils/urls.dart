@@ -7,6 +7,7 @@ class Urls {
   static const  String gender_url = base_url+"api/gender";
   static const  String bloodgroup_url = base_url+"api/blood_group";
   static const  String material_url = base_url+"/api/marital_status";
+  static const  String country_url = base_url+"api/country";
   static const  String CHECKLM_url = base_url+"api/check_lm_code";
   static const  String occuption_url = base_url+"api/occupation";
   static const  String occuption_profession_url = base_url+"api/occupation_profession";

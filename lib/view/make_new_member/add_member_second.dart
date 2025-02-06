@@ -7,6 +7,7 @@ import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/CheckPinCode/Building.dart';
 import 'package:mpm/model/documenttype/DocumentTypeModel.dart';
 import 'package:mpm/model/membership/MemberShipData.dart';
+import 'package:mpm/route/route_name.dart';
 import 'package:mpm/utils/app_constants.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
@@ -79,16 +80,18 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
       },
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+          backgroundColor:
+              ColorHelperClass.getColorFromHex(ColorResources.logo_color),
           title: Text(
             AppConstants.new_member,
             style: TextStyleClass.white16style,
           ),
+          iconTheme: IconThemeData(color: Colors.white),
         ),
         backgroundColor: Colors.white,
         bottomNavigationBar: Container(
           margin:
-          const EdgeInsets.only(bottom: 20, left: 20, right: 20, top: 10),
+              const EdgeInsets.only(bottom: 20, left: 20, right: 20, top: 10),
           height: 50,
           child: Padding(
             padding: const EdgeInsets.only(left: 6.0, right: 6),
@@ -97,7 +100,7 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 SizedBox(
-                  width: 160,
+                  width: 130,
                   child: Container(
                     child: ElevatedButton(
                       onPressed: () {
@@ -106,7 +109,7 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: ColorHelperClass.getColorFromHex(
                             ColorResources.red_color),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -117,74 +120,71 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                   ),
                 ),
                 SizedBox(
-                  width: 160,
+                  width: 130,
                   child: Obx(() => ElevatedButton(
-                    onPressed: () {
-                      if (_formKeyLogin!.currentState!.validate()) {
-                        void showErrorSnackbar(String message) {
-                          Get.snackbar(
-                            "Error",
-                            message,
-                            backgroundColor: Colors.red,
-                            colorText: Colors.white,
-                            snackPosition: SnackPosition.TOP,
-                          );
-                        }
+                        onPressed: () {
+                          if (_formKeyLogin!.currentState!.validate()) {
+                            void showErrorSnackbar(String message) {
+                              Get.snackbar(
+                                "Error",
+                                message,
+                                backgroundColor: Colors.red,
+                                colorText: Colors.white,
+                                snackPosition: SnackPosition.TOP,
+                              );
+                            }
 
-                        if (regiController.selectBuilding == '') {
-                          showErrorSnackbar("Select Building Name");
-                          return;
-                        }
-                        if (regiController.selectDocumentType == '') {
-                          showErrorSnackbar("Select Document Type");
-                          return;
-                        }
-                        if (regiController.userdocumentImage.value == '') {
-                          showErrorSnackbar("Select Document Image");
-                          return;
-                        }
-                        if (regiController.selectMemberShipType.value ==
-                            '') {
-                          showErrorSnackbar("Select MemberShip Type");
-                          return;
-                        }
-                        regiController.userRegister(
-                          regiController.lmCodeValue.value,
-                          context,
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorHelperClass.getColorFromHex(
-                          ColorResources.red_color),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: regiController.loading.value
-                        ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        color:
-                        Colors.white, // Loading indicator color
-                        strokeWidth: 2, // Thickness of the spinner
-                      ),
-                    )
-                        : Text(
-                      AppConstants.continues,
-                      style: TextStyleClass.white16style,
-                    ),
-                  )),
+                            if (regiController.selectBuilding == '') {
+                              showErrorSnackbar("Select Building Name");
+                              return;
+                            }
+                            if (regiController.selectDocumentType == '') {
+                              showErrorSnackbar("Select Document Type");
+                              return;
+                            }
+                            if (regiController.selectMemberShipType.value ==
+                                '') {
+                              showErrorSnackbar("Select MemberShip Type");
+                              return;
+                            }
+                            regiController.userRegister(
+                              regiController.lmCodeValue.value,
+                              context,
+                            );
+                            Navigator.pushNamed(
+                                context!, RouteNames.member_otp_screen);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorHelperClass.getColorFromHex(
+                              ColorResources.red_color),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: regiController.loading.value
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  color:
+                                      Colors.white, // Loading indicator color
+                                  strokeWidth: 2, // Thickness of the spinner
+                                ),
+                              )
+                            : Text(
+                                AppConstants.continues,
+                                style: TextStyleClass.white16style,
+                              ),
+                      )),
                 ),
               ],
             ),
           ),
         ),
         body: Container(
-          height: screenHeight,
-          padding: const EdgeInsets.only(top: 10),
+          padding: const EdgeInsets.only(top: 30),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.start,
@@ -226,10 +226,6 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                               ),
                               child: Row(
                                 children: [
-                                  const Padding(
-                                    padding: EdgeInsets.only(left: 12.0),
-                                  ),
-                                  // Space between the flag and text field
                                   Expanded(
                                     child: TextFormField(
                                       keyboardType: TextInputType.phone,
@@ -253,7 +249,7 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                         print(
                                             "fghjjhjjh${regiController.pincodeController.value.text}");
                                         if (regiController
-                                            .pincodeController.value.text !=
+                                                .pincodeController.value.text !=
                                             '') {
                                           var pincode = regiController
                                               .pincodeController.value.text;
@@ -270,10 +266,12 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                         }
                                       },
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                                        backgroundColor:
+                                            ColorHelperClass.getColorFromHex(
+                                                ColorResources.red_color),
                                         shape: RoundedRectangleBorder(
                                           borderRadius:
-                                          BorderRadius.circular(5),
+                                              BorderRadius.circular(5),
                                         ),
                                       ),
                                       child: const Icon(
@@ -298,16 +296,13 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                             ),
                             child: Row(
                               children: [
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 12.0),
-                                ),
                                 Obx(() {
                                   return Visibility(
                                     visible: regiController.isBuilding.value ==
                                         false,
                                     child: Obx(() {
                                       if (regiController
-                                          .rxStatusBuilding.value ==
+                                              .rxStatusBuilding.value ==
                                           Status.LOADING) {
                                         return Padding(
                                           padding: const EdgeInsets.symmetric(
@@ -319,25 +314,24 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                             child: CircularProgressIndicator(
                                               color: ColorHelperClass
                                                   .getColorFromHex(
-                                                  ColorResources
-                                                      .red_color),
+                                                      ColorResources.red_color),
                                             ),
                                           ),
                                         );
                                       } else if (regiController
-                                          .rxStatusBuilding.value ==
+                                              .rxStatusBuilding.value ==
                                           Status.ERROR) {
                                         return const Center(
                                             child: Text(
                                                 'Failed to load Building Name'));
                                       } else if (regiController
-                                          .rxStatusBuilding.value ==
+                                              .rxStatusBuilding.value ==
                                           Status.IDLE) {
                                         return const Center(
                                           child: Padding(
                                             padding: EdgeInsets.all(12.0),
                                             child:
-                                            Text('Select Building Name *'),
+                                                Text('Select Building Name *'),
                                           ),
                                         );
                                       } else if (regiController
@@ -358,10 +352,10 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                                   fontWeight: FontWeight.bold),
                                             ), // Hint to show when nothing is selected
                                             value: regiController.selectBuilding
-                                                .value.isEmpty
+                                                    .value.isEmpty
                                                 ? null
                                                 : regiController
-                                                .selectBuilding.value,
+                                                    .selectBuilding.value,
                                             items: regiController
                                                 .checkPinCodeList
                                                 .map((Building marital) {
@@ -369,7 +363,7 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                                 value: marital.id
                                                     .toString(), // Use unique ID or any unique property.
                                                 child: Text(marital
-                                                    .buildingName ??
+                                                        .buildingName ??
                                                     'Unknown'), // Display name from DataX.
                                               );
                                             }).toList(), // Convert to List.
@@ -429,7 +423,7 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                             "Mandal Zone",
                             regiController.zoneController.value,
                             "Mandal Zone *",
-                            "Enter Mandal Zone",
+                            "",
                           ),
                           const SizedBox(height: 20),
 
@@ -437,8 +431,8 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                           _buildEditableField(
                             'Flat No *',
                             regiController.housenoController.value,
-                            'Enter House No/Flat',
-                            'Enter House No/Flat',
+                            'Enter Flat No',
+                            '',
                           ),
                           const SizedBox(height: 20),
 
@@ -447,7 +441,7 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                             'Area *',
                             regiController.areaController.value,
                             'Enter Area Name',
-                            'Enter Area Name',
+                            '',
                           ),
                           const SizedBox(height: 20),
 
@@ -456,7 +450,7 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                             'City *',
                             regiController.cityController.value,
                             'Enter City Name',
-                            'Enter City Name',
+                            '',
                           ),
                           const SizedBox(height: 20),
 
@@ -467,7 +461,19 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                               'State *',
                               regiController.stateController.value,
                               'Enter State Name',
-                              'Enter State Name',
+                              '',
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Country
+                          SizedBox(
+                            width: double.infinity,
+                            child: _buildEditableField(
+                              'Country *',
+                              regiController.countryController.value,
+                              'Enter Country Name',
+                              '',
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -482,12 +488,9 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                             ),
                             child: Row(
                               children: [
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 12.0),
-                                ),
                                 Obx(() {
                                   if (regiController
-                                      .rxStatusMemberShipTYpe.value ==
+                                          .rxStatusMemberShipTYpe.value ==
                                       Status.LOADING) {
                                     return Padding(
                                       padding: const EdgeInsets.symmetric(
@@ -498,13 +501,13 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                         width: 24,
                                         child: CircularProgressIndicator(
                                           color:
-                                          ColorHelperClass.getColorFromHex(
-                                              ColorResources.pink_color),
+                                              ColorHelperClass.getColorFromHex(
+                                                  ColorResources.pink_color),
                                         ),
                                       ),
                                     );
                                   } else if (regiController
-                                      .rxStatusMemberShipTYpe.value ==
+                                          .rxStatusMemberShipTYpe.value ==
                                       Status.ERROR) {
                                     return const Center(
                                         child: Text(' No Data'));
@@ -526,12 +529,12 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                               fontWeight: FontWeight.bold),
                                         ), // Hint to show when nothing is selected
                                         value: regiController
-                                            .selectMemberShipType
-                                            .value
-                                            .isEmpty
+                                                .selectMemberShipType
+                                                .value
+                                                .isEmpty
                                             ? null
                                             : regiController
-                                            .selectMemberShipType.value,
+                                                .selectMemberShipType.value,
                                         items: regiController.memberShipList
                                             .map((MemberShipData marital) {
                                           return DropdownMenuItem<String>(
@@ -566,9 +569,6 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                             ),
                             child: Row(
                               children: [
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 12.0),
-                                ),
                                 Obx(() {
                                   if (regiController.rxStatusDocument.value ==
                                       Status.LOADING) {
@@ -581,13 +581,13 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                         width: 24,
                                         child: CircularProgressIndicator(
                                           color:
-                                          ColorHelperClass.getColorFromHex(
-                                              ColorResources.red_color),
+                                              ColorHelperClass.getColorFromHex(
+                                                  ColorResources.red_color),
                                         ),
                                       ),
                                     );
                                   } else if (regiController
-                                      .rxStatusDocument.value ==
+                                          .rxStatusDocument.value ==
                                       Status.ERROR) {
                                     return const Center(
                                         child: Text(' No Data'));
@@ -595,7 +595,7 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                       .documntTypeList.isEmpty) {
                                     return const Center(
                                         child:
-                                        Text('No Document Type available'));
+                                            Text('No Document Type available'));
                                   } else {
                                     return Expanded(
                                       child: DropdownButton<String>(
@@ -609,10 +609,10 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                               fontWeight: FontWeight.bold),
                                         ), // Hint to show when nothing is selected
                                         value: regiController.selectDocumentType
-                                            .value.isEmpty
+                                                .value.isEmpty
                                             ? null
                                             : regiController
-                                            .selectDocumentType.value,
+                                                .selectDocumentType.value,
                                         items: regiController.documntTypeList
                                             .map((DocumentTypeData marital) {
                                           return DropdownMenuItem<String>(
@@ -648,9 +648,9 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                       children: <Widget>[
                                         ListTile(
                                           leading:
-                                          const Icon(Icons.photo_library),
+                                              const Icon(Icons.photo_library),
                                           title:
-                                          const Text('Pick from Gallery'),
+                                              const Text('Pick from Gallery'),
                                           onTap: () async {
                                             Navigator.pop(context);
                                             await _pickImage(
@@ -673,7 +673,8 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                               );
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                              backgroundColor: ColorHelperClass.getColorFromHex(
+                                  ColorResources.red_color),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(5),
                               ),
@@ -682,27 +683,27 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                               width: double.infinity,
                               child: _image != null
                                   ? ClipRRect(
-                                borderRadius: BorderRadius.circular(5),
-                                child: Image.file(
-                                  _image!,
-                                  width: double.infinity,
-                                  height: 100,
-                                  fit: BoxFit.cover,
-                                ),
-                              )
+                                      borderRadius: BorderRadius.circular(5),
+                                      child: Image.file(
+                                        _image!,
+                                        width: double.infinity,
+                                        height: 100,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
                                   : const Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    "Upload File",
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.white,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          "Upload File",
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
-                              ),
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -714,15 +715,15 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                               mainAxisAlignment: MainAxisAlignment.start,
                               children: [
                                 Obx(() => Checkbox(
-                                  value: regiController.isChecked.value,
-                                  onChanged: regiController.toggleCheckbox,
-                                )),
+                                      value: regiController.isChecked.value,
+                                      onChanged: regiController.toggleCheckbox,
+                                    )),
                                 const Text(
                                   'Accept Terms and Condition ',
                                   style: TextStyle(
                                     color: Color(0xFFe61428), // Updated color
                                     fontSize:
-                                    16, // Assuming the original size was 16
+                                        16, // Assuming the original size was 16
                                     // Add other properties if needed (e.g., fontWeight, fontFamily, etc.)
                                   ),
                                 ),
@@ -744,22 +745,37 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
   }
 
   Widget _buildEditableField(
-      String label,
-      TextEditingController controller,
-      String hintText,
-      String validationMessage,
-      {bool obscureText = false}) {
+    String label,
+    TextEditingController controller,
+    String hintText,
+    String validationMessage, {
+    bool obscureText = false,
+  }) {
     return Container(
       margin: const EdgeInsets.only(left: 5, right: 5),
       child: TextFormField(
         keyboardType: TextInputType.text,
         controller: controller,
         obscureText: obscureText,
+        style: const TextStyle(color: Colors.black), // Text color set to black
         decoration: InputDecoration(
           labelText: label,
+          labelStyle: const TextStyle(
+              color: Colors.black), // Label text color set to black
           hintText: hintText,
-          border: OutlineInputBorder(
-            borderSide: BorderSide(color: ColorHelperClass.getColorFromHex(ColorResources.red_color)),
+          hintStyle: const TextStyle(
+              color: Colors.black54), // Slightly dimmed black for hint text
+          border: const OutlineInputBorder(
+            borderSide:
+                BorderSide(color: Colors.grey), // Border color set to black
+          ),
+          enabledBorder: const OutlineInputBorder(
+            borderSide: BorderSide(
+                color: Colors.grey), // Border when field is not focused
+          ),
+          focusedBorder: const OutlineInputBorder(
+            borderSide: BorderSide(
+                color: Colors.grey, width: 0.5), // Thicker border when focused
           ),
           contentPadding: const EdgeInsets.symmetric(
             vertical: 12,
@@ -767,7 +783,7 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
           ),
         ),
         validator: (value) {
-          if (value!.isEmpty) {
+          if (value == null || value.isEmpty) {
             return validationMessage;
           }
           return null;
