@@ -2,24 +2,14 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mpm/OccuptionProfession/OccuptionProfessionData.dart';
 import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/CheckPinCode/Building.dart';
-
 import 'package:mpm/model/CheckPinCode/CheckPinCodeModel.dart';
-
 import 'package:mpm/model/CheckUser/CheckUserData.dart';
-import 'package:mpm/model/Occupation/OccupationData.dart';
-import 'package:mpm/model/OccupationSpec/OccuptionSpecData.dart';
-import 'package:mpm/model/Qualification/QualificationData.dart';
-import 'package:mpm/model/QualificationCategory/QualificationCategoryModel.dart';
-import 'package:mpm/model/QualificationMain/QualicationMainData.dart';
 import 'package:mpm/model/Register/RegisterModelClass.dart';
-
 import 'package:mpm/model/bloodgroup/BloodData.dart';
 import 'package:mpm/model/documenttype/DocumentTypeModel.dart';
 import 'package:mpm/model/gender/DataX.dart';
-
 import 'package:mpm/model/marital/MaritalData.dart';
 import 'package:mpm/model/membership/MemberShipData.dart';
 import 'package:mpm/model/relation/RelationData.dart';
@@ -37,12 +27,6 @@ class NewMemberController extends GetxController {
   final rxStatusMemberLoading = Status.IDLE.obs;
   final rxStatusLoading2 = Status.LOADING.obs;
   final rxStatusmarried = Status.LOADING.obs;
-  final rxStatusOccupation = Status.LOADING.obs;
-  final rxStatusOccupationData = Status.IDLE.obs;
-  final rxStatusOccupationSpec = Status.IDLE.obs;
-  final rxStatusQualification = Status.LOADING.obs;
-  final rxStatusQualificationMain = Status.IDLE.obs;
-  final rxStatusQualificationCat = Status.IDLE.obs;
   final rxStatusBuilding = Status.IDLE.obs;
   final rxStatusDocument = Status.LOADING.obs;
   final rxStatusMemberShipTYpe = Status.LOADING.obs;
@@ -53,12 +37,6 @@ class NewMemberController extends GetxController {
   var maritalList = <MaritalData>[].obs;
   var selectMarital = ''.obs;
   var selectMember = CheckUserData().obs;
-  var selectOccuption = ''.obs;
-  var selectOccuptionPro = ''.obs;
-  var selectOccuptionSpec = ''.obs;
-  var selectQlification = ''.obs;
-  var selectQualicationMain = ''.obs;
-  var selectQualicationCat = ''.obs;
   var bloodgroupList = <BloodGroupData>[].obs;
   var selectBloodGroup = ''.obs;
   var selectBuilding = ''.obs;
@@ -68,12 +46,6 @@ class NewMemberController extends GetxController {
   var memberList = <CheckUserData>[].obs;
   var ducumentList = <CheckUserData>[].obs;
 
-  var occuptionList = <OccupationData>[].obs;
-  var occuptionProfessionList = <OccuptionProfessionData>[].obs;
-  var occuptionSpeList = <OccuptionSpecData>[].obs;
-  var qulicationList = <QualificationData>[].obs;
-  var qulicationMainList = <QualicationMainData>[].obs;
-  var qulicationCategoryList = <Qualificationcategorydata>[].obs;
   var checkPinCodeList = <Building>[].obs;
   var memberShipList = <MemberShipData>[].obs;
   var documntTypeList = <DocumentTypeData>[].obs;
@@ -88,6 +60,7 @@ class NewMemberController extends GetxController {
 
   Rx<TextEditingController> housenoController = TextEditingController().obs;
   Rx<TextEditingController> stateController = TextEditingController().obs;
+  Rx<TextEditingController> countryController = TextEditingController().obs;
   Rx<TextEditingController> cityController = TextEditingController().obs;
   Rx<TextEditingController> zoneController = TextEditingController().obs;
   Rx<TextEditingController> areaController = TextEditingController().obs;
@@ -105,28 +78,12 @@ class NewMemberController extends GetxController {
 
   Rx<TextEditingController> emailController = TextEditingController().obs;
   Rx<TextEditingController> buildingController = TextEditingController().obs;
-  Rx<TextEditingController> occuptiondetailController =
-      TextEditingController().obs;
-  Rx<TextEditingController> educationdetailController =
-      TextEditingController().obs;
   TextEditingController dateController = TextEditingController();
   void setRxRequest(Status _value) => rxStatusLoading.value = _value;
   void setRxMemberRequest(Status _value) =>
       rxStatusMemberLoading.value = _value;
   void setRxRequest2(Status _value) => rxStatusLoading2.value = _value;
   void setRxRequestMarried(Status _value) => rxStatusmarried.value = _value;
-  void setRxRequestOccuption(Status _value) =>
-      rxStatusOccupation.value = _value;
-  void setRxRequestOccuptionData(Status _value) =>
-      rxStatusOccupationData.value = _value;
-  void setRxRequestOccuptionSpec(Status _value) =>
-      rxStatusOccupationSpec.value = _value;
-  void setRxRequestQualification(Status _value) =>
-      rxStatusQualification.value = _value;
-  void setRxRequestQualificationMain(Status _value) =>
-      rxStatusQualificationMain.value = _value;
-  void setRxRequestQualificationCat(Status _value) =>
-      rxStatusQualificationCat.value = _value;
   void setRxRequestBuilding(Status _value) => rxStatusBuilding.value = _value;
   void setRxRequestDocument(Status _value) => rxStatusDocument.value = _value;
   void setRxRequestMemberShip(Status _value) =>
@@ -137,17 +94,6 @@ class NewMemberController extends GetxController {
   void setBloodStatus(List<BloodGroupData> _value) =>
       bloodgroupList.value = _value;
   void setMember(List<CheckUserData> _value) => memberList.value = _value;
-  void setOccuption(List<OccupationData> _value) =>
-      occuptionList.value = _value;
-  void setOccuptionPro(List<OccuptionProfessionData> _value) =>
-      occuptionProfessionList.value = _value;
-  setOccuptionSpe(List<OccuptionSpecData> _value) =>
-      occuptionSpeList.value = _value;
-  setQlication(List<QualificationData> _value) => qulicationList.value = _value;
-  setQualicationMain(List<QualicationMainData> _value) =>
-      qulicationMainList.value = _value;
-  setQualicationCategory(List<Qualificationcategorydata> _value) =>
-      qulicationCategoryList.value = _value;
   setcheckPinCode(List<Building> _value) => checkPinCodeList.value = _value;
   setdocumentType(List<DocumentTypeData> _value) =>
       documntTypeList.value = _value;
@@ -158,9 +104,6 @@ class NewMemberController extends GetxController {
 
   var dropdownItems = <String>[].obs;
   var selectedValue = ''.obs;
-  var isOccutionList = false.obs;
-  var isQualicationList = false.obs;
-  var isQualicationCateList = false.obs;
   void toggleCheckbox(bool? value) {
     isChecked.value = value ?? false;
   }
@@ -197,26 +140,6 @@ class NewMemberController extends GetxController {
 
   void setDocumentType(String value) {
     selectDocumentType(value);
-  }
-
-  void setSelectOccuptionPro(String value) {
-    selectOccuptionPro(value);
-  }
-
-  void setSelectOccuptionSpec(String value) {
-    selectOccuptionSpec(value);
-  }
-
-  void setSelectQualification(String value) {
-    selectQlification(value);
-  }
-
-  void setSelectQualificationMain(String value) {
-    selectQualicationMain(value);
-  }
-
-  void setSelectQualificationCat(String value) {
-    selectQualicationMain(value);
   }
 
   void setSelectMemberShip(String value) {
@@ -257,60 +180,6 @@ class NewMemberController extends GetxController {
     });
   }
 
-  void getOccupationData() {
-    setRxRequestOccuption(Status.LOADING);
-    api.userOccupationDataApi().then((_value) {
-      setRxRequestOccuption(Status.COMPLETE);
-      setOccuption(_value.data!);
-      occuptionList.add(OccupationData(
-          id: "other",
-          occupation: 'Other',
-          status: '1',
-          createdAt: null,
-          updatedAt: null));
-    }).onError((error, strack) {
-      setRxRequestOccuption(Status.ERROR);
-    });
-  }
-
-  void getOccupationProData(String occupation_id) {
-    Map datas = {"occupation_id": occupation_id};
-    setRxRequestOccuptionData(Status.LOADING);
-    api.userOccutionPreCodeApi(datas).then((_value) {
-      setRxRequestOccuptionData(Status.COMPLETE);
-      setOccuptionPro(_value.data!);
-    }).onError((error, strack) {
-      setRxRequestOccuptionData(Status.ERROR);
-    });
-  }
-
-  void getOccupationSpectData(String occupation_profession_id) {
-    Map datas = {"occupation_profession_id": occupation_profession_id};
-    setRxRequestOccuptionSpec(Status.LOADING);
-    api.userOccutionSpectionCodeApi(datas).then((_value) {
-      setRxRequestOccuptionSpec(Status.COMPLETE);
-      setOccuptionSpe(_value.data!);
-    }).onError((error, strack) {
-      setRxRequestOccuptionSpec(Status.ERROR);
-    });
-  }
-
-  void getQualification() {
-    setRxRequestQualification(Status.LOADING);
-    api.userQualification().then((_value) {
-      setRxRequestQualification(Status.COMPLETE);
-      setQlication(_value.data!);
-      qulicationList.add(QualificationData(
-          id: "other",
-          qualification: 'Other',
-          status: '1',
-          createdAt: null,
-          updatedAt: null));
-    }).onError((error, strack) {
-      setRxRequestQualification(Status.ERROR);
-    });
-  }
-
   void getDocumentType() {
     setRxRequestDocument(Status.LOADING);
     api.userDocumentType().then((_value) {
@@ -318,17 +187,6 @@ class NewMemberController extends GetxController {
       setdocumentType(_value.data!);
     }).onError((error, strack) {
       setRxRequestDocument(Status.ERROR);
-    });
-  }
-
-  void getQualicationMain(String qualification_id) {
-    Map datas = {"qualification_id": qualification_id};
-    setRxRequestQualificationMain(Status.LOADING);
-    api.userQualificationMain(datas).then((_value) {
-      setRxRequestQualificationMain(Status.COMPLETE);
-      setQualicationMain(_value.data!);
-    }).onError((error, strack) {
-      setRxRequestQualificationMain(Status.ERROR);
     });
   }
 
@@ -343,17 +201,6 @@ class NewMemberController extends GetxController {
     });
   }
 
-  void getQualicationCategory(String qualification_main_id) {
-    Map datas = {"qualification_main_id": qualification_main_id};
-    setRxRequestQualificationCat(Status.LOADING);
-    api.userQualificationCategory(datas).then((_value) {
-      setRxRequestQualificationCat(Status.COMPLETE);
-      setQualicationCategory(_value.data!);
-    }).onError((error, strack) {
-      setRxRequestQualificationCat(Status.ERROR);
-    });
-  }
-
   void getCheckPinCode(var pincode) async {
     setRxRequestBuilding(Status.LOADING);
     var token =
@@ -364,7 +211,7 @@ class NewMemberController extends GetxController {
     print("ccvv" + payload.toString());
     var headers = {
       'Authorization':
-      'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJsb2NhbGhvc3QiLCJzdWIiOiI2IiwiaWF0IjoxNzMyNjA4ODc0LCJleHAiOjE3MzI2MTI0NzR9.5soj-FTXfHfGbr8qfJowy9RCJHJv65jRg1wx6hy_OCc'
+          'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJsb2NhbGhvc3QiLCJzdWIiOiI2IiwiaWF0IjoxNzMyNjA4ODc0LCJleHAiOjE3MzI2MTI0NzR9.5soj-FTXfHfGbr8qfJowy9RCJHJv65jRg1wx6hy_OCc'
     };
     var request = http.MultipartRequest('POST', url);
     request.fields.addAll({'pincode': pincode});
@@ -379,7 +226,7 @@ class NewMemberController extends GetxController {
 
       Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
       CheckPinCodeModel pincodeResponse =
-      CheckPinCodeModel.fromJson(jsonResponse);
+          CheckPinCodeModel.fromJson(jsonResponse);
       print('Status: ${pincodeResponse.status}');
       print('Message: ${pincodeResponse.message}');
       setcheckPinCode(pincodeResponse.data!.building!);
@@ -392,6 +239,8 @@ class NewMemberController extends GetxController {
           updatedAt: null));
       // housenoController.value.text= _value.data.country;
       stateController.value.text = pincodeResponse.data!.state!.name.toString();
+      countryController.value.text =
+          pincodeResponse.data!.country!.name.toString();
       cityController.value.text = pincodeResponse.data!.city!.name.toString();
       zoneController.value.text = pincodeResponse.data!.zone!.name.toString();
       areaController.value.text = pincodeResponse.data!.areaName!.toString();
@@ -429,24 +278,15 @@ class NewMemberController extends GetxController {
         "" +
         cityController.value.text +
         "" +
+        countryController.value.text +
+        "" +
         zoneController.value.text +
         "" +
         areaController.value.text;
     var document_type = selectDocumentType.value;
     var password = "1234";
-    var occupation_id = "";
     var flat_no = housenoController.value.text;
-    if (selectOccuption.value == "other") {
-      occupation_id = "";
-    } else {
-      occupation_id = selectOccuption.value;
-    }
-    var qualification_id = "";
-    if (selectQlification.value == 'other') {
-      qualification_id = "";
-    } else {
-      qualification_id = selectQlification.value;
-    }
+
     //var token=await SessionManager.getToken();
     var token =
         "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyMSIsImlhdCI6MTczNTQ2NjMyOCwiZXhwIjoxNzM1NDY5OTI4fQ.YVCh_-zc1Cap8ERgkY9yRVduxalEFEqUPT8RRs-NRcg";
@@ -454,12 +294,6 @@ class NewMemberController extends GetxController {
     // var token="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyMSIsImlhdCI6MTczNTQ1ODE1MCwiZXhwIjoxNzM1NDYxNzUwfQ.qSTPYD9uHX8eVNr1ZSdZIMBi1M_tlcrC8wg3vXxvwIY";
     print("bbbb" + token.toString());
 
-    var profession_id = selectOccuptionPro.value;
-    var qualification_main_id = selectQualicationMain.value;
-    var specialization_id = selectOccuptionSpec.value;
-    var qualification_category_id = selectQualicationCat.value;
-    var occupation_details = occuptiondetailController.value.text.trim();
-    var qualification_details = educationdetailController.value.text.trim();
     var whatsapp_number = whatappmobileController.value.text.trim();
     var relation_type = "";
     if (selectRelationShipType.value == "") {
@@ -485,14 +319,6 @@ class NewMemberController extends GetxController {
       "building_name": building_name,
       "full_address": full_address,
       "document_type": document_type,
-      "occupation_id": occupation_id,
-      "qualification_id": qualification_id,
-      "profession_id": profession_id,
-      "qualification_main_id": qualification_main_id,
-      "specialization_id": specialization_id,
-      "qualification_category_id": qualification_category_id,
-      "occupation_details": occupation_details,
-      "qualification_details": qualification_details,
       "building_id": building_id,
       "member_type_id": membership_type_id,
       "whatsapp_number": whatsapp_number,
@@ -514,13 +340,13 @@ class NewMemberController extends GetxController {
     var headers = {'Authorization': 'Bearer $token'};
     request.headers.addAll(headers);
     http.StreamedResponse response =
-    await request.send().timeout(Duration(seconds: 120));
+        await request.send().timeout(Duration(seconds: 120));
     if (response.statusCode == 200) {
       String responseBody = await response.stream.bytesToString();
       loading.value = false;
       Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
       RegisterModelClass registerResponse =
-      RegisterModelClass.fromJson(jsonResponse);
+          RegisterModelClass.fromJson(jsonResponse);
       if (registerResponse.status == true) {
         Get.snackbar(
           "Success",
@@ -546,7 +372,7 @@ class NewMemberController extends GetxController {
       loading.value = false;
       Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
       RegisterModelClass registerResponse =
-      RegisterModelClass.fromJson(jsonResponse);
+          RegisterModelClass.fromJson(jsonResponse);
 
       Get.snackbar(
         "Error",

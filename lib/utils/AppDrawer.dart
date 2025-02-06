@@ -40,9 +40,9 @@ class _AppDrawerState extends State<AppDrawer> {
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Color(0xFFcd4e2b),
-          ),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(10.0),
                 child: Row(
@@ -91,7 +91,7 @@ class _AppDrawerState extends State<AppDrawer> {
                           const SizedBox(height: 4),
                           Text(
                             "Mobile: $mobileNumber", // Display mobile number
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 12, // Adjusted font size for mobile
                               color: Colors.white70,
                             ),
@@ -104,96 +104,94 @@ class _AppDrawerState extends State<AppDrawer> {
               ),
             ),
             ListTile(
-              leading: Icon(Icons.home),
-              title: Text('Home'),
+              leading: const Icon(Icons.home),
+              title: const Text('Home'),
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                       builder: (context) =>
-                          DashboardView()), // Navigate to the HomePage widget
+                          const DashboardView()), // Navigate to the HomePage widget
                 );
               },
             ),
             ListTile(
-              leading: Icon(Icons.person),
-              title: Text('My Profile'),
+              leading: const Icon(Icons.person),
+              title: const Text('My Profile'),
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) =>
-                          ProfileView()), // Navigate to the HomePage widget
-                );
+                Navigator.pushNamed(context,
+                    RouteNames.profile); // Navigate to the HomePage widget
               },
             ),
             ListTile(
-              leading: Icon(Icons.person_search),
-              title: Text('Search Members'),
+              leading: const Icon(Icons.person_search),
+              title: const Text('Search Members'),
               onTap: () {
                 Navigator.pushNamed(context, RouteNames.searchmember);
               },
             ),
             ListTile(
-              leading: Icon(Icons.account_balance),
-              title: Text('Samiti Members'),
+              leading: const Icon(Icons.account_balance),
+              title: const Text('Samiti Members'),
               onTap: () async {
                 Navigator.pushNamed(context, RouteNames.samitimemberview);
               },
             ),
             ListTile(
-              leading: Icon(Icons.share),
-              title: Text('Share App'),
+              leading: const Icon(Icons.share),
+              title: const Text('Share App'),
               onTap: () {
-                _showShareBottomSheet(context);
+                Navigator.pop(context);
+                _onShare(context);
               },
             ),
             ListTile(
-              leading: Icon(Icons.file_copy),
-              title: Text('Forms'),
+              leading: const Icon(Icons.file_copy),
+              title: const Text('Forms'),
               onTap: () {
                 Navigator.pushNamed(context, RouteNames.forms);
               },
             ),
             ListTile(
-              leading: Icon(Icons.account_balance),
-              title: Text('Government Scheme'),
+              leading: const Icon(Icons.account_balance),
+              title: const Text('Government Scheme'),
               onTap: () {
                 Navigator.pushNamed(context, RouteNames.gov_scheme);
               },
             ),
             ListTile(
-              leading: Icon(Icons.info),
-              title: Text('About Us'),
+              leading: const Icon(Icons.info),
+              title: const Text('About Us'),
               onTap: () {
                 Navigator.pushNamed(context, RouteNames.aboutUs);
               },
             ),
             ListTile(
-              leading: Icon(Icons.headset_mic),
-              title: Text('Contact Us'),
+              leading: const Icon(Icons.headset_mic),
+              title: const Text('Contact Us'),
               onTap: () {
                 Navigator.pushNamed(context, RouteNames.contactUs);
               },
             ),
             ListTile(
-              leading: Icon(Icons.privacy_tip),
-              title: Text('Privacy Policy'),
+              leading: const Icon(Icons.privacy_tip),
+              title: const Text('Privacy Policy'),
               onTap: () {
-                Navigator.pushNamed(context, RouteNames.pravacypolicy);
+                Navigator.pushNamed(context, RouteNames.privacypolicy);
               },
             ),
             ListTile(
-              leading: Icon(Icons.description),
-              title: Text('Terms & Condition'),
+              leading: const Icon(Icons.description),
+              title: const Text('Terms & Condition'),
               onTap: () {
                 Navigator.pushNamed(context, RouteNames.termandcondition);
               },
             ),
             ListTile(
-              leading: Icon(Icons.logout),
-              title: Text('Logout'),
+              leading: const Icon(Icons.logout),
+              title: const Text('Logout'),
               onTap: () {
+                Navigator.pop(context);
                 _showLogoutDialog(context);
               },
             ),
@@ -203,75 +201,23 @@ class _AppDrawerState extends State<AppDrawer> {
     );
   }
 
-  void _showShareBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (BuildContext context) {
-        return Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                "Share App",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              const Text("Share this app with your friends on social media!"),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Cancel"),
-              ),
-            ],
-          ),
-        );
-      },
+  void _onShare(BuildContext context) async {
+    final box = context.findRenderObject() as RenderBox?;
+
+    const String playStoreLink =
+        'https://play.google.com/store/apps/details?id=com.example.yourapp';
+    const String appStoreLink =
+        'https://apps.apple.com/app/id123456789'; // Replace with actual link
+
+    String shareText =
+        "🌟 Welcome to MPM App! \n\n📲 🚀 Check out this amazing app! \n\n📲 Download Now: \n👉 Android: $playStoreLink\n👉 iOS: $appStoreLink";
+
+    await Share.share(
+      shareText,
+      subject: "Download Our App!",
+      sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
     );
   }
-
-  void _shareOnSocialMedia(String platform) {
-    const String playStoreLink = 'https://play.google.com/store/apps/details?id=com.example.yourapp';
-    const String appStoreLink = 'https://apps.apple.com/app/id123456789'; // Replace with actual link
-
-    String shareText = "🚀 Check out this amazing app! \n\n📲 Download Now: \n👉 Android: $playStoreLink\n👉 iOS: $appStoreLink";
-
-    switch (platform) {
-      case "Facebook":
-      // Implement Facebook sharing logic
-        break;
-      case "Twitter":
-      // Implement Twitter sharing logic
-        break;
-      case "Google+":
-      // Implement Google+ sharing logic
-        break;
-      case "LinkedIn":
-      // Implement LinkedIn sharing logic
-        break;
-      case "Dropbox":
-      // Implement Dropbox sharing logic
-        break;
-      case "Reddit":
-      // Implement Reddit sharing logic
-        break;
-      case "Skype":
-      // Implement Skype sharing logic
-        break;
-      case "Pinterest":
-      // Implement Pinterest sharing logic
-        break;
-      default:
-        Share.share(
-          shareText,
-          subject: "Download Our App!",
-        );
-    }
-  }
-
 
   /// ✅ **Fixed Logout Dialog**
   void _showLogoutDialog(BuildContext context) {
@@ -292,7 +238,8 @@ class _AppDrawerState extends State<AppDrawer> {
             TextButton(
               onPressed: () {
                 SessionManager.clearSession();
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginPage()));
+                Navigator.pushReplacement(context,
+                    MaterialPageRoute(builder: (context) => LoginPage()));
               },
               child: const Text("Yes", style: TextStyle(color: Colors.red)),
             ),

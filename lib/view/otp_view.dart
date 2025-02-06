@@ -114,28 +114,22 @@ class _OTPScreenState extends State<OTPScreen> {
 
                 const SizedBox(height: 40),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: List.generate(4, (index) {
-                    return SizedBox(
-                      width: 50,
+                  children: [
+                    Expanded(
                       child: TextField(
-                        controller: _controllers[index],
-                        focusNode: _focusNodes[index],
-                        maxLength: 1,
+                        controller: _controllers[0], // Use the first controller if you have a list of controllers
                         keyboardType: TextInputType.number,
-                        textAlign: TextAlign.center,
-                        decoration: InputDecoration(
-
-                          counterText: "",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(18),
-
-                          ),
+                        maxLength: 4,
+                        decoration: const InputDecoration(
+                          hintText: 'Enter OTP',
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                          counterText: '',
                         ),
-                        onChanged: (value) => _onChanged(value, index),
+                        onChanged: (value) => _onChanged(value, 0), // Use the corresponding index if needed
                       ),
-                    );
-                  }),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 40),
                 // SizedBox(
@@ -169,7 +163,7 @@ class _OTPScreenState extends State<OTPScreen> {
                             : () => verifyOtp(context),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: ColorHelperClass.getColorFromHex(
-                              ColorResources.pink_color),
+                              ColorResources.red_color),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -180,7 +174,7 @@ class _OTPScreenState extends State<OTPScreen> {
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
-                            color: Colors.pink,
+                            color: ColorHelperClass.getColorFromHex(ColorResources.red_color),
                             strokeWidth: 2,
                           ),
                         )
@@ -203,7 +197,7 @@ class _OTPScreenState extends State<OTPScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(controller.isButtonEnabled.value?AppConstants.dontreceive : "Resend OTP in ${controller.start.value} seconds" ,style: TextStyleClass.black14style,),
-                        Text(AppConstants.resentotp,style: TextStyleClass.pink12style,),
+                        Text(AppConstants.resentotp,style: TextStyleClass.red12style,),
                       ],
                     ),
                   );
