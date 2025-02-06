@@ -22,8 +22,8 @@ class _HomeViewState extends State<HomeView> {
   late double screenWidth;
 
   final List<Map<String, dynamic>> gridItems = [
-    {'icon': Images.makenewmember, 'label': 'Make New Member'},
     {'icon': Images.user, 'label': 'My Profile'},
+    {'icon': Images.makenewmember, 'label': 'Make New Member'},
     {'icon': Images.samiti, 'label': 'Samiti Members'},
     {'icon': Images.discount, 'label': 'Discounts & Offers'},
   ];
