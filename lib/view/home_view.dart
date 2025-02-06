@@ -24,7 +24,6 @@ class _HomeViewState extends State<HomeView> {
   final List<Map<String, dynamic>> gridItems = [
     {'icon': Images.user, 'label': 'My Profile'},
     {'icon': Images.makenewmember, 'label': 'Make New Member'},
-    {'icon': Images.samiti, 'label': 'Samiti Members'},
     {'icon': Images.discount, 'label': 'Discounts & Offers'},
   ];
 
@@ -145,10 +144,9 @@ class _HomeViewState extends State<HomeView> {
                         regiController.isRelation.value = false;
                         Navigator.pushNamed(context, RouteNames.profile);
                       }
-                      if (item['label'] == "Samiti Members") {
-                        regiController.isRelation.value = false;
+                      if (item['label'] == "Discounts & Offers") {
                         Navigator.pushNamed(
-                            context, RouteNames.samitimemberview);
+                            context, RouteNames.discount_offer_view);
                       }
                     },
                     child: Card(

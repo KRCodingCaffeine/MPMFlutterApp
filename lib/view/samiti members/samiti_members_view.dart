@@ -26,14 +26,6 @@ class _SamitiMembersViewPageState extends State<SamitiMembersViewPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: const Text(
-          'Samiti Members',
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Obx(() {

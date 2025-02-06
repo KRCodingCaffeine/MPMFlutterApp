@@ -11,6 +11,7 @@ import 'package:mpm/view/SearchView.dart';
 import 'package:mpm/view/home_view.dart';
 import 'package:mpm/view/login_view.dart';
 import 'package:mpm/view/profile%20view/profile_view.dart';
+import 'package:mpm/view/samiti%20members/samiti_members_view.dart';
 import 'package:mpm/view_model/controller/dashboard/dashboardcontroller.dart';
 import 'package:mpm/view_model/controller/login/logincontroller.dart';
 
@@ -34,7 +35,7 @@ class _DashboardViewState extends State<DashboardView> {
   final List<Widget> pages = [
     const HomeView(),
     const SearchView(),
-    // const ProfileView(), // Ensure this matches the 3rd tab
+    const SamitiMembersViewPage(), // Ensure this matches the 3rd tab
   ];
 
   @override
@@ -74,10 +75,10 @@ class _DashboardViewState extends State<DashboardView> {
               icon: Icon(Icons.search),
               label: "Search",
             ),
-            // BottomNavigationBarItem(
-            //   icon: Icon(Icons.person),
-            //   label: "Profile",
-            // ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.account_balance),
+              label: "Samiti Member",
+            ),
           ],
         ),
       ),
