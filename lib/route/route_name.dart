@@ -13,6 +13,7 @@ class RouteNames {
   static const String personalinfo = "personalinfo";
   static const String residentailinfo = "residentailinfo";
   static const String dashboard = "dashboard";
+  static const String discount_offer_view = "discount_offer_view";
   static const String forms = "forms_down";
   static const String gov_scheme = "gov_scheme";
   static const String profile = "profile_view";
