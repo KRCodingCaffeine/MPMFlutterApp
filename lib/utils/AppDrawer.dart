@@ -2,11 +2,15 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/route/route_name.dart';
+import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/images.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mpm/view/dashboard_view.dart';
 import 'package:mpm/view/home_view.dart';
+import 'package:mpm/view/login_view.dart';
 import 'package:mpm/view/profile%20view/profile_view.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'color_helper.dart';
 import 'color_resources.dart'; // Add this import to handle image picking
@@ -141,6 +145,7 @@ class _AppDrawerState extends State<AppDrawer> {
               leading: Icon(Icons.share),
               title: Text('Share App'),
               onTap: () {
+                _showShareBottomSheet(context);
               },
             ),
             ListTile(
@@ -189,12 +194,111 @@ class _AppDrawerState extends State<AppDrawer> {
               leading: Icon(Icons.logout),
               title: Text('Logout'),
               onTap: () {
-                Get.back(); // Close Drawer
+                _showLogoutDialog(context);
               },
             ),
           ],
         ),
       ),
+    );
+  }
+
+  void _showShareBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (BuildContext context) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Share App",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text("Share this app with your friends on social media!"),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel"),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _shareOnSocialMedia(String platform) {
+    const String playStoreLink = 'https://play.google.com/store/apps/details?id=com.example.yourapp';
+    const String appStoreLink = 'https://apps.apple.com/app/id123456789'; // Replace with actual link
+
+    String shareText = "🚀 Check out this amazing app! \n\n📲 Download Now: \n👉 Android: $playStoreLink\n👉 iOS: $appStoreLink";
+
+    switch (platform) {
+      case "Facebook":
+      // Implement Facebook sharing logic
+        break;
+      case "Twitter":
+      // Implement Twitter sharing logic
+        break;
+      case "Google+":
+      // Implement Google+ sharing logic
+        break;
+      case "LinkedIn":
+      // Implement LinkedIn sharing logic
+        break;
+      case "Dropbox":
+      // Implement Dropbox sharing logic
+        break;
+      case "Reddit":
+      // Implement Reddit sharing logic
+        break;
+      case "Skype":
+      // Implement Skype sharing logic
+        break;
+      case "Pinterest":
+      // Implement Pinterest sharing logic
+        break;
+      default:
+        Share.share(
+          shareText,
+          subject: "Download Our App!",
+        );
+    }
+  }
+
+
+  /// ✅ **Fixed Logout Dialog**
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text("Logout"),
+          content: const Text("Are you sure you want to logout?"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text("No", style: TextStyle(color: Colors.red)),
+            ),
+            TextButton(
+              onPressed: () {
+                SessionManager.clearSession();
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginPage()));
+              },
+              child: const Text("Yes", style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
     );
   }
 }
