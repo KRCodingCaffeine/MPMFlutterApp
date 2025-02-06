@@ -14,7 +14,7 @@ import 'package:mpm/view/login_view.dart';
 import 'package:mpm/view/member_otp_view.dart';
 import 'package:mpm/view/otp_view.dart';
 import 'package:mpm/view/personal_view.dart';
-import 'package:mpm/view/pesidental_adress_view.dart';
+import 'package:mpm/view/residental_adress_view.dart';
 import 'package:mpm/view/profile%20view/profile_view.dart';
 import 'package:mpm/view/register_view.dart';
 import 'package:mpm/view/samiti%20members/samiti_detail_view.dart';

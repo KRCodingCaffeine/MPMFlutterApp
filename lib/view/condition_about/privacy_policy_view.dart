@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mpm/utils/color_helper.dart';
+import 'package:mpm/utils/color_resources.dart';
 
 class PrivacyPolicyViewPage extends StatefulWidget {
   const PrivacyPolicyViewPage({super.key});
@@ -13,8 +15,9 @@ class _PrivacyPolicyViewPageState extends State<PrivacyPolicyViewPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text("Privacy Policy"),
-        backgroundColor: Colors.white54,
+        title: const Text("Privacy Policy", style: TextStyle(color: Colors.white),),
+        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        iconTheme: IconThemeData(color: Colors.white),
       ),
       body: const SingleChildScrollView(
         padding: EdgeInsets.all(16.0),
