@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mpm/utils/color_helper.dart';
+import 'package:mpm/utils/color_resources.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ContactViewPage extends StatefulWidget {
@@ -28,10 +30,11 @@ class _ContactViewPageState extends State<ContactViewPage> {
       appBar: AppBar(
         title: const Text(
           'Contact Us',
-          style: TextStyle(color: Colors.black),
+          style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: Colors.white54,
-        iconTheme: const IconThemeData(color: Colors.black),
+        backgroundColor:
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),

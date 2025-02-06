@@ -55,31 +55,34 @@ class _DashboardViewState extends State<DashboardView> {
         ),
         drawer: AppDrawer(),
         body: pages[controller.currentIndex.value],
-        bottomNavigationBar: BottomNavigationBar(
-          backgroundColor: Color(0xFFFFFFFF), // White background
-          selectedItemColor:
-              ColorHelperClass.getColorFromHex(ColorResources.red_color),
-          unselectedItemColor: Colors.grey,
-          currentIndex: controller.currentIndex.value,
-          onTap: (index) {
-            if (index < pages.length) {
-              controller.currentIndex.value = index;
-            }
-          },
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: "Home",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.search),
-              label: "Search",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.account_balance),
-              label: "Samiti Member",
-            ),
-          ],
+        bottomNavigationBar: Container(
+          height: 70, // Adjust the height as needed
+          child: BottomNavigationBar(
+            backgroundColor: Color(0xFFFFFFFF), // White background
+            selectedItemColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+            unselectedItemColor: Colors.grey,
+            currentIndex: controller.currentIndex.value,
+            onTap: (index) {
+              if (index < pages.length) {
+                controller.currentIndex.value = index;
+              }
+            },
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home),
+                label: "Home",
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.search),
+                label: "Search",
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.account_balance),
+                label: "Samiti Member",
+              ),
+            ],
+          ),
         ),
       ),
     );

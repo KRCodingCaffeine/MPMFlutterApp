@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mpm/utils/color_helper.dart';
+import 'package:mpm/utils/color_resources.dart';
 import 'package:url_launcher/url_launcher.dart'; // Import url_launcher package
 
 class TermsconditionViewPage extends StatefulWidget {
@@ -27,8 +29,9 @@ class _TermsconditionViewPageState extends State<TermsconditionViewPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text("Terms and Conditions"),
-        backgroundColor: Colors.white54,
+        title: const Text("Terms and Conditions", style: TextStyle(color: Colors.white),),
+        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        iconTheme: IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
         // Removed const here

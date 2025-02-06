@@ -193,7 +193,7 @@ class _HomeViewState extends State<HomeView> {
 
           // Horizontal ListView
           SizedBox(
-            height: 180,
+            height: 160,
             child: ListView.builder(
               controller: _scrollController,
               scrollDirection: Axis.horizontal,
