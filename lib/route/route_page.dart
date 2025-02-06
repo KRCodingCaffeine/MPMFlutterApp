@@ -6,6 +6,7 @@ import 'package:mpm/view/condition_about/contact_view.dart';
 import 'package:mpm/view/condition_about/privacy_policy_view.dart';
 import 'package:mpm/view/condition_about/terms&condition_view.dart';
 import 'package:mpm/view/dashboard_view.dart';
+import 'package:mpm/view/discount_offer_view.dart';
 import 'package:mpm/view/forms_down.dart';
 import 'package:mpm/view/gov_scheme.dart';
 import 'package:mpm/view/language_view.dart';
@@ -43,6 +44,8 @@ class RoutePages {
         return _buildRoute(const PesidentalAdressView(), settings);
       case RouteNames.dashboard:
         return _buildRoute(const DashboardView(), settings);
+      case RouteNames.discount_offer_view:
+        return _buildRoute(const DiscountofferView(), settings);
       case RouteNames.forms:
         return _buildRoute(const FormsDownloadView(), settings);
       case RouteNames.gov_scheme:
