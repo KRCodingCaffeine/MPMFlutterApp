@@ -21,6 +21,7 @@ class _LoginPageState extends State<LoginPage> {
   TextEditingController? mobile6666Controller;
   TextEditingController? lmController;
   TextEditingController? otherMobileontroller;
+
   @override
   void initState() {
     super.initState();
@@ -29,48 +30,54 @@ class _LoginPageState extends State<LoginPage> {
     lmController = TextEditingController();
     mobile6666Controller = TextEditingController();
     otherMobileontroller = TextEditingController();
-
   }
 
   @override
   void dispose() {
     mobileController!.dispose();
+    lmController!.dispose();
+    mobile6666Controller!.dispose();
+    otherMobileontroller!.dispose();
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: (){
+      onTap: () {
         FocusManager.instance.primaryFocus?.unfocus();
       },
       child: Scaffold(
         backgroundColor: Colors.white,
-        body: SingleChildScrollView(
-          child: Form(
-            key: _formKeyLogin,
-            child: Container(
-                  padding: EdgeInsets.only(left: 20,right: 20,top: 10),
+        body: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Form(
+                key: _formKeyLogin,
+                child: Container(
+                  padding: const EdgeInsets.only(left: 20, right: 20, top: 10),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const SizedBox(
-                        height: 130,
-                      ),
-
+                      const SizedBox(height: 190),
                       Image.asset(
                         Images.logoImage,
                         height: 240,
                         width: 300,
                       ),
                       const SizedBox(height: 34),
-                      Text(AppConstants.enter_mobile,
-                          style: TextStyleClass.black20style),
-                      Text(AppConstants.logincon,
-                          style: TextStyleClass.black14style),
+                      Text(
+                        AppConstants.enter_mobile,
+                        style: TextStyleClass.black20style,
+                      ),
+                      Text(
+                        AppConstants.logincon,
+                        style: TextStyleClass.black14style,
+                      ),
                       const SizedBox(height: 34),
 
-                      //mobilenumber
+                      // Mobile Number Field
                       SizedBox(
                         width: double.infinity,
                         child: Padding(
@@ -91,10 +98,10 @@ class _LoginPageState extends State<LoginPage> {
                                     controller: mobileController,
                                     keyboardType: TextInputType.text,
                                     decoration: const InputDecoration(
-                                      hintText: 'LM Code / Mobile Number',
+                                      hintText: 'Enter Your Mobile / LM Code',
                                       border: InputBorder.none,
-                                      contentPadding: EdgeInsets.symmetric(
-                                          vertical: 8),
+                                      contentPadding:
+                                      EdgeInsets.symmetric(vertical: 8),
                                     ),
                                     validator: (value) {
                                       if (value!.isEmpty) {
@@ -121,176 +128,193 @@ class _LoginPageState extends State<LoginPage> {
                       const SizedBox(height: 24),
                       Obx(() {
                         return Visibility(
-                            visible: controller.lmCodeVisible.value,
-                            child: Column(
-                              children: [
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                        left: 6.0, right: 6),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(color: Colors.grey),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          const SizedBox(width: 18),
-                                          Expanded(
-                                            child: TextFormField(
-                                              controller: lmController,
-                                              keyboardType: TextInputType.text,
-                                              decoration: const InputDecoration(
-                                                hintText: 'Enter LM Code',
-                                                border: InputBorder.none,
-                                                contentPadding:
-                                                EdgeInsets.symmetric(
-                                                    vertical:
-                                                    8), // Adjust padding
-                                              ),
-                                              validator: (value) {
-                                                if (value!.isEmpty) {
-                                                  return 'Enter LM code';
-                                                }
-                                                // else if(value.length>10){
-                                                //   return "Enter 10 digit mobile number ";
-                                                // }
-                                                else {
-                                                  return null;
-                                                }
-                                              },
+                          visible: controller.lmCodeVisible.value,
+                          child: Column(
+                            children: [
+                              SizedBox(
+                                width: double.infinity,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 6.0, right: 6),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: Colors.grey),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const SizedBox(width: 18),
+                                        Expanded(
+                                          child: TextFormField(
+                                            controller: lmController,
+                                            keyboardType: TextInputType.text,
+                                            decoration: const InputDecoration(
+                                              hintText: 'Enter LM Code',
+                                              border: InputBorder.none,
+                                              contentPadding:
+                                              EdgeInsets.symmetric(
+                                                  vertical: 8),
                                             ),
+                                            validator: (value) {
+                                              if (value!.isEmpty) {
+                                                return 'Enter LM code';
+                                              } else {
+                                                return null;
+                                              }
+                                            },
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 24),
-                              ],
-                            ));
+                              ),
+                              const SizedBox(height: 24),
+                            ],
+                          ),
+                        );
                       }),
 
                       Obx(() {
                         return Visibility(
-                            visible: controller.otherMobVisible.value,
-                            child: Column(
-                              children: [
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                        left: 6.0, right: 6),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(color: Colors.grey),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          const SizedBox(width: 18),
-                                          Expanded(
-                                            child: TextFormField(
-                                              controller: otherMobileontroller,
-                                              keyboardType: TextInputType.number,
-                                              decoration: const InputDecoration(
-                                                hintText: 'Mobile Number',
-                                                border: InputBorder.none,
-                                                contentPadding:
-                                                EdgeInsets.symmetric(
-                                                    vertical:
-                                                    8), // Adjust padding
-                                              ),
-                                              validator: (value) {
-                                                if (value!.isEmpty) {
-                                                  return 'Enter mobile number';
-                                                } else if (value.length > 10) {
-                                                  return "Enter 10 digit mobile number ";
-                                                } else {
-                                                  return null;
-                                                }
-                                              },
+                          visible: controller.otherMobVisible.value,
+                          child: Column(
+                            children: [
+                              SizedBox(
+                                width: double.infinity,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 6.0, right: 6),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: Colors.grey),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const SizedBox(width: 18),
+                                        Expanded(
+                                          child: TextFormField(
+                                            controller: otherMobileontroller,
+                                            keyboardType: TextInputType.number,
+                                            decoration: const InputDecoration(
+                                              hintText: 'Mobile Number',
+                                              border: InputBorder.none,
+                                              contentPadding:
+                                              EdgeInsets.symmetric(
+                                                  vertical: 8),
                                             ),
+                                            validator: (value) {
+                                              if (value!.isEmpty) {
+                                                return 'Enter mobile number';
+                                              } else if (value.length > 10) {
+                                                return "Enter 10 digit mobile number ";
+                                              } else {
+                                                return null;
+                                              }
+                                            },
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 24),
-                              ],
-                            ));
+                              ),
+                              const SizedBox(height: 24),
+                            ],
+                          ),
+                        );
                       }),
-
 
                       // Submit Button
                       SizedBox(
                         width: double.infinity,
                         child: Padding(
                           padding: const EdgeInsets.only(left: 6.0, right: 6),
-                          child: Obx(() => ElevatedButton(
-                            onPressed: () async {
-                              if (_formKeyLogin!.currentState!.validate()) {
-                                   if(controller.lmCodeVisible.value==false)
-                                     {
-                                       print("shivi");
-                                       if(controller.otherMobVisible.value==true)
-                                         {
-                                           controller.checkUser(otherMobileontroller!.text,context);
-                                         }
-                                       else {
-                                         controller.checkUser(mobileController!.text, context);
-                                       }
-                                     }
-                                   else
-                                     {
-
-                                        if(controller.otherMobVisible.value==false)
-                                          {
-                                            print("shivi"+"if else working");
-                                            controller.checkUser(lmController!.text,context);
-                                          }
-                                        else
-                                          {
-                                            print("shivi"+"else working");
-                                            controller.checkUser(otherMobileontroller!.text,context);
-                                          }
-                                     }
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                              ColorHelperClass.getColorFromHex(
-                                  ColorResources.red_color),
-                              padding:
-                              const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                          child: Obx(
+                                () => ElevatedButton(
+                              onPressed: () async {
+                                if (_formKeyLogin!.currentState!.validate()) {
+                                  if (controller.lmCodeVisible.value == false) {
+                                    if (controller.otherMobVisible.value ==
+                                        true) {
+                                      controller.checkUser(
+                                          otherMobileontroller!.text, context);
+                                    } else {
+                                      controller.checkUser(
+                                          mobileController!.text, context);
+                                    }
+                                  } else {
+                                    if (controller.otherMobVisible.value ==
+                                        false) {
+                                      controller.checkUser(
+                                          lmController!.text, context);
+                                    } else {
+                                      controller.checkUser(
+                                          otherMobileontroller!.text, context);
+                                    }
+                                  }
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                ColorHelperClass.getColorFromHex(
+                                    ColorResources.red_color),
+                                padding:
+                                const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: controller.loadinng.value
+                                  ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                                  : Text(
+                                AppConstants.continues,
+                                style: TextStyleClass.white16style,
                               ),
                             ),
-                            child: controller.loadinng.value
-                                ? CircularProgressIndicator(
-                              color: Colors.white,
-                            )
-                                : Text(AppConstants.continues,
-                              style: TextStyleClass.white16style,
-                            ),
-                          )),
+                          ),
                         ),
                       ),
-                        const SizedBox(height: 20),
-
-                    ]
+                      const SizedBox(height: 20),
+                    ],
                   ),
                 ),
-          ),
+              ),
+            ),
+
+            // Top Right Button
+            Positioned(
+              top: 40,
+              right: 20,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, RouteNames.registration_screen);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColorHelperClass.getColorFromHex(
+                      ColorResources.red_color),
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 10, horizontal: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  "Register Here!",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
