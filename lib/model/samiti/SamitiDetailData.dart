@@ -1,14 +1,14 @@
 class SamitiDetailData{
 
-  String? memberSamitiRoleMappingId;
+ var memberSamitiRoleMappingId;
   var memberId;
-  String? samitiSubCategoryId;
-  String? samitiRoleId;
-  String? startsFrom;
-  String? endTo;
-  String? status;
-  String? createdBy;
-  String? createdAt;
+ var samitiSubCategoryId;
+ var samitiRoleId;
+ var startsFrom;
+ var endTo;
+ var status;
+ var createdBy;
+ var createdAt;
   var updatedBy;
   var updatedAt;
   var firstName;
@@ -17,12 +17,13 @@ class SamitiDetailData{
   var mobile;
   var memberCode;
   var email;
-  String? samitiRolesName;
-  String? profileImagePath;
-  bool? encryptedMemberId;
+ var samitiRolesName;
+ var profileImagePath;
+ var encryptedMemberId;
 
   SamitiDetailData(
-      {this.memberSamitiRoleMappingId,
+      {
+        this.memberSamitiRoleMappingId,
         this.memberId,
         this.samitiSubCategoryId,
         this.samitiRoleId,

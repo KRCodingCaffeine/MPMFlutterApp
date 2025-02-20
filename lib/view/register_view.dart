@@ -1,14 +1,14 @@
-import 'package:easy_stepper/easy_stepper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/data/response/status.dart';
-import 'package:mpm/model/CheckUser/CheckUserData.dart';
+
+import 'package:mpm/model/search/SearchData.dart';
 import 'package:mpm/route/route_name.dart';
 import 'package:mpm/utils/app_constants.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
-import 'package:mpm/utils/images.dart';
+
 import 'package:mpm/utils/textstyleclass.dart';
 import 'package:mpm/view_model/controller/register/register_view_model.dart';
 
@@ -39,6 +39,10 @@ class _RegisterViewState extends State<RegisterView> {
     regiController.getBloodGroup();
     regiController.getDocumentType();
     regiController.getMemberShip();
+    regiController.getMemberSalutation();
+    regiController.getCountry();
+    regiController.getState();
+    regiController.getCity();
   }
 
   @override
@@ -59,9 +63,9 @@ class _RegisterViewState extends State<RegisterView> {
                 return ElevatedButton(
                   onPressed: regiController.isButtonEnabled.value
                       ? () {
-                          Navigator.pushNamed(
-                              context!, RouteNames.personalinfo);
-                        }
+                    Navigator.pushNamed(
+                        context!, RouteNames.personalinfo);
+                  }
                       : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: ColorHelperClass.getColorFromHex(
@@ -88,16 +92,16 @@ class _RegisterViewState extends State<RegisterView> {
                   height: 20,
                 ),
                 Container(
-                  margin: EdgeInsets.zero, // No margin applied
+                  margin: EdgeInsets.zero,
                   child: Align(
                     alignment: Alignment
-                        .topCenter, // Align the child to the top-left corner
+                        .topCenter,
                     child: Image.asset(
-                      'assets/images/logo.png', // Replace with your actual image path
-                      width: 100, // Set the image width to 100
-                      height: 100, // Set the image height to 100
+                      'assets/images/logo.png',
+                      width: 100,
+                      height: 100,
                       fit: BoxFit
-                          .cover, // Ensure the image covers the container area
+                          .cover,
                     ),
                   ),
                 ),
@@ -112,7 +116,7 @@ class _RegisterViewState extends State<RegisterView> {
                     color: Colors.black,
                     fontSize: 18,
                     fontWeight:
-                        FontWeight.bold, // Change this to your desired size
+                    FontWeight.bold,
                   ),
                 ),
                 Container(
@@ -156,7 +160,7 @@ class _RegisterViewState extends State<RegisterView> {
                                   decoration: const InputDecoration(
                                     hintText: 'Name / LM Code *',
                                     border: InputBorder
-                                        .none, // Remove the internal border
+                                        .none,
                                     contentPadding: EdgeInsets.symmetric(
                                         vertical: 8,
                                         horizontal: 20), // Adjust padding
@@ -180,17 +184,17 @@ class _RegisterViewState extends State<RegisterView> {
                                         "Enter lm code Or Name", // Message
                                         snackPosition: SnackPosition.BOTTOM,
                                         backgroundColor:
-                                            ColorHelperClass.getColorFromHex(
-                                                ColorResources.red_color),
-                                        colorText: Colors.white,
-                                        duration: const Duration(seconds: 3),
+                                        ColorHelperClass.getColorFromHex(
+                                            ColorResources.red_color),
+                                         colorText: Colors.white,
+                                         duration: const Duration(seconds: 3),
                                       );
                                     }
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor:
-                                        ColorHelperClass.getColorFromHex(
-                                            ColorResources.red_color),
+                                    ColorHelperClass.getColorFromHex(
+                                        ColorResources.red_color),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(5),
                                     ),
@@ -219,88 +223,59 @@ class _RegisterViewState extends State<RegisterView> {
                           child: Row(
                             children: [
                               Obx(() {
-                                if (regiController
-                                        .rxStatusMemberLoading.value ==
-                                    Status.LOADING) {
+                                if (regiController.rxStatusMemberLoading.value == Status.LOADING) {
                                   return Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 10, horizontal: 22),
+                                    padding: EdgeInsets.symmetric(vertical: 10,horizontal: 22),
                                     child: Container(
                                         alignment: Alignment.centerRight,
-                                        height: 24,
-                                        width: 24,
-                                        child: CircularProgressIndicator(
-                                          color:
-                                              ColorHelperClass.getColorFromHex(
-                                                  ColorResources.pink_color),
-                                        )),
+                                        height:24,width:24,child: CircularProgressIndicator(color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),)),
                                   );
-                                } else if (regiController
-                                        .rxStatusMemberLoading.value ==
-                                    Status.ERROR) {
-                                  return const Center(
-                                      child: Padding(
-                                    padding: EdgeInsets.all(14.0),
-                                    child: Text('--Please Choose Proposer--'),
-                                  ));
-                                } else if (regiController
-                                        .rxStatusMemberLoading.value ==
-                                    Status.IDLE) {
-                                  return const Center(
-                                      child: Padding(
-                                    padding: EdgeInsets.all(14.0),
-                                    child: Text('--Please Choose Proposer--'),
-                                  ));
-                                } else if (regiController.memberList.isEmpty) {
-                                  return Center(
-                                      child: Padding(
+                                } else if (regiController.rxStatusMemberLoading.value == Status.ERROR) {
+                                  return Center(child: Padding(
                                     padding: const EdgeInsets.all(14.0),
-                                    child: Text(
-                                      'No member  available',
-                                      style: TextStyleClass.black12style,
-                                    ),
+                                    child: Text('Select Member'),
+                                  ));
+                                }
+                                else if (regiController.rxStatusMemberLoading.value == Status.IDLE) {
+                                  return Center(child: Padding(
+                                    padding: const EdgeInsets.all(14.0),
+                                    child: Text('Select Member'),
+                                  ));
+                                }
+                                else if (regiController.memberList.isEmpty) {
+                                  return Center(child: Padding(
+                                    padding: const EdgeInsets.all(14.0),
+
+                                    child: Text('No member  available',style: TextStyleClass.black12style,),
                                   ));
                                 } else {
                                   return Expanded(
-                                    child: DropdownButton<CheckUserData>(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 20),
+                                    child: DropdownButton<SearchData>(
+                                      padding: EdgeInsets.symmetric(horizontal: 20),
                                       isExpanded: true,
                                       underline: Container(),
-                                      hint: const Text(
-                                        'Select Mamber',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold),
-                                      ), // Hint to show when nothing is selected
-                                      value: regiController.memberList.contains(
-                                              regiController.selectMember.value)
+                                      hint: Text('Select Mamber',style: TextStyle(
+                                          fontWeight: FontWeight.bold
+                                      ),), // Hint to show when nothing is selected
+                                      value:  regiController.memberList.contains(regiController.selectMember.value)
                                           ? regiController.selectMember.value
                                           : null,
-                                      items: regiController.memberList
-                                          .map((CheckUserData marital) {
-                                        return DropdownMenuItem<CheckUserData>(
+                                      items: regiController.memberList.map((SearchData marital) {
+                                        return DropdownMenuItem<SearchData>(
                                           value: marital,
-                                          child: Text("" +
-                                              marital.lMCode.toString() +
-                                              "-" +
-                                              marital.name.toString()),
+                                          child: Text(""+marital.memberCode.toString()+"-"+marital.firstName.toString()),
                                         );
                                       }).toList(),
-                                      onChanged: (CheckUserData? newValue) {
+                                      onChanged: (SearchData? newValue) {
                                         if (newValue != null) {
-                                          print("ghgbh" +
-                                              newValue.mobile.toString());
+                                          print("ghgbh"+newValue.mobile.toString());
                                           regiController.selectMember(newValue);
-                                          regiController.generateRandomOTP();
-                                          regiController.lmCodeValue.value =
-                                              newValue.lMCode.toString();
-                                          print("ghgbh" +
-                                              regiController.lmCodeValue.value
-                                                  .toString());
 
-                                          regiController.sendOtp(
-                                              newValue.mobile.toString(),
-                                              regiController.otp.value);
+                                          regiController.lmCodeValue.value=newValue.memberCode.toString();
+                                          print("ghgbh"+regiController.lmCodeValue.value.toString());
+
+                                          regiController.sendOtp(newValue.mobile.toString(),);
+
                                         }
                                       },
                                     ),
@@ -311,6 +286,7 @@ class _RegisterViewState extends State<RegisterView> {
                           ),
                         ),
                       ),
+
                       const SizedBox(height: 20),
 
                       // OTP Validation
@@ -343,60 +319,27 @@ class _RegisterViewState extends State<RegisterView> {
                                 height: 48,
                                 child: ElevatedButton(
                                   onPressed: () {
-                                    if (otpCOntroller.text.toString() != null &&
-                                        otpCOntroller.text
-                                                .toString()
-                                                .trim()
-                                                .length ==
-                                            4) {
-                                      var otps = otpCOntroller.text.toString();
-                                      print(
-                                          "gfhghgjht${otps}gfhgfjhjjt${regiController.otp.value}");
-                                      if (otps == regiController.otp.value) {
-                                        regiController.isButtonEnabled.value =
-                                            true;
-                                        Get.snackbar(
-                                          'Success', // Title
-                                          'OTP matched', // Message
-                                          snackPosition: SnackPosition.BOTTOM,
-                                          backgroundColor:
-                                              ColorHelperClass.getColorFromHex(
-                                                  ColorResources.red_color),
-                                          colorText: Colors.white,
-                                          duration: const Duration(seconds: 3),
-                                        );
-                                      } else {
-                                        regiController.isButtonEnabled.value =
-                                            true;
-                                        print("OTP not matched");
-                                        Get.snackbar(
-                                          'Error', // Title
-                                          'OTP not matched', // Message
-                                          snackPosition: SnackPosition.BOTTOM,
-                                          backgroundColor:
-                                              ColorHelperClass.getColorFromHex(
-                                                  ColorResources.red_color),
-                                          colorText: Colors.white,
-                                          duration: const Duration(seconds: 3),
-                                        );
-                                      }
-                                    } else {
+                                    if(otpCOntroller.text.toString()!=null && otpCOntroller.text.toString().trim().length==4)
+                                    {
+                                      var otps=otpCOntroller.text.toString();
+                                      regiController.checkOtp(otps, context);
+                                    }
+                                    else
+                                    {
                                       Get.snackbar(
                                         'Error', // Title
                                         "Enter OTP Or 4 digit OTP", // Message
                                         snackPosition: SnackPosition.BOTTOM,
-                                        backgroundColor:
-                                            ColorHelperClass.getColorFromHex(
-                                                ColorResources.red_color),
+                                        backgroundColor: Colors.pink,
                                         colorText: Colors.white,
-                                        duration: const Duration(seconds: 3),
+                                        duration: Duration(seconds: 3),
                                       );
                                     }
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor:
-                                        ColorHelperClass.getColorFromHex(
-                                            ColorResources.red_color),
+                                    ColorHelperClass.getColorFromHex(
+                                        ColorResources.red_color),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(5),
                                     ),

@@ -1,5 +1,5 @@
 import 'package:mpm/data/network/network_api_Service.dart';
-
+import 'package:mpm/model/CheckUser/CheckModelClass.dart';
 import 'package:mpm/model/Register/RegisterModelClass.dart';
 import 'package:mpm/utils/urls.dart';
 
@@ -15,5 +15,17 @@ class LoginRepo{
     print("vdgvgdv"+response.toString());
     return RegisterModelClass.fromJson(response);
   }
+  Future<RegisterModelClass> sendOTP(var data) async {
+    dynamic response = await api.postApi(data,Urls.sendOTP,"","2");
+    print("vdgvgdv"+response.toString());
+    return RegisterModelClass.fromJson(response);
+  }
+
+  Future<CheckModel> verifyOTP(var data) async {
+    dynamic response = await api.postApi(data,Urls.verifyOTP,"","2");
+    print("vdgvgdv"+response.toString());
+    return CheckModel.fromJson(response);
+  }
+
 
 }

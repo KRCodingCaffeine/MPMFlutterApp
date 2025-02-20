@@ -1,8 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mpm/utils/color_helper.dart';
-import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view_model/controller/samiti/SamitiController.dart';
 
 class SamitiDetailPage extends StatefulWidget {
@@ -13,40 +11,7 @@ class SamitiDetailPage extends StatefulWidget {
 
 class _SamitiDetailPageState extends State<SamitiDetailPage> {
   SamitiController controller= Get.put(SamitiController());
-  final List<Map<String, String>> members = const [
-    {
-      "samitiRoles": "Super Admin",
-      "lmCode": "LM1",
-      "name": "Karthika K Rajesh",
-      "email": "karthi@example.com",
-      "mobile": "8898085105",
-      "profile": ""
-    },
-    {
-      "samitiRoles": "Admin",
-      "lmCode": "LM2",
-      "name": "Rajesh Mani Nair",
-      "email": "rajesh@example.com",
-      "mobile": "8765432109",
-      "profile": ""
-    },
-    {
-      "samitiRoles": "Adhyaksh",
-      "lmCode": "LM4",
-      "name": "Manoj Kumar Murugan",
-      "email": "manoj@example.com",
-      "mobile": "8086130758",
-      "profile": ""
-    },
-    {
-      "samitiRoles": "Upadhyaksh",
-      "lmCode": "LM6",
-      "name": "Developer Test",
-      "email": "developer@example.com",
-      "mobile": "6543210987",
-      "profile": ""
-    },
-  ];
+
   @override
   void initState() {
     // TODO: implement initState
@@ -59,9 +24,8 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: Text(controller.samitiName.value.toString(), style: TextStyle(color: Colors.white),),
-        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text(controller.samitiName.value.toString()),
+        backgroundColor: Colors.white54,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -78,11 +42,48 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
             itemCount: controller.samitiDetailList.value.length,
             itemBuilder: (context, index) {
               final member = controller.samitiDetailList.value[index];
+              var firstname="";
+              var middlename="";
+              var lastname="";
+              var mobile="";
+              if(member.firstName.toString()=="null")
+                {
+                  firstname="";
+                }
+              else
+                {
+                 firstname= member.firstName.toString();
+                }
+              if(member.middleName.toString()=="null")
+                {
+                  middlename="";
+                }
+              else
+                {
+                 middlename= member.middleName.toString();
+                }
+              if(member.lastName.toString()=="null")
+                {
+                  lastname="";
+                }
+              else
+                {
+                 lastname= member.lastName.toString();
+                }
+              if(member.mobile.toString()=="null")
+                {
+                  mobile= " ";
+                }
+              else
+                {
+                 mobile= member.mobile.toString();
+                }
+              var name =firstname+" "+middlename+" "+lastname;
               return _buildMemberCard(
                 samitiRoles: member.samitiRolesName.toString(),
                 lmCode: member.samitiRolesName.toString(),
-               name:"",
-                mobile: "",
+               name: name,
+                mobile: mobile,
                 profileImage: "",
               );
             },

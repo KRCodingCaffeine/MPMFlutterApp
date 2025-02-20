@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mpm/utils/AppDrawer.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 
@@ -15,10 +16,13 @@ class _PrivacyPolicyViewPageState extends State<PrivacyPolicyViewPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text("Privacy Policy", style: TextStyle(color: Colors.white),),
+        title:  Text("Privacy Policy",style: TextStyle(
+          color: Colors.white
+        ), ),
         backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        iconTheme: IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
+      drawer: AppDrawer(),
       body: const SingleChildScrollView(
         padding: EdgeInsets.all(16.0),
         child: Column(

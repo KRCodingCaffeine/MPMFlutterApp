@@ -28,7 +28,7 @@ class _OTPScreenState extends State<OTPScreen> {
     return otp;
   }
   void verifyOtp(BuildContext context) {
-   controller.validotp.value = getOtpFromControllers();
+    controller.validotp.value = getOtpFromControllers();
     print("dfdd"+ controller.validotp.value.toString());
     if ( controller.validotp.value.length == 4) {
       print('OTP is valid');
@@ -45,17 +45,16 @@ class _OTPScreenState extends State<OTPScreen> {
 
     }
   }
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Get.find<LoginController>().startTimer();
-      Get.find<LoginController>().generateRandomOTP();
-      Get.find<LoginController>().sendOtp(controller.mobilecon.value, controller.otp.value);
-    });
+    @override
+    void initState() {
+      // TODO: implement initState
+      super.initState();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Get.find<LoginController>().startTimer();
+        Get.find<LoginController>().sendOtp(controller.mobilecon.value);
+      });
 
-  }
+    }
 
 
   @override
@@ -85,6 +84,12 @@ class _OTPScreenState extends State<OTPScreen> {
   }
   @override
   Widget build(BuildContext context) {
+    final   Map<String, dynamic>? rcvdData = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+    controller.memberId.value=rcvdData!['memeberId'].toString();
+    controller.dontSaveDataNewMeb.value=rcvdData!['page_type_direct'].toString();
+    controller.mobilecon.value=rcvdData!['mobile'].toString();
+    print("mem"+controller.memberId.value);
+
     return GestureDetector(
       onTap: (){
         FocusScope.of(context).unfocus();
@@ -96,12 +101,12 @@ class _OTPScreenState extends State<OTPScreen> {
             margin: EdgeInsets.only(left: 16,right: 16),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-             crossAxisAlignment: CrossAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const SizedBox(height: 120),
                 Image.asset(Images.logoImage, height: 240), // Replace with your image
                 const SizedBox(height: 20),
-                 Text(AppConstants.enter_otp,
+                Text(AppConstants.enter_otp,
                   style: TextStyleClass.black20style,
                 ),
 
@@ -212,5 +217,4 @@ class _OTPScreenState extends State<OTPScreen> {
     );
   }
 }
-
 

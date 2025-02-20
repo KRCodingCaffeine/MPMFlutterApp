@@ -31,12 +31,20 @@ class NetWorkApiService extends BaseApiService{
       case 200:
         dynamic responseJson =json.decode(response.body);
         return responseJson;
+        case 201:
+        dynamic responseJson =json.decode(response.body);
+        return responseJson;
       case 400:
-        throw InvalidExpection();
-
-        case 404:
-        throw InvalidExpection();
-        default: FetchDataExpection("Error communication ouuror");
+        throw ServerExpection("Bad Request: ${response.body}");
+      case 401:
+        throw ServerExpection("Unauthorized: ${response.body}");
+      case 500:
+        throw ServerExpection("Internal Server Error: ${response.body}");
+      case 409:
+        throw ServerExpection("Internal Server Error: ${response.body}");
+      case 404:
+        throw InvalidExpection("Invalid Url Or Data :${response.body}");
+      default: FetchDataExpection("Error communication Ouur: ${response.body}");
     }
 
   }
@@ -59,7 +67,6 @@ class NetWorkApiService extends BaseApiService{
       {
         header=<String,String> {
           'Accept': 'application/json',
-
         };
         body=data;
       }

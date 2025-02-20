@@ -12,6 +12,7 @@ import 'package:mpm/view/home_view.dart';
 import 'package:mpm/view/login_view.dart';
 import 'package:mpm/view/profile%20view/profile_view.dart';
 import 'package:mpm/view/samiti%20members/samiti_members_view.dart';
+
 import 'package:mpm/view_model/controller/dashboard/dashboardcontroller.dart';
 import 'package:mpm/view_model/controller/login/logincontroller.dart';
 
@@ -23,7 +24,7 @@ class DashboardView extends StatefulWidget {
 }
 
 class _DashboardViewState extends State<DashboardView> {
-  var mobilenumber = '';
+
   DashBoardController controller = Get.put(DashBoardController());
   @override
   void initState() {
@@ -35,54 +36,51 @@ class _DashboardViewState extends State<DashboardView> {
   final List<Widget> pages = [
     const HomeView(),
     const SearchView(),
-    const SamitiMembersViewPage(), // Ensure this matches the 3rd tab
+    const SamitiMembersViewPage(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Obx(
-      () => Scaffold(
+          () => Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
           backgroundColor:
-              ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-          title: const Text(
-            'Maheshwari Pragati Mandal',
+          ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+          title:  Text(
+            'Maheshwari Pragati Manda',
             style: TextStyle(color: Colors.white),
           ),
-          iconTheme: const IconThemeData(
-              color: Colors.white), // Set drawer icon color to white
-        ),
+          iconTheme: const IconThemeData(color: Colors.white),
+          ),
+
         drawer: AppDrawer(),
         body: pages[controller.currentIndex.value],
-        bottomNavigationBar: Container(
-          height: 70, // Adjust the height as needed
-          child: BottomNavigationBar(
-            backgroundColor: Color(0xFFFFFFFF), // White background
-            selectedItemColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
-            unselectedItemColor: Colors.grey,
-            currentIndex: controller.currentIndex.value,
-            onTap: (index) {
-              if (index < pages.length) {
-                controller.currentIndex.value = index;
-              }
-            },
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home),
-                label: "Home",
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.search),
-                label: "Search",
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.account_balance),
-                label: "Samiti Member",
-              ),
-            ],
-          ),
+        bottomNavigationBar: BottomNavigationBar(
+          backgroundColor: Color(0xFFFFFFFF), // White background
+          selectedItemColor:
+          ColorHelperClass.getColorFromHex(ColorResources.red_color),
+          unselectedItemColor: Colors.grey,
+          currentIndex: controller.currentIndex.value,
+          onTap: (index) {
+            if (index < pages.length) {
+              controller.currentIndex.value = index;
+            }
+          },
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: "Home",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.search),
+              label: "Search",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.account_balance),
+              label: "Samiti Member",
+            ),
+          ],
         ),
       ),
     );
@@ -128,11 +126,30 @@ class _DashboardViewState extends State<DashboardView> {
     if (userData != null) {
       print('User ID: ${userData.memberId}');
       print('User Name: ${userData.mobile}');
-
-      setState(() {
-        mobilenumber = userData.mobile ?? "";
-      });
-      // Use userData as needed in your application
+      if(userData?.memberCode!=null)
+        {
+          controller.lmCode.value=userData!.memberCode.toString();
+        }
+      if(userData?.mobile!=null)
+      {
+        controller.mobileNumber.value=userData!.memberCode.toString();
+      }
+      var firstname = "";
+      var middlename = "";
+      var lastname = "";
+      if(userData?.firstName!=null)
+      {
+        firstname = userData!.firstName.toString();
+      }
+      if(userData?.middleName!=null)
+      {
+        middlename = userData!.middleName.toString();
+      }
+      if(userData?.lastName!=null)
+      {
+        lastname = userData!.lastName.toString();
+      }
+      controller.userName.value = firstname+middlename+lastname;
     } else {
       print('No user session data found!');
     }

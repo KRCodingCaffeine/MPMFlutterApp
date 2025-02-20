@@ -2,6 +2,8 @@ import 'package:get/get.dart';
 import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/samiti/SamitiDetailData.dart';
 import 'package:mpm/model/samiti/SamitiDetailModel.dart';
+import 'package:mpm/model/search/SearchData.dart';
+import 'package:mpm/model/search/SearchLMCodeModel.dart';
 import 'package:mpm/repository/samiti_repository/samiti_repo.dart';
 
 class SamitiController extends  GetxController {
@@ -15,6 +17,7 @@ class SamitiController extends  GetxController {
   var samitiName="".obs;
   var samitiId="".obs;
   var samitiDetailList=<SamitiDetailData>[].obs;
+  var searchDataList=<SearchData>[].obs;
 
   void getSamitiType() async {
    loading.value=true;
@@ -43,4 +46,23 @@ class SamitiController extends  GetxController {
       print("Error: " + error.toString());
     }
   }
+  void getSearchLPM(var query) async {
+    loading2.value=true;
+    try {
+      var response = await api.searchMember(query);
+      loading2.value = false;
+      print("Response: " + response.toString());
+      var data=SearchLMCodeModel.fromJson(response);
+      searchDataList.value = data.data!;
+    } catch (error) {
+      loading2.value = false;
+      print("Error: " + error.toString());
+    }
+  }
 }
+
+
+
+
+
+

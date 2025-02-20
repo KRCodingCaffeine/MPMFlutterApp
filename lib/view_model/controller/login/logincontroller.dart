@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
@@ -15,24 +15,26 @@ import 'package:mpm/utils/images.dart';
 import 'dart:async';
 
 import 'package:mpm/utils/urls.dart';
-
 class LoginController {
+
   final api = LoginRepo();
   RxBool loadinng = false.obs;
   RxBool isLoading = false.obs;
   var isMobileValid = false.obs;
   var mobilecon = ''.obs;
-  var LMCODEDYANMIC = "".obs;
+  var LMCODEDYANMIC="".obs;
   var validotp = "".obs;
   var start = 60.obs;
   var isButtonEnabled = false.obs;
   late Timer _timer;
   var lmCodeVisible = false.obs;
-  var lmDyanmicMobNo = "".obs;
-  var otherMobileNo = "".obs;
-  var otherMobVisible = false.obs;
-  var flag = "".obs;
-  var isNumber = false.obs;
+  var lmDyanmicMobNo="".obs;
+  var otherMobileNo="".obs;
+  var otherMobVisible=false.obs;
+  var flag="".obs;
+  var isNumber=false.obs;
+  var memberId="".obs;
+  var dontSaveDataNewMeb="".obs;
 
   Rx<SessionManager?> sessionData = Rx<SessionManager?>(null);
   Rx<CheckUserData?> userData = Rx<CheckUserData?>(null);
@@ -41,12 +43,12 @@ class LoginController {
     loadinng.value = true;
 
     var request = http.MultipartRequest('POST', Uri.parse(Urls.check_url));
-    request.fields.addAll({'LM_code_or_mobile': mobile});
+    request.fields.addAll({
+      'LM_code_or_mobile': mobile
+    });
     http.StreamedResponse response = await request.send();
 
     if (response.statusCode == 200) {
-      //   print(await response.stream.bytesToString());
-
       String responseBody = await response.stream.bytesToString();
       loadinng.value = false;
       Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
@@ -59,34 +61,54 @@ class LoginController {
           Navigator.pushNamed(context!, RouteNames.registration_screen);
         }
       } else {
-        var lmcode = registerResponse.data!.memberCode.toString();
-        print("ghhhhhhhhhhh" + lmcode);
-        var mob = registerResponse.data!.mobile.toString();
-        if (lmcode == mobile) {
-          flag.value = "1";
-        } else {
-          flag.value = "2";
-          mobilecon.value = mobile;
-        }
+         var lmcode = registerResponse.data!.memberCode.toString();
+         print("ghhhhhhhhhhh"+lmcode);
+         var mob=registerResponse.data!.mobile.toString();
+         if(lmcode==mobile)
+           {
+             flag.value="1";
+           }
+         else
+           {
+             flag.value="2";
+             mobilecon.value = mobile;
+           }
 
-        // CheckUserData checkUserData = value['data'];
-        if (flag.value == "2") {
-          if (lmCodeVisible.value == false) {
-            Navigator.pushNamed(context!, RouteNames.otp_screen);
-          } else {
-            lmDyanmicMobNo.value = registerResponse.data!.mobile.toString();
-            mobilecon.value = registerResponse.data!.mobile.toString();
-            _showLoginAlert2(context);
-          }
-        } else {
-          if (otherMobVisible.value == false) {
-            lmDyanmicMobNo.value = registerResponse.data!.mobile.toString();
-            mobilecon.value = registerResponse.data!.mobile.toString();
-            _showLoginAlert2(context);
-          }
-        }
+
+          if(flag.value=="2")
+            {
+              if(lmCodeVisible.value==false)
+              {
+                memberId.value=registerResponse.data!.memberId.toString();
+                mobile=registerResponse.data!.mobile.toString();
+                Navigator.pushNamed(context!, RouteNames.otp_screen,arguments: {
+                  "memeberId":memberId.value,
+                  "page_type_direct":"2",
+                  "mobile":mobile
+                });
+              }
+              else
+              {
+                lmDyanmicMobNo.value= registerResponse.data!.mobile.toString();
+                mobilecon.value=registerResponse.data!.mobile.toString();
+                memberId.value=registerResponse.data!.memberId.toString();
+                _showLoginAlert2(context);
+              }
+            }
+          else
+            {  if(otherMobVisible.value==false)
+              {
+                lmDyanmicMobNo.value= registerResponse.data!.mobile.toString();
+                memberId.value=registerResponse.data!.memberId.toString();
+                mobilecon.value=registerResponse.data!.mobile.toString();
+                _showLoginAlert2(context);
+              }
+            }
+
+
       }
-    } else {
+    }
+    else {
       loadinng.value = false;
       String responseBody = await response.stream.bytesToString();
       loadinng.value = false;
@@ -96,29 +118,49 @@ class LoginController {
         print("" + registerResponse.message.toString());
         if (registerResponse.message.toString() == "Sorry! Data Not Found") {
           mobilecon.value = mobile;
-          if (lmCodeVisible.value == false) {
-            if (otherMobVisible.value == true) {
-              Navigator.pushNamed(context!, RouteNames.otp_screen);
-            } else {
-              _showLoginAlert(context);
+
+          if(lmCodeVisible.value==false)
+            {
+
+                  if(otherMobVisible.value==true)
+                    {
+                      Navigator.pushNamed(context!, RouteNames.otp_screen,arguments: {
+                        "memeberId":memberId.value,
+                        "page_type_direct":"2",
+                        "mobile": otherMobVisible.value
+                      });
+                    }
+                  else
+                    {
+                      _showLoginAlert(context);
+                    }
             }
-          } else if (otherMobVisible.value == true) {
-            Navigator.pushNamed(context!, RouteNames.otp_screen);
-          } else {
-            lmCodeVisible.value = false;
-            Navigator.pushNamed(context!, RouteNames.registration_screen);
+
+          else if(otherMobVisible.value==true)
+            {
+              Navigator.pushNamed(context!, RouteNames.otp_screen,arguments: {
+
+              "memeberId":memberId.value,
+                "page_type_direct":"2",
+                "mobile":otherMobVisible.value
+
+              });
+            }
+          else {
+              lmCodeVisible.value=false;
+              Navigator.pushNamed(context!, RouteNames.registration_screen);
           }
         }
       }
 
-      // print(response.reasonPhrase);
+     // print(response.reasonPhrase);
     }
   }
 
   void startTimer() {
-    isButtonEnabled.value = false; // Disable button initially
+    isButtonEnabled.value = false;
     start.value = 60; // Reset timer
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       if (start.value == 0) {
         isButtonEnabled.value = true;
         _timer.cancel();
@@ -128,67 +170,136 @@ class LoginController {
     });
   }
 
-  // void validateMobileNumber(String mobile) {
-  //   if (mobile.length == 10) {
-  //     isMobileValid.value = true;
-  //   } else {
-  //     isMobileValid.value = false;
-  //   }
-  // }
+
 
   var otp = '5555'.obs;
 
-  void generateRandomOTP({int length = 4}) {
-    final Random random = Random();
-    final StringBuffer otpBuffer = StringBuffer();
-    for (int i = 0; i < length; i++) {
-      otpBuffer.write(random.nextInt(10)); // Generate a single digit (0-9)
-    }
-    otp.value = otpBuffer.toString();
-    print("fgfggghg" + otp.value);
-  }
 
-  void sendOtp(var mobile, var otp) async {
-    var url =
-        "https://web.azinfomedia.com/domestic/sendsms/bulksms_v2.php?apikey=TWFoZXNod2FyaTp4em5ESlVPcA==&type=TEXT&sender=ASCTRL&entityId=xznDJUOp&templateId=1707170308164618962&mobile=${mobile}&message=Your%20One%20Time%20Password%20(OTP)%20is:%20${otp}%20Please%20use%20this%20OTP%20to%20complete%20your%20login.%20For%20Any%20Support%20Contact%20-%20Maheshwari%20Pragati%20Mandal%20ASCENT";
-    try {
-      var response = await http.get(Uri.parse(url));
 
-      if (response.statusCode == 200) {
-        // Parse the response if needed
-        var data = json.decode(response.body);
-        print('OTP Sent Successfully: $data');
-      } else {
-        print('Failed to send OTP. Error: ${response.statusCode}');
-      }
+  void sendOtp(var mobile) async {
+     try {
+       Map<String,String> map={
+         "mobile_number":mobile
+       };
+       api.sendOTP(map).then((_value) async {
+         if(_value.status==true)
+           {
+
+           }
+         else
+           {
+
+           }
+
+       }).onError((error, strack) async {
+         Get.snackbar(
+                 'Error', // Title
+                "Something went wrong", // Message
+                 snackPosition: SnackPosition.BOTTOM,
+                 backgroundColor: Colors.pink,
+                 colorText: Colors.white,
+                 duration: Duration(seconds: 3),
+               );
+
+       });
     } catch (e) {
       print('Error: $e');
     } finally {
-      // Set loading state to false
+
     }
   }
 
   void checkOtp(var otps, BuildContext context) {
-    if (otps == otp.value) {
-      validuserlogin(mobilecon.value, context);
-    } else {
-      print("OTP not matched");
-      Get.snackbar(
-        'Error', // Title
-        'OTP not matched', // Message
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.pink,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 3),
-      );
+  loadinng.value=true;
+    try {
+      Map map={
+        "member_id":memberId.value,
+        "otp":otps
+      };
+      print("fffh"+map.toString());
+      api.verifyOTP(map).then((_value) async {
+        loadinng.value=false;
+        if(_value.status==true)
+        {
+          if(dontSaveDataNewMeb.value=="2")
+              {
+                await SessionManager.saveSessionUserData(_value.data!);
+                await SessionManager.saveSessionToken(
+                    _value.token.toString());
+
+                api.userVerify(_value.token.toString()).then((_value) async {
+                  print("Session saved successfully!");
+
+
+
+                  Navigator.pushNamedAndRemoveUntil(
+                    context!,
+                    RouteNames.dashboard,
+                        (Route<dynamic> route) => false,
+                  );
+                }).onError((error, strack) async {
+                  print("Session saved successfully!");
+
+                  Navigator.pushNamedAndRemoveUntil(
+                    context!,
+                    RouteNames.dashboard,
+                        (Route<dynamic> route) => false,
+                  );
+                });
+              }
+          else
+            {
+              Navigator.pushNamedAndRemoveUntil(
+                context!,
+                RouteNames.dashboard,
+                    (Route<dynamic> route) => false,
+              );
+            }
+        }
+
+
+      }).onError((error, strack) async {
+        loadinng.value=false;
+        print("fvvf"+error.toString());
+        if(error.toString().contains("Sorry! OTP doesn't match"))
+        {
+          Get.snackbar(
+            'Error', // Title
+            "Sorry! OTP doesn't match", // Message
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.pink,
+            colorText: Colors.white,
+            duration: Duration(seconds: 3),
+          );
+        }
+        else {
+          Get.snackbar(
+            'Error', // Title
+            "Some thing went wrong ", // Message
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.pink,
+            colorText: Colors.white,
+            duration: Duration(seconds: 3),
+          );
+        }
+      });
+    } catch (e) {
+      loadinng.value=false;
+      print('Error: $e');
+    } finally {
+
     }
+
+
   }
 
   void validuserlogin(var mobile, BuildContext context) async {
     loadinng.value = true;
-    Map data = {"mobile": mobile};
+
     var request = http.MultipartRequest('POST', Uri.parse(Urls.check_url));
-    request.fields.addAll({'LM_code_or_mobile': mobile});
+    request.fields.addAll({
+      'LM_code_or_mobile': mobile
+    });
     http.StreamedResponse response = await request.send();
 
     if (response.statusCode == 200) {
@@ -210,39 +321,54 @@ class LoginController {
 
         api.userVerify(registerResponse.token.toString()).then((_value) async {
           print("Session saved successfully!");
-          Navigator.pushReplacementNamed(context!, RouteNames.dashboard);
+
+          Navigator.pushNamedAndRemoveUntil(
+            context!,
+            RouteNames.dashboard,
+                (Route<dynamic> route) => false,
+          );
         }).onError((error, strack) async {
           print("Session saved successfully!");
-          Navigator.pushReplacementNamed(context!, RouteNames.dashboard);
+
+          Navigator.pushNamedAndRemoveUntil(
+            context!,
+            RouteNames.dashboard,
+                (Route<dynamic> route) => false,
+          );
         });
       }
-    } else {
+    }
+    else {
       loadinng.value = false;
 
-      if (otherMobVisible == true) {
-        var mobiles = mobilecon.value;
-        Navigator.pushReplacementNamed(context!, RouteNames.dashboard);
-      } else {
-        Get.snackbar(
-          'Error', // Title
-          "Something went wrong", // Message
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.pink,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 3),
-        );
-      }
+     if(otherMobVisible==true)
+       { var mobiles= mobilecon.value;
+
+       Navigator.pushNamedAndRemoveUntil(
+         context!,
+         RouteNames.dashboard,
+             (Route<dynamic> route) => false,
+       );
+       }else
+         {
+           Get.snackbar(
+             'Error', // Title
+             "Something went wrong", // Message
+             snackPosition: SnackPosition.BOTTOM,
+             backgroundColor: Colors.pink,
+             colorText: Colors.white,
+             duration: Duration(seconds: 3),
+           );
+         }
       print(response.reasonPhrase);
     }
   }
 
   void resendOtp() {
-    generateRandomOTP();
-    print("OTP Resent!");
     startTimer();
-    sendOtp(mobilecon.value, otp.value);
+    sendOtp(mobilecon.value);
+    print("OTP Resent!");
   }
-
   String maskMobileNumber(String mobileNumber) {
     if (mobileNumber.length == 10) {
       return 'xxxxxx${mobileNumber.substring(6)}';
@@ -250,7 +376,6 @@ class LoginController {
       return 'Invalid Number'; // Handle invalid input
     }
   }
-
   void _showLoginAlert(BuildContext context) {
     showDialog(
       context: context,
@@ -344,7 +469,11 @@ class LoginController {
               onPressed: () {
                 Navigator.of(context).pop();
 
-                Navigator.pushNamed(context, RouteNames.otp_screen);
+                Navigator.pushNamed(context, RouteNames.otp_screen,arguments: {
+                  "memeberId":memberId.value,
+                  "page_type_direct":"2",
+                  "mobile":otherMobVisible.value
+                });
               },
               child: const Text("Yes"),
             ),
@@ -354,3 +483,4 @@ class LoginController {
     );
   }
 }
+

@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:mpm/model/CheckUser/CheckUserData.dart';
+
 import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/route/route_name.dart';
+import 'package:mpm/utils/FirebaseFCMApi.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/images.dart';
+import 'package:permission_handler/permission_handler.dart';
 class SplashView extends StatefulWidget {
   const SplashView({super.key});
 
@@ -27,7 +30,7 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
 
-  getData();
+     getData();
   }
 
   @override
@@ -61,7 +64,20 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
 
   void getData() async{
     var mobilenumber="";
-    Timer(Duration(seconds: 2), () async{
+    // await Future.delayed(const Duration(milliseconds: 500), () async {
+    //   final token = await FirebaseMessaging.instance.getToken();
+    //   await PushNotificationService().initialise();
+    //   if (token != null) {
+    //    print('firebase device token >>>>> $token');
+    //     // sharedPreference.saveDeviceToken(token);
+    //   }
+    //   await Permission.notification.isDenied.then((value) {
+    //     if (value) {
+    //       Permission.notification.request();
+    //     }
+    //   });
+    // });
+    Timer(Duration(seconds: 2), () async {
       if(mounted) {
         CheckUserData2? userData = await SessionManager.getSession();
         print('User ID: ${userData?.memberId}');

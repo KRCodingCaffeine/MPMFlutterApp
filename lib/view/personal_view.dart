@@ -6,14 +6,11 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mpm/OccuptionProfession/OccuptionProfessionData.dart';
 import 'package:mpm/data/response/status.dart';
-import 'package:mpm/model/Occupation/OccupationData.dart';
-import 'package:mpm/model/OccupationSpec/OccuptionSpecData.dart';
-import 'package:mpm/model/Qualification/QualificationData.dart';
-import 'package:mpm/model/QualificationCategory/QualificationCategoryModel.dart';
-import 'package:mpm/model/QualificationMain/QualicationMainData.dart';
+
 import 'package:mpm/model/bloodgroup/BloodData.dart';
 import 'package:mpm/model/gender/DataX.dart';
 import 'package:mpm/model/marital/MaritalData.dart';
+import 'package:mpm/model/membersalutation/MemberSalutationData.dart';
 import 'package:mpm/route/route_name.dart';
 import 'package:mpm/utils/app_constants.dart';
 import 'package:mpm/utils/color_helper.dart';
@@ -41,11 +38,6 @@ class _PersonalViewState extends State<PersonalView> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    // regiController.getGender();
-    // regiController.getMaritalStatus();
-    // regiController.getBloodGroup();
-    // regiController.getOccupationData();
-    // _formKeyLogin = GlobalKey<FormState>();
   }
 
   @override
@@ -102,7 +94,10 @@ class _PersonalViewState extends State<PersonalView> {
                             snackPosition: SnackPosition.TOP,
                           );
                         }
-
+                        if (regiController.selectMemberSalutation.value == '') {
+                          showErrorSnackbar("Select salutation");
+                          return;
+                        }
                         // Gender validation
                         if (regiController.selectedGender == '') {
                           showErrorSnackbar("Select Gender");
@@ -118,7 +113,18 @@ class _PersonalViewState extends State<PersonalView> {
                           showErrorSnackbar("Select Marital Status");
                           return;
                         }
-
+                              if(regiController.MaritalAnnivery.value==true)
+                                {
+                                  if(regiController.marriagedateController.value.text=='')
+                                    {
+                                      showErrorSnackbar("Select Marriage Date");
+                                      return;
+                                    }
+                                }
+                              else
+                                {
+                                  regiController.marriagedateController.value.text="";
+                                }
 
                         // If all validations pass, proceed with the desired logic
                         print("All validations passed!");
@@ -127,7 +133,7 @@ class _PersonalViewState extends State<PersonalView> {
                             "Selected Gender: ${regiController.selectedGender}");
                         print(
                             "Selected Marital Status: ${regiController.selectMarital}");
-                      Navigator.pushNamed(context!, RouteNames.residentailinfo);
+                        Navigator.pushNamed(context!, RouteNames.residentailinfo);
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -158,10 +164,10 @@ class _PersonalViewState extends State<PersonalView> {
                     height: 10,
                   ),
                   Container(
-                    margin: EdgeInsets.zero, // No margin applied
+                    margin: EdgeInsets.zero,
                     child: Align(
                       alignment: Alignment
-                          .topCenter, // Align the child to the top-left corner
+                          .topCenter,
                       child: Image.asset(
                         'assets/images/logo.png', // Replace with your actual image path
                         width: 100, // Set the image width to 100
@@ -182,7 +188,7 @@ class _PersonalViewState extends State<PersonalView> {
                       color: Colors.black,
                       fontSize: 18,
                       fontWeight:
-                          FontWeight.bold, // Change this to your desired size
+                      FontWeight.bold, // Change this to your desired size
                     ),
                   )
                 ],
@@ -216,6 +222,74 @@ class _PersonalViewState extends State<PersonalView> {
                             ),
                           ),
                           const SizedBox(height: 30),
+
+                          Container(
+                            width: double.infinity,
+                            margin: EdgeInsets.only(left: 5,right: 5),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey),
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+
+                            child: Row(
+                              children: [
+                                // Padding(
+                                //   padding: const EdgeInsets.only(left: 12.0),
+                                //   child: Image.asset(Images.gender, // Replace with your flag asset
+                                //     height: 29, // Adjust height as needed
+                                //     width: 29,
+                                //     fit: BoxFit.cover,
+                                //     color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),
+                                //   ),
+                                // ),
+                                Obx(() {
+                                  if (regiController.rxStatusMemberSalutation.value == Status.LOADING) {
+                                    return Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 10,horizontal: 22),
+                                      child: Container(
+                                          alignment: Alignment.centerRight,
+                                          height:24,width:24,child: CircularProgressIndicator(color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),)),
+                                    );
+                                  } else if (regiController.rxStatusMemberSalutation.value == Status.ERROR) {
+                                    return Center(child: Text(' No Data'));
+                                  } else if (regiController.memberSalutationList.isEmpty) {
+                                    return Center(child: Text('No  salutation available'));
+                                  } else {
+                                    return Expanded(
+                                      child: DropdownButton<String>(
+                                        padding: EdgeInsets.symmetric(horizontal: 20),
+                                        isExpanded: true,
+                                        underline: Container(),
+                                        hint: Text('Select Saluation',style: TextStyle(
+                                            fontWeight: FontWeight.bold
+                                        ),), // Hint to show when nothing is selected
+                                        value: regiController.selectMemberSalutation.value.isEmpty
+                                            ? null
+                                            : regiController.selectMemberSalutation.value,
+
+                                        items: regiController.memberSalutationList.map((MemberSalutationData marital) {
+                                          return DropdownMenuItem<String>(
+                                            value: marital.memberSalutaitonId.toString(), // Use unique ID or any unique property.
+                                            child: Text(""+marital.salutationName.toString()), // Display name from DataX.
+                                          );
+                                        }).toList(), // Convert to List.
+                                        onChanged: (String? newValue) {
+                                          if (newValue != null) {
+                                            regiController.selectMemberSalutation(newValue);
+                                          }
+                                        },
+                                      ),
+                                    );
+                                  }
+                                }),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 20),
+
+
+
+
                           //First Name
                           _buildEditableField(
                             'First Name *', // Label
@@ -310,7 +384,7 @@ class _PersonalViewState extends State<PersonalView> {
                                 controller: regiController.dateController,
                                 decoration: const InputDecoration(
                                   hintText:
-                                      'Date of Birth *', // Match the hint text
+                                  'Date of Birth *', // Match the hint text
                                   border: InputBorder.none,
                                   contentPadding: EdgeInsets.symmetric(
                                     vertical: 12,
@@ -330,7 +404,7 @@ class _PersonalViewState extends State<PersonalView> {
                                           colorScheme: ColorScheme.light(
                                             primary: ColorHelperClass
                                                 .getColorFromHex(ColorResources
-                                                    .red_color), // Apply red color
+                                                .red_color), // Apply red color
                                             onPrimary: Colors
                                                 .white, // Text color on primary button
                                             onSurface: Colors
@@ -340,7 +414,7 @@ class _PersonalViewState extends State<PersonalView> {
                                             style: TextButton.styleFrom(
                                               foregroundColor: ColorHelperClass
                                                   .getColorFromHex(ColorResources
-                                                      .red_color), // Buttons color
+                                                  .red_color), // Buttons color
                                             ),
                                           ),
                                         ),
@@ -350,8 +424,8 @@ class _PersonalViewState extends State<PersonalView> {
                                   );
                                   if (pickedDate != null) {
                                     String formattedDate =
-                                        DateFormat('dd/MM/yyyy')
-                                            .format(pickedDate);
+                                    DateFormat('dd/MM/yyyy')
+                                        .format(pickedDate);
                                     setState(() {
                                       regiController.dateController.text =
                                           formattedDate;
@@ -386,11 +460,11 @@ class _PersonalViewState extends State<PersonalView> {
                                           child: CircularProgressIndicator(
                                             color: ColorHelperClass
                                                 .getColorFromHex(
-                                                    ColorResources.pink_color),
+                                                ColorResources.pink_color),
                                           )),
                                     );
                                   } else if (regiController
-                                          .rxStatusLoading2.value ==
+                                      .rxStatusLoading2.value ==
                                       Status.ERROR) {
                                     return const Center(
                                         child: Text('Failed to load genders'));
@@ -412,10 +486,10 @@ class _PersonalViewState extends State<PersonalView> {
                                           ),
                                         ),
                                         value: regiController
-                                                .selectedGender.value.isEmpty
+                                            .selectedGender.value.isEmpty
                                             ? null
                                             : regiController
-                                                .selectedGender.value,
+                                            .selectedGender.value,
                                         items: regiController.genderList
                                             .map((DataX gender) {
                                           return DropdownMenuItem<String>(
@@ -463,20 +537,20 @@ class _PersonalViewState extends State<PersonalView> {
                                           child: CircularProgressIndicator(
                                             color: ColorHelperClass
                                                 .getColorFromHex(
-                                                    ColorResources.pink_color),
+                                                ColorResources.pink_color),
                                           )),
                                     );
                                   } else if (regiController
-                                          .rxStatusLoading.value ==
+                                      .rxStatusLoading.value ==
                                       Status.ERROR) {
                                     return const Center(
                                         child:
-                                            Text('Failed to load blood group'));
+                                        Text('Failed to load blood group'));
                                   } else if (regiController
                                       .bloodgroupList.isEmpty) {
                                     return const Center(
                                         child:
-                                            Text('No blood gruop available'));
+                                        Text('No blood gruop available'));
                                   } else {
                                     return Expanded(
                                       child: DropdownButton<String>(
@@ -490,10 +564,10 @@ class _PersonalViewState extends State<PersonalView> {
                                               fontWeight: FontWeight.bold),
                                         ), // Hint to show when nothing is selected
                                         value: regiController
-                                                .selectBloodGroup.value.isEmpty
+                                            .selectBloodGroup.value.isEmpty
                                             ? null
                                             : regiController
-                                                .selectBloodGroup.value,
+                                            .selectBloodGroup.value,
 
                                         items: regiController.bloodgroupList
                                             .map((BloodGroupData marital) {
@@ -508,7 +582,7 @@ class _PersonalViewState extends State<PersonalView> {
                                           if (newValue != null) {
                                             regiController
                                                 .setSelectedBloodGroup(
-                                                    newValue);
+                                                newValue);
                                           }
                                         },
                                       ),
@@ -544,12 +618,12 @@ class _PersonalViewState extends State<PersonalView> {
                                           child: CircularProgressIndicator(
                                             color: ColorHelperClass
                                                 .getColorFromHex(
-                                                    ColorResources.pink_color),
+                                                ColorResources.pink_color),
                                           ),
                                         ),
                                       );
                                     } else if (regiController
-                                            .rxStatusmarried.value ==
+                                        .rxStatusmarried.value ==
                                         Status.ERROR) {
                                       return const Center(
                                           child: Text(
@@ -572,10 +646,10 @@ class _PersonalViewState extends State<PersonalView> {
                                                 fontWeight: FontWeight.bold),
                                           ),
                                           value: regiController
-                                                  .selectMarital.value.isEmpty
+                                              .selectMarital.value.isEmpty
                                               ? null
                                               : regiController
-                                                  .selectMarital.value,
+                                              .selectMarital.value,
                                           items: regiController.maritalList
                                               .map((MaritalData marital) {
                                             return DropdownMenuItem<String>(
@@ -588,7 +662,7 @@ class _PersonalViewState extends State<PersonalView> {
                                           onChanged: (String? newValue) {
                                             if (newValue != null) {
                                               regiController
-                                                  .selectMarital(newValue);
+                                                  .setSelectedMarital(newValue);
                                             }
                                           },
                                         ),
@@ -600,86 +674,52 @@ class _PersonalViewState extends State<PersonalView> {
                             ),
                           ),
                           const SizedBox(height: 20),
+                          Obx((){
+                            return  Visibility(
+                                visible: regiController.MaritalAnnivery.value==true,
+                                child: Column(
+                                  children: [
+                                    SizedBox(height: 8),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: Container(
+                                        margin:
+                                        const EdgeInsets.only(left: 5, right: 5),
+                                        decoration: BoxDecoration(
+                                          border: Border.all(color: Colors.grey),
+                                          borderRadius: BorderRadius.circular(5),
+                                        ),
+                                        child: TextFormField(
+                                          keyboardType: TextInputType.text,
+                                          readOnly: true,
+                                          controller: regiController.marriagedateController.value,
+                                          decoration: InputDecoration(
+                                            hintText: 'Marriage Anniversary *',
+                                              border: InputBorder.none, // Remove the internal border
+                                            contentPadding: EdgeInsets.symmetric(vertical: 12,horizontal: 20),
+                                          ),
+                                          onTap: () async{
+                                            DateTime? pickedDate = await showDatePicker(
+                                              context: context,
+                                              initialDate: DateTime.now(),
+                                              firstDate: DateTime(1900),
+                                              lastDate: DateTime.now(),
+                                            );
+                                            if (pickedDate != null) {
+                                              String formattedDate = DateFormat('dd/MM/yyyy').format(pickedDate);
+                                              setState(() {
+                                                regiController.marriagedateController.value.text = formattedDate;
+                                              });
+                                            }
 
-                          // Marriage Anniversary Date Picker (Only visible if "Married" is selected)
-                          Obx(() {
-                            if (regiController.selectMarital.value == '1') {
-                              // '1' indicates "Married"
-                              return SizedBox(
-                                width: double.infinity,
-                                child: Container(
-                                  margin:
-                                      const EdgeInsets.only(left: 5, right: 5),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.grey),
-                                    borderRadius: BorderRadius.circular(5),
-                                  ),
-                                  child: TextFormField(
-                                    keyboardType: TextInputType.text,
-                                    readOnly: true,
-                                    controller: TextEditingController(
-                                      text: regiController
-                                                  .anniversaryDate.value !=
-                                              null
-                                          ? DateFormat('dd/MM/yyyy').format(
-                                              regiController
-                                                  .anniversaryDate.value!)
-                                          : 'Select Anniversary Date',
-                                    ),
-                                    decoration: const InputDecoration(
-                                      hintText: 'Marriage Anniversary *',
-                                      border: InputBorder.none,
-                                      contentPadding: EdgeInsets.symmetric(
-                                        vertical: 12,
-                                        horizontal: 20,
+                                          },
+                                        ),
+
                                       ),
                                     ),
-                                    onTap: () async {
-                                      DateTime? pickedDate =
-                                          await showDatePicker(
-                                        context: context,
-                                        initialDate: DateTime.now(),
-                                        firstDate: DateTime(1900),
-                                        lastDate: DateTime.now(),
-                                        builder: (BuildContext context,
-                                            Widget? child) {
-                                          return Theme(
-                                            data: Theme.of(context).copyWith(
-                                              colorScheme: ColorScheme.light(
-                                                primary: ColorHelperClass
-                                                    .getColorFromHex(
-                                                        ColorResources
-                                                            .red_color),
-                                                onPrimary: Colors.white,
-                                                onSurface: Colors.black,
-                                              ),
-                                              textButtonTheme:
-                                                  TextButtonThemeData(
-                                                style: TextButton.styleFrom(
-                                                  foregroundColor:
-                                                      ColorHelperClass
-                                                          .getColorFromHex(
-                                                              ColorResources
-                                                                  .red_color),
-                                                ),
-                                              ),
-                                            ),
-                                            child: child!,
-                                          );
-                                        },
-                                      );
-                                      if (pickedDate != null) {
-                                        regiController.anniversaryDate.value =
-                                            pickedDate;
-                                      }
-                                    },
-                                  ),
-                                ),
-                              );
-                            }
-                            return SizedBox.shrink(); // Hide if not "Married"
+                                  ],
+                                ));
                           }),
-
                           const SizedBox(height: 80),
                         ],
                       ),
@@ -695,12 +735,12 @@ class _PersonalViewState extends State<PersonalView> {
   }
 
   Widget _buildEditableField(
-    String label,
-    TextEditingController controller,
-    String hintText,
-    String validationMessage, {
-    bool obscureText = false,
-  }) {
+      String label,
+      TextEditingController controller,
+      String hintText,
+      String validationMessage, {
+        bool obscureText = false,
+      }) {
     return Container(
       margin: const EdgeInsets.only(left: 5, right: 5),
       child: TextFormField(
@@ -717,7 +757,7 @@ class _PersonalViewState extends State<PersonalView> {
               color: Colors.black54), // Slightly dimmed black for hint text
           border: const OutlineInputBorder(
             borderSide:
-                BorderSide(color: Colors.grey), // Border color set to black
+            BorderSide(color: Colors.grey), // Border color set to black
           ),
           enabledBorder: const OutlineInputBorder(
             borderSide: BorderSide(

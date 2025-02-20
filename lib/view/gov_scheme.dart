@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mpm/utils/AppDrawer.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -29,6 +30,7 @@ class _GovSchemeViewState extends State<GovSchemeView> {
           ),
           iconTheme: const IconThemeData(color: Colors.white),
       ),
+      drawer: AppDrawer(),
       body: WebViewWidget(controller: _controller),
     );
   }

@@ -16,4 +16,9 @@ class SamitiRepository{
     dynamic response= api.getApi(Urls.samiti_detail_url+"?samiti_category_id="+data,"");
   return response;
   }
+  Future<dynamic> searchMember(data) async {
+    print("urls"+Urls.searchMemberProfile_url+"?search_term="+data);
+    dynamic response= api.getApi(Urls.searchMemberProfile_url+"?search_term="+data,"");
+   return response;
+  }
 }

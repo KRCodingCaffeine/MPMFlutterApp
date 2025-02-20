@@ -1,15 +1,13 @@
 
 class Urls {
   static const  String base_url = "https://krcodingcaffeine.com/pragati-mandal-api/";
-  static const  String register_url = base_url+"api/register";
+  static const  String register_url = base_url+"api/make_new_member";
   static const  String login_url = base_url+"api/login";
   static const  String check_url = base_url+"api/check_lm_code_or_mobile";
   static const  String gender_url = base_url+"api/gender";
   static const  String bloodgroup_url = base_url+"api/blood_group";
   static const  String material_url = base_url+"/api/marital_status";
-  static const  String country_url = base_url+"api/country";
-  static const  String CHECKLM_url = base_url+"api/check_lm_code";
-  static const  String occuption_url = base_url+"api/occupation";
+   static const  String occuption_url = base_url+"api/occupation";
   static const  String occuption_profession_url = base_url+"api/occupation_profession";
   static const  String occuption_specialization_url = base_url+"api/occupation_specialization";
   static const  String qualification_url = base_url+"api/qualification";
@@ -24,5 +22,18 @@ class Urls {
   static const  String relation_url = base_url+"api/relation-dropdown";
   static const  String samiti_url = base_url+"api/get_samiti_types";
   static const  String samiti_detail_url = base_url+"api/get_samiti_member_by_samiti_type";
+  static const  String searchMemberProfile_url = base_url+"api/search_member_profile";
+  static const  String updateProfile_url = base_url+"api/update_member_profile";
+  static const  String getProfile_url = base_url+"api/get_member_profile_by_id";
+  static const  String verifyOTP = base_url+"api/check_otp";
+  static const  String sendOTP = base_url+"api/send_otp";
+  static const  String memberSalutation_url = base_url+"api/member_salutation";
+  static const  String country_url = base_url+"api/country";
+  static const  String state_url = base_url+"api/state";
+  static const  String city_url = base_url +"api/city";
+  static const  String updateMemberProfile_url = base_url+"api/update_member_profile";
+  static const  String addEducation_url = base_url+"api/add_education";
+  static const  String addUpdateFamilyMEber_url = base_url+"api/update_family_member_relation";
+  static const  String addOccuption_url = base_url+"api/add_update_occupation";
 
 }

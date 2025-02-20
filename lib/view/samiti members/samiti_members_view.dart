@@ -1,9 +1,10 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/route/route_name.dart';
+import 'package:mpm/utils/AppDrawer.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/view_model/controller/dashboard/dashboardcontroller.dart';
 import 'package:mpm/view_model/controller/samiti/SamitiController.dart';
 
 
@@ -16,35 +17,64 @@ class SamitiMembersViewPage extends StatefulWidget {
 
 class _SamitiMembersViewPageState extends State<SamitiMembersViewPage> {
   SamitiController controller= Get.put(SamitiController());
+  final DashBoardController dashBoardController = Get.find();
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    controller.getSamitiType();
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) {
+      controller.getSamitiType();
+    });
+  }
+  @override
+  void dispose() {
+
+    super.dispose();
+    controller.dispose();
   }
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Obx(() {
-          if (controller.loading.value) {
-            return Center(child: CircularProgressIndicator(color: Colors.pink,));
-          }
-          if (controller.getSamitidata.value == null) {
-            return Center(child: Text("No data available"));
-          }
-          return ListView(
-            children: controller.getSamitidata.value!.entries.map((entry) {
-              String title = entry.key;
-              List<dynamic> items = entry.value;
-              return _buildExpansionTile(title, items);
-            }).toList(),
-          );
-        }),
-      )
 
+
+    return Scaffold(
+        backgroundColor: Colors.grey[100],
+        appBar:  dashBoardController.showAppBar.value
+            ? PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child:  AppBar(
+            title: const Text(
+              'Samiti Members',
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor:
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+            iconTheme: const IconThemeData(color: Colors.white),
+          ),
+        )
+            : null,
+
+
+
+        drawer: AppDrawer(),
+
+
+
+        body: Obx(() {
+        if (controller.loading.value) {
+          return Center(child: CircularProgressIndicator(color: Colors.pink,));
+        }
+        if (controller.getSamitidata.value == null) {
+          return Center(child: Text("No data available"));
+        }
+        return ListView(
+          children: controller.getSamitidata.value!.entries.map((entry) {
+            String title = entry.key;
+            List<dynamic> items = entry.value;
+            return _buildExpansionTile(title, items);
+          }).toList(),
+        );
+      })
     );
   }
 

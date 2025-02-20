@@ -1,10 +1,12 @@
-import 'dart:isolate';
+import 'dart:io';
 import 'dart:ui';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_downloader/flutter_downloader.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+
 
 class FormsDownloadView extends StatefulWidget {
   const FormsDownloadView({super.key});
@@ -14,146 +16,159 @@ class FormsDownloadView extends StatefulWidget {
 }
 
 class _FormsDownloadViewState extends State<FormsDownloadView> {
-  ReceivePort _port = ReceivePort();
+  final Dio dio = Dio();
 
   final List<Map<String, dynamic>> forms = [
     {
       'title': 'Karyakarta form 2022-24',
+      'fileName' : 'karyakarta_form',
       'icon': Icons.picture_as_pdf,
       'color': const Color(0xFFd6d6d6),
       'url':
-          'https://krcodingcaffeine.com/pragati-mandal-api/public/assets/forms/karyakartha_form.pdf',
+      'https://krcodingcaffeine.com/pragati-mandal-api/public/assets/forms/karyakartha_form.pdf',
     },
     {
       'title': 'Scholarship Application Form',
+      'fileName' : 'scholarship_form',
       'icon': Icons.picture_as_pdf,
       'color': const Color(0xFFd6d6d6),
       'url':
-          'https://krcodingcaffeine.com/pragati-mandal-api/public/assets/forms/application_for_loan_scholarship.pdf',
+      'https://krcodingcaffeine.com/pragati-mandal-api/public/assets/forms/application_for_loan_scholarship.pdf',
     },
     {
       'title': 'Radhakrishna Lahoti Sahayata Kosh Form',
+      'fileName' : 'radhakrishna_lahoti_form',
       'icon': Icons.picture_as_pdf,
       'color': const Color(0xFFd6d6d6),
       'url':
-          'https://krcodingcaffeine.com/pragati-mandal-api/public/assets/forms/radhakrishna_lahoti_sahayata_kosh_form.pdf',
+      'https://krcodingcaffeine.com/pragati-mandal-api/public/assets/forms/radhakrishna_lahoti_sahayata_kosh_form.pdf',
     },
     {
       'title': 'Membership Form',
+      'fileName' : 'membership_form',
       'icon': Icons.picture_as_pdf,
       'color': const Color(0xFFd6d6d6),
       'url':
-          'https://krcodingcaffeine.com/pragati-mandal-api/public/assets/forms/membership_form.pdf',
+      'https://krcodingcaffeine.com/pragati-mandal-api/public/assets/forms/membership_form.pdf',
     },
     {
       'title': 'Shiksha Form',
+      'fileName' : 'shiksha_form',
       'icon': Icons.picture_as_pdf,
       'color': const Color(0xFFd6d6d6),
       'url':
-          'https://krcodingcaffeine.com/pragati-mandal-api/public/assets/forms/shiksha_form.pdf',
+      'https://krcodingcaffeine.com/pragati-mandal-api/public/assets/forms/shiksha_form.pdf',
     },
     {
       'title': 'Student Prize Application',
+      'fileName' : 'student_prize_form',
       'icon': Icons.picture_as_pdf,
       'color': const Color(0xFFd6d6d6),
       'url':
-          'https://krcodingcaffeine.com/pragati-mandal-api/public/assets/forms/student_price_application_form.pdf',
+      'https://krcodingcaffeine.com/pragati-mandal-api/public/assets/forms/student_price_application_form.pdf',
     },
   ];
 
   @override
   void initState() {
     super.initState();
-
-    IsolateNameServer.registerPortWithName(
-        _port.sendPort, 'downloader_send_port');
-    _port.listen((dynamic data) {
-      String id = data[0];
-      int status = data[1];
-      int progress = data[2];
-
-      if (status == DownloadTaskStatus.complete.index) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Download completed!')),
-        );
-      }
-    });
-
-    FlutterDownloader.registerCallback(downloadCallback);
   }
 
   @override
   void dispose() {
-    IsolateNameServer.removePortNameMapping('downloader_send_port');
     super.dispose();
   }
 
-  static void downloadCallback(String id, int status, int progress) {
-    final SendPort? send =
-        IsolateNameServer.lookupPortByName('downloader_send_port');
-    send?.send([id, status, progress]);
-  }
-
   Future<void> _downloadFile(String? url, String? fileName) async {
+
     if (url == null || fileName == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid file url or file name')),
+        const SnackBar(content: Text('Invalid file URL or file name')),
       );
       return;
     }
+    final permissionStatus = await _requestPermission();
+    if (!permissionStatus) return;
 
-    final status = await Permission.storage.request();
-    if (status.isGranted) {
-      final taskId = await FlutterDownloader.enqueue(
-        url: url, // Now guaranteed to be non-null
-        savedDir: '/storage/emulated/0/Download',
-        fileName: fileName,
-        showNotification: true,
-        openFileFromNotification: true,
+    try {
+      Directory? directory = await getExternalStorageDirectory();
+      String newPath = "/storage/emulated/0/Download";
+      directory = Directory(newPath);
+
+      if (!directory.existsSync()) {
+        directory.createSync(recursive: true);
+      }
+
+      String filePath = "${directory.path}/$fileName";
+      Dio dio = Dio();
+      int progress = 0;
+      // Show a persistent Snackbar with a StatefulBuilder
+      // Show a persistent Snackbar with a StatefulBuilder
+      final scaffoldMessenger = ScaffoldMessenger.of(context);
+      StateSetter? setSnackbarState;
+
+      final snackBarController = scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: StatefulBuilder(
+            builder: (context, setState) {
+              setSnackbarState = setState; // Capture the setState function
+              return Text("Downloading $fileName ... 0%");
+            },
+          ),
+          duration: Duration(days: 1), // Keep it open
+        ),
       );
 
-      if (taskId != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$fileName downloading...')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Download failed for $fileName')),
-        );
-      }
-    } else {
+      await dio.download(
+        url,
+        filePath,
+        onReceiveProgress: (received, total) {
+          if (total > 0) {
+            int newProgress = ((received / total) * 100).toInt();
+            if (newProgress != progress) {
+              progress = newProgress;
+              if (setSnackbarState != null) {
+                setSnackbarState!(() {}); // Update Snackbar text dynamically
+              } // Update Snackbar text without hiding it
+            }
+          }
+        },
+      );
+
+      // Hide progress Snackbar
+      snackBarController.close();
+
+      // Show success Snackbar with a "View" button
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Permission denied for storage')),
+        SnackBar(
+          content: Text("$fileName - Downloaded successfully."),
+
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Download failed: $e")),
       );
     }
   }
 
   Future<bool> _requestPermission() async {
-    if (await Permission.storage.isGranted) {
-      return true;
-    }
+    if (await Permission.storage.isGranted) return true;
 
     var status = await Permission.storage.request();
-    if (status.isGranted) {
-      return true;
-    }
-
-    // Additional check for Android 11+ (MANAGE_EXTERNAL_STORAGE)
-    if (await Permission.manageExternalStorage.isGranted) {
-      return true;
-    }
+    if (status.isGranted) return true;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Permission denied for storage')),
+      const SnackBar(content: Text('Storage permission denied')),
     );
 
     return false;
   }
 
-  Widget buildCard(String title, IconData icon, Color color, String url) {
+  Widget buildCard(String title, IconData icon, Color color, String url, String fileName) {
     return GestureDetector(
       onTap: () {
-        _downloadFile(url, "$title.pdf");
+        _downloadFile(url, "$fileName.pdf");
       },
       child: Card(
         color: Colors.white,
@@ -192,7 +207,7 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor:
-            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Padding(
@@ -209,10 +224,11 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
             final form = forms[index];
             return Center(
               child: buildCard(
-                form['title'],
-                form['icon'],
-                form['color'],
-                form['url'],
+                  form['title'],
+                  form['icon'],
+                  form['color'],
+                  form['url'],
+                  form['fileName']
               ),
             );
           },
