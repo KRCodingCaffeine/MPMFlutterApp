@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
+import 'business_info_view.dart';
+import 'occupation_info_view.dart';
 
 class BusinessInformationPage extends StatefulWidget {
-  const BusinessInformationPage({super.key});
+  final String? successMessage;
+  final String? failureMessage;
+
+  const BusinessInformationPage(
+      {Key? key, this.successMessage, this.failureMessage})
+      : super(key: key);
 
   @override
   _BusinessInformationPageState createState() =>
@@ -9,6 +16,13 @@ class BusinessInformationPage extends StatefulWidget {
 }
 
 class _BusinessInformationPageState extends State<BusinessInformationPage> {
+  // Variables to store occupation-related information
+  String occupation = "Software Developer";
+  String occupationProfession = "Technology";
+  String occupationSpecialization = "Mobile App Development";
+  String occupationDetails =
+      "Specialized in Flutter and Dart for mobile applications.";
+
   // Variables to store business-related information
   String organisationName = 'Company Name';
   String officePhone = 'Landline Number';
@@ -23,63 +37,81 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
   String businessEmail = 'Official Email';
   String website = 'Official URL';
 
+  // List to store business card details
+  List<Map<String, String>> businessCards = [];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Occupation Info'),
-        backgroundColor: Colors.white,
+        title: const Text('Occupation & Business Info'),
+        backgroundColor: Colors.white54,
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit),
+            icon: const Icon(Icons.add),
             onPressed: () {
-              _showEditModalSheet(context);
+              _showAddModalSheet(context);
             },
           ),
         ],
       ),
-      body: Container(
-        color: Colors.grey[200],
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20.0),
-            child: Column(
-              children: [
-                _buildInfoBox('Name of Organisation:',
-                    subtitle: organisationName),
-                SizedBox(height: 20),
-                _buildInfoBox('Office Phone:', subtitle: officePhone),
-                SizedBox(height: 20),
-                _buildInfoBox('Building Name:', subtitle: buildingName),
-                SizedBox(height: 20),
-                _buildInfoBox('Flat No:', subtitle: flatNo),
-                SizedBox(height: 20),
-                _buildInfoBox('Address:', subtitle: address),
-                SizedBox(height: 20),
-                _buildInfoBox('Area:', subtitle: areaName),
-                SizedBox(height: 20),
-                _buildInfoBox('City:', subtitle: city),
-                SizedBox(height: 20),
-                _buildInfoBox('State:', subtitle: stateName),
-                SizedBox(height: 20),
-                _buildInfoBox('Country:', subtitle: countryName),
-                SizedBox(height: 20),
-                _buildInfoBox('Office Pincode:', subtitle: officePincode),
-                SizedBox(height: 20),
-                _buildInfoBox('Business Email:', subtitle: businessEmail),
-                SizedBox(height: 20),
-                _buildInfoBox('Website:', subtitle: website),
-                SizedBox(height: 20),
-              ],
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(vertical: 20.0),
+        child: Column(
+          children: [
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EditOccInfoPage(
+                      occupation: occupation,
+                      occupationProfession: occupationProfession,
+                      occupationSpecialization: occupationSpecialization,
+                      occupationDetails: occupationDetails,
+                      onOccInfoChanged: (occ, prof, spec, det) {
+                        setState(() {
+                          occupation = occ;
+                          occupationProfession = prof;
+                          occupationSpecialization = spec;
+                          occupationDetails = det;
+                        });
+                      },
+                    ),
+                  ),
+                );
+              },
+              child: _buildOccCard(),
             ),
-          ),
+            const SizedBox(height: 20),
+            Column(
+              children: businessCards.map((card) {
+                return _buildBusinessInfoCard(
+                  organisationName: card['organisationName']!,
+                  officePhone: card['officePhone']!,
+                  buildingName: card['buildingName']!,
+                  flatNo: card['flatNo']!,
+                  address: card['address']!,
+                  areaName: card['areaName']!,
+                  city: card['city']!,
+                  stateName: card['stateName']!,
+                  countryName: card['countryName']!,
+                  officePincode: card['officePincode']!,
+                  businessEmail: card['businessEmail']!,
+                  website: card['website']!,
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 20),
+          ],
         ),
       ),
     );
   }
 
   // Method to show the Modal Bottom Sheet for editing
-  void _showEditModalSheet(BuildContext context) {
+  void _showAddModalSheet(BuildContext context) {
     double heightFactor = 0.8; // Default height for the modal
 
     showModalBottomSheet(
@@ -97,45 +129,27 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
               heightFactor: heightFactor,
               child: Column(
                 children: [
-                  // Top row with Cancel and Save buttons
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 40.0),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment:
+                          MainAxisAlignment.end, // Move button to the right
                       children: [
-                        // Cancel button on the left
-                        TextButton(
-                          onPressed: () {
-                            Navigator.of(context)
-                                .pop(); // Close the bottom sheet
-                          },
-                          style: TextButton.styleFrom(
-                            backgroundColor: Colors.lightBlueAccent,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 12.0,
-                              horizontal: 24.0,
-                            ),
-                          ),
-                          child: const Text('Cancel'),
-                        ),
-                        // Save button on the right
                         ElevatedButton(
                           onPressed: () {
                             bool isValid = _validateFields();
                             if (isValid) {
                               setState(() {
-                                // Perform save logic if fields are valid
-                                _showSuccessMessage();
+
+                                _addNewBusinessCard();
                               });
-                              Navigator.of(context)
-                                  .pop(); // Close the bottom sheet
+                              Navigator.of(context).pop();
                             } else {
                               _showFailureMessage();
                             }
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.lightBlueAccent,
+                            backgroundColor: Color(0xFFDC3545),
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(
                               vertical: 12.0,
@@ -147,9 +161,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                       ],
                     ),
                   ),
-                  const SizedBox(
-                      height: 16), // Add spacing between buttons and fields
-                  // Expanded section with editable fields
+                  const SizedBox(height: 16),
                   Expanded(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.all(16.0),
@@ -224,6 +236,26 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
     );
   }
 
+  // Method to add a new business card to the list
+  void _addNewBusinessCard() {
+    final newCard = {
+      'organisationName': organisationName,
+      'officePhone': officePhone,
+      'buildingName': buildingName,
+      'flatNo': flatNo,
+      'address': address,
+      'areaName': areaName,
+      'city': city,
+      'stateName': stateName,
+      'countryName': countryName,
+      'officePincode': officePincode,
+      'businessEmail': businessEmail,
+      'website': website,
+    };
+
+    businessCards.add(newCard); // Add the new card to the list
+  }
+
   // Method to validate fields before saving
   bool _validateFields() {
     return organisationName.isNotEmpty && officePhone.isNotEmpty;
@@ -232,7 +264,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
   // Method to show success message
   void _showSuccessMessage() {
     final snackBar = SnackBar(
-      content: const Text('Occupation info updated successfully!'),
+      content: const Text('Information updated successfully!'),
       duration: const Duration(seconds: 2),
       backgroundColor: Colors.green,
     );
@@ -249,12 +281,13 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
-  // Editable fields
+  // Editable fields widget
   Widget _buildEditableField(
       String label, String initialValue, Function(String) onChanged) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20.0),
       child: TextField(
+        controller: TextEditingController(text: initialValue),
         decoration: InputDecoration(
           labelText: label,
           border: OutlineInputBorder(),
@@ -264,53 +297,120 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
     );
   }
 
-  // Information box widget
-  Widget _buildInfoBox(String title, {String? subtitle}) {
-    return Container(
-      height: 100,
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          const BoxShadow(
-            color: Colors.black26,
-            blurRadius: 6,
-            offset: Offset(0, 4),
-          ),
-        ],
+  // Business Info Card widget with white background color
+  Widget _buildBusinessInfoCard({
+    required String organisationName,
+    required String officePhone,
+    required String buildingName,
+    required String flatNo,
+    required String address,
+    required String areaName,
+    required String city,
+    required String stateName,
+    required String countryName,
+    required String officePincode,
+    required String businessEmail,
+    required String website,
+  }) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
       ),
+      elevation: 5,
+      color: Colors.white, // Set the background color to white
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildInfoLine('Name of Organisation', organisationName),
+            _buildInfoLine('Office Phone', officePhone),
+            _buildInfoLine('Building Name', buildingName),
+            _buildInfoLine('Flat No', flatNo),
+            _buildInfoLine('Address', address),
+            _buildInfoLine('Area', areaName),
+            _buildInfoLine('City', city),
+            _buildInfoLine('State', stateName),
+            _buildInfoLine('Country', countryName),
+            _buildInfoLine('Office Pincode', officePincode),
+            _buildInfoLine('Business Email', businessEmail),
+            _buildInfoLine('Website', website),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoLine(String title, String subtitle) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10.0),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start, // Align items to the top
         children: [
-          const SizedBox(width: 10),
-          Expanded(
+          // Title and Colon
+          Container(
+            width: 140, // Adjust width for alignment
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+                const Text(
+                  ':',
+                  style: TextStyle(
+                    fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                   ),
                 ),
-                if (subtitle != null)
-                  Padding(
-                    padding: const EdgeInsets.only(
-                        left:
-                            8.0), // Add some spacing between title and subtitle
-                    child: Text(
-                      subtitle,
-                      style: TextStyle(fontSize: 14, color: Colors.red[300]),
-                    ),
-                  ),
+                const SizedBox(
+                    width: 8), // Add space between colon and subtitle
               ],
             ),
           ),
+          // Subtitle
+          Expanded(
+            child: Text(
+              subtitle,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  // Occupation Card widget with white background color
+  Widget _buildOccCard() {
+    return Card(
+      elevation: 5,
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      color: Colors.white, // Set the background color to white
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildInfoLine('Occupation:', occupation),
+            _buildInfoLine('Profession:', occupationProfession),
+            _buildInfoLine('Specialization:', occupationSpecialization),
+            _buildInfoLine('Details:', occupationDetails),
+          ],
+        ),
       ),
     );
   }

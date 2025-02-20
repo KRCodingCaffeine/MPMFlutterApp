@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mpm/utils/AppDrawer.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -32,10 +33,10 @@ class _ContactViewPageState extends State<ContactViewPage> {
           'Contact Us',
           style: TextStyle(color: Colors.white),
         ),
-        backgroundColor:
-            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
+      drawer: AppDrawer(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(

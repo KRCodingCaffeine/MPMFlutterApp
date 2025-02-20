@@ -9,6 +9,8 @@ class NotificationView extends StatefulWidget {
 class _NotificationViewState extends State<NotificationView> {
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Scaffold(
+      body: Center(child: Text("No data"),),
+    );
   }
 }

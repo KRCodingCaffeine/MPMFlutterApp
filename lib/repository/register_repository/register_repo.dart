@@ -1,8 +1,10 @@
 import 'package:mpm/OccuptionProfession/OccuptionProfessionModel.dart';
 import 'package:mpm/data/network/network_api_Service.dart';
 import 'package:mpm/model/CheckPinCode/CheckPinCodeModel.dart';
+import 'package:mpm/model/CheckPinCode/Country.dart';
 import 'package:mpm/model/CheckUser/CheckLMCode.dart';
 import 'package:mpm/model/CheckUser/CheckModelClass.dart';
+import 'package:mpm/model/CountryModel/CountryModelClass.dart';
 
 import 'package:mpm/model/Occupation/OccupationModel.dart';
 import 'package:mpm/model/OccupationSpec/OccuptionSpecialization.dart';
@@ -10,14 +12,18 @@ import 'package:mpm/model/Qualification/QualificationModel.dart';
 import 'package:mpm/model/QualificationCategory/QualificationCategoryModel.dart';
 import 'package:mpm/model/QualificationMain/QualicationMainModel.dart';
 import 'package:mpm/model/Register/RegisterModelClass.dart';
+import 'package:mpm/model/State/StateModelClass.dart';
 
 
 import 'package:mpm/model/bloodgroup/BloodGroupModel.dart';
+import 'package:mpm/model/city/CityModelClass.dart';
 import 'package:mpm/model/documenttype/DocumentTypeModel.dart';
 import 'package:mpm/model/gender/GenderModelClass.dart';
 import 'package:mpm/model/marital/MaritalModel.dart';
+import 'package:mpm/model/membersalutation/MemberSalutationModel.dart';
 import 'package:mpm/model/membership/MembershipModel.dart';
 import 'package:mpm/model/relation/RelationModel.dart';
+import 'package:mpm/model/search/SearchLMCodeModel.dart';
 import 'package:mpm/utils/urls.dart';
 
 class RegisterRepository {
@@ -42,47 +48,31 @@ class RegisterRepository {
     print("bfnbfn"+response.toString());
     return BloodGroupModel.fromJson(response);
   }
-  Future<OccupationModel> userOccupationDataApi() async {
-     dynamic response =  await _apiService.postApi("",Urls.occuption_url,"","2");
+  Future<CountryModelClass> CountryApi() async {
+    dynamic response =  await _apiService.getApi(Urls.country_url,"");
     print("bfnbfn"+response.toString());
-    return OccupationModel.fromJson(response);
+    return CountryModelClass.fromJson(response);
   }
-  Future<CheckLMCode> userCheckLMCodeApi(var data) async {
-
-    dynamic response = await _apiService.postApi(data, Urls.check_url, "","2");
-    print("vdgvgdv"+response.toString());
-    return CheckLMCode.fromJson(response);
-
+  Future<StateModelClass> StateApi() async {
+    dynamic response =  await _apiService.getApi(Urls.state_url,"");
+    print("bfnbfn"+response.toString());
+    return StateModelClass.fromJson(response);
   }
-  Future<OccuptionProfessionModel> userOccutionPreCodeApi(var data) async {
-    dynamic response = await _apiService.postApi(data, Urls.occuption_profession_url, "","2");
-    print("vdgvgdv"+response.toString());
-    return OccuptionProfessionModel.fromJson(response);
-
+  Future<CityModelClass> CityApi() async {
+    dynamic response =  await _apiService.getApi(Urls.city_url,"");
+    print("bfnbfn"+response.toString());
+    return CityModelClass.fromJson(response);
   }
-  Future<OccuptionSpectionModel> userOccutionSpectionCodeApi(var data) async {
-    dynamic response = await _apiService.postApi(data, Urls.occuption_specialization_url, "","2");
-    print("vdgvgdv"+response.toString());
-    return OccuptionSpectionModel.fromJson(response);
 
-  }
-  Future<QualificationModel> userQualification() async {
-    dynamic response = await _apiService.postApi("", Urls.qualification_url, "","2");
+  Future<SearchLMCodeModel> userCheckLMCodeApi(var data) async {
+
+    dynamic response = await _apiService.getApi(Urls.searchMemberProfile_url+"?search_term="+data, "");
     print("vdgvgdv"+response.toString());
-    return QualificationModel.fromJson(response);
+    return SearchLMCodeModel.fromJson(response);
 
   }
-  Future<QualicationMainModel> userQualificationMain(var data) async {
-    dynamic response = await _apiService.postApi(data, Urls.qualificationmain_url, "","2");
-    print("vdgvgdv"+response.toString());
-    return QualicationMainModel.fromJson(response);
 
-  }
-  Future<QualificationCategoryModel> userQualificationCategory(var data) async {
-    dynamic response = await _apiService.postApi(data, Urls.qualificationcategory_url, "","2");
-    print("vdgvgdv"+response.toString());
-    return QualificationCategoryModel.fromJson(response);
-  }
+
   Future<DocumentTypeModel> userDocumentType() async {
     dynamic response = await _apiService.postApi("", Urls.documentotion_url, "","2");
     print("vdgvgdv"+response.toString());
@@ -94,11 +84,23 @@ class RegisterRepository {
     print("vdgvgdv"+response.toString());
     return MembershipModel.fromJson(response);
   }
-
- Future<RelationModel> userFamilyRelation(data) async {
-    dynamic response = await _apiService.postApi(data,Urls.relation_url,"","2");
+  Future<MemberSalutationModel> userMemberSalutation() async {
+    dynamic response = await _apiService.getApi(Urls.memberSalutation_url,"");
     print("vdgvgdv"+response.toString());
-    return RelationModel.fromJson(response);
+    return MemberSalutationModel.fromJson(response);
+  }
+
+
+  Future<CheckModel> sendOTP(var data) async {
+    dynamic response = await _apiService.postApi(data,Urls.sendOTP,"","2");
+    print("vdgvgdv"+response.toString());
+    return CheckModel.fromJson(response);
+  }
+
+  Future<CheckModel> verifyOTP(var data) async {
+    dynamic response = await _apiService.postApi(data,Urls.verifyOTP,"","2");
+    print("vdgvgdv"+response.toString());
+    return CheckModel.fromJson(response);
   }
 
 

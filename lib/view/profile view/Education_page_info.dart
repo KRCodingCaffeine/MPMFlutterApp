@@ -1,4 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:mpm/data/response/status.dart';
+import 'package:mpm/model/GetProfile/Qualification.dart';
+import 'package:mpm/model/Qualification/QualificationData.dart';
+import 'package:mpm/model/QualificationCategory/QualificationCategoryModel.dart';
+import 'package:mpm/model/QualificationMain/QualicationMainData.dart';
+import 'package:mpm/utils/color_helper.dart';
+import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
 class EducationPageInfo extends StatefulWidget {
   const EducationPageInfo({Key? key}) : super(key: key);
@@ -9,17 +18,15 @@ class EducationPageInfo extends StatefulWidget {
 
 class _EducationPageInfoState extends State<EducationPageInfo> {
   // Variables to store information
-  String qualification = 'qualification';
-  String qualificationMain = 'qualificationMain';
-  String qualificationCat = 'qualificationCat';
-  String qualificationDetail = 'qualificationDetail';
+  UdateProfileController regiController=Get.put(UdateProfileController());
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text('Education Info'),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.white54,
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
@@ -29,139 +36,315 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
           ),
         ],
       ),
-      body: Container(
-        color: Colors.grey[200],
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20.0),
-            child: Column(
-              children: [
-                _buildInfoBox('Qualification:', subtitle: 'Qualification'),
-                SizedBox(height: 20),
-                _buildInfoBox('Qualification Main:',
-                    subtitle: 'QualificationMain'),
-                SizedBox(height: 20),
-                _buildInfoBox('Qualification Category:',
-                    subtitle: 'QualificationCat'),
-                SizedBox(height: 20),
-                _buildInfoBox(
-                  'Qualification Details:',
-                  subtitle: 'Qualification Details',
-                ),
-              ],
-            ),
-          ),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: regiController.qualificationList.value.isEmpty
+            ? const Center(child: Text("No family members added yet."))
+            : ListView.builder(
+          itemCount: regiController.qualificationList.value.length,
+          itemBuilder: (context, index) {
+            return educationWidget(regiController.qualificationList.value[index]);
+          },
         ),
       ),
     );
   }
 
-  // Method to show the Modal Bottom Sheet
-  void _showEditModalSheet(BuildContext context) {
-    double heightFactor = 0.8; // Default height for the modal
+
+  Future<void> _showEditModalSheet(BuildContext context) async {
 
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       backgroundColor: Colors.white,
-      builder: (BuildContext context) {
-        return MediaQuery(
-          data: MediaQueryData.fromWindow(WidgetsBinding.instance.window),
-          child: SafeArea(
-            child: FractionallySizedBox(
-              heightFactor: heightFactor,
-              child: Column(
-                children: [
-                  // Top row with Cancel and Save buttons
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40.0),
+      isScrollControlled: true,
+      builder: (context) {
+        return SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 16.0,
+              right: 16.0,
+              top: 16.0,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 16.0,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Add "Save" TextButton at the top-right corner with custom color
+                Align(
+                  alignment: Alignment.topRight,
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: Color(
+                          0xFFDC3545), // Setting the button color to #DC3545
+                    ),
+                    onPressed: () async{
+                      if(regiController.educationdetailController.value!="") {
+                        regiController.addQualification(context);
+                      }
+                      else
+                        {
+
+                        }
+                    },
+                    child:  regiController.addloading.value?CircularProgressIndicator():Text(
+                      "Save",
+                    ),
+                  ),
+                ),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: Container(
+                    margin: EdgeInsets.only(left: 5,right: 5),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Cancel button on the left
-                        TextButton(
-                          onPressed: () {
-                            Navigator.of(context)
-                                .pop(); // Close the bottom sheet
-                          },
-                          style: TextButton.styleFrom(
-                            backgroundColor: Colors.lightBlueAccent,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 12.0,
-                              horizontal: 24.0,
-                            ),
-                          ),
-                          child: const Text('Cancel'),
-                        ),
-                        // Save button on the right
-                        ElevatedButton(
-                          onPressed: () {
-                            bool isValid = _validateFields();
-                            if (isValid) {
-                              setState(() {
-                                // Perform save logic if fields are valid
-                                _showSuccessMessage();
-                              });
-                              Navigator.of(context)
-                                  .pop(); // Close the bottom sheet
-                            } else {
-                              _showFailureMessage();
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.lightBlueAccent,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 12.0,
-                              horizontal: 24.0,
-                            ),
-                          ),
-                          child: const Text('Save'),
-                        ),
+
+                        Obx(() {
+                          if (regiController.rxStatusQualification.value == Status.LOADING) {
+                            return Padding(
+                              padding: EdgeInsets.symmetric(vertical: 10,horizontal: 22),
+                              child: Container(
+                                  alignment: Alignment.centerRight,
+                                  height:24,width:24,child: CircularProgressIndicator(color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),)),
+                            );
+                          } else if (regiController.rxStatusQualification.value == Status.ERROR) {
+                            return Center(child: Text('Failed to load Qualification'));
+                          } else if (regiController.qulicationList.isEmpty) {
+                            return Center(child: Text('No Qualification  available'));
+                          } else {
+                            return Expanded(
+                              child: DropdownButton<String>(
+                                padding: EdgeInsets.symmetric(horizontal: 20),
+                                isExpanded: true,
+                                underline: Container(),
+                                hint: Text('Select Qualification',style: TextStyle(
+                                    fontWeight: FontWeight.bold
+                                ),), // Hint to show when nothing is selected
+                                value: regiController.selectQlification.value.isEmpty
+                                    ? null
+                                    : regiController.selectQlification.value,
+
+                                items: regiController.qulicationList.map((QualificationData marital) {
+                                  return DropdownMenuItem<String>(
+                                    value: marital.id.toString(), // Use unique ID or any unique property.
+                                    child: Text(marital.qualification ?? 'Unknown'), // Display name from DataX.
+                                  );
+                                }).toList(),
+                                onChanged: (String? newValue) {
+                                  print("fddfdfff"+newValue.toString());
+
+
+                                  if (newValue != null) {
+                                    regiController.selectQlification(newValue);
+                                    if(newValue!="other")
+                                    {
+                                      regiController.isQualicationList.value=true;
+                                      regiController.getQualicationMain(newValue);
+                                    }
+                                    else
+                                    {
+                                      regiController.isQualicationList.value=false;
+
+
+                                    }
+                                  }
+                                },
+                              ),
+                            );
+                          }
+                        }),
+
                       ],
                     ),
                   ),
-                  const SizedBox(
-                      height: 16), // Add spacing between buttons and fields
-                  // Expanded section with editable fields
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(16.0),
+                ),
+
+                SizedBox(height: 8),
+                Obx((){
+                  return Visibility(
+                      visible: regiController.isQualicationList.value,
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildEditableField(
-                            'Qualification',
-                            qualification,
-                            (value) => setState(() => qualification = value),
+                          Container(
+                              width: double.infinity,
+                              margin: EdgeInsets.only(left: 5,right: 5),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child:Row(
+                                children: [
+
+                                  Obx(() {
+                                    if (regiController.rxStatusQualificationMain.value == Status.LOADING) {
+                                      return Padding(
+                                        padding: EdgeInsets.symmetric(vertical: 10,horizontal: 22),
+                                        child: Container(
+                                            alignment: Alignment.centerRight,
+                                            height:24,width:24,child: CircularProgressIndicator(color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),)),
+                                      );
+                                    } else if (regiController.rxStatusQualificationMain.value == Status.ERROR) {
+                                      return Center(child: Padding(
+                                        padding: const EdgeInsets.all(14),
+                                        child: Text(' No Data ', style: TextStyle(
+                                            fontWeight: FontWeight.bold
+                                        ),),
+                                      ));
+                                    }
+                                    else if (regiController.rxStatusQualificationMain.value == Status.IDLE) {
+                                      return Center(child: Padding(
+                                        padding: const EdgeInsets.all(12.0),
+                                        child: Text('Select  Qualification Main'),
+                                      ));
+                                    }
+
+                                    else if (regiController.qulicationMainList.isEmpty) {
+                                      return Center(child: Text('No Qualification Main available'));
+                                    } else {
+                                      return Expanded(
+                                        child: DropdownButton<String>(
+                                          padding: EdgeInsets.symmetric(horizontal: 20),
+                                          isExpanded: true,
+                                          underline: Container(),
+                                          hint: Text('Select Qualification Main',style: TextStyle(
+                                              fontWeight: FontWeight.bold
+                                          ),), // Hint to show when nothing is selected
+                                          value: regiController.selectQualicationMain.value.isEmpty
+                                              ? null
+                                              : regiController.selectQualicationMain.value,
+
+                                          items: regiController.qulicationMainList.map((QualicationMainData marital) {
+                                            return DropdownMenuItem<String>(
+                                              value: marital.id.toString(), // Use unique ID or any unique property.
+                                              child: Text(marital.name ?? 'Unknown'), // Display name from DataX.
+                                            );
+                                          }).toList(), // Convert to List.
+                                          onChanged: (String? newValue) {
+                                            if (newValue != null) {
+                                              regiController.selectQualicationMain(newValue);
+                                              regiController.getQualicationCategory(newValue);
+                                            }
+                                          },
+                                        ),
+                                      );
+                                    }
+                                  }),
+                                ],
+                              )
+
+
                           ),
-                          _buildEditableField(
-                            'QualificationMain',
-                            qualificationMain,
-                            (value) =>
-                                setState(() => qualificationMain = value),
+                          SizedBox(
+                            height: 8,
                           ),
-                          _buildEditableField(
-                            'QualificationCat',
-                            qualificationCat,
-                            (value) => setState(() => qualificationCat = value),
-                          ),
-                          _buildEditableField(
-                            'Qualification Details',
-                            qualificationDetail,
-                            (value) =>
-                                setState(() => qualificationDetail = value),
+                          Container(
+                              width: double.infinity,
+                              margin: EdgeInsets.only(left: 5,right: 5),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child:Row(
+                                children: [
+
+                                  Obx(() {
+                                    if (regiController.rxStatusQualificationCat.value == Status.LOADING) {
+                                      return Padding(
+                                        padding: EdgeInsets.symmetric(vertical: 10,horizontal: 22),
+                                        child: Container(
+                                            alignment: Alignment.centerRight,
+                                            height:24,width:24,child: CircularProgressIndicator(color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),)),
+                                      );
+                                    } else if (regiController.rxStatusQualificationCat.value == Status.ERROR) {
+                                      return Center(child: Text('No Data'));
+                                    }
+                                    else if (regiController.rxStatusQualificationCat.value == Status.IDLE) {
+                                      return Center(child: Padding(
+                                        padding: const EdgeInsets.all(12.0),
+                                        child: Text('Select Qualification Category',style: TextStyle(
+                                            fontWeight: FontWeight.bold
+                                        ),),
+                                      ));
+                                    }
+
+
+                                    else if (regiController.qulicationCategoryList.isEmpty) {
+                                      return Center(child: Text('No qualification Category available'));
+                                    } else {
+                                      return Expanded(
+                                        child: DropdownButton<String>(
+                                          padding: EdgeInsets.symmetric(horizontal: 20),
+                                          isExpanded: true,
+                                          underline: Container(),
+                                          hint: Text('Select Qualification Category',style: TextStyle(
+                                              fontWeight: FontWeight.bold
+                                          ),), // Hint to show when nothing is selected
+                                          value: regiController.selectQualicationCat.value.isEmpty
+                                              ? null
+                                              : regiController.selectQualicationCat.value,
+
+                                          items: regiController.qulicationCategoryList.map((Qualificationcategorydata marital) {
+                                            return DropdownMenuItem<String>(
+                                              value: marital.id.toString(), // Use unique ID or any unique property.
+                                              child: Text(marital.name ?? 'Unknown'), // Display name from DataX.
+                                            );
+                                          }).toList(), // Convert to List.
+                                          onChanged: (String? newValue) {
+                                            if (newValue != null) {
+                                              regiController.selectQualicationCat(newValue);
+
+                                            }
+                                          },
+                                        ),
+                                      );
+                                    }
+                                  }),
+                                ],
+                              )
+
+
                           ),
                         ],
+                      ));
+                }),
+                SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: Container(
+                    margin: EdgeInsets.only(left: 5,right: 5),
+
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: TextFormField(
+                      keyboardType: TextInputType.text,
+                      controller: regiController.educationdetailController.value,
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return 'Enter Education Detail';
+                        }
+                        else {
+                          return null;
+                        }
+                      },
+                      decoration: InputDecoration(
+                        prefixIcon: Icon(Icons.details,color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),),
+                        hintText: 'Qualification detail',
+                        border: InputBorder.none, // Remove the internal border
+                        contentPadding: EdgeInsets.symmetric(vertical: 12,horizontal: 20), // Adjust padding
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 10),
+
+                const SizedBox(height: 10),
+              ],
             ),
           ),
         );
@@ -169,24 +352,30 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
     );
   }
 
-  // Method to validate the fields before saving
-  bool _validateFields() {
-    // You can implement your validation logic here
-    // For example, check if any field is empty
-    return qualification.isNotEmpty;
+  Widget _buildTextField({
+    required String label,
+    required Function(String) onChanged,
+  }) {
+    return TextField(
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+      ),
+      onChanged: onChanged,
+    );
   }
 
-  // Method to show success message
+
   void _showSuccessMessage() {
     final snackBar = SnackBar(
-      content: const Text('Education Info updated successfully!'),
-      duration: const Duration(seconds: 2),
+      content:  Text('Education Info updated successfully!'),
+      duration:  Duration(seconds: 2),
       backgroundColor: Colors.green,
     );
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
-  // Method to show failure message
   void _showFailureMessage() {
     final snackBar = SnackBar(
       content: const Text('Failed to update information. Please check fields.'),
@@ -211,51 +400,86 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
   }
 
   Widget _buildInfoBox(String title, {String? subtitle}) {
-    return Container(
-      height: 100,
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          const BoxShadow(
-            color: Colors.black26,
-            blurRadius: 6,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(width: 10),
-          Expanded(
+          Container(
+            width: 140,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+                const Text(
+                  ':',
+                  style: TextStyle(
+                    fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                   ),
                 ),
-                if (subtitle != null)
-                  Padding(
-                    padding: const EdgeInsets.only(
-                        left:
-                            8.0), // Add some spacing between title and subtitle
-                    child: Text(
-                      subtitle,
-                      style: TextStyle(fontSize: 14, color: Colors.red[300]),
-                    ),
-                  ),
+                const SizedBox(width: 8),
               ],
             ),
           ),
+          if (subtitle != null)
+            Expanded(
+              child: Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+            ),
         ],
+      ),
+    );
+  }
+  Widget educationWidget(Qualification qualification){
+    return  GestureDetector(
+      onTap: () {
+        _showEditModalSheet(context);
+      },
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        elevation: 5,
+        color: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildInfoBox(
+                'Qualification',
+                subtitle: qualification.qualification,
+              ),
+              _buildInfoBox(
+                'Qualification Main',
+                subtitle: qualification.qualificationMainName,
+              ),
+              _buildInfoBox(
+                'Qualification Category',
+                subtitle: qualification.qualificationCategoryName,
+              ),
+              _buildInfoBox(
+                'Qualification Details',
+                subtitle: qualification.qualificationOtherName,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

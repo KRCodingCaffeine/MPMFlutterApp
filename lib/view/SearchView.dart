@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:mpm/utils/AppDrawer.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/view_model/controller/dashboard/dashboardcontroller.dart';
+import 'package:mpm/view_model/controller/samiti/SamitiController.dart';
 
 class SearchView extends StatefulWidget {
   const SearchView({super.key});
@@ -10,58 +14,39 @@ class SearchView extends StatefulWidget {
 }
 
 class _SearchViewState extends State<SearchView> {
+  SamitiController controller= Get.put(SamitiController());
   final TextEditingController _searchController = TextEditingController();
+  final DashBoardController dashBoardController = Get.find();
   final String defaultProfile = "assets/images/user3.png";
-
-  List<Map<String, String>> members = [
-    {
-      "lmcode": "LM1",
-      "name": "Karthika K Rajesh",
-      "mobile": "8898085105",
-      "profile": "assets/images/user2.png"
-    },
-    {
-      "lmcode": "LM2",
-      "name": "Rajesh Mani Nair",
-      "mobile": "8765432109",
-      "profile": "assets/images/male.png"
-    },
-    {
-      "lmcode": "LM4",
-      "name": "Manoj Kumar Murugan",
-      "mobile": "8086130758",
-      "profile": ""
-    },
-    {
-      "lmcode": "LM6",
-      "name": "Developer Test",
-      "mobile": "6543210987",
-      "profile": "assets/images/user2.png"
-    },
-  ];
-
-  List<Map<String, String>> filteredMembers = [];
-
-  @override
-  void initState() {
-    super.initState();
-    filteredMembers = members;
-  }
-
   void _filterMembers(String query) {
-    setState(() {
-      filteredMembers = members
-          .where((member) =>
-              member["name"]!.toLowerCase().contains(query.toLowerCase()) ||
-              member["mobile"]!.contains(query))
-          .toList();
-    });
+    // setState(() {
+    //   filteredMembers = members
+    //       .where((member) =>
+    //   member["name"]!.toLowerCase().contains(query.toLowerCase()) ||
+    //       member["mobile"]!.contains(query))
+    //       .toList();
+    // });
+    controller.getSearchLPM(query);
+  }
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    controller.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
+      appBar: dashBoardController.showAppBar.value?AppBar(
+        title: const Text('Search Member', style: TextStyle(
+          color: Colors.white
+        ),),
+        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ):null,
+      drawer: AppDrawer(),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -89,37 +74,60 @@ class _SearchViewState extends State<SearchView> {
             const SizedBox(height: 16),
             // Member List
             Expanded(
-              child: ListView.builder(
-                itemCount: filteredMembers.length,
-                itemBuilder: (context, index) {
-                  final member = filteredMembers[index];
-                  return _buildMemberCard(
-                    context,
-                    lmcode: member["lmcode"]!,
-                    name: member["name"]!,
-                    mobile: member["mobile"]!,
-                    profileImage: member["profile"]!.isEmpty
-                        ? defaultProfile
-                        : member["profile"]!,
-                  );
-                },
-              ),
-            ),
+              child: Obx(() =>
+              controller.loading2.value
+                  ? Center(child: CircularProgressIndicator(color: Colors.pink,))
+                  : ListView.builder(
+                    itemCount: controller.searchDataList.length,
+                    itemBuilder: (context, index) {
+                      var member = controller.searchDataList[index];
+                      var firstname = "";
+                      var middlename = "";
+                      var lastname = "";
+                      var name="";
+                      var lmcode="";
+                      if(member?.firstName!=null)
+                      {
+                        firstname = member!.firstName.toString();
+                      }
+                      if(member?.middleName!=null)
+                      {
+                        middlename = member!.middleName.toString();
+                      }
+                      if(member?.lastName!=null)
+                      {
+                        lastname = member!.lastName.toString();
+                      }
+                      if(member?.memberCode!=null)
+                      {
+                        lmcode = member!.memberCode.toString();
+                      }
+                     name = firstname+middlename+lastname;
+                      return buildMemberCard(
+                        context,
+                        lmcode: lmcode,
+                        name: name,
+                        mobile: member.mobile,
+                        profileImage: member.profileImage!.isEmpty
+                            ? defaultProfile
+                            : member.profileImage,
+                      );
+                    },
+                  )
+              ),)
           ],
         ),
       ),
     );
   }
 
-  /// **Reusable method to build a member card with navigation**
-  Widget _buildMemberCard(
-    BuildContext context, {
+
+
+  Widget buildMemberCard(BuildContext context, {
     required String lmcode,
-    required String name,
-    required String mobile,
-    required String profileImage,
-  }) {
-    return InkWell(
+    String? name, String? mobile,
+    String? profileImage}) {
+      return InkWell(
       onTap: () {
         // Navigate to MemberDetailPage on tap
         Navigator.push(
@@ -140,7 +148,7 @@ class _SearchViewState extends State<SearchView> {
             children: [
               CircleAvatar(
                 radius: 35,
-                backgroundImage: AssetImage(profileImage),
+                backgroundImage: AssetImage(profileImage.toString()),
                 backgroundColor: Colors.grey[300],
               ),
               const SizedBox(width: 16),
@@ -149,20 +157,14 @@ class _SearchViewState extends State<SearchView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Name and LM Code in the same row
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
                     Row(
                       children: [
                         Text(
-                          "Mobile: $mobile",
-                          style:
-                              TextStyle(fontSize: 14, color: Colors.grey[600]),
+                          name.toString(),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -170,11 +172,16 @@ class _SearchViewState extends State<SearchView> {
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFFe61428), // Red color
+                            color: Color(0xFFDC3545), // Red color
                           ),
                         ),
                       ],
-                    )
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Mobile: $mobile",
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    ),
                   ],
                 ),
               ),
@@ -186,6 +193,7 @@ class _SearchViewState extends State<SearchView> {
       ),
     );
   }
+
 }
 
 /// **Member Detail Page**

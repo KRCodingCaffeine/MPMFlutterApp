@@ -10,7 +10,7 @@ class CheckUserData2{
   String? email;
   Null? password;
   String? dob;
-  Null? proposerId;
+  var proposerId;
   String? maritalStatusId;
   String? marriageAnniversaryDate;
   String? genderId;
@@ -28,13 +28,13 @@ class CheckUserData2{
   String? memberStatusId;
   String? membershipApprovalStatusId;
   String? membershipTypeId;
-  Null? familyHeadMemberId;
-  Null? tempId;
+  var familyHeadMemberId;
+  var tempId;
   String? isJangana;
-  Null? saraswaniOptionId;
+  var saraswaniOptionId;
   String? createdBy;
   String? createdAt;
-  Null? updatedBy;
+ var updatedBy;
   String? updatedAt;
 
   CheckUserData2(

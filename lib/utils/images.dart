@@ -5,7 +5,6 @@ class Images {
   static const String loginImage = 'assets/images/login.png';
   static const String indiaImage = 'assets/images/india_flag.png';
   static const String gender = 'assets/images/gender.png';
-  static const String samiti = 'assets/images/samiti.svg';
   static const String marraige = 'assets/images/marriage.png';
   static const String house = 'assets/images/house.png';
   static const String city = 'assets/images/cityscape.png';
@@ -15,8 +14,6 @@ class Images {
   static const String pin = 'assets/images/pin.png';
   static const String docs = 'assets/images/docs.png';
   static const String user = 'assets/images/user.svg';
-  static const String makenewmember = 'assets/images/newmember.svg';
-  static const String share = 'assets/images/share.svg';
   static const String blood = 'assets/images/blood.png';
   static const String occupation = 'assets/images/occuption.png';
   static const String qualification = 'assets/images/qualification.png';
@@ -29,6 +26,6 @@ class Images {
   static const String publication = 'assets/images/publication.svg';
   static const String shiksha = 'assets/images/shiksha.svg';
   static const String vivah = 'assets/images/vivah.svg';
-
+  static const String makenewmember = 'assets/images/newmember.svg';
 
 }
