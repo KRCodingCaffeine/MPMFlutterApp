@@ -29,24 +29,22 @@ class _HomeViewState extends State<HomeView> {
 
   final List<Map<String, dynamic>> bhawanItems = [
     {
-      "title": "Girgaon Bhawan",
-      "imagePath": "assets/images/girgaon_bhawan.png"
+      "imagePath": "assets/images/banner1.jpg"
     },
     {
-      "title": "Andheri Bhawan",
-      "imagePath": "assets/images/girgaon_bhawan.png"
+      "imagePath": "assets/images/banner2.jpg"
     },
     {
-      "title": "Goregaon Bhawan",
-      "imagePath": "assets/images/girgaon_bhawan.png"
+      "imagePath": "assets/images/banner3.jpg"
     },
     {
-      "title": "Borivali Bhawan",
-      "imagePath": "assets/images/girgaon_bhawan.png"
+      "imagePath": "assets/images/banner4.jpg"
     },
     {
-      "title": "Ghatkopar Bhawan",
-      "imagePath": "assets/images/girgaon_bhawan.png"
+      "imagePath": "assets/images/banner5.jpg"
+    },
+    {
+      "imagePath": "assets/images/banner6.jpg"
     },
   ];
 
@@ -183,7 +181,7 @@ class _HomeViewState extends State<HomeView> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
             child: Text(
-              "Maheswari Bhavans",
+              "Advertisement",
               style: TextStyleClass.black12style.copyWith(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -193,7 +191,7 @@ class _HomeViewState extends State<HomeView> {
 
           // Horizontal ListView
           SizedBox(
-            height: 160,
+            height: 120,
             child: ListView.builder(
               controller: _scrollController,
               scrollDirection: Axis.horizontal,
@@ -201,7 +199,7 @@ class _HomeViewState extends State<HomeView> {
               itemCount: bhawanItems.length,
               itemBuilder: (context, index) {
                 final item = bhawanItems[index];
-                return _buildBhawanCard(item["title"], item["imagePath"]);
+                return _buildAdCard(item["title"], item["imagePath"]);
               },
             ),
           ),
@@ -212,63 +210,40 @@ class _HomeViewState extends State<HomeView> {
   }
 
   // Bhawan Card
-  Widget _buildBhawanCard(String title, String imagePath) {
+  Widget _buildAdCard(String? title, String imagePath) {
     return Container(
-      width: screenWidth,
+      width: 300,
+      height: 150,
       margin: const EdgeInsets.only(right: 16.0),
-      child: Card(
-        color: Colors.white,
-        elevation: 4.0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.0),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: Row(
-            children: [
-              // Left: Text
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyleClass.black12style.copyWith(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    ElevatedButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.info, color: Colors.black),
-                      label: const Text("Know More",
-                          style: TextStyle(color: Colors.black)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey[100],
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Right: Image
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8.0),
-                child: Image.asset(
-                  imagePath,
-                  width: 100,
-                  height: 100,
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ],
+      child: Stack(
+        children: [
+          // Background Image
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8.0),
+            child: Image.asset(
+              imagePath,
+              width: 300,
+              height: 150,
+              fit: BoxFit.fill,
+            ),
           ),
-        ),
+          // Gradient Overlay
+          Container(
+            width: 300,
+            height: 150,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8.0),
+              // gradient: LinearGradient(
+              //   begin: Alignment.bottomCenter,
+              //   end: Alignment.topCenter,
+              //   colors: [
+              //     Colors.black.withOpacity(0.6),
+              //     Colors.transparent,
+              //   ],
+              // ),
+            ),
+          ),
+        ],
       ),
     );
   }
