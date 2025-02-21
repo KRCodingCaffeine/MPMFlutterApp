@@ -30,6 +30,7 @@ class _ProfileViewState extends State<ProfileView> {
 
   UdateProfileController controller =Get.put(UdateProfileController());
   NewMemberController newMemberController=Get.put(NewMemberController());
+
   Future<void> _pickImage() async {
     try {
       final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
@@ -65,10 +66,10 @@ class _ProfileViewState extends State<ProfileView> {
       appBar: AppBar(
         backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         iconTheme: const IconThemeData(color: Colors.white),
-        title:  Text("My Profile",style: TextStyle(
-          color: Colors.white
-        ),),
-
+        title: const Text(
+          "My Profile",
+          style: TextStyle(color: Colors.white),
+        ),
         elevation: 0,
       ),
       drawer: AppDrawer(),
@@ -91,14 +92,15 @@ class _ProfileViewState extends State<ProfileView> {
                       children: [
                         Stack(
                           children: [
-                            CircleAvatar(
-                              radius: 40,
-                              backgroundImage: _profileImage != null
-                                  ? FileImage(_profileImage!)
-                                  : const AssetImage("assets/images/logo.png")
-                              as ImageProvider,
-                              backgroundColor: Colors.grey[300],
-                            ),
+                            Obx(() {
+                              return CircleAvatar(
+                                radius: 40,
+                                backgroundImage: controller.profileImage.value.isNotEmpty
+                                    ? NetworkImage(controller.profileImage.value)
+                                    : const AssetImage("assets/images/user3.png") as ImageProvider,
+                                backgroundColor: Colors.grey[300],
+                              );
+                            }),
                             Positioned(
                               bottom: 0,
                               right: 0,
@@ -127,34 +129,23 @@ class _ProfileViewState extends State<ProfileView> {
                             children: [
                               Row(
                                 children: [
-
-
-                                  const Text(
-                                    "UserName",
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-
-                                    ),
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Obx((){
-                                    return  Text(
+                                  Obx(() {
+                                    return Text(
                                       controller.userName.value,
                                       style: const TextStyle(
                                         fontSize: 16,
-                                        color: Color(0xFFDC3545),
+                                        color: Colors.black,
                                       ),
                                     );
                                   }),
                                 ],
                               ),
                               const SizedBox(height: 4),
-                              Obx((){
+                              Obx(() {
                                 return Text(
                                   "Mobile: ${controller.mobileNumber.value}",
                                   style: TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 14,
                                     color: Colors.grey[600],
                                   ),
                                 );

@@ -39,30 +39,9 @@ class _SamitiMembersViewPageState extends State<SamitiMembersViewPage> {
 
     return Scaffold(
         backgroundColor: Colors.grey[100],
-        appBar:  dashBoardController.showAppBar.value
-            ? PreferredSize(
-          preferredSize: const Size.fromHeight(kToolbarHeight),
-          child:  AppBar(
-            title: const Text(
-              'Samiti Members',
-              style: TextStyle(color: Colors.white),
-            ),
-            backgroundColor:
-            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-            iconTheme: const IconThemeData(color: Colors.white),
-          ),
-        )
-            : null,
-
-
-
-        drawer: AppDrawer(),
-
-
-
         body: Obx(() {
         if (controller.loading.value) {
-          return Center(child: CircularProgressIndicator(color: Colors.pink,));
+          return Center(child: CircularProgressIndicator(color: Color(0xFFe61428),));
         }
         if (controller.getSamitidata.value == null) {
           return Center(child: Text("No data available"));
