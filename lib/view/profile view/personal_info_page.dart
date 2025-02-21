@@ -21,15 +21,12 @@ class PersonalInformationPage extends StatefulWidget {
 
 class _PersonalInformationPageState extends State<PersonalInformationPage> {
   UdateProfileController controller=Get.put(UdateProfileController());
-NewMemberController newMemberController =Get.put(NewMemberController());
+  NewMemberController newMemberController =Get.put(NewMemberController());
   // Controllers for the text fields to manage user input
-
 
   @override
   void initState() {
     super.initState();
-
-
   }
 
   @override
@@ -160,15 +157,12 @@ NewMemberController newMemberController =Get.put(NewMemberController());
                         children: [
                           Padding(
                             padding: const EdgeInsets.only(
-                              bottom: 8.0, // Reduced bottom padding
-                              top: 8.0, // Optionally reduce top padding as well
+                              bottom: 4.0, // Reduced bottom padding
+                              top: 4.0, // Optionally reduce top padding as well
                             ),
                             child: TextButton(
                               onPressed: () {
-
-                                controller.userUpdateProfile(context,"1");
-
-
+                                controller.userUpdateProfile(context,controller.memberId.value);
                                 // _showSuccessMessage();
                               },
                               style: TextButton.styleFrom(
@@ -199,17 +193,13 @@ NewMemberController newMemberController =Get.put(NewMemberController());
                               return _buildEditableField(
                                 'Middle Name',
                                 controller.middleNameController.value,
-
                               );
                             }),
                             Obx((){
                               return _buildEditableField(
                                 'SurName',
                                 controller.surNameController.value);
-
                             }),
-
-
                              Obx((){
                               return  _buildEditableField(
                                   'Fathers Name',
@@ -233,7 +223,6 @@ NewMemberController newMemberController =Get.put(NewMemberController());
                               return  _buildEditableField(
                                   'WhatsApp Number',
                                   controller.whatsAppNumberController.value,
-
                               );
                             }),
                             Obx((){
@@ -253,10 +242,9 @@ NewMemberController newMemberController =Get.put(NewMemberController());
                                 child: TextFormField(
                                   keyboardType: TextInputType.text,
                                   readOnly: true,
-                                  controller: newMemberController.dateController,
+                                  controller: controller.dobController.value, // Use .value to get the TextEditingController
                                   decoration: const InputDecoration(
-                                    hintText:
-                                    'Date of Birth *', // Match the hint text
+                                    hintText: 'Date of Birth *',
                                     border: InputBorder.none,
                                     contentPadding: EdgeInsets.symmetric(
                                       vertical: 12,
@@ -266,25 +254,23 @@ NewMemberController newMemberController =Get.put(NewMemberController());
                                   onTap: () async {
                                     DateTime? pickedDate = await showDatePicker(
                                       context: context,
-                                      initialDate: DateTime.now(),
+                                      initialDate: controller.dobController.value.text.isNotEmpty
+                                          ? DateFormat('dd/MM/yyyy').parse(
+                                          controller.dobController.value.text.replaceAll('-', '/')) // ✅ Fix: Handle incorrect format
+                                          : DateTime.now(),
                                       firstDate: DateTime(1900),
                                       lastDate: DateTime.now(),
-                                      builder:
-                                          (BuildContext context, Widget? child) {
+                                      builder: (BuildContext context, Widget? child) {
                                         return Theme(
                                           data: Theme.of(context).copyWith(
                                             colorScheme: ColorScheme.light(
-                                              primary: ColorHelperClass.getColorFromHex(ColorResources.red_color), // Apply red color
-                                              onPrimary: Colors
-                                                  .white, // Text color on primary button
-                                              onSurface: Colors
-                                                  .black, // Text color on surface
+                                              primary: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                                              onPrimary: Colors.white,
+                                              onSurface: Colors.black,
                                             ),
                                             textButtonTheme: TextButtonThemeData(
                                               style: TextButton.styleFrom(
-                                                foregroundColor: ColorHelperClass
-                                                    .getColorFromHex(ColorResources
-                                                    .red_color), // Buttons color
+                                                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
                                               ),
                                             ),
                                           ),
@@ -292,17 +278,15 @@ NewMemberController newMemberController =Get.put(NewMemberController());
                                         );
                                       },
                                     );
+
                                     if (pickedDate != null) {
-                                      String formattedDate =
-                                      DateFormat('dd/MM/yyyy')
-                                          .format(pickedDate);
-                                      setState(() {
-                                        newMemberController.dateController.text =
-                                            formattedDate;
-                                      });
+                                      String formattedDate = DateFormat('dd/MM/yyyy').format(pickedDate);
+                                      controller.dobController.value.text = formattedDate; // ✅ Set text correctly
                                     }
                                   },
-                                ),
+                                )
+
+                                ,
                               ),
                             ),
                             const SizedBox(height: 20),
@@ -355,11 +339,7 @@ NewMemberController newMemberController =Get.put(NewMemberController());
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                          value: newMemberController
-                                              .selectedGender.value.isEmpty
-                                              ? null
-                                              : newMemberController
-                                              .selectedGender.value,
+                                          value: controller.gender_id.value.isNotEmpty ? controller.gender_id.value : '',
                                           items: newMemberController.genderList
                                               .map((DataX gender) {
                                             return DropdownMenuItem<String>(
@@ -371,7 +351,7 @@ NewMemberController newMemberController =Get.put(NewMemberController());
                                           }).toList(),
                                           onChanged: (String? newValue) {
                                             if (newValue != null) {
-                                              newMemberController.setSelectedGender(newValue);
+                                              controller.gender_id.value = newValue;
                                             }
                                           },
                                         ),
@@ -433,11 +413,7 @@ NewMemberController newMemberController =Get.put(NewMemberController());
                                             style: TextStyle(
                                                 fontWeight: FontWeight.bold),
                                           ), // Hint to show when nothing is selected
-                                          value: newMemberController
-                                              .selectBloodGroup.value.isEmpty
-                                              ? null
-                                              : newMemberController
-                                              .selectBloodGroup.value,
+                                          value: controller.blood_group_id.value.isNotEmpty ? controller.blood_group_id.value : '',
 
                                           items: newMemberController.bloodgroupList
                                               .map((BloodGroupData marital) {
@@ -450,7 +426,7 @@ NewMemberController newMemberController =Get.put(NewMemberController());
                                           }).toList(), // Convert to List.
                                           onChanged: (String? newValue) {
                                             if (newValue != null) {
-                                              newMemberController.setSelectedBloodGroup(newValue);
+                                              controller.blood_group_id.value = newValue;
                                             }
                                           },
                                         ),
@@ -472,68 +448,51 @@ NewMemberController newMemberController =Get.put(NewMemberController());
                                 child: Row(
                                   children: [
                                     Obx(() {
-                                      if (newMemberController.rxStatusmarried.value ==
-                                          Status.LOADING) {
+                                      if (newMemberController.rxStatusmarried.value == Status.LOADING) {
                                         return Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 10, horizontal: 22),
+                                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 22),
                                           child: Container(
                                             alignment: Alignment.centerRight,
                                             height: 24,
                                             width: 24,
                                             child: CircularProgressIndicator(
-                                              color: ColorHelperClass
-                                                  .getColorFromHex(
-                                                  ColorResources.pink_color),
+                                              color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),
                                             ),
                                           ),
                                         );
-                                      } else if (newMemberController
-                                          .rxStatusmarried.value ==
-                                          Status.ERROR) {
-                                        return const Center(
-                                            child: Text(
-                                                'Failed to load marital status'));
-                                      } else if (newMemberController
-                                          .maritalList.isEmpty) {
-                                        return const Center(
-                                            child: Text(
-                                                'No marital status available'));
+                                      } else if (newMemberController.rxStatusmarried.value == Status.ERROR) {
+                                        return const Center(child: Text('Failed to load marital status'));
+                                      } else if (newMemberController.maritalList.isEmpty) {
+                                        return const Center(child: Text('No marital status available'));
                                       } else {
                                         return Expanded(
                                           child: DropdownButton<String>(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 20),
+                                            padding: const EdgeInsets.symmetric(horizontal: 20),
                                             isExpanded: true,
                                             underline: Container(),
                                             hint: const Text(
                                               'Select marital status',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
+                                              style: TextStyle(fontWeight: FontWeight.bold),
                                             ),
-                                            value: newMemberController
-                                                .selectMarital.value.isEmpty
-                                                ? null
-                                                : newMemberController
-                                                .selectMarital.value,
-                                            items: newMemberController.maritalList
-                                                .map((MaritalData marital) {
+                                            value: controller.marital_status_id.value.isNotEmpty
+                                                ? controller.marital_status_id.value
+                                                : null, // Set to null if empty to show hint
+                                            items: newMemberController.maritalList.map((MaritalData marital) {
                                               return DropdownMenuItem<String>(
                                                 value: marital.id.toString(),
-                                                child: Text(
-                                                    marital.maritalStatus ??
-                                                        'Unknown'),
+                                                child: Text(marital.maritalStatus ?? 'Unknown'),
                                               );
                                             }).toList(),
                                             onChanged: (String? newValue) {
                                               if (newValue != null) {
-                                                newMemberController.setSelectedMarital(newValue);
+                                                controller.marital_status_id.value = newValue; // Update the correct Rx variable
                                               }
                                             },
                                           ),
                                         );
                                       }
                                     }),
+
                                   ],
                                 ),
                               ),
@@ -541,54 +500,64 @@ NewMemberController newMemberController =Get.put(NewMemberController());
                             const SizedBox(height: 20),
                             Obx((){
                               return  Visibility(
-                                  visible: newMemberController.MaritalAnnivery.value==true,
-                                  child: Column(
-                                    children: [
-                                      SizedBox(height: 8),
-                                      SizedBox(
-                                        width: double.infinity,
-                                        child: Container(
-                                          margin:
-                                          const EdgeInsets.only(left: 5, right: 5),
-                                          decoration: BoxDecoration(
-                                            border: Border.all(color: Colors.grey),
-                                            borderRadius: BorderRadius.circular(5),
+                                visible: controller.marriageAnniversaryDate.value.isNotEmpty,
+                                child: Column(
+                                  children: [
+                                    const SizedBox(height: 8),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: Container(
+                                        margin: const EdgeInsets.only(left: 5, right: 5),
+                                        decoration: BoxDecoration(
+                                          border: Border.all(color: Colors.grey),
+                                          borderRadius: BorderRadius.circular(5),
+                                        ),
+                                        child: TextFormField(
+                                          keyboardType: TextInputType.text,
+                                          readOnly: true,
+                                          controller: newMemberController.marriagedateController.value,
+                                          decoration: const InputDecoration(
+                                            hintText: 'Marriage Anniversary *',
+                                            border: InputBorder.none,
+                                            contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
                                           ),
-                                          child: TextFormField(
-                                            keyboardType: TextInputType.text,
-                                            readOnly: true,
-                                            controller: newMemberController.marriagedateController.value,
-                                            decoration: InputDecoration(
-                                              hintText: 'Marriage Anniversary *',
-                                              border: InputBorder.none, // Remove the internal border
-                                              contentPadding: EdgeInsets.symmetric(vertical: 12,horizontal: 20),
-                                            ),
-                                            onTap: () async{
-                                              DateTime? pickedDate = await showDatePicker(
-                                                context: context,
-                                                initialDate: DateTime.now(),
-                                                firstDate: DateTime(1900),
-                                                lastDate: DateTime.now(),
-                                              );
-                                              if (pickedDate != null) {
-                                                String formattedDate = DateFormat('dd/MM/yyyy').format(pickedDate);
-                                                setState(() {
-                                                  newMemberController.marriagedateController.value.text = formattedDate;
-                                                });
+                                          onTap: () async {
+                                            DateTime initialDate = DateTime.now();
+
+                                            // Parse the existing date if available
+                                            if (controller.marriageAnniversaryDate.value.isNotEmpty) {
+                                              try {
+                                                initialDate = DateFormat('dd/MM/yyyy').parse(controller.marriageAnniversaryDate.value);
+                                              } catch (e) {
+                                                // Handle parsing error, if any
                                               }
+                                            }
 
-                                            },
-                                          ),
+                                            DateTime? pickedDate = await showDatePicker(
+                                              context: context,
+                                              initialDate: initialDate,
+                                              firstDate: DateTime(1900),
+                                              lastDate: DateTime.now(),
+                                            );
 
+                                            if (pickedDate != null) {
+                                              String formattedDate = DateFormat('dd/MM/yyyy').format(pickedDate);
+
+                                              // Update TextEditingController
+                                              newMemberController.marriagedateController.value.text = formattedDate;
+
+                                              // Update the observable value
+                                              controller.marriageAnniversaryDate.value = formattedDate;
+                                            }
+                                          },
                                         ),
                                       ),
-                                    ],
-                                  ));
+                                    ),
+                                  ],
+                                ),
+                              );
                             }),
                             const SizedBox(height: 80),
-
-
-
                           ],
                         ),
                       ),
@@ -611,9 +580,9 @@ NewMemberController newMemberController =Get.put(NewMemberController());
 
   // Method to show success message
   void _showSuccessMessage() {
-    final snackBar = SnackBar(
-      content: const Text('Personal Info updated successfully!'),
-      duration: const Duration(seconds: 2),
+    const snackBar = SnackBar(
+      content: Text('Personal Info updated successfully!'),
+      duration: Duration(seconds: 2),
       backgroundColor: Colors.green,
     );
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
@@ -686,4 +655,5 @@ NewMemberController newMemberController =Get.put(NewMemberController());
       ),
     );
   }
+
 }

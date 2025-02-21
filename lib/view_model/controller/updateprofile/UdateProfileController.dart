@@ -26,6 +26,8 @@ import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/urls.dart';
 import 'package:http/http.dart' as http;
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
+
+import '../../../view/profile view/personal_info_page.dart';
 class UdateProfileController extends GetxController{
   final api = UpdateProfileRepository();
   var userName = "".obs;
@@ -47,8 +49,12 @@ class UdateProfileController extends GetxController{
   var email = ''.obs;
   var dob = ''.obs;
   var gender = ''.obs;
+  var gender_id = ''.obs;
   var maritalStatus = ''.obs;
+  var marital_status_id = ''.obs;
   var bloodGroup = ''.obs;
+  var blood_group_id = ''.obs;
+  var marriageAnniversaryDate = ''.obs;
 
   var address = ''.obs;
   var flatNo = ''.obs;
@@ -137,11 +143,9 @@ class UdateProfileController extends GetxController{
 
   void getUserProfile() async {
       CheckUserData2? userData = await SessionManager.getSession();
-      print('User ID: ${userData?.memberId}');
-      print('User Name: ${userData?.mobile}');
       loading.value=true;
       var id=userData?.memberId.toString();
-     id="1";
+        //id="1";
       api.getUserData(id).then((_value) {
       loading.value=false;
       getUserData.value=_value.data!;
@@ -155,10 +159,15 @@ class UdateProfileController extends GetxController{
       email.value=getUserData.value.email.toString();
       dob.value=getUserData.value.dob.toString();
       maritalStatus.value=getUserData.value.marital_status.toString();
+      marital_status_id.value = getUserData.value.maritalStatusId.toString();
       gender.value=getUserData.value.gender_name.toString();
+      gender_id.value = getUserData.value.genderId.toString();
       bloodGroup.value=getUserData.value.blood_group.toString();
-
+      blood_group_id.value = getUserData.value.bloodGroupId.toString();
       whatsAppNumber.value=getUserData.value.whatsappNumber.toString();
+      marriageAnniversaryDate.value = getUserData.value.marriageAnniversaryDate.toString();
+
+
       firstNameController.value.text =  firstName.value;
       middleNameController.value.text = middleName.value;
       surNameController.value.text =  surName.value;
@@ -301,7 +310,7 @@ class UdateProfileController extends GetxController{
         "created_by":memberId.value
 
       };
-      print("fffh"+map.toString());
+      //print("fffh"+map.toString());
       api.addQualification(map).then((_value) async {
         addloading.value=false;
         if(_value['status']==true)
@@ -351,8 +360,8 @@ Navigator.pushReplacementNamed(con, RouteNames.dashboard);
 
   void  updateFamilyRelation(BuildContext con, String memerId) async{
     CheckUserData2? userData = await SessionManager.getSession();
-    print('User ID: ${userData?.memberId}');
-    print('User Name: ${userData?.mobile}');
+    //print('User ID: ${userData?.memberId}');
+    //print('User Name: ${userData?.mobile}');
     memberId.value=userData!.memberId.toString();
     //addloading.value=true;
     try {
@@ -360,7 +369,7 @@ Navigator.pushReplacementNamed(con, RouteNames.dashboard);
         "member_id":memerId,
         "relationship_type_id": selectRelationShipType.value,
       };
-      print("fffh"+map.toString());
+      //print("fffh"+map.toString());
       await api.updateFamilyRelation(map).then((UpdateFamilyMember _value) async {
        // addloading.value=false;
         print("gnfg"+_value.message.toString());
@@ -412,7 +421,7 @@ Navigator.pushReplacementNamed(con, RouteNames.dashboard);
         "occupation_other_name":"",
         "updated_by":"1"
       };
-      print("fffh"+map.toString());
+      //print("fffh"+map.toString());
       await api.updateOrAddOccuption(map).then((AddOccuptionModel _value) async {
        // addloading.value=false;
         print("gnfg"+_value.message.toString());
@@ -449,19 +458,20 @@ Navigator.pushReplacementNamed(con, RouteNames.dashboard);
     }
 
   }
+
   void userUpdateProfile(BuildContext context, String type) async{
-    print("member"+memberId.value);
+    //print("member"+memberId.value);
     CheckUserData2? userData = await SessionManager.getSession();
-    print('User ID: ${userData?.memberId}');
-    print('User Name: ${userData?.mobile}');
+    //print('User ID: ${userData?.memberId}');
+    //print('User Name: ${userData?.mobile}');
     final url = Uri.parse(Urls.updateProfile_url);
 
     var email=emailController.value.text.trim();
     var mobile=mobileNumberController.value.text.trim();
    NewMemberController memberController=Get.put(NewMemberController());
-    var blood_group_id = memberController.selectBloodGroup.value;
-    var gender_id =memberController. selectedGender.value;
-    var marital_status_id = memberController.selectMarital.value;
+    //var blood_group_id = memberController.selectBloodGroup.value;
+    //var gender_id =gen;
+    //var marital_status_id = memberController.selectMarital.value;
     var dob= dobController.value.text.trim();
 
     var whatsapp_number=whatsAppNumberController.value.text.trim();
@@ -478,25 +488,15 @@ Navigator.pushReplacementNamed(con, RouteNames.dashboard);
       "email": email,
       "whatsapp_number": whatsapp_number,
       "mobile": mobile,
-      "gender_id": gender_id,
-      "marital_status_id": marital_status_id,
-      "pincode": "",
-      "blood_group_id": blood_group_id,
+      "gender_id": gender_id.value,
+      "marital_status_id": marital_status_id.value,
+      "blood_group_id": blood_group_id.value,
       "dob": dob,
-      "document_type": "",
-      "building_id": "",
-      "member_type_id":  "",
-      "flat_no": "",
-      "state_id":"",
-      "city_id":"",
-      "area_name":"",
-      "zone_id":"",
-      "country_id":"",
       "marriage_anniversary_date": memberController.marriagedateController.value.text,
       "salutation_id": "",
 
     };
-    print("ccvv"+payload.toString());
+    print("Update profile payload $payload");
     var request = http.MultipartRequest('POST',url);
     request.fields.addAll(payload);
     //request.files.add(await http.MultipartFile.fromPath('document_image',document_image));
@@ -511,10 +511,11 @@ Navigator.pushReplacementNamed(con, RouteNames.dashboard);
       String responseBody = await response.stream.bytesToString();
       loading.value=false;
       Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
-      print("vfbb"+jsonResponse.toString());
+      //print("vfbb"+jsonResponse.toString());
       RegisterModelClass registerResponse = RegisterModelClass.fromJson(jsonResponse);
       if(registerResponse.status==true)
       {
+        getUserProfile();
         Get.snackbar(
           "Success",
           "Update Successfully",
@@ -523,8 +524,12 @@ Navigator.pushReplacementNamed(con, RouteNames.dashboard);
           snackPosition: SnackPosition.TOP,
         );
         memberId.value=registerResponse.data.toString();
-
-        Navigator.pushReplacementNamed(context!, RouteNames.dashboard,);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const PersonalInformationPage(),
+          ),
+        );
       }
       else
       {
