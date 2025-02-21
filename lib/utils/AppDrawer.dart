@@ -4,19 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/route/route_name.dart';
 import 'package:mpm/utils/Session.dart';
-import 'package:mpm/utils/images.dart';
 import 'package:mpm/view/login_view.dart';
 import 'package:mpm/view_model/controller/dashboard/dashboardcontroller.dart';
 import 'package:share_plus/share_plus.dart';
 
 
 class AppDrawer extends StatelessWidget {
-  File? _profileImage;
 
   @override
   Widget build(BuildContext context) {
     final DashBoardController dashBoardController = Get.find();
     return Drawer(
+      backgroundColor: Colors.white,
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
@@ -28,55 +27,41 @@ class AppDrawer extends StatelessWidget {
               padding: const EdgeInsets.all(10.0),
               child: Row(
                 children: [
-                  // Profile Image Section
-                  CircleAvatar(
-                    radius: 30, // Adjusted size for better visibility
-                    backgroundImage: _profileImage != null
-                        ? FileImage(_profileImage!)
-                        : const AssetImage("assets/images/logo.png")
-                    as ImageProvider,
+                  // Profile Image
+                  Obx(() => CircleAvatar(
+                    radius: 30,
+                    backgroundImage: dashBoardController.profileImage.value.isNotEmpty
+                        ? NetworkImage(dashBoardController.profileImage.value)
+                        : const AssetImage("assets/images/user3.png") as ImageProvider,
                     backgroundColor: Colors.grey[300],
-                  ),
-
-                  // User Information Section
+                  )),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment
-                          .center, // Vertically center content
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment
-                              .start, // Align userName and ID properly
-                          children: [
-                            Text(
-                              dashBoardController.userName.value,
-                              style: const TextStyle(
-                                fontSize:
-                                14, // Adjusted font size for better readability
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(width: 5),
-                            Text(
-                              dashBoardController.lmCode.value, // Display Lm code (logged-in member code)
-                              style: const TextStyle(
-                                fontSize: 8,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
+                        Text(
+                          dashBoardController.userName.value.isNotEmpty
+                              ? dashBoardController.userName.value
+                              : "Guest User",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          "Mobile: ${dashBoardController.mobileNumber.value}", // Display mobile number
-                          style: const TextStyle(
-                            fontSize: 12, // Adjusted font size for mobile
-                            color: Colors.white70,
-                          ),
+                          "Member Code: ${dashBoardController.lmCode.value.isNotEmpty ? dashBoardController.lmCode.value : "N/A"}",
+                          style: const TextStyle(fontSize: 12, color: Colors.white70),
                         ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "Mobile: ${dashBoardController.mobileNumber.value.isNotEmpty ? dashBoardController.mobileNumber.value : "N/A"}",
+                          style: const TextStyle(fontSize: 12, color: Colors.white70),
+                        ),
+
                       ],
                     ),
                   )
@@ -88,38 +73,28 @@ class AppDrawer extends StatelessWidget {
             leading: Icon(Icons.home),
             title: Text('Home'),
             onTap: () {
-              Navigator.pop(context);
+              Navigator.pushNamed(context, RouteNames.dashboard);
             },
           ),
           ListTile(
             leading: Icon(Icons.person),
             title: Text('My Profile'),
             onTap: () {
-              Navigator.pushReplacementNamed(context,
-                  RouteNames.profile);
+              Navigator.pushNamed(context, RouteNames.profile);
             },
           ),
           ListTile(
-            leading: Icon(Icons.search),
+            leading: Icon(Icons.person_search),
             title: Text('Search Members'),
             onTap: () {
-              dashBoardController.showAppBar.value=true;
-              Navigator.pushReplacementNamed(context, RouteNames.searchmember);
+              Navigator.pushNamed(context, RouteNames.searchmember);
             },
           ),
           ListTile(
-            leading: Icon(Icons.person),
+            leading: Icon(Icons.account_balance),
             title: Text('Samiti Members'),
             onTap: () async {
-              Navigator.pushReplacementNamed(context, RouteNames.samitimemberview);
-              dashBoardController.showAppBar.value=true;
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.settings),
-            title: Text('Make New Member'),
-            onTap: () {
-
+              Navigator.pushNamed(context, RouteNames.samitimemberview);
             },
           ),
           ListTile(
@@ -134,42 +109,42 @@ class AppDrawer extends StatelessWidget {
             leading: const Icon(Icons.file_copy),
             title: const Text('Forms'),
             onTap: () {
-              Navigator.pushReplacementNamed(context, RouteNames.forms);
+              Navigator.pushNamed(context, RouteNames.forms);
             },
           ),
           ListTile(
             leading: const Icon(Icons.account_balance),
             title: const Text('Government Scheme'),
             onTap: () {
-              Navigator.pushReplacementNamed(context, RouteNames.gov_scheme);
+              Navigator.pushNamed(context, RouteNames.gov_scheme);
             },
           ),
           ListTile(
-            leading: Icon(Icons.settings),
+            leading: Icon(Icons.info),
             title: Text('About Us'),
             onTap: () {
-              Navigator.pushReplacementNamed(context, RouteNames.aboutUs);
+              Navigator.pushNamed(context, RouteNames.aboutUs);
             },
           ),
           ListTile(
-            leading: Icon(Icons.support_agent_rounded),
+            leading: Icon(Icons.headset_mic),
             title: Text('Contact Us'),
             onTap: () {
-              Navigator.pushReplacementNamed(context, RouteNames.contactUs);
+              Navigator.pushNamed(context, RouteNames.contactUs);
             },
           ),
           ListTile(
-            leading: Icon(Icons.settings),
-            title: Text('Pravacy Policy'),
+            leading: Icon(Icons.privacy_tip),
+            title: Text('Privacy Policy'),
             onTap: () {
-              Navigator.pushReplacementNamed(context, RouteNames.pravacypolicy);
+              Navigator.pushNamed(context, RouteNames.pravacypolicy);
             },
           )
           ,ListTile(
-            leading: Icon(Icons.document_scanner),
+            leading: Icon(Icons.description),
             title: Text('Terms & Condition'),
             onTap: () {
-              Navigator.pushReplacementNamed(context, RouteNames.termandcondition);
+              Navigator.pushNamed(context, RouteNames.termandcondition);
             },
           ),
 

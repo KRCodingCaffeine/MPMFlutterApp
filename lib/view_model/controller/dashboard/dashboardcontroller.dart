@@ -1,17 +1,24 @@
 import 'package:get/get.dart';
-class DashBoardController extends GetxController{
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:mpm/utils/urls.dart';
 
+class DashBoardController extends GetxController {
   var currentIndex = 0.obs;
-  var showAppBar = false.obs;
+  var showAppBar = true.obs;
 
   void changeTab(int index) {
     currentIndex.value = index;
   }
-  void toggleAppBar(bool value) {
+
+  void toggleAppBar(bool value, {bool fromDrawer = false}) {
     showAppBar.value = value;
   }
-   var userName = 'Karthika K Rajesh'.obs;
-  var mobileNumber = '8898085105'.obs;
-  var lmCode = 'LM0001'.obs;
+
+  // User Data Variables (Only for Viewing)
+  var userName = ''.obs;
+  var mobileNumber = ''.obs;
+  var lmCode = ''.obs;
+  var profileImage = ''.obs;
 
 }
