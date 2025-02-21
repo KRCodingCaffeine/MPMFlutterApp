@@ -25,8 +25,10 @@ import 'package:mpm/route/route_name.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/urls.dart';
 import 'package:http/http.dart' as http;
+import 'package:mpm/view/profile%20view/profile_view.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 
+import '../../../view/profile view/family_info_page.dart';
 import '../../../view/profile view/personal_info_page.dart';
 class UdateProfileController extends GetxController{
   final api = UpdateProfileRepository();
@@ -372,9 +374,11 @@ Navigator.pushReplacementNamed(con, RouteNames.dashboard);
       //print("fffh"+map.toString());
       await api.updateFamilyRelation(map).then((UpdateFamilyMember _value) async {
        // addloading.value=false;
-        print("gnfg"+_value.message.toString());
+        //print("gnfg"+_value.message.toString());
         if(_value.status==true) {
           Navigator.pushReplacementNamed(con, RouteNames.dashboard);
+
+
           Get.snackbar(
             'Success', // Title
             "Update Relation SuccessFully", // Message
@@ -383,6 +387,8 @@ Navigator.pushReplacementNamed(con, RouteNames.dashboard);
             colorText: Colors.white,
             duration: Duration(seconds: 3),
           );
+
+          getUserProfile();
         }
       })
           .onError((error, strack) async {

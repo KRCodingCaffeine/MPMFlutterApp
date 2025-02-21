@@ -53,8 +53,6 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
     regiController.getGender();
     regiController.getMaritalStatus();
     regiController.getBloodGroup();
-
-
     regiController.getMemberShip();
     regiController.getDocumentType();
 
@@ -78,8 +76,8 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
   @override
   Widget build(BuildContext context) {
     final double screenHeight = MediaQuery.of(context).size.height;
-    final   Map<String, dynamic>? rcvdData = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
-    regiController.arg_page.value=rcvdData!['arg_page'].toString();
+    // final   Map<String, dynamic>? rcvdData = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+    // regiController.arg_page.value=rcvdData!['arg_page'].toString();
 
     return GestureDetector(
       onTap: () {
@@ -87,8 +85,8 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title:  regiController.arg_page.value==2?Text("Update Personal Info") :Text(
-            "Add new Member",
+          title:  const Text(
+            "Make new Member",
             style: TextStyle(color: Colors.white),
           ),
           backgroundColor:
@@ -105,27 +103,6 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SizedBox(
-                  width: 130,
-                  child: Container(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Navigator.pushReplacementNamed(context!, RouteNames.registration_screen);
-                        Navigator.pop(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: ColorHelperClass.getColorFromHex(
-                            ColorResources.red_color),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(AppConstants.back,
-                          style: TextStyleClass.white16style),
-                    ),
-                  ),
-                ),
                 SizedBox(
                   width: 130,
                   child: ElevatedButton(
@@ -203,7 +180,7 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
           ),
         ),
         body: Container(
-          padding: const EdgeInsets.only(top: 50),
+          padding: const EdgeInsets.only(top: 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.start,
@@ -224,7 +201,7 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           const Padding(
-                            padding: EdgeInsets.only(left: 5, top: 20),
+                            padding: EdgeInsets.only(left: 5, top: 0),
                             child: Align(
                               alignment: Alignment
                                   .centerLeft, // Align text to the left side
@@ -269,15 +246,6 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
 
                             child: Row(
                               children: [
-                                // Padding(
-                                //   padding: const EdgeInsets.only(left: 12.0),
-                                //   child: Image.asset(Images.gender, // Replace with your flag asset
-                                //     height: 29, // Adjust height as needed
-                                //     width: 29,
-                                //     fit: BoxFit.cover,
-                                //     color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),
-                                //   ),
-                                // ),
                                 Obx(() {
                                   if (regiController.rxStatusMemberSalutation.value == Status.LOADING) {
                                     return Padding(
@@ -322,9 +290,6 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                             ),
                           ),
                           SizedBox(height: 20),
-
-
-
 
                           //First Name
                           _buildEditableField(
