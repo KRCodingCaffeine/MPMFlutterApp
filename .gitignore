@@ -56,6 +56,10 @@ web/.dart_tool/
 web/.packages
 web/.flutter-plugins
 
+# Ignore auto-generated Flutter files
+linux/flutter/
+windows/flutter/
+macos/flutter/
 # Firebase
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
