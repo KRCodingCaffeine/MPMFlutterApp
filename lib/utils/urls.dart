@@ -36,4 +36,5 @@ class Urls {
   static const  String addUpdateFamilyMEber_url = base_url+"api/update_family_member_relation";
   static const  String addOccuption_url = base_url+"api/add_update_occupation";
 
+  static const String imagePathUrl = base_url+"public/";
 }

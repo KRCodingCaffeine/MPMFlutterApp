@@ -6,6 +6,7 @@ import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/relation/RelationData.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/utils/urls.dart';
 import 'package:mpm/view/profile%20view/profile_view.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
@@ -13,7 +14,8 @@ class FamilyInfoPage extends StatefulWidget {
   final String? successMessage;
   final String? failureMessage;
 
-  const FamilyInfoPage({Key? key, this.successMessage, this.failureMessage}) : super(key: key);
+  const FamilyInfoPage({Key? key, this.successMessage, this.failureMessage})
+      : super(key: key);
 
   @override
   _FamilyInfoPageState createState() => _FamilyInfoPageState();
@@ -23,7 +25,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
   final ImagePicker _picker = ImagePicker();
   File? _profileImage;
   File? _image;
-  UdateProfileController controller=Get.put(UdateProfileController());
+  UdateProfileController controller = Get.put(UdateProfileController());
   String firstName = "Rajesh";
   String middleName = "Mani";
   String surName = "Nair";
@@ -43,11 +45,13 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
         return Wrap(
           children: [
             ListTile(
-              leading: const Icon(Icons.photo_library, color: Color(0xFFe61428)),
+              leading:
+                  const Icon(Icons.photo_library, color: Color(0xFFe61428)),
               title: const Text("Pick from Gallery"),
               onTap: () async {
                 Navigator.pop(context);
-                final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+                final pickedFile =
+                    await _picker.pickImage(source: ImageSource.gallery);
                 if (pickedFile != null) {
                   onImageSelected(File(pickedFile.path));
                 }
@@ -58,7 +62,8 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
               title: const Text("Take a Picture"),
               onTap: () async {
                 Navigator.pop(context);
-                final pickedFile = await _picker.pickImage(source: ImageSource.camera);
+                final pickedFile =
+                    await _picker.pickImage(source: ImageSource.camera);
                 if (pickedFile != null) {
                   onImageSelected(File(pickedFile.path));
                 }
@@ -76,7 +81,8 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text('Family Info', style: TextStyle(color: Colors.white)),
-        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        backgroundColor:
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -86,13 +92,9 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
         child: Column(
           children: [
-            GestureDetector(
-              onTap: () => _navigateToProfilePage(context, firstName, middleName, surName, relationshipName, _profileImage),
-              child: _buildUserCard(context), // Main user card
-            ),
             const SizedBox(height: 20),
             Expanded(
               child: ListView.builder(
@@ -115,19 +117,36 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
       child: ListTile(
         leading: CircleAvatar(
           radius: 30,
-          backgroundImage: member.profileImage!= null
-              ? NetworkImage(member.profileImage)
-              : const AssetImage("assets/images/male.png") as ImageProvider,
+          backgroundImage:
+              (member.profileImage != null && member.profileImage.isNotEmpty)
+                  ? NetworkImage(Urls.imagePathUrl + member.profileImage)
+                  : const AssetImage("assets/images/male.png") as ImageProvider,
           backgroundColor: Colors.grey[300],
         ),
-        title: Text(
-          "${member.firstName} ${member.middleName} ${member.lastName}".trim(),
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min, // Prevent unnecessary space
+          children: [
+            Text(
+              "${member.firstName} ${member.lastName}".trim(),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              "Member Code : " + (member.memberCode ?? member.memberId),
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            ),
+            Text(
+              "Relation : " + member.relationshipName,
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            ),
+          ],
         ),
-        subtitle: Text(member.relationshipName, style: TextStyle(fontSize: 16, color: Colors.grey[600])),
         trailing: IconButton(
           icon: const Icon(Icons.edit, color: Colors.grey),
-          onPressed: () => _showEditModalSheet(context, member.memberId),
+          onPressed: ()  {
+            controller.selectRelationShipType(member.relationshipTypeId);
+            _showEditModalSheet(context, member.memberId);
+          },
         ),
       ),
     );
@@ -159,7 +178,8 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                     children: [
                       Text(
                         "$firstName $middleName $surName".trim(),
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -170,9 +190,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.edit, color: Colors.grey),
-                    onPressed: (){
-
-                    },
+                    onPressed: () {},
                   ),
                 ],
               ),
@@ -184,7 +202,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
   }
 
   void _showEditModalSheet(BuildContext context, String index) {
-
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -208,14 +225,15 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text("Cancel", style: TextStyle(color: Color(0xFFe61428))),
+                    child: const Text("Cancel",
+                        style: TextStyle(color: Color(0xFFe61428))),
                   ),
                   TextButton(
                     onPressed: () {
-                  controller.updateFamilyRelation(context, index);
-
+                      controller.updateFamilyRelation(context, index);
                     },
-                    child: const Text("Save", style: TextStyle(color: Color(0xFFe61428))),
+                    child: const Text("Save",
+                        style: TextStyle(color: Color(0xFFe61428))),
                   ),
                 ],
               ),
@@ -234,34 +252,45 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                           padding: EdgeInsets.only(left: 12.0),
                         ),
                         Obx(() {
-                          if (controller.rxStatusRelationType.value == Status.LOADING) {
+                          if (controller.rxStatusRelationType.value ==
+                              Status.LOADING) {
                             return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 10, horizontal: 22),
                               child: Container(
                                 alignment: Alignment.centerRight,
                                 height: 24,
                                 width: 24,
                                 child: CircularProgressIndicator(
-                                  color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),
+                                  color: ColorHelperClass.getColorFromHex(
+                                      ColorResources.pink_color),
                                 ),
                               ),
                             );
-                          } else if (controller.rxStatusRelationType.value == Status.ERROR) {
-                            return const Center(child: Text('Failed to load relation'));
+                          } else if (controller.rxStatusRelationType.value ==
+                              Status.ERROR) {
+                            return const Center(
+                                child: Text('Failed to load relation'));
                           } else if (controller.relationShipTypeList.isEmpty) {
-                            return const Center(child: Text('No relation available'));
+                            return const Center(
+                                child: Text('No relation available'));
                           } else {
                             return Expanded(
                               child: DropdownButton<String>(
-                                padding: const EdgeInsets.symmetric(horizontal: 20),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 20),
                                 isExpanded: true,
                                 underline: Container(),
                                 hint: const Text(
                                   'Select Relation',
                                   style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
-                                value: controller.selectRelationShipType.value.isEmpty ? null : controller.selectRelationShipType.value,
-                                items: controller.relationShipTypeList.map((RelationData gender) {
+                                value: controller
+                                        .selectRelationShipType.value.isEmpty
+                                    ? null
+                                    : controller.selectRelationShipType.value,
+                                items: controller.relationShipTypeList
+                                    .map((RelationData gender) {
                                   return DropdownMenuItem<String>(
                                     value: gender.id.toString(),
                                     child: Text(gender.name ?? 'Unknown'),
@@ -317,7 +346,8 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
       ),
       builder: (context) {
         return FractionallySizedBox(
-          heightFactor: 0.6, // Adjust this value to control the starting position
+          heightFactor: 0.6,
+          // Adjust this value to control the starting position
           child: SafeArea(
             child: Padding(
               padding: EdgeInsets.only(
@@ -390,33 +420,49 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                             decoration: BoxDecoration(
                               color: Colors.grey[300],
                               image: newImage != null
-                                  ? DecorationImage(image: FileImage(newImage!), fit: BoxFit.cover)
+                                  ? DecorationImage(
+                                      image: FileImage(newImage!),
+                                      fit: BoxFit.cover)
                                   : null,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: newImage == null
-                                ? const Icon(Icons.camera_alt, color: Colors.grey, size: 40)
+                                ? const Icon(Icons.camera_alt,
+                                    color: Colors.grey, size: 40)
                                 : null,
                           ),
                         ),
                         const SizedBox(height: 10),
 
                         /// **Form Fields**
-                        _buildTextField("Salutation", (value) => newSalutation = value),
-                        _buildTextField("Relationship", (value) => newRelationship = value),
-                        _buildTextField("First Name", (value) => newFirstName = value),
-                        _buildTextField("Middle Name", (value) => newMiddleName = value),
-                        _buildTextField("SurName", (value) => newSurName = value),
-                        _buildTextField("Mobile Number", (value) => newMobileNumber = value),
-                        _buildTextField("WhatsApp Number", (value) => newWhatsAppNumber = value),
-                        _buildTextField("Father's Name", (value) => newFathersName = value),
-                        _buildTextField("Mother's Name", (value) => newMothersName = value),
+                        _buildTextField(
+                            "Salutation", (value) => newSalutation = value),
+                        _buildTextField(
+                            "Relationship", (value) => newRelationship = value),
+                        _buildTextField(
+                            "First Name", (value) => newFirstName = value),
+                        _buildTextField(
+                            "Middle Name", (value) => newMiddleName = value),
+                        _buildTextField(
+                            "SurName", (value) => newSurName = value),
+                        _buildTextField("Mobile Number",
+                            (value) => newMobileNumber = value),
+                        _buildTextField("WhatsApp Number",
+                            (value) => newWhatsAppNumber = value),
+                        _buildTextField(
+                            "Father's Name", (value) => newFathersName = value),
+                        _buildTextField(
+                            "Mother's Name", (value) => newMothersName = value),
                         _buildTextField("Email", (value) => newEmail = value),
-                        _buildTextField("Date Of Birth", (value) => newDob = value),
+                        _buildTextField(
+                            "Date Of Birth", (value) => newDob = value),
                         _buildTextField("Gender", (value) => newGender = value),
-                        _buildTextField("Blood Group", (value) => newBloodGroup = value),
-                        _buildTextField("Marital Status", (value) => newMaritalStatus = value),
-                        _buildTextField("Membership", (value) => newMembership = value),
+                        _buildTextField(
+                            "Blood Group", (value) => newBloodGroup = value),
+                        _buildTextField("Marital Status",
+                            (value) => newMaritalStatus = value),
+                        _buildTextField(
+                            "Membership", (value) => newMembership = value),
 
                         const SizedBox(height: 20),
                       ],
@@ -444,7 +490,14 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
     );
   }
 
-  void _navigateToProfilePage(BuildContext context, String firstName, String middleName, String surName, String relationship, File? profileImage) {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileView()));
+  void _navigateToProfilePage(
+      BuildContext context,
+      String firstName,
+      String middleName,
+      String surName,
+      String relationship,
+      File? profileImage) {
+    Navigator.push(
+        context, MaterialPageRoute(builder: (context) => ProfileView()));
   }
 }
