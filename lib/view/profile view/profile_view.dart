@@ -76,7 +76,7 @@ class _ProfileViewState extends State<ProfileView> {
       body: Obx((){
         if(controller.loading.value)
           {
-            return Center(child: CircularProgressIndicator(),);
+            return const Center(child: CircularProgressIndicator(),);
           }
         return Padding(
           padding: const EdgeInsets.all(16.0),
