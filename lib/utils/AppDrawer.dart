@@ -8,9 +8,7 @@ import 'package:mpm/view/login_view.dart';
 import 'package:mpm/view_model/controller/dashboard/dashboardcontroller.dart';
 import 'package:share_plus/share_plus.dart';
 
-
 class AppDrawer extends StatelessWidget {
-
   @override
   Widget build(BuildContext context) {
     final DashBoardController dashBoardController = Get.find();
@@ -29,12 +27,15 @@ class AppDrawer extends StatelessWidget {
                 children: [
                   // Profile Image
                   Obx(() => CircleAvatar(
-                    radius: 30,
-                    backgroundImage: dashBoardController.profileImage.value.isNotEmpty
-                        ? NetworkImage(dashBoardController.profileImage.value)
-                        : const AssetImage("assets/images/user3.png") as ImageProvider,
-                    backgroundColor: Colors.grey[300],
-                  )),
+                        radius: 30,
+                        backgroundImage:
+                            dashBoardController.profileImage.value.isNotEmpty
+                                ? NetworkImage(
+                                    dashBoardController.profileImage.value)
+                                : const AssetImage("assets/images/user3.png")
+                                    as ImageProvider,
+                        backgroundColor: Colors.grey[300],
+                      )),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -54,14 +55,15 @@ class AppDrawer extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           "Member Code: ${dashBoardController.lmCode.value.isNotEmpty ? dashBoardController.lmCode.value : "N/A"}",
-                          style: const TextStyle(fontSize: 12, color: Colors.white70),
+                          style: const TextStyle(
+                              fontSize: 12, color: Colors.white70),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           "Mobile: ${dashBoardController.mobileNumber.value.isNotEmpty ? dashBoardController.mobileNumber.value : "N/A"}",
-                          style: const TextStyle(fontSize: 12, color: Colors.white70),
+                          style: const TextStyle(
+                              fontSize: 12, color: Colors.white70),
                         ),
-
                       ],
                     ),
                   )
@@ -81,20 +83,6 @@ class AppDrawer extends StatelessWidget {
             title: Text('My Profile'),
             onTap: () {
               Navigator.pushNamed(context, RouteNames.profile);
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.person_search),
-            title: Text('Search Members'),
-            onTap: () {
-              Navigator.pushNamed(context, RouteNames.searchmember);
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.account_balance),
-            title: Text('Samiti Members'),
-            onTap: () async {
-              Navigator.pushNamed(context, RouteNames.samitimemberview);
             },
           ),
           ListTile(
@@ -139,15 +127,14 @@ class AppDrawer extends StatelessWidget {
             onTap: () {
               Navigator.pushNamed(context, RouteNames.pravacypolicy);
             },
-          )
-          ,ListTile(
+          ),
+          ListTile(
             leading: Icon(Icons.description),
             title: Text('Terms & Condition'),
             onTap: () {
               Navigator.pushNamed(context, RouteNames.termandcondition);
             },
           ),
-
           ListTile(
             leading: Icon(Icons.exit_to_app),
             title: Text('Logout'),
@@ -160,6 +147,7 @@ class AppDrawer extends StatelessWidget {
       ),
     );
   }
+
   void _onShare(BuildContext context) async {
     final box = context.findRenderObject() as RenderBox?;
 

@@ -63,7 +63,7 @@ class _SearchViewState extends State<SearchView> {
               child: Obx(() {
                 if (controller.loading2.value) {
                   return const Center(
-                    child: CircularProgressIndicator(color: Colors.pink),
+                    child: CircularProgressIndicator(color: Color(0xFFe61428)),
                   );
                 } else if (controller.searchDataList.isEmpty) {
                   return const Center(
