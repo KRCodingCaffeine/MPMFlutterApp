@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:mpm/utils/color_helper.dart';
@@ -80,13 +81,13 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
   }
 
   Future<void> _downloadFile(String? url, String? fileName) async {
-
     if (url == null || fileName == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Invalid file URL or file name')),
       );
       return;
     }
+
     final permissionStatus = await _requestPermission();
     if (!permissionStatus) return;
 
@@ -102,7 +103,7 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
       String filePath = "${directory.path}/$fileName";
       Dio dio = Dio();
       int progress = 0;
-      // Show a persistent Snackbar with a StatefulBuilder
+
       // Show a persistent Snackbar with a StatefulBuilder
       final scaffoldMessenger = ScaffoldMessenger.of(context);
       StateSetter? setSnackbarState;
@@ -111,11 +112,11 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
         SnackBar(
           content: StatefulBuilder(
             builder: (context, setState) {
-              setSnackbarState = setState; // Capture the setState function
-              return Text("Downloading $fileName ... 0%");
+              setSnackbarState = setState; // Capture setState function
+              return Text("Downloading $fileName ... $progress%");
             },
           ),
-          duration: Duration(days: 1), // Keep it open
+          duration: const Duration(days: 1), // Keep it open
         ),
       );
 
@@ -127,22 +128,28 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
             int newProgress = ((received / total) * 100).toInt();
             if (newProgress != progress) {
               progress = newProgress;
+
+              // Update Snackbar text dynamically
               if (setSnackbarState != null) {
-                setSnackbarState!(() {}); // Update Snackbar text dynamically
-              } // Update Snackbar text without hiding it
+                setSnackbarState!(() {}); // Update Snackbar text
+              }
             }
           }
         },
       );
-
       // Hide progress Snackbar
       snackBarController.close();
 
-      // Show success Snackbar with a "View" button
-      ScaffoldMessenger.of(context).showSnackBar(
+      // Show success Snackbar
+      scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text("$fileName - Downloaded successfully."),
-
+          action: SnackBarAction(
+            label: "View",
+            onPressed: () {
+              OpenFilex.open(filePath);  // Open the downloaded PDF
+            },
+          ),
         ),
       );
     } catch (e) {
@@ -151,6 +158,7 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
       );
     }
   }
+
 
   Future<bool> _requestPermission() async {
     if (await Permission.storage.isGranted) return true;
