@@ -28,7 +28,14 @@ import 'package:http/http.dart' as http;
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 class UdateProfileController extends GetxController{
   final api = UpdateProfileRepository();
- var userName = "".obs;
+  var userName = "".obs;
+
+  var profileImage = "".obs; // Add this field
+
+  // Example function to update profile image
+  void updateProfileImage(String newImageUrl) {
+    profileImage.value = newImageUrl;
+  }
 
   var firstName = ''.obs;
   var middleName = ''.obs;
