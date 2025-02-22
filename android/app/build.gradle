@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.mpm.mpm"
+    namespace = "com.mpm.members"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
