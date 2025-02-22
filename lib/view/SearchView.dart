@@ -78,9 +78,8 @@ class _SearchViewState extends State<SearchView> {
                     itemBuilder: (context, index) {
                       var member = controller.searchDataList[index];
                       var firstname = member?.firstName ?? "";
-                      var middlename = member?.middleName ?? "";
                       var lastname = member?.lastName ?? "";
-                      var name = "$firstname $middlename $lastname".trim();
+                      var name = "$firstname $lastname".trim();
                       var lmcode = member?.memberCode ?? "";
 
                       return buildMemberCard(
@@ -109,15 +108,15 @@ class _SearchViewState extends State<SearchView> {
         String? profileImage,
       }) {
     return InkWell(
-      onTap: () {
-        // Navigate to MemberDetailPage on tap
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const MemberDetailPage(),
-          ),
-        );
-      },
+      // onTap: () {
+      //   // Navigate to MemberDetailPage on tap
+      //   Navigator.push(
+      //     context,
+      //     MaterialPageRoute(
+      //       builder: (context) => const MemberDetailPage(),
+      //     ),
+      //   );
+      // },
       child: Card(
         color: Colors.white,
         margin: const EdgeInsets.only(bottom: 12),
@@ -177,7 +176,7 @@ class _SearchViewState extends State<SearchView> {
                 ),
               ),
               // Arrow Icon at Bottom Right
-              const Icon(Icons.arrow_forward_ios, color: Colors.grey),
+              // const Icon(Icons.arrow_forward_ios, color: Colors.grey),
             ],
           ),
         ),
