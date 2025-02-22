@@ -10,6 +10,10 @@ import 'package:mpm/utils/images.dart';
 import 'package:mpm/utils/textstyleclass.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 
+import '../model/CheckUser/CheckUserData2.dart';
+import '../utils/Session.dart';
+import '../view_model/controller/updateprofile/UdateProfileController.dart';
+
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
 
@@ -19,9 +23,11 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> {
   final regiController = Get.put(NewMemberController());
+  UdateProfileController controller =Get.put(UdateProfileController());
   final ScrollController _scrollController = ScrollController();
   late Timer _timer;
   double screenWidth = 0.0;
+  String? membershipApprovalStatus;
 
   final List<Map<String, dynamic>> gridItems = [
     {'icon': Images.user, 'label': 'My Profile'},
@@ -41,6 +47,7 @@ class _HomeViewState extends State<HomeView> {
   @override
   void initState() {
     super.initState();
+    controller.getUserProfile();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       screenWidth = MediaQuery.of(context).size.width * 0.7;
       _timer = Timer.periodic(const Duration(seconds: 2), (Timer timer) {
@@ -77,9 +84,16 @@ class _HomeViewState extends State<HomeView> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildMembershipNotice(),
+          Obx(() {
+            if (int.tryParse(controller.membershipApprovalStatusId.value) != null &&
+                int.parse(controller.membershipApprovalStatusId.value) < 6) {
+              return _buildMembershipNotice();
+            } else {
+              return SizedBox.shrink(); // Return an empty widget when not needed
+            }
+          }),
           _buildGridView(),
-          _buildAdvertisementTitle(),
+          //_buildAdvertisementTitle(),
           _buildAdvertisementList(),
           const SizedBox(height: 20),
         ],
@@ -88,6 +102,23 @@ class _HomeViewState extends State<HomeView> {
   }
 
   Widget _buildMembershipNotice() {
+    String message;
+    switch (controller.membershipApprovalStatusId.value.trim()) {
+      case '2':
+        message = "Your membership is currently under review for Sangathan Samiti approval.";
+        break;
+      case '3':
+        message = "Your membership currently under review for Vyaspathika Samiti approval.";
+        break;
+      case '4':
+        message = "Your payment is pending.";
+        break;
+      case '5':
+        message = "We received your payment and its under approval .";
+        break;
+      default:
+        message = "Membership status unknown. Please check your account.";
+    }
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Container(
@@ -100,16 +131,13 @@ class _HomeViewState extends State<HomeView> {
           children: [
             const Icon(Icons.error, color: Color(0xFFe61428)),
             const SizedBox(width: 10),
-            const Expanded(
+            Expanded(
               child: Text(
-                "Your membership is currently under review for approval.",
-                style: TextStyle(color: Colors.black),
+                message,
+                style: const TextStyle(color: Colors.black),
               ),
             ),
-            GestureDetector(
-              onTap: () {},
-              child: const Icon(Icons.close, color: Colors.grey),
-            ),
+
           ],
         ),
       ),
