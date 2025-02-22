@@ -42,46 +42,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
   String whatsAppNumber = '9920113198';
 
   List<Map<String, dynamic>> familyMembers = [];
-
-  void _showImagePicker(BuildContext context, Function(File?) onImageSelected) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Wrap(
-          children: [
-            ListTile(
-              leading:
-                  const Icon(Icons.photo_library, color: Color(0xFFe61428)),
-              title: const Text("Pick from Gallery"),
-              onTap: () async {
-                Navigator.pop(context);
-                final pickedFile =
-                    await _picker.pickImage(source: ImageSource.gallery);
-                if (pickedFile != null) {
-                  onImageSelected(File(pickedFile.path));
-                }
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Color(0xFFe61428)),
-              title: const Text("Take a Picture"),
-              onTap: () async {
-                Navigator.pop(context);
-                final pickedFile =
-                    await _picker.pickImage(source: ImageSource.camera);
-                if (pickedFile != null) {
-                  onImageSelected(File(pickedFile.path));
-                }
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
   final regiController = Get.put(NewMemberController());
   final GlobalKey<FormState> _formKeyLogin = GlobalKey<FormState>();
   @override
@@ -176,55 +136,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
             controller.selectRelationShipType(member.relationshipTypeId);
             _showEditModalSheet(context, member.memberId);
           },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildUserCard(BuildContext context) {
-    return Card(
-      color: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 40,
-              backgroundImage: _profileImage != null
-                  ? FileImage(_profileImage!)
-                  : const AssetImage("assets/images/logo.png") as ImageProvider,
-              backgroundColor: Colors.grey[300],
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "$firstName $middleName $surName".trim(),
-                        style: const TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        relationshipName.isNotEmpty ? relationshipName : "N/A",
-                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.edit, color: Colors.grey),
-                    onPressed: () {},
-                  ),
-                ],
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -347,107 +258,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
     );
   }
 
-  void _showPicker({
-    required BuildContext context,
-  }) {
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return SafeArea(
-          child: Wrap(
-            children: <Widget>[
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Photo Library'),
-                onTap: () async {
-                  getImage(ImageSource.gallery);
-                  Navigator.of(context).pop();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_camera),
-                title: const Text('Camera'),
-                onTap: () {
-                  getImage(ImageSource.camera);
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> getImage(
-      ImageSource img,
-      ) async {
-    if (ImagePicker().supportsImageSource(img) == true) {
-      try {
-        final XFile? pickedFile =
-        await ImagePicker().pickImage(source: img, imageQuality: 80);
-        setState(() {
-          _image = File(pickedFile!.path);
-        });
-        if (pickedFile!.path != null) {
-          regiController.userprofile.value = pickedFile!.path;
-        }
-      } catch (e) {
-        print("gggh" + e.toString());
-      }
-    }
-  }
-
-  Widget _buildEditableField(
-      String label,
-      TextEditingController controller,
-      String hintText,
-      String validationMessage, {
-        bool obscureText = false,
-      }) {
-    return Container(
-      margin: const EdgeInsets.only(left: 5, right: 5),
-      child: TextFormField(
-        keyboardType: TextInputType.text,
-        controller: controller,
-        obscureText: obscureText,
-        style: const TextStyle(color: Colors.black), // Text color set to black
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(
-              color: Colors.black), // Label text color set to black
-          hintText: hintText,
-          hintStyle: const TextStyle(
-              color: Colors.black54), // Slightly dimmed black for hint text
-          border: const OutlineInputBorder(
-            borderSide:
-            BorderSide(color: Colors.grey), // Border color set to black
-          ),
-          enabledBorder: const OutlineInputBorder(
-            borderSide: BorderSide(
-                color: Colors.grey), // Border when field is not focused
-          ),
-          focusedBorder: const OutlineInputBorder(
-            borderSide: BorderSide(
-                color: Colors.grey, width: 0.5), // Thicker border when focused
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            vertical: 12,
-            horizontal: 20,
-          ),
-        ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return validationMessage;
-          }
-          return null;
-        },
-      ),
-    );
-  }
-
-
-
   void _showAddModalSheet(BuildContext context) {
     String newSalutation = "";
     String newFirstName = "";
@@ -466,46 +276,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
     String newMembership = "";
 
     File? newImage;
-    /*Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text(
-            "Cancel",
-            style: TextStyle(color: Color(0xFFe61428)),
-          ),
-        ),
-        TextButton(
-          onPressed: () {
-            familyMembers.add({
-              'salutation': newSalutation,
-              'relationship': newRelationship,
-              'firstName': newFirstName,
-              'middleName': newMiddleName,
-              'surName': newSurName,
-              'mobileNumber': newMobileNumber,
-              'whatsAppNumber': newWhatsAppNumber,
-              'fathersName': newFathersName,
-              'mothersName': newMothersName,
-              'email': newEmail,
-              'dob': newDob,
-              'gender': newGender,
-              'bloodGroup': newBloodGroup,
-              'maritalStatus': newMaritalStatus,
-              'membership': newMembership,
-              'image': newImage,
-            });
-
-            Navigator.pop(context);
-          },
-          child: const Text(
-            "Add Member",
-            style: TextStyle(color: Color(0xFFe61428)),
-          ),
-        ),
-      ],
-    ),*/
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -543,21 +313,54 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisAlignment: MainAxisAlignment.start,
                               children: [
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 5, top: 0),
-                                  child: Align(
-                                    alignment: Alignment
-                                        .centerLeft, // Align text to the left side
-                                    child: Text(
-                                      'Personal Info',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
+                              Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text(
+                                    "Cancel",
+                                    style: TextStyle(color: Color(0xFFe61428)),
                                   ),
                                 ),
-                                const SizedBox(height: 30),
+                                TextButton(
+                                  onPressed: () {
+                                    // Validate the form
+                                    if (_formKeyLogin.currentState!.validate()) {
+                                      // Add the member to the list
+                                      familyMembers.add({
+                                        'salutation': newSalutation,
+                                        'relationship': newRelationship,
+                                        'firstName': newFirstName,
+                                        'middleName': newMiddleName,
+                                        'surName': newSurName,
+                                        'mobileNumber': newMobileNumber,
+                                        'whatsAppNumber': newWhatsAppNumber,
+                                        'fathersName': newFathersName,
+                                        'mothersName': newMothersName,
+                                        'email': newEmail,
+                                        'dob': newDob,
+                                        'gender': newGender,
+                                        'bloodGroup': newBloodGroup,
+                                        'maritalStatus': newMaritalStatus,
+                                        'membership': newMembership,
+                                        'image': newImage,
+                                      });
+
+                                      // Close the current bottom sheet
+                                      Navigator.pop(context);
+
+                                      // Show the OTP bottom sheet
+                                      _showOtpBottomSheet(context);
+                                    }
+                                  },
+                                  child: const Text(
+                                    "Add Member",
+                                    style: TextStyle(color: Color(0xFFe61428)),
+                                  ),
+                                ),                              ],
+                            ),
+                                const SizedBox(height: 20),
                                 Align(
                                   alignment: Alignment.center,
                                   child: GestureDetector(
@@ -578,7 +381,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 20),
+                                const SizedBox(height: 30),
                                 Container(
                                   width: double.infinity,
                                   margin: EdgeInsets.only(left: 5,right: 5),
@@ -632,7 +435,76 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                     ],
                                   ),
                                 ),
-                                SizedBox(height: 20),
+                                const SizedBox(height: 20),
+
+                                //Relationship type
+                                Container(
+                                  margin: const EdgeInsets.only(left: 5, right: 5),
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey),
+                                    borderRadius: BorderRadius.circular(5),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Obx(() {
+                                        if (controller.rxStatusRelationType.value ==
+                                            Status.LOADING) {
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 10, horizontal: 22),
+                                            child: Container(
+                                              alignment: Alignment.centerRight,
+                                              height: 24,
+                                              width: 24,
+                                              child: CircularProgressIndicator(
+                                                color: ColorHelperClass.getColorFromHex(
+                                                    ColorResources.pink_color),
+                                              ),
+                                            ),
+                                          );
+                                        } else if (controller.rxStatusRelationType.value ==
+                                            Status.ERROR) {
+                                          return const Center(
+                                              child: Text('Failed to load relation'));
+                                        } else if (controller.relationShipTypeList.isEmpty) {
+                                          return const Center(
+                                              child: Text('No relation available'));
+                                        } else {
+                                          return Expanded(
+                                            child: DropdownButton<String>(
+                                              padding:
+                                              const EdgeInsets.symmetric(horizontal: 20),
+                                              isExpanded: true,
+                                              underline: Container(),
+                                              hint: const Text(
+                                                'Select Relation',
+                                                style: TextStyle(fontWeight: FontWeight.bold),
+                                              ),
+                                              value: controller
+                                                  .selectRelationShipType.value.isEmpty
+                                                  ? null
+                                                  : controller.selectRelationShipType.value,
+                                              items: controller.relationShipTypeList
+                                                  .map((RelationData gender) {
+                                                return DropdownMenuItem<String>(
+                                                  value: gender.id.toString(),
+                                                  child: Text(gender.name ?? 'Unknown'),
+                                                );
+                                              }).toList(),
+                                              onChanged: (String? newValue) {
+                                                if (newValue != null) {
+                                                  controller.setSelectRelationShip(newValue);
+                                                }
+                                              },
+                                            ),
+                                          );
+                                        }
+                                      }),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
 
                                 //First Name
                                 _buildEditableField(
@@ -785,163 +657,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                   ),
                                 ),
                                 const SizedBox(height: 20),
-                                //Relationship type
-                                Container(
-                                  margin: const EdgeInsets.only(left: 5, right: 5),
-                                  width: double.infinity,
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.grey),
-                                    borderRadius: BorderRadius.circular(5),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Obx(() {
-                                        if (controller.rxStatusRelationType.value ==
-                                            Status.LOADING) {
-                                          return Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 10, horizontal: 22),
-                                            child: Container(
-                                              alignment: Alignment.centerRight,
-                                              height: 24,
-                                              width: 24,
-                                              child: CircularProgressIndicator(
-                                                color: ColorHelperClass.getColorFromHex(
-                                                    ColorResources.pink_color),
-                                              ),
-                                            ),
-                                          );
-                                        } else if (controller.rxStatusRelationType.value ==
-                                            Status.ERROR) {
-                                          return const Center(
-                                              child: Text('Failed to load relation'));
-                                        } else if (controller.relationShipTypeList.isEmpty) {
-                                          return const Center(
-                                              child: Text('No relation available'));
-                                        } else {
-                                          return Expanded(
-                                            child: DropdownButton<String>(
-                                              padding:
-                                              const EdgeInsets.symmetric(horizontal: 20),
-                                              isExpanded: true,
-                                              underline: Container(),
-                                              hint: const Text(
-                                                'Select Relation',
-                                                style: TextStyle(fontWeight: FontWeight.bold),
-                                              ),
-                                              value: controller
-                                                  .selectRelationShipType.value.isEmpty
-                                                  ? null
-                                                  : controller.selectRelationShipType.value,
-                                              items: controller.relationShipTypeList
-                                                  .map((RelationData gender) {
-                                                return DropdownMenuItem<String>(
-                                                  value: gender.id.toString(),
-                                                  child: Text(gender.name ?? 'Unknown'),
-                                                );
-                                              }).toList(),
-                                              onChanged: (String? newValue) {
-                                                if (newValue != null) {
-                                                  controller.setSelectRelationShip(newValue);
-                                                }
-                                              },
-                                            ),
-                                          );
-                                        }
-                                      }),
-                                    ],
-                                  ),
-                                ),
 
-                                const SizedBox(height: 20),
-
-                                //Membership type
-                                Container(
-                                  margin: const EdgeInsets.only(left: 5, right: 5),
-                                  width: double.infinity,
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.grey),
-                                    borderRadius: BorderRadius.circular(5),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Obx(() {
-
-                                        if (regiController.rxStatusMemberShipTYpe.value ==
-                                            Status.LOADING) {
-                                          return Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 10, horizontal: 22),
-                                            child: Container(
-                                                alignment: Alignment.centerRight,
-                                                height: 24,
-                                                width: 24,
-                                                child: CircularProgressIndicator(
-                                                  color: ColorHelperClass
-                                                      .getColorFromHex(
-                                                      ColorResources.red_color),
-                                                )),
-                                          );
-                                        } else if (regiController
-                                            .rxStatusMemberShipTYpe.value ==
-                                            Status.ERROR) {
-                                          return const Center(
-                                              child: Padding(
-                                                padding: const EdgeInsets.symmetric(
-                                                    vertical: 13, horizontal: 20),
-                                                child: Text(' Select Membership'),
-                                              ));
-                                        } else if (regiController
-                                            .memberShipList.isEmpty) {
-                                          return const Center(
-                                              child:
-                                              Padding(
-                                                padding: const EdgeInsets.symmetric(
-                                                    vertical: 13, horizontal: 20),
-                                                child: Text('No  Membership available'),
-                                              ));
-                                        } else {
-                                          return Expanded(
-                                            child: DropdownButton<String>(
-                                              padding: const EdgeInsets.symmetric(
-                                                  horizontal: 20),
-                                              isExpanded: true,
-                                              underline: Container(),
-                                              hint: const Text(
-                                                'MemberShip *',
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold),
-                                              ), // Hint to show when nothing is selected
-                                              value: regiController
-                                                  .selectMemberShipType
-                                                  .value
-                                                  .isEmpty
-                                                  ? null
-                                                  : regiController
-                                                  .selectMemberShipType.value,
-
-                                              items: regiController.memberShipList
-                                                  .map<DropdownMenuItem<String>>((MemberShipData marital) {
-                                                return DropdownMenuItem<String>(
-                                                  value: marital.id
-                                                      .toString(), // Use unique ID or any unique property.
-                                                  child: Text("${marital.membershipName}- Rs ${marital.price}"), // Display name from DataX.
-                                                );
-                                              }).toList(), // Convert to List.
-                                              onChanged: (String? newValue) {
-                                                if (newValue != null) {
-                                                  regiController.selectMemberShipType(newValue);
-                                                }
-                                              },
-                                            ),
-                                          );
-                                        }
-                                      }),
-                                    ],
-                                  ),
-                                ),
-
-                                const SizedBox(height: 20),
                                 //Gender
                                 Container(
                                   margin: const EdgeInsets.only(left: 5, right: 5),
@@ -1017,7 +733,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                     ],
                                   ),
                                 ),
-
                                 const SizedBox(height: 20),
 
                                 //Blood Group
@@ -1100,7 +815,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                 ),
                                 const SizedBox(height: 20),
 
-                                // Marital Status
+                                // Marital Status Dropdown
                                 SizedBox(
                                   width: double.infinity,
                                   child: Container(
@@ -1112,63 +827,45 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                     child: Row(
                                       children: [
                                         Obx(() {
-                                          if (regiController.rxStatusmarried.value ==
-                                              Status.LOADING) {
+                                          if (regiController.rxStatusmarried.value == Status.LOADING) {
                                             return Padding(
-                                              padding: const EdgeInsets.symmetric(
-                                                  vertical: 10, horizontal: 22),
+                                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 22),
                                               child: Container(
                                                 alignment: Alignment.centerRight,
                                                 height: 24,
                                                 width: 24,
                                                 child: CircularProgressIndicator(
-                                                  color: ColorHelperClass
-                                                      .getColorFromHex(
-                                                      ColorResources.pink_color),
+                                                  color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),
                                                 ),
                                               ),
                                             );
-                                          } else if (regiController
-                                              .rxStatusmarried.value ==
-                                              Status.ERROR) {
-                                            return const Center(
-                                                child: Text(
-                                                    'Failed to load marital status'));
-                                          } else if (regiController
-                                              .maritalList.isEmpty) {
-                                            return const Center(
-                                                child: Text(
-                                                    'No marital status available'));
+                                          } else if (regiController.rxStatusmarried.value == Status.ERROR) {
+                                            return const Center(child: Text('Failed to load marital status'));
+                                          } else if (regiController.maritalList.isEmpty) {
+                                            return const Center(child: Text('No marital status available'));
                                           } else {
                                             return Expanded(
                                               child: DropdownButton<String>(
-                                                padding: const EdgeInsets.symmetric(
-                                                    horizontal: 20),
+                                                padding: const EdgeInsets.symmetric(horizontal: 20),
                                                 isExpanded: true,
                                                 underline: Container(),
                                                 hint: const Text(
                                                   'Select marital status',
-                                                  style: TextStyle(
-                                                      fontWeight: FontWeight.bold),
+                                                  style: TextStyle(fontWeight: FontWeight.bold),
                                                 ),
-                                                value: regiController
-                                                    .selectMarital.value.isEmpty
+                                                value: regiController.selectMarital.value.isEmpty
                                                     ? null
-                                                    : regiController
-                                                    .selectMarital.value,
+                                                    : regiController.selectMarital.value,
                                                 items: regiController.maritalList
                                                     .map<DropdownMenuItem<String>>((MaritalData marital) {
                                                   return DropdownMenuItem<String>(
                                                     value: marital.id.toString(),
-                                                    child: Text(
-                                                        marital.maritalStatus ??
-                                                            'Unknown'),
+                                                    child: Text(marital.maritalStatus ?? 'Unknown'),
                                                   );
                                                 }).toList(),
                                                 onChanged: (String? newValue) {
                                                   if (newValue != null) {
-                                                    regiController
-                                                        .setSelectedMarital(newValue);
+                                                    regiController.setSelectedMarital(newValue);
                                                   }
                                                 },
                                               ),
@@ -1181,54 +878,151 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                 ),
                                 const SizedBox(height: 20),
 
-                                //Marriage anniversary date
-                                Obx((){
-                                  return  Visibility(
-                                      visible: regiController.MaritalAnnivery.value==true,
-                                      child: Column(
-                                        children: [
-                                          SizedBox(height: 8),
-                                          SizedBox(
-                                            width: double.infinity,
-                                            child: Container(
-                                              margin:
-                                              const EdgeInsets.only(left: 5, right: 5),
-                                              decoration: BoxDecoration(
-                                                border: Border.all(color: Colors.grey),
-                                                borderRadius: BorderRadius.circular(5),
+                                // Show Marriage Anniversary Date ONLY if Married
+                                Obx(() {
+                                  return Visibility(
+                                    visible: regiController.MaritalAnnivery.value == true,
+                                    child: Column(
+                                      children: [
+                                        const SizedBox(height: 8), // Space before Marriage Anniversary field
+                                        SizedBox(
+                                          width: double.infinity,
+                                          child: Container(
+                                            margin: const EdgeInsets.only(left: 5, right: 5),
+                                            decoration: BoxDecoration(
+                                              border: Border.all(color: Colors.grey),
+                                              borderRadius: BorderRadius.circular(5),
+                                            ),
+                                            child: TextFormField(
+                                              keyboardType: TextInputType.text,
+                                              readOnly: true,
+                                              controller: regiController.marriagedateController.value,
+                                              decoration: const InputDecoration(
+                                                hintText: 'Marriage Anniversary *',
+                                                border: InputBorder.none,
+                                                contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
                                               ),
-                                              child: TextFormField(
-                                                keyboardType: TextInputType.text,
-                                                readOnly: true,
-                                                controller: regiController.marriagedateController.value,
-                                                decoration: InputDecoration(
-                                                  hintText: 'Marriage Anniversary *',
-                                                  border: InputBorder.none, // Remove the internal border
-                                                  contentPadding: EdgeInsets.symmetric(vertical: 12,horizontal: 20),
-                                                ),
-                                                onTap: () async{
-                                                  DateTime? pickedDate = await showDatePicker(
-                                                    context: context,
-                                                    initialDate: DateTime.now(),
-                                                    firstDate: DateTime(1900),
-                                                    lastDate: DateTime.now(),
-                                                  );
-                                                  if (pickedDate != null) {
-                                                    String formattedDate = DateFormat('dd/MM/yyyy').format(pickedDate);
-                                                    setState(() {
-                                                      regiController.marriagedateController.value.text = formattedDate;
-                                                    });
-                                                  }
+                                              onTap: () async {
+                                                DateTime? pickedDate = await showDatePicker(
+                                                  context: context,
+                                                  initialDate: DateTime.now(),
+                                                  firstDate: DateTime(1900),
+                                                  lastDate: DateTime.now(),
+                                                  builder:
+                                                      (BuildContext context, Widget? child) {
+                                                    return Theme(
+                                                      data: Theme.of(context).copyWith(
+                                                        colorScheme: ColorScheme.light(
+                                                          primary: ColorHelperClass
+                                                              .getColorFromHex(ColorResources
+                                                              .red_color), // Apply red color
+                                                          onPrimary: Colors
+                                                              .white, // Text color on primary button
+                                                          onSurface: Colors
+                                                              .black, // Text color on surface
+                                                        ),
+                                                        textButtonTheme: TextButtonThemeData(
+                                                          style: TextButton.styleFrom(
+                                                            foregroundColor: ColorHelperClass
+                                                                .getColorFromHex(ColorResources
+                                                                .red_color), // Buttons color
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      child: child!,
+                                                    );
+                                                  },
+                                                );
+                                                if (pickedDate != null) {
+                                                  String formattedDate =
+                                                  DateFormat('dd/MM/yyyy')
+                                                      .format(pickedDate);
+                                                  setState(() {
+                                                    regiController.marriagedateController.value.text =
+                                                        formattedDate;
+                                                  });
+                                                  // Get zoneId from the text field
+                                                  String zoneId = controller.zone_id.value.trim();
 
-                                                },
-                                              ),
-
+                                                  // Call the function with selected date and zone ID
+                                                  regiController.getFamilyMemberShip(formattedDate, zoneId);
+                                                }
+                                              },
                                             ),
                                           ),
-                                        ],
-                                      ));
+                                        ),
+                                        const SizedBox(height: 20), // Space only when Married
+                                      ],
+                                    ),
+                                  );
                                 }),
 
+                                // Membership Type (Always Visible)
+                                Container(
+                                  margin: const EdgeInsets.only(left: 5, right: 5),
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey),
+                                    borderRadius: BorderRadius.circular(5),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Obx(() {
+                                        if (regiController.rxStatusMemberShipTYpe.value == Status.LOADING) {
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                                            child: Container(
+                                                alignment: Alignment.centerRight,
+                                                height: 24,
+                                                width: 24,
+                                                child: CircularProgressIndicator(
+                                                  color: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                                                )),
+                                          );
+                                        } else if (regiController.rxStatusMemberShipTYpe.value == Status.ERROR) {
+                                          return const Center(
+                                              child: Padding(
+                                                padding: EdgeInsets.symmetric(vertical: 13, horizontal: 20),
+                                                child: Text('Select Membership'),
+                                              ));
+                                        } else if (regiController.memberShipList.isEmpty) {
+                                          return const Center(
+                                              child: Padding(
+                                                padding: EdgeInsets.symmetric(vertical: 13, horizontal: 20),
+                                                child: Text('No Membership available'),
+                                              ));
+                                        } else {
+                                          return Expanded(
+                                            child: DropdownButton<String>(
+                                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                                              isExpanded: true,
+                                              underline: Container(),
+                                              hint: const Text(
+                                                'Membership *',
+                                                style: TextStyle(fontWeight: FontWeight.bold),
+                                              ),
+                                              value: regiController.selectMemberShipType.value.isEmpty
+                                                  ? null
+                                                  : regiController.selectMemberShipType.value,
+                                              items: regiController.memberShipList.map<DropdownMenuItem<String>>(
+                                                      (MemberShipData marital) {
+                                                    return DropdownMenuItem<String>(
+                                                      value: marital.id.toString(),
+                                                      child: Text("${marital.membershipName}- Rs ${marital.price}"),
+                                                    );
+                                                  }).toList(),
+                                              onChanged: (String? newValue) {
+                                                if (newValue != null) {
+                                                  regiController.selectMemberShipType(newValue);
+                                                }
+                                              },
+                                            ),
+                                          );
+                                        }
+                                      }),
+                                    ],
+                                  ),
+                                ),
                                 const SizedBox(height: 20),
                               ],
                             ),
@@ -1246,27 +1040,255 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
     );
   }
 
-  Widget _buildTextField(String label, Function(String) onChanged) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: TextField(
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(),
-        ),
-        onChanged: onChanged,
+  void _showOtpBottomSheet(BuildContext context) {
+    final TextEditingController otpController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true, // Ensure the bottom sheet is scrollable
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom, // Adjust for keyboard height
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min, // Use minimum height
+            children: [
+              const SizedBox(height: 20),
+              const Text(
+                "Enter OTP",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: TextFormField(
+                  controller: otpController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    hintText: "Enter OTP",
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        // Resend OTP logic
+                        _resendOtp(context);
+                      },
+                      child: const Text(
+                        "Resend OTP",
+                        style: TextStyle(color: Color(0xFFe61428)),
+                      ),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        // Submit OTP logic
+                        _submitOtp(context, otpController.text);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                      ),
+                      child: const Text(
+                        "Submit OTP",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20), // Add extra space at the bottom
+            ],
+          ),
+        );
+      },
+    );
+  }
+  
+  void _resendOtp(BuildContext context) {
+    // Call your API to resend OTP
+    // Example:
+    // apiService.resendOtp().then((response) {
+    //   if (response.success) {
+    //     ScaffoldMessenger.of(context).showSnackBar(
+    //       SnackBar(content: Text("OTP Resent Successfully")),
+    //     );
+    //   } else {
+    //     ScaffoldMessenger.of(context).showSnackBar(
+    //       SnackBar(content: Text("Failed to Resend OTP")),
+    //     );
+    //   }
+    // });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("OTP Resent Successfully")),
     );
   }
 
-  void _navigateToProfilePage(
-      BuildContext context,
-      String firstName,
-      String middleName,
-      String surName,
-      String relationship,
-      File? profileImage) {
-    Navigator.push(
-        context, MaterialPageRoute(builder: (context) => ProfileView()));
+  void _submitOtp(BuildContext context, String otp) {
+    if (otp.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter OTP")),
+      );
+      return;
+    }
+
+    // Call your API to validate OTP
+    // Example:
+    // apiService.validateOtp(otp).then((response) {
+    //   if (response.success) {
+    //     Navigator.pop(context); // Close OTP bottom sheet
+    //     _refreshData(); // Refresh data on the current screen
+    //   } else {
+    //     ScaffoldMessenger.of(context).showSnackBar(
+    //       SnackBar(content: Text("Invalid OTP")),
+    //     );
+    //   }
+    // });
+
+    // Simulate OTP validation
+    if (otp == "123456") { // Replace with actual OTP validation logic
+      Navigator.pop(context); // Close OTP bottom sheet
+      _refreshData(); // Refresh data on the current screen
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Invalid OTP")),
+      );
+    }
+  }
+
+  void _refreshData() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Data Refreshed Successfully")),
+    );
+  }
+
+  void _submitRegistrationForm(BuildContext context) {
+    // Validate and submit registration form
+    // Example:
+    // if (_formKeyLogin.currentState!.validate()) {
+    //   apiService.registerUser().then((response) {
+    //     if (response.success) {
+    //       _showOtpBottomSheet(context); // Show OTP bottom sheet
+    //     } else {
+    //       ScaffoldMessenger.of(context).showSnackBar(
+    //         SnackBar(content: Text("Registration Failed")),
+    //       );
+    //     }
+    //   });
+    // }
+
+    // Simulate registration success
+    _showOtpBottomSheet(context); // Show OTP bottom sheet
+  }
+
+  void _showPicker({
+    required BuildContext context,
+  }) {
+    showModalBottomSheet(
+      backgroundColor: Colors.white,
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Wrap(
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Choose Photo From Gallery'),
+                onTap: () async {
+                  getImage(ImageSource.gallery);
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_camera),
+                title: const Text('Take a Picture'),
+                onTap: () {
+                  getImage(ImageSource.camera);
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> getImage(
+      ImageSource img,
+      ) async {
+    if (ImagePicker().supportsImageSource(img) == true) {
+      try {
+        final XFile? pickedFile =
+        await ImagePicker().pickImage(source: img, imageQuality: 80);
+        setState(() {
+          _image = File(pickedFile!.path);
+        });
+        if (pickedFile!.path != null) {
+          regiController.userprofile.value = pickedFile!.path;
+        }
+      } catch (e) {
+        print("gggh" + e.toString());
+      }
+    }
+  }
+
+  Widget _buildEditableField(
+      String label,
+      TextEditingController controller,
+      String hintText,
+      String validationMessage, {
+        bool obscureText = false,
+      }) {
+    return Container(
+      margin: const EdgeInsets.only(left: 5, right: 5),
+      child: TextFormField(
+        keyboardType: TextInputType.text,
+        controller: controller,
+        obscureText: obscureText,
+        style: const TextStyle(color: Colors.black), // Text color set to black
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(
+              color: Colors.black), // Label text color set to black
+          hintText: hintText,
+          hintStyle: const TextStyle(
+              color: Colors.black54), // Slightly dimmed black for hint text
+          border: const OutlineInputBorder(
+            borderSide:
+            BorderSide(color: Colors.grey), // Border color set to black
+          ),
+          enabledBorder: const OutlineInputBorder(
+            borderSide: BorderSide(
+                color: Colors.grey), // Border when field is not focused
+          ),
+          focusedBorder: const OutlineInputBorder(
+            borderSide: BorderSide(
+                color: Colors.grey, width: 0.5), // Thicker border when focused
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 12,
+            horizontal: 20,
+          ),
+        ),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return validationMessage;
+          }
+          return null;
+        },
+      ),
+    );
   }
 }

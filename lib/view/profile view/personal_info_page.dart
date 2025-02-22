@@ -208,7 +208,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                     )
                                         : Icon(
                                       Icons.camera_alt,
-                                      color: Colors.grey[700],
+                                      color: Colors.grey[600],
                                       size: 40,
                                     ),
                                   ),
@@ -616,29 +616,26 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
     return controller.firstName.value.isNotEmpty && controller.dob.value.isNotEmpty;
   }
 
-  void _showPicker({
-    required BuildContext context,
-  }) {
+  void _showPicker({required BuildContext context}) {
     showModalBottomSheet(
-      backgroundColor: Colors.white,
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext bc) {
         return SafeArea(
           child: Wrap(
             children: <Widget>[
               ListTile(
                 leading: const Icon(Icons.photo_library),
-                title: const Text('Photo Library'),
-                onTap: () async {
-                  getImage(ImageSource.gallery);
+                title: const Text('Choose Photo From Gallery'),
+                onTap: () {
+                  _pickImage(ImageSource.gallery);
                   Navigator.of(context).pop();
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.photo_camera),
-                title: const Text('Camera'),
+                title: const Text('Take a Picture'),
                 onTap: () {
-                  getImage(ImageSource.camera);
+                  _pickImage(ImageSource.camera);
                   Navigator.of(context).pop();
                 },
               ),
@@ -648,6 +645,17 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
       },
     );
   }
+
+  Future<void> _pickImage(ImageSource source) async {
+    final pickedFile = await ImagePicker().pickImage(source: source);
+
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+    }
+  }
+
 
   Future<void> getImage(
       ImageSource img,
