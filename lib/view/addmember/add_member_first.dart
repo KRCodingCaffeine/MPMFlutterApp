@@ -185,7 +185,6 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-
               const SizedBox(height: 20),
               Expanded(
                 child: SingleChildScrollView(

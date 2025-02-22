@@ -39,7 +39,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
     flatNoController = TextEditingController(text: controller.flatNo.value);
     addressController = TextEditingController(text: controller.address.value);
     areaNameController = TextEditingController(text: controller.areaName.value);
-    cityController = TextEditingController(text: controller.city.value);
+    cityController = TextEditingController(text: controller.city_id.value);
     stateNameController = TextEditingController(text: controller.stateName.value);
     countryNameController = TextEditingController(text: controller.countryName.value);
     officePincodeController = TextEditingController(text: controller.officePincode.value);
@@ -91,7 +91,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
     flatNoController = TextEditingController(text: controller.flatNo.value);
     addressController = TextEditingController(text: controller.address.value);
     areaNameController = TextEditingController(text: controller.areaName.value);
-    cityController = TextEditingController(text: controller.city.value);
+    cityController = TextEditingController(text: controller.city_id.value);
     stateNameController = TextEditingController(text: controller.stateName.value);
     countryNameController = TextEditingController(text: controller.countryName.value);
     officePincodeController = TextEditingController(text: controller.officePincode.value);

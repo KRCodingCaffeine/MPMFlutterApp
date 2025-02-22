@@ -57,14 +57,15 @@ class UdateProfileController extends GetxController{
   var bloodGroup = ''.obs;
   var blood_group_id = ''.obs;
   var marriageAnniversaryDate = ''.obs;
-
+//Address Data
+  var zone_id = ''.obs;
   var address = ''.obs;
   var flatNo = ''.obs;
-  var zone = ''.obs;
-  var area = ''.obs;
-  var state = ''.obs;
-  var city = ''.obs;
-  var country = ''.obs;
+  var zone_name = ''.obs;
+  var area_id = ''.obs;
+  var state_id = ''.obs;
+  var city_id = ''.obs;
+  var country_id = ''.obs;
   var pincode = ''.obs;
   var documentType = ''.obs;
   var document = ''.obs;
@@ -74,7 +75,6 @@ class UdateProfileController extends GetxController{
   var organisationName = 'Company Name'.obs;
   var officePhone = 'Landline Number'.obs;
   var buildingName = 'Building Name'.obs;
-
 
   var areaName = 'Area'.obs;
   var city2 = 'Office Location'.obs;
@@ -189,6 +189,16 @@ class UdateProfileController extends GetxController{
       familyDataList.value=getUserData.value.familyMembersData!;
       if(getUserData.value.address!=null)
         {
+          area_id.value = getUserData.value.address!.areaName.toString();
+          zone_id.value = getUserData.value.address!.zoneId.toString();
+          address.value = getUserData.value.address!.address.toString();
+          flatNo.value = getUserData.value.address!.flatNo.toString();
+          zone_name.value = getUserData.value.address!.zoneName.toString();
+          state_id.value = getUserData.value.address!.stateId.toString();
+          city_id.value = getUserData.value.address!.cityId.toString();
+          country_id.value = getUserData.value.address!.countryId.toString();
+          pincode.value = getUserData.value.address!.pincode.toString();
+          documentType.value = getUserData.value.address!.addressType.toString();
           countryController.value.text=getUserData.value.address!.countryName.toString();
           buildingController.value.text=getUserData.value.address!.buildingNameId.toString();
           //pincodeController.value = getUserData.value.address!.stateId;

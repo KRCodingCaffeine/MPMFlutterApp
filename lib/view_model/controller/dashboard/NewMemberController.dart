@@ -398,6 +398,7 @@ class NewMemberController extends GetxController {
       setRxRequestMemberShip(Status.ERROR);
     });
   }
+
   bool isUnder18(DateTime dateOfBirth) {
     final today = DateTime.now();
     final age = today.year - dateOfBirth.year;
@@ -407,7 +408,75 @@ class NewMemberController extends GetxController {
     return age < 18;
   }
 
+  void getFamilyMemberShip(String dob, String zoneId) {
+    print("DOB : $dob Zone: $zoneId");
+    setRxRequestMemberShip(Status.LOADING);
 
+    api.userMemberShip().then((_value) {
+      setRxRequestMemberShip(Status.COMPLETE);
+
+      DateFormat inputFormat = DateFormat("dd/MM/yyyy");
+      DateFormat outputFormat = DateFormat("yyyy-MM-dd");
+
+      DateTime dobDate = inputFormat.parse(dob);
+      String formattedDate = outputFormat.format(dobDate);
+
+      print("Formatted DOB: $formattedDate, Zone ID: $zoneId");
+
+        memberShipList.value.clear();
+
+        if (isUnder18(dobDate)) {
+          if (zoneId.isEmpty) {
+            _showLoginAlert(context!);
+          } else {
+            for (var membership in _value.data!) {
+              if (membership.membershipName == "Non Member") {
+                memberShipList.value.add(MemberShipData(
+                  id: membership.id,
+                  membershipName: membership.membershipName,
+                  price: membership.price.toString(),
+                  status: membership.status.toString(),
+                  updatedAt: null,
+                  createdAt: null,
+                ));
+              }
+            }
+          }
+        } else {
+          for (var membership in _value.data!) {
+            if (zoneId.isEmpty) {
+              if (membership.membershipName == "Saraswani Member" ||
+                  membership.membershipName == "Guest Member") {
+                memberShipList.value.add(MemberShipData(
+                  id: membership.id,
+                  membershipName: membership.membershipName,
+                  price: membership.price.toString(),
+                  status: membership.status.toString(),
+                  updatedAt: null,
+                  createdAt: null,
+                ));
+              }
+            } else {
+              if (membership.membershipName == "Non Member" ||
+                  membership.membershipName == "Life Member") {
+                memberShipList.value.add(MemberShipData(
+                  id: membership.id,
+                  membershipName: membership.membershipName,
+                  price: membership.price.toString(),
+                  status: membership.status.toString(),
+                  updatedAt: null,
+                  createdAt: null,
+                ));
+              }
+            }
+          }
+        }
+
+    }).onError((error, stack) {
+      setRxRequestMemberShip(Status.ERROR);
+      print("Error fetching membership: $error");
+    });
+  }
 
   void _showLoginAlert(BuildContext context) {
     showDialog(
