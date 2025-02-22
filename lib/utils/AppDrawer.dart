@@ -71,10 +71,17 @@ class AppDrawer extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          "Member Code: ${dashBoardController.lmCode.value.isNotEmpty ? dashBoardController.lmCode.value : "N/A"}",
+                          "Member Code : ${(dashBoardController.lmCode.value.trim().isNotEmpty)
+                              ? dashBoardController.lmCode.value
+                              : (dashBoardController.memberId.value.trim().isNotEmpty
+                              ? dashBoardController.memberId.value
+                              : "N/A")}", // Default text if both are empty
                           style: const TextStyle(
-                              fontSize: 12, color: Colors.white70),
+                            fontSize: 14,
+                            color: Colors.white,
+                          ),
                         ),
+
                         const SizedBox(height: 4),
                         Text(
                           "Mobile: ${dashBoardController.mobileNumber.value.isNotEmpty ? dashBoardController.mobileNumber.value : "N/A"}",
