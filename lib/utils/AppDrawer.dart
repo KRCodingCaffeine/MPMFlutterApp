@@ -28,13 +28,30 @@ class AppDrawer extends StatelessWidget {
                   // Profile Image
                   Obx(() => CircleAvatar(
                         radius: 30,
-                        backgroundImage:
-                            dashBoardController.profileImage.value.isNotEmpty
-                                ? NetworkImage(
-                                    dashBoardController.profileImage.value)
-                                : const AssetImage("assets/images/user3.png")
-                                    as ImageProvider,
                         backgroundColor: Colors.grey[300],
+                        // Placeholder background color
+                        child: ClipOval(
+                          child: dashBoardController
+                                  .profileImage.value.isNotEmpty
+                              ? FadeInImage(
+                                  placeholder: const AssetImage(
+                                      "assets/images/placeholder.png"),
+                                  // Show while loading
+                                  image: NetworkImage(
+                                      dashBoardController.profileImage.value),
+                                  imageErrorBuilder:
+                                      (context, error, stackTrace) {
+                                    return Image.asset(
+                                        "assets/images/user3.png",
+                                        fit: BoxFit.cover);
+                                  },
+                                  fit: BoxFit.cover,
+                                  width: 60,
+                                  height: 60,
+                                )
+                              : Image.asset("assets/images/user3.png",
+                                  fit: BoxFit.cover, width: 60, height: 60),
+                        ),
                       )),
                   const SizedBox(width: 12),
                   Expanded(
@@ -79,7 +96,7 @@ class AppDrawer extends StatelessWidget {
               Navigator.pushNamedAndRemoveUntil(
                 context,
                 RouteNames.dashboard,
-                    (route) => false, // Removes all previous routes
+                (route) => false, // Removes all previous routes
               );
             },
           ),
