@@ -55,6 +55,7 @@ class UdateProfileController extends GetxController {
   var gender_id = ''.obs;
   var maritalStatus = ''.obs;
   var marital_status_id = ''.obs;
+  var isMarried = false.obs;
   var bloodGroup = ''.obs;
   var blood_group_id = ''.obs;
   var marriageAnniversaryDate = ''.obs;
