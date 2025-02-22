@@ -75,13 +75,19 @@ class AppDrawer extends StatelessWidget {
             leading: Icon(Icons.home),
             title: Text('Home'),
             onTap: () {
-              Navigator.pushNamed(context, RouteNames.dashboard);
+              Navigator.pop(context); // Close AppDrawer
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                RouteNames.dashboard,
+                    (route) => false, // Removes all previous routes
+              );
             },
           ),
           ListTile(
             leading: Icon(Icons.person),
             title: Text('My Profile'),
             onTap: () {
+              Navigator.pop(context);
               Navigator.pushNamed(context, RouteNames.profile);
             },
           ),
@@ -97,6 +103,7 @@ class AppDrawer extends StatelessWidget {
             leading: const Icon(Icons.file_copy),
             title: const Text('Forms'),
             onTap: () {
+              Navigator.pop(context);
               Navigator.pushNamed(context, RouteNames.forms);
             },
           ),
@@ -104,6 +111,7 @@ class AppDrawer extends StatelessWidget {
             leading: const Icon(Icons.account_balance),
             title: const Text('Government Scheme'),
             onTap: () {
+              Navigator.pop(context);
               Navigator.pushNamed(context, RouteNames.gov_scheme);
             },
           ),
@@ -111,6 +119,7 @@ class AppDrawer extends StatelessWidget {
             leading: Icon(Icons.info),
             title: Text('About Us'),
             onTap: () {
+              Navigator.pop(context);
               Navigator.pushNamed(context, RouteNames.aboutUs);
             },
           ),
@@ -118,6 +127,7 @@ class AppDrawer extends StatelessWidget {
             leading: Icon(Icons.headset_mic),
             title: Text('Contact Us'),
             onTap: () {
+              Navigator.pop(context);
               Navigator.pushNamed(context, RouteNames.contactUs);
             },
           ),
@@ -125,6 +135,7 @@ class AppDrawer extends StatelessWidget {
             leading: Icon(Icons.privacy_tip),
             title: Text('Privacy Policy'),
             onTap: () {
+              Navigator.pop(context);
               Navigator.pushNamed(context, RouteNames.pravacypolicy);
             },
           ),
@@ -132,6 +143,7 @@ class AppDrawer extends StatelessWidget {
             leading: Icon(Icons.description),
             title: Text('Terms & Condition'),
             onTap: () {
+              Navigator.pop(context);
               Navigator.pushNamed(context, RouteNames.termandcondition);
             },
           ),

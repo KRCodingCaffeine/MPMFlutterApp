@@ -76,39 +76,46 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text('Family Info', style: TextStyle(color: Colors.white)),
-        backgroundColor:
-            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _showAddModalSheet(context),
-          ),
-        ],
+        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            Expanded(
-              child: ListView.builder(
-                itemCount: controller.familyDataList.value.length,
-                itemBuilder: (context, index) => _buildFamilyMemberCard(index),
-              ),
+      body: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              children: [
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: controller.familyDataList.value.length,
+                    itemBuilder: (context, index) => _buildFamilyMemberCard(context, index),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          // Add Button at the bottom right
+          Positioned(
+            bottom: 20, // Distance from the bottom
+            right: 20,  // Distance from the right
+            child: FloatingActionButton(
+              onPressed: () => _showAddModalSheet(context),
+              backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color), // Button color
+              child: const Icon(Icons.add, color: Colors.white), // Add icon
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildFamilyMemberCard(int index) {
+  Widget _buildFamilyMemberCard(context, int index) {
     final member = controller.familyDataList.value[index];
     return Card(
       color: Colors.white,

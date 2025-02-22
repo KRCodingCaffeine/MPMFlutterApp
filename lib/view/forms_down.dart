@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:mpm/utils/AppDrawer.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -218,6 +219,7 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
         ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
+      drawer: AppDrawer(),
       body: Padding(
         padding: const EdgeInsets.all(14.0),
         child: GridView.builder(

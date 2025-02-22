@@ -25,8 +25,9 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Education Info'),
-        backgroundColor: Colors.white54,
+        title: const Text('Education Info', style: TextStyle(color: Colors.white),),
+        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        iconTheme: IconThemeData(color: Colors.white),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),

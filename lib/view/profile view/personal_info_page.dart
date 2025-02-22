@@ -32,14 +32,14 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
   @override
   void dispose() {
     // Dispose of controllers when no longer needed
-    controller.firstNameController.value.dispose();
-    controller.middleNameController.value.dispose();
-    controller.surNameController.value.dispose();
-    controller.fathersNameController.value.dispose();
-    controller. mothersNameController.value.dispose();
-    controller.mobileNumberController.value.dispose();
-    controller. whatsAppNumberController.value.dispose();
-    controller. emailController.value.dispose();
+    // controller.firstNameController.value.dispose();
+    // controller.middleNameController.value.dispose();
+    // controller.surNameController.value.dispose();
+    // controller.fathersNameController.value.dispose();
+    // controller. mothersNameController.value.dispose();
+    // controller.mobileNumberController.value.dispose();
+    // controller. whatsAppNumberController.value.dispose();
+    // controller. emailController.value.dispose();
 
     super.dispose();
   }
@@ -49,8 +49,9 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
     return Scaffold(
         backgroundColor: Colors.grey[100],
         appBar: AppBar(
-          title: const Text('Personal Info'),
-          backgroundColor: Colors.white54,
+          title: const Text('Personal Info', style: TextStyle(color: Colors.white)),
+          backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+          iconTheme: IconThemeData(color: Colors.white),
           actions: [
             IconButton(
               icon: const Icon(Icons.edit),
@@ -101,6 +102,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                       Obx((){
                         return  _buildInfoBox('WhatsApp Number:', subtitle: controller.whatsAppNumber.value);
                       }),
+                      SizedBox(height: 20),
                       Obx((){
                         return  _buildInfoBox('Email:', subtitle: controller.email.value);
                       }),
@@ -476,7 +478,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                             ),
                                             value: controller.marital_status_id.value.isNotEmpty
                                                 ? controller.marital_status_id.value
-                                                : null, // Set to null if empty to show hint
+                                                : '', // Set to null if empty to show hint
                                             items: newMemberController.maritalList.map((MaritalData marital) {
                                               return DropdownMenuItem<String>(
                                                 value: marital.id.toString(),
