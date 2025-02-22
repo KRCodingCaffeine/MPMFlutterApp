@@ -92,7 +92,7 @@ class _DashboardViewState extends State<DashboardView> {
     if (userData != null) {
       controller.lmCode.value = userData.memberCode ?? "";
       controller.mobileNumber.value = userData.mobile ?? "";
-      controller.memberId.value = userData.memberId ?? ""; // ✅ Added memberId
+      controller.memberId.value = userData.memberId ?? ""; 
 
       String firstName = userData.firstName ?? "";
       String middleName = userData.middleName ?? "";
