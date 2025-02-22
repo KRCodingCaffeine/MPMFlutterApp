@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/utils/AppDrawer.dart';
+import 'package:mpm/utils/urls.dart';
 import 'package:mpm/view/home_view.dart';
 import 'package:mpm/view/SearchView.dart';
 import 'package:mpm/view/samiti%20members/samiti_members_view.dart';
@@ -103,8 +104,9 @@ class _DashboardViewState extends State<DashboardView> {
 
       // Handle profile image URL
       if (userData.profileImage != null && userData.profileImage!.isNotEmpty) {
-        controller.profileImage.value =
-        "https://krcodingcaffeine.com/pragati-mandal-api/public/${userData.profileImage!}";
+        controller.profileImage.value = Urls.imagePathUrl + userData.profileImage!;
+        /*controller.profileImage.value =
+        "https://krcodingcaffeine.com/pragati-mandal-api/public/${userData.profileImage!}";*/
       } else {
         controller.profileImage.value = "assets/images/user3.png"; // Default image
       }
