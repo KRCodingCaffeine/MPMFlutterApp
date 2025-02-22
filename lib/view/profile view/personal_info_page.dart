@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/bloodgroup/BloodData.dart';
@@ -20,6 +23,8 @@ class PersonalInformationPage extends StatefulWidget {
 }
 
 class _PersonalInformationPageState extends State<PersonalInformationPage> {
+  File? _image;
+
   UdateProfileController controller=Get.put(UdateProfileController());
   NewMemberController newMemberController =Get.put(NewMemberController());
   // Controllers for the text fields to manage user input
@@ -148,34 +153,34 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
             child: FractionallySizedBox(
               heightFactor: heightFactor,
               child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   children: [
-                    // Top row with Save button on the right side
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 40.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment
-                            .end, // Move the button to the right
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              bottom: 4.0, // Reduced bottom padding
-                              top: 4.0, // Optionally reduce top padding as well
-                            ),
-                            child: TextButton(
-                              onPressed: () {
-                                controller.userUpdateProfile(context,controller.memberId.value);
-                                // _showSuccessMessage();
-                              },
-                              style: TextButton.styleFrom(
-                                foregroundColor:
-                                    Color(0xFFDC3545), // Red color for text
-                              ),
-                              child: const Text('Save'),
-                            ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Cancel Button
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context); // Close the modal
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: Color(0xFFDC3545), // Red color for text
                           ),
-                        ],
-                      ),
+                          child: const Text('Cancel'),
+                        ),
+                        // Save Button
+                        TextButton(
+                          onPressed: () {
+                            controller.userUpdateProfile(context, controller.memberId.value);
+                            Navigator.pop(context); // Close the modal after saving
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: Color(0xFFDC3545), // Red color for text
+                          ),
+                          child: const Text('Save'),
+                        ),
+                      ],
                     ),
                     // Expanded section with editable fields
                     Expanded(
@@ -184,6 +189,33 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            Align(
+                              alignment: Alignment.center,
+                              child: GestureDetector(
+                                onTap: () {
+                                  _showPicker(context: context);
+                                },
+                                child: CircleAvatar(
+                                  radius: 40,
+                                  backgroundColor: Colors.grey[300],
+                                  child: ClipOval(
+                                    child: _image != null
+                                        ? Image.file(
+                                      _image!,
+                                      width: 80,
+                                      height: 80,
+                                      fit: BoxFit.cover,
+                                    )
+                                        : Icon(
+                                      Icons.camera_alt,
+                                      color: Colors.grey[700],
+                                      size: 40,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 30),
                             Obx((){
                               return _buildEditableField(
                                 'First Name',
@@ -199,10 +231,10 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                             }),
                             Obx((){
                               return _buildEditableField(
-                                'SurName',
-                                controller.surNameController.value);
+                                  'SurName',
+                                  controller.surNameController.value);
                             }),
-                             Obx((){
+                            Obx((){
                               return  _buildEditableField(
                                   'Fathers Name',
                                   controller.fathersNameController.value);
@@ -210,8 +242,8 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
 
                             Obx((){
                               return  _buildEditableField(
-                                'Mother Name',
-                                controller.mothersNameController.value
+                                  'Mother Name',
+                                  controller.mothersNameController.value
                               );
                             }),
                             Obx((){
@@ -223,14 +255,14 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                             }),
                             Obx((){
                               return  _buildEditableField(
-                                  'WhatsApp Number',
-                                  controller.whatsAppNumberController.value,
+                                'WhatsApp Number',
+                                controller.whatsAppNumberController.value,
                               );
                             }),
                             Obx((){
                               return _buildEditableField(
-                                'Email',
-                                controller.emailController.value
+                                  'Email',
+                                  controller.emailController.value
                               );
                             }),
                             SizedBox(
@@ -258,7 +290,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                       context: context,
                                       initialDate: controller.dobController.value.text.isNotEmpty
                                           ? DateFormat('dd/MM/yyyy').parse(
-                                          controller.dobController.value.text.replaceAll('-', '/')) // ✅ Fix: Handle incorrect format
+                                          controller.dobController.value.text.replaceAll('-', '/'))
                                           : DateTime.now(),
                                       firstDate: DateTime(1900),
                                       lastDate: DateTime.now(),
@@ -283,7 +315,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
 
                                     if (pickedDate != null) {
                                       String formattedDate = DateFormat('dd/MM/yyyy').format(pickedDate);
-                                      controller.dobController.value.text = formattedDate; // ✅ Set text correctly
+                                      controller.dobController.value.text = formattedDate;
                                     }
                                   },
                                 )
@@ -389,7 +421,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                             child: CircularProgressIndicator(
                                               color: ColorHelperClass
                                                   .getColorFromHex(
-                                                  ColorResources.pink_color),
+                                                  ColorResources.red_color),
                                             )),
                                       );
                                     } else if (newMemberController
@@ -458,7 +490,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                             height: 24,
                                             width: 24,
                                             child: CircularProgressIndicator(
-                                              color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),
+                                              color: ColorHelperClass.getColorFromHex(ColorResources.red_color),
                                             ),
                                           ),
                                         );
@@ -478,31 +510,31 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                             ),
                                             value: controller.marital_status_id.value.isNotEmpty
                                                 ? controller.marital_status_id.value
-                                                : '', // Set to null if empty to show hint
+                                                : '',
                                             items: newMemberController.maritalList.map((MaritalData marital) {
                                               return DropdownMenuItem<String>(
                                                 value: marital.id.toString(),
                                                 child: Text(marital.maritalStatus ?? 'Unknown'),
                                               );
                                             }).toList(),
-                                            onChanged: (String? newValue) {
-                                              if (newValue != null) {
-                                                controller.marital_status_id.value = newValue; // Update the correct Rx variable
+                                              onChanged: (String? newValue) {
+                                                if (newValue != null) {
+                                                  controller.marital_status_id.value = newValue;
+                                                  controller.isMarried.value = newValue == "1";
+                                                }
                                               }
-                                            },
                                           ),
                                         );
                                       }
                                     }),
-
                                   ],
                                 ),
                               ),
                             ),
                             const SizedBox(height: 20),
-                            Obx((){
-                              return  Visibility(
-                                visible: controller.marriageAnniversaryDate.value.isNotEmpty,
+                            Obx(() {
+                              return Visibility(
+                                visible: controller.isMarried.value, // Show only if marital_status_id is "1"
                                 child: Column(
                                   children: [
                                     const SizedBox(height: 8),
@@ -524,32 +556,36 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                             contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
                                           ),
                                           onTap: () async {
-                                            DateTime initialDate = DateTime.now();
-
-                                            // Parse the existing date if available
-                                            if (controller.marriageAnniversaryDate.value.isNotEmpty) {
-                                              try {
-                                                initialDate = DateFormat('dd/MM/yyyy').parse(controller.marriageAnniversaryDate.value);
-                                              } catch (e) {
-                                                // Handle parsing error, if any
-                                              }
-                                            }
-
                                             DateTime? pickedDate = await showDatePicker(
                                               context: context,
-                                              initialDate: initialDate,
+                                              initialDate: newMemberController.marriagedateController.value.text.isNotEmpty
+                                                  ? DateFormat('dd/MM/yyyy').parse(
+                                                  newMemberController.marriagedateController.value.text.replaceAll('-', '/'))
+                                                  : DateTime.now(),
                                               firstDate: DateTime(1900),
                                               lastDate: DateTime.now(),
+                                              builder: (BuildContext context, Widget? child) {
+                                                return Theme(
+                                                  data: Theme.of(context).copyWith(
+                                                    colorScheme: ColorScheme.light(
+                                                      primary: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                                                      onPrimary: Colors.white,
+                                                      onSurface: Colors.black,
+                                                    ),
+                                                    textButtonTheme: TextButtonThemeData(
+                                                      style: TextButton.styleFrom(
+                                                        foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  child: child!,
+                                                );
+                                              },
                                             );
 
                                             if (pickedDate != null) {
                                               String formattedDate = DateFormat('dd/MM/yyyy').format(pickedDate);
-
-                                              // Update TextEditingController
                                               newMemberController.marriagedateController.value.text = formattedDate;
-
-                                              // Update the observable value
-                                              controller.marriageAnniversaryDate.value = formattedDate;
                                             }
                                           },
                                         ),
@@ -559,7 +595,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                 ),
                               );
                             }),
-                            const SizedBox(height: 80),
+                            const SizedBox(height: 20),
                           ],
                         ),
                       ),
@@ -578,6 +614,58 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
   bool _validateFields() {
     // You can add your validation logic here, for example:
     return controller.firstName.value.isNotEmpty && controller.dob.value.isNotEmpty;
+  }
+
+  void _showPicker({
+    required BuildContext context,
+  }) {
+    showModalBottomSheet(
+      backgroundColor: Colors.white,
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Wrap(
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Photo Library'),
+                onTap: () async {
+                  getImage(ImageSource.gallery);
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_camera),
+                title: const Text('Camera'),
+                onTap: () {
+                  getImage(ImageSource.camera);
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> getImage(
+      ImageSource img,
+      ) async {
+    if (ImagePicker().supportsImageSource(img) == true) {
+      try {
+        final XFile? pickedFile =
+        await ImagePicker().pickImage(source: img, imageQuality: 80);
+        setState(() {
+          _image = File(pickedFile!.path);
+        });
+        if (pickedFile!.path != null) {
+          controller.profileImage.value = pickedFile!.path;
+        }
+      } catch (e) {
+        print("gggh" + e.toString());
+      }
+    }
   }
 
   // Method to show success message
