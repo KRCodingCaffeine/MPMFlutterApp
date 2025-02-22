@@ -1,7 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mpm/utils/color_helper.dart';
+import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view_model/controller/samiti/SamitiController.dart';
+
+import '../../utils/urls.dart';
 
 class SamitiDetailPage extends StatefulWidget {
   SamitiDetailPage({super.key});
@@ -24,8 +28,9 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: Text(controller.samitiName.value.toString()),
-        backgroundColor: Colors.white54,
+        title: Text(controller.samitiName.value.toString(), style: TextStyle(color: Colors.white),),
+        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        iconTheme: IconThemeData(color: Colors.white),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -42,10 +47,12 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
             itemCount: controller.samitiDetailList.value.length,
             itemBuilder: (context, index) {
               final member = controller.samitiDetailList.value[index];
+              print("member samiti ${member.memberCode}");
               var firstname="";
               var middlename="";
               var lastname="";
               var mobile="";
+              var memberCode="";
               if(member.firstName.toString()=="null")
                 {
                   firstname="";
@@ -78,13 +85,23 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
                 {
                  mobile= member.mobile.toString();
                 }
-              var name =firstname+" "+middlename+" "+lastname;
+              var name =firstname+" "+lastname;
+
+              if(member.memberCode.toString()=="null")
+              {
+                memberCode="";
+              }
+              else
+              {
+                memberCode= member.memberCode.toString();
+              }
               return _buildMemberCard(
                 samitiRoles: member.samitiRolesName.toString(),
-                lmCode: member.samitiRolesName.toString(),
+                lmCode: memberCode,
                name: name,
                 mobile: mobile,
-                profileImage: "",
+                profileImage: member.profileImagePath,
+                memberId: member.memberId
               );
             },
           );
@@ -100,11 +117,13 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
     required String name,
     required String mobile,
     required String profileImage,
+    required String memberId,
   }) {
     // Use the default image if profileImage is null or empty
     String imagePath = (profileImage.isNotEmpty && profileImage != null)
         ? profileImage
         : 'assets/images/user3.png'; // Default image path
+    print('Profile Image Path: $imagePath');
 
     return Center(
       child: Card(
@@ -119,7 +138,9 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
               // Profile Image with default fallback
               CircleAvatar(
                 radius: 40,
-                backgroundImage: AssetImage(imagePath),
+                backgroundImage: (profileImage != null && profileImage.isNotEmpty)
+                    ? NetworkImage(Urls.imagePathUrl + profileImage)
+                    : const AssetImage("assets/images/male.png") as ImageProvider,
                 backgroundColor: Colors.grey[300],
               ),
               const SizedBox(width: 16),
@@ -130,7 +151,7 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
                   children: [
                     // Role Text (Super Admin)
                     Text(
-                      samitiRoles ?? 'Unknown Role',
+                      "Role: ${samitiRoles ?? 'Unknown Role'}",
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -138,31 +159,26 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
                     ),
                     const SizedBox(height: 5),
                     // Name and LM Code
-                    Row(
-                      children: [
-                        Text(
-                          name ?? 'No Name',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          lmCode ?? 'Unknown Code',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFFDC3545),
-                          ),
-                        ),
-                      ],
+                    Text(
+                      name ?? 'No Name',
+                      style: const TextStyle(
+                        fontSize: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      "Member Code : ${lmCode.isNotEmpty ? lmCode : memberId}",
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFFDC3545),
+                      ),
                     ),
                     const SizedBox(height: 4),
                     // Mobile Number
                     Text(
                       "Mobile: ${mobile ?? 'No Mobile'}",
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 14,
                         color: Colors.grey[600],
                       ),
                     ),
