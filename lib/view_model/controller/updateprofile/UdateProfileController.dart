@@ -233,6 +233,7 @@ class UdateProfileController extends GetxController {
       familyHeadMemberId.value =
           getUserData.value.familyHeadMemberId.toString();
       tempId.value = getUserData.value.tempId.toString();
+      profileImage.value = getUserData.value.profileImage.toString();
       isJangana.value = getUserData.value.isJangana.toString();
       saraswaniOptionId.value = getUserData.value.saraswaniOptionId.toString();
       firstNameController.value.text = firstName.value;

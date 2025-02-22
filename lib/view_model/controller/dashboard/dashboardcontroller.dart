@@ -14,6 +14,7 @@ class DashBoardController extends GetxController {
 
   // User Data Variables (Only for Viewing)
   var userName = ''.obs;
+  var memberId = ''.obs;
   var mobileNumber = ''.obs;
   var lmCode = ''.obs;
   var profileImage = ''.obs;

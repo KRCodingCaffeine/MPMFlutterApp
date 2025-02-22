@@ -164,10 +164,10 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
                     Text(
                       name ?? 'No Name',
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: 16,
                       ),
                     ),
-                    const SizedBox(width: 5),
+                    const SizedBox(height: 5),
                     Text(
                       "Member Code : ${lmCode.isNotEmpty ? lmCode : memberId}",
                       style: const TextStyle(
@@ -175,7 +175,7 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
                         color: Color(0xFFDC3545),
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 5),
                     // Mobile Number
                     Text(
                       "Mobile: ${mobile ?? 'No Mobile'}",
@@ -184,6 +184,7 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
                         color: Colors.grey[600],
                       ),
                     ),
+                    const SizedBox(height: 5),
                   ],
                 ),
               ),

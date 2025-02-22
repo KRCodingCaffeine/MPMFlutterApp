@@ -6,6 +6,7 @@ import 'package:mpm/utils/AppDrawer.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/utils/urls.dart';
 import 'package:mpm/view/login_view.dart';
 import 'package:mpm/view/profile%20view/Education_page_info.dart';
 import 'package:mpm/view/profile%20view/business_info_view.dart';
@@ -95,31 +96,33 @@ class _ProfileViewState extends State<ProfileView> {
                             Obx(() {
                               return CircleAvatar(
                                 radius: 40,
-                                backgroundImage: controller.profileImage.value.isNotEmpty
-                                    ? NetworkImage(controller.profileImage.value)
-                                    : const AssetImage("assets/images/user3.png") as ImageProvider,
-                                backgroundColor: Colors.grey[300],
-                              );
-                            }),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: GestureDetector(
-                                onTap: _pickImage,
-                                child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFDC3545),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.edit,
-                                    size: 15,
-                                    color: Colors.white,
+                                backgroundColor: Colors.grey[300], // Background color while loading
+                                child: ClipOval(
+                                  child: (controller.profileImage.value.isNotEmpty)
+                                      ? FadeInImage(
+                                    placeholder: const AssetImage("assets/images/user3.png"), // Placeholder while loading
+                                    image: NetworkImage(Urls.imagePathUrl + controller.profileImage.value), // Network image
+                                    imageErrorBuilder: (context, error, stackTrace) {
+                                      return Image.asset(
+                                        "assets/images/male.png", // Fallback image on error
+                                        fit: BoxFit.cover,
+                                        width: 80,
+                                        height: 80,
+                                      );
+                                    },
+                                    fit: BoxFit.cover,
+                                    width: 80,
+                                    height: 80,
+                                  )
+                                      : Image.asset(
+                                    "assets/images/user3.png", // Default image if profileImage is empty
+                                    fit: BoxFit.cover,
+                                    width: 80,
+                                    height: 80,
                                   ),
                                 ),
-                              ),
-                            ),
+                              );
+                            }),
                           ],
                         ),
                         const SizedBox(width: 16),

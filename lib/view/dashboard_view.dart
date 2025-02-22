@@ -90,11 +90,9 @@ class _DashboardViewState extends State<DashboardView> {
   Future<void> getUserSessionData() async {
     CheckUserData2? userData = await SessionManager.getSession();
     if (userData != null) {
-      print('User ID: ${userData.memberId}');
-      print('User Name: ${userData.mobile}');
-
       controller.lmCode.value = userData.memberCode ?? "";
       controller.mobileNumber.value = userData.mobile ?? "";
+      controller.memberId.value = userData.memberId ?? ""; 
 
       String firstName = userData.firstName ?? "";
       String middleName = userData.middleName ?? "";
