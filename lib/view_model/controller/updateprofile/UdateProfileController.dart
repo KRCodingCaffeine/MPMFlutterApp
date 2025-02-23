@@ -23,6 +23,8 @@ import 'package:mpm/model/relation/RelationData.dart';
 import 'package:mpm/repository/update_repository/UpdateProfileRepository.dart';
 import 'package:mpm/route/route_name.dart';
 import 'package:mpm/utils/Session.dart';
+import 'package:mpm/utils/color_helper.dart';
+import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/urls.dart';
 import 'package:http/http.dart' as http;
 import 'package:mpm/view/profile%20view/profile_view.dart';
@@ -168,12 +170,16 @@ class UdateProfileController extends GetxController {
       TextEditingController().obs;
   Rx<TextEditingController> countryController = TextEditingController().obs;
   Rx<TextEditingController> buildingController = TextEditingController().obs;
+  Rx<TextEditingController> flatNoController = TextEditingController().obs;
   Rx<TextEditingController> pincodeController = TextEditingController().obs;
   Rx<TextEditingController> cityController = TextEditingController().obs;
   Rx<TextEditingController> zoneController = TextEditingController().obs;
   Rx<TextEditingController> areaController = TextEditingController().obs;
   Rx<TextEditingController> housenoController = TextEditingController().obs;
   Rx<TextEditingController> stateController = TextEditingController().obs;
+  final Rx<TextEditingController> documentTypeController = TextEditingController().obs;
+  final Rx<TextEditingController> documentController = TextEditingController().obs;
+
 
   @override
   void onInit() {
@@ -660,7 +666,7 @@ class UdateProfileController extends GetxController {
         Get.snackbar(
           "Error",
           registerResponse.toString(),
-          backgroundColor: Colors.red,
+          backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
           colorText: Colors.white,
           snackPosition: SnackPosition.TOP,
         );
