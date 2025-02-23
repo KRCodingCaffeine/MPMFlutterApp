@@ -14,6 +14,8 @@ import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
+import '../../utils/urls.dart';
+
 class PersonalInformationPage extends StatefulWidget {
   const PersonalInformationPage({Key? key}) : super(key: key);
 
@@ -36,16 +38,6 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
 
   @override
   void dispose() {
-    // Dispose of controllers when no longer needed
-    // controller.firstNameController.value.dispose();
-    // controller.middleNameController.value.dispose();
-    // controller.surNameController.value.dispose();
-    // controller.fathersNameController.value.dispose();
-    // controller. mothersNameController.value.dispose();
-    // controller.mobileNumberController.value.dispose();
-    // controller. whatsAppNumberController.value.dispose();
-    // controller. emailController.value.dispose();
-
     super.dispose();
   }
 
@@ -124,6 +116,10 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                       }),
                       SizedBox(height: 20),
                       Obx((){
+                        return   _buildInfoBox('Anniversary Date:', subtitle: controller.marriageAnniversaryDate.value);
+                      }),
+                      SizedBox(height: 20),
+                      Obx((){
                         return   _buildInfoBox('Blood Group:', subtitle: controller.bloodGroup.value);
                       })
                     ],
@@ -195,24 +191,21 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                 onTap: () {
                                   _showPicker(context: context);
                                 },
-                                child: CircleAvatar(
-                                  radius: 40,
-                                  backgroundColor: Colors.grey[300],
-                                  child: ClipOval(
-                                    child: _image != null
-                                        ? Image.file(
-                                      _image!,
-                                      width: 80,
-                                      height: 80,
-                                      fit: BoxFit.cover,
-                                    )
-                                        : Icon(
-                                      Icons.camera_alt,
-                                      color: Colors.grey[600],
-                                      size: 40,
-                                    ),
-                                  ),
-                                ),
+                                child: Obx(() {
+                                  String networkImageUrl = Urls.imagePathUrl + controller.profileImage.value;
+                                  bool hasNewImage = controller.newProfileImage.value.isNotEmpty;
+                                  bool hasNetworkImage = controller.profileImage.value.isNotEmpty;
+                                  print("Current newProfileImage: ${controller.newProfileImage.value}");
+                                  print("Current profileImage: ${controller.profileImage.value}");
+                                  return CircleAvatar(
+                                    radius: 50,
+                                    backgroundImage: hasNewImage
+                                        ? FileImage(File(controller.newProfileImage.value))
+                                        : (hasNetworkImage
+                                        ? NetworkImage(networkImageUrl)
+                                        : const AssetImage("assets/default_profile.png")) as ImageProvider,
+                                  );
+                                })
                               ),
                             ),
                             const SizedBox(height: 30),
@@ -534,7 +527,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                             const SizedBox(height: 20),
                             Obx(() {
                               return Visibility(
-                                visible: controller.isMarried.value, // Show only if marital_status_id is "1"
+                                visible: controller.marriageAnniversaryController.value.text.isNotEmpty, // Show only if marital_status_id is "1"
                                 child: Column(
                                   children: [
                                     const SizedBox(height: 8),
@@ -549,7 +542,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                         child: TextFormField(
                                           keyboardType: TextInputType.text,
                                           readOnly: true,
-                                          controller: newMemberController.marriagedateController.value,
+                                          controller: controller.marriageAnniversaryController.value,
                                           decoration: const InputDecoration(
                                             hintText: 'Marriage Anniversary *',
                                             border: InputBorder.none,
@@ -558,9 +551,9 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                           onTap: () async {
                                             DateTime? pickedDate = await showDatePicker(
                                               context: context,
-                                              initialDate: newMemberController.marriagedateController.value.text.isNotEmpty
+                                              initialDate: controller.marriageAnniversaryController.value.text.isNotEmpty
                                                   ? DateFormat('dd/MM/yyyy').parse(
-                                                  newMemberController.marriagedateController.value.text.replaceAll('-', '/'))
+                                                  controller.marriageAnniversaryController.value.text.replaceAll('-', '/'))
                                                   : DateTime.now(),
                                               firstDate: DateTime(1900),
                                               lastDate: DateTime.now(),
@@ -585,7 +578,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
 
                                             if (pickedDate != null) {
                                               String formattedDate = DateFormat('dd/MM/yyyy').format(pickedDate);
-                                              newMemberController.marriagedateController.value.text = formattedDate;
+                                              controller.marriageAnniversaryController.value.text = formattedDate;
                                             }
                                           },
                                         ),
@@ -627,7 +620,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                 leading: const Icon(Icons.photo_library),
                 title: const Text('Choose Photo From Gallery'),
                 onTap: () {
-                  _pickImage(ImageSource.gallery);
+                  getImage(ImageSource.gallery);
                   Navigator.of(context).pop();
                 },
               ),
@@ -651,28 +644,29 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
 
     if (pickedFile != null) {
       setState(() {
-        _image = File(pickedFile.path);
+        controller.newProfileImage.value = pickedFile.path;
       });
     }
   }
 
 
-  Future<void> getImage(
-      ImageSource img,
-      ) async {
-    if (ImagePicker().supportsImageSource(img) == true) {
-      try {
-        final XFile? pickedFile =
-        await ImagePicker().pickImage(source: img, imageQuality: 80);
-        setState(() {
-          _image = File(pickedFile!.path);
-        });
-        if (pickedFile!.path != null) {
-          controller.profileImage.value = pickedFile!.path;
-        }
-      } catch (e) {
-        print("gggh" + e.toString());
+  Future<void> getImage(ImageSource img) async {
+    try {
+      final XFile? pickedFile = await ImagePicker().pickImage(
+        source: img,
+        imageQuality: 80,
+      );
+      print("New Image Picked: ${pickedFile?.path}");
+      if (pickedFile != null) {
+        print("New Image Picked: ${pickedFile.path}");
+
+        // Ensure the observable variable is updated
+        controller.newProfileImage.value = pickedFile.path;
+      } else {
+        print("No image selected.");
       }
+    } catch (e) {
+      print("Error picking image: $e");
     }
   }
 

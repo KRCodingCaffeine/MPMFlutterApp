@@ -9,7 +9,6 @@ import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/model/GetProfile/BusinessInfo.dart';
 import 'package:mpm/model/GetProfile/FamilyMembersData.dart';
 import 'package:mpm/model/GetProfile/GetProfileData.dart';
-import 'package:mpm/model/GetProfile/GetProfileModel.dart';
 import 'package:mpm/model/GetProfile/Qualification.dart';
 import 'package:mpm/model/Occupation/OccupationData.dart';
 import 'package:mpm/model/Occupation/addoccuption/AddOccuptionModel.dart';
@@ -38,6 +37,7 @@ class UdateProfileController extends GetxController {
   var userName = "".obs;
 
   var profileImage = "".obs; // Add this field
+  var newProfileImage = "".obs;
 
   // Example function to update profile image
   void updateProfileImage(String newImageUrl) {
@@ -146,6 +146,7 @@ class UdateProfileController extends GetxController {
   var familyDataList = <FamilyMembersData>[].obs;
   var areaDataList = <FamilyMembersData>[].obs;
   var selectRelationShipType = ''.obs;
+
   final Rx<TextEditingController> firstNameController =
       TextEditingController().obs;
   final Rx<TextEditingController> middleNameController =
@@ -166,6 +167,7 @@ class UdateProfileController extends GetxController {
       TextEditingController().obs;
   final Rx<TextEditingController> maritalStatusController =
       TextEditingController().obs;
+  final Rx<TextEditingController> marriageAnniversaryController = TextEditingController().obs;
   final Rx<TextEditingController> bloodGroupController =
       TextEditingController().obs;
   Rx<TextEditingController> countryController = TextEditingController().obs;
@@ -177,9 +179,10 @@ class UdateProfileController extends GetxController {
   Rx<TextEditingController> areaController = TextEditingController().obs;
   Rx<TextEditingController> housenoController = TextEditingController().obs;
   Rx<TextEditingController> stateController = TextEditingController().obs;
-  final Rx<TextEditingController> documentTypeController = TextEditingController().obs;
-  final Rx<TextEditingController> documentController = TextEditingController().obs;
-
+  final Rx<TextEditingController> documentTypeController =
+      TextEditingController().obs;
+  final Rx<TextEditingController> documentController =
+      TextEditingController().obs;
 
   @override
   void onInit() {
@@ -254,6 +257,7 @@ class UdateProfileController extends GetxController {
       dobController.value.text = dob.value;
       genderController.value.text = gender.value;
       maritalStatusController.value.text = maritalStatus.value;
+      marriageAnniversaryController.value.text = marriageAnniversaryDate.value;
       bloodGroupController.value.text = bloodGroup.value;
       organisationName.value =
           getUserData.value.occupation!.occupationOtherName.toString();
@@ -278,7 +282,7 @@ class UdateProfileController extends GetxController {
             getUserData.value.address!.buildingNameId.toString();
         //pincodeController.value = getUserData.value.address!.stateId;
       }
-     /* CheckUserData2 userData = CheckUserData2(
+      /* CheckUserData2 userData = CheckUserData2(
         memberId: memberId.value,
         firstName: firstName.value,
         lastName: surName.value,
@@ -593,48 +597,49 @@ class UdateProfileController extends GetxController {
   void userUpdateProfile(BuildContext context, String type) async {
     //print("member"+memberId.value);
     CheckUserData2? userData = await SessionManager.getSession();
-    //print('User ID: ${userData?.memberId}');
-    //print('User Name: ${userData?.mobile}');
+
     final url = Uri.parse(Urls.updateProfile_url);
 
-    var email = emailController.value.text.trim();
-    var mobile = mobileNumberController.value.text.trim();
     NewMemberController memberController = Get.put(NewMemberController());
-    //var blood_group_id = memberController.selectBloodGroup.value;
-    //var gender_id =gen;
-    //var marital_status_id = memberController.selectMarital.value;
-    var dob = dobController.value.text.trim();
 
-    var whatsapp_number = whatsAppNumberController.value.text.trim();
     loading.value = true;
+
+    if(marital_status_id.value != "1"){
+      marriageAnniversaryController.value.text = "";
+    }
 
     Map<String, String> payload = {
       "member_id": userData!.memberId.toString(),
       "first_name": firstNameController.value.text,
       "last_name": surNameController.value.text,
-      ""
-          "middle_name": middleNameController.value.text,
+      "middle_name": middleNameController.value.text,
       "father_name": fathersNameController.value.text,
       "mother_name": mothersNameController.value.text,
-      "email": email,
-      "whatsapp_number": whatsapp_number,
-      "mobile": mobile,
+      "email": emailController.value.text.trim(),
+      "whatsapp_number": whatsAppNumberController.value.text.trim(),
       "gender_id": gender_id.value,
       "marital_status_id": marital_status_id.value,
       "blood_group_id": blood_group_id.value,
-      "dob": dob,
+      "dob": dobController.value.text.trim(),
       "marriage_anniversary_date":
-          memberController.marriagedateController.value.text,
-      "salutation_id": "",
+          marriageAnniversaryController.value.text,
+      "salutation_id": memberSalutaitonId.value,
     };
-    print("Update profile payload $payload");
+
     var request = http.MultipartRequest('POST', url);
     request.fields.addAll(payload);
-    //request.files.add(await http.MultipartFile.fromPath('document_image',document_image));
-    // if(profile_image!="") {
-    //   request.files.add(
-    //       await http.MultipartFile.fromPath("image_profile", profile_image));
-    // }
+
+    print("Profile Image Path: ${newProfileImage.value}");
+    if (newProfileImage.value.isNotEmpty) {
+      print("Uploading Image...");
+      request.files.add(
+        await http.MultipartFile.fromPath(
+            "profile_image", newProfileImage.value),
+      );
+    } else {
+      print("No image to upload.");
+    }
+
 
     http.StreamedResponse response =
         await request.send().timeout(Duration(seconds: 60));
@@ -643,7 +648,7 @@ class UdateProfileController extends GetxController {
       String responseBody = await response.stream.bytesToString();
       loading.value = false;
       Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
-      //print("vfbb"+jsonResponse.toString());
+
       RegisterModelClass registerResponse =
           RegisterModelClass.fromJson(jsonResponse);
       if (registerResponse.status == true) {
@@ -666,7 +671,8 @@ class UdateProfileController extends GetxController {
         Get.snackbar(
           "Error",
           registerResponse.toString(),
-          backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+          backgroundColor:
+              ColorHelperClass.getColorFromHex(ColorResources.red_color),
           colorText: Colors.white,
           snackPosition: SnackPosition.TOP,
         );
