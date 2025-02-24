@@ -9,7 +9,7 @@ import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/urls.dart';
 import 'package:mpm/view/login_view.dart';
 import 'package:mpm/view/profile%20view/Education_page_info.dart';
-import 'package:mpm/view/profile%20view/business_info_view.dart';
+import 'package:mpm/view/profile%20view/business_info_page.dart';
 import 'package:mpm/view/profile%20view/family_info_page.dart';
 import 'package:mpm/view/profile%20view/personal_info_page.dart';
 import 'package:mpm/view/profile%20view/residence_info_page.dart';

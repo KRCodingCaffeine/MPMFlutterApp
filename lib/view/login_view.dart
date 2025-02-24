@@ -66,7 +66,7 @@ class _LoginPageState extends State<LoginPage> {
                         height: 240,
                         width: 300,
                       ),
-                      const SizedBox(height: 34),
+                      const SizedBox(height: 20),
                       Text(
                         AppConstants.enter_mobile,
                         style: TextStyleClass.black20style,
@@ -75,7 +75,7 @@ class _LoginPageState extends State<LoginPage> {
                         AppConstants.logincon,
                         style: TextStyleClass.black14style,
                       ),
-                      const SizedBox(height: 34),
+                      const SizedBox(height: 20),
 
                       // Mobile Number Field
                       SizedBox(
@@ -101,7 +101,7 @@ class _LoginPageState extends State<LoginPage> {
                                       hintText: 'Enter Your Mobile / LM Code',
                                       border: InputBorder.none,
                                       contentPadding:
-                                      EdgeInsets.symmetric(vertical: 8),
+                                          EdgeInsets.symmetric(vertical: 8),
                                     ),
                                     validator: (value) {
                                       if (value!.isEmpty) {
@@ -155,8 +155,8 @@ class _LoginPageState extends State<LoginPage> {
                                               hintText: 'Enter LM Code',
                                               border: InputBorder.none,
                                               contentPadding:
-                                              EdgeInsets.symmetric(
-                                                  vertical: 8),
+                                                  EdgeInsets.symmetric(
+                                                      vertical: 8),
                                             ),
                                             validator: (value) {
                                               if (value!.isEmpty) {
@@ -207,8 +207,8 @@ class _LoginPageState extends State<LoginPage> {
                                               hintText: 'Mobile Number',
                                               border: InputBorder.none,
                                               contentPadding:
-                                              EdgeInsets.symmetric(
-                                                  vertical: 8),
+                                                  EdgeInsets.symmetric(
+                                                      vertical: 8),
                                             ),
                                             validator: (value) {
                                               if (value!.isEmpty) {
@@ -238,7 +238,7 @@ class _LoginPageState extends State<LoginPage> {
                         child: Padding(
                           padding: const EdgeInsets.only(left: 6.0, right: 6),
                           child: Obx(
-                                () => ElevatedButton(
+                            () => ElevatedButton(
                               onPressed: () async {
                                 if (_formKeyLogin!.currentState!.validate()) {
                                   if (controller.lmCodeVisible.value == false) {
@@ -264,22 +264,22 @@ class _LoginPageState extends State<LoginPage> {
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
-                                ColorHelperClass.getColorFromHex(
-                                    ColorResources.red_color),
+                                    ColorHelperClass.getColorFromHex(
+                                        ColorResources.red_color),
                                 padding:
-                                const EdgeInsets.symmetric(vertical: 14),
+                                    const EdgeInsets.symmetric(vertical: 14),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                               child: controller.loadinng.value
                                   ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
+                                      color: Colors.white,
+                                    )
                                   : Text(
-                                AppConstants.continues,
-                                style: TextStyleClass.white16style,
-                              ),
+                                      AppConstants.continues,
+                                      style: TextStyleClass.white16style,
+                                    ),
                             ),
                           ),
                         ),
@@ -302,8 +302,8 @@ class _LoginPageState extends State<LoginPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: ColorHelperClass.getColorFromHex(
                       ColorResources.red_color),
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 10, horizontal: 16),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),

@@ -93,7 +93,7 @@ class _HomeViewState extends State<HomeView> {
             }
           }),
           _buildGridView(),
-          //_buildAdvertisementTitle(),
+          _buildAdvertisementTitle(),
           _buildAdvertisementList(),
           const SizedBox(height: 20),
         ],
