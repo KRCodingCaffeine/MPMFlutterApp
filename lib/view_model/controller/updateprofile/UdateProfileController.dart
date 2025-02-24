@@ -44,6 +44,9 @@ class UdateProfileController extends GetxController {
     profileImage.value = newImageUrl;
   }
 
+  var isQualificationDetailVisible = false.obs;
+  var isQualificationCategoryVisible = false.obs;
+
   var firstName = ''.obs;
   var middleName = ''.obs;
   var surName = ''.obs;
