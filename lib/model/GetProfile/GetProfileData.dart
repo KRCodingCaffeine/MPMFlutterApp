@@ -10,7 +10,7 @@ class GetProfileData{
   var memberCode;
   var memberSalutaitonId;
   var firstName;
- var middleName;
+  var middleName;
   var lastName;
   var mobile;
   var whatsappNumber;
@@ -36,10 +36,10 @@ class GetProfileData{
   var memberStatusId;
   var membershipApprovalStatusId;
   var membershipTypeId;
-  var familyHeadMemberId;
+  // var familyHeadMemberId;
   var marital_status;
   var gender_name;
- var tempId;
+  var tempId;
   var isJangana;
   var saraswaniOptionId;
   var createdBy;
@@ -50,13 +50,13 @@ class GetProfileData{
   var memberStatusName;
   var profileImagePath;
   var addressProofPath;
-  Address? address;
-  List<FamilyMembersData>? familyMembersData;
- FamilyHeadMemberData? familyHeadMemberData;
- List<Qualification>? qualification;
- Occupation? occupation;
-  List<BusinessInfo>? businessInfo;
 
+  List<FamilyMembersData>? familyMembersData;
+  FamilyHeadMemberData? familyHeadMemberData;
+  List<Qualification>? qualification;
+  Occupation? occupation;
+  List<BusinessInfo>? businessInfo;
+  Address? address;
   GetProfileData(
       {this.memberId,
         this.memberCode,
@@ -88,7 +88,7 @@ class GetProfileData{
         this.memberStatusId,
         this.membershipApprovalStatusId,
         this.membershipTypeId,
-        this.familyHeadMemberId,
+        // this.familyHeadMemberId,
         this.tempId,
         this.isJangana,
         this.saraswaniOptionId,
@@ -102,12 +102,12 @@ class GetProfileData{
         this.memberStatusName,
         this.profileImagePath,
         this.addressProofPath,
-         this.address,
-         this.familyMembersData,
-         this.familyHeadMemberData,
-         this.qualification,
-         this.occupation,
-         this.businessInfo
+        this.address,
+        this.familyMembersData,
+        this.familyHeadMemberData,
+        this.qualification,
+        this.occupation,
+        this.businessInfo
       });
 
   GetProfileData.fromJson(Map<String, dynamic> json) {
@@ -141,7 +141,7 @@ class GetProfileData{
     memberStatusId = json['member_status_id'];
     membershipApprovalStatusId = json['membership_approval_status_id'];
     membershipTypeId = json['membership_type_id'];
-    familyHeadMemberId = json['family_head_member_id'];
+    //familyHeadMemberId = json['family_head_member_id'];
     tempId = json['temp_id'];
     isJangana = json['is_jangana'];
     saraswaniOptionId = json['saraswani_option_id'];
@@ -155,8 +155,7 @@ class GetProfileData{
     memberStatusName = json['member_status_name'];
     profileImagePath = json['profile_image_path'];
     addressProofPath = json['address_proof_path'];
-    address =
-    json['address'] != null ? new Address.fromJson(json['address']) : null;
+    address = json['address'] != null ? new Address.fromJson(json['address']) : null;
     if (json['family_members_data'] != null) {
       familyMembersData = <FamilyMembersData>[];
       json['family_members_data'].forEach((v) {
@@ -215,7 +214,7 @@ class GetProfileData{
     data['member_status_id'] = this.memberStatusId;
     data['membership_approval_status_id'] = this.membershipApprovalStatusId;
     data['membership_type_id'] = this.membershipTypeId;
-    data['family_head_member_id'] = this.familyHeadMemberId;
+    //data['family_head_member_id'] = this.familyHeadMemberId;
     data['temp_id'] = this.tempId;
     data['is_jangana'] = this.isJangana;
     data['saraswani_option_id'] = this.saraswaniOptionId;

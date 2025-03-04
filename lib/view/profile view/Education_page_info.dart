@@ -88,7 +88,7 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                       onPressed: () async {
                         if (regiController
                             .educationdetailController.value.text.isNotEmpty) {
-                          regiController.addQualification(context);
+                          regiController.updateQualification();
                         }
                       },
                       child: regiController.addloading.value

@@ -27,6 +27,11 @@ class UpdateProfileRepository {
     //print("vdgvgdv"+response.toString());
     return response;
   }
+  Future<dynamic> updateQualification(data) async {
+    dynamic response = await api.postApi(data,Urls.updateBusinessInfo_url,"","2");
+    print("vdgvgdv"+response.toString()+Urls.updateBusinessInfo_url);
+    return response;
+  }
   Future<UpdateFamilyMember> updateFamilyRelation(data) async {
     dynamic response = await api.postApi(data,Urls.addUpdateFamilyMEber_url,"","2");
     //print("vdgvgdv"+response.toString());
@@ -60,6 +65,18 @@ class UpdateProfileRepository {
     return QualificationModel.fromJson(response);
 
   }
+  Future<dynamic> userAddBusiness(data) async {
+    dynamic response = await api.postApi(data, Urls.addBusinessInfo_url, "","2");
+    //print("vdgvgdv"+response.toString());
+    return response;
+
+  }
+  Future<dynamic> userUpdateBusiness(data) async {
+    dynamic response = await api.postApi(data, Urls.updateBusinessInfo_url, "","2");
+    //print("vdgvgdv"+response.toString());
+    return response;
+
+  }
   Future<QualicationMainModel> userQualificationMain(var data) async {
     dynamic response = await api.postApi(data, Urls.qualificationmain_url, "","2");
     //print("vdgvgdv"+response.toString());
@@ -73,7 +90,7 @@ class UpdateProfileRepository {
   }
   Future<RelationModel> userFamilyRelation(data) async {
     dynamic response = await api.postApi(data,Urls.relation_url,"","2");
-    //print("vdgvgdv"+response.toString());
+    print("relationdata"+response.toString());
     return RelationModel.fromJson(response);
   }
 

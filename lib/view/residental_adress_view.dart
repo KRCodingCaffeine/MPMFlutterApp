@@ -115,7 +115,6 @@ class _PesidentalAdressViewState extends State<PesidentalAdressView> {
                           showErrorSnackbar("Select MemberShip Type");
                           return;
                         }
-
                         regiController.userRegister(
                           regiController.lmCodeValue.value,
                           context,

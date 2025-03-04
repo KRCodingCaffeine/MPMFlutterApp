@@ -58,6 +58,7 @@ class _ProfileViewState extends State<ProfileView> {
     newMemberController.getCountry();
     newMemberController.getCity();
     newMemberController.getState();
+    newMemberController.getDocumentType();
   }
 
   @override

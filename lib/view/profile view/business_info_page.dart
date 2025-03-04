@@ -1,7 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:mpm/OccuptionProfession/OccuptionProfessionData.dart';
+import 'package:mpm/data/response/status.dart';
+import 'package:mpm/model/CountryModel/CountryData.dart';
+import 'package:mpm/model/GetProfile/BusinessInfo.dart';
+import 'package:mpm/model/Occupation/OccupationData.dart';
+import 'package:mpm/model/OccupationSpec/OccuptionSpecData.dart';
+import 'package:mpm/model/State/StateData.dart';
+import 'package:mpm/model/city/CityData.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
-import 'business_info_view.dart';
+import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
+import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
+
 import 'occupation_info_view.dart';
 
 class BusinessInformationPage extends StatefulWidget {
@@ -23,24 +34,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
   String occupationProfession = "";
   String occupationSpecialization = "";
   String occupationDetails = "";
-
-  // Variables to store business-related information
-  String organisationName = 'Company Name';
-  String officePhone = 'Landline Number';
-  String buildingName = 'Building Name';
-  String flatNo = 'Flat No';
-  String address = 'Address';
-  String areaName = 'Area';
-  String city = 'Office Location';
-  String stateName = 'State';
-  String countryName = 'Country';
-  String officePincode = 'Postal Code';
-  String businessEmail = 'Official Email';
-  String website = 'Official URL';
-
-  // List to store business card details
-  List<Map<String, String>> businessCards = [];
-
+  NewMemberController regiController =Get.put(NewMemberController());
+  UdateProfileController controller =Get.put(UdateProfileController());
   @override
   @override
   Widget build(BuildContext context) {
@@ -127,44 +122,37 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                   ),
                 ),
 
-                // Check if businessCards is empty, display message, otherwise show cards
-                businessCards.isEmpty
-                    ? Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Text(
-                                "No Employment Details, Please add by clicking Add Employment Button.",
-                                style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey,
-                                    fontWeight: FontWeight.bold),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
+
+                Obx((){
+                  if(controller.businessInfoList.value.isEmpty)
+                  {
+                    return Center(child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              "No Employment Details, Please add by clicking Add Employment Button.",
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                  fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
                         ),
-                      )
-                    : Column(
-                        children: businessCards.map((card) {
-                          return _buildBusinessInfoCard(
-                            organisationName: card['organisationName']!,
-                            officePhone: card['officePhone']!,
-                            buildingName: card['buildingName']!,
-                            flatNo: card['flatNo']!,
-                            address: card['address']!,
-                            areaName: card['areaName']!,
-                            city: card['city']!,
-                            stateName: card['stateName']!,
-                            countryName: card['countryName']!,
-                            officePincode: card['officePincode']!,
-                            businessEmail: card['businessEmail']!,
-                            website: card['website']!,
-                          );
-                        }).toList(),
                       ),
+                    ),);
+                  }
+                  return ListView.builder(
+                      physics: BouncingScrollPhysics(),
+                      shrinkWrap: true,
+
+                      itemCount: controller.businessInfoList.value.length,
+                      itemBuilder: (context, index) => _buildBusinessInfoCard(bussinessinfo: controller.businessInfoList.value[index])
+                  );
+                }),
                 const SizedBox(height: 20),
               ],
             )
@@ -174,10 +162,9 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
     );
   }
 
-  // Method to show the Modal Bottom Sheet for editing
+
   void _showAddModalSheet(BuildContext context) {
     double heightFactor = 0.8; // Default height for the modal
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -225,12 +212,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                               onPressed: () {
                                 bool isValid = _validateFields();
                                 if (isValid) {
-                                  setState(() {
-                                    _addNewBusinessCard();
-                                  });
-                                  Navigator.of(context).pop();
-                                } else {
-                                  _showFailureMessage();
+                                  controller.userAddBuniessInfo();
                                 }
                               },
                               style: TextButton.styleFrom(
@@ -254,61 +236,290 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildEditableField(
-                                'Organisation Name',
-                                organisationName,
-                                (value) => organisationName = value,
-                              ),
-                              _buildEditableField(
-                                'Office Phone',
-                                officePhone,
-                                (value) => officePhone = value,
-                              ),
-                              _buildEditableField(
+                              Obx((){
+                                return _buildEditableField(
+                                  'Organisation Name',
+                                  controller.organisationName.value,
+                                      (value) => controller.organisationName.value = value,
+                                );
+                              }),
+                             Obx((){
+                               return  _buildEditableField(
+                                 'Office Phone',
+                                 controller.officePhone.value,
+                                     (value) => controller.officePhone.value = value,
+                               );
+                             }),
+                            Obx((){
+                              return   _buildEditableField(
                                 'Building Name',
-                                buildingName,
-                                (value) => buildingName = value,
-                              ),
-                              _buildEditableField(
-                                'Flat No',
-                                flatNo,
-                                (value) => flatNo = value,
-                              ),
-                              _buildEditableField(
-                                'Area',
-                                areaName,
-                                (value) => areaName = value,
-                              ),
-                              _buildEditableField(
-                                'City',
-                                city,
-                                (value) => city = value,
-                              ),
-                              _buildEditableField(
-                                'State',
-                                stateName,
-                                (value) => stateName = value,
-                              ),
-                              _buildEditableField(
-                                'Country',
-                                countryName,
-                                (value) => countryName = value,
-                              ),
-                              _buildEditableField(
-                                'Office Pincode',
-                                officePincode,
-                                (value) => officePincode = value,
-                              ),
-                              _buildEditableField(
-                                'Business Email',
-                                businessEmail,
-                                (value) => businessEmail = value,
-                              ),
-                              _buildEditableField(
-                                'Website',
-                                website,
-                                (value) => website = value,
-                              ),
+                                controller.buildingName.value,
+                                    (value) => controller.buildingName.value = value,
+                              );
+                            }),
+                              Obx((){
+                                return _buildEditableField(
+                                  'Flat No',
+                                  controller.flatNo.value,
+                                      (value) =>  controller.flatNo.value = value,
+                                );
+                              }),
+                             Obx((){
+                               return  _buildEditableField(
+                                 'Area',
+                                 controller.areaName.value,
+                                     (value) => controller.areaName.value = value,
+                               );
+                             }),
+                                  Container(
+
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: Colors.grey),
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Obx(() {
+                                          if (regiController.rxStatusCountryLoading.value ==
+                                              Status.LOADING) {
+                                            return Padding(
+                                              padding: const EdgeInsets.symmetric(
+                                                  vertical: 10, horizontal: 22),
+                                              child: Container(
+                                                  alignment: Alignment.centerRight,
+                                                  height: 24,
+                                                  width: 24,
+                                                  child: CircularProgressIndicator(
+                                                    color: ColorHelperClass
+                                                        .getColorFromHex(
+                                                        ColorResources.pink_color),
+                                                  )),
+                                            );
+                                          } else if (regiController
+                                              .rxStatusCountryLoading.value ==
+                                              Status.ERROR) {
+                                            return const Center(
+                                                child: Text('Failed to load country'));
+                                          } else if (regiController
+                                              .countryList.isEmpty) {
+                                            return const Center(
+                                                child: Text('No Country available'));
+                                          } else {
+                                            return Expanded(
+                                              child: DropdownButton<String>(
+                                                padding: const EdgeInsets.symmetric(
+                                                    horizontal: 20),
+                                                underline: Container(),
+                                                isExpanded: true,
+                                                hint: const Text(
+                                                  'Select Country',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                value: regiController
+                                                    .country_id.value.isEmpty
+                                                    ? null
+                                                    : regiController
+                                                    .country_id.value,
+                                                items: regiController.countryList
+                                                    .map((CountryData gender) {
+                                                  return DropdownMenuItem<String>(
+                                                    value: gender.id
+                                                        .toString(),
+                                                    child: Text(gender.countryName ??
+                                                        'Unknown'),
+                                                  );
+                                                }).toList(),
+                                                onChanged: (String? newValue) {
+                                                  if (newValue != null) {
+                                                    regiController.setSelectedCountry(newValue);
+                                                  }
+                                                },
+                                              ),
+                                            );
+                                          }
+                                        })
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  Container(
+
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: Colors.grey),
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Obx(() {
+                                          if (regiController.rxStatusStateLoading.value ==
+                                              Status.LOADING) {
+                                            return Padding(
+                                              padding: const EdgeInsets.symmetric(
+                                                  vertical: 10, horizontal: 22),
+                                              child: Container(
+                                                  alignment: Alignment.centerRight,
+                                                  height: 24,
+                                                  width: 24,
+                                                  child: CircularProgressIndicator(
+                                                    color: ColorHelperClass
+                                                        .getColorFromHex(
+                                                        ColorResources.pink_color),
+                                                  )),
+                                            );
+                                          } else if (regiController
+                                              .rxStatusStateLoading.value ==
+                                              Status.ERROR) {
+                                            return const Center(
+                                                child: Text('Failed to load state'));
+                                          } else if (regiController
+                                              .stateList.isEmpty) {
+                                            return const Center(
+                                                child: Text('No State available'));
+                                          } else {
+                                            return Expanded(
+                                              child: DropdownButton<String>(
+                                                padding: const EdgeInsets.symmetric(
+                                                    horizontal: 20),
+                                                underline: Container(),
+                                                isExpanded: true,
+                                                hint: const Text(
+                                                  'Select State',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                value: regiController
+                                                    .state_id.value.isEmpty
+                                                    ? null
+                                                    : regiController
+                                                    .state_id.value,
+                                                items: regiController.stateList
+                                                    .map((StateData gender) {
+                                                  return DropdownMenuItem<String>(
+                                                    value: gender.id
+                                                        .toString(),
+                                                    child: Text(gender.stateName ??
+                                                        'Unknown'),
+                                                  );
+                                                }).toList(),
+                                                onChanged: (String? newValue) {
+                                                  if (newValue != null) {
+                                                    regiController.setSelectedState(newValue);
+                                                  }
+                                                },
+                                              ),
+                                            );
+                                          }
+                                        })
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  Container(
+
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: Colors.grey),
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Obx(() {
+                                          if (regiController.rxStatusCityLoading.value ==
+                                              Status.LOADING) {
+                                            return Padding(
+                                              padding: const EdgeInsets.symmetric(
+                                                  vertical: 10, horizontal: 22),
+                                              child: Container(
+                                                  alignment: Alignment.centerRight,
+                                                  height: 24,
+                                                  width: 24,
+                                                  child: CircularProgressIndicator(
+                                                    color: ColorHelperClass
+                                                        .getColorFromHex(
+                                                        ColorResources.pink_color),
+                                                  )),
+                                            );
+                                          } else if (regiController
+                                              .rxStatusCityLoading.value ==
+                                              Status.ERROR) {
+                                            return const Center(
+                                                child: Padding(
+                                                  padding: EdgeInsets.all(8.0),
+                                                  child: Text('Failed to load city'),
+                                                ));
+                                          } else if (regiController
+                                              .cityList.isEmpty) {
+                                            return const Center(
+                                                child: Padding(
+                                                  padding: EdgeInsets.all(8.0),
+                                                  child: Text('No City available'),
+                                                ));
+                                          } else {
+                                            return Expanded(
+                                              child: DropdownButton<String>(
+                                                padding: const EdgeInsets.symmetric(
+                                                    horizontal: 20),
+                                                underline: Container(),
+                                                isExpanded: true,
+                                                hint: const Text(
+                                                  'Select City',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                value: regiController
+                                                    .city_id.value.isEmpty
+                                                    ? null
+                                                    : regiController
+                                                    .city_id.value,
+                                                items: regiController.cityList
+                                                    .map((CityData gender) {
+                                                  return DropdownMenuItem<String>(
+                                                    value: gender.id
+                                                        .toString(),
+                                                    child: Text(gender.cityName ??
+                                                        'Unknown'),
+                                                  );
+                                                }).toList(),
+                                                onChanged: (String? newValue) {
+                                                  if (newValue != null) {
+                                                    regiController.setSelectedCity(newValue);
+                                                  }
+                                                },
+                                              ),
+                                            );
+                                          }
+                                        })
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                 Obx((){
+                                   return  _buildEditableField(
+                                     'Office Pincode',
+                                     controller. officePincode.value,
+                                         (value) => controller. officePincode.value = value,
+                                   );
+                                 }),
+                                  Obx((){
+                                    return _buildEditableField(
+                                      'Business Email',
+                                      controller.businessEmail.value,
+                                          (value) => controller.businessEmail.value = value,
+                                    );
+                                  }),
+                                Obx((){
+                                  return   _buildEditableField(
+                                    'Website',
+                                    controller.website.value,
+                                        (value) => controller.website.value = value,
+                                  );
+                                }),
                             ],
                           ),
                         ),
@@ -324,54 +535,13 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
     );
   }
 
-  // Method to add a new business card to the list
-  void _addNewBusinessCard() {
-    final newCard = {
-      'organisationName': organisationName,
-      'officePhone': officePhone,
-      'buildingName': buildingName,
-      'flatNo': flatNo,
-      'address': address,
-      'areaName': areaName,
-      'city': city,
-      'stateName': stateName,
-      'countryName': countryName,
-      'officePincode': officePincode,
-      'businessEmail': businessEmail,
-      'website': website,
-    };
-
-    setState(() {
-      businessCards.add(newCard); // Add the new card to the list
-      print("New Card Added: $newCard"); // Debugging
-      print("Total Cards: ${businessCards.length}"); // Debugging
-    });
-  }
-
-  // Method to validate fields before saving
   bool _validateFields() {
-    return organisationName.isNotEmpty;
+    return controller.organisationName.isNotEmpty;
   }
 
-  // Method to show success message
-  void _showSuccessMessage() {
-    final snackBar = SnackBar(
-      content: const Text('Information updated successfully!'),
-      duration: const Duration(seconds: 2),
-      backgroundColor: Colors.green,
-    );
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
-  }
 
-  // Method to show failure message
-  void _showFailureMessage() {
-    final snackBar = SnackBar(
-      content: const Text('Failed to update information. Please check fields.'),
-      duration: const Duration(seconds: 2),
-      backgroundColor: Colors.red,
-    );
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
-  }
+
+
 
   // Editable fields widget
   Widget _buildEditableField(
@@ -391,18 +561,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
 
   // Business Info Card widget with white background color
   Widget _buildBusinessInfoCard({
-    required String organisationName,
-    required String officePhone,
-    required String buildingName,
-    required String flatNo,
-    required String address,
-    required String areaName,
-    required String city,
-    required String stateName,
-    required String countryName,
-    required String officePincode,
-    required String businessEmail,
-    required String website,
+   required BusinessInfo bussinessinfo
   }) {
     return Card(
       elevation: 5,
@@ -420,16 +579,14 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
               children: [
                 Expanded(
                   child: Text(
-                    organisationName.isNotEmpty
-                        ? organisationName
-                        : 'Business Details',
+                    bussinessinfo.organisationName.toString(),
                     style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.bold),
                     overflow: TextOverflow.ellipsis, // Prevents overflow
                   ),
                 ),
                 TextButton.icon(
-                  onPressed: () => _showEditModalSheet(context),
+                  onPressed: () => _showEditModalSheet(context,bussinessinfo),
                   icon: const Icon(Icons.edit, color: Colors.red),
                   label: const Text(
                     "Edit",
@@ -444,53 +601,60 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
             ),
 
             const Divider(color: Color(0xFFE0E0E0)), // Black divider
-
-            if (organisationName.isNotEmpty) ...[
-              const SizedBox(height: 8),
-
-              // Line 1: Flat No, Address
-              Text(
-                "$flatNo, $address",
+            const SizedBox(height: 8),
+            Text(
+                "${bussinessinfo.flatNo.toString()}, ${bussinessinfo.address.toString()}",
                 style: const TextStyle(fontSize: 14, color: Colors.black87),
               ),
               const SizedBox(height: 10),
 
               // Line 2: City, State - Pincode
               Text(
-                "$city, $stateName - $officePincode",
+                "${bussinessinfo.cityName.toString()}, ${bussinessinfo.stateName.toString()} - ${bussinessinfo.pincode.toString()}",
                 style: const TextStyle(fontSize: 14, color: Colors.black87),
               ),
               const SizedBox(height: 10),
 
               // Line 3: Phone Number
               Text(
-                "📞 $officePhone",
+                "📞 ${bussinessinfo.officePhone.toString()}",
                 style: const TextStyle(fontSize: 14, color: Colors.black87),
               ),
               const SizedBox(height: 10),
 
               // Line 4: Email
               Text(
-                "✉ $businessEmail",
+                "✉ ${bussinessinfo.businessEmail.toString()}",
                 style: const TextStyle(fontSize: 14, color: Colors.black87),
               ),
               const SizedBox(height: 10),
 
               // Line 5: Website
               Text(
-                "🌐 $website",
+                "🌐 ${bussinessinfo.website.toString()}",
                 style: const TextStyle(fontSize: 14, color: Colors.blue),
               ),
               const SizedBox(height: 10),
-            ]
+
           ],
         ),
       ),
     );
   }
 
-  void _showEditModalSheet(BuildContext context) {
+  void _showEditModalSheet(BuildContext context, BusinessInfo bussinessinfo) {
     double heightFactor = 0.8;
+    controller.organisationName.value=bussinessinfo.organisationName.toString();
+    controller.officePhone.value=bussinessinfo.officePhone.toString();
+    controller.flatNo.value=bussinessinfo.flatNo.toString();
+    controller.buildingName.value=bussinessinfo.buildingNameId.toString();
+    controller.areaName.value=bussinessinfo.areaName.toString();
+    controller.officePincode.value=bussinessinfo.pincode.toString();
+    controller.businessEmail.value=bussinessinfo.businessEmail.toString();
+    controller.website.value=bussinessinfo.website.toString();
+      regiController.city_id.value=bussinessinfo.cityId.toString();
+      regiController.state_id.value=bussinessinfo.stateId.toString();
+      regiController.country_id.value=bussinessinfo.countryId.toString();
 
     showModalBottomSheet(
       context: context,
@@ -532,12 +696,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                           onPressed: () {
                             bool isValid = _validateFields();
                             if (isValid) {
-                              setState(() {
-                                _updateBusinessCard();
-                              });
+                              controller.userUpdateBuniessInfo(bussinessinfo);
                               Navigator.of(context).pop();
-                            } else {
-                              _showFailureMessage();
                             }
                           },
                           style: TextButton.styleFrom(
@@ -560,61 +720,289 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildEditableField(
-                            'Organisation Name',
-                            organisationName,
-                            (value) => setState(() => organisationName = value),
+                         Obx((){
+                           return  _buildEditableField(
+                               'Organisation Name',
+                               controller.organisationName.value,
+                                   (value) =>  controller.organisationName.value = value
+                           );
+                         }),
+                          Obx((){
+                            return _buildEditableField(
+                              'Office Phone',
+                              controller.officePhone.value,
+                                  (value) => controller.officePhone.value = value,
+                            );
+                          }),
+                         Obx((){
+                           return  _buildEditableField(
+                             'Building Name',
+                               controller.buildingName.value,
+                                 (value) =>  controller.buildingName.value = value
+                           );
+
+
+                         }),
+                          Obx((){
+                            return _buildEditableField(
+                                'Flat No',
+                                controller.flatNo.value,
+                                    (value) => controller.flatNo.value = value
+                            );
+                          }),
+                        Obx((){
+                          return   _buildEditableField(
+                              'Area',
+                              controller.areaName.value,
+                                  (value) =>  controller.areaName.value = value
+                          );
+                        }),
+                          Container(
+
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey),
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: Row(
+                              children: [
+                                Obx(() {
+                                  if (regiController.rxStatusCountryLoading.value ==
+                                      Status.LOADING) {
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 10, horizontal: 22),
+                                      child: Container(
+                                          alignment: Alignment.centerRight,
+                                          height: 24,
+                                          width: 24,
+                                          child: CircularProgressIndicator(
+                                            color: ColorHelperClass
+                                                .getColorFromHex(
+                                                ColorResources.pink_color),
+                                          )),
+                                    );
+                                  } else if (regiController
+                                      .rxStatusCountryLoading.value ==
+                                      Status.ERROR) {
+                                    return const Center(
+                                        child: Text('Failed to load country'));
+                                  } else if (regiController
+                                      .countryList.isEmpty) {
+                                    return const Center(
+                                        child: Text('No Country available'));
+                                  } else {
+                                    return Expanded(
+                                      child: DropdownButton<String>(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 20),
+                                        underline: Container(),
+                                        isExpanded: true,
+                                        hint: const Text(
+                                          'Select Country',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        value: regiController
+                                            .country_id.value.isEmpty
+                                            ? null
+                                            : regiController
+                                            .country_id.value,
+                                        items: regiController.countryList
+                                            .map((CountryData gender) {
+                                          return DropdownMenuItem<String>(
+                                            value: gender.id
+                                                .toString(),
+                                            child: Text(gender.countryName ??
+                                                'Unknown'),
+                                          );
+                                        }).toList(),
+                                        onChanged: (String? newValue) {
+                                          if (newValue != null) {
+                                            regiController.setSelectedCountry(newValue);
+                                          }
+                                        },
+                                      ),
+                                    );
+                                  }
+                                })
+                              ],
+                            ),
                           ),
-                          _buildEditableField(
-                            'Office Phone',
-                            officePhone,
-                            (value) => setState(() => officePhone = value),
+                          const SizedBox(height: 20),
+                          Container(
+
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey),
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: Row(
+                              children: [
+                                Obx(() {
+                                  if (regiController.rxStatusStateLoading.value ==
+                                      Status.LOADING) {
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 10, horizontal: 24),
+                                      child: Container(
+                                          alignment: Alignment.centerRight,
+                                          height: 24,
+                                          width: 24,
+                                          child: CircularProgressIndicator(
+                                            color: ColorHelperClass
+                                                .getColorFromHex(
+                                                ColorResources.pink_color),
+                                          )),
+                                    );
+                                  } else if (regiController
+                                      .rxStatusStateLoading.value ==
+                                      Status.ERROR) {
+                                    return const Center(
+                                        child: Text('Failed to load state'));
+                                  } else if (regiController
+                                      .stateList.isEmpty) {
+                                    return const Center(
+                                        child: Text('No State available'));
+                                  } else {
+                                    return Expanded(
+                                      child: DropdownButton<String>(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 20),
+                                        underline: Container(),
+                                        isExpanded: true,
+                                        hint: const Text(
+                                          'Select State',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        value: regiController
+                                            .state_id.value.isEmpty
+                                            ? null
+                                            : regiController
+                                            .state_id.value,
+                                        items: regiController.stateList
+                                            .map((StateData gender) {
+                                          return DropdownMenuItem<String>(
+                                            value: gender.id
+                                                .toString(),
+                                            child: Text(gender.stateName ??
+                                                'Unknown'),
+                                          );
+                                        }).toList(),
+                                        onChanged: (String? newValue) {
+                                          if (newValue != null) {
+                                            regiController.setSelectedState(newValue);
+                                          }
+                                        },
+                                      ),
+                                    );
+                                  }
+                                })
+                              ],
+                            ),
                           ),
-                          _buildEditableField(
-                            'Building Name',
-                            buildingName,
-                            (value) => setState(() => buildingName = value),
+                          const SizedBox(height: 20),
+                          Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey),
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: Row(
+                              children: [
+                                Obx(() {
+                                  if (regiController.rxStatusCityLoading.value ==
+                                      Status.LOADING) {
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 12, horizontal: 22),
+                                      child: Container(
+                                          alignment: Alignment.centerRight,
+                                          height: 24,
+                                          width: 24,
+                                          child: CircularProgressIndicator(
+                                            color: ColorHelperClass
+                                                .getColorFromHex(
+                                                ColorResources.pink_color),
+                                          )),
+                                    );
+                                  } else if (regiController
+                                      .rxStatusCityLoading.value ==
+                                      Status.ERROR) {
+                                    return const Center(
+                                        child: Padding(
+                                          padding: EdgeInsets.all(8.0),
+                                          child: Text('Failed to load city'),
+                                        ));
+                                  } else if (regiController
+                                      .cityList.isEmpty) {
+                                    return const Center(
+                                        child: Padding(
+                                          padding: EdgeInsets.all(8.0),
+                                          child: Text('No City available'),
+                                        ));
+                                  } else {
+                                    return Expanded(
+                                      child: DropdownButton<String>(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 20),
+                                        underline: Container(),
+                                        isExpanded: true,
+                                        hint: const Text(
+                                          'Select City',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        value: regiController.city_id.value.isEmpty ? null
+                                            : regiController
+                                            .city_id.value,
+                                        items: regiController.cityList
+                                            .map((CityData gender) {
+                                          return DropdownMenuItem<String>(
+                                            value: gender.id
+                                                .toString(),
+                                            child: Text(gender.cityName ??
+                                                'Unknown'),
+                                          );
+                                        }).toList(),
+                                        onChanged: (String? newValue) {
+                                          if (newValue != null) {
+                                            regiController.setSelectedCity(newValue);
+                                          }
+                                        },
+                                      ),
+                                    );
+                                  }
+                                })
+                              ],
+                            ),
                           ),
-                          _buildEditableField(
-                            'Flat No',
-                            flatNo,
-                            (value) => setState(() => flatNo = value),
-                          ),
-                          _buildEditableField(
-                            'Area',
-                            areaName,
-                            (value) => setState(() => areaName = value),
-                          ),
-                          _buildEditableField(
-                            'City',
-                            city,
-                            (value) => setState(() => city = value),
-                          ),
-                          _buildEditableField(
-                            'State',
-                            stateName,
-                            (value) => setState(() => stateName = value),
-                          ),
-                          _buildEditableField(
-                            'Country',
-                            countryName,
-                            (value) => setState(() => countryName = value),
-                          ),
-                          _buildEditableField(
-                            'Office Pincode',
-                            officePincode,
-                            (value) => setState(() => officePincode = value),
-                          ),
-                          _buildEditableField(
-                            'Business Email',
-                            businessEmail,
-                            (value) => setState(() => businessEmail = value),
-                          ),
-                          _buildEditableField(
-                            'Website',
-                            website,
-                            (value) => setState(() => website = value),
-                          ),
+                          const SizedBox(height: 20),
+                         Obx((){
+                           return  _buildEditableField(
+                               'Office Pincode',
+                               controller.officePincode.value,
+                                   (value)=>  controller.officePincode.value = value
+                           );
+                         }),
+                          Obx((){
+                            return _buildEditableField(
+                                'Business Email',
+                                controller.businessEmail.value,
+                                    (value) => controller.businessEmail.value = value);
+
+                          }),
+                          Obx((){
+                            return _buildEditableField(
+                                'Website',
+                                controller.website.value,
+                                    (value) => controller.website.value = value
+                            );
+                          }),
                         ],
                       ),
                     ),
@@ -628,17 +1016,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
     );
   }
 
-  void _updateBusinessCard() {
-    setState(() {
-      // Implement logic to update the business card details
-      // For example, you might update a database, API, or local storage
-    });
 
-    // Optionally, show a success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Business details updated successfully!')),
-    );
-  }
 
   Widget _buildInfoLine(String title, String subtitle) {
     return Padding(
@@ -648,7 +1026,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
         children: [
           // Title and Colon
           Container(
-            width: 140, // Adjust width for alignment
+            width: 140,
             child: Row(
               children: [
                 Expanded(
@@ -669,7 +1047,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                   ),
                 ),
                 const SizedBox(
-                    width: 8), // Add space between colon and subtitle
+                    width: 8),
               ],
             ),
           ),
@@ -688,8 +1066,6 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
       ),
     );
   }
-
-  // Method to show the Occupation Info BottomSheet
   void _showEditOccBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -744,10 +1120,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (occupation.isNotEmpty ||
-              occupationProfession.isNotEmpty ||
-              occupationSpecialization.isNotEmpty ||
-              occupationDetails.isNotEmpty)
+          controller.occupationData.value?
             Card(
               elevation: 5,
               shape: RoundedRectangleBorder(
@@ -770,12 +1143,10 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildInfoLine('Occupation', occupation),
-                              _buildInfoLine(
-                                  'Profession', occupationProfession),
-                              _buildInfoLine(
-                                  'Specialization', occupationSpecialization),
-                              _buildInfoLine('Details', occupationDetails),
+                              _buildInfoLine('Occupation', controller.occupationController.value.text),
+                              _buildInfoLine('Profession', controller.occupation_profession_nameController.value.text),
+                              _buildInfoLine('Specialization', controller.specialization_nameController.value.text),
+                              _buildInfoLine('Details', controller.detailsController.value.text),
                             ],
                           ),
                         ),
@@ -796,9 +1167,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                   ],
                 ),
               ),
-            )
-          else
-            Column(
+            ):
+          Column(
               children: [
                 const Text(
                   "No Occupation Detail, Please add by clicking Add Occupation Button",
@@ -855,24 +1225,24 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
   final TextEditingController _professionController = TextEditingController();
   final TextEditingController _specializationController =
       TextEditingController();
-  final TextEditingController _detailsController = TextEditingController();
 
+  UdateProfileController controller =Get.put(UdateProfileController());
   @override
   void initState() {
     super.initState();
-    _occupationController.text = widget.occupation;
-    _professionController.text = widget.occupationProfession;
-    _specializationController.text = widget.occupationSpecialization;
-    _detailsController.text = widget.occupationDetails;
+
+
+    controller.detailsController.value.text = widget.occupationDetails;
   }
 
   void _saveChanges() {
-    widget.onOccInfoChanged(
-      _occupationController.text,
-      _professionController.text,
-      _specializationController.text,
-      _detailsController.text,
-    );
+    // widget.onOccInfoChanged(
+    //   _occupationController.text,
+    //   _professionController.text,
+    //   _specializationController.text,
+    //   _detailsController.text,
+    // );
+    controller.addAndupdateOccuption();
     Navigator.pop(context);
   }
 
@@ -920,15 +1290,253 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
 
             const SizedBox(height: 16),
 
-            // Editable Fields
+            // TextButton.icon(
+            //   onPressed: (){
+            //
+            //   },
+            //   icon: const Icon(Icons.edit,
+            //       color: Colors.red, size: 16),
+            //   label: const Text(
+            //     "Edit",
+            //     style: TextStyle(fontSize: 14, color: Colors.red),
+            //   ),
+            //   style: TextButton.styleFrom(
+            //     foregroundColor: Colors.red,
+            //   ),
+            // ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: Container(
+                          margin: EdgeInsets.only(left: 5,right: 5),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: Row(
+                            children: [
+
+                              Obx(() {
+                                if (controller.rxStatusOccupation.value == Status.LOADING) {
+                                  return Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 10,horizontal: 22),
+                                    child: Container(
+                                        alignment: Alignment.centerRight,
+                                        height:24,width:24,child: CircularProgressIndicator(color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),)),
+                                  );
+                                } else if (controller.rxStatusOccupation.value == Status.ERROR) {
+                                  return Center(child: Text('Failed to load occuption'));
+                                } else if (controller.occuptionList.isEmpty) {
+                                  return Center(child: Text('No occuption  available'));
+                                } else {
+                                  return Expanded(
+                                    child: DropdownButton<String>(
+                                      padding: EdgeInsets.symmetric(horizontal: 20),
+                                      isExpanded: true,
+                                      underline: Container(),
+                                      hint: Text('Select Occuption',style: TextStyle(
+                                          fontWeight: FontWeight.bold
+                                      ),), // Hint to show when nothing is selected
+                                      value: controller.selectOccuption.value.isEmpty
+                                          ? null
+                                          : controller.selectOccuption.value,
+
+                                      items: controller.occuptionList.map((OccupationData marital) {
+                                        return DropdownMenuItem<String>(
+                                          value: marital.id.toString(), // Use unique ID or any unique property.
+                                          child: Text(marital.occupation ?? 'Unknown'), // Display name from DataX.
+                                        );
+                                      }).toList(),
+                                      onChanged: (String? newValue) {
+                                        print("fddfdfff"+newValue.toString());
+
+                                        controller.selectOccuption(newValue);
+                                        if (newValue != null) {
+                                          controller.selectOccuption(newValue);
+                                          if(newValue!="other")
+                                          {
+                                            controller.isOccutionList.value=true;
+                                            controller.getOccupationProData(newValue);
+                                          }
+                                          else
+                                          {
+                                            controller.isOccutionList.value=false;
+
+
+                                          }
+                                        }
+                                      },
+                                    ),
+                                  );
+                                }
+                              }),
+
+                            ],
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        height: 20,
+                      ),
+                      Obx((){
+                        return Visibility(
+                            visible: controller.isOccutionList.value,
+                            child: Column(
+                              children: [
+                                Container(
+                                    width: double.infinity,
+                                    margin: EdgeInsets.only(left: 5,right: 5),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: Colors.grey),
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                    child:Row(
+                                      children: [
+
+                                        Obx(() {
+                                          if (controller.rxStatusOccupationData.value == Status.LOADING) {
+                                            return Padding(
+                                              padding: EdgeInsets.symmetric(vertical: 10,horizontal: 22),
+                                              child: Container(
+                                                  alignment: Alignment.centerRight,
+                                                  height:24,width:24,child: CircularProgressIndicator(color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),)),
+                                            );
+                                          } else if (controller.rxStatusOccupationData.value == Status.ERROR) {
+                                            return Center(child: Text('Failed to load occuption Profession'));
+                                          }
+                                          else if (controller.rxStatusOccupationData.value == Status.IDLE) {
+                                            return Center(child: Padding(
+                                              padding: const EdgeInsets.all(12.0),
+                                              child: Text('Select Occuption Profession'),
+                                            ));
+                                          }
+
+
+                                          else if (controller.occuptionProfessionList.isEmpty) {
+                                            return Center(child: Text('No occuption Pro available'));
+                                          } else {
+                                            return Expanded(
+                                              child: DropdownButton<String>(
+                                                padding: EdgeInsets.symmetric(horizontal: 20,),
+                                                isExpanded: true,
+                                                underline: Container(),
+                                                hint: Text('Select Occuption Profession',style: TextStyle(
+                                                    fontWeight: FontWeight.bold
+                                                ),), // Hint to show when nothing is selected
+                                                value: controller.selectOccuptionPro.value.isEmpty
+                                                    ? null
+                                                    : controller.selectOccuptionPro.value,
+
+                                                items: controller.occuptionProfessionList.map((OccuptionProfessionData marital) {
+                                                  return DropdownMenuItem<String>(
+                                                    value: marital.id.toString(), // Use unique ID or any unique property.
+                                                    child: Text(marital.name ?? 'Unknown'), // Display name from DataX.
+                                                  );
+                                                }).toList(), // Convert to List.
+                                                onChanged: (String? newValue) {
+                                                  if (newValue != null) {
+                                                    controller.setSelectOccuptionPro(newValue);
+                                                    controller.getOccupationSpectData(newValue);
+
+                                                  }
+                                                },
+                                              ),
+                                            );
+                                          }
+                                        }),
+                                      ],
+                                    )),
+                                SizedBox(
+                                  height: 20,
+                                ),
+                                Container(
+                                    width: double.infinity,
+                                    margin: EdgeInsets.only(left: 5,right: 5),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: Colors.grey),
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                    child:Row(
+                                      children: [
+                                        Obx(() {
+                                          if (controller.rxStatusOccupationSpec.value == Status.LOADING) {
+                                            return Padding(
+                                              padding: EdgeInsets.symmetric(vertical: 10,horizontal: 22),
+                                              child: Container(
+                                                  alignment: Alignment.centerRight,
+                                                  height:24,width:24,child: CircularProgressIndicator(color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),)),
+                                            );
+                                          } else if (controller.rxStatusOccupationSpec.value == Status.ERROR) {
+                                            return Center(child: Text('Failed to load occuption specialization',style: TextStyle(
+                                                fontWeight: FontWeight.bold
+                                            ),), );
+                                          }
+                                          else if (controller.rxStatusOccupationSpec.value == Status.IDLE) {
+                                            return Center(child: Padding(
+                                              padding: const EdgeInsets.all(12.0),
+                                              child: Text('Select Occuption specialization,',style: TextStyle(
+                                                  fontWeight: FontWeight.bold
+                                              ),),
+                                            ));
+                                          }
+
+                                          else if (controller.occuptionSpeList.isEmpty) {
+                                            return Center(child: Text('No occuption specialization available'));
+                                          } else {
+                                            return Expanded(
+                                              child: DropdownButton<String>(
+                                                padding: EdgeInsets.symmetric(horizontal: 20),
+                                                isExpanded: true,
+                                                underline: Container(),
+                                                hint: Text('Select Occuption specialization',style: TextStyle(
+                                                    fontWeight: FontWeight.bold
+                                                ),),
+                                                value: controller.selectOccuptionSpec.value.isEmpty
+                                                    ? null
+                                                    : controller.selectOccuptionSpec.value,
+
+                                                items: controller.occuptionSpeList.map((OccuptionSpecData marital) {
+                                                  return DropdownMenuItem<String>(
+                                                    value: marital.id.toString(), // Use unique ID or any unique property.
+                                                    child: Text(marital.name ?? 'Unknown'), // Display name from DataX.
+                                                  );
+                                                }).toList(), // Convert to List.
+                                                onChanged: (String? newValue) {
+                                                  if (newValue != null) {
+                                                    controller.selectOccuptionSpec(newValue);
+
+                                                  }
+                                                },
+                                              ),
+                                            );
+                                          }
+                                        }),
+                                      ],
+                                    )
+
+
+                                ),
+                              ],
+                            ));
+                      }),
+                      //_buildInfoLine('Details', occupationDetails),
+                    ],
+                  ),
+                ),
+
+              ],
+            ),
+            SizedBox(
+              height: 20,
+            ),
             _buildEditableField(
-                label: 'Occupation', controller: _occupationController),
-            _buildEditableField(
-                label: 'Profession', controller: _professionController),
-            _buildEditableField(
-                label: 'Specialization', controller: _specializationController),
-            _buildEditableField(
-                label: 'Details', controller: _detailsController),
+                label: 'Details', controller: controller.detailsController.value),
           ],
         ),
       ),
@@ -937,12 +1545,23 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
 
   Widget _buildEditableField(
       {required String label, required TextEditingController controller}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20.0),
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.only(left: 5,right: 5),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(color: Colors.grey),
+      ),
       child: TextField(
+
         controller: controller,
-        decoration:
-            InputDecoration(labelText: label, border: OutlineInputBorder()),
+        decoration:  InputDecoration(
+        hintText: label,
+        border: InputBorder.none,
+        contentPadding: EdgeInsets.symmetric(
+            vertical: 8,horizontal: 22),
+      ),
       ),
     );
   }

@@ -232,7 +232,6 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                   'Fathers Name',
                                   controller.fathersNameController.value);
                             }),
-
                             Obx((){
                               return  _buildEditableField(
                                   'Mother Name',
@@ -699,7 +698,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
   // Method to build the information boxes
   Widget _buildInfoBox(String title, {String? subtitle}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10.0), // Add spacing between boxes
+      padding: const EdgeInsets.only(bottom: 10.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start, // Align items to the top
         children: [

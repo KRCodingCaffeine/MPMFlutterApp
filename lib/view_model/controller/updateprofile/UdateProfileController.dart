@@ -19,6 +19,7 @@ import 'package:mpm/model/QualificationMain/QualicationMainData.dart';
 import 'package:mpm/model/Register/RegisterModelClass.dart';
 import 'package:mpm/model/UpdateFamilyRelation/UpdateFamilyMember.dart';
 import 'package:mpm/model/relation/RelationData.dart';
+import 'package:mpm/repository/register_repository/register_repo.dart';
 import 'package:mpm/repository/update_repository/UpdateProfileRepository.dart';
 import 'package:mpm/route/route_name.dart';
 import 'package:mpm/utils/Session.dart';
@@ -27,6 +28,7 @@ import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/urls.dart';
 import 'package:http/http.dart' as http;
 import 'package:mpm/view/profile%20view/profile_view.dart';
+import 'package:mpm/view/profile%20view/residence_info_page.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 
 import '../../../view/profile view/family_info_page.dart';
@@ -34,10 +36,30 @@ import '../../../view/profile view/personal_info_page.dart';
 
 class UdateProfileController extends GetxController {
   final api = UpdateProfileRepository();
+  Rx<TextEditingController> detailsController = TextEditingController().obs;
+   Rx<TextEditingController> organisationNameController = TextEditingController().obs;
+   Rx<TextEditingController> officePhoneController= TextEditingController().obs;
+   Rx<TextEditingController> buildingNameController= TextEditingController().obs;
+
+   Rx<TextEditingController> addressController = TextEditingController().obs;
+   Rx<TextEditingController> areaNameController= TextEditingController().obs;
+
+   Rx<TextEditingController> stateNameController = TextEditingController().obs;
+   Rx<TextEditingController> countryNameController = TextEditingController().obs;
+   Rx<TextEditingController> officePincodeController = TextEditingController().obs;
+   Rx<TextEditingController> businessEmailController = TextEditingController().obs;
+   Rx<TextEditingController> websiteController = TextEditingController().obs;
+   Rx<TextEditingController> occupationController = TextEditingController().obs;
+   Rx<TextEditingController> occupation_profession_nameController = TextEditingController().obs;
+  Rx<TextEditingController> specialization_nameController = TextEditingController().obs;
+
+
   var userName = "".obs;
 
   var profileImage = "".obs; // Add this field
   var newProfileImage = "".obs;
+  var userdocumentImage = "".obs;
+  var newdocumentImage = "".obs;
 
   // Example function to update profile image
   void updateProfileImage(String newImageUrl) {
@@ -82,7 +104,7 @@ class UdateProfileController extends GetxController {
   var isJangana = ''.obs;
   var saraswaniOptionId = ''.obs;
 
-//Address Data
+  BuildContext? context=Get.context;
   var zone_id = ''.obs;
   var address = ''.obs;
   var flatNo = ''.obs;
@@ -95,17 +117,18 @@ class UdateProfileController extends GetxController {
   var documentType = ''.obs;
   var document = ''.obs;
   var loading = false.obs;
+  var familyloading = false.obs;
   var addloading = false.obs;
-
+  var selectOccuptionPro = ''.obs;
   var organisationName = 'Company Name'.obs;
   var officePhone = 'Landline Number'.obs;
   var buildingName = 'Building Name'.obs;
 
-  var areaName = 'Area'.obs;
-  var city2 = 'Office Location'.obs;
-  var stateName = 'State'.obs;
-  var countryName = 'Country'.obs;
-  var officePincode = 'Postal Code'.obs;
+  var areaName = ''.obs;
+  var city2 = ''.obs;
+  var stateName = ''.obs;
+  var countryName = ''.obs;
+  var officePincode = ''.obs;
   var businessEmail = 'Official Email'.obs;
   var website = 'Official URL'.obs;
   var getUserData = GetProfileData().obs;
@@ -116,6 +139,8 @@ class UdateProfileController extends GetxController {
   var occuptionList = <OccupationData>[].obs;
   var occuptionProfessionList = <OccuptionProfessionData>[].obs;
   var occuptionSpeList = <OccuptionSpecData>[].obs;
+  var family_head_member_id = "".obs;
+  var occupationData=false.obs;
 
   void setOccuption(List<OccupationData> _value) =>
       occuptionList.value = _value;
@@ -125,6 +150,9 @@ class UdateProfileController extends GetxController {
 
   setOccuptionSpe(List<OccuptionSpecData> _value) =>
       occuptionSpeList.value = _value;
+  void setSelectOccuptionPro(String value) {
+    selectOccuptionPro(value);
+  }
 
   void setRxRequestOccuption(Status _value) =>
       rxStatusOccupation.value = _value;
@@ -170,7 +198,9 @@ class UdateProfileController extends GetxController {
       TextEditingController().obs;
   final Rx<TextEditingController> maritalStatusController =
       TextEditingController().obs;
-  final Rx<TextEditingController> marriageAnniversaryController = TextEditingController().obs;
+  final Rx<
+      TextEditingController> marriageAnniversaryController = TextEditingController()
+      .obs;
   final Rx<TextEditingController> bloodGroupController =
       TextEditingController().obs;
   Rx<TextEditingController> countryController = TextEditingController().obs;
@@ -182,10 +212,11 @@ class UdateProfileController extends GetxController {
   Rx<TextEditingController> areaController = TextEditingController().obs;
   Rx<TextEditingController> housenoController = TextEditingController().obs;
   Rx<TextEditingController> stateController = TextEditingController().obs;
-  final Rx<TextEditingController> documentTypeController =
-      TextEditingController().obs;
-  final Rx<TextEditingController> documentController =
-      TextEditingController().obs;
+  final Rx<
+      TextEditingController> documentTypeController = TextEditingController()
+      .obs;
+  final Rx<TextEditingController> documentController = TextEditingController()
+      .obs;
 
   @override
   void onInit() {
@@ -243,8 +274,9 @@ class UdateProfileController extends GetxController {
           getUserData.value.sangathanApprovalStatus.toString();
       vyavasthapikaApprovalStatus.value =
           getUserData.value.vyavasthapikaApprovalStatus.toString();
-      familyHeadMemberId.value =
-          getUserData.value.familyHeadMemberId.toString();
+      if (getUserData.value.familyHeadMemberData != null) {
+        familyHeadMemberId.value = getUserData.value.familyHeadMemberData!.memberId.toString();
+      }
       tempId.value = getUserData.value.tempId.toString();
       profileImage.value = getUserData.value.profileImage.toString();
       isJangana.value = getUserData.value.isJangana.toString();
@@ -262,20 +294,60 @@ class UdateProfileController extends GetxController {
       maritalStatusController.value.text = maritalStatus.value;
       marriageAnniversaryController.value.text = marriageAnniversaryDate.value;
       bloodGroupController.value.text = bloodGroup.value;
-      organisationName.value =
-          getUserData.value.occupation!.occupationOtherName.toString();
+      if (getUserData.value.occupation != null) {
+        occupationData.value=true;
+        organisationName.value = getUserData.value.occupation!.occupationOtherName.toString();
+        selectOccuption.value=getUserData.value.occupation!.occupationId.toString();
+        if(getUserData.value.occupation!.occupationProfessionId!=null) {
+         isOccutionList.value=true;
+         occupationController.value.text=getUserData.value.occupation!.occupation.toString();
+         occupation_profession_nameController.value.text=getUserData.value.occupation!.occupationProfessionName.toString();
+         specialization_nameController.value.text=getUserData.value.occupation!.specializationName.toString();
+         getOccupationProData(getUserData.value.occupation!.occupationProfessionId.toString());
+
+         getOccupationSpectData(getUserData.value.occupation!.occupationSpecializationId.toString());
+         selectOccuptionSpec.value=getUserData.value.occupation!.occupationSpecializationId.toString();
+          selectOccuptionPro.value = getUserData.value.occupation!.occupationProfessionId.toString();
+
+
+        }
+        else{
+          isOccutionList.value=false;
+        }
+
+        detailsController.value.text=getUserData.value.occupation!.occupationOtherName.toString();
+      }
+      else
+        {
+          occupationData.value=false;
+        }
       officePhone.value = getUserData.value.mobile.toString();
-      qualificationList.value = getUserData.value.qualification!;
-      businessInfoList.value = getUserData.value.businessInfo!;
-      familyDataList.value = getUserData.value.familyMembersData!;
+      if (getUserData.value.qualification != null) {
+        qualificationList.value = getUserData.value.qualification!;
+      }
+      if (getUserData.value.businessInfo != null) {
+        businessInfoList.value = getUserData.value.businessInfo!;
+
+      }
+
+      if (getUserData.value.familyMembersData != null) {
+        print("hjfhhjj" + getUserData.value.familyMembersData.toString());
+        familyDataList.value = getUserData.value.familyMembersData!;
+      }
+
       if (getUserData.value.address != null) {
-        area_id.value = getUserData.value.address!.areaName.toString();
+        print("ggghhg"+getUserData.value.address!.city_id.toString());
+        NewMemberController memberController = Get.put(NewMemberController());
+       memberController.area_name.value = getUserData.value.address!.areaName.toString();
+       memberController. zone_id.value = getUserData.value.address!.zoneId.toString();
+        areaName.value = getUserData.value.address!.areaName.toString();
         zone_id.value = getUserData.value.address!.zoneId.toString();
+
         address.value = getUserData.value.address!.address.toString();
         flatNo.value = getUserData.value.address!.flatNo.toString();
         zone_name.value = getUserData.value.address!.zoneName.toString();
         state_id.value = getUserData.value.address!.stateId.toString();
-        city_id.value = getUserData.value.address!.cityId.toString();
+        city_id.value = getUserData.value.address!.city_id.toString();
         country_id.value = getUserData.value.address!.countryId.toString();
         pincode.value = getUserData.value.address!.pincode.toString();
         documentType.value = getUserData.value.address!.addressType.toString();
@@ -283,41 +355,30 @@ class UdateProfileController extends GetxController {
             getUserData.value.address!.countryName.toString();
         buildingController.value.text =
             getUserData.value.address!.buildingNameId.toString();
-        //pincodeController.value = getUserData.value.address!.stateId;
+        if(getUserData.value.address!.pincode.toString()!="" && getUserData.value.address!.pincode.toString()!="null") {
+          pincodeController.value.text =
+              getUserData.value.address!.pincode.toString();
+        }
+        if(getUserData.value.address!.buildingNameId.toString()!="" && getUserData.value.address!.buildingNameId.toString()!="null") {
+          memberController.buildingController.value.text =
+              getUserData.value.address!.buildingNameId.toString();
+        }
+        flatNoController.value.text=getUserData.value.address!.flatNo.toString();
+        memberController. zoneController.value.text= getUserData.value.address!.zoneName.toString();
+        if(getUserData.value.address!.areaName.toString()!="" && getUserData.value.address!.areaName.toString()!="null" ) {
+          memberController.areaController.value.text =
+              getUserData.value.address!.areaName.toString();
+        }
+
+        memberController.country_id.value=getUserData.value.address!.countryId.toString();
+        memberController.state_id.value=getUserData.value.address!.stateId.toString();
+        if((getUserData.value.address!.city_id.toString()!="null") && (getUserData.value.address!.city_id.toString()!="")) {
+          memberController.city_id.value = getUserData.value.address!.city_id.toString();
+        }
+          memberController.selectDocumentType.value=getUserData.value.addressProofTypeId.toString();
+
       }
-      /* CheckUserData2 userData = CheckUserData2(
-        memberId: memberId.value,
-        firstName: firstName.value,
-        lastName: surName.value,
-        middleName: middleName.value,
-        mobile: mobileNumber.value,
-        fatherName: fathersName.value,
-        motherName: mothersName.value,
-        whatsappNumber: whatsAppNumber.value,
-        email: email.value,
-        genderId: gender_id.value,
-        maritalStatusId: marital_status_id.value,
-        bloodGroupId: blood_group_id.value,
-        memberCode: memberCode.value,
-        memberSalutaitonId: memberSalutaitonId.value,
-        membershipApprovalStatusId: membershipApprovalStatusId.value,
-        membershipTypeId: membershipTypeId.value,
-        memberStatusId: memberStatusId.value,
-        proposerId: proposerId.value,
-        profileImage: profileImage.value,
-        addressProof: addressProof.value,
-        addressProofTypeId: addressProofTypeId.value,
-        otp: otp.value,
-        verifyOtpStatus: verifyOtpStatus.value,
-        mobileVerifyStatus: mobileVerifyStatus.value,
-        sangathanApprovalStatus: sangathanApprovalStatus.value,
-        vyavasthapikaApprovalStatus: vyavasthapikaApprovalStatus.value,
-        familyHeadMemberId: familyHeadMemberId.value,
-        tempId: tempId.value,
-        isJangana: isJangana.value,
-        saraswaniOptionId: saraswaniOptionId.value,
-      );
-      await SessionManager.saveSessionUserData(userData!);*/
+
     }).onError((error, strack) {
       loading.value = false;
       print("err" + error.toString());
@@ -370,7 +431,12 @@ class UdateProfileController extends GetxController {
   var qulicationCategoryList = <Qualificationcategorydata>[].obs;
   var isQualicationList = false.obs;
   var isQualicationCateList = false.obs;
-
+  var selectOccuptionSpec = ''.obs;
+  var selectOccuption = ''.obs;
+  var isOccutionList = false.obs;
+  void setSelectOccuptionSpec(String value) {
+    selectOccuptionSpec(value);
+  }
   void setSelectQualification(String value) {
     selectQlification(value);
   }
@@ -486,6 +552,52 @@ class UdateProfileController extends GetxController {
       print('Error: $e');
     } finally {}
   }
+  void updateQualification() async {
+    CheckUserData2? userData = await SessionManager.getSession();
+    print('User ID: ${userData?.memberId}');
+    print('User Name: ${userData?.mobile}');
+    memberId.value = userData!.memberId.toString();
+    addloading.value = true;
+    try {
+      Map map = {
+        'member_id':  memberId.value,
+        'member_qualification_id': selectQlification.value,
+        'qualification_main_id': selectQualicationMain.value,
+        'qualification_category_id': selectQualicationCat.value,
+        'qualification_other_name': educationdetailController.value.text,
+        'updated_by': memberId.value
+      };
+      //print("fffh"+map.toString());
+      api.updateQualification(map).then((_value) async {
+        addloading.value = false;
+        if (_value['status'] == true) {
+          Navigator.pushReplacementNamed(context!, RouteNames.dashboard);
+          Get.snackbar(
+            'Success', // Title
+            "Add Education Successfully", // Message
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            duration: Duration(seconds: 3),
+          );
+        }
+      }).onError((error, strack) async {
+        addloading.value = false;
+        print("fvvf" + error.toString());
+        Get.snackbar(
+          'Error', // Title
+          "Some thing went wrong ", // Message
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.pink,
+          colorText: Colors.white,
+          duration: Duration(seconds: 3),
+        );
+      });
+    } catch (e) {
+      addloading.value = false;
+      print('Error: $e');
+    } finally {}
+  }
 
   void getRelation() {
     Map datas = {"attribute_id": "1"};
@@ -493,8 +605,10 @@ class UdateProfileController extends GetxController {
     api.userFamilyRelation(datas).then((_value) {
       setRxRelationType(Status.COMPLETE);
       setRelationShipType(_value.data!);
+      print("relationdata"+_value.data!.toString());
     }).onError((error, strack) {
       setRxRelationType(Status.ERROR);
+      print("relationdata"+error.toString());
     });
   }
 
@@ -510,8 +624,7 @@ class UdateProfileController extends GetxController {
         "relationship_type_id": selectRelationShipType.value,
       };
       //print("fffh"+map.toString());
-      await api
-          .updateFamilyRelation(map)
+      await api.updateFamilyRelation(map)
           .then((UpdateFamilyMember _value) async {
         // addloading.value=false;
         //print("gnfg"+_value.message.toString());
@@ -547,7 +660,7 @@ class UdateProfileController extends GetxController {
     } finally {}
   }
 
-  void addAndupdateOccuption(BuildContext con, String memerId) async {
+  void addAndupdateOccuption() async {
     CheckUserData2? userData = await SessionManager.getSession();
     print('User ID: ${userData?.memberId}');
     print('User Name: ${userData?.mobile}');
@@ -555,21 +668,20 @@ class UdateProfileController extends GetxController {
     //addloading.value=true;
     try {
       Map map = {
-        "member_id": memerId,
-        "occupation_id": "",
-        "occupation_profession_id": "",
-        "occupation_specialization_id": "",
-        "occupation_other_name": "",
+        "member_id": memberId.value,
+        "occupation_id": selectOccuption.value,
+        "occupation_profession_id": selectOccuptionPro.value,
+        "occupation_specialization_id": selectOccuptionSpec.value,
+        "occupation_other_name": detailsController.value.text,
         "updated_by": "1"
       };
-      //print("fffh"+map.toString());
-      await api
-          .updateOrAddOccuption(map)
+      print("fffh"+map.toString());
+      await api.updateOrAddOccuption(map)
           .then((AddOccuptionModel _value) async {
         // addloading.value=false;
         print("gnfg" + _value.message.toString());
         if (_value.status == true) {
-          Navigator.pushReplacementNamed(con, RouteNames.dashboard);
+          Navigator.pushReplacementNamed(context!, RouteNames.dashboard);
           Get.snackbar(
             'Success', // Title
             "Update Relation SuccessFully", // Message
@@ -607,7 +719,7 @@ class UdateProfileController extends GetxController {
 
     loading.value = true;
 
-    if(marital_status_id.value != "1"){
+    if (marital_status_id.value != "1") {
       marriageAnniversaryController.value.text = "";
     }
 
@@ -625,7 +737,7 @@ class UdateProfileController extends GetxController {
       "blood_group_id": blood_group_id.value,
       "dob": dobController.value.text.trim(),
       "marriage_anniversary_date":
-          marriageAnniversaryController.value.text,
+      marriageAnniversaryController.value.text,
       "salutation_id": memberSalutaitonId.value,
     };
 
@@ -645,7 +757,7 @@ class UdateProfileController extends GetxController {
 
 
     http.StreamedResponse response =
-        await request.send().timeout(Duration(seconds: 60));
+    await request.send().timeout(Duration(seconds: 60));
 
     if (response.statusCode == 200) {
       String responseBody = await response.stream.bytesToString();
@@ -653,7 +765,7 @@ class UdateProfileController extends GetxController {
       Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
 
       RegisterModelClass registerResponse =
-          RegisterModelClass.fromJson(jsonResponse);
+      RegisterModelClass.fromJson(jsonResponse);
       if (registerResponse.status == true) {
         getUserProfile();
         Get.snackbar(
@@ -675,7 +787,7 @@ class UdateProfileController extends GetxController {
           "Error",
           registerResponse.toString(),
           backgroundColor:
-              ColorHelperClass.getColorFromHex(ColorResources.red_color),
+          ColorHelperClass.getColorFromHex(ColorResources.red_color),
           colorText: Colors.white,
           snackPosition: SnackPosition.TOP,
         );
@@ -687,7 +799,7 @@ class UdateProfileController extends GetxController {
       loading.value = false;
       Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
       RegisterModelClass registerResponse =
-          RegisterModelClass.fromJson(jsonResponse);
+      RegisterModelClass.fromJson(jsonResponse);
 
       Get.snackbar(
         "Error",
@@ -698,4 +810,525 @@ class UdateProfileController extends GetxController {
       );
     }
   }
+
+  void userResidentalProfile(BuildContext context) async {
+    CheckUserData2? userData = await SessionManager.getSession();
+
+    final url = Uri.parse(Urls.updateMemberAddress_url);
+    print("vcgdhfh" + Urls.updateMemberAddress_url);
+    NewMemberController regiController = Get.put(NewMemberController());
+
+    loading.value = true;
+
+
+    var building_name = buildingController.value.text;
+    var building_id = "";
+
+    if (regiController.selectBuilding.value == "other") {
+      building_id = "";
+    }
+    else {
+      building_id = regiController.selectBuilding.value;
+    }
+    var document_type = regiController.selectDocumentType.value;
+    var document_image = userdocumentImage.value;
+    print("vvb" + document_image);
+
+    var payload = {
+      "member_id": userData!.memberId.toString(),
+      "flat_no": flatNoController.value.text.toString(),
+      "area": regiController.area_name.value,
+      "building_id": "8",
+      "zone_id": regiController.zone_id.value,
+      "city_id": regiController.city_id.value,
+      "state_id": regiController.state_id.value,
+      "country_id": regiController.country_id.value,
+      "document_type": document_type,
+      "address": "gdfhghfjjjjfheghrf",
+      "updated_by": "2"
+    };
+
+    print("ccvv" + payload.toString());
+    var request = http.MultipartRequest('POST', url);
+    request.fields.addAll(payload);
+    if(document_image!="") {
+      request.files.add(
+          await http.MultipartFile.fromPath('document_image', document_image));
+    }
+    http.StreamedResponse response = await request.send().timeout(
+        Duration(seconds: 60));
+    //
+    if (response.statusCode == 200) {
+      String responseBody = await response.stream.bytesToString();
+      loading.value = false;
+      Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
+      print("ccvv" + jsonResponse.toString());
+      RegisterModelClass registerResponse = RegisterModelClass.fromJson(
+          jsonResponse);
+      if (registerResponse.status == true) {
+        Get.snackbar(
+          "Success",
+          "Update Successfully",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+
+       Navigator.pushReplacementNamed(context, RouteNames.dashboard);
+        getUserProfile();
+      }
+      else {
+        Get.snackbar(
+          "Error",
+          registerResponse.message.toString(),
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+      }
+    }
+    else {
+      loading.value = false;
+      print("ccvv" + await response.reasonPhrase.toString());
+       String responseBody = await response.stream.bytesToString();
+      print("" +responseBody);
+      // loading.value=false;
+      // Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
+      // RegisterModelClass registerResponse = RegisterModelClass.fromJson(jsonResponse);
+      //
+      // Get.snackbar(
+      //   "Error",
+      //   ""+registerResponse.message.toString(),
+      //   backgroundColor: Colors.red,
+      //   colorText: Colors.white,
+      //   snackPosition: SnackPosition.TOP,
+      // );
+    }
+
+
+  }
+
+  void userAddFamily() async {
+    CheckUserData2? userData = await SessionManager.getSession();
+
+    final url = Uri.parse(Urls.addmemberorfamily_url);
+    print("vcgdhfh" + Urls.addmemberorfamily_url);
+    NewMemberController regiController = Get.put(NewMemberController());
+
+    familyloading.value = true;
+
+
+    var building_name = buildingController.value.text;
+    var building_id = "";
+
+    if (regiController.selectBuilding.value == "other") {
+      building_id = "";
+    }
+    else {
+      building_id = regiController.selectBuilding.value;
+    }
+    var document_type = regiController.selectDocumentType.value;
+    var document_image = userdocumentImage.value;
+    var marital_status_id = regiController.selectMarital.value;
+    print("vvb" + document_image);
+
+    Map<String, String> payload = {
+      "proposer_id": "1",
+      "first_name": regiController.firstNameController.value.text,
+      "last_name": regiController.lastNameController.value.text,
+          "middle_name": regiController.middleNameController.value.text,
+      "father_name": regiController.fathersnameController.value.text,
+      "mother_name": regiController.mothersnameController.value.text,
+      "email": regiController.emailController.value.text,
+      "whatsapp_number": regiController.whatappmobileController.value.text,
+      "mobile": regiController.mobileController.value.text,
+      "gender_id": regiController.selectedGender.value,
+      "marital_status_id": marital_status_id,
+      "blood_group_id": regiController.selectBloodGroup.value,
+      "dob": regiController.dateController.value.text,
+      "family_head_member_id": familyHeadMemberId.value,
+      "relation_id": selectRelationShipType.value,
+      "member_type_id": regiController.selectMarital.value,
+      "marriage_anniversary_date": regiController.marriagedateController.value.text,
+      "salutation_id": regiController.selectMemberSalutation.value,
+      "created_by": "1"
+    };
+    print("ccvv" + payload.toString());
+    var request = http.MultipartRequest('POST', url);
+    request.fields.addAll(payload);
+    request.files.add(
+        await http.MultipartFile.fromPath('profile_image', document_image));
+    http.StreamedResponse response = await request.send().timeout(
+        Duration(seconds: 60));
+    //
+    if (response.statusCode == 200) {
+      String responseBody = await response.stream.bytesToString();
+      familyloading.value = false;
+      Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
+      print("ccvv" + jsonResponse.toString());
+      RegisterModelClass registerResponse = RegisterModelClass.fromJson(
+          jsonResponse);
+      if (registerResponse.status == true) {
+        Get.snackbar(
+          "Success",
+          "Update Successfully",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+         sendOtp(regiController.mobileController.value.text);
+       showOtpBottomSheet(context!,regiController.mobileController.value.text);
+
+      }
+      else {
+        Get.snackbar(
+          "Error",
+          registerResponse.message.toString(),
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+      }
+    }
+    else {
+      familyloading.value = false;
+     // print("ccvv" + await response.reasonPhrase.toString());
+      //  String responseBody = await response.stream.bytesToString();
+      print("ccvv" + await response.stream.bytesToString());
+      // loading.value=false;
+      // Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
+      //  RegisterModelClass registerResponse = RegisterModelClass.fromJson(jsonResponse);
+      // //
+      // Get.snackbar(
+      //   "Error",
+      //   ""+registerResponse.message.toString(),
+      //   backgroundColor: Colors.red,
+      //   colorText: Colors.white,
+      //   snackPosition: SnackPosition.TOP,
+      // );
+    }
+  }
+  final api2 = RegisterRepository();
+  var family_member_id="".obs;
+  void sendOtp(var mobile) async {
+
+    try {
+      Map<String,String> map={
+        "mobile_number":mobile
+      };
+      api2.sendOTP(map).then((_value) async {
+        if(_value.status==true)
+        {
+          family_member_id.value=  _value.data!.memberId.toString();
+        }
+        else
+        {
+
+        }
+
+      }).onError((error, strack) async {
+        Get.snackbar(
+          'Error', // Title
+          error.toString(), // Message
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.pink,
+          colorText: Colors.white,
+          duration: Duration(seconds: 3),
+        );
+
+      });
+    } catch (e) {
+      print('Error: $e');
+    } finally {
+
+    }
+  }
+
+  void checkOtp(var otps, BuildContext context) {
+    try {
+      Map map={
+        "member_id":family_member_id.value,
+        "otp":otps
+      };
+      api2.verifyOTP(map).then((_value) async {
+        if(_value.status==true)
+        {
+
+          Get.snackbar(
+            'Success', // Title
+            'OTP matched', // Message
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            duration: Duration(seconds: 3),
+          );
+        }
+        else
+        {
+
+        }
+      }).onError((error, strack) async {
+        print("fvvf"+error.toString());
+        if(error.toString().contains("Sorry! OTP doesn't match"))
+        {
+          Get.snackbar(
+            'Error', // Title
+            "Sorry! OTP doesn't match", // Message
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.pink,
+            colorText: Colors.white,
+            duration: Duration(seconds: 3),
+          );
+        }
+        else {
+          Get.snackbar(
+            'Error', // Title
+            "Some thing went wrong ", // Message
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.pink,
+            colorText: Colors.white,
+            duration: Duration(seconds: 3),
+          );
+        }
+      });
+    } catch (e) {
+      print('Error: $e');
+    } finally {
+
+    }
+
+
+  }
+
+  void userAddBuniessInfo() async {
+    CheckUserData2? userData = await SessionManager.getSession();
+    NewMemberController memberController = Get.put(NewMemberController());
+    loading.value = true;
+    memberId.value = userData!.memberId.toString();
+    //addloading.value=true;
+    try {
+      var payload={
+        'member_id': memberId.value,
+        'organisation_name': organisationName.value,
+        'office_phone': officePhone.value,
+        'business_email': businessEmail.value,
+        'website': website.value,
+        'flat_no': flatNo.value,
+        'address': address.value,
+        'area': areaName.value,
+        'city_id': memberController.city_id.value,
+        'state_id': memberController.state_id.value,
+        'country_id': memberController.country_id.value,
+        'created_by': '1',
+        'pincode':  officePincode.value
+      };
+      print("fffh"+payload.toString());
+      await api.userAddBusiness(payload)
+          .then((dynamic _value) async {
+        print("fffh2"+_value.toString());
+        if (_value['status'] == true) {
+          print("fffh"+ _value['message'].toString());
+          Get.snackbar(
+            'Success', // Title
+            _value['message'], // Message
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            duration: Duration(seconds: 3),
+          );
+          Navigator.pushReplacementNamed(context!, RouteNames.dashboard);
+        }
+      }).onError((error, strack) async {
+        //addloading.value=false;
+        print("fvvf" + error.toString());
+        Get.snackbar(
+          'Error', // Title
+          "Some thing went wrong ", // Message
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.pink,
+          colorText: Colors.white,
+          duration: Duration(seconds: 3),
+        );
+      });
+    } catch (e) {
+      addloading.value = false;
+      print('Error: $e');
+    } finally {}
+
+
+  }
+  void userUpdateBuniessInfo(BusinessInfo bussinessinfo) async {
+    CheckUserData2? userData = await SessionManager.getSession();
+    NewMemberController memberController = Get.put(NewMemberController());
+    loading.value = true;
+    memberId.value = userData!.memberId.toString();
+    //addloading.value=true;
+    try {
+      var map={
+        'member_id': memberId.value,
+        'organisation_name': organisationName.value,
+        'office_phone': officePhone.value,
+        'business_email': businessEmail.value,
+        'website':  website.value,
+        'flat_no': flatNo.value,
+        'address': address.value,
+        'area': areaName.value,
+        'city_id': memberController.city_id.value,
+        'state_id': memberController.state_id.value,
+        'country_id': memberController.country_id.value,
+        'created_by': '1',
+        'pincode': officePincode.value,
+        'member_address_id': bussinessinfo.memberAddressId.toString(),
+        'member_business_info_id': bussinessinfo.membersBusinessInfoId.toString()
+      };
+      print("fffh"+map.toString());
+      await api.userUpdateBusiness(map)
+          .then((dynamic _value) async {
+        print("fffh2"+_value.toString());
+        if (_value['status'] == true) {
+          print("fffh"+ _value['message'].toString());
+          Get.snackbar(
+            'Success', // Title
+            _value['message'], // Message
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            duration: Duration(seconds: 3),
+          );
+          Navigator.pushReplacementNamed(context!, RouteNames.dashboard);
+        }
+      }).onError((error, strack) async {
+        //addloading.value=false;
+        print("fvvf" + error.toString());
+        Get.snackbar(
+          'Error', // Title
+          "Some thing went wrong ", // Message
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.pink,
+          colorText: Colors.white,
+          duration: Duration(seconds: 3),
+        );
+      });
+    } catch (e) {
+      addloading.value = false;
+      print('Error: $e');
+    } finally {}
+
+
+  }
+  void showOtpBottomSheet(BuildContext context, String mobile) {
+    final TextEditingController otpController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true, // Ensure the bottom sheet is scrollable
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom, // Adjust for keyboard height
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min, // Use minimum height
+            children: [
+              const SizedBox(height: 20),
+              const Text(
+                "Enter OTP",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: TextFormField(
+                  controller: otpController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    hintText: "Enter OTP",
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        // Resend OTP logic
+                        resendOtp(context,mobile);
+                      },
+                      child: const Text(
+                        "Resend OTP",
+                        style: TextStyle(color: Color(0xFFe61428)),
+                      ),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        // Submit OTP logic
+                        checkOtp(otpController.text,context!);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                      ),
+                      child: const Text(
+                        "Submit OTP",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20), // Add extra space at the bottom
+            ],
+          ),
+        );
+      },
+    );
+  }
+  void resendOtp(BuildContext context,String mobile) {
+    sendOtp(mobile);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("OTP Resent Successfully")),
+    );
+  }
+
+  void submitOtp(BuildContext context, String otp) {
+    if (otp.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter OTP")),
+      );
+      return;
+    }
+
+    // Call your API to validate OTP
+    // Example:
+    // apiService.validateOtp(otp).then((response) {
+    //   if (response.success) {
+    //     Navigator.pop(context); // Close OTP bottom sheet
+    //     _refreshData(); // Refresh data on the current screen
+    //   } else {
+    //     ScaffoldMessenger.of(context).showSnackBar(
+    //       SnackBar(content: Text("Invalid OTP")),
+    //     );
+    //   }
+    // });
+
+    // Simulate OTP validation
+    if (otp == "123456") { // Replace with actual OTP validation logic
+      Navigator.pop(context); // Close OTP bottom sheet
+
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Invalid OTP")),
+      );
+    }
+  }
+
 }
+
+

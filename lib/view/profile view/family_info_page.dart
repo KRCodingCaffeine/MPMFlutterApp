@@ -8,7 +8,7 @@ import 'package:mpm/model/relation/RelationData.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/urls.dart';
-import 'package:mpm/view/profile%20view/profile_view.dart';
+
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
 import '../../model/bloodgroup/BloodData.dart';
@@ -60,6 +60,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
   }
   @override
   Widget build(BuildContext context) {
+    print("bvnvn"+controller.familyDataList.value.length.toString());
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
@@ -74,10 +75,12 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
             child: Column(
               children: [
                 Expanded(
-                  child: ListView.builder(
-                    itemCount: controller.familyDataList.value.length,
-                    itemBuilder: (context, index) => _buildFamilyMemberCard(context, index),
-                  ),
+                  child: Obx((){
+                    return ListView.builder(
+                      itemCount: controller.familyDataList.value.length,
+                      itemBuilder: (context, index) => _buildFamilyMemberCard(context, index),
+                    );
+                  }),
                 ),
               ],
             ),
@@ -99,6 +102,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
 
   Widget _buildFamilyMemberCard(context, int index) {
     final member = controller.familyDataList.value[index];
+    print("vbfbbv"+member.toString());
     return Card(
       color: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -286,7 +290,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
       builder: (context) {
         return FractionallySizedBox(
           heightFactor: 0.7,
-          // Adjust this value to control the starting position
+
           child: SafeArea(
             child: Padding(
               padding: EdgeInsets.only(
@@ -323,42 +327,74 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                     style: TextStyle(color: Color(0xFFe61428)),
                                   ),
                                 ),
-                                TextButton(
-                                  onPressed: () {
-                                    // Validate the form
-                                    if (_formKeyLogin.currentState!.validate()) {
-                                      // Add the member to the list
-                                      familyMembers.add({
-                                        'salutation': newSalutation,
-                                        'relationship': newRelationship,
-                                        'firstName': newFirstName,
-                                        'middleName': newMiddleName,
-                                        'surName': newSurName,
-                                        'mobileNumber': newMobileNumber,
-                                        'whatsAppNumber': newWhatsAppNumber,
-                                        'fathersName': newFathersName,
-                                        'mothersName': newMothersName,
-                                        'email': newEmail,
-                                        'dob': newDob,
-                                        'gender': newGender,
-                                        'bloodGroup': newBloodGroup,
-                                        'maritalStatus': newMaritalStatus,
-                                        'membership': newMembership,
-                                        'image': newImage,
-                                      });
+                                Obx((){
+                                  return TextButton(
+                                    onPressed: () {
+                                      // Validate the form
+                                      if (_formKeyLogin.currentState!.validate()) {
+                                        void showErrorSnackbar(String message) {
+                                          Get.snackbar(
+                                            "Error",
+                                            message,
+                                            backgroundColor: Colors.red,
+                                            colorText: Colors.white,
+                                            snackPosition: SnackPosition.TOP,
+                                          );
+                                        }
+                                        if(regiController.selectMemberSalutation.value=="")
+                                        {
+                                          showErrorSnackbar("Select Salutation");
+                                          return;
+                                        }
+                                        if(controller.selectRelationShipType.value=="")
+                                        {
+                                          showErrorSnackbar("Select Member Relation");
+                                          return;
+                                        }
+                                        if(regiController.selectedGender.value=="")
+                                        {
+                                          showErrorSnackbar("Select Gender");
+                                          return;
+                                        } if(regiController.selectBloodGroup.value=="")
+                                        {
+                                          showErrorSnackbar("Select Blood Group");
+                                          return;
+                                        }
+                                        if(regiController.dateController.text=="")
+                                        {
+                                          showErrorSnackbar("Enter Date of Birth");
+                                          return;
+                                        }
+                                        if(regiController.selectMarital.value=="")
+                                        {
+                                          showErrorSnackbar("Select Marital status");
+                                          return;
+                                        }
+                                        if(regiController.MaritalAnnivery.value==true)
+                                        {
+                                          showErrorSnackbar("Enter Marital Anniversary Date");
+                                          return;
+                                        }
 
-                                      // Close the current bottom sheet
-                                      Navigator.pop(context);
-
-                                      // Show the OTP bottom sheet
-                                      _showOtpBottomSheet(context);
-                                    }
-                                  },
-                                  child: const Text(
-                                    "Add Member",
-                                    style: TextStyle(color: Color(0xFFe61428)),
-                                  ),
-                                ),                              ],
+                                        if(regiController.selectMemberShipType.value=="")
+                                        {
+                                          showErrorSnackbar("Select membership type");
+                                          return;
+                                        }
+                                        controller.userAddFamily();
+                                      }
+                                    },
+                                    child:   controller.familyloading.value
+                                        ? const CircularProgressIndicator(
+                                      color: Colors.red,
+                                    )
+                                        : Text(
+                                      "Add Member",
+                                      style: TextStyle(color: Color(0xFFe61428)),
+                                    ),
+                                  );
+                                }),
+                              ],
                             ),
                                 const SizedBox(height: 20),
                                 Align(
@@ -512,17 +548,16 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                   regiController
                                       .firstNameController.value, // Controller
                                   'First Name', // Hint Text
-                                  '',
+                                  'Enter First Name', text: TextInputType.text,
                                 ),
                                 const SizedBox(height: 20),
 
                                 //Second Name
                                 _buildEditableField(
                                   "Middle Name", // Label
-                                  regiController
-                                      .middleNameController.value, // Controller
+                                  regiController.middleNameController.value, // Controller
                                   "Middle Name", // Hint Text
-                                  "",
+                                  "", text: TextInputType.text,
                                 ),
                                 const SizedBox(height: 20),
 
@@ -533,6 +568,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                       .lastNameController.value, // Controller
                                   "SurName", // Hint Text
                                   "",
+                                  text: TextInputType.text
                                 ),
                                 const SizedBox(height: 20),
 
@@ -542,6 +578,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                   regiController.mobileController.value, // Controller
                                   "Mobile Number", // Hint Text
                                   "",
+                                  text: TextInputType.phone
                                 ),
                                 const SizedBox(height: 20),
 
@@ -552,6 +589,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                       .whatappmobileController.value, // Controller
                                   "WhatsApp Number", // Hint Text
                                   "",
+                                  text: TextInputType.phone
                                 ),
                                 const SizedBox(height: 20),
 
@@ -562,6 +600,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                       .fathersnameController.value, // Controller
                                   "Father's Name", // Hint Text
                                   "",
+                                  text: TextInputType.text
                                 ),
                                 const SizedBox(height: 20),
 
@@ -572,6 +611,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                       .mothersnameController.value, // Controller
                                   "Mother's Name", // Hint Text
                                   "",
+                                  text: TextInputType.text
                                 ),
                                 const SizedBox(height: 20),
 
@@ -582,6 +622,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                   "Email",
                                   '',
                                   obscureText: false,
+                                  text: TextInputType.emailAddress
                                 ),
                                 const SizedBox(height: 20),
 
@@ -722,8 +763,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                               }).toList(),
                                               onChanged: (String? newValue) {
                                                 if (newValue != null) {
-                                                  regiController
-                                                      .setSelectedGender(newValue);
+                                                  regiController.setSelectedGender(newValue);
                                                 }
                                               },
                                             ),
@@ -951,7 +991,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                             ),
                                           ),
                                         ),
-                                        const SizedBox(height: 20), // Space only when Married
+                                        const SizedBox(height: 20),
                                       ],
                                     ),
                                   );
@@ -1040,158 +1080,8 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
     );
   }
 
-  void _showOtpBottomSheet(BuildContext context) {
-    final TextEditingController otpController = TextEditingController();
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      isScrollControlled: true, // Ensure the bottom sheet is scrollable
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom, // Adjust for keyboard height
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min, // Use minimum height
-            children: [
-              const SizedBox(height: 20),
-              const Text(
-                "Enter OTP",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: TextFormField(
-                  controller: otpController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    hintText: "Enter OTP",
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        // Resend OTP logic
-                        _resendOtp(context);
-                      },
-                      child: const Text(
-                        "Resend OTP",
-                        style: TextStyle(color: Color(0xFFe61428)),
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        // Submit OTP logic
-                        _submitOtp(context, otpController.text);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                      ),
-                      child: const Text(
-                        "Submit OTP",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20), // Add extra space at the bottom
-            ],
-          ),
-        );
-      },
-    );
-  }
   
-  void _resendOtp(BuildContext context) {
-    // Call your API to resend OTP
-    // Example:
-    // apiService.resendOtp().then((response) {
-    //   if (response.success) {
-    //     ScaffoldMessenger.of(context).showSnackBar(
-    //       SnackBar(content: Text("OTP Resent Successfully")),
-    //     );
-    //   } else {
-    //     ScaffoldMessenger.of(context).showSnackBar(
-    //       SnackBar(content: Text("Failed to Resend OTP")),
-    //     );
-    //   }
-    // });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("OTP Resent Successfully")),
-    );
-  }
-
-  void _submitOtp(BuildContext context, String otp) {
-    if (otp.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter OTP")),
-      );
-      return;
-    }
-
-    // Call your API to validate OTP
-    // Example:
-    // apiService.validateOtp(otp).then((response) {
-    //   if (response.success) {
-    //     Navigator.pop(context); // Close OTP bottom sheet
-    //     _refreshData(); // Refresh data on the current screen
-    //   } else {
-    //     ScaffoldMessenger.of(context).showSnackBar(
-    //       SnackBar(content: Text("Invalid OTP")),
-    //     );
-    //   }
-    // });
-
-    // Simulate OTP validation
-    if (otp == "123456") { // Replace with actual OTP validation logic
-      Navigator.pop(context); // Close OTP bottom sheet
-      _refreshData(); // Refresh data on the current screen
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Invalid OTP")),
-      );
-    }
-  }
-
-  void _refreshData() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Data Refreshed Successfully")),
-    );
-  }
-
-  void _submitRegistrationForm(BuildContext context) {
-    // Validate and submit registration form
-    // Example:
-    // if (_formKeyLogin.currentState!.validate()) {
-    //   apiService.registerUser().then((response) {
-    //     if (response.success) {
-    //       _showOtpBottomSheet(context); // Show OTP bottom sheet
-    //     } else {
-    //       ScaffoldMessenger.of(context).showSnackBar(
-    //         SnackBar(content: Text("Registration Failed")),
-    //       );
-    //     }
-    //   });
-    // }
-
-    // Simulate registration success
-    _showOtpBottomSheet(context); // Show OTP bottom sheet
-  }
-
   void _showPicker({
     required BuildContext context,
   }) {
@@ -1236,7 +1126,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
           _image = File(pickedFile!.path);
         });
         if (pickedFile!.path != null) {
-          regiController.userprofile.value = pickedFile!.path;
+         controller. userdocumentImage.value = pickedFile!.path;
         }
       } catch (e) {
         print("gggh" + e.toString());
@@ -1248,19 +1138,22 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
       String label,
       TextEditingController controller,
       String hintText,
+
       String validationMessage, {
         bool obscureText = false,
+        required TextInputType text,
       }) {
     return Container(
-      margin: const EdgeInsets.only(left: 5, right: 5),
+      margin:  EdgeInsets.only(left: 5, right: 5),
       child: TextFormField(
-        keyboardType: TextInputType.text,
+        keyboardType: text,
         controller: controller,
         obscureText: obscureText,
-        style: const TextStyle(color: Colors.black), // Text color set to black
+
+        style:  TextStyle(color: Colors.black), // Text color set to black
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(
+          labelStyle:  TextStyle(
               color: Colors.black), // Label text color set to black
           hintText: hintText,
           hintStyle: const TextStyle(
@@ -1269,15 +1162,15 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
             borderSide:
             BorderSide(color: Colors.grey), // Border color set to black
           ),
-          enabledBorder: const OutlineInputBorder(
+          enabledBorder:  OutlineInputBorder(
             borderSide: BorderSide(
                 color: Colors.grey), // Border when field is not focused
           ),
-          focusedBorder: const OutlineInputBorder(
+          focusedBorder:  OutlineInputBorder(
             borderSide: BorderSide(
                 color: Colors.grey, width: 0.5), // Thicker border when focused
           ),
-          contentPadding: const EdgeInsets.symmetric(
+          contentPadding:  EdgeInsets.symmetric(
             vertical: 12,
             horizontal: 20,
           ),

@@ -6,7 +6,7 @@ class Address {
   String? buildingNameId;
   var address;
   String? areaName;
-  String? cityId;
+  String? city_id;
   String? stateId;
   String? countryId;
   String? zoneId;
@@ -28,7 +28,7 @@ class Address {
         this.buildingNameId,
         this.address,
         this.areaName,
-        this.cityId,
+        this.city_id,
         this.stateId,
         this.countryId,
         this.zoneId,
@@ -50,7 +50,7 @@ class Address {
     buildingNameId = json['building_name_id'];
     address = json['address'];
     areaName = json['area_name'];
-    cityId = json['city_id'];
+    city_id = json['city_id'];
     stateId = json['state_id'];
     countryId = json['country_id'];
     zoneId = json['zone_id'];
@@ -74,7 +74,7 @@ class Address {
     data['building_name_id'] = this.buildingNameId;
     data['address'] = this.address;
     data['area_name'] = this.areaName;
-    data['city_id'] = this.cityId;
+    data['city_id'] = this.city_id;
     data['state_id'] = this.stateId;
     data['country_id'] = this.countryId;
     data['zone_id'] = this.zoneId;
