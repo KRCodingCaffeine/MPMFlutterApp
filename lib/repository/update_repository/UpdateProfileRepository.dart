@@ -28,8 +28,8 @@ class UpdateProfileRepository {
     return response;
   }
   Future<dynamic> updateQualification(data) async {
-    dynamic response = await api.postApi(data,Urls.updateBusinessInfo_url,"","2");
-    print("vdgvgdv"+response.toString()+Urls.updateBusinessInfo_url);
+    dynamic response = await api.postApi(data,Urls.updateQualification_url,"","2");
+    print("vdgvgdv"+response.toString()+Urls.updateQualification_url);
     return response;
   }
   Future<UpdateFamilyMember> updateFamilyRelation(data) async {

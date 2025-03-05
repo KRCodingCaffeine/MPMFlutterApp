@@ -10,7 +10,7 @@ import 'package:mpm/view/login_view.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
-import 'package:mpm/view_model/controller/dashboard/dashboardcontroller.dart';
+import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
@@ -20,7 +20,7 @@ class DashboardView extends StatefulWidget {
 }
 
 class _DashboardViewState extends State<DashboardView> {
-  final DashBoardController controller = Get.put(DashBoardController());
+  final UdateProfileController controller = Get.put(UdateProfileController());
 
   @override
   void initState() {
@@ -90,26 +90,7 @@ class _DashboardViewState extends State<DashboardView> {
   Future<void> getUserSessionData() async {
     CheckUserData2? userData = await SessionManager.getSession();
     if (userData != null) {
-      controller.lmCode.value = userData.memberCode ?? "";
-      controller.mobileNumber.value = userData.mobile ?? "";
-      controller.memberId.value = userData.memberId ?? ""; 
-
-      String firstName = userData.firstName ?? "";
-      String middleName = userData.middleName ?? "";
-      String lastName = userData.lastName ?? "";
-
-      controller.userName.value = "$firstName $middleName $lastName".trim();
-
-      // Handle profile image URL
-      if (userData.profileImage != null && userData.profileImage!.isNotEmpty) {
-        controller.profileImage.value = Urls.imagePathUrl + userData.profileImage!;
-        /*controller.profileImage.value =
-        "https://krcodingcaffeine.com/pragati-mandal-api/public/${userData.profileImage!}";*/
-      } else {
-        controller.profileImage.value = "assets/images/user3.png"; // Default image
-      }
-    } else {
-      print('No user session data found!');
+      controller.memberId.value = userData.memberId ?? "";
     }
   }
 }

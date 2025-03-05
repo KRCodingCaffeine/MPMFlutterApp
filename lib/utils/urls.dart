@@ -39,6 +39,7 @@ class Urls {
   static const  String updateMemberAddress_url = base_url+"api/update_member_address";
   static const  String addBusinessInfo_url = base_url+"api/add_business_info";
   static const  String updateBusinessInfo_url = base_url+"api/update_business_info";
+  static const  String updateQualification_url = base_url+"api/update_education";
 
 
   static const String imagePathUrl = base_url+"public/";

@@ -36,7 +36,7 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () {
-              _showEditModalSheet(context);
+              _showEditModalSheet(context,"1");
             },
           ),
         ],
@@ -56,7 +56,7 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
     );
   }
 
-  Future<void> _showEditModalSheet(BuildContext context) async {
+  Future<void> _showEditModalSheet(BuildContext context, String type) async {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -88,7 +88,13 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                       onPressed: () async {
                         if (regiController
                             .educationdetailController.value.text.isNotEmpty) {
-                          regiController.updateQualification();
+                          if(type=="1") {
+                            regiController.addQualification();
+                          }
+                          else if(type=="2")
+                            {
+                              regiController.updateQualification();
+                            }
                         }
                       },
                       child: regiController.addloading.value
@@ -282,7 +288,7 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
   Widget educationWidget(Qualification qualification) {
     return GestureDetector(
       onTap: () {
-        _showEditModalSheet(context);
+        _showEditModalSheet(context,"2");
       },
       child: Card(
         shape: RoundedRectangleBorder(

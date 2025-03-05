@@ -36,6 +36,23 @@ import '../../../view/profile view/personal_info_page.dart';
 
 class UdateProfileController extends GetxController {
   final api = UpdateProfileRepository();
+  var currentIndex = 0.obs;
+  var showAppBar = false.obs;
+
+  void changeTab(int index) {
+    currentIndex.value = index;
+  }
+
+  void toggleAppBar(bool value, {bool fromDrawer = false}) {
+    showAppBar.value = value;
+  }
+
+  // User Data Variables (Only for Viewing)
+  var userName = ''.obs;
+  var memberId = ''.obs;
+  var mobileNumber = ''.obs;
+  var lmCode = ''.obs;
+  var profileImage = ''.obs;
   Rx<TextEditingController> detailsController = TextEditingController().obs;
    Rx<TextEditingController> organisationNameController = TextEditingController().obs;
    Rx<TextEditingController> officePhoneController= TextEditingController().obs;
@@ -54,14 +71,12 @@ class UdateProfileController extends GetxController {
   Rx<TextEditingController> specialization_nameController = TextEditingController().obs;
 
 
-  var userName = "".obs;
 
-  var profileImage = "".obs; // Add this field
   var newProfileImage = "".obs;
   var userdocumentImage = "".obs;
   var newdocumentImage = "".obs;
 
-  // Example function to update profile image
+
   void updateProfileImage(String newImageUrl) {
     profileImage.value = newImageUrl;
   }
@@ -74,7 +89,7 @@ class UdateProfileController extends GetxController {
   var surName = ''.obs;
   var fathersName = ''.obs;
   var mothersName = ''.obs;
-  var mobileNumber = ''.obs;
+
   var whatsAppNumber = ''.obs;
   var email = ''.obs;
   var dob = ''.obs;
@@ -132,7 +147,7 @@ class UdateProfileController extends GetxController {
   var businessEmail = 'Official Email'.obs;
   var website = 'Official URL'.obs;
   var getUserData = GetProfileData().obs;
-  var memberId = "".obs;
+
   final rxStatusOccupation = Status.LOADING.obs;
   final rxStatusOccupationData = Status.IDLE.obs;
   final rxStatusOccupationSpec = Status.IDLE.obs;
@@ -369,7 +384,6 @@ class UdateProfileController extends GetxController {
           memberController.areaController.value.text =
               getUserData.value.address!.areaName.toString();
         }
-
         memberController.country_id.value=getUserData.value.address!.countryId.toString();
         memberController.state_id.value=getUserData.value.address!.stateId.toString();
         if((getUserData.value.address!.city_id.toString()!="null") && (getUserData.value.address!.city_id.toString()!="")) {
@@ -480,6 +494,7 @@ class UdateProfileController extends GetxController {
       setRxRequestQualificationMain(Status.COMPLETE);
       setQualicationMain(_value.data!);
     }).onError((error, strack) {
+      print("cvv"+error.toString());
       setRxRequestQualificationMain(Status.ERROR);
     });
   }
@@ -492,6 +507,7 @@ class UdateProfileController extends GetxController {
       setQualicationCategory(_value.data!);
     }).onError((error, strack) {
       setRxRequestQualificationCat(Status.ERROR);
+      print("cvv"+error.toString());
     });
   }
 
@@ -506,7 +522,7 @@ class UdateProfileController extends GetxController {
 
   void setRxRelationType(Status _value) => rxStatusRelationType.value = _value;
 
-  void addQualification(BuildContext con) async {
+  void addQualification() async {
     CheckUserData2? userData = await SessionManager.getSession();
     print('User ID: ${userData?.memberId}');
     print('User Name: ${userData?.mobile}');
@@ -525,7 +541,7 @@ class UdateProfileController extends GetxController {
       api.addQualification(map).then((_value) async {
         addloading.value = false;
         if (_value['status'] == true) {
-          Navigator.pushReplacementNamed(con, RouteNames.dashboard);
+          Navigator.pushReplacementNamed(context!, RouteNames.dashboard);
           Get.snackbar(
             'Success', // Title
             "Add Education Successfully", // Message
@@ -574,7 +590,7 @@ class UdateProfileController extends GetxController {
           Navigator.pushReplacementNamed(context!, RouteNames.dashboard);
           Get.snackbar(
             'Success', // Title
-            "Add Education Successfully", // Message
+            "Update Education Successfully", // Message
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Colors.green,
             colorText: Colors.white,
@@ -776,12 +792,14 @@ class UdateProfileController extends GetxController {
           snackPosition: SnackPosition.TOP,
         );
         memberId.value = registerResponse.data.toString();
+
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => const PersonalInformationPage(),
           ),
         );
+
       } else {
         Get.snackbar(
           "Error",
@@ -956,8 +974,10 @@ class UdateProfileController extends GetxController {
     print("ccvv" + payload.toString());
     var request = http.MultipartRequest('POST', url);
     request.fields.addAll(payload);
-    request.files.add(
-        await http.MultipartFile.fromPath('profile_image', document_image));
+    if(document_image!="") {
+      request.files.add(
+          await http.MultipartFile.fromPath('profile_image', document_image));
+    }
     http.StreamedResponse response = await request.send().timeout(
         Duration(seconds: 60));
     //
@@ -978,7 +998,7 @@ class UdateProfileController extends GetxController {
         );
          sendOtp(regiController.mobileController.value.text);
        showOtpBottomSheet(context!,regiController.mobileController.value.text);
-
+        Navigator.of(context!).pop();
       }
       else {
         Get.snackbar(
@@ -1061,6 +1081,12 @@ class UdateProfileController extends GetxController {
             backgroundColor: Colors.green,
             colorText: Colors.white,
             duration: Duration(seconds: 3),
+          );
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const FamilyInfoPage(),
+            ),
           );
         }
         else
@@ -1296,39 +1322,6 @@ class UdateProfileController extends GetxController {
       const SnackBar(content: Text("OTP Resent Successfully")),
     );
   }
-
-  void submitOtp(BuildContext context, String otp) {
-    if (otp.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter OTP")),
-      );
-      return;
-    }
-
-    // Call your API to validate OTP
-    // Example:
-    // apiService.validateOtp(otp).then((response) {
-    //   if (response.success) {
-    //     Navigator.pop(context); // Close OTP bottom sheet
-    //     _refreshData(); // Refresh data on the current screen
-    //   } else {
-    //     ScaffoldMessenger.of(context).showSnackBar(
-    //       SnackBar(content: Text("Invalid OTP")),
-    //     );
-    //   }
-    // });
-
-    // Simulate OTP validation
-    if (otp == "123456") { // Replace with actual OTP validation logic
-      Navigator.pop(context); // Close OTP bottom sheet
-
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Invalid OTP")),
-      );
-    }
-  }
-
 }
 
 

@@ -446,7 +446,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                               padding: EdgeInsets.symmetric(horizontal: 20),
                                               isExpanded: true,
                                               underline: Container(),
-                                              hint: const Text('Select Saluatation',style: TextStyle(
+                                              hint: const Text('Select Salutation',style: TextStyle(
                                                   fontWeight: FontWeight.bold
                                               ),), // Hint to show when nothing is selected
                                               value: regiController.selectMemberSalutation.value.isEmpty
@@ -548,7 +548,10 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                   regiController
                                       .firstNameController.value, // Controller
                                   'First Name', // Hint Text
-                                  'Enter First Name', text: TextInputType.text,
+                                  'Enter First Name',
+                                  text: TextInputType.text,
+                                    isRequired: true
+
                                 ),
                                 const SizedBox(height: 20),
 
@@ -558,6 +561,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                   regiController.middleNameController.value, // Controller
                                   "Middle Name", // Hint Text
                                   "", text: TextInputType.text,
+
                                 ),
                                 const SizedBox(height: 20),
 
@@ -568,7 +572,8 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                       .lastNameController.value, // Controller
                                   "SurName", // Hint Text
                                   "",
-                                  text: TextInputType.text
+                                  text: TextInputType.text,
+                                    isRequired: true
                                 ),
                                 const SizedBox(height: 20),
 
@@ -600,7 +605,8 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                       .fathersnameController.value, // Controller
                                   "Father's Name", // Hint Text
                                   "",
-                                  text: TextInputType.text
+                                  text: TextInputType.text,
+                                    isRequired: true
                                 ),
                                 const SizedBox(height: 20),
 
@@ -1142,6 +1148,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
       String validationMessage, {
         bool obscureText = false,
         required TextInputType text,
+        bool isRequired = false,
       }) {
     return Container(
       margin:  EdgeInsets.only(left: 5, right: 5),
@@ -1176,7 +1183,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
           ),
         ),
         validator: (value) {
-          if (value == null || value.isEmpty) {
+          if (isRequired && (value == null || value.isEmpty)) {
             return validationMessage;
           }
           return null;
