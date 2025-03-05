@@ -67,9 +67,9 @@ class NewMemberController extends GetxController {
   var maritalList = <MaritalData>[].obs;
   var selectMarital = ''.obs;
   var selectMember = CheckUserData().obs;
-  var selectOccuption = ''.obs;
-  var selectOccuptionPro = ''.obs;
-  var selectOccuptionSpec = ''.obs;
+
+
+
   var selectQlification = ''.obs;
   var selectQualicationMain = ''.obs;
   var selectQualicationCat = ''.obs;
@@ -172,7 +172,7 @@ class NewMemberController extends GetxController {
 
   var dropdownItems = <String>[].obs;
   var selectedValue = ''.obs;
-  var isOccutionList = false.obs;
+
   var isQualicationList = false.obs;
   var isQualicationCateList = false.obs;
   void toggleCheckbox(bool? value) {
@@ -266,13 +266,9 @@ class NewMemberController extends GetxController {
     selectDocumentType(value);
   }
 
-  void setSelectOccuptionPro(String value) {
-    selectOccuptionPro(value);
-  }
 
-  void setSelectOccuptionSpec(String value) {
-    selectOccuptionSpec(value);
-  }
+
+
 
   void setSelectQualification(String value) {
     selectQlification(value);
@@ -571,6 +567,7 @@ class NewMemberController extends GetxController {
       String responseBody = await response.stream.bytesToString();
 
       Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
+      print("ggggggggggg"+jsonResponse.toString());
       CheckPinCodeModel pincodeResponse =
       CheckPinCodeModel.fromJson(jsonResponse);
       print('Status: ${pincodeResponse.status}');
@@ -600,7 +597,10 @@ class NewMemberController extends GetxController {
       countryNotFound.value=false;
       withoutcheckotp.value=true;
       getMemberShip();
-      print(response.reasonPhrase);
+      String responseBody = await response.stream.bytesToString();
+
+      Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
+      print("vvvvvvv"+responseBody.toString());
       setRxRequestBuilding(Status.COMPLETE);
     }
   }
@@ -918,23 +918,5 @@ class NewMemberController extends GetxController {
     print("fgfggghg" + otp.value);
   }
 
-  void sendOtp(var mobile, var otp) async {
-    var url =
-        "https://web.azinfomedia.com/domestic/sendsms/bulksms_v2.php?apikey=TWFoZXNod2FyaTp4em5ESlVPcA==&type=TEXT&sender=ASCTRL&entityId=xznDJUOp&templateId=1707170308164618962&mobile=${mobile}&message=Your%20One%20Time%20Password%20(OTP)%20is:%20${otp}%20Please%20use%20this%20OTP%20to%20complete%20your%20login.%20For%20Any%20Support%20Contact%20-%20Maheshwari%20Pragati%20Mandal%20ASCENT";
-    try {
-      var response = await http.get(Uri.parse(url));
 
-      if (response.statusCode == 200) {
-        // Parse the response if needed
-        var data = json.decode(response.body);
-        print('OTP Sent Successfully: $data');
-      } else {
-        print('Failed to send OTP. Error: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error: $e');
-    } finally {
-
-    }
-  }
 }

@@ -4,8 +4,9 @@ import 'package:mpm/route/route_name.dart';
 import 'package:mpm/utils/AppDrawer.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
-import 'package:mpm/view_model/controller/dashboard/dashboardcontroller.dart';
+
 import 'package:mpm/view_model/controller/samiti/SamitiController.dart';
+import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
 class SamitiMembersViewPage extends StatefulWidget {
   const SamitiMembersViewPage({super.key});
@@ -16,7 +17,7 @@ class SamitiMembersViewPage extends StatefulWidget {
 
 class _SamitiMembersViewPageState extends State<SamitiMembersViewPage> {
   SamitiController controller = Get.put(SamitiController());
-  final DashBoardController dashBoardController = Get.find();
+  final UdateProfileController dashBoardController = Get.find();
   @override
   void initState() {
     // TODO: implement initState

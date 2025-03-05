@@ -4,14 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/route/route_name.dart';
 import 'package:mpm/utils/Session.dart';
+import 'package:mpm/utils/urls.dart';
 import 'package:mpm/view/login_view.dart';
-import 'package:mpm/view_model/controller/dashboard/dashboardcontroller.dart';
+
+import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 import 'package:share_plus/share_plus.dart';
 
 class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final DashBoardController dashBoardController = Get.find();
+    final UdateProfileController dashBoardController = Get.find();
     return Drawer(
       backgroundColor: Colors.white,
       child: ListView(
@@ -26,33 +28,40 @@ class AppDrawer extends StatelessWidget {
               child: Row(
                 children: [
                   // Profile Image
-                  Obx(() => CircleAvatar(
-                        radius: 30,
-                        backgroundColor: Colors.grey[300],
-                        // Placeholder background color
-                        child: ClipOval(
-                          child: dashBoardController
-                                  .profileImage.value.isNotEmpty
-                              ? FadeInImage(
-                                  placeholder: const AssetImage(
-                                      "assets/images/placeholder.png"),
-                                  // Show while loading
-                                  image: NetworkImage(
-                                      dashBoardController.profileImage.value),
-                                  imageErrorBuilder:
-                                      (context, error, stackTrace) {
-                                    return Image.asset(
-                                        "assets/images/user3.png",
-                                        fit: BoxFit.cover);
-                                  },
+                  Stack(
+                    children: [
+                      Obx(() {
+                        return CircleAvatar(
+                          radius: 40,
+                          backgroundColor: Colors.grey[300], // Background color while loading
+                          child: ClipOval(
+                            child: (dashBoardController.profileImage.value.isNotEmpty)
+                                ? FadeInImage(
+                              placeholder: const AssetImage("assets/images/user3.png"), // Placeholder while loading
+                              image: NetworkImage(Urls.imagePathUrl + dashBoardController.profileImage.value), // Network image
+                              imageErrorBuilder: (context, error, stackTrace) {
+                                return Image.asset(
+                                  "assets/images/male.png", // Fallback image on error
                                   fit: BoxFit.cover,
-                                  width: 60,
-                                  height: 60,
-                                )
-                              : Image.asset("assets/images/user3.png",
-                                  fit: BoxFit.cover, width: 60, height: 60),
-                        ),
-                      )),
+                                  width: 80,
+                                  height: 80,
+                                );
+                              },
+                              fit: BoxFit.cover,
+                              width: 80,
+                              height: 80,
+                            )
+                                : Image.asset(
+                              "assets/images/user3.png", // Default image if profileImage is empty
+                              fit: BoxFit.cover,
+                              width: 80,
+                              height: 80,
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(

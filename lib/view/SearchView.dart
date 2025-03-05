@@ -3,8 +3,9 @@ import 'package:get/get.dart';
 import 'package:mpm/utils/AppDrawer.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
-import 'package:mpm/view_model/controller/dashboard/dashboardcontroller.dart';
+
 import 'package:mpm/view_model/controller/samiti/SamitiController.dart';
+import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
 class SearchView extends StatefulWidget {
   const SearchView({super.key});
@@ -16,7 +17,7 @@ class SearchView extends StatefulWidget {
 class _SearchViewState extends State<SearchView> {
   SamitiController controller = Get.put(SamitiController());
   final TextEditingController _searchController = TextEditingController();
-  final DashBoardController dashBoardController = Get.find();
+  final UdateProfileController dashBoardController = Get.find();
   final String defaultProfile = "assets/images/user3.png";
 
   void _filterMembers(String query) {

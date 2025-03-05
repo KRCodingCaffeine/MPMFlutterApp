@@ -1,6 +1,6 @@
 
 class Urls {
-  //static const  String base_url = "https://krcodingcaffeine.com/pragati-mandal-api/";
+ //static const  String base_url = "https://krcodingcaffeine.com/pragati-mandal-api/";
   static const  String base_url = "https://staging.mumbaimaheshwari.com/api/";
   static const  String register_url = base_url+"api/make_new_member";
   static const  String login_url = base_url+"api/login";
@@ -18,7 +18,7 @@ class Urls {
   static const  String documentotion_url = base_url+"api/document_option";
   static const  String membership_url = base_url+"api/membership_type";
   static const  String verify_url = base_url+"api/user_verified";
-  static const  String addmemberorfamily_url = base_url+"api/add_member_or_family";
+  static const  String addmemberorfamily_url = base_url+"api/add_family_member";
   static const  String attribute_url = base_url+"api/attribute-page";
   static const  String relation_url = base_url+"api/relation-dropdown";
   static const  String samiti_url = base_url+"api/get_samiti_types";
@@ -36,6 +36,11 @@ class Urls {
   static const  String addEducation_url = base_url+"api/add_education";
   static const  String addUpdateFamilyMEber_url = base_url+"api/update_family_member_relation";
   static const  String addOccuption_url = base_url+"api/add_update_occupation";
+  static const  String updateMemberAddress_url = base_url+"api/update_member_address";
+  static const  String addBusinessInfo_url = base_url+"api/add_business_info";
+  static const  String updateBusinessInfo_url = base_url+"api/update_business_info";
+  static const  String updateQualification_url = base_url+"api/update_education";
+
 
   static const String imagePathUrl = base_url+"public/";
 }
