@@ -88,7 +88,7 @@ class _SearchViewState extends State<SearchView> {
                         lmcode: lmcode,
                         name: name,
                         mobile: member.mobile,
-                        profileImage: member.profileImage!.isEmpty ? defaultProfile : member.profileImage,
+                        profileImage: member.profileImage!=null?member.profileImage!.isEmpty ? defaultProfile : member.profileImage:defaultProfile,
                       );
                     },
                   );

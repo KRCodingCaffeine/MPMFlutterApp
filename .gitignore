@@ -8,6 +8,7 @@ build/
 .flutter-versions
 .melos/
 .melos_tool/
+generated_plugin_registrant.dart
 
 # IntelliJ/Android Studio
 .idea/
@@ -19,47 +20,78 @@ build/
 .vscode/
 
 # macOS
-.DS_Store
-
-# Linux
-*.swp
+macos/
+macos/Flutter/ephemeral/
+*.xcworkspace/
+*.xcodeproj/
+*.xcuserdata/
+*.xcassets/
+Pods/
+DerivedData/
+*.ipa
+macos/Pods/
+macos/.symlinks/
+macos/Runner/GeneratedPluginRegistrant.swift
 
 # Windows
-Thumbs.db
-desktop.ini
+windows/
+windows/flutter/ephemeral/
+windows/generated_plugin_registrant.cc
+windows/CMakeCache.txt
+windows/CMakeFiles/
+*.exe
+*.pdb
+*.dll
+*.ilk
+*.obj
+*.lib
+*.exp
 
-# Flutter Generated
-ios/Flutter/Flutter.framework
-ios/Flutter/Flutter.podspec
-ios/.symlinks/
+# Linux
+linux/
+linux/flutter/ephemeral/
+linux/generated_plugin_registrant.cc
+linux/CMakeCache.txt
+linux/CMakeFiles/
+*.so
+*.o
+*.a
+
+# Android
+android/.gradle/
+android/app/build/
+android/local.properties
+android/.cxx/
+android/.idea/
+android/capture/
+
+# iOS
+ios/
 ios/Pods/
-ios/Runner.xcworkspace/
-ios/Flutter/App.framework
+ios/.symlinks/
+ios/Flutter/
+ios/Flutter/App.framework/
+ios/Flutter/Flutter.framework/
+ios/Flutter/Flutter.podspec
 ios/Flutter/Generated.xcconfig
-
-# Xcode Specific
-*.xcodeproj/*
-!*.xcodeproj/project.pbxproj
-!*.xcodeproj/xcshareddata/
-!*.xcworkspacedata
-!*.xcsettings
-!*.xccheckout
-*.xcuserstate
-*.xcuserdata
-
-# Android Specific
-**/android/**/local.properties
-**/android/**/build/
+ios/Flutter/ServiceDefinitions.json
+ios/Flutter/engine/
+ios/Flutter/*.xcworkspace/
+ios/Flutter/*.xcodeproj/
+ios/Flutter/*.xcuserdata/
+ios/Flutter/*.xcassets/
+ios/Flutter/*.ipa
+ios/Runner/GeneratedPluginRegistrant.swift
 
 # Web
 web/.dart_tool/
-web/.packages
-web/.flutter-plugins
+web/generated_plugin_registrant.dart
+web/flutter/
 
-# Ignore auto-generated Flutter files
-linux/flutter/
-windows/flutter/
-macos/flutter/
+# Flutter & Dart
+.build/
+packages/
+
 # Firebase
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist

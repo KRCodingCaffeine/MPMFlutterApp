@@ -46,26 +46,33 @@ class UdateProfileController extends GetxController {
   void toggleAppBar(bool value, {bool fromDrawer = false}) {
     showAppBar.value = value;
   }
-
-  // User Data Variables (Only for Viewing)
   var userName = ''.obs;
   var memberId = ''.obs;
   var mobileNumber = ''.obs;
   var lmCode = ''.obs;
   var profileImage = ''.obs;
-  Rx<TextEditingController> detailsController = TextEditingController().obs;
+    Rx<TextEditingController> detailsController = TextEditingController().obs;
    Rx<TextEditingController> organisationNameController = TextEditingController().obs;
+   Rx<TextEditingController> udorganisationNameController = TextEditingController().obs;
    Rx<TextEditingController> officePhoneController= TextEditingController().obs;
-   Rx<TextEditingController> buildingNameController= TextEditingController().obs;
+   Rx<TextEditingController> udofficePhoneController= TextEditingController().obs;
+   Rx<TextEditingController> addressbusinessinfoNameController= TextEditingController().obs;
+   Rx<TextEditingController> upaddressbusinessinfoNameController= TextEditingController().obs;
 
    Rx<TextEditingController> addressController = TextEditingController().obs;
    Rx<TextEditingController> areaNameController= TextEditingController().obs;
+   Rx<TextEditingController> udareaNameController= TextEditingController().obs;
+   Rx<TextEditingController> flatnoController= TextEditingController().obs;
+   Rx<TextEditingController> udflatnoController= TextEditingController().obs;
 
    Rx<TextEditingController> stateNameController = TextEditingController().obs;
    Rx<TextEditingController> countryNameController = TextEditingController().obs;
    Rx<TextEditingController> officePincodeController = TextEditingController().obs;
+   Rx<TextEditingController> udofficePincodeController = TextEditingController().obs;
    Rx<TextEditingController> businessEmailController = TextEditingController().obs;
+   Rx<TextEditingController> udbusinessEmailController = TextEditingController().obs;
    Rx<TextEditingController> websiteController = TextEditingController().obs;
+   Rx<TextEditingController> upwebsiteController = TextEditingController().obs;
    Rx<TextEditingController> occupationController = TextEditingController().obs;
    Rx<TextEditingController> occupation_profession_nameController = TextEditingController().obs;
   Rx<TextEditingController> specialization_nameController = TextEditingController().obs;
@@ -118,6 +125,7 @@ class UdateProfileController extends GetxController {
   var tempId = ''.obs;
   var isJangana = ''.obs;
   var saraswaniOptionId = ''.obs;
+  var addBussinessLoading=false.obs;
 
   BuildContext? context=Get.context;
   var zone_id = ''.obs;
@@ -135,7 +143,7 @@ class UdateProfileController extends GetxController {
   var familyloading = false.obs;
   var addloading = false.obs;
   var selectOccuptionPro = ''.obs;
-  var organisationName = 'Company Name'.obs;
+  var organisationName = ''.obs;
   var officePhone = 'Landline Number'.obs;
   var buildingName = 'Building Name'.obs;
 
@@ -339,6 +347,7 @@ class UdateProfileController extends GetxController {
       officePhone.value = getUserData.value.mobile.toString();
       if (getUserData.value.qualification != null) {
         qualificationList.value = getUserData.value.qualification!;
+
       }
       if (getUserData.value.businessInfo != null) {
         businessInfoList.value = getUserData.value.businessInfo!;
@@ -541,7 +550,6 @@ class UdateProfileController extends GetxController {
       api.addQualification(map).then((_value) async {
         addloading.value = false;
         if (_value['status'] == true) {
-          Navigator.pushReplacementNamed(context!, RouteNames.dashboard);
           Get.snackbar(
             'Success', // Title
             "Add Education Successfully", // Message
@@ -550,6 +558,12 @@ class UdateProfileController extends GetxController {
             colorText: Colors.white,
             duration: Duration(seconds: 3),
           );
+          selectQlification.value="";
+          selectQualicationMain.value="";
+          selectQualicationCat.value="";
+          educationdetailController.value.text="";
+          getUserProfile();
+          Navigator.of(context!).pop();
         }
       }).onError((error, strack) async {
         addloading.value = false;
@@ -587,15 +601,17 @@ class UdateProfileController extends GetxController {
       api.updateQualification(map).then((_value) async {
         addloading.value = false;
         if (_value['status'] == true) {
-          Navigator.pushReplacementNamed(context!, RouteNames.dashboard);
+
           Get.snackbar(
             'Success', // Title
             "Update Education Successfully", // Message
-            snackPosition: SnackPosition.BOTTOM,
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.green,
             colorText: Colors.white,
             duration: Duration(seconds: 3),
           );
+          getUserProfile();
+          Navigator.of(context!).pop();
         }
       }).onError((error, strack) async {
         addloading.value = false;
@@ -645,8 +661,8 @@ class UdateProfileController extends GetxController {
         // addloading.value=false;
         //print("gnfg"+_value.message.toString());
         if (_value.status == true) {
-          Navigator.pushReplacementNamed(con, RouteNames.dashboard);
 
+          getUserProfile();
           Get.snackbar(
             'Success', // Title
             "Update Relation SuccessFully", // Message
@@ -655,8 +671,9 @@ class UdateProfileController extends GetxController {
             colorText: Colors.white,
             duration: Duration(seconds: 3),
           );
-
           getUserProfile();
+          Navigator.of(context!).pop();
+
         }
       }).onError((error, strack) async {
         //addloading.value=false;
@@ -697,7 +714,7 @@ class UdateProfileController extends GetxController {
         // addloading.value=false;
         print("gnfg" + _value.message.toString());
         if (_value.status == true) {
-          Navigator.pushReplacementNamed(context!, RouteNames.dashboard);
+
           Get.snackbar(
             'Success', // Title
             "Update Relation SuccessFully", // Message
@@ -706,6 +723,8 @@ class UdateProfileController extends GetxController {
             colorText: Colors.white,
             duration: Duration(seconds: 3),
           );
+          getUserProfile();
+          Navigator.of(context!).pop();
         }
       }).onError((error, strack) async {
         //addloading.value=false;
@@ -792,13 +811,8 @@ class UdateProfileController extends GetxController {
           snackPosition: SnackPosition.TOP,
         );
         memberId.value = registerResponse.data.toString();
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const PersonalInformationPage(),
-          ),
-        );
+getUserProfile();
+        Navigator.of(context!).pop();
 
       } else {
         Get.snackbar(
@@ -892,8 +906,9 @@ class UdateProfileController extends GetxController {
           snackPosition: SnackPosition.TOP,
         );
 
-       Navigator.pushReplacementNamed(context, RouteNames.dashboard);
+
         getUserProfile();
+        Navigator.of(context!).pop();
       }
       else {
         Get.snackbar(
@@ -951,7 +966,7 @@ class UdateProfileController extends GetxController {
     print("vvb" + document_image);
 
     Map<String, String> payload = {
-      "proposer_id": "1",
+      "proposer_id": userData!.memberId.toString(),
       "first_name": regiController.firstNameController.value.text,
       "last_name": regiController.lastNameController.value.text,
           "middle_name": regiController.middleNameController.value.text,
@@ -963,10 +978,10 @@ class UdateProfileController extends GetxController {
       "gender_id": regiController.selectedGender.value,
       "marital_status_id": marital_status_id,
       "blood_group_id": regiController.selectBloodGroup.value,
-      "dob": regiController.dateController.value.text,
+      "dob": regiController.dateController.text,
       "family_head_member_id": familyHeadMemberId.value,
       "relation_id": selectRelationShipType.value,
-      "member_type_id": regiController.selectMarital.value,
+      "member_type_id": regiController.selectMemberShipType.value,
       "marriage_anniversary_date": regiController.marriagedateController.value.text,
       "salutation_id": regiController.selectMemberSalutation.value,
       "created_by": "1"
@@ -996,9 +1011,28 @@ class UdateProfileController extends GetxController {
           colorText: Colors.white,
           snackPosition: SnackPosition.TOP,
         );
+        regiController.firstNameController.value.text="";
+        regiController.lastNameController.value.text="";
+        regiController.middleNameController.value.text="";
+        regiController.fathersnameController.value.text="";
+        regiController.mothersnameController.value.text="";
+        regiController.emailController.value.text="";
+        regiController.whatappmobileController.value.text="";
+       // regiController.mobileController.value.text="";
+        regiController.selectedGender.value="";
+        regiController.selectBloodGroup.value="";
+        regiController.dateController.text="";
+
+        selectRelationShipType.value="";
+        regiController.selectMarital.value="";
+        regiController.marriagedateController.value.text="";
+        regiController.selectMemberSalutation.value="";
+        regiController.selectMemberSalutation.value="";
+        getUserProfile();
          sendOtp(regiController.mobileController.value.text);
-       showOtpBottomSheet(context!,regiController.mobileController.value.text);
         Navigator.of(context!).pop();
+        showOtpBottomSheet(context!,regiController.mobileController.value.text);
+        regiController.mobileController.value.text="";
       }
       else {
         Get.snackbar(
@@ -1039,7 +1073,17 @@ class UdateProfileController extends GetxController {
       api2.sendOTP(map).then((_value) async {
         if(_value.status==true)
         {
+          Get.snackbar(
+            "Success",
+            "Send Otp Successfully",
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            snackPosition: SnackPosition.TOP,
+          );
           family_member_id.value=  _value.data!.memberId.toString();
+
+
+
         }
         else
         {
@@ -1082,12 +1126,7 @@ class UdateProfileController extends GetxController {
             colorText: Colors.white,
             duration: Duration(seconds: 3),
           );
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const FamilyInfoPage(),
-            ),
-          );
+          Navigator.of(context!).pop();
         }
         else
         {
@@ -1129,24 +1168,24 @@ class UdateProfileController extends GetxController {
   void userAddBuniessInfo() async {
     CheckUserData2? userData = await SessionManager.getSession();
     NewMemberController memberController = Get.put(NewMemberController());
-    loading.value = true;
+    addBussinessLoading.value=true;
     memberId.value = userData!.memberId.toString();
-    //addloading.value=true;
+
     try {
       var payload={
         'member_id': memberId.value,
-        'organisation_name': organisationName.value,
-        'office_phone': officePhone.value,
-        'business_email': businessEmail.value,
-        'website': website.value,
-        'flat_no': flatNo.value,
-        'address': address.value,
-        'area': areaName.value,
+        'organisation_name': organisationNameController.value.text,
+        'office_phone': officePhoneController.value.text,
+        'business_email': businessEmailController.value.text,
+        'website': websiteController.value.text,
+        'flat_no': flatnoController.value.text,
+        'address': addressbusinessinfoNameController.value.text,
+        'area': areaNameController.value.text,
         'city_id': memberController.city_id.value,
         'state_id': memberController.state_id.value,
         'country_id': memberController.country_id.value,
         'created_by': '1',
-        'pincode':  officePincode.value
+        'pincode':  officePincodeController.value.text
       };
       print("fffh"+payload.toString());
       await api.userAddBusiness(payload)
@@ -1162,10 +1201,24 @@ class UdateProfileController extends GetxController {
             colorText: Colors.white,
             duration: Duration(seconds: 3),
           );
-          Navigator.pushReplacementNamed(context!, RouteNames.dashboard);
+          organisationNameController.value.text="";
+          officePhoneController.value.text="";
+          businessEmailController.value.text="";
+          websiteController.value.text="";
+          flatnoController.value.text="";
+          addressbusinessinfoNameController.value.text="";
+          areaNameController.value.text="";
+          memberController.city_id.value="";
+          memberController.state_id.value="";
+          memberController.country_id.value="";
+          officePincodeController.value.text="";
+
+          getUserProfile();
+          addBussinessLoading.value=false;
+          Navigator.pop(context!,"");
         }
       }).onError((error, strack) async {
-        //addloading.value=false;
+        addBussinessLoading.value=false;
         print("fvvf" + error.toString());
         Get.snackbar(
           'Error', // Title
@@ -1177,7 +1230,7 @@ class UdateProfileController extends GetxController {
         );
       });
     } catch (e) {
-      addloading.value = false;
+      addBussinessLoading.value=false;
       print('Error: $e');
     } finally {}
 
@@ -1186,24 +1239,24 @@ class UdateProfileController extends GetxController {
   void userUpdateBuniessInfo(BusinessInfo bussinessinfo) async {
     CheckUserData2? userData = await SessionManager.getSession();
     NewMemberController memberController = Get.put(NewMemberController());
-    loading.value = true;
+    addloading.value=true;
     memberId.value = userData!.memberId.toString();
-    //addloading.value=true;
+
     try {
       var map={
         'member_id': memberId.value,
-        'organisation_name': organisationName.value,
-        'office_phone': officePhone.value,
-        'business_email': businessEmail.value,
-        'website':  website.value,
-        'flat_no': flatNo.value,
-        'address': address.value,
-        'area': areaName.value,
+        'organisation_name': udorganisationNameController.value.text,
+        'office_phone': udofficePhoneController.value.text,
+        'business_email': udbusinessEmailController.value.text,
+        'website':  upwebsiteController.value.text,
+        'flat_no': udflatnoController.value.text,
+        'address': upaddressbusinessinfoNameController.value.text,
+        'area': udareaNameController.value.text,
         'city_id': memberController.city_id.value,
         'state_id': memberController.state_id.value,
         'country_id': memberController.country_id.value,
         'created_by': '1',
-        'pincode': officePincode.value,
+        'pincode': udofficePincodeController.value.text,
         'member_address_id': bussinessinfo.memberAddressId.toString(),
         'member_business_info_id': bussinessinfo.membersBusinessInfoId.toString()
       };
@@ -1221,10 +1274,12 @@ class UdateProfileController extends GetxController {
             colorText: Colors.white,
             duration: Duration(seconds: 3),
           );
-          Navigator.pushReplacementNamed(context!, RouteNames.dashboard);
+          getUserProfile();
+          addloading.value=false;
+          Navigator.of(context!).pop();
         }
       }).onError((error, strack) async {
-        //addloading.value=false;
+        addloading.value=false;
         print("fvvf" + error.toString());
         Get.snackbar(
           'Error', // Title

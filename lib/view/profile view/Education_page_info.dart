@@ -34,7 +34,7 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
         iconTheme: IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit),
+            icon: const Icon(Icons.add,size: 35,),
             onPressed: () {
               _showEditModalSheet(context,"1");
             },
@@ -80,22 +80,25 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                     TextButton(
                       style: TextButton.styleFrom(foregroundColor: Colors.red),
                       onPressed: () => Navigator.pop(context),
-                      child:
-                          Text("Cancel", style: TextStyle(color: Colors.red)),
+                      child: Text("Cancel", style: TextStyle(color: Colors.red)),
                     ),
                     TextButton(
                       style: TextButton.styleFrom(foregroundColor: Colors.red),
                       onPressed: () async {
-                        if (regiController
-                            .educationdetailController.value.text.isNotEmpty) {
-                          if(type=="1") {
+                        if (regiController.educationdetailController.value.text.isNotEmpty) {
                             regiController.addQualification();
-                          }
-                          else if(type=="2")
-                            {
-                              regiController.updateQualification();
-                            }
                         }
+                        else
+                          {
+                            Get.snackbar(
+                              'Error', // Title
+                              "Sorry no data", // Message
+                              snackPosition: SnackPosition.TOP,
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                              duration: Duration(seconds: 3),
+                            );
+                          }
                       },
                       child: regiController.addloading.value
                           ? CircularProgressIndicator()
@@ -237,6 +240,190 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
       },
     );
   }
+  Future<void> _showUpdateModalSheet(BuildContext context, Qualification qualification) async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      builder: (context) {
+        regiController.selectQlification.value=qualification.memberQualificationId.toString();
+        if(qualification.qualificationMainId.toString()!="") {
+          regiController.isQualicationList.value=true;
+          regiController.getQualicationMain(regiController.selectQlification.value);
+          regiController.selectQualicationMain.value = qualification.qualificationMainId.toString();
+        }
+        else
+          {
+            regiController.isQualicationList.value=false;
+          }
+
+        return SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 16.0,
+              right: 16.0,
+              top: 16.0,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 16.0,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                /// **Top Buttons: Cancel & Save**
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                      onPressed: () => Navigator.pop(context),
+                      child:
+                          Text("Cancel", style: TextStyle(color: Colors.red)),
+                    ),
+                    TextButton(
+                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                      onPressed: () async {
+                        if (regiController.educationdetailController.value.text.isNotEmpty) {
+                          regiController.updateQualification();
+
+                        }
+                      },
+                      child: regiController.addloading.value
+                          ? CircularProgressIndicator()
+                          : Text("Save"),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
+
+                /// **Qualification Dropdown**
+                Obx(() {
+                  return DropdownButtonFormField<String>(
+                    decoration: InputDecoration(
+                      labelText: "Select Qualification",
+                      border: OutlineInputBorder(),
+                    ),
+                    value: regiController.selectQlification.value.isEmpty
+                        ? null
+                        : regiController.selectQlification.value,
+                    items: regiController.qulicationList
+                        .map((QualificationData item) {
+                      return DropdownMenuItem<String>(
+                        value: item.id.toString(),
+                        child: Text(item.qualification ?? 'Unknown'),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        regiController.selectQlification(newValue);
+                        if (newValue == "other") {
+                          regiController.isQualicationList.value = false;
+                          regiController.isQualificationDetailVisible.value = true;
+                        } else {
+                          regiController.isQualicationList.value = true;
+                          regiController.isQualificationDetailVisible.value =
+                              false;
+                          regiController.getQualicationMain(newValue);
+                        }
+                      }
+                    },
+                  );
+                }),
+                SizedBox(height: 20),
+
+                /// **Qualification Main Dropdown**
+                Obx(() {
+                  return Visibility(
+                    visible: regiController.isQualicationList.value,
+                    child: DropdownButtonFormField<String>(
+                      decoration: InputDecoration(
+                        labelText: "Select Qualification Main",
+                        border: OutlineInputBorder(),
+                      ),
+                      value: regiController.selectQualicationMain.value.isEmpty
+                          ? null
+                          : regiController.selectQualicationMain.value,
+                      items: regiController.qulicationMainList
+                          .map((QualicationMainData item) {
+                        return DropdownMenuItem<String>(
+                          value: item.id.toString(),
+                          child: Text(item.name ?? 'Unknown'),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          regiController.selectQualicationMain(newValue);
+                          if (newValue == "other") {
+                            regiController
+                                .isQualificationCategoryVisible.value = false;
+                            regiController.isQualificationDetailVisible.value =
+                                true;
+                          } else {
+                            regiController
+                                .isQualificationCategoryVisible.value = true;
+                            regiController.isQualificationDetailVisible.value =
+                                false;
+                            regiController.getQualicationCategory(newValue);
+                          }
+                        }
+                      },
+                    ),
+                  );
+                }),
+                SizedBox(height: 20),
+
+                /// **Qualification Category Dropdown**
+                Obx(() {
+                  return Visibility(
+                    visible:
+                        regiController.isQualificationCategoryVisible.value,
+                    child: DropdownButtonFormField<String>(
+                      decoration: InputDecoration(
+                        labelText: "Select Qualification Category",
+                        border: OutlineInputBorder(),
+                      ),
+                      value: regiController.selectQualicationCat.value.isEmpty
+                          ? null
+                          : regiController.selectQualicationCat.value,
+                      items: regiController.qulicationCategoryList
+                          .map((Qualificationcategorydata item) {
+                        return DropdownMenuItem<String>(
+                          value: item.id.toString(),
+                          child: Text(item.name ?? 'Unknown'),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          regiController.selectQualicationCat(newValue);
+                          regiController.isQualificationDetailVisible.value = true;
+                        }
+                      },
+                    ),
+                  );
+                }),
+                SizedBox(height: 20),
+
+                /// **Qualification Detail TextField**
+                Obx(() {
+                  return Visibility(
+                    visible: regiController.isQualificationDetailVisible.value,
+                    child: TextFormField(
+                      keyboardType: TextInputType.text,
+                      controller:
+                          regiController.educationdetailController.value,
+                      decoration: InputDecoration(
+                        labelText: "Qualification Detail",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  );
+                }),
+                SizedBox(height: 20),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   Widget _buildInfoBox(String title, {String? subtitle}) {
     return Padding(
@@ -288,7 +475,7 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
   Widget educationWidget(Qualification qualification) {
     return GestureDetector(
       onTap: () {
-        _showEditModalSheet(context,"2");
+        _showUpdateModalSheet(context,qualification);
       },
       child: Card(
         shape: RoundedRectangleBorder(
