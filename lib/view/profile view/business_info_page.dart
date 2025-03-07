@@ -36,6 +36,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
   String occupationDetails = "";
   NewMemberController regiController =Get.put(NewMemberController());
   UdateProfileController controller =Get.put(UdateProfileController());
+  final GlobalKey<FormState> _formKeyLogin = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKeyLogin2 = GlobalKey<FormState>();
   @override
   @override
   Widget build(BuildContext context) {
@@ -82,14 +84,13 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
             ),
             const SizedBox(height: 20),
 
-            // Business / Employment Details Section
+
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Title Row with "Business / Employment Details" and Add Button (conditionally visible)
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -117,11 +118,9 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: Divider(
                     thickness: 1.0,
-                    color:
-                        Color(0xFFE0E0E0), // Equivalent to Colors.grey.shade300
+                    color: Color(0xFFE0E0E0), // Equivalent to Colors.grey.shade300
                   ),
                 ),
-
 
                 Obx((){
                   if(controller.businessInfoList.value.isEmpty)
@@ -148,7 +147,6 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                   return ListView.builder(
                       physics: BouncingScrollPhysics(),
                       shrinkWrap: true,
-
                       itemCount: controller.businessInfoList.value.length,
                       itemBuilder: (context, index) => _buildBusinessInfoCard(bussinessinfo: controller.businessInfoList.value[index])
                   );
@@ -208,23 +206,63 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                               child: const Text('Cancel',
                                   style: TextStyle(color: Colors.red)),
                             ),
-                            TextButton(
-                              onPressed: () {
-                                bool isValid = _validateFields();
-                                if (isValid) {
-                                  controller.userAddBuniessInfo();
-                                }
-                              },
-                              style: TextButton.styleFrom(
-                                foregroundColor: Colors.red,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 12.0,
-                                  horizontal: 24.0,
+                            Obx((){
+                              return TextButton(
+                                onPressed: () {
+                                  if(_formKeyLogin.currentState!.validate()) {
+
+                                    if(regiController.city_id.value=="")
+                                    {
+                                      Get.snackbar(
+                                        "Error",
+                                        "Please Select City",
+                                        backgroundColor: Colors.red,
+                                        colorText: Colors.white,
+                                        snackPosition: SnackPosition.TOP,
+                                      );
+                                      return;
+                                    }
+                                    if(regiController.state_id.value=="")
+                                    {
+                                      Get.snackbar(
+                                        "Error",
+                                        "Please Select State",
+                                        backgroundColor: Colors.red,
+                                        colorText: Colors.white,
+                                        snackPosition: SnackPosition.TOP,
+                                      );
+                                      return;
+                                    }
+                                    if(regiController.country_id.value=="")
+                                    {
+                                      Get.snackbar(
+                                        "Error",
+                                        "Please Select Country",
+                                        backgroundColor: Colors.red,
+                                        colorText: Colors.white,
+                                        snackPosition: SnackPosition.TOP,
+                                      );
+                                      return;
+                                    }
+
+                                    controller.userAddBuniessInfo();
+                                  }
+
+                                },
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Colors.red,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12.0,
+                                    horizontal: 24.0,
+                                  ),
                                 ),
-                              ),
-                              child: const Text('Save',
-                                  style: TextStyle(color: Colors.red)),
-                            ),
+                                child:  controller.addBussinessLoading.value
+                                    ? const CircularProgressIndicator(
+                                  color: Colors.red,
+                                ): Text('Save',
+                                    style: TextStyle(color: Colors.red)),
+                              );
+                            }),
                           ],
                         ),
                       ),
@@ -233,294 +271,321 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                         child: SingleChildScrollView(
                           controller: scrollController, // Make it scrollable
                           padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Obx((){
-                                return _buildEditableField(
-                                  'Organisation Name',
-                                  controller.organisationName.value,
-                                      (value) => controller.organisationName.value = value,
-                                );
-                              }),
-                             Obx((){
-                               return  _buildEditableField(
-                                 'Office Phone',
-                                 controller.officePhone.value,
-                                     (value) => controller.officePhone.value = value,
-                               );
-                             }),
-                            Obx((){
-                              return   _buildEditableField(
-                                'Building Name',
-                                controller.buildingName.value,
-                                    (value) => controller.buildingName.value = value,
-                              );
-                            }),
-                              Obx((){
-                                return _buildEditableField(
-                                  'Flat No',
-                                  controller.flatNo.value,
-                                      (value) =>  controller.flatNo.value = value,
-                                );
-                              }),
-                             Obx((){
-                               return  _buildEditableField(
-                                 'Area',
-                                 controller.areaName.value,
-                                     (value) => controller.areaName.value = value,
-                               );
-                             }),
-                                  Container(
-
-                                    width: double.infinity,
-                                    decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.grey),
-                                      borderRadius: BorderRadius.circular(5),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Obx(() {
-                                          if (regiController.rxStatusCountryLoading.value ==
-                                              Status.LOADING) {
-                                            return Padding(
-                                              padding: const EdgeInsets.symmetric(
-                                                  vertical: 10, horizontal: 22),
-                                              child: Container(
-                                                  alignment: Alignment.centerRight,
-                                                  height: 24,
-                                                  width: 24,
-                                                  child: CircularProgressIndicator(
-                                                    color: ColorHelperClass
-                                                        .getColorFromHex(
-                                                        ColorResources.pink_color),
-                                                  )),
-                                            );
-                                          } else if (regiController
-                                              .rxStatusCountryLoading.value ==
-                                              Status.ERROR) {
-                                            return const Center(
-                                                child: Text('Failed to load country'));
-                                          } else if (regiController
-                                              .countryList.isEmpty) {
-                                            return const Center(
-                                                child: Text('No Country available'));
-                                          } else {
-                                            return Expanded(
-                                              child: DropdownButton<String>(
-                                                padding: const EdgeInsets.symmetric(
-                                                    horizontal: 20),
-                                                underline: Container(),
-                                                isExpanded: true,
-                                                hint: const Text(
-                                                  'Select Country',
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                                value: regiController
-                                                    .country_id.value.isEmpty
-                                                    ? null
-                                                    : regiController
-                                                    .country_id.value,
-                                                items: regiController.countryList
-                                                    .map((CountryData gender) {
-                                                  return DropdownMenuItem<String>(
-                                                    value: gender.id
-                                                        .toString(),
-                                                    child: Text(gender.countryName ??
-                                                        'Unknown'),
-                                                  );
-                                                }).toList(),
-                                                onChanged: (String? newValue) {
-                                                  if (newValue != null) {
-                                                    regiController.setSelectedCountry(newValue);
-                                                  }
-                                                },
-                                              ),
-                                            );
-                                          }
-                                        })
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  Container(
-
-                                    width: double.infinity,
-                                    decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.grey),
-                                      borderRadius: BorderRadius.circular(5),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Obx(() {
-                                          if (regiController.rxStatusStateLoading.value ==
-                                              Status.LOADING) {
-                                            return Padding(
-                                              padding: const EdgeInsets.symmetric(
-                                                  vertical: 10, horizontal: 22),
-                                              child: Container(
-                                                  alignment: Alignment.centerRight,
-                                                  height: 24,
-                                                  width: 24,
-                                                  child: CircularProgressIndicator(
-                                                    color: ColorHelperClass
-                                                        .getColorFromHex(
-                                                        ColorResources.pink_color),
-                                                  )),
-                                            );
-                                          } else if (regiController
-                                              .rxStatusStateLoading.value ==
-                                              Status.ERROR) {
-                                            return const Center(
-                                                child: Text('Failed to load state'));
-                                          } else if (regiController
-                                              .stateList.isEmpty) {
-                                            return const Center(
-                                                child: Text('No State available'));
-                                          } else {
-                                            return Expanded(
-                                              child: DropdownButton<String>(
-                                                padding: const EdgeInsets.symmetric(
-                                                    horizontal: 20),
-                                                underline: Container(),
-                                                isExpanded: true,
-                                                hint: const Text(
-                                                  'Select State',
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                                value: regiController
-                                                    .state_id.value.isEmpty
-                                                    ? null
-                                                    : regiController
-                                                    .state_id.value,
-                                                items: regiController.stateList
-                                                    .map((StateData gender) {
-                                                  return DropdownMenuItem<String>(
-                                                    value: gender.id
-                                                        .toString(),
-                                                    child: Text(gender.stateName ??
-                                                        'Unknown'),
-                                                  );
-                                                }).toList(),
-                                                onChanged: (String? newValue) {
-                                                  if (newValue != null) {
-                                                    regiController.setSelectedState(newValue);
-                                                  }
-                                                },
-                                              ),
-                                            );
-                                          }
-                                        })
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  Container(
-
-                                    width: double.infinity,
-                                    decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.grey),
-                                      borderRadius: BorderRadius.circular(5),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Obx(() {
-                                          if (regiController.rxStatusCityLoading.value ==
-                                              Status.LOADING) {
-                                            return Padding(
-                                              padding: const EdgeInsets.symmetric(
-                                                  vertical: 10, horizontal: 22),
-                                              child: Container(
-                                                  alignment: Alignment.centerRight,
-                                                  height: 24,
-                                                  width: 24,
-                                                  child: CircularProgressIndicator(
-                                                    color: ColorHelperClass
-                                                        .getColorFromHex(
-                                                        ColorResources.pink_color),
-                                                  )),
-                                            );
-                                          } else if (regiController
-                                              .rxStatusCityLoading.value ==
-                                              Status.ERROR) {
-                                            return const Center(
-                                                child: Padding(
-                                                  padding: EdgeInsets.all(8.0),
-                                                  child: Text('Failed to load city'),
-                                                ));
-                                          } else if (regiController
-                                              .cityList.isEmpty) {
-                                            return const Center(
-                                                child: Padding(
-                                                  padding: EdgeInsets.all(8.0),
-                                                  child: Text('No City available'),
-                                                ));
-                                          } else {
-                                            return Expanded(
-                                              child: DropdownButton<String>(
-                                                padding: const EdgeInsets.symmetric(
-                                                    horizontal: 20),
-                                                underline: Container(),
-                                                isExpanded: true,
-                                                hint: const Text(
-                                                  'Select City',
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                                value: regiController
-                                                    .city_id.value.isEmpty
-                                                    ? null
-                                                    : regiController
-                                                    .city_id.value,
-                                                items: regiController.cityList
-                                                    .map((CityData gender) {
-                                                  return DropdownMenuItem<String>(
-                                                    value: gender.id
-                                                        .toString(),
-                                                    child: Text(gender.cityName ??
-                                                        'Unknown'),
-                                                  );
-                                                }).toList(),
-                                                onChanged: (String? newValue) {
-                                                  if (newValue != null) {
-                                                    regiController.setSelectedCity(newValue);
-                                                  }
-                                                },
-                                              ),
-                                            );
-                                          }
-                                        })
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 20),
-                                 Obx((){
-                                   return  _buildEditableField(
-                                     'Office Pincode',
-                                     controller. officePincode.value,
-                                         (value) => controller. officePincode.value = value,
-                                   );
-                                 }),
-                                  Obx((){
-                                    return _buildEditableField(
-                                      'Business Email',
-                                      controller.businessEmail.value,
-                                          (value) => controller.businessEmail.value = value,
-                                    );
-                                  }),
+                          child: Form(
+                            key: _formKeyLogin,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
                                 Obx((){
-                                  return   _buildEditableField(
-                                    'Website',
-                                    controller.website.value,
-                                        (value) => controller.website.value = value,
+                                  return _buildEditableField(
+                                    'Organisation Name',
+                                    controller.organisationNameController.value,
+                                      'Organisation Name', // Hint Text
+                                      'Enter Organisation Name',
+                                      text: TextInputType.text,
+                                      isRequired: true
                                   );
                                 }),
-                            ],
+                               Obx((){
+                                 return  _buildEditableField(
+                                   'Office Phone',
+                                   controller.officePhoneController.value,
+                                     'Office Phone',
+                                     'Enter Office Phone',
+                                     text: TextInputType.phone,
+                                     isRequired: true
+                                 );
+                               }),
+
+                                Obx((){
+                                  return _buildEditableField(
+                                    'Flat No',
+                                    controller.flatnoController.value,
+                                      'Flat No',
+                                      'Enter Flat No',
+                                      text: TextInputType.text,
+                                      isRequired: true
+                                  );
+                                }),
+                                Obx((){
+                                  return   _buildEditableField(
+                                      'Address',
+                                      controller.addressbusinessinfoNameController.value,
+                                      'Address',
+                                      'Enter Address',
+                                      text: TextInputType.text,
+                                      isRequired: true
+
+                                  );
+                                }),
+                               Obx((){
+                                 return  _buildEditableField(
+                                   'Area',
+                                   controller.areaNameController.value,
+                                     'Area',
+                                     'Enter Area',
+                                     text: TextInputType.text,
+                                     isRequired: true
+                                 );
+                               }),
+                                Container(
+
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey),
+                                    borderRadius: BorderRadius.circular(5),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Obx(() {
+                                        if (regiController.rxStatusCityLoading.value ==
+                                            Status.LOADING) {
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 10, horizontal: 22),
+                                            child: Container(
+                                                alignment: Alignment.centerRight,
+                                                height: 24,
+                                                width: 24,
+                                                child: CircularProgressIndicator(
+                                                  color: ColorHelperClass
+                                                      .getColorFromHex(
+                                                      ColorResources.pink_color),
+                                                )),
+                                          );
+                                        } else if (regiController
+                                            .rxStatusCityLoading.value ==
+                                            Status.ERROR) {
+                                          return const Center(
+                                              child: Padding(
+                                                padding: EdgeInsets.all(8.0),
+                                                child: Text('Failed to load city'),
+                                              ));
+                                        } else if (regiController.cityList.isEmpty) {
+                                          return const Center(
+                                              child: Padding(
+                                                padding: EdgeInsets.all(8.0),
+                                                child: Text('No City available'),
+                                              ));
+                                        } else {
+                                          return Expanded(
+                                            child: DropdownButton<String>(
+                                              padding: const EdgeInsets.symmetric(
+                                                  horizontal: 20),
+                                              underline: Container(),
+                                              isExpanded: true,
+                                              hint: const Text(
+                                                'Select City',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              value: regiController.city_id.value.isEmpty ? null
+                                                  : regiController
+                                                  .city_id.value,
+                                              items: regiController.cityList
+                                                  .map((CityData gender) {
+                                                return DropdownMenuItem<String>(
+                                                  value: gender.id
+                                                      .toString(),
+                                                  child: Text(gender.cityName ??
+                                                      'Unknown'),
+                                                );
+                                              }).toList(),
+                                              onChanged: (String? newValue) {
+                                                if (newValue != null) {
+                                                  regiController.setSelectedCity(newValue);
+                                                }
+                                              },
+                                            ),
+                                          );
+                                        }
+                                      })
+                                    ],
+                                  ),
+                                ),
+
+                                    const SizedBox(height: 20),
+                                    Container(
+
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: Colors.grey),
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Obx(() {
+                                            if (regiController.rxStatusStateLoading.value ==
+                                                Status.LOADING) {
+                                              return Padding(
+                                                padding: const EdgeInsets.symmetric(
+                                                    vertical: 10, horizontal: 22),
+                                                child: Container(
+                                                    alignment: Alignment.centerRight,
+                                                    height: 24,
+                                                    width: 24,
+                                                    child: CircularProgressIndicator(
+                                                      color: ColorHelperClass
+                                                          .getColorFromHex(
+                                                          ColorResources.pink_color),
+                                                    )),
+                                              );
+                                            } else if (regiController
+                                                .rxStatusStateLoading.value ==
+                                                Status.ERROR) {
+                                              return const Center(
+                                                  child: Text('Failed to load state'));
+                                            } else if (regiController
+                                                .stateList.isEmpty) {
+                                              return const Center(
+                                                  child: Text('No State available'));
+                                            } else {
+                                              return Expanded(
+                                                child: DropdownButton<String>(
+                                                  padding: const EdgeInsets.symmetric(
+                                                      horizontal: 20),
+                                                  underline: Container(),
+                                                  isExpanded: true,
+                                                  hint: const Text(
+                                                    'Select State',
+                                                    style: TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                  value: regiController
+                                                      .state_id.value.isEmpty
+                                                      ? null
+                                                      : regiController
+                                                      .state_id.value,
+                                                  items: regiController.stateList
+                                                      .map((StateData gender) {
+                                                    return DropdownMenuItem<String>(
+                                                      value: gender.id
+                                                          .toString(),
+                                                      child: Text(gender.stateName ??
+                                                          'Unknown'),
+                                                    );
+                                                  }).toList(),
+                                                  onChanged: (String? newValue) {
+                                                    if (newValue != null) {
+                                                      regiController.setSelectedState(newValue);
+                                                    }
+                                                  },
+                                                ),
+                                              );
+                                            }
+                                          })
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
+                                  Container(
+
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey),
+                                    borderRadius: BorderRadius.circular(5),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Obx(() {
+                                        if (regiController.rxStatusCountryLoading.value ==
+                                            Status.LOADING) {
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 10, horizontal: 22),
+                                            child: Container(
+                                                alignment: Alignment.centerRight,
+                                                height: 24,
+                                                width: 24,
+                                                child: CircularProgressIndicator(
+                                                  color: ColorHelperClass
+                                                      .getColorFromHex(
+                                                      ColorResources.pink_color),
+                                                )),
+                                          );
+                                        } else if (regiController
+                                            .rxStatusCountryLoading.value ==
+                                            Status.ERROR) {
+                                          return const Center(
+                                              child: Text('Failed to load country'));
+                                        } else if (regiController
+                                            .countryList.isEmpty) {
+                                          return const Center(
+                                              child: Text('No Country available'));
+                                        } else {
+                                          return Expanded(
+                                            child: DropdownButton<String>(
+                                              padding: const EdgeInsets.symmetric(
+                                                  horizontal: 20),
+                                              underline: Container(),
+                                              isExpanded: true,
+                                              hint: const Text(
+                                                'Select Country',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              value: regiController
+                                                  .country_id.value.isEmpty
+                                                  ? null
+                                                  : regiController
+                                                  .country_id.value,
+                                              items: regiController.countryList
+                                                  .map((CountryData gender) {
+                                                return DropdownMenuItem<String>(
+                                                  value: gender.id
+                                                      .toString(),
+                                                  child: Text(gender.countryName ??
+                                                      'Unknown'),
+                                                );
+                                              }).toList(),
+                                              onChanged: (String? newValue) {
+                                                if (newValue != null) {
+                                                  regiController.setSelectedCountry(newValue);
+                                                }
+                                              },
+                                            ),
+                                          );
+                                        }
+                                      })
+                                    ],
+                                  ),
+                                ),
+                                    const SizedBox(height: 20),
+                                   Obx((){
+                                     return  _buildEditableField(
+                                       'Office Pincode',
+                                       controller. officePincodeController.value,
+                                         'Office Pincode',
+                                         'Office Pincode',
+                                         text: TextInputType.number,
+                                         isRequired: true
+                                     );
+                                   }),
+                                    Obx((){
+                                      return _buildEditableField(
+                                        'Business Email',
+                                        controller.businessEmailController.value,
+                                          'Business Email',
+                                          'Enter Business Email',
+                                          text: TextInputType.emailAddress,
+                                          isRequired: true
+                                      );
+                                    }),
+                                  Obx((){
+                                    return   _buildEditableField(
+                                      'Website',
+                                      controller.websiteController.value,
+                                        'Website',
+                                        'Enter Website',
+                                        text: TextInputType.text,
+
+                                    );
+                                  }),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -535,31 +600,59 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
     );
   }
 
-  bool _validateFields() {
-    return controller.organisationName.isNotEmpty;
-  }
-
-
-
-
-
-  // Editable fields widget
   Widget _buildEditableField(
-      String label, String initialValue, Function(String) onChanged) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20.0),
-      child: TextField(
-        controller: TextEditingController(text: initialValue),
+      String label,
+      TextEditingController controller,
+      String hintText,
+
+      String validationMessage, {
+        bool obscureText = false,
+        required TextInputType text,
+        bool isRequired = false,
+      }) {
+    return Container(
+      margin:  EdgeInsets.only(left: 5, right: 5,bottom: 20),
+      child: TextFormField(
+        keyboardType: text,
+        controller: controller,
+        obscureText: obscureText,
+        style:  TextStyle(color: Colors.black),
         decoration: InputDecoration(
           labelText: label,
-          border: OutlineInputBorder(),
+          labelStyle:  TextStyle(
+              color: Colors.black), // Label text color set to black
+          hintText: hintText,
+          hintStyle: const TextStyle(
+              color: Colors.black54), // Slightly dimmed black for hint text
+          border: const OutlineInputBorder(
+            borderSide:
+            BorderSide(color: Colors.grey), // Border color set to black
+          ),
+          enabledBorder:  OutlineInputBorder(
+            borderSide: BorderSide(
+                color: Colors.grey), // Border when field is not focused
+          ),
+          focusedBorder:  OutlineInputBorder(
+            borderSide: BorderSide(
+                color: Colors.grey, width: 0.5), // Thicker border when focused
+          ),
+          contentPadding:  EdgeInsets.symmetric(
+            vertical: 12,
+            horizontal: 20,
+          ),
         ),
-        onChanged: onChanged,
+        validator: (value) {
+          if (isRequired && (value == null || value.isEmpty)) {
+            return validationMessage;
+          }
+          return null;
+        },
       ),
     );
   }
 
-  // Business Info Card widget with white background color
+
+
   Widget _buildBusinessInfoCard({
    required BusinessInfo bussinessinfo
   }) {
@@ -573,7 +666,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title Header with Organisation Name and Add Button on Right
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -644,14 +737,14 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
 
   void _showEditModalSheet(BuildContext context, BusinessInfo bussinessinfo) {
     double heightFactor = 0.8;
-    controller.organisationName.value=bussinessinfo.organisationName.toString();
-    controller.officePhone.value=bussinessinfo.officePhone.toString();
-    controller.flatNo.value=bussinessinfo.flatNo.toString();
-    controller.buildingName.value=bussinessinfo.buildingNameId.toString();
-    controller.areaName.value=bussinessinfo.areaName.toString();
-    controller.officePincode.value=bussinessinfo.pincode.toString();
-    controller.businessEmail.value=bussinessinfo.businessEmail.toString();
-    controller.website.value=bussinessinfo.website.toString();
+    controller.udorganisationNameController.value.text=bussinessinfo.organisationName.toString();
+    controller.udofficePhoneController.value.text=bussinessinfo.officePhone.toString();
+    controller.udflatnoController.value.text=bussinessinfo.flatNo.toString();
+    controller.upaddressbusinessinfoNameController.value.text=bussinessinfo.address.toString();
+    controller.udareaNameController.value.text=bussinessinfo.areaName.toString();
+    controller.udofficePincodeController.value.text=bussinessinfo.pincode.toString();
+    controller.udbusinessEmailController.value.text=bussinessinfo.businessEmail.toString();
+    controller.upwebsiteController.value.text=bussinessinfo.website.toString();
       regiController.city_id.value=bussinessinfo.cityId.toString();
       regiController.state_id.value=bussinessinfo.stateId.toString();
       regiController.country_id.value=bussinessinfo.countryId.toString();
@@ -692,24 +785,27 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                           child: const Text('Cancel',
                               style: TextStyle(color: Colors.red)),
                         ),
-                        TextButton(
-                          onPressed: () {
-                            bool isValid = _validateFields();
-                            if (isValid) {
-                              controller.userUpdateBuniessInfo(bussinessinfo);
-                              Navigator.of(context).pop();
-                            }
-                          },
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.red,
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 12.0,
-                              horizontal: 24.0,
+                        Obx((){
+                          return TextButton(
+                            onPressed: () {
+                              // if(_formKeyLogin2.currentState!.validate()) {
+                                controller.userUpdateBuniessInfo(bussinessinfo);
+                             // }
+                            },
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.red,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12.0,
+                                horizontal: 24.0,
+                              ),
                             ),
-                          ),
-                          child: const Text('Update',
-                              style: TextStyle(color: Colors.red)),
-                        ),
+                            child: controller.addloading.value
+                                ? const CircularProgressIndicator(
+                              color: Colors.red,
+                            ):Text('Update',
+                                style: TextStyle(color: Colors.red)),
+                          );
+                        }),
                       ],
                     ),
                   ),
@@ -723,22 +819,30 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                          Obx((){
                            return  _buildEditableField(
                                'Organisation Name',
-                               controller.organisationName.value,
-                                   (value) =>  controller.organisationName.value = value
+                               controller.udorganisationNameController.value,
+                             "Organisation Name",
+                             "Enter Organisation Name",
+                             text: TextInputType.text,
+
+
                            );
                          }),
                           Obx((){
                             return _buildEditableField(
                               'Office Phone',
-                              controller.officePhone.value,
-                                  (value) => controller.officePhone.value = value,
+                              controller.udofficePhoneController.value,
+                                 "Office Phone",
+                              "Office Phone",
+                              text: TextInputType.phone,
                             );
                           }),
                          Obx((){
                            return  _buildEditableField(
-                             'Building Name',
-                               controller.buildingName.value,
-                                 (value) =>  controller.buildingName.value = value
+                             'Address',
+                               controller.upaddressbusinessinfoNameController.value,
+                             "Address Name",
+                             "Address Name",
+                             text: TextInputType.text,
                            );
 
 
@@ -746,15 +850,19 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                           Obx((){
                             return _buildEditableField(
                                 'Flat No',
-                                controller.flatNo.value,
-                                    (value) => controller.flatNo.value = value
+                                controller.udflatnoController.value,
+                              'Flat No',
+                              'Flat No',
+                              text: TextInputType.text,
                             );
                           }),
                         Obx((){
                           return   _buildEditableField(
                               'Area',
-                              controller.areaName.value,
-                                  (value) =>  controller.areaName.value = value
+                              controller.udareaNameController.value,
+                            'Area',
+                            'Area',
+                            text: TextInputType.text,
                           );
                         }),
                           Container(
@@ -985,22 +1093,29 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                          Obx((){
                            return  _buildEditableField(
                                'Office Pincode',
-                               controller.officePincode.value,
-                                   (value)=>  controller.officePincode.value = value
+                               controller.udofficePincodeController.value,
+                             "Office Pincode",
+                             "Office Pincode",
+                             text: TextInputType.number,
                            );
                          }),
                           Obx((){
                             return _buildEditableField(
                                 'Business Email',
-                                controller.businessEmail.value,
-                                    (value) => controller.businessEmail.value = value);
+                                controller.udbusinessEmailController.value,
+                                "Business Email",
+                                "Business Email",
+                                text: TextInputType.emailAddress
+                            );
 
                           }),
                           Obx((){
                             return _buildEditableField(
                                 'Website',
-                                controller.website.value,
-                                    (value) => controller.website.value = value
+                              controller.upwebsiteController.value,
+                              "Website",
+                              "Website",
+                              text: TextInputType.text,
                             );
                           }),
                         ],

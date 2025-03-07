@@ -121,15 +121,15 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
           mainAxisSize: MainAxisSize.min, // Prevent unnecessary space
           children: [
             Text(
-              "${member.firstName} ${member.lastName}".trim(),
+              "${member.firstName!=null?member.firstName:""} ${member.lastName!=null?member.lastName:""}".trim(),
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
             ),
             Text(
-              "Member Code : " + (member.memberCode ?? member.memberId),
+              "Member Code : " + (member.memberCode!=null?member.memberCode: member.memberId!=null?member.memberId:""),
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
             Text(
-              "Relation : " + member.relationshipName,
+              "Relation : " + member.relationshipName!=null?member.relationshipName:"",
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
           ],
@@ -196,8 +196,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                           padding: EdgeInsets.only(left: 12.0),
                         ),
                         Obx(() {
-                          if (controller.rxStatusRelationType.value ==
-                              Status.LOADING) {
+                          if (controller.rxStatusRelationType.value == Status.LOADING) {
                             return Padding(
                               padding: const EdgeInsets.symmetric(
                                   vertical: 10, horizontal: 22),
@@ -229,8 +228,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                   'Select Relation',
                                   style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
-                                value: controller
-                                        .selectRelationShipType.value.isEmpty
+                                value: controller.selectRelationShipType.value.isEmpty
                                     ? null
                                     : controller.selectRelationShipType.value,
                                 items: controller.relationShipTypeList
@@ -338,7 +336,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                             message,
                                             backgroundColor: Colors.red,
                                             colorText: Colors.white,
-                                            snackPosition: SnackPosition.TOP,
+                                            snackPosition: SnackPosition.BOTTOM,
                                           );
                                         }
                                         if(regiController.selectMemberSalutation.value=="")
@@ -355,7 +353,8 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                         {
                                           showErrorSnackbar("Select Gender");
                                           return;
-                                        } if(regiController.selectBloodGroup.value=="")
+                                        }
+                                        if(regiController.selectBloodGroup.value=="")
                                         {
                                           showErrorSnackbar("Select Blood Group");
                                           return;
@@ -370,10 +369,15 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                           showErrorSnackbar("Select Marital status");
                                           return;
                                         }
-                                        if(regiController.MaritalAnnivery.value==true)
-                                        {
-                                          showErrorSnackbar("Enter Marital Anniversary Date");
-                                          return;
+                                        if (regiController.MaritalAnnivery.value == true) {
+                                          if (regiController
+                                              .marriagedateController.value.text ==
+                                              '') {
+                                            showErrorSnackbar("Select Marriage Date");
+                                            return;
+                                          }
+                                        } else {
+                                          regiController.marriagedateController.value.text = "";
                                         }
 
                                         if(regiController.selectMemberShipType.value=="")

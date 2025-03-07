@@ -474,47 +474,61 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                 child: Row(
                                   children: [
                                     Obx(() {
-                                      if (newMemberController.rxStatusmarried.value == Status.LOADING) {
+                                      if (newMemberController.rxStatusmarried.value ==
+                                          Status.LOADING) {
                                         return Padding(
-                                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 10, horizontal: 22),
                                           child: Container(
                                             alignment: Alignment.centerRight,
                                             height: 24,
                                             width: 24,
                                             child: CircularProgressIndicator(
-                                              color: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                                              color: ColorHelperClass
+                                                  .getColorFromHex(
+                                                  ColorResources.pink_color),
                                             ),
                                           ),
                                         );
                                       } else if (newMemberController.rxStatusmarried.value == Status.ERROR) {
-                                        return const Center(child: Text('Failed to load marital status'));
+                                        return const Center(
+                                            child: Text(
+                                                'Failed to load marital status'));
                                       } else if (newMemberController.maritalList.isEmpty) {
-                                        return const Center(child: Text('No marital status available'));
+                                        return const Center(
+                                            child: Text(
+                                                'No marital status available'));
                                       } else {
                                         return Expanded(
                                           child: DropdownButton<String>(
-                                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 20),
                                             isExpanded: true,
                                             underline: Container(),
                                             hint: const Text(
-                                              'Select marital status',
-                                              style: TextStyle(fontWeight: FontWeight.bold),
+                                              'Select Marital Status *',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold),
                                             ),
-                                            value: controller.marital_status_id.value.isNotEmpty
-                                                ? controller.marital_status_id.value
-                                                : '',
-                                            items: newMemberController.maritalList.map((MaritalData marital) {
+                                            value: newMemberController
+                                                .selectMarital.value.isEmpty
+                                                ? null
+                                                : newMemberController
+                                                .selectMarital.value,
+                                            items: newMemberController.maritalList
+                                                .map((MaritalData marital) {
                                               return DropdownMenuItem<String>(
                                                 value: marital.id.toString(),
-                                                child: Text(marital.maritalStatus ?? 'Unknown'),
+                                                child: Text(
+                                                    marital.maritalStatus ??
+                                                        'Unknown'),
                                               );
                                             }).toList(),
-                                              onChanged: (String? newValue) {
-                                                if (newValue != null) {
-                                                  controller.marital_status_id.value = newValue;
-                                                  controller.isMarried.value = newValue == "1";
-                                                }
+                                            onChanged: (String? newValue) {
+                                              if (newValue != null) {
+                                                newMemberController.setSelectedMarital(newValue);
                                               }
+                                            },
                                           ),
                                         );
                                       }
@@ -526,7 +540,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                             const SizedBox(height: 20),
                             Obx(() {
                               return Visibility(
-                                visible: controller.marriageAnniversaryController.value.text.isNotEmpty, // Show only if marital_status_id is "1"
+                                visible: newMemberController.MaritalAnnivery.value == true, // Show only if marital_status_id is "1"
                                 child: Column(
                                   children: [
                                     const SizedBox(height: 8),
@@ -602,11 +616,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
     );
   }
 
-  // Method to validate the fields before saving (optional)
-  bool _validateFields() {
-    // You can add your validation logic here, for example:
-    return controller.firstName.value.isNotEmpty && controller.dob.value.isNotEmpty;
-  }
+
 
   void _showPicker({required BuildContext context}) {
     showModalBottomSheet(
