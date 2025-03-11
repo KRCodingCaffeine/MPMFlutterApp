@@ -14,9 +14,7 @@ import 'package:mpm/model/CountryModel/CountryData.dart';
 
 import 'package:mpm/model/Occupation/OccupationData.dart';
 import 'package:mpm/model/OccupationSpec/OccuptionSpecData.dart';
-import 'package:mpm/model/Qualification/QualificationData.dart';
-import 'package:mpm/model/QualificationCategory/QualificationCategoryModel.dart';
-import 'package:mpm/model/QualificationMain/QualicationMainData.dart';
+
 import 'package:mpm/model/Register/RegisterModelClass.dart';
 import 'package:mpm/model/State/StateData.dart';
 
@@ -37,6 +35,7 @@ import 'package:mpm/utils/urls.dart';
 class RegisterController extends GetxController  {
   final api = RegisterRepository();
   var loading=false.obs;
+  var MandalZoneFlag=false.obs;
   RxBool isChecked = false.obs;
   final rxStatusLoading = Status.IDLE.obs;
   final rxStatusCountryLoading = Status.IDLE.obs;
@@ -65,7 +64,7 @@ class RegisterController extends GetxController  {
   var selectOccuption=''.obs;
   var selectOccuptionPro=''.obs;
   var selectOccuptionSpec=''.obs;
-
+  Rx<TextEditingController> addressMemberController = TextEditingController().obs;
   var bloodgroupList = <BloodGroupData>[].obs;
   var countryList = <CountryData>[].obs;
   var stateList = <StateData>[].obs;
@@ -401,6 +400,7 @@ class RegisterController extends GetxController  {
 
    if (response.statusCode == 200) {
      withoutcheckotp.value=true;
+      MandalZoneFlag.value=true;
      getMemberShip();
      setRxRequestBuilding(Status.COMPLETE);
    //  print(await response.stream.bytesToString());
@@ -426,6 +426,8 @@ class RegisterController extends GetxController  {
    }
    else {
      withoutcheckotp.value=true;
+     MandalZoneFlag.value=false;
+     areaController.value.text="";
      getMemberShip();
      print(response.reasonPhrase);
      setRxRequestBuilding(Status.COMPLETE);
@@ -478,11 +480,11 @@ var profile_image=userprofile.value;
 var document_image=userdocumentImage.value;
    Map<String,String> payload = {
      "proposer_id":memberId.value,
-     "first_name":firstNameController.value.text,
-      "last_name": lastNameController.value.text,""
-         "middle_name": middleNameController.value.text,
-     "father_name": fathersnameController.value.text,
-     "mother_name":mothersnameController.value.text,
+     "first_name":firstNameController.value.text.trim(),
+      "last_name": lastNameController.value.text.trim(),
+         "middle_name": middleNameController.value.text.trim(),
+     "father_name": fathersnameController.value.text.trim(),
+     "mother_name":mothersnameController.value.text.trim(),
      "email": email,
      "whatsapp_number": whatsapp_number,
      "mobile": mobile,
@@ -500,8 +502,9 @@ var document_image=userdocumentImage.value;
      "area_name":area_name.value.toString(),
      "zone_id":zone_id.value.toString(),
      "country_id":country_id.value.toString(),
-     "marriage_anniversary_date": marriagedateController.value.text,
+     "marriage_anniversary_date": marriagedateController.value.text.trim(),
      "salutation_id": selectMemberSalutation.value,
+     "address":  addressMemberController.value.text
 
    };
    print("ccvv"+payload.toString());
@@ -509,8 +512,7 @@ var document_image=userdocumentImage.value;
     request.fields.addAll(payload);
     request.files.add(await http.MultipartFile.fromPath('document_image',document_image));
     if(profile_image!="") {
-      request.files.add(
-          await http.MultipartFile.fromPath("image_profile", profile_image));
+      request.files.add(await http.MultipartFile.fromPath("image_profile", profile_image));
     }
 
     http.StreamedResponse response = await request.send().timeout(Duration(seconds: 60));
@@ -531,7 +533,21 @@ var document_image=userdocumentImage.value;
             snackPosition: SnackPosition.TOP,
           );
           memberId.value=registerResponse.data.toString();
-
+          firstNameController.value.text="";
+          lastNameController.value.text="";
+          middleNameController.value.text="";
+          fathersnameController.value.text="";
+          mothersnameController.value.text="";
+          emailController.value.text="";
+          housenoController.value.text="";
+          whatappmobileController.value.text="";
+          marriagedateController.value.text="";
+          addressMemberController.value.text="";
+          selectMemberSalutation.value="";
+          country_id.value="";
+          state_id.value="";
+          zone_id.value="";
+          city_id.value="";
           Navigator.pushReplacementNamed(context!, RouteNames.otp_screen,arguments: {
             "memeberId":memberId.value,
             "page_type_direct":"2",

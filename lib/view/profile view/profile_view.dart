@@ -231,6 +231,11 @@ class _ProfileViewState extends State<ProfileView> {
                   ),
                 ],
               ),
+              Obx((){
+                return Visibility(
+                    visible: controller.showDashboardReviewFlag.value,
+                    child: _buildAdCard2("assets/images/banner1.jpg"));
+              }),
             ],
           ),
         );
@@ -238,6 +243,22 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
+  Widget _buildAdCard2(String imagePath) {
+    return GestureDetector(
+      onTap: () async{
+        showJanganaDialog(context);
+      },
+      child: Container(
+        width: MediaQuery.of(context).size.width,
+        height: 150,
+        margin: const EdgeInsets.only(right: 16.0),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8.0),
+          child: Image.asset(imagePath, fit: BoxFit.fill),
+        ),
+      ),
+    );
+  }
   Widget buildCustomButton({
     required String title,
     required IconData icon,
@@ -257,6 +278,34 @@ class _ProfileViewState extends State<ProfileView> {
             color: Colors.grey,
             thickness: 0.5), // Ensures divider is always visible
       ],
+    );
+  }
+
+  void showJanganaDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text("Jangana"),
+          content: const Text("Are you sure you ant to update your Jangana?"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text("No", style: TextStyle(color: Colors.red)),
+            ),
+            TextButton(
+              onPressed: () {
+
+               controller.updateJanganaStatus();
+              },
+              child: const Text("Yes", style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
     );
   }
 }

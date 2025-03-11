@@ -93,5 +93,10 @@ class UpdateProfileRepository {
     print("relationdata"+response.toString());
     return RelationModel.fromJson(response);
   }
+  Future<dynamic> userJanganaStatus(data) async {
+    dynamic response = await api.getApi(Urls.updateJanganaStatus_url+"?member_id=$data","");
+    print("relationdata"+response.toString());
+    return response;
+  }
 
 }

@@ -140,14 +140,14 @@ class AppDrawer extends StatelessWidget {
               Navigator.pushNamed(context, RouteNames.forms);
             },
           ),
-          ListTile(
-            leading: const Icon(Icons.account_balance),
-            title: const Text('Government Scheme'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, RouteNames.gov_scheme);
-            },
-          ),
+          // ListTile(
+          //   leading: const Icon(Icons.account_balance),
+          //   title: const Text('Government Scheme'),
+          //   onTap: () {
+          //     Navigator.pop(context);
+          //     Navigator.pushNamed(context, RouteNames.gov_scheme);
+          //   },
+          // ),
           ListTile(
             leading: Icon(Icons.info),
             title: Text('About Us'),
@@ -197,12 +197,12 @@ class AppDrawer extends StatelessWidget {
     final box = context.findRenderObject() as RenderBox?;
 
     const String playStoreLink =
-        'https://play.google.com/store/apps/details?id=com.example.yourapp';
+        'https://members.mumbaimaheshwari.com/member/registration';
     const String appStoreLink =
         'https://apps.apple.com/app/id123456789'; // Replace with actual link
 
     String shareText =
-        "🌟 Welcome to MPM App! \n\n📲 🚀 Check out this amazing app! \n\n📲 Download Now: \n👉 Android: $playStoreLink\n👉 iOS: $appStoreLink";
+        "We invite you to join us!  \n\nRegister now using the following link:  \n\n📲 '${playStoreLink}\n\n We look forward to having you onboard' iOS: $appStoreLink";
 
     await Share.share(
       shareText,

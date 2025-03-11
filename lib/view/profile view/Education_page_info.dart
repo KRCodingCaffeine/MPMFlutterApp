@@ -249,12 +249,18 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
         regiController.selectQlification.value=qualification.memberQualificationId.toString();
         if(qualification.qualificationMainId.toString()!="") {
           regiController.isQualicationList.value=true;
-          regiController.getQualicationMain(regiController.selectQlification.value);
+          regiController.getQualicationMain(qualification.memberQualificationId.toString());
           regiController.selectQualicationMain.value = qualification.qualificationMainId.toString();
+          regiController.isQualificationCategoryVisible.value=true;
+          regiController.getQualicationCategory(qualification.qualificationCategoryId.toString());
+          regiController.selectQualicationCat.value = qualification.qualificationCategoryId.toString();
+
+
         }
         else
           {
             regiController.isQualicationList.value=false;
+            regiController.isQualificationCategoryVisible.value=false;
           }
 
         return SingleChildScrollView(
@@ -319,8 +325,7 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                           regiController.isQualificationDetailVisible.value = true;
                         } else {
                           regiController.isQualicationList.value = true;
-                          regiController.isQualificationDetailVisible.value =
-                              false;
+                          regiController.isQualificationDetailVisible.value = false;
                           regiController.getQualicationMain(newValue);
                         }
                       }
@@ -352,15 +357,11 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                         if (newValue != null) {
                           regiController.selectQualicationMain(newValue);
                           if (newValue == "other") {
-                            regiController
-                                .isQualificationCategoryVisible.value = false;
-                            regiController.isQualificationDetailVisible.value =
-                                true;
+                            regiController.isQualificationCategoryVisible.value = false;
+                            regiController.isQualificationDetailVisible.value = true;
                           } else {
-                            regiController
-                                .isQualificationCategoryVisible.value = true;
-                            regiController.isQualificationDetailVisible.value =
-                                false;
+                            regiController.isQualificationCategoryVisible.value = true;
+                            regiController.isQualificationDetailVisible.value = false;
                             regiController.getQualicationCategory(newValue);
                           }
                         }
@@ -373,8 +374,7 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                 /// **Qualification Category Dropdown**
                 Obx(() {
                   return Visibility(
-                    visible:
-                        regiController.isQualificationCategoryVisible.value,
+                    visible: regiController.isQualificationCategoryVisible.value,
                     child: DropdownButtonFormField<String>(
                       decoration: InputDecoration(
                         labelText: "Select Qualification Category",

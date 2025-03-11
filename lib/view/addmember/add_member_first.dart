@@ -320,7 +320,8 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                             regiController
                                 .firstNameController.value, // Controller
                             'First Name', // Hint Text
-                            '',
+                            '', text: TextInputType.text,
+                            isRequired: true
                           ),
                           const SizedBox(height: 20),
 
@@ -331,6 +332,8 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                                 .middleNameController.value, // Controller
                             "Middle Name", // Hint Text
                             "",
+                              text: TextInputType.text,
+                              isRequired: false
                           ),
                           const SizedBox(height: 20),
 
@@ -341,6 +344,8 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                                 .lastNameController.value, // Controller
                             "SurName", // Hint Text
                             "",
+                              text: TextInputType.text,
+                              isRequired: true
                           ),
                           const SizedBox(height: 20),
 
@@ -350,6 +355,8 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                             regiController.mobileController.value, // Controller
                             "Mobile Number", // Hint Text
                             "",
+                              text: TextInputType.phone,
+                              isRequired: true
                           ),
                           const SizedBox(height: 20),
 
@@ -360,6 +367,8 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                                 .whatappmobileController.value, // Controller
                             "WhatsApp Number", // Hint Text
                             "",
+                              text: TextInputType.phone,
+                              isRequired: true
                           ),
                           const SizedBox(height: 20),
 
@@ -370,6 +379,8 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                                 .fathersnameController.value, // Controller
                             "Father's Name", // Hint Text
                             "",
+                              text: TextInputType.text,
+                              isRequired: true
                           ),
                           const SizedBox(height: 20),
 
@@ -380,6 +391,8 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                                 .mothersnameController.value, // Controller
                             "Mother's Name", // Hint Text
                             "",
+                              text: TextInputType.text,
+                              isRequired: true
                           ),
                           const SizedBox(height: 20),
 
@@ -390,6 +403,8 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                             "Email",
                             '',
                             obscureText: false,
+                              text: TextInputType.emailAddress,
+                              isRequired: true
                           ),
                           const SizedBox(height: 20),
 
@@ -686,8 +701,7 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                                           }).toList(),
                                           onChanged: (String? newValue) {
                                             if (newValue != null) {
-                                              regiController
-                                                  .setSelectedMarital(newValue);
+                                              regiController.setSelectedMarital(newValue);
                                             }
                                           },
                                         ),
@@ -807,11 +821,13 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
     String hintText,
     String validationMessage, {
     bool obscureText = false,
+        required TextInputType text,
+        bool isRequired = false,
   }) {
     return Container(
       margin: const EdgeInsets.only(left: 5, right: 5),
       child: TextFormField(
-        keyboardType: TextInputType.text,
+        keyboardType: text,
         controller: controller,
         obscureText: obscureText,
         style: const TextStyle(color: Colors.black), // Text color set to black
@@ -840,7 +856,7 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
           ),
         ),
         validator: (value) {
-          if (value == null || value.isEmpty) {
+          if (isRequired && (value == null || value.isEmpty)) {
             return validationMessage;
           }
           return null;

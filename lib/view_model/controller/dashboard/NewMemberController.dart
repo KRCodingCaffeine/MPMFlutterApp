@@ -67,7 +67,7 @@ class NewMemberController extends GetxController {
   var maritalList = <MaritalData>[].obs;
   var selectMarital = ''.obs;
   var selectMember = CheckUserData().obs;
-
+  var MandalZoneFlag=false.obs;
 
 
   var selectQlification = ''.obs;
@@ -130,6 +130,7 @@ class NewMemberController extends GetxController {
   Rx<TextEditingController>   educationdetailController=TextEditingController().obs;
   TextEditingController dateController = TextEditingController();
   Rx<TextEditingController> marriagedateController = TextEditingController().obs;
+  Rx<TextEditingController> addressMemberController = TextEditingController().obs;
   var memberSalutationList =<MemberSalutationData>[].obs;
   void setRxRequest(Status _value) => rxStatusLoading.value = _value;
   void setRxMemberRequest(Status _value) =>
@@ -561,6 +562,7 @@ class NewMemberController extends GetxController {
     if (response.statusCode == 200) {
       withoutcheckotp.value=true;
       countryNotFound.value=true;
+    MandalZoneFlag.value=true;
       getMemberShip();
       setRxRequestBuilding(Status.COMPLETE);
       //  print(await response.stream.bytesToString());
@@ -594,8 +596,10 @@ class NewMemberController extends GetxController {
       areaController.value.text =pincodeResponse.data!.areaName!.toString();
     }
     else {
+      MandalZoneFlag.value=false;
       countryNotFound.value=false;
       withoutcheckotp.value=true;
+      areaController.value.text="";
       getMemberShip();
       String responseBody = await response.stream.bytesToString();
 
@@ -605,164 +609,7 @@ class NewMemberController extends GetxController {
     }
   }
 
-  // void userRegister(var LM_code, BuildContext context) async {
-  //   final url = Uri.parse(Urls.addmemberorfamily_url);
-  //   LM_code = "LM-0006";
-  //   var first = firstNameController.value.text;
-  //   var last = lastNameController.value.text.trim();
-  //   var name = first + "" + last;
-  //   var email = emailController.value.text.trim();
-  //   var mobile = mobileController.value.text.trim();
-  //   var fathers_name = fatherNameController.value.text.trim();
-  //   var mothers_name = motherNameController.value.text.trim();
-  //   var marriage_anniversary = marriageAnniversaryController.value.text.trim();
-  //   var pincode = pincodeController.value.text.trim();
-  //   var blood_group_id = selectBloodGroup.value;
-  //   var gender_id = selectedGender.value;
-  //   var marital_status_id = selectMarital.value;
-  //   var dob = dateController.value.text.trim();
-  //
-  //   var building_name = buildingController.value.text;
-  //   var building_id = "";
-  //   var membership_type_id = selectMemberShipType.value;
-  //   if (selectBuilding.value == "other") {
-  //     building_id = "";
-  //   } else {
-  //     building_id = selectBuilding.value;
-  //   }
-  //   var full_address = stateController.value.text +
-  //       "" +
-  //       cityController.value.text +
-  //       "" +
-  //       zoneController.value.text +
-  //       "" +
-  //       areaController.value.text;
-  //   var document_type = selectDocumentType.value;
-  //   var password = "1234";
-  //   var occupation_id = "";
-  //   var flat_no = housenoController.value.text;
-  //   if (selectOccuption.value == "other") {
-  //     occupation_id = "";
-  //   } else {
-  //     occupation_id = selectOccuption.value;
-  //   }
-  //   var qualification_id = "";
-  //   if (selectQlification.value == 'other') {
-  //     qualification_id = "";
-  //   } else {
-  //     qualification_id = selectQlification.value;
-  //   }
-  //   //var token=await SessionManager.getToken();
-  //   var token =
-  //       "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyMSIsImlhdCI6MTczNTQ2NjMyOCwiZXhwIjoxNzM1NDY5OTI4fQ.YVCh_-zc1Cap8ERgkY9yRVduxalEFEqUPT8RRs-NRcg";
-  //
-  //   // var token="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyMSIsImlhdCI6MTczNTQ1ODE1MCwiZXhwIjoxNzM1NDYxNzUwfQ.qSTPYD9uHX8eVNr1ZSdZIMBi1M_tlcrC8wg3vXxvwIY";
-  //   print("bbbb" + token.toString());
-  //
-  //   var profession_id = selectOccuptionPro.value;
-  //   var qualification_main_id = selectQualicationMain.value;
-  //   var specialization_id = selectOccuptionSpec.value;
-  //   var qualification_category_id = selectQualicationCat.value;
-  //   var occupation_details = occuptiondetailController.value.text.trim();
-  //   var qualification_details = educationdetailController.value.text.trim();
-  //   var whatsapp_number = whatappmobileController.value.text.trim();
-  //   var relation_type = "";
-  //   if (selectRelationShipType.value == "") {
-  //     relation_type = "normal";
-  //   } else {
-  //     relation_type = "family";
-  //   }
-  //   var relation_id = selectRelationShipType.value;
-  //   loading.value = true;
-  //   var profile_image = userprofile.value;
-  //   var document_image = userdocumentImage.value;
-  //   Map<String, String> payload = {
-  //     "LM_code": LM_code,
-  //     "name": name,
-  //     "email": email,
-  //     "mobile": mobile,
-  //     "password": password,
-  //     "pincode": pincode,
-  //     "blood_group_id": blood_group_id,
-  //     "gender_id": gender_id,
-  //     "marital_status_id": marital_status_id,
-  //     "dob": dob,
-  //     "building_name": building_name,
-  //     "full_address": full_address,
-  //     "document_type": document_type,
-  //     "occupation_id": occupation_id,
-  //     "qualification_id": qualification_id,
-  //     "profession_id": profession_id,
-  //     "qualification_main_id": qualification_main_id,
-  //     "specialization_id": specialization_id,
-  //     "qualification_category_id": qualification_category_id,
-  //     "occupation_details": occupation_details,
-  //     "qualification_details": qualification_details,
-  //     "building_id": building_id,
-  //     "member_type_id": membership_type_id,
-  //     "whatsapp_number": whatsapp_number,
-  //     "fathers_name": fathers_name,
-  //     "mothers_name": mothers_name,
-  //     "marriage_anniversary": marriage_anniversary,
-  //     "flat_no": flat_no,
-  //     "relation_type": relation_type,
-  //     "relation_id": relation_id
-  //   };
-  //   print("ccvv" + payload.toString());
-  //   var request = http.MultipartRequest('POST', url);
-  //   request.fields.addAll(payload);
-  //   request.files.add(
-  //       await http.MultipartFile.fromPath('document_image', document_image));
-  //   if (profile_image != "") {
-  //     request.files.add(
-  //         await http.MultipartFile.fromPath("image_profile", profile_image));
-  //   }
-  //   var headers = {'Authorization': 'Bearer $token'};
-  //   request.headers.addAll(headers);
-  //   http.StreamedResponse response =
-  //   await request.send().timeout(Duration(seconds: 120));
-  //   if (response.statusCode == 200) {
-  //     String responseBody = await response.stream.bytesToString();
-  //     loading.value = false;
-  //     Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
-  //     RegisterModelClass registerResponse =
-  //     RegisterModelClass.fromJson(jsonResponse);
-  //     if (registerResponse.status == true) {
-  //       Get.snackbar(
-  //         "Success",
-  //         "New User Register Successfully",
-  //         backgroundColor: Colors.green,
-  //         colorText: Colors.white,
-  //         snackPosition: SnackPosition.TOP,
-  //       );
-  //       Navigator.pushReplacementNamed(context!, RouteNames.dashboard);
-  //     } else {
-  //       Get.snackbar(
-  //         "Error",
-  //         registerResponse.message.toString(),
-  //         backgroundColor: Color(0xFFDC3545),
-  //         colorText: Colors.white,
-  //         snackPosition: SnackPosition.TOP,
-  //       );
-  //     }
-  //   } else {
-  //     loading.value = false;
-  //     print("gfgghgh" + response.reasonPhrase.toString());
-  //     String responseBody = await response.stream.bytesToString();
-  //     loading.value = false;
-  //     Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
-  //     RegisterModelClass registerResponse =
-  //     RegisterModelClass.fromJson(jsonResponse);
-  //
-  //     Get.snackbar(
-  //       "Error",
-  //       "" + registerResponse.message.toString(),
-  //       backgroundColor: Color(0xFFDC3545),
-  //       colorText: Colors.white,
-  //       snackPosition: SnackPosition.TOP,
-  //     );
-  //   }
-  // }
+
   void userRegister(var LM_code,BuildContext context) async{
     print("member"+memberId.value);
     final url = Uri.parse(Urls.register_url);
@@ -776,7 +623,7 @@ class NewMemberController extends GetxController {
     var gender_id=selectedGender.value;
     var marital_status_id= selectMarital.value;
     var dob= dateController.value.text.trim();
-    var building_name = buildingController.value.text;
+    var building_name = buildingController.value.text.trim();
     var building_id="";
     var membership_type_id= selectMemberShipType.value;
     if(selectBuilding.value=="other")
@@ -789,20 +636,20 @@ class NewMemberController extends GetxController {
     }
     var document_type=selectDocumentType.value;
 
-    var flat_no=housenoController.value.text;
+    var flat_no=housenoController.value.text.trim();
     var whatsapp_number=whatappmobileController.value.text.trim();
     loading.value=true;
     var profile_image=userprofile.value;
     var document_image=userdocumentImage.value;
     Map<String,String> payload = {
       "proposer_id":memberId.value,
-      "first_name":firstNameController.value.text,
-      "last_name": lastNameController.value.text,""
-          "middle_name": middleNameController.value.text,
-      "father_name": fathersnameController.value.text,
-      "mother_name":mothersnameController.value.text,
+      "first_name":firstNameController.value.text.trim(),
+      "last_name": lastNameController.value.text.trim(),
+          "middle_name": middleNameController.value.text.trim(),
+      "father_name": fathersnameController.value.text.trim(),
+      "mother_name":mothersnameController.value.text.trim(),
       "email": email,
-      "whatsapp_number": whatsapp_number,
+      "whatsapp_number": whatsapp_number.trim(),
       "mobile": mobile,
       "gender_id": gender_id,
       "marital_status_id": marital_status_id,
@@ -820,6 +667,8 @@ class NewMemberController extends GetxController {
       "country_id":country_id.value.toString(),
       "marriage_anniversary_date": marriagedateController.value.text,
       "salutation_id": selectMemberSalutation.value,
+      "address":addressMemberController.value.text,
+      "created_by": memberId.value
 
     };
     print("ccvv"+payload.toString());
@@ -869,19 +718,19 @@ class NewMemberController extends GetxController {
     }
     else {
       loading.value=false;
-      // print(""+await response.stream.bytesToString());
-      String responseBody = await response.stream.bytesToString();
-      loading.value=false;
-      Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
-      RegisterModelClass registerResponse = RegisterModelClass.fromJson(jsonResponse);
-
-      Get.snackbar(
-        "Error",
-        ""+registerResponse.message.toString(),
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-      );
+       print("ddddddd"+await response.stream.bytesToString());
+      // String responseBody = await response.stream.bytesToString();
+      // loading.value=false;
+      // Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
+      // RegisterModelClass registerResponse = RegisterModelClass.fromJson(jsonResponse);
+      //
+      // Get.snackbar(
+      //   "Error",
+      //   ""+registerResponse.message.toString(),
+      //   backgroundColor: Colors.red,
+      //   colorText: Colors.white,
+      //   snackPosition: SnackPosition.TOP,
+      // );
     }
   }
 

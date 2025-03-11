@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mpm/route/route_name.dart';
-import 'package:mpm/view/SearchView.dart';
+
 import 'package:mpm/view/addmember/add_member_first.dart';
 import 'package:mpm/view/addmember/add_member_second.dart';
 import 'package:mpm/view/condition_about/about_view.dart';
@@ -21,6 +21,7 @@ import 'package:mpm/view/profile%20view/profile_view.dart';
 import 'package:mpm/view/register_view.dart';
 import 'package:mpm/view/samiti%20members/samiti_detail_view.dart';
 import 'package:mpm/view/samiti%20members/samiti_members_view.dart';
+import 'package:mpm/view/search_view.dart';
 import 'package:mpm/view/splash_view.dart';
 
 class RoutePages {

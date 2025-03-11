@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mpm/data/response/status.dart';
+import 'package:mpm/model/CheckPinCode/Building.dart';
 import 'package:mpm/model/CountryModel/CountryData.dart';
 import 'package:mpm/model/State/StateData.dart';
 import 'package:mpm/model/city/CityData.dart';
@@ -57,50 +58,75 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  _buildInfoBox(
-                    'Building Name:',
-                    subtitle: controller.getUserData.value.address?.buildingNameId?.toString() ?? "N/A",
-                  ),
+                 Obx((){
+                   return  _buildInfoBox(
+                     'Building Name:',
+                     subtitle: controller.getUserData.value.address?.buildingNameId?.toString() ?? "N/A",
+                   );
+                 }),
                   const SizedBox(height: 20),
-                  _buildInfoBox(
-                    'Flat No:',
-                    subtitle: controller.getUserData.value.address?.flatNo?.toString() ?? "N/A",
-                  ),
+                  Obx((){
+                   return _buildInfoBox(
+                      'Flat No:',
+                      subtitle: controller.getUserData.value.address?.flatNo?.toString() ?? "N/A",
+                    );
+                  }),
                   const SizedBox(height: 20),
-                  _buildInfoBox(
-                    'Zone:',
-                    subtitle: controller.getUserData.value.address?.zoneName?.toString() ?? "N/A",
-                  ),
+                 Obx((){
+                   return  _buildInfoBox(
+                     'Zone:',
+                     subtitle: controller.getUserData.value.address?.zoneName?.toString() ?? "N/A",
+                   );
+                 }),
                   const SizedBox(height: 20),
-                  _buildInfoBox(
-                    'Area:',
-                    subtitle: controller.getUserData.value.address?.areaName?.toString() ?? "N/A",
-                  ),
+                 Obx((){
+                   return  _buildInfoBox(
+                     'Address:',
+                     subtitle: controller.getUserData.value.address?.address?.toString() ?? "N/A",
+                   );
+                 }),
                   const SizedBox(height: 20),
-                  _buildInfoBox(
-                    'State:',
-                    subtitle: controller.getUserData.value.address?.stateName?.toString() ?? "N/A",
-                  ),
+                 Obx((){
+                   return  _buildInfoBox(
+                     'Area:',
+                     subtitle: controller.getUserData.value.address?.areaName?.toString() ?? "N/A",
+                   );
+                 }),
                   const SizedBox(height: 20),
-                  _buildInfoBox(
-                    'City:',
-                    subtitle: controller.getUserData.value.address?.cityName?.toString() ?? "N/A",
-                  ),
+                  Obx((){
+                    return _buildInfoBox(
+                      'State:',
+                      subtitle: controller.getUserData.value.address?.stateName?.toString() ?? "N/A",
+                    );
+                  }),
                   const SizedBox(height: 20),
-                  _buildInfoBox(
+                 Obx((){
+                   return  _buildInfoBox(
+                     'City:',
+                     subtitle: controller.getUserData.value.address?.cityName?.toString() ?? "N/A",
+                   );
+                 }),
+                  const SizedBox(height: 20),
+                Obx((){
+                  return   _buildInfoBox(
                     'Country:',
                     subtitle: controller.getUserData.value.address?.countryName?.toString() ?? "N/A",
-                  ),
+                  );
+                }),
                   const SizedBox(height: 20),
-                  _buildInfoBox(
-                    'Pincode:',
-                    subtitle: controller.getUserData.value.address?.pincode?.toString() ?? "N/A",
-                  ),
+                 Obx((){
+                   return  _buildInfoBox(
+                     'Pincode:',
+                     subtitle: controller.getUserData.value.address?.pincode?.toString() ?? "N/A",
+                   );
+                 }),
                   const SizedBox(height: 20),
-                  _buildInfoBox(
-                    'Address Proof:',
-                    subtitle: controller.getUserData.value.address?.addressType?.toString() ?? "N/A",
-                  ),
+                 Obx((){
+                   return  _buildInfoBox(
+                     'Address Proof:',
+                     subtitle: controller.getUserData.value.document_type.toString() ?? "N/A",
+                   );
+                 }),
                   const SizedBox(height: 20),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,8 +200,51 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
+        if (controller.getUserData.value.address != null) {
+       //   print("ggghhg"+getUserData.value.address!.city_id.toString());
+          NewMemberController memberController = Get.put(NewMemberController());
+          memberController.area_name.value = controller.getUserData.value.address!.areaName.toString();
+          memberController. zone_id.value = controller.getUserData.value.address!.zoneId.toString();
+          regiController.areaController.value.text = controller.getUserData.value.address!.areaName.toString();
+          // zone_id.value = getUserData.value.address!.zoneId.toString();
+          //
+          // address.value = getUserData.value.address!.address.toString();
+          // flatNo.value = getUserData.value.address!.flatNo.toString();
+         // zone_name.value = controller.getUserData.value.address!.zoneName.toString();
+          regiController.state_id.value = controller.getUserData.value.address!.stateId.toString();
+          regiController.city_id.value = controller.getUserData.value.address!.city_id.toString();
+          regiController.country_id.value = controller.getUserData.value.address!.countryId.toString();
+          controller.pincodeController.value.text = controller.getUserData.value.address!.pincode.toString();
+          regiController.selectDocumentType.value = controller.getUserData.value.addressProofTypeId.toString();
+          // countryController.value.text = getUserData.value.address!.countryName.toString();
+          // buildingController.value.text =
+          //     getUserData.value.address!.buildingNameId.toString();
+          // if(getUserData.value.address!.pincode.toString()!="" && getUserData.value.address!.pincode.toString()!="null") {
+          //   pincodeController.value.text =
+          //       getUserData.value.address!.pincode.toString();
+          // }
+          // if(getUserData.value.address!.buildingNameId.toString()!="" && getUserData.value.address!.buildingNameId.toString()!="null") {
+          //   memberController.buildingController.value.text =
+          //       getUserData.value.address!.buildingNameId.toString();
+          // }
+          controller.flatNoController.value.text=controller.getUserData.value.address!.flatNo.toString();
+          controller.updateresidentalAddressController.value.text=controller.getUserData.value.address!.address!.toString()!;
+          // memberController. zoneController.value.text= getUserData.value.address!.zoneName.toString();
+          // if(getUserData.value.address!.areaName.toString()!="" && getUserData.value.address!.areaName.toString()!="null" ) {
+          //   memberController.areaController.value.text = getUserData.value.address!.areaName.toString();
+          // }
+          // memberController.country_id.value=getUserData.value.address!.countryId.toString();
+          // memberController.state_id.value=getUserData.value.address!.stateId.toString();
+          // if((getUserData.value.address!.city_id.toString()!="null") && (getUserData.value.address!.city_id.toString()!="")) {
+          //   memberController.city_id.value = getUserData.value.address!.city_id.toString();
+          // }
+
+
+        }
+
+
         return FractionallySizedBox(
-          heightFactor: 0.9, // Adjust height factor (0.9 means 90% of screen height)
+          heightFactor: 0.9,
           child: SafeArea(
             child: SingleChildScrollView(
               child: Padding(
@@ -237,18 +306,14 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                                   showErrorSnackbar("Enter PinCode");
                                   return;
                                 }
-                                if(regiController.documntTypeList.value=="")
+                                if(regiController.selectDocumentType.value=="")
                                 {
                                   showErrorSnackbar("Select Document Type");
                                   return;
                                 }
-                                controller.userResidentalProfile(context);
+                                   controller.userResidentalProfile(context);
                               }
-
-
-
-
-                            },
+                              },
                             child:  Text(
                               "Save",
                               style: TextStyle(
@@ -322,13 +387,151 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                       ),
                       const SizedBox(height: 20),
                       // Building Name
-                      _buildTextField(
-                        label: "Building Name",
-                        controller: regiController.buildingController,
-                        text: TextInputType.text,
-                        empty: 'Building Name is empty',
-                      ),
-                      const SizedBox(height: 20),
+
+                      Obx((){
+                        return Visibility(
+                            visible: regiController.MandalZoneFlag.value,
+                            child:  Column(
+                              children: [
+                                const SizedBox(height: 20),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: Container(
+                                    margin: const EdgeInsets.only(left: 5, right: 5),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: Colors.grey),
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Obx(() {
+                                          if (regiController.rxStatusBuilding.value ==
+                                              Status.LOADING) {
+                                            return Padding(
+                                              padding: const EdgeInsets.symmetric(
+                                                  vertical: 8, horizontal: 20),
+                                              child: Container(
+                                                alignment: Alignment.centerRight,
+                                                height: 20,
+                                                width: 20,
+                                                child: CircularProgressIndicator(
+                                                  color: ColorHelperClass
+                                                      .getColorFromHex(
+                                                      ColorResources.pink_color),
+                                                ),
+                                              ),
+                                            );
+                                          } else if (regiController
+                                              .rxStatusBuilding.value ==
+                                              Status.ERROR) {
+                                            return const Center(
+                                                child: Padding(
+                                                  padding: const EdgeInsets.symmetric(
+                                                      vertical: 13, horizontal: 20),
+                                                  child: Text(
+                                                      'Failed to load Building Name'),
+                                                ));
+                                          } else if (regiController
+                                              .rxStatusBuilding.value ==
+                                              Status.IDLE) {
+                                            return const Center(
+                                              child: Padding(
+                                                padding: EdgeInsets.all(12.0),
+                                                child: Text('Building Name *'),
+                                              ),
+                                            );
+                                          } else if (regiController
+                                              .checkPinCodeList.isEmpty) {
+                                            return const Center(
+                                                child: Padding(
+                                                  padding: const EdgeInsets.symmetric(
+                                                      vertical: 13, horizontal: 24),
+                                                  child:
+                                                  Text('No Building Name available'),
+                                                ));
+                                          } else {
+                                            return Expanded(
+                                              child: DropdownButton<String>(
+                                                padding: const EdgeInsets.symmetric(
+                                                    vertical: 8, horizontal: 20),
+                                                isExpanded: true,
+                                                underline: Container(),
+                                                hint: const Text(
+                                                  'Select Building Name',
+                                                  style: TextStyle(
+                                                      fontWeight: FontWeight.bold),
+                                                ),
+                                                value: regiController
+                                                    .selectBuilding.value.isEmpty
+                                                    ? null
+                                                    : regiController
+                                                    .selectBuilding.value,
+                                                items: regiController.checkPinCodeList
+                                                    .map((Building marital) {
+                                                  return DropdownMenuItem<String>(
+                                                    value: marital.id.toString(),
+                                                    child: Text(
+                                                        marital.buildingName ??
+                                                            'Unknown'),
+                                                  );
+                                                }).toList(),
+                                                onChanged: (String? newValue) {
+                                                  if (newValue != null) {
+                                                    regiController.selectBuilding(newValue);
+                                                    regiController.isBuilding.value = newValue == 'other';
+                                                  }
+                                                },
+                                              ),
+                                            );
+                                          }
+                                        }),
+                                        Obx(() {
+                                          return Visibility(
+                                            visible: regiController.isBuilding.value,
+                                            child: Expanded(
+                                              child: TextFormField(
+                                                controller: regiController
+                                                    .buildingController.value,
+                                                keyboardType: TextInputType.text,
+                                                validator: (value) {
+                                                  if (value!.isEmpty) {
+                                                    return 'Enter Building';
+                                                  }
+                                                  return null;
+                                                },
+                                                decoration: InputDecoration(
+                                                  hintText: 'Building Name',
+                                                  border: OutlineInputBorder(
+                                                    borderRadius:
+                                                    BorderRadius.circular(5),
+                                                    borderSide: BorderSide(
+                                                        color: Colors.grey),
+                                                  ),
+                                                  contentPadding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 8,
+                                                      horizontal: 20),
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        }),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                _buildTextField(
+                                    label: "Mandal Zone *",
+                                    controller:  regiController.zoneController,
+                                    text: TextInputType.text,
+                                  empty:   "Mandal Zone *",
+                                    readOnly: true
+                                ),
+                                const SizedBox(height: 20),
+                              ],
+                            ));
+                      }),
                       // Flat No
                       _buildTextField(
                         label: "Flat No",
@@ -336,24 +539,65 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                         text: TextInputType.text,
                         empty: "Flat No is required !!"
                       ),
+
                       const SizedBox(height: 20),
-                      // Zone
                       _buildTextField(
-                        label: "Zone",
-                        controller: regiController.zoneController,
-                        text: TextInputType.text,
-                        empty: 'Zone is required !!',
+                          label: "Address",
+                          controller: controller.updateresidentalAddressController,
+                          text: TextInputType.text,
+                          empty: "Address is required !!"
                       ),
                       const SizedBox(height: 20),
                       // Area
-                      _buildTextField(
-                        label: "Area",
-                        controller: regiController.areaController,
-                        text: TextInputType.text,
-                        empty: 'Area Name is required !!',
-                      ),
+                      Obx((){
+                        return _buildTextField(
+                            label: "Area",
+                            controller: regiController.areaController,
+                            text: TextInputType.text,
+                            empty: 'Area Name is required !!',
+                            readOnly: regiController.countryNotFound.value?true: false
+                        );
+                      }),
                       const SizedBox(height: 20),
+                      Obx(() {
+                        return Visibility(
+                            visible: regiController.countryNotFound.value,
+                            child: Column(
+                              children: [
+                                const SizedBox(height: 20),
 
+                                // City
+                                _buildTextField(
+                                   label:  'City *',
+                                   controller:  regiController.cityController,
+                                   empty:  'Enter City Name',
+                                    text: TextInputType.text,
+                                    readOnly: true),
+                                const SizedBox(height: 20),
+
+                                //State
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: _buildTextField(
+                                    label:   'State *',
+                                    controller:   regiController.stateController,
+                                    empty:   'Enter State Name',
+                                      text: TextInputType.text,
+                                      readOnly: true),
+                                ),
+                                const SizedBox(height: 20),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: _buildTextField(
+                                    label:   'Country *',
+                                    controller:   regiController.countryController,
+                                    empty:   'Enter Country Name',
+                                      text: TextInputType.text,
+                                      readOnly: true),
+                                ),
+                              ],
+                            ));
+                      }),
                       Obx((){
                         return Visibility(
                             visible: regiController.countryNotFound.value==false,
