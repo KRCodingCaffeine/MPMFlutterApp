@@ -48,6 +48,7 @@ class _HomeViewState extends State<HomeView> {
   void initState() {
     super.initState();
     controller.getUserProfile();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       screenWidth = MediaQuery.of(context).size.width * 0.7;
       _timer = Timer.periodic(const Duration(seconds: 2), (Timer timer) {
@@ -93,11 +94,21 @@ class _HomeViewState extends State<HomeView> {
             }
           }),
 
-          Obx((){
+          Obx(() {
+            if (int.tryParse(controller.memberStatusId.value) != null &&
+                int.parse(controller.memberStatusId.value) == 1 &&
+                controller.isJangana.value == '0') {
+              return _buildJanganaNotice();
+            } else {
+              return SizedBox.shrink(); // Return an empty widget when not needed
+            }
+          }),
+
+       /*   Obx((){
             return Visibility(
               visible: controller.showDashboardReviewFlag.value,
                 child: _buildAdCard2("assets/images/banner1.jpg"));
-          }),
+          }),*/
           _buildGridView(),
           _buildAdvertisementTitle(),
           _buildAdvertisementList(),
@@ -145,6 +156,38 @@ class _HomeViewState extends State<HomeView> {
             ),
 
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildJanganaNotice() {
+    String janganaMessage = "Your Janaganana is pending. Please click here to complete Janganana.";
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: GestureDetector(
+        onTap: () async{
+          Navigator.pushNamed(context, RouteNames.profile);
+        },
+        child: Container(
+          padding: const EdgeInsets.all(16.0),
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.error, color: Color(0xFFe61428)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  janganaMessage,
+                  style: const TextStyle(color: Colors.black),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
