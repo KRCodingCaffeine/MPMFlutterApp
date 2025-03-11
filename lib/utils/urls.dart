@@ -1,7 +1,7 @@
 
 class Urls {
  //static const  String base_url = "https://krcodingcaffeine.com/pragati-mandal-api/";
-  static const  String base_url = "https://staging.mumbaimaheshwari.com/api/";
+  static const  String base_url = "https://members.mumbaimaheshwari.com/api/";
   static const  String register_url = base_url+"api/make_new_member";
   static const  String login_url = base_url+"api/login";
   static const  String check_url = base_url+"api/check_lm_code_or_mobile";
@@ -40,6 +40,7 @@ class Urls {
   static const  String addBusinessInfo_url = base_url+"api/add_business_info";
   static const  String updateBusinessInfo_url = base_url+"api/update_business_info";
   static const  String updateQualification_url = base_url+"api/update_education";
+  static const  String updateJanganaStatus_url = base_url+"api/update_jangana_status";
 
 
   static const String imagePathUrl = base_url+"public/";

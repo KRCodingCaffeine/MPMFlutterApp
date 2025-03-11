@@ -32,7 +32,8 @@ class FamilyInfoPage extends StatefulWidget {
 class _FamilyInfoPageState extends State<FamilyInfoPage> {
   final ImagePicker _picker = ImagePicker();
   File? _profileImage;
-  File? _image;
+
+  Rx<File?> selectimage = Rx<File?>(null);
   UdateProfileController controller = Get.put(UdateProfileController());
   String firstName = "Rajesh";
   String middleName = "Mani";
@@ -405,20 +406,22 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                   alignment: Alignment.center,
                                   child: GestureDetector(
                                     onTap: () {
-                                      _showPicker(context: context);
+                                      _showPicker();
                                     },
-                                    child: CircleAvatar(
-                                      radius: 40,
-                                      backgroundColor: Colors.grey[300],
-                                      backgroundImage: _image != null ? FileImage(_image!) : null,
-                                      child: _image == null
-                                          ? Icon(
-                                        Icons.camera_alt,
-                                        color: Colors.grey[700],
-                                        size: 40,
-                                      )
-                                          : null,
-                                    ),
+                                    child: Obx((){
+                                      return CircleAvatar(
+                                        radius: 40,
+                                        backgroundColor: Colors.grey[300],
+                                        backgroundImage: selectimage.value != null ? FileImage(selectimage.value!) : null,
+                                        child: selectimage.value == null
+                                            ? Icon(
+                                          Icons.camera_alt,
+                                          color: Colors.grey[700],
+                                          size: 40,
+                                        )
+                                            : null,
+                                      );
+                                    }),
                                   ),
                                 ),
                                 const SizedBox(height: 30),
@@ -1092,9 +1095,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
 
 
   
-  void _showPicker({
-    required BuildContext context,
-  }) {
+  void _showPicker() {
     showModalBottomSheet(
       backgroundColor: Colors.white,
       context: context,
@@ -1132,9 +1133,9 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
       try {
         final XFile? pickedFile =
         await ImagePicker().pickImage(source: img, imageQuality: 80);
-        setState(() {
-          _image = File(pickedFile!.path);
-        });
+
+        selectimage.value = File(pickedFile!.path);
+
         if (pickedFile!.path != null) {
          controller. userdocumentImage.value = pickedFile!.path;
         }

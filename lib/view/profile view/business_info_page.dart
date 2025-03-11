@@ -299,10 +299,10 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
 
                                 Obx((){
                                   return _buildEditableField(
-                                    'Flat No',
+                                    'Office No',
                                     controller.flatnoController.value,
-                                      'Flat No',
-                                      'Enter Flat No',
+                                      'Office No',
+                                      'Enter Office No',
                                       text: TextInputType.text,
                                       isRequired: true
                                   );
@@ -318,7 +318,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
 
                                   );
                                 }),
-                               Obx((){
+                                Obx((){
                                  return  _buildEditableField(
                                    'Area',
                                    controller.areaNameController.value,
@@ -849,10 +849,10 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                          }),
                           Obx((){
                             return _buildEditableField(
-                                'Flat No',
+                                'Office No',
                                 controller.udflatnoController.value,
-                              'Flat No',
-                              'Flat No',
+                              'Office No',
+                              'Office No',
                               text: TextInputType.text,
                             );
                           }),
@@ -1194,8 +1194,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
               EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
           child: DraggableScrollableSheet(
             expand: false,
-            initialChildSize: 0.5, // Start from the middle
-            maxChildSize: 0.95, // Can be expanded almost full-screen
+            initialChildSize: 0.5,
+            maxChildSize: 0.95,
             minChildSize: 0.5, // Minimum half-screen height
             builder: (context, scrollController) {
               return Container(
@@ -1436,7 +1436,6 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
                           ),
                           child: Row(
                             children: [
-
                               Obx(() {
                                 if (controller.rxStatusOccupation.value == Status.LOADING) {
                                   return Padding(
@@ -1482,8 +1481,6 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
                                           else
                                           {
                                             controller.isOccutionList.value=false;
-
-
                                           }
                                         }
                                       },
@@ -1624,7 +1621,7 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
                                                 }).toList(), // Convert to List.
                                                 onChanged: (String? newValue) {
                                                   if (newValue != null) {
-                                                    controller.selectOccuptionSpec(newValue);
+                                                    controller.setSelectOccuptionSpec(newValue);
 
                                                   }
                                                 },

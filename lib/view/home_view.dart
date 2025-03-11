@@ -92,6 +92,12 @@ class _HomeViewState extends State<HomeView> {
               return SizedBox.shrink(); // Return an empty widget when not needed
             }
           }),
+
+          Obx((){
+            return Visibility(
+              visible: controller.showDashboardReviewFlag.value,
+                child: _buildAdCard2("assets/images/banner1.jpg"));
+          }),
           _buildGridView(),
           _buildAdvertisementTitle(),
           _buildAdvertisementList(),
@@ -228,6 +234,24 @@ class _HomeViewState extends State<HomeView> {
         itemBuilder: (context, index) {
           return _buildAdCard(bhawanItems[index]["imagePath"]);
         },
+      ),
+    );
+  }
+
+  Widget _buildAdCard2(String imagePath) {
+    return GestureDetector(
+      onTap: () async{
+        Navigator.pushNamed(context, RouteNames.profile);
+      },
+      child: Container(
+        width: MediaQuery.of(context).size.width,
+        height: 150,
+        margin:  EdgeInsets.only(right: 16.0),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8.0),
+          child: Padding(padding: EdgeInsets.symmetric(vertical: 10,horizontal: 10),
+          child: Text("Your Janaganana is pending. Please click here to complete Janganana."),),
+        ),
       ),
     );
   }

@@ -50,6 +50,7 @@ class GetProfileData{
   var memberStatusName;
   var profileImagePath;
   var addressProofPath;
+  var document_type;
 
   List<FamilyMembersData>? familyMembersData;
   FamilyHeadMemberData? familyHeadMemberData;
@@ -107,7 +108,8 @@ class GetProfileData{
         this.familyHeadMemberData,
         this.qualification,
         this.occupation,
-        this.businessInfo
+        this.businessInfo,
+        this.document_type
       });
 
   GetProfileData.fromJson(Map<String, dynamic> json) {
@@ -155,6 +157,7 @@ class GetProfileData{
     memberStatusName = json['member_status_name'];
     profileImagePath = json['profile_image_path'];
     addressProofPath = json['address_proof_path'];
+    document_type = json['document_type'];
     address = json['address'] != null ? new Address.fromJson(json['address']) : null;
     if (json['family_members_data'] != null) {
       familyMembersData = <FamilyMembersData>[];
@@ -204,6 +207,7 @@ class GetProfileData{
     data['father_name'] = this.fatherName;
     data['mother_name'] = this.motherName;
     data['address_proof_type_id'] = this.addressProofTypeId;
+    data['document_type'] = this.document_type;
     data['address_proof'] = this.addressProof;
     data['profile_image'] = this.profileImage;
     data['otp'] = this.otp;

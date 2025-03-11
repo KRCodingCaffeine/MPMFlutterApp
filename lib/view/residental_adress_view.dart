@@ -15,10 +15,10 @@ import 'package:mpm/model/membership/MemberShipData.dart';
 import 'package:mpm/utils/app_constants.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
-import 'package:mpm/utils/images.dart';
+
 import 'package:mpm/utils/textstyleclass.dart';
 import 'package:mpm/view_model/controller/register/register_view_model.dart';
-import 'package:permission_handler/permission_handler.dart';
+
 
 class PesidentalAdressView extends StatefulWidget {
   const PesidentalAdressView({super.key});
@@ -293,146 +293,151 @@ class _PesidentalAdressViewState extends State<PesidentalAdressView> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 20),
-
-                              //Building Name
-                              SizedBox(
-                                width: double.infinity,
-                                child: Container(
-                                  margin: const EdgeInsets.only(left: 5, right: 5),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.grey),
-                                    borderRadius: BorderRadius.circular(5),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Obx(() {
-                                        if (regiController.rxStatusBuilding.value ==
-                                            Status.LOADING) {
-                                          return Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 8, horizontal: 20),
-                                            child: Container(
-                                              alignment: Alignment.centerRight,
-                                              height: 20,
-                                              width: 20,
-                                              child: CircularProgressIndicator(
-                                                color: ColorHelperClass
-                                                    .getColorFromHex(
-                                                    ColorResources.pink_color),
-                                              ),
+                              Obx((){
+                                return Visibility(
+                                    visible: regiController.MandalZoneFlag.value,
+                                    child:  Column(
+                                      children: [
+                                        const SizedBox(height: 20),
+                                        SizedBox(
+                                          width: double.infinity,
+                                          child: Container(
+                                            margin: const EdgeInsets.only(left: 5, right: 5),
+                                            decoration: BoxDecoration(
+                                              border: Border.all(color: Colors.grey),
+                                              borderRadius: BorderRadius.circular(5),
                                             ),
-                                          );
-                                        } else if (regiController
-                                            .rxStatusBuilding.value ==
-                                            Status.ERROR) {
-                                          return const Center(
-                                              child: Padding(
-                                                padding: const EdgeInsets.symmetric(
-                                                    vertical: 13, horizontal: 20),
-                                                child: Text(
-                                                    'Failed to load Building Name'),
-                                              ));
-                                        } else if (regiController
-                                            .rxStatusBuilding.value ==
-                                            Status.IDLE) {
-                                          return const Center(
-                                            child: Padding(
-                                              padding: EdgeInsets.all(12.0),
-                                              child: Text('Building Name *'),
-                                            ),
-                                          );
-                                        } else if (regiController
-                                            .checkPinCodeList.isEmpty) {
-                                          return const Center(
-                                              child: Padding(
-                                                padding: const EdgeInsets.symmetric(
-                                                    vertical: 13, horizontal: 24),
-                                                child: Text(
-                                                    'No Building Name available'),
-                                              ));
-                                        } else {
-                                          return Expanded(
-                                            child: DropdownButton<String>(
-                                              padding: const EdgeInsets.symmetric(
-                                                  vertical: 8, horizontal: 20),
-                                              isExpanded: true,
-                                              underline: Container(),
-                                              hint: const Text(
-                                                'Select Building Name',
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold),
-                                              ),
-                                              value: regiController
-                                                  .selectBuilding.value.isEmpty
-                                                  ? null
-                                                  : regiController
-                                                  .selectBuilding.value,
-                                              items: regiController.checkPinCodeList
-                                                  .map((Building marital) {
-                                                return DropdownMenuItem<String>(
-                                                  value: marital.id.toString(),
-                                                  child: Text(
-                                                      marital.buildingName ??
-                                                          'Unknown'),
-                                                );
-                                              }).toList(),
-                                              onChanged: (String? newValue) {
-                                                if (newValue != null) {
-                                                  regiController
-                                                      .selectBuilding(newValue);
-                                                  regiController.isBuilding.value =
-                                                      newValue == 'other';
-                                                }
-                                              },
-                                            ),
-                                          );
-                                        }
-                                      }),
-                                      Obx(() {
-                                        return Visibility(
-                                          visible: regiController.isBuilding.value,
-                                          child: Expanded(
-                                            child: TextFormField(
-                                              controller: regiController
-                                                  .buildingController.value,
-                                              keyboardType: TextInputType.text,
-                                              validator: (value) {
-                                                if (value!.isEmpty) {
-                                                  return 'Enter Building';
-                                                }
-                                                return null;
-                                              },
-                                              decoration: InputDecoration(
-                                                hintText: 'Building Name',
-                                                border: OutlineInputBorder(
-                                                  borderRadius:
-                                                  BorderRadius.circular(5),
-                                                  borderSide: BorderSide(
-                                                      color: Colors.grey),
-                                                ),
-                                                contentPadding:
-                                                const EdgeInsets.symmetric(
-                                                    vertical: 8,
-                                                    horizontal: 20),
-                                              ),
+                                            child: Row(
+                                              children: [
+                                                Obx(() {
+                                                  if (regiController.rxStatusBuilding.value ==
+                                                      Status.LOADING) {
+                                                    return Padding(
+                                                      padding: const EdgeInsets.symmetric(
+                                                          vertical: 8, horizontal: 20),
+                                                      child: Container(
+                                                        alignment: Alignment.centerRight,
+                                                        height: 20,
+                                                        width: 20,
+                                                        child: CircularProgressIndicator(
+                                                          color: ColorHelperClass
+                                                              .getColorFromHex(
+                                                              ColorResources.pink_color),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  } else if (regiController
+                                                      .rxStatusBuilding.value ==
+                                                      Status.ERROR) {
+                                                    return const Center(
+                                                        child: Padding(
+                                                          padding: const EdgeInsets.symmetric(
+                                                              vertical: 13, horizontal: 20),
+                                                          child: Text(
+                                                              'Failed to load Building Name'),
+                                                        ));
+                                                  } else if (regiController
+                                                      .rxStatusBuilding.value ==
+                                                      Status.IDLE) {
+                                                    return const Center(
+                                                      child: Padding(
+                                                        padding: EdgeInsets.all(12.0),
+                                                        child: Text('Building Name *'),
+                                                      ),
+                                                    );
+                                                  } else if (regiController
+                                                      .checkPinCodeList.isEmpty) {
+                                                    return const Center(
+                                                        child: Padding(
+                                                          padding: const EdgeInsets.symmetric(
+                                                              vertical: 13, horizontal: 24),
+                                                          child:
+                                                          Text('No Building Name available'),
+                                                        ));
+                                                  } else {
+                                                    return Expanded(
+                                                      child: DropdownButton<String>(
+                                                        padding: const EdgeInsets.symmetric(
+                                                            vertical: 8, horizontal: 20),
+                                                        isExpanded: true,
+                                                        underline: Container(),
+                                                        hint: const Text(
+                                                          'Select Building Name',
+                                                          style: TextStyle(
+                                                              fontWeight: FontWeight.bold),
+                                                        ),
+                                                        value: regiController
+                                                            .selectBuilding.value.isEmpty
+                                                            ? null
+                                                            : regiController
+                                                            .selectBuilding.value,
+                                                        items: regiController.checkPinCodeList
+                                                            .map((Building marital) {
+                                                          return DropdownMenuItem<String>(
+                                                            value: marital.id.toString(),
+                                                            child: Text(
+                                                                marital.buildingName ??
+                                                                    'Unknown'),
+                                                          );
+                                                        }).toList(),
+                                                        onChanged: (String? newValue) {
+                                                          if (newValue != null) {
+                                                            regiController
+                                                                .selectBuilding(newValue);
+                                                            regiController.isBuilding.value =
+                                                                newValue == 'other';
+                                                          }
+                                                        },
+                                                      ),
+                                                    );
+                                                  }
+                                                }),
+                                                Obx(() {
+                                                  return Visibility(
+                                                    visible: regiController.isBuilding.value,
+                                                    child: Expanded(
+                                                      child: TextFormField(
+                                                        controller: regiController
+                                                            .buildingController.value,
+                                                        keyboardType: TextInputType.text,
+                                                        validator: (value) {
+                                                          if (value!.isEmpty) {
+                                                            return 'Enter Building';
+                                                          }
+                                                          return null;
+                                                        },
+                                                        decoration: InputDecoration(
+                                                          hintText: 'Building Name',
+                                                          border: OutlineInputBorder(
+                                                            borderRadius:
+                                                            BorderRadius.circular(5),
+                                                            borderSide: BorderSide(
+                                                                color: Colors.grey),
+                                                          ),
+                                                          contentPadding:
+                                                          const EdgeInsets.symmetric(
+                                                              vertical: 8,
+                                                              horizontal: 20),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  );
+                                                }),
+                                              ],
                                             ),
                                           ),
-                                        );
-                                      }),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-
-                              // Mandal Zone
-                              _buildEditableField(
-                                "Mandal Zone",
-                                regiController.zoneController.value,
-                                "Mandal Zone *",
-                                "",
-                              ),
+                                        ),
+                                        const SizedBox(height: 20),
+                                        _buildEditableField(
+                                            "Mandal Zone *",
+                                            regiController.zoneController.value,
+                                            "Mandal Zone *",
+                                            "",
+                                            readonly: true
+                                        ),
+                                      ],
+                                    ));
+                              }),
                               const SizedBox(height: 20),
 
                               // Flat No
@@ -440,6 +445,14 @@ class _PesidentalAdressViewState extends State<PesidentalAdressView> {
                                 'Flat No *',
                                 regiController.housenoController.value,
                                 'Enter Flat No',
+                                '',
+                              ),
+
+                              const SizedBox(height: 20),
+                              _buildEditableField(
+                                'Address *',
+                                regiController.addressMemberController.value,
+                                'Enter Address',
                                 '',
                               ),
                               const SizedBox(height: 20),
@@ -457,8 +470,6 @@ class _PesidentalAdressViewState extends State<PesidentalAdressView> {
                                     child: Column(
                                       children: [
                                         const SizedBox(height: 20),
-
-                                        // City
                                         _buildEditableField(
                                             'City *',
                                             regiController.cityController.value,

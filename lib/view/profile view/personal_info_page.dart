@@ -53,9 +53,8 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
             IconButton(
               icon: const Icon(Icons.edit),
               onPressed: () {
-                _showEditModalSheet(context);
-
-              },
+                  _showEditModalSheet(context);
+                },
             ),
           ],
         ),
@@ -722,7 +721,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                     title,
                     style: const TextStyle(
                       fontSize: 12,
-                      color: Colors.grey,
+                      color: Colors.black,
                     ),
                   ),
                 ),

@@ -29,7 +29,7 @@ class _EditOccInfoPageState extends State<EditOccInfoPage> {
   final ImagePicker _picker = ImagePicker();
   File? _profileImage;
 UdateProfileController controller=Get.put(UdateProfileController());
-  // Controllers to manage the text field data
+
   TextEditingController _occupationController = TextEditingController();
   TextEditingController _professionController = TextEditingController();
   TextEditingController _specializationController = TextEditingController();
