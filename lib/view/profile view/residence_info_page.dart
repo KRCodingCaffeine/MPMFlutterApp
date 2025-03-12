@@ -1106,7 +1106,7 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                     title,
                     style: const TextStyle(
                       fontSize: 12,
-                      color: Colors.grey,
+                      color: Colors.black,
                     ),
                   ),
                 ),

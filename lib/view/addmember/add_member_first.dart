@@ -870,6 +870,7 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
   }) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.white,
       builder: (BuildContext context) {
         return SafeArea(
           child: Wrap(

@@ -176,8 +176,6 @@ class _SearchViewState extends State<SearchView> {
                   ],
                 ),
               ),
-              // Arrow Icon at Bottom Right
-              // const Icon(Icons.arrow_forward_ios, color: Colors.grey),
             ],
           ),
         ),

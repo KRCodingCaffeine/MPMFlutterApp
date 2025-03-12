@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,12 +7,10 @@ import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/bloodgroup/BloodData.dart';
 import 'package:mpm/model/gender/DataX.dart';
 import 'package:mpm/model/marital/MaritalData.dart';
-import 'package:mpm/route/route_name.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
-
 import '../../utils/urls.dart';
 
 class PersonalInformationPage extends StatefulWidget {
@@ -27,8 +24,8 @@ class PersonalInformationPage extends StatefulWidget {
 class _PersonalInformationPageState extends State<PersonalInformationPage> {
   File? _image;
 
-  UdateProfileController controller=Get.put(UdateProfileController());
-  NewMemberController newMemberController =Get.put(NewMemberController());
+  UdateProfileController controller = Get.put(UdateProfileController());
+  NewMemberController newMemberController = Get.put(NewMemberController());
   // Controllers for the text fields to manage user input
 
   @override
@@ -44,90 +41,100 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Colors.grey[100],
-        appBar: AppBar(
-          title: const Text('Personal Info', style: TextStyle(color: Colors.white)),
-          backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-          iconTheme: IconThemeData(color: Colors.white),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: () {
-                  _showEditModalSheet(context);
-                },
-            ),
-          ],
-        ),
-        body: Container(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16.0),
-              child: Card(
-                color: Colors.white,
-                elevation: 4, // Adds shadow to the card
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10), // Rounded corners
-                ),
-                child: Padding(
-                  padding:
-                      const EdgeInsets.all(16.0), // Inner padding of the card
-                  child: Column(
-                    children: [
-
-                      Obx((){
-                        return  _buildInfoBox(
-                          'Full Name:',
-                          subtitle:
-                          '${controller.firstName.value} ${controller.middleName.value.isNotEmpty ? "${controller.middleName.value} " : ""}${controller.surName.value}',
-                        );
-                      }),
-                      SizedBox(height: 20),
-
-                      Obx((){
-                        return  _buildInfoBox('Father\'s Name:', subtitle: controller.fathersName.value);
-                      }),
-                      SizedBox(height: 20),
-                      Obx((){
-                        return  _buildInfoBox('Mother\'s Name:', subtitle: controller.mothersName.value);
-                      }),
-                      SizedBox(height: 20),
-                      Obx((){
-                        return  _buildInfoBox('Mobile Number:', subtitle: controller.mobileNumber.value);
-                      }),
-                      SizedBox(height: 20),
-                      Obx((){
-                        return  _buildInfoBox('WhatsApp Number:', subtitle: controller.whatsAppNumber.value);
-                      }),
-                      SizedBox(height: 20),
-                      Obx((){
-                        return  _buildInfoBox('Email:', subtitle: controller.email.value);
-                      }),
-                      SizedBox(height: 20),
-                      _buildInfoBox('Date of Birth:', subtitle: controller.dob.value),
-                      SizedBox(height: 20),
-                      Obx((){
-                        return  _buildInfoBox('Gender:', subtitle: controller.gender.value);
-                      }),
-                      SizedBox(height: 20),
-                      Obx((){
-                        return  _buildInfoBox('Marital Status:', subtitle: controller.maritalStatus.value);
-
-                      }),
-                      SizedBox(height: 20),
-                      Obx((){
-                        return   _buildInfoBox('Anniversary Date:', subtitle: controller.marriageAnniversaryDate.value);
-                      }),
-                      SizedBox(height: 20),
-                      Obx((){
-                        return   _buildInfoBox('Blood Group:', subtitle: controller.bloodGroup.value);
-                      })
-                    ],
-                  ),
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(
+        title:
+            const Text('Personal Info', style: TextStyle(color: Colors.white)),
+        backgroundColor:
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        iconTheme: IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () {
+              _showEditModalSheet(context);
+            },
+          ),
+        ],
+      ),
+      body: Container(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: Card(
+              color: Colors.white,
+              elevation: 4, // Adds shadow to the card
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10), // Rounded corners
+              ),
+              child: Padding(
+                padding:
+                    const EdgeInsets.all(16.0), // Inner padding of the card
+                child: Column(
+                  children: [
+                    Obx(() {
+                      return _buildInfoBox(
+                        'Full Name:',
+                        subtitle:
+                            '${controller.firstName.value} ${controller.middleName.value.isNotEmpty ? "${controller.middleName.value} " : ""}${controller.surName.value}',
+                      );
+                    }),
+                    SizedBox(height: 20),
+                    Obx(() {
+                      return _buildInfoBox('Father\'s Name:',
+                          subtitle: controller.fathersName.value);
+                    }),
+                    SizedBox(height: 20),
+                    Obx(() {
+                      return _buildInfoBox('Mother\'s Name:',
+                          subtitle: controller.mothersName.value);
+                    }),
+                    SizedBox(height: 20),
+                    Obx(() {
+                      return _buildInfoBox('Mobile Number:',
+                          subtitle: controller.mobileNumber.value);
+                    }),
+                    SizedBox(height: 20),
+                    Obx(() {
+                      return _buildInfoBox('WhatsApp Number:',
+                          subtitle: controller.whatsAppNumber.value);
+                    }),
+                    SizedBox(height: 20),
+                    Obx(() {
+                      return _buildInfoBox('Email:',
+                          subtitle: controller.email.value);
+                    }),
+                    SizedBox(height: 20),
+                    _buildInfoBox('Date of Birth:',
+                        subtitle: controller.dob.value),
+                    SizedBox(height: 20),
+                    Obx(() {
+                      return _buildInfoBox('Gender:',
+                          subtitle: controller.gender.value);
+                    }),
+                    SizedBox(height: 20),
+                    Obx(() {
+                      return _buildInfoBox('Marital Status:',
+                          subtitle: controller.maritalStatus.value);
+                    }),
+                    SizedBox(height: 20),
+                    Obx(() {
+                      return _buildInfoBox('Anniversary Date:',
+                          subtitle: controller.marriageAnniversaryDate.value);
+                    }),
+                    SizedBox(height: 20),
+                    Obx(() {
+                      return _buildInfoBox('Blood Group:',
+                          subtitle: controller.bloodGroup.value);
+                    })
+                  ],
                 ),
               ),
             ),
           ),
-        ));
+        ),
+      ),
+    );
   }
 
   // Method to show the Modal Bottom Sheet for editing
@@ -160,18 +167,22 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                             Navigator.pop(context); // Close the modal
                           },
                           style: TextButton.styleFrom(
-                            foregroundColor: Color(0xFFDC3545), // Red color for text
+                            foregroundColor:
+                                Color(0xFFDC3545), // Red color for text
                           ),
                           child: const Text('Cancel'),
                         ),
                         // Save Button
                         TextButton(
                           onPressed: () {
-                            controller.userUpdateProfile(context, controller.memberId.value);
-                            Navigator.pop(context); // Close the modal after saving
+                            controller.userUpdateProfile(
+                                context, controller.memberId.value);
+                            Navigator.pop(
+                                context); // Close the modal after saving
                           },
                           style: TextButton.styleFrom(
-                            foregroundColor: Color(0xFFDC3545), // Red color for text
+                            foregroundColor:
+                                Color(0xFFDC3545), // Red color for text
                           ),
                           child: const Text('Save'),
                         ),
@@ -186,80 +197,78 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                           children: [
                             Align(
                               alignment: Alignment.center,
-                              child: GestureDetector(
-                                onTap: () {
-                                  _showPicker(context: context);
-                                },
-                                child: Obx(() {
-                                  String networkImageUrl = Urls.imagePathUrl + controller.profileImage.value;
-                                  bool hasNewImage = controller.newProfileImage.value.isNotEmpty;
-                                  bool hasNetworkImage = controller.profileImage.value.isNotEmpty;
-                                  print("Current newProfileImage: ${controller.newProfileImage.value}");
-                                  print("Current profileImage: ${controller.profileImage.value}");
-                                  return CircleAvatar(
-                                    radius: 50,
-                                    backgroundImage: hasNewImage
-                                        ? FileImage(File(controller.newProfileImage.value))
-                                        : (hasNetworkImage
-                                        ? NetworkImage(networkImageUrl)
-                                        : const AssetImage("assets/default_profile.png")) as ImageProvider,
-                                  );
-                                })
-                              ),
+                              child: GestureDetector(onTap: () {
+                                _showPicker(context: context);
+                              }, child: Obx(() {
+                                String networkImageUrl = Urls.imagePathUrl +
+                                    controller.profileImage.value;
+                                bool hasNewImage =
+                                    controller.newProfileImage.value.isNotEmpty;
+                                bool hasNetworkImage =
+                                    controller.profileImage.value.isNotEmpty;
+                                print(
+                                    "Current newProfileImage: ${controller.newProfileImage.value}");
+                                print(
+                                    "Current profileImage: ${controller.profileImage.value}");
+                                return CircleAvatar(
+                                  radius: 50,
+                                  backgroundImage: hasNewImage
+                                      ? FileImage(File(
+                                          controller.newProfileImage.value))
+                                      : (hasNetworkImage
+                                              ? NetworkImage(networkImageUrl)
+                                              : const AssetImage(
+                                                  "assets/default_profile.png"))
+                                          as ImageProvider,
+                                );
+                              })),
                             ),
                             const SizedBox(height: 30),
-                            Obx((){
+                            Obx(() {
                               return _buildEditableField(
                                 'First Name',
                                 controller.firstNameController.value,
-
                               );
                             }),
-                            Obx((){
+                            Obx(() {
                               return _buildEditableField(
                                 'Middle Name',
                                 controller.middleNameController.value,
                               );
                             }),
-                            Obx((){
-                              return _buildEditableField(
-                                  'SurName',
+                            Obx(() {
+                              return _buildEditableField('SurName',
                                   controller.surNameController.value);
                             }),
-                            Obx((){
-                              return  _buildEditableField(
-                                  'Fathers Name',
+                            Obx(() {
+                              return _buildEditableField('Fathers Name',
                                   controller.fathersNameController.value);
                             }),
-                            Obx((){
-                              return  _buildEditableField(
-                                  'Mother Name',
-                                  controller.mothersNameController.value
-                              );
+                            Obx(() {
+                              return _buildEditableField('Mother Name',
+                                  controller.mothersNameController.value);
                             }),
-                            Obx((){
-                              return  _buildEditableField(
+                            Obx(() {
+                              return _buildEditableField(
                                 'Mobile Number',
                                 controller.mobileNumberController.value,
-
                               );
                             }),
-                            Obx((){
-                              return  _buildEditableField(
+                            Obx(() {
+                              return _buildEditableField(
                                 'WhatsApp Number',
                                 controller.whatsAppNumberController.value,
                               );
                             }),
-                            Obx((){
+                            Obx(() {
                               return _buildEditableField(
-                                  'Email',
-                                  controller.emailController.value
-                              );
+                                  'Email', controller.emailController.value);
                             }),
                             SizedBox(
                               width: double.infinity,
                               child: Container(
-                                margin: const EdgeInsets.only(left: 5, right: 5),
+                                margin:
+                                    const EdgeInsets.only(left: 5, right: 5),
                                 decoration: BoxDecoration(
                                   border: Border.all(color: Colors.grey),
                                   borderRadius: BorderRadius.circular(5),
@@ -267,7 +276,8 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                 child: TextFormField(
                                   keyboardType: TextInputType.text,
                                   readOnly: true,
-                                  controller: controller.dobController.value, // Use .value to get the TextEditingController
+                                  controller: controller.dobController
+                                      .value, // Use .value to get the TextEditingController
                                   decoration: const InputDecoration(
                                     hintText: 'Date of Birth *',
                                     border: InputBorder.none,
@@ -279,23 +289,34 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                   onTap: () async {
                                     DateTime? pickedDate = await showDatePicker(
                                       context: context,
-                                      initialDate: controller.dobController.value.text.isNotEmpty
+                                      initialDate: controller.dobController
+                                              .value.text.isNotEmpty
                                           ? DateFormat('dd/MM/yyyy').parse(
-                                          controller.dobController.value.text.replaceAll('-', '/'))
+                                              controller
+                                                  .dobController.value.text
+                                                  .replaceAll('-', '/'))
                                           : DateTime.now(),
                                       firstDate: DateTime(1900),
                                       lastDate: DateTime.now(),
-                                      builder: (BuildContext context, Widget? child) {
+                                      builder: (BuildContext context,
+                                          Widget? child) {
                                         return Theme(
                                           data: Theme.of(context).copyWith(
                                             colorScheme: ColorScheme.light(
-                                              primary: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                                              primary: ColorHelperClass
+                                                  .getColorFromHex(
+                                                      ColorResources.red_color),
                                               onPrimary: Colors.white,
                                               onSurface: Colors.black,
                                             ),
-                                            textButtonTheme: TextButtonThemeData(
+                                            textButtonTheme:
+                                                TextButtonThemeData(
                                               style: TextButton.styleFrom(
-                                                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                                                foregroundColor:
+                                                    ColorHelperClass
+                                                        .getColorFromHex(
+                                                            ColorResources
+                                                                .red_color),
                                               ),
                                             ),
                                           ),
@@ -305,13 +326,14 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                     );
 
                                     if (pickedDate != null) {
-                                      String formattedDate = DateFormat('dd/MM/yyyy').format(pickedDate);
-                                      controller.dobController.value.text = formattedDate;
+                                      String formattedDate =
+                                          DateFormat('dd/MM/yyyy')
+                                              .format(pickedDate);
+                                      controller.dobController.value.text =
+                                          formattedDate;
                                     }
                                   },
-                                )
-
-                                ,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 20),
@@ -327,7 +349,8 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                               child: Row(
                                 children: [
                                   Obx(() {
-                                    if (newMemberController.rxStatusLoading2.value ==
+                                    if (newMemberController
+                                            .rxStatusLoading2.value ==
                                         Status.LOADING) {
                                       return Padding(
                                         padding: const EdgeInsets.symmetric(
@@ -339,14 +362,16 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                             child: CircularProgressIndicator(
                                               color: ColorHelperClass
                                                   .getColorFromHex(
-                                                  ColorResources.pink_color),
+                                                      ColorResources
+                                                          .pink_color),
                                             )),
                                       );
                                     } else if (newMemberController
-                                        .rxStatusLoading2.value ==
+                                            .rxStatusLoading2.value ==
                                         Status.ERROR) {
                                       return const Center(
-                                          child: Text('Failed to load genders'));
+                                          child:
+                                              Text('Failed to load genders'));
                                     } else if (newMemberController
                                         .genderList.isEmpty) {
                                       return const Center(
@@ -364,7 +389,10 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                          value: controller.gender_id.value.isNotEmpty ? controller.gender_id.value : '',
+                                          value: controller
+                                                  .gender_id.value.isNotEmpty
+                                              ? controller.gender_id.value
+                                              : '',
                                           items: newMemberController.genderList
                                               .map((DataX gender) {
                                             return DropdownMenuItem<String>(
@@ -376,7 +404,8 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                           }).toList(),
                                           onChanged: (String? newValue) {
                                             if (newValue != null) {
-                                              controller.gender_id.value = newValue;
+                                              controller.gender_id.value =
+                                                  newValue;
                                             }
                                           },
                                         ),
@@ -386,7 +415,6 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                 ],
                               ),
                             ),
-
                             const SizedBox(height: 20),
 
                             //Blood Group
@@ -400,7 +428,8 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                               child: Row(
                                 children: [
                                   Obx(() {
-                                    if (newMemberController.rxStatusLoading.value ==
+                                    if (newMemberController
+                                            .rxStatusLoading.value ==
                                         Status.LOADING) {
                                       return Padding(
                                         padding: const EdgeInsets.symmetric(
@@ -412,23 +441,25 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                             child: CircularProgressIndicator(
                                               color: ColorHelperClass
                                                   .getColorFromHex(
-                                                  ColorResources.red_color),
+                                                      ColorResources.red_color),
                                             )),
                                       );
                                     } else if (newMemberController
-                                        .rxStatusLoading.value ==
+                                            .rxStatusLoading.value ==
                                         Status.ERROR) {
                                       return const Center(
-                                          child:
-                                          Text('Failed to load blood group'));
+                                          child: Text(
+                                              'Failed to load blood group'));
                                     } else if (newMemberController
                                         .bloodgroupList.isEmpty) {
                                       return const Center(
                                           child:
-                                          Text('No blood gruop available'));
+                                              Text('No blood gruop available'));
                                     } else {
                                       return Expanded(
                                         child: DropdownButton<String>(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 20),
                                           isExpanded: true,
@@ -438,9 +469,13 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                             style: TextStyle(
                                                 fontWeight: FontWeight.bold),
                                           ), // Hint to show when nothing is selected
-                                          value: controller.blood_group_id.value.isNotEmpty ? controller.blood_group_id.value : '',
+                                          value: controller.blood_group_id.value
+                                                  .isNotEmpty
+                                              ? controller.blood_group_id.value
+                                              : '',
 
-                                          items: newMemberController.bloodgroupList
+                                          items: newMemberController
+                                              .bloodgroupList
                                               .map((BloodGroupData marital) {
                                             return DropdownMenuItem<String>(
                                               value: marital.id
@@ -451,7 +486,8 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                           }).toList(), // Convert to List.
                                           onChanged: (String? newValue) {
                                             if (newValue != null) {
-                                              controller.blood_group_id.value = newValue;
+                                              controller.blood_group_id.value =
+                                                  newValue;
                                             }
                                           },
                                         ),
@@ -465,7 +501,8 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                             SizedBox(
                               width: double.infinity,
                               child: Container(
-                                margin: const EdgeInsets.only(left: 5, right: 5),
+                                margin:
+                                    const EdgeInsets.only(left: 5, right: 5),
                                 decoration: BoxDecoration(
                                   border: Border.all(color: Colors.grey),
                                   borderRadius: BorderRadius.circular(5),
@@ -473,7 +510,8 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                 child: Row(
                                   children: [
                                     Obx(() {
-                                      if (newMemberController.rxStatusmarried.value ==
+                                      if (newMemberController
+                                              .rxStatusmarried.value ==
                                           Status.LOADING) {
                                         return Padding(
                                           padding: const EdgeInsets.symmetric(
@@ -485,36 +523,50 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                             child: CircularProgressIndicator(
                                               color: ColorHelperClass
                                                   .getColorFromHex(
-                                                  ColorResources.pink_color),
+                                                      ColorResources
+                                                          .pink_color),
                                             ),
                                           ),
                                         );
-                                      } else if (newMemberController.rxStatusmarried.value == Status.ERROR) {
+                                      } else if (newMemberController
+                                              .rxStatusmarried.value ==
+                                          Status.ERROR) {
                                         return const Center(
                                             child: Text(
                                                 'Failed to load marital status'));
-                                      } else if (newMemberController.maritalList.isEmpty) {
+                                      } else if (newMemberController
+                                          .maritalList.isEmpty) {
                                         return const Center(
                                             child: Text(
                                                 'No marital status available'));
                                       } else {
                                         return Expanded(
+                                            child: Container(
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 10),
                                           child: DropdownButton<String>(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 20),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
                                             isExpanded: true,
                                             underline: Container(),
+                                            dropdownColor: Colors.white,
                                             hint: const Text(
                                               'Select Marital Status *',
                                               style: TextStyle(
                                                   fontWeight: FontWeight.bold),
                                             ),
                                             value: newMemberController
-                                                .selectMarital.value.isEmpty
+                                                    .selectMarital.value.isEmpty
                                                 ? null
                                                 : newMemberController
-                                                .selectMarital.value,
-                                            items: newMemberController.maritalList
+                                                    .selectMarital.value,
+                                            items: newMemberController
+                                                .maritalList
                                                 .map((MaritalData marital) {
                                               return DropdownMenuItem<String>(
                                                 value: marital.id.toString(),
@@ -525,11 +577,13 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                             }).toList(),
                                             onChanged: (String? newValue) {
                                               if (newValue != null) {
-                                                newMemberController.setSelectedMarital(newValue);
+                                                newMemberController
+                                                    .setSelectedMarital(
+                                                        newValue);
                                               }
                                             },
                                           ),
-                                        );
+                                        ));
                                       }
                                     }),
                                   ],
@@ -539,47 +593,78 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                             const SizedBox(height: 20),
                             Obx(() {
                               return Visibility(
-                                visible: newMemberController.MaritalAnnivery.value == true, // Show only if marital_status_id is "1"
+                                visible: newMemberController
+                                        .MaritalAnnivery.value ==
+                                    true, // Show only if marital_status_id is "1"
                                 child: Column(
                                   children: [
                                     const SizedBox(height: 8),
                                     SizedBox(
                                       width: double.infinity,
                                       child: Container(
-                                        margin: const EdgeInsets.only(left: 5, right: 5),
+                                        margin: const EdgeInsets.only(
+                                            left: 5, right: 5),
                                         decoration: BoxDecoration(
-                                          border: Border.all(color: Colors.grey),
-                                          borderRadius: BorderRadius.circular(5),
+                                          border:
+                                              Border.all(color: Colors.grey),
+                                          borderRadius:
+                                              BorderRadius.circular(5),
                                         ),
                                         child: TextFormField(
                                           keyboardType: TextInputType.text,
                                           readOnly: true,
-                                          controller: controller.marriageAnniversaryController.value,
+                                          controller: controller
+                                              .marriageAnniversaryController
+                                              .value,
                                           decoration: const InputDecoration(
                                             hintText: 'Marriage Anniversary *',
                                             border: InputBorder.none,
-                                            contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                                            contentPadding:
+                                                EdgeInsets.symmetric(
+                                                    vertical: 12,
+                                                    horizontal: 20),
                                           ),
                                           onTap: () async {
-                                            DateTime? pickedDate = await showDatePicker(
+                                            DateTime? pickedDate =
+                                                await showDatePicker(
                                               context: context,
-                                              initialDate: controller.marriageAnniversaryController.value.text.isNotEmpty
-                                                  ? DateFormat('dd/MM/yyyy').parse(
-                                                  controller.marriageAnniversaryController.value.text.replaceAll('-', '/'))
+                                              initialDate: controller
+                                                      .marriageAnniversaryController
+                                                      .value
+                                                      .text
+                                                      .isNotEmpty
+                                                  ? DateFormat('dd/MM/yyyy')
+                                                      .parse(controller
+                                                          .marriageAnniversaryController
+                                                          .value
+                                                          .text
+                                                          .replaceAll('-', '/'))
                                                   : DateTime.now(),
                                               firstDate: DateTime(1900),
                                               lastDate: DateTime.now(),
-                                              builder: (BuildContext context, Widget? child) {
+                                              builder: (BuildContext context,
+                                                  Widget? child) {
                                                 return Theme(
-                                                  data: Theme.of(context).copyWith(
-                                                    colorScheme: ColorScheme.light(
-                                                      primary: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                                                  data: Theme.of(context)
+                                                      .copyWith(
+                                                    colorScheme:
+                                                        ColorScheme.light(
+                                                      primary: ColorHelperClass
+                                                          .getColorFromHex(
+                                                              ColorResources
+                                                                  .red_color),
                                                       onPrimary: Colors.white,
                                                       onSurface: Colors.black,
                                                     ),
-                                                    textButtonTheme: TextButtonThemeData(
-                                                      style: TextButton.styleFrom(
-                                                        foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                                                    textButtonTheme:
+                                                        TextButtonThemeData(
+                                                      style:
+                                                          TextButton.styleFrom(
+                                                        foregroundColor:
+                                                            ColorHelperClass
+                                                                .getColorFromHex(
+                                                                    ColorResources
+                                                                        .red_color),
                                                       ),
                                                     ),
                                                   ),
@@ -589,8 +674,13 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                             );
 
                                             if (pickedDate != null) {
-                                              String formattedDate = DateFormat('dd/MM/yyyy').format(pickedDate);
-                                              controller.marriageAnniversaryController.value.text = formattedDate;
+                                              String formattedDate =
+                                                  DateFormat('dd/MM/yyyy')
+                                                      .format(pickedDate);
+                                              controller
+                                                  .marriageAnniversaryController
+                                                  .value
+                                                  .text = formattedDate;
                                             }
                                           },
                                         ),
@@ -615,11 +705,10 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
     );
   }
 
-
-
   void _showPicker({required BuildContext context}) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.white,
       builder: (BuildContext bc) {
         return SafeArea(
           child: Wrap(
@@ -657,7 +746,6 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
     }
   }
 
-
   Future<void> getImage(ImageSource img) async {
     try {
       final XFile? pickedFile = await ImagePicker().pickImage(
@@ -689,17 +777,15 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
   }
 
   // Method to build editable text fields inside the modal
-  Widget _buildEditableField(
-      String label, TextEditingController controller) {
+  Widget _buildEditableField(String label, TextEditingController controller) {
     return Padding(
-      padding:  EdgeInsets.only(bottom: 20.0),
+      padding: EdgeInsets.only(bottom: 20.0),
       child: TextField(
         controller: controller,
         decoration: InputDecoration(
           labelText: label,
           border: OutlineInputBorder(),
         ),
-
       ),
     );
   }
@@ -755,5 +841,4 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
       ),
     );
   }
-
 }

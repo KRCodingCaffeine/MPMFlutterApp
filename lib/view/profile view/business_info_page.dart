@@ -1149,7 +1149,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                     title,
                     style: const TextStyle(
                       fontSize: 12,
-                      color: Colors.grey,
+                      color: Colors.black,
                     ),
                   ),
                 ),
