@@ -253,7 +253,7 @@ class UdateProfileController extends GetxController {
       firstName.value = getUserData.value.firstName.toString();
       middleName.value = getUserData.value.middleName.toString();
       surName.value = getUserData.value.lastName.toString();
-      userName.value = firstName.value + middleName.value + surName.value;
+      userName.value = '${firstName.value} ${middleName.value.isNotEmpty ? middleName.value + " " : ""}${surName.value}';
       mothersName.value = getUserData.value.motherName.toString();
       mobileNumber.value = getUserData.value.mobile.toString();
       email.value = getUserData.value.email.toString();

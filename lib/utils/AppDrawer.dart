@@ -80,8 +80,8 @@ class AppDrawer extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          "Member Code : ${(dashBoardController.lmCode.value.trim().isNotEmpty)
-                              ? dashBoardController.lmCode.value
+                          "Member Code : ${(dashBoardController.memberCode.value.trim().isNotEmpty)
+                              ? dashBoardController.memberCode.value
                               : (dashBoardController.memberId.value.trim().isNotEmpty
                               ? dashBoardController.memberId.value
                               : "N/A")}", // Default text if both are empty
@@ -205,12 +205,12 @@ class AppDrawer extends StatelessWidget {
     final box = context.findRenderObject() as RenderBox?;
 
     const String playStoreLink =
-        'https://members.mumbaimaheshwari.com/member/registration';
+        'https://play.google.com/store/apps/details?id=com.example.yourapp';
     const String appStoreLink =
         'https://apps.apple.com/app/id123456789'; // Replace with actual link
 
     String shareText =
-        "We invite you to join us!  \n\nRegister now using the following link:  \n\n📲 '${playStoreLink}\n\n We look forward to having you onboard' iOS: $appStoreLink";
+        "🌟 Welcome to MPM App! \n\n📲 🚀 Check out this amazing app! \n\n📲 Download Now: \n👉 Android: $playStoreLink\n👉 iOS: $appStoreLink";
 
     await Share.share(
       shareText,

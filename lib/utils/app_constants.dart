@@ -6,7 +6,7 @@ class AppConstants {
   static const String continues = 'Continue';
   static const String back = 'Back';
   static const String resentotp = 'Resend OTP';
-  static const String dontreceive = "Don't receivethe OTP ? ";
+  static const String dontreceive = "Didn’t receive the OTP ? ";
   static const String enter_otp = 'Enter Verification Code';
   static const String detail_otp =
       'We are automatically detecting the SMS sent to your number';

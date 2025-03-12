@@ -51,7 +51,6 @@ class _OTPScreenState extends State<OTPScreen> {
     // TODO: implement initState
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Get.find<LoginController>().startTimer();
       Get.find<LoginController>().sendOtp(controller.mobilecon.value);
     });
   }
@@ -124,8 +123,8 @@ class _OTPScreenState extends State<OTPScreen> {
                     textAlign: TextAlign.center,
                   );
                 }),
-
                 const SizedBox(height: 20),
+
                 Row(
                   children: [
                     Expanded(
@@ -223,7 +222,7 @@ class _OTPScreenState extends State<OTPScreen> {
                         Text(
                           controller.isButtonEnabled.value
                               ? AppConstants.dontreceive
-                              : "Resend OTP in ${controller.start.value} seconds",
+                              : "Resend OTP",
                           style: TextStyleClass.black14style,
                         ),
                         Text(

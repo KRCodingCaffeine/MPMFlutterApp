@@ -24,7 +24,6 @@ class LoginController {
   var mobilecon = ''.obs;
   var LMCODEDYANMIC="".obs;
   var validotp = "".obs;
-  var start = 60.obs;
   var isButtonEnabled = false.obs;
   late Timer _timer;
   var lmCodeVisible = false.obs;
@@ -155,19 +154,6 @@ class LoginController {
 
      // print(response.reasonPhrase);
     }
-  }
-
-  void startTimer() {
-    isButtonEnabled.value = false;
-    start.value = 60; // Reset timer
-    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
-      if (start.value == 0) {
-        isButtonEnabled.value = true;
-        _timer.cancel();
-      } else {
-        start.value--; // Decrement the timer
-      }
-    });
   }
 
 
@@ -365,7 +351,6 @@ class LoginController {
   }
 
   void resendOtp() {
-    startTimer();
     sendOtp(mobilecon.value);
     print("OTP Resent!");
   }
