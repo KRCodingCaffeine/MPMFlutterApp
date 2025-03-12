@@ -133,6 +133,14 @@ class AppDrawer extends StatelessWidget {
             },
           ),
           ListTile(
+            leading: const Icon(Icons.ios_share),
+            title: const Text('Share Membership Form'),
+            onTap: () {
+              Navigator.pop(context);
+              _onSharememberForm(context);
+            },
+          ),
+          ListTile(
             leading: const Icon(Icons.file_copy),
             title: const Text('Forms'),
             onTap: () {
@@ -211,7 +219,27 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
-  /// ✅ **Fixed Logout Dialog**
+  void _onSharememberForm(BuildContext context) async {
+    final box = context.findRenderObject() as RenderBox?;
+
+    const String membershipFormLink =
+        'https://members.mumbaimaheshwari.com/member/registration';
+
+    String shareText =
+        "We invite you to join us! 🎉\n\n"
+        "Register now using the following link: \n\n"
+        "📲 $membershipFormLink\n\n"
+        "We look forward to having you onboard!";
+
+    await Share.share(
+      shareText,
+      subject: "Join Us - Membership Registration",
+      sharePositionOrigin: box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : Rect.zero, // Provide a fallback value
+    );
+  }
+
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
