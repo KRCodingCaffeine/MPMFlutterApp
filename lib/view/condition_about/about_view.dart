@@ -18,7 +18,7 @@ class AboutViewPage extends StatelessWidget {
             padding: 10px;
         }
         h2, h3 {
-            color: #2c3e50;
+            color: black;
             margin-top: 20px;
         }
         h2 {
@@ -40,6 +40,7 @@ class AboutViewPage extends StatelessWidget {
             list-style-type: none;
             position: relative;
             padding-left: 20px;
+            textAlign: TextAlign.justify,
         }
         li::before {
             content: "•";
