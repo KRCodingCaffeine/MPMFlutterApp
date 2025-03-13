@@ -44,13 +44,17 @@ class _DashboardViewState extends State<DashboardView> {
   @override
   Widget build(BuildContext context) {
     return Obx(
-          () => Scaffold(
+      () => Scaffold(
         appBar: AppBar(
           backgroundColor:
-          ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+              ColorHelperClass.getColorFromHex(ColorResources.logo_color),
           title: Text(
-            appBarTitles[controller.currentIndex.value], // Dynamic title
-            style: const TextStyle(color: Colors.white),
+            appBarTitles[controller.currentIndex.value],
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: MediaQuery.of(context).size.width * 0.045,
+              fontWeight: FontWeight.w500,
+            ),
           ),
           iconTheme: const IconThemeData(color: Colors.white),
         ),
@@ -60,7 +64,7 @@ class _DashboardViewState extends State<DashboardView> {
         bottomNavigationBar: BottomNavigationBar(
           backgroundColor: Colors.white,
           selectedItemColor:
-          ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              ColorHelperClass.getColorFromHex(ColorResources.red_color),
           unselectedItemColor: Colors.grey,
           currentIndex: controller.currentIndex.value,
           onTap: (index) {
