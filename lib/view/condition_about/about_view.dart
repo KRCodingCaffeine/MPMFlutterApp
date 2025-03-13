@@ -17,7 +17,7 @@ class _AboutViewPageState extends State<AboutViewPage> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text(
-          'About Us',
+          'About',
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
