@@ -6,6 +6,7 @@ import 'package:mpm/utils/AppDrawer.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/utils/textstyleclass.dart';
 import 'package:mpm/utils/urls.dart';
 import 'package:mpm/view/login_view.dart';
 import 'package:mpm/view/profile%20view/Education_page_info.dart';
@@ -231,10 +232,30 @@ class _ProfileViewState extends State<ProfileView> {
                 ],
               ),
               Obx((){
+                controller.checkReviewApproval();
                 return Visibility(
                     visible: controller.showDashboardReviewFlag.value,
-                    child: _buildAdCard2("assets/images/banner1.jpg"));
+                    child: SizedBox(
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          showJanganaDialog(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                          ColorHelperClass.getColorFromHex(
+                              ColorResources.red_color),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                        ),
+                        child: Text("Update Jangana",
+                            style: TextStyleClass.white14style),
+                      ),
+                    )
+                );
               }),
+
             ],
           ),
         );
