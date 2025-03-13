@@ -1212,12 +1212,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                     occupationSpecialization: occupationSpecialization,
                     occupationDetails: occupationDetails,
                     onOccInfoChanged: (occ, prof, spec, det) {
-                      setState(() {
-                        occupation = occ;
-                        occupationProfession = prof;
-                        occupationSpecialization = spec;
-                        occupationDetails = det;
-                      });
+                      controller.getUserData();
                     },
                   ),
                 ),
@@ -1235,81 +1230,97 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          controller.occupationData.value?
-            Card(
-              elevation: 5,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              color: Colors.white,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(
-                        height: 8), // Spacing between title and details
+       Obx((){
+        if(controller.occupationData.value)
+        return Card(
+           elevation: 5,
+           shape: RoundedRectangleBorder(
+             borderRadius: BorderRadius.circular(10),
+           ),
+           color: Colors.white,
+           child: Padding(
+             padding: const EdgeInsets.all(16.0),
+             child: Column(
+               crossAxisAlignment: CrossAxisAlignment.start,
+               children: [
+                 const SizedBox(
+                     height: 8),
 
-                    // Using Row to align info on the left and Edit button on the right
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildInfoLine('Occupation', controller.occupationController.value.text),
-                              _buildInfoLine('Profession', controller.occupation_profession_nameController.value.text),
-                              _buildInfoLine('Specialization', controller.specialization_nameController.value.text),
-                              _buildInfoLine('Details', controller.detailsController.value.text),
-                            ],
-                          ),
-                        ),
-                        TextButton.icon(
-                          onPressed: () => _showEditOccBottomSheet(context),
-                          icon: const Icon(Icons.edit,
-                              color: Colors.red, size: 16),
-                          label: const Text(
-                            "Edit",
-                            style: TextStyle(fontSize: 14, color: Colors.red),
-                          ),
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.red,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ):
-          Column(
-              children: [
-                const Text(
-                  "No Occupation Detail, Please add by clicking Add Occupation Button",
-                  style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
-                TextButton.icon(
-                  onPressed: () => _showEditOccBottomSheet(context),
-                  icon: const Icon(
-                    Icons.add,
-                    color: Colors.red,
-                  ),
-                  label: const Text(
-                    "Add Occupation",
-                    style: TextStyle(color: Colors.red),
-                  ),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors
-                        .red, // Ensures the text and icon stay red when pressed
-                  ),
-                ),
-              ],
-            ),
+                 // Using Row to align info on the left and Edit button on the right
+                 Row(
+                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                   children: [
+                     Expanded(
+                       child: Column(
+                         crossAxisAlignment: CrossAxisAlignment.start,
+                         children: [
+
+                           Obx((){
+                             return  _buildInfoLine('Occupation', controller.occupationController.value.text);
+
+                           }),
+                           Obx((){
+                             return    _buildInfoLine('Profession', controller.occupation_profession_nameController.value.text);
+
+                           }),
+                           Obx((){
+                             return      _buildInfoLine('Specialization', controller.specialization_nameController.value.text);
+
+                           }),
+                           Obx((){
+                             return    _buildInfoLine('Details', controller.detailsController.value.text);
+
+                           }),
+                         ],
+                       ),
+                     ),
+                     TextButton.icon(
+                       onPressed: () => _showEditOccBottomSheet(context),
+                       icon: const Icon(Icons.edit,
+                           color: Colors.red, size: 16),
+                       label: const Text(
+                         "Edit",
+                         style: TextStyle(fontSize: 14, color: Colors.red),
+                       ),
+                       style: TextButton.styleFrom(
+                         foregroundColor: Colors.red,
+                       ),
+                     ),
+                   ],
+                 ),
+               ],
+             ),
+           ),
+         );
+        else
+        return Column(
+           children: [
+             const Text(
+               "No Occupation Detail, Please add by clicking Add Occupation Button",
+               style: TextStyle(
+                   fontSize: 14,
+                   color: Colors.grey,
+                   fontWeight: FontWeight.bold),
+               textAlign: TextAlign.center,
+             ),
+             TextButton.icon(
+               onPressed: () => _showEditOccBottomSheet(context),
+               icon: const Icon(
+                 Icons.add,
+                 color: Colors.red,
+               ),
+               label: const Text(
+                 "Add Occupation",
+                 style: TextStyle(color: Colors.red),
+               ),
+               style: TextButton.styleFrom(
+                 foregroundColor: Colors
+                     .red, // Ensures the text and icon stay red when pressed
+               ),
+             ),
+           ],
+         );
+       })
         ],
       ),
     );
@@ -1358,7 +1369,7 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
     //   _detailsController.text,
     // );
     controller.addAndupdateOccuption();
-    Navigator.pop(context);
+
   }
 
   @override
@@ -1622,7 +1633,6 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
                                                 onChanged: (String? newValue) {
                                                   if (newValue != null) {
                                                     controller.setSelectOccuptionSpec(newValue);
-
                                                   }
                                                 },
                                               ),

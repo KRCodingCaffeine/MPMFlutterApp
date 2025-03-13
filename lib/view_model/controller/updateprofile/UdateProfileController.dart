@@ -281,7 +281,7 @@ class UdateProfileController extends GetxController {
       marriageAnniversaryDate.value = getUserData.value.marriageAnniversaryDate.toString();
       memberCode.value = getUserData.value.memberCode.toString();
       memberSalutaitonId.value = getUserData.value.memberSalutaitonId.toString();
-      membershipApprovalStatusId.value = getUserData.value.membershipApprovalStatusId.toString();
+
       membershipTypeId.value = getUserData.value.membershipTypeId.toString();
       memberStatusId.value = getUserData.value.memberStatusId.toString();
       proposerId.value = getUserData.value.proposerId.toString();
@@ -487,14 +487,15 @@ class UdateProfileController extends GetxController {
     setRxRequestQualificationCat(Status.LOADING);
     api.userQualificationCategory(datas).then((_value) {
       setRxRequestQualificationCat(Status.COMPLETE);
-      setQualicationCategory(_value.data!);
+      qulicationCategoryList.value .add(_value.data!);
+      setQualicationCategory(qulicationCategoryList.value);
     }).onError((error, strack) {
       setRxRequestQualificationCat(Status.ERROR);
       print("cvv"+error.toString());
     });
   }
 void checkReviewApproval(){
-    if(userMaritalStatus.value=="1" && membership_approval_status_id.value=="6")
+    if(userMaritalStatus.value=="1" && membershipApprovalStatusId.value=="6")
       {
         if(isJangana.value=="0")
           {
@@ -692,7 +693,7 @@ void checkReviewApproval(){
         "occupation_profession_id": selectOccuptionPro.value,
         "occupation_specialization_id": selectOccuptionSpec.value,
         "occupation_other_name": detailsController.value.text,
-        "updated_by": "1"
+        "updated_by": memberId.value
       };
       print("fffh"+map.toString());
       await api.updateOrAddOccuption(map)
@@ -736,15 +737,12 @@ void checkReviewApproval(){
     memberId.value = userData!.memberId.toString();
     //addloading.value=true;
     try {
-      Map map = {
-        "member_id": memberId.value,
 
-      };
-      print("fffh"+map.toString());
-      await api.userJanganaStatus(map).then((_value) async {
+
+      await api.userJanganaStatus(memberId.value).then((_value) async {
         // addloading.value=false;
-        print("gnfg" + _value.message.toString());
-        if (_value.status == true) {
+
+        if (_value['status'] == true) {
 
           Get.snackbar(
             'Success', // Title
@@ -755,7 +753,7 @@ void checkReviewApproval(){
             duration: Duration(seconds: 3),
           );
           getUserProfile();
-          Navigator.pushReplacementNamed(context!, RouteNames.dashboard);
+          Navigator.of(context!).pop();
         }
       }).onError((error, strack) async {
         //addloading.value=false;

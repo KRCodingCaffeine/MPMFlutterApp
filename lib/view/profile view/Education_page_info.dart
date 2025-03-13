@@ -43,15 +43,17 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: regiController.qualificationList.value.isEmpty
-            ? const Center(child: Text("No Education added yet."))
-            : ListView.builder(
-                itemCount: regiController.qualificationList.value.length,
-                itemBuilder: (context, index) {
-                  return educationWidget(
-                      regiController.qualificationList.value[index]);
-                },
-              ),
+        child: Obx((){
+          return regiController.qualificationList.value.isEmpty
+              ? const Center(child: Text("No Education added yet."))
+              : ListView.builder(
+            itemCount: regiController.qualificationList.value.length,
+            itemBuilder: (context, index) {
+              return educationWidget(
+                  regiController.qualificationList.value[index]);
+            },
+          );
+        }),
       ),
     );
   }
@@ -246,7 +248,8 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
       backgroundColor: Colors.white,
       isScrollControlled: true,
       builder: (context) {
-        regiController.selectQlification.value=qualification.memberQualificationId.toString();
+        regiController.selectQlification.value=qualification.qualificationId.toString();
+        print("fhggh"+regiController.selectQlification.value.toString());
         if(qualification.qualificationMainId.toString()!="") {
           regiController.isQualicationList.value=true;
           regiController.getQualicationMain(qualification.memberQualificationId.toString());
@@ -319,7 +322,7 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                     }).toList(),
                     onChanged: (String? newValue) {
                       if (newValue != null) {
-                        regiController.selectQlification(newValue);
+                        regiController.setSelectQualification(newValue);
                         if (newValue == "other") {
                           regiController.isQualicationList.value = false;
                           regiController.isQualificationDetailVisible.value = true;

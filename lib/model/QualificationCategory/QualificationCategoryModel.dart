@@ -1,19 +1,17 @@
 class QualificationCategoryModel {
   bool? status;
   String? message;
-  List<Qualificationcategorydata>? data;
+  Qualificationcategorydata? data;
 
   QualificationCategoryModel({this.status, this.message, this.data});
 
   QualificationCategoryModel.fromJson(Map<String, dynamic> json) {
     status = json['status'];
     message = json['message'];
-    if (json['data'] != null) {
-      data = <Qualificationcategorydata>[];
-      json['data'].forEach((v) {
-        data!.add(new Qualificationcategorydata.fromJson(v));
-      });
-    }
+
+      data = json['data'] != null ? new Qualificationcategorydata.fromJson(json['data']) : null;
+
+
   }
 
   Map<String, dynamic> toJson() {
@@ -21,7 +19,7 @@ class QualificationCategoryModel {
     data['status'] = this.status;
     data['message'] = this.message;
     if (this.data != null) {
-      data['data'] = this.data!.map((v) => v.toJson()).toList();
+      data['data'] = this.data!.toJson();
     }
     return data;
   }
