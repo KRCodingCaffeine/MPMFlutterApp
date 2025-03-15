@@ -34,8 +34,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
   String occupationProfession = "";
   String occupationSpecialization = "";
   String occupationDetails = "";
-  NewMemberController regiController =Get.put(NewMemberController());
-  UdateProfileController controller =Get.put(UdateProfileController());
+  NewMemberController regiController = Get.put(NewMemberController());
+  UdateProfileController controller = Get.put(UdateProfileController());
   final GlobalKey<FormState> _formKeyLogin = GlobalKey<FormState>();
   final GlobalKey<FormState> _formKeyLogin2 = GlobalKey<FormState>();
   @override
@@ -84,7 +84,6 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
             ),
             const SizedBox(height: 20),
 
-
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -96,24 +95,42 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                     children: [
                       const Text(
                         'Business / Employment Details',
-                        style: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                       ),
-                      TextButton.icon(
-                        onPressed: () => _showAddModalSheet(context),
-                        icon: const Icon(Icons.add, color: Colors.red),
-                        label: const Text(
-                          "Add",
-                          style: TextStyle(fontSize: 14, color: Colors.red),
+                      ElevatedButton(
+                        onPressed: () {
+                          _showAddModalSheet(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFFDC3545),
+                          elevation: 4,
+                          shadowColor: Colors.black,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         ),
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.red,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.add, size: 12),
+                            const SizedBox(width: 4),
+                            const Text(
+                              'Add',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
 
+                // Divider
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: Divider(
@@ -122,35 +139,40 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                   ),
                 ),
 
-                Obx((){
-                  if(controller.businessInfoList.value.isEmpty)
-                  {
-                    return Center(child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Center(
+                // Business Info List
+                Obx(() {
+                  if (controller.businessInfoList.value.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
+                          children: const [
+                            Text(
                               "No Employment Details, Please add by clicking Add Employment Button.",
                               style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey,
-                                  fontWeight: FontWeight.bold),
+                                fontSize: 14,
+                                color: Colors.grey,
+                                fontWeight: FontWeight.bold,
+                              ),
                               textAlign: TextAlign.center,
                             ),
                           ],
                         ),
                       ),
-                    ),);
+                    );
                   }
+
                   return ListView.builder(
-                      physics: BouncingScrollPhysics(),
-                      shrinkWrap: true,
-                      itemCount: controller.businessInfoList.value.length,
-                      itemBuilder: (context, index) => _buildBusinessInfoCard(bussinessinfo: controller.businessInfoList.value[index])
+                    physics: const BouncingScrollPhysics(),
+                    shrinkWrap: true,
+                    itemCount: controller.businessInfoList.value.length,
+                    itemBuilder: (context, index) => _buildBusinessInfoCard(
+                      bussinessinfo: controller.businessInfoList.value[index],
+                    ),
                   );
                 }),
+
                 const SizedBox(height: 20),
               ],
             )
@@ -159,7 +181,6 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
       ),
     );
   }
-
 
   void _showAddModalSheet(BuildContext context) {
     double heightFactor = 0.8; // Default height for the modal
@@ -194,25 +215,31 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            TextButton(
+                            ElevatedButton(
                               onPressed: () => Navigator.of(context).pop(),
-                              style: TextButton.styleFrom(
-                                foregroundColor: Colors.red,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 12.0,
-                                  horizontal: 24.0,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: const Color(0xFFDC3545),
+                                elevation: 4,
+                                shadowColor: Colors.black,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                              ),
+                              child: const Text(
+                                'Cancel',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
-                              child: const Text('Cancel',
-                                  style: TextStyle(color: Colors.red)),
                             ),
-                            Obx((){
-                              return TextButton(
+                            Obx(() {
+                              return ElevatedButton(
                                 onPressed: () {
-                                  if(_formKeyLogin.currentState!.validate()) {
-
-                                    if(regiController.city_id.value=="")
-                                    {
+                                  if (_formKeyLogin.currentState!.validate()) {
+                                    if (regiController.city_id.value == "") {
                                       Get.snackbar(
                                         "Error",
                                         "Please Select City",
@@ -222,8 +249,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                       );
                                       return;
                                     }
-                                    if(regiController.state_id.value=="")
-                                    {
+                                    if (regiController.state_id.value == "") {
                                       Get.snackbar(
                                         "Error",
                                         "Please Select State",
@@ -233,8 +259,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                       );
                                       return;
                                     }
-                                    if(regiController.country_id.value=="")
-                                    {
+                                    if (regiController.country_id.value == "") {
                                       Get.snackbar(
                                         "Error",
                                         "Please Select Country",
@@ -247,20 +272,28 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
 
                                     controller.userAddBuniessInfo();
                                   }
-
                                 },
-                                style: TextButton.styleFrom(
-                                  foregroundColor: Colors.red,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 12.0,
-                                    horizontal: 24.0,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: const Color(0xFFDC3545),
+                                  elevation: 4,
+                                  shadowColor: Colors.black,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                                 ),
-                                child:  controller.addBussinessLoading.value
+                                child: controller.addBussinessLoading.value
                                     ? const CircularProgressIndicator(
                                   color: Colors.red,
-                                ): Text('Save',
-                                    style: TextStyle(color: Colors.red)),
+                                )
+                                    : const Text(
+                                  'Save',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
                               );
                             }),
                           ],
@@ -276,127 +309,139 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Obx((){
+                                Obx(() {
                                   return _buildEditableField(
-                                    'Organisation Name',
-                                    controller.organisationNameController.value,
+                                      'Organisation Name',
+                                      controller
+                                          .organisationNameController.value,
                                       'Organisation Name', // Hint Text
                                       'Enter Organisation Name',
                                       text: TextInputType.text,
-                                      isRequired: true
-                                  );
+                                      isRequired: true);
                                 }),
-                               Obx((){
-                                 return  _buildEditableField(
-                                   'Office Phone',
-                                   controller.officePhoneController.value,
-                                     'Office Phone',
-                                     'Enter Office Phone',
-                                     text: TextInputType.phone,
-                                     isRequired: true
-                                 );
-                               }),
-
-                                Obx((){
+                                Obx(() {
                                   return _buildEditableField(
-                                    'Office No',
-                                    controller.flatnoController.value,
+                                      'Office Phone',
+                                      controller.officePhoneController.value,
+                                      'Office Phone',
+                                      'Enter Office Phone',
+                                      text: TextInputType.phone,
+                                      isRequired: true);
+                                }),
+                                Obx(() {
+                                  return _buildEditableField(
+                                      'Office No',
+                                      controller.flatnoController.value,
                                       'Office No',
                                       'Enter Office No',
                                       text: TextInputType.text,
-                                      isRequired: true
-                                  );
+                                      isRequired: true);
                                 }),
-                                Obx((){
-                                  return   _buildEditableField(
+                                Obx(() {
+                                  return _buildEditableField(
                                       'Address',
-                                      controller.addressbusinessinfoNameController.value,
+                                      controller
+                                          .addressbusinessinfoNameController
+                                          .value,
                                       'Address',
                                       'Enter Address',
                                       text: TextInputType.text,
-                                      isRequired: true
-
-                                  );
+                                      isRequired: true);
                                 }),
-                                Obx((){
-                                 return  _buildEditableField(
-                                   'Area',
-                                   controller.areaNameController.value,
-                                     'Area',
-                                     'Enter Area',
-                                     text: TextInputType.text,
-                                     isRequired: true
-                                 );
-                               }),
-                                Container(
+                                Obx(() {
+                                  return _buildEditableField(
+                                      'Area',
+                                      controller.areaNameController.value,
+                                      'Area',
+                                      'Enter Area',
+                                      text: TextInputType.text,
+                                      isRequired: true);
+                                }),
 
+                                Container(
                                   width: double.infinity,
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.grey),
-                                    borderRadius: BorderRadius.circular(5),
-                                  ),
                                   child: Row(
                                     children: [
                                       Obx(() {
-                                        if (regiController.rxStatusCityLoading.value ==
+                                        if (regiController
+                                                .rxStatusCityLoading.value ==
                                             Status.LOADING) {
                                           return Padding(
                                             padding: const EdgeInsets.symmetric(
                                                 vertical: 10, horizontal: 22),
                                             child: Container(
-                                                alignment: Alignment.centerRight,
+                                                alignment:
+                                                    Alignment.centerRight,
                                                 height: 24,
                                                 width: 24,
-                                                child: CircularProgressIndicator(
+                                                child:
+                                                    CircularProgressIndicator(
                                                   color: ColorHelperClass
                                                       .getColorFromHex(
-                                                      ColorResources.pink_color),
+                                                          ColorResources
+                                                              .pink_color),
                                                 )),
                                           );
                                         } else if (regiController
-                                            .rxStatusCityLoading.value ==
+                                                .rxStatusCityLoading.value ==
                                             Status.ERROR) {
                                           return const Center(
                                               child: Padding(
-                                                padding: EdgeInsets.all(8.0),
-                                                child: Text('Failed to load city'),
-                                              ));
-                                        } else if (regiController.cityList.isEmpty) {
+                                            padding: EdgeInsets.all(8.0),
+                                            child: Text('Failed to load city'),
+                                          ));
+                                        } else if (regiController
+                                            .cityList.isEmpty) {
                                           return const Center(
                                               child: Padding(
-                                                padding: EdgeInsets.all(8.0),
-                                                child: Text('No City available'),
-                                              ));
+                                            padding: EdgeInsets.all(8.0),
+                                            child: Text('No City available'),
+                                          ));
                                         } else {
                                           return Expanded(
-                                            child: DropdownButton<String>(
-                                              padding: const EdgeInsets.symmetric(
-                                                  horizontal: 20),
-                                              underline: Container(),
-                                              isExpanded: true,
-                                              hint: const Text(
-                                                'Select City',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
+                                            child: InputDecorator(
+                                              decoration: InputDecoration(
+                                                labelText: 'City *',
+                                                border: OutlineInputBorder(
+                                                  borderSide: BorderSide(color: Colors.black26),
+                                                ),
+                                                enabledBorder: OutlineInputBorder(
+                                                  borderSide: BorderSide(color: Colors.black26),
+                                                ),
+                                                focusedBorder: OutlineInputBorder(
+                                                  borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                                                ),
+                                                contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                                                labelStyle: TextStyle(
+                                                  color: Colors.black45,
                                                 ),
                                               ),
-                                              value: regiController.city_id.value.isEmpty ? null
-                                                  : regiController
-                                                  .city_id.value,
-                                              items: regiController.cityList
-                                                  .map((CityData gender) {
-                                                return DropdownMenuItem<String>(
-                                                  value: gender.id
-                                                      .toString(),
-                                                  child: Text(gender.cityName ??
-                                                      'Unknown'),
-                                                );
-                                              }).toList(),
-                                              onChanged: (String? newValue) {
-                                                if (newValue != null) {
-                                                  regiController.setSelectedCity(newValue);
-                                                }
-                                              },
+                                              isEmpty: regiController.city_id.value.isEmpty,
+                                              child: DropdownButtonHideUnderline(
+                                                child: DropdownButton<String>(
+                                                  dropdownColor: Colors.white, // White background for dropdown list
+                                                  borderRadius: BorderRadius.circular(10),
+                                                  isExpanded: true,
+                                                  hint: const Text(
+                                                    'Select City *',
+                                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                                  ),
+                                                  value: regiController.city_id.value.isEmpty
+                                                      ? null
+                                                      : regiController.city_id.value,
+                                                  items: regiController.cityList.map((CityData city) {
+                                                    return DropdownMenuItem<String>(
+                                                      value: city.id.toString(),
+                                                      child: Text(city.cityName ?? 'Unknown'),
+                                                    );
+                                                  }).toList(),
+                                                  onChanged: (String? newValue) {
+                                                    if (newValue != null) {
+                                                      regiController.setSelectedCity(newValue);
+                                                    }
+                                                  },
+                                                ),
+                                              ),
                                             ),
                                           );
                                         }
@@ -404,67 +449,79 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                     ],
                                   ),
                                 ),
+                                const SizedBox(height: 30),
 
-                                    const SizedBox(height: 20),
-                                    Container(
-
-                                      width: double.infinity,
-                                      decoration: BoxDecoration(
-                                        border: Border.all(color: Colors.grey),
-                                        borderRadius: BorderRadius.circular(5),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Obx(() {
-                                            if (regiController.rxStatusStateLoading.value ==
-                                                Status.LOADING) {
-                                              return Padding(
-                                                padding: const EdgeInsets.symmetric(
-                                                    vertical: 10, horizontal: 22),
-                                                child: Container(
-                                                    alignment: Alignment.centerRight,
-                                                    height: 24,
-                                                    width: 24,
-                                                    child: CircularProgressIndicator(
-                                                      color: ColorHelperClass
-                                                          .getColorFromHex(
-                                                          ColorResources.pink_color),
-                                                    )),
-                                              );
-                                            } else if (regiController
+                                Container(
+                                  width: double.infinity,
+                                  child: Row(
+                                    children: [
+                                      Obx(() {
+                                        if (regiController
                                                 .rxStatusStateLoading.value ==
-                                                Status.ERROR) {
-                                              return const Center(
-                                                  child: Text('Failed to load state'));
-                                            } else if (regiController
-                                                .stateList.isEmpty) {
-                                              return const Center(
-                                                  child: Text('No State available'));
-                                            } else {
-                                              return Expanded(
+                                            Status.LOADING) {
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 10, horizontal: 22),
+                                            child: Container(
+                                                alignment:
+                                                    Alignment.centerRight,
+                                                height: 24,
+                                                width: 24,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                  color: ColorHelperClass
+                                                      .getColorFromHex(
+                                                          ColorResources
+                                                              .pink_color),
+                                                )),
+                                          );
+                                        } else if (regiController
+                                                .rxStatusStateLoading.value ==
+                                            Status.ERROR) {
+                                          return const Center(
+                                              child:
+                                                  Text('Failed to load state'));
+                                        } else if (regiController
+                                            .stateList.isEmpty) {
+                                          return const Center(
+                                              child:
+                                                  Text('No State available'));
+                                        } else {
+                                          return Expanded(
+                                            child: InputDecorator(
+                                              decoration: InputDecoration(
+                                                labelText: 'State *',
+                                                border: OutlineInputBorder(
+                                                  borderSide: BorderSide(color: Colors.black26),
+                                                ),
+                                                enabledBorder: OutlineInputBorder(
+                                                  borderSide: BorderSide(color: Colors.black26),
+                                                ),
+                                                focusedBorder: OutlineInputBorder(
+                                                  borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                                                ),
+                                                contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                                                labelStyle: TextStyle(
+                                                  color: Colors.black45,
+                                                ),
+                                              ),
+                                              isEmpty: regiController.state_id.value.isEmpty,
+                                              child: DropdownButtonHideUnderline(
                                                 child: DropdownButton<String>(
-                                                  padding: const EdgeInsets.symmetric(
-                                                      horizontal: 20),
-                                                  underline: Container(),
+                                                  dropdownColor: Colors.white, // White background for dropdown list
+                                                  borderRadius: BorderRadius.circular(10),
                                                   isExpanded: true,
                                                   hint: const Text(
-                                                    'Select State',
-                                                    style: TextStyle(
-                                                      fontWeight: FontWeight.bold,
-                                                    ),
+                                                    'Select State *',
+                                                    style: TextStyle(fontWeight: FontWeight.bold),
                                                   ),
-                                                  value: regiController
-                                                      .state_id.value.isEmpty
+                                                  value: regiController.state_id.value.isEmpty
                                                       ? null
-                                                      : regiController
-                                                      .state_id.value,
-                                                  items: regiController.stateList
-                                                      .map((StateData gender) {
+                                                      : regiController.state_id.value,
+                                                  items: regiController.stateList.map((StateData state) {
                                                     return DropdownMenuItem<String>(
-                                                      value: gender.id
-                                                          .toString(),
-                                                      child: Text(gender.stateName ??
-                                                          'Unknown'),
+                                                      value: state.id.toString(),
+                                                      child: Text(state.stateName ?? 'Unknown'),
                                                     );
                                                   }).toList(),
                                                   onChanged: (String? newValue) {
@@ -473,79 +530,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                                     }
                                                   },
                                                 ),
-                                              );
-                                            }
-                                          })
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(height: 20),
-                                  Container(
-
-                                  width: double.infinity,
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.grey),
-                                    borderRadius: BorderRadius.circular(5),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Obx(() {
-                                        if (regiController.rxStatusCountryLoading.value ==
-                                            Status.LOADING) {
-                                          return Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 10, horizontal: 22),
-                                            child: Container(
-                                                alignment: Alignment.centerRight,
-                                                height: 24,
-                                                width: 24,
-                                                child: CircularProgressIndicator(
-                                                  color: ColorHelperClass
-                                                      .getColorFromHex(
-                                                      ColorResources.pink_color),
-                                                )),
-                                          );
-                                        } else if (regiController
-                                            .rxStatusCountryLoading.value ==
-                                            Status.ERROR) {
-                                          return const Center(
-                                              child: Text('Failed to load country'));
-                                        } else if (regiController
-                                            .countryList.isEmpty) {
-                                          return const Center(
-                                              child: Text('No Country available'));
-                                        } else {
-                                          return Expanded(
-                                            child: DropdownButton<String>(
-                                              padding: const EdgeInsets.symmetric(
-                                                  horizontal: 20),
-                                              underline: Container(),
-                                              isExpanded: true,
-                                              hint: const Text(
-                                                'Select Country',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                ),
                                               ),
-                                              value: regiController
-                                                  .country_id.value.isEmpty
-                                                  ? null
-                                                  : regiController
-                                                  .country_id.value,
-                                              items: regiController.countryList
-                                                  .map((CountryData gender) {
-                                                return DropdownMenuItem<String>(
-                                                  value: gender.id
-                                                      .toString(),
-                                                  child: Text(gender.countryName ??
-                                                      'Unknown'),
-                                                );
-                                              }).toList(),
-                                              onChanged: (String? newValue) {
-                                                if (newValue != null) {
-                                                  regiController.setSelectedCountry(newValue);
-                                                }
-                                              },
                                             ),
                                           );
                                         }
@@ -553,37 +538,124 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                     ],
                                   ),
                                 ),
-                                    const SizedBox(height: 20),
-                                   Obx((){
-                                     return  _buildEditableField(
-                                       'Office Pincode',
-                                       controller. officePincodeController.value,
-                                         'Office Pincode',
-                                         'Office Pincode',
-                                         text: TextInputType.number,
-                                         isRequired: true
-                                     );
-                                   }),
-                                    Obx((){
-                                      return _buildEditableField(
-                                        'Business Email',
-                                        controller.businessEmailController.value,
-                                          'Business Email',
-                                          'Enter Business Email',
-                                          text: TextInputType.emailAddress,
-                                          isRequired: true
-                                      );
-                                    }),
-                                  Obx((){
-                                    return   _buildEditableField(
-                                      'Website',
-                                      controller.websiteController.value,
-                                        'Website',
-                                        'Enter Website',
-                                        text: TextInputType.text,
+                                const SizedBox(height: 30),
 
-                                    );
-                                  }),
+                                Container(
+                                  width: double.infinity,
+                                  child: Row(
+                                    children: [
+                                      Obx(() {
+                                        if (regiController
+                                                .rxStatusCountryLoading.value ==
+                                            Status.LOADING) {
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 10, horizontal: 22),
+                                            child: Container(
+                                                alignment:
+                                                    Alignment.centerRight,
+                                                height: 24,
+                                                width: 24,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                  color: ColorHelperClass
+                                                      .getColorFromHex(
+                                                          ColorResources
+                                                              .pink_color),
+                                                )),
+                                          );
+                                        } else if (regiController
+                                                .rxStatusCountryLoading.value ==
+                                            Status.ERROR) {
+                                          return const Center(
+                                              child: Text(
+                                                  'Failed to load country'));
+                                        } else if (regiController
+                                            .countryList.isEmpty) {
+                                          return const Center(
+                                              child:
+                                                  Text('No Country available'));
+                                        } else {
+                                          return Expanded(
+                                            child: InputDecorator(
+                                              decoration: InputDecoration(
+                                                labelText: 'Country *',
+                                                border: OutlineInputBorder(
+                                                  borderSide: BorderSide(color: Colors.black26),
+                                                ),
+                                                enabledBorder: OutlineInputBorder(
+                                                  borderSide: BorderSide(color: Colors.black26),
+                                                ),
+                                                focusedBorder: OutlineInputBorder(
+                                                  borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                                                ),
+                                                contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                                                labelStyle: TextStyle(
+                                                  color: Colors.black45,
+                                                ),
+                                              ),
+                                              isEmpty: regiController.country_id.value.isEmpty,
+                                              child: DropdownButtonHideUnderline(
+                                                child: DropdownButton<String>(
+                                                  dropdownColor: Colors.white, // Ensures white dropdown background
+                                                  borderRadius: BorderRadius.circular(10),
+                                                  isExpanded: true,
+                                                  hint: const Text(
+                                                    'Select Country *',
+                                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                                  ),
+                                                  value: regiController.country_id.value.isEmpty
+                                                      ? null
+                                                      : regiController.country_id.value,
+                                                  items: regiController.countryList.map((CountryData country) {
+                                                    return DropdownMenuItem<String>(
+                                                      value: country.id.toString(),
+                                                      child: Text(country.countryName ?? 'Unknown'),
+                                                    );
+                                                  }).toList(),
+                                                  onChanged: (String? newValue) {
+                                                    if (newValue != null) {
+                                                      regiController.setSelectedCountry(newValue);
+                                                    }
+                                                  },
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      })
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 30),
+
+                                Obx(() {
+                                  return _buildEditableField(
+                                      'Office Pincode',
+                                      controller.officePincodeController.value,
+                                      'Office Pincode',
+                                      'Office Pincode',
+                                      text: TextInputType.number,
+                                      isRequired: true);
+                                }),
+                                Obx(() {
+                                  return _buildEditableField(
+                                      'Business Email',
+                                      controller.businessEmailController.value,
+                                      'Business Email',
+                                      'Enter Business Email',
+                                      text: TextInputType.emailAddress,
+                                      isRequired: true);
+                                }),
+                                Obx(() {
+                                  return _buildEditableField(
+                                    'Website',
+                                    controller.websiteController.value,
+                                    'Website',
+                                    'Enter Website',
+                                    text: TextInputType.text,
+                                  );
+                                }),
                               ],
                             ),
                           ),
@@ -601,44 +673,32 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
   }
 
   Widget _buildEditableField(
-      String label,
-      TextEditingController controller,
-      String hintText,
-
-      String validationMessage, {
-        bool obscureText = false,
-        required TextInputType text,
-        bool isRequired = false,
-      }) {
+    String label,
+    TextEditingController controller,
+    String hintText,
+    String validationMessage, {
+    bool obscureText = false,
+    required TextInputType text,
+    bool isRequired = false,
+  }) {
     return Container(
-      margin:  EdgeInsets.only(left: 5, right: 5,bottom: 20),
+      margin: EdgeInsets.only(bottom: 30),
       child: TextFormField(
         keyboardType: text,
         controller: controller,
         obscureText: obscureText,
-        style:  TextStyle(color: Colors.black),
+        style: TextStyle(color: Colors.black),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle:  TextStyle(
-              color: Colors.black), // Label text color set to black
-          hintText: hintText,
-          hintStyle: const TextStyle(
-              color: Colors.black54), // Slightly dimmed black for hint text
-          border: const OutlineInputBorder(
-            borderSide:
-            BorderSide(color: Colors.grey), // Border color set to black
+          labelStyle: TextStyle(color: Colors.black45),
+          border: OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black26),
           ),
-          enabledBorder:  OutlineInputBorder(
-            borderSide: BorderSide(
-                color: Colors.grey), // Border when field is not focused
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black26),
           ),
-          focusedBorder:  OutlineInputBorder(
-            borderSide: BorderSide(
-                color: Colors.grey, width: 0.5), // Thicker border when focused
-          ),
-          contentPadding:  EdgeInsets.symmetric(
-            vertical: 12,
-            horizontal: 20,
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black26, width: 1.0),
           ),
         ),
         validator: (value) {
@@ -651,11 +711,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
     );
   }
 
-
-
-  Widget _buildBusinessInfoCard({
-   required BusinessInfo bussinessinfo
-  }) {
+  Widget _buildBusinessInfoCard({required BusinessInfo bussinessinfo}) {
     return Card(
       elevation: 5,
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -666,69 +722,95 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Text(
-                    bussinessinfo.organisationName.toString(),
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                    bussinessinfo.organisationName ?? '', // Use null-aware operator
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     overflow: TextOverflow.ellipsis, // Prevents overflow
                   ),
                 ),
-                TextButton.icon(
-                  onPressed: () => _showEditModalSheet(context,bussinessinfo),
-                  icon: const Icon(Icons.edit, color: Colors.red),
-                  label: const Text(
-                    "Edit",
-                    style: TextStyle(fontSize: 14, color: Colors.red),
+                ElevatedButton(
+                  onPressed: () {
+                    _showEditModalSheet(context, bussinessinfo);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFFDC3545),
+                    elevation: 4,
+                    shadowColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   ),
-                  style: TextButton.styleFrom(
-                    foregroundColor:
-                        Colors.red, // Keep text and icon red when pressed
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.edit, size: 12),
+                      SizedBox(width: 4),
+                      Text(
+                        'Edit',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
 
             const Divider(color: Color(0xFFE0E0E0)), // Black divider
-            const SizedBox(height: 8),
-            Text(
-                "${bussinessinfo.flatNo.toString()}, ${bussinessinfo.address.toString()}",
+            const SizedBox(height: 10),
+
+            // Address
+            if ((bussinessinfo.flatNo ?? '').isNotEmpty &&
+                (bussinessinfo.address ?? '').isNotEmpty)
+              Text(
+                "${bussinessinfo.flatNo}, ${bussinessinfo.address}",
                 style: const TextStyle(fontSize: 14, color: Colors.black87),
               ),
+            if ((bussinessinfo.flatNo ?? '').isNotEmpty &&
+                (bussinessinfo.address ?? '').isNotEmpty)
               const SizedBox(height: 10),
 
-              // Line 2: City, State - Pincode
+            // City, State - Pincode
+            if ((bussinessinfo.cityName ?? '').isNotEmpty &&
+                (bussinessinfo.stateName ?? '').isNotEmpty &&
+                (bussinessinfo.pincode ?? '').isNotEmpty)
               Text(
-                "${bussinessinfo.cityName.toString()}, ${bussinessinfo.stateName.toString()} - ${bussinessinfo.pincode.toString()}",
+                "${bussinessinfo.cityName}, ${bussinessinfo.stateName} - ${bussinessinfo.pincode}",
                 style: const TextStyle(fontSize: 14, color: Colors.black87),
               ),
+            if ((bussinessinfo.cityName ?? '').isNotEmpty &&
+                (bussinessinfo.stateName ?? '').isNotEmpty &&
+                (bussinessinfo.pincode ?? '').isNotEmpty)
               const SizedBox(height: 10),
 
-              // Line 3: Phone Number
+            // Phone Number
+            if ((bussinessinfo.officePhone ?? '').isNotEmpty)
               Text(
-                "📞 ${bussinessinfo.officePhone.toString()}",
+                "📞 ${bussinessinfo.officePhone}",
                 style: const TextStyle(fontSize: 14, color: Colors.black87),
               ),
-              const SizedBox(height: 10),
+            if ((bussinessinfo.officePhone ?? '').isNotEmpty) const SizedBox(height: 10),
 
-              // Line 4: Email
+            // Email
+            if ((bussinessinfo.businessEmail ?? '').isNotEmpty)
               Text(
-                "✉ ${bussinessinfo.businessEmail.toString()}",
+                "✉ ${bussinessinfo.businessEmail}",
                 style: const TextStyle(fontSize: 14, color: Colors.black87),
               ),
-              const SizedBox(height: 10),
+            if ((bussinessinfo.businessEmail ?? '').isNotEmpty) const SizedBox(height: 10),
 
-              // Line 5: Website
+            // Website
+            if ((bussinessinfo.website ?? '').isNotEmpty)
               Text(
-                "🌐 ${bussinessinfo.website.toString()}",
+                "🌐 ${bussinessinfo.website}",
                 style: const TextStyle(fontSize: 14, color: Colors.blue),
               ),
-              const SizedBox(height: 10),
-
+            if ((bussinessinfo.website ?? '').isNotEmpty) const SizedBox(height: 10),
           ],
         ),
       ),
@@ -737,17 +819,24 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
 
   void _showEditModalSheet(BuildContext context, BusinessInfo bussinessinfo) {
     double heightFactor = 0.8;
-    controller.udorganisationNameController.value.text=bussinessinfo.organisationName.toString();
-    controller.udofficePhoneController.value.text=bussinessinfo.officePhone.toString();
-    controller.udflatnoController.value.text=bussinessinfo.flatNo.toString();
-    controller.upaddressbusinessinfoNameController.value.text=bussinessinfo.address.toString();
-    controller.udareaNameController.value.text=bussinessinfo.areaName.toString();
-    controller.udofficePincodeController.value.text=bussinessinfo.pincode.toString();
-    controller.udbusinessEmailController.value.text=bussinessinfo.businessEmail.toString();
-    controller.upwebsiteController.value.text=bussinessinfo.website.toString();
-      regiController.city_id.value=bussinessinfo.cityId.toString();
-      regiController.state_id.value=bussinessinfo.stateId.toString();
-      regiController.country_id.value=bussinessinfo.countryId.toString();
+    controller.udorganisationNameController.value.text =
+        bussinessinfo.organisationName.toString();
+    controller.udofficePhoneController.value.text =
+        bussinessinfo.officePhone.toString();
+    controller.udflatnoController.value.text = bussinessinfo.flatNo.toString();
+    controller.upaddressbusinessinfoNameController.value.text =
+        bussinessinfo.address.toString();
+    controller.udareaNameController.value.text =
+        bussinessinfo.areaName.toString();
+    controller.udofficePincodeController.value.text =
+        bussinessinfo.pincode.toString();
+    controller.udbusinessEmailController.value.text =
+        bussinessinfo.businessEmail.toString();
+    controller.upwebsiteController.value.text =
+        bussinessinfo.website.toString();
+    regiController.city_id.value = bussinessinfo.cityId.toString();
+    regiController.state_id.value = bussinessinfo.stateId.toString();
+    regiController.country_id.value = bussinessinfo.countryId.toString();
 
     showModalBottomSheet(
       context: context,
@@ -768,114 +857,302 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
               child: Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20.0, vertical: 12.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.red,
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 12.0,
-                              horizontal: 24.0,
-                            ),
-                          ),
-                          child: const Text('Cancel',
-                              style: TextStyle(color: Colors.red)),
-                        ),
-                        Obx((){
-                          return TextButton(
-                            onPressed: () {
-                              // if(_formKeyLogin2.currentState!.validate()) {
-                                controller.userUpdateBuniessInfo(bussinessinfo);
-                             // }
-                            },
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.red,
+                    padding: const EdgeInsets.only(top: 50.0), // Padding at the top
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          ElevatedButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: const Color(0xFFDC3545),
+                              elevation: 4,
+                              shadowColor: Colors.black,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                               padding: const EdgeInsets.symmetric(
-                                vertical: 12.0,
-                                horizontal: 24.0,
+                                  horizontal: 24, vertical: 8),
+                            ),
+                            child: const Text(
+                              'Cancel',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                            child: controller.addloading.value
-                                ? const CircularProgressIndicator(
-                              color: Colors.red,
-                            ):Text('Update',
-                                style: TextStyle(color: Colors.red)),
-                          );
-                        }),
-                      ],
+                          ),
+                          Obx(() {
+                            return ElevatedButton(
+                              onPressed: () {
+                                controller.userUpdateBuniessInfo(bussinessinfo);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: const Color(0xFFDC3545),
+                                elevation: 4,
+                                shadowColor: Colors.black,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 24, vertical: 8),
+                              ),
+                              child: controller.addloading.value
+                                  ? const CircularProgressIndicator(
+                                color: Colors.red,
+                              )
+                                  : const Text(
+                                'Update',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            );
+                          }),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 30),
                   Expanded(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                         Obx((){
-                           return  _buildEditableField(
-                               'Organisation Name',
-                               controller.udorganisationNameController.value,
-                             "Organisation Name",
-                             "Enter Organisation Name",
-                             text: TextInputType.text,
-
-
-                           );
-                         }),
-                          Obx((){
+                          Obx(() {
+                            return _buildEditableField(
+                              'Organisation Name',
+                              controller.udorganisationNameController.value,
+                              "Organisation Name",
+                              "Enter Organisation Name",
+                              text: TextInputType.text,
+                            );
+                          }),
+                          Obx(() {
                             return _buildEditableField(
                               'Office Phone',
                               controller.udofficePhoneController.value,
-                                 "Office Phone",
+                              "Office Phone",
                               "Office Phone",
                               text: TextInputType.phone,
                             );
                           }),
-                         Obx((){
-                           return  _buildEditableField(
-                             'Address',
-                               controller.upaddressbusinessinfoNameController.value,
-                             "Address Name",
-                             "Address Name",
-                             text: TextInputType.text,
-                           );
-
-
-                         }),
-                          Obx((){
+                          Obx(() {
                             return _buildEditableField(
-                                'Office No',
-                                controller.udflatnoController.value,
+                              'Address',
+                              controller
+                                  .upaddressbusinessinfoNameController.value,
+                              "Address Name",
+                              "Address Name",
+                              text: TextInputType.text,
+                            );
+                          }),
+                          Obx(() {
+                            return _buildEditableField(
+                              'Office No',
+                              controller.udflatnoController.value,
                               'Office No',
                               'Office No',
                               text: TextInputType.text,
                             );
                           }),
-                        Obx((){
-                          return   _buildEditableField(
+                          Obx(() {
+                            return _buildEditableField(
                               'Area',
                               controller.udareaNameController.value,
-                            'Area',
-                            'Area',
-                            text: TextInputType.text,
-                          );
-                        }),
-                          Container(
+                              'Area',
+                              'Area',
+                              text: TextInputType.text,
+                            );
+                          }),
 
+                          // City
+                          Container(
                             width: double.infinity,
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(5),
-                            ),
                             child: Row(
                               children: [
                                 Obx(() {
-                                  if (regiController.rxStatusCountryLoading.value ==
+                                  if (regiController
+                                      .rxStatusCityLoading.value ==
+                                      Status.LOADING) {
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 12, horizontal: 22),
+                                      child: Container(
+                                          alignment: Alignment.centerRight,
+                                          height: 24,
+                                          width: 24,
+                                          child: CircularProgressIndicator(
+                                            color: ColorHelperClass
+                                                .getColorFromHex(
+                                                ColorResources.pink_color),
+                                          )),
+                                    );
+                                  } else if (regiController
+                                      .rxStatusCityLoading.value ==
+                                      Status.ERROR) {
+                                    return const Center(
+                                        child: Padding(
+                                          padding: EdgeInsets.all(8.0),
+                                          child: Text('Failed to load city'),
+                                        ));
+                                  } else if (regiController.cityList.isEmpty) {
+                                    return const Center(
+                                        child: Padding(
+                                          padding: EdgeInsets.all(8.0),
+                                          child: Text('No City available'),
+                                        ));
+                                  } else {
+                                    return Expanded(
+                                      child: InputDecorator(
+                                        decoration: InputDecoration(
+                                          labelText: 'City',
+                                          border: OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black26),
+                                          ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black26),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                                          ),
+                                          contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                                          labelStyle: TextStyle(
+                                            color: Colors.black45,
+                                          ),
+                                        ),
+                                        isEmpty: regiController.city_id.value.isEmpty,
+                                        child: DropdownButtonHideUnderline(
+                                          child: DropdownButton<String>(
+                                            dropdownColor: Colors.white, // Ensures dropdown list background is white
+                                            borderRadius: BorderRadius.circular(10),
+                                            isExpanded: true,
+                                            hint: const Text(
+                                              'Select City',
+                                              style: TextStyle(fontWeight: FontWeight.bold),
+                                            ),
+                                            value: regiController.city_id.value.isEmpty
+                                                ? null
+                                                : regiController.city_id.value,
+                                            items: regiController.cityList.map((CityData city) {
+                                              return DropdownMenuItem<String>(
+                                                value: city.id.toString(),
+                                                child: Text(city.cityName ?? 'Unknown'),
+                                              );
+                                            }).toList(),
+                                            onChanged: (String? newValue) {
+                                              if (newValue != null) {
+                                                regiController.setSelectedCity(newValue);
+                                              }
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                })
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 30),
+
+                          // State
+                          Container(
+                            width: double.infinity,
+                            child: Row(
+                              children: [
+                                Obx(() {
+                                  if (regiController
+                                          .rxStatusStateLoading.value ==
+                                      Status.LOADING) {
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 10, horizontal: 24),
+                                      child: Container(
+                                          alignment: Alignment.centerRight,
+                                          height: 24,
+                                          width: 24,
+                                          child: CircularProgressIndicator(
+                                            color: ColorHelperClass
+                                                .getColorFromHex(
+                                                    ColorResources.pink_color),
+                                          )),
+                                    );
+                                  } else if (regiController
+                                          .rxStatusStateLoading.value ==
+                                      Status.ERROR) {
+                                    return const Center(
+                                        child: Text('Failed to load state'));
+                                  } else if (regiController.stateList.isEmpty) {
+                                    return const Center(
+                                        child: Text('No State available'));
+                                  } else {
+                                    return Expanded(
+                                      child: InputDecorator(
+                                        decoration: InputDecoration(
+                                          labelText: 'State *',
+                                          border: OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black26),
+                                          ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black26),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                                          ),
+                                          contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                                          labelStyle: TextStyle(
+                                            color: Colors.black45,
+                                          ),
+                                        ),
+                                        isEmpty: regiController.state_id.value.isEmpty,
+                                        child: DropdownButtonHideUnderline(
+                                          child: DropdownButton<String>(
+                                            dropdownColor: Colors.white, // Dropdown list background is white
+                                            borderRadius: BorderRadius.circular(10),
+                                            isExpanded: true,
+                                            hint: const Text(
+                                              'Select State *',
+                                              style: TextStyle(fontWeight: FontWeight.bold),
+                                            ),
+                                            value: regiController.state_id.value.isEmpty
+                                                ? null
+                                                : regiController.state_id.value,
+                                            items: regiController.stateList.map((StateData state) {
+                                              return DropdownMenuItem<String>(
+                                                value: state.id.toString(),
+                                                child: Text(state.stateName ?? 'Unknown'),
+                                              );
+                                            }).toList(),
+                                            onChanged: (String? newValue) {
+                                              if (newValue != null) {
+                                                regiController.setSelectedState(newValue);
+                                              }
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                })
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 30),
+
+                          // Country
+                          Container(
+                            width: double.infinity,
+                            child: Row(
+                              children: [
+                                Obx(() {
+                                  if (regiController
+                                      .rxStatusCountryLoading.value ==
                                       Status.LOADING) {
                                     return Padding(
                                       padding: const EdgeInsets.symmetric(
@@ -901,36 +1178,49 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                         child: Text('No Country available'));
                                   } else {
                                     return Expanded(
-                                      child: DropdownButton<String>(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 20),
-                                        underline: Container(),
-                                        isExpanded: true,
-                                        hint: const Text(
-                                          'Select Country',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
+                                      child: InputDecorator(
+                                        decoration: InputDecoration(
+                                          labelText: 'Country *',
+                                          border: OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black26),
+                                          ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black26),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                                          ),
+                                          contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                                          labelStyle: TextStyle(
+                                            color: Colors.black45,
                                           ),
                                         ),
-                                        value: regiController
-                                            .country_id.value.isEmpty
-                                            ? null
-                                            : regiController
-                                            .country_id.value,
-                                        items: regiController.countryList
-                                            .map((CountryData gender) {
-                                          return DropdownMenuItem<String>(
-                                            value: gender.id
-                                                .toString(),
-                                            child: Text(gender.countryName ??
-                                                'Unknown'),
-                                          );
-                                        }).toList(),
-                                        onChanged: (String? newValue) {
-                                          if (newValue != null) {
-                                            regiController.setSelectedCountry(newValue);
-                                          }
-                                        },
+                                        isEmpty: regiController.country_id.value.isEmpty,
+                                        child: DropdownButtonHideUnderline(
+                                          child: DropdownButton<String>(
+                                            dropdownColor: Colors.white, // White background for dropdown list
+                                            borderRadius: BorderRadius.circular(10),
+                                            isExpanded: true,
+                                            hint: const Text(
+                                              'Select Country *',
+                                              style: TextStyle(fontWeight: FontWeight.bold),
+                                            ),
+                                            value: regiController.country_id.value.isEmpty
+                                                ? null
+                                                : regiController.country_id.value,
+                                            items: regiController.countryList.map((CountryData country) {
+                                              return DropdownMenuItem<String>(
+                                                value: country.id.toString(),
+                                                child: Text(country.countryName ?? 'Unknown'),
+                                              );
+                                            }).toList(),
+                                            onChanged: (String? newValue) {
+                                              if (newValue != null) {
+                                                regiController.setSelectedCountry(newValue);
+                                              }
+                                            },
+                                          ),
+                                        ),
                                       ),
                                     );
                                   }
@@ -938,180 +1228,28 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 20),
-                          Container(
+                          const SizedBox(height: 30),
 
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                            child: Row(
-                              children: [
-                                Obx(() {
-                                  if (regiController.rxStatusStateLoading.value ==
-                                      Status.LOADING) {
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 10, horizontal: 24),
-                                      child: Container(
-                                          alignment: Alignment.centerRight,
-                                          height: 24,
-                                          width: 24,
-                                          child: CircularProgressIndicator(
-                                            color: ColorHelperClass
-                                                .getColorFromHex(
-                                                ColorResources.pink_color),
-                                          )),
-                                    );
-                                  } else if (regiController
-                                      .rxStatusStateLoading.value ==
-                                      Status.ERROR) {
-                                    return const Center(
-                                        child: Text('Failed to load state'));
-                                  } else if (regiController
-                                      .stateList.isEmpty) {
-                                    return const Center(
-                                        child: Text('No State available'));
-                                  } else {
-                                    return Expanded(
-                                      child: DropdownButton<String>(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 20),
-                                        underline: Container(),
-                                        isExpanded: true,
-                                        hint: const Text(
-                                          'Select State',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        value: regiController
-                                            .state_id.value.isEmpty
-                                            ? null
-                                            : regiController
-                                            .state_id.value,
-                                        items: regiController.stateList
-                                            .map((StateData gender) {
-                                          return DropdownMenuItem<String>(
-                                            value: gender.id
-                                                .toString(),
-                                            child: Text(gender.stateName ??
-                                                'Unknown'),
-                                          );
-                                        }).toList(),
-                                        onChanged: (String? newValue) {
-                                          if (newValue != null) {
-                                            regiController.setSelectedState(newValue);
-                                          }
-                                        },
-                                      ),
-                                    );
-                                  }
-                                })
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          Container(
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                            child: Row(
-                              children: [
-                                Obx(() {
-                                  if (regiController.rxStatusCityLoading.value ==
-                                      Status.LOADING) {
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 12, horizontal: 22),
-                                      child: Container(
-                                          alignment: Alignment.centerRight,
-                                          height: 24,
-                                          width: 24,
-                                          child: CircularProgressIndicator(
-                                            color: ColorHelperClass
-                                                .getColorFromHex(
-                                                ColorResources.pink_color),
-                                          )),
-                                    );
-                                  } else if (regiController
-                                      .rxStatusCityLoading.value ==
-                                      Status.ERROR) {
-                                    return const Center(
-                                        child: Padding(
-                                          padding: EdgeInsets.all(8.0),
-                                          child: Text('Failed to load city'),
-                                        ));
-                                  } else if (regiController
-                                      .cityList.isEmpty) {
-                                    return const Center(
-                                        child: Padding(
-                                          padding: EdgeInsets.all(8.0),
-                                          child: Text('No City available'),
-                                        ));
-                                  } else {
-                                    return Expanded(
-                                      child: DropdownButton<String>(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 20),
-                                        underline: Container(),
-                                        isExpanded: true,
-                                        hint: const Text(
-                                          'Select City',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        value: regiController.city_id.value.isEmpty ? null
-                                            : regiController
-                                            .city_id.value,
-                                        items: regiController.cityList
-                                            .map((CityData gender) {
-                                          return DropdownMenuItem<String>(
-                                            value: gender.id
-                                                .toString(),
-                                            child: Text(gender.cityName ??
-                                                'Unknown'),
-                                          );
-                                        }).toList(),
-                                        onChanged: (String? newValue) {
-                                          if (newValue != null) {
-                                            regiController.setSelectedCity(newValue);
-                                          }
-                                        },
-                                      ),
-                                    );
-                                  }
-                                })
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                         Obx((){
-                           return  _buildEditableField(
-                               'Office Pincode',
-                               controller.udofficePincodeController.value,
-                             "Office Pincode",
-                             "Office Pincode",
-                             text: TextInputType.number,
-                           );
-                         }),
-                          Obx((){
+                          Obx(() {
+                            return _buildEditableField(
+                              'Office Pincode',
+                              controller.udofficePincodeController.value,
+                              "Office Pincode",
+                              "Office Pincode",
+                              text: TextInputType.number,
+                            );
+                          }),
+                          Obx(() {
                             return _buildEditableField(
                                 'Business Email',
                                 controller.udbusinessEmailController.value,
                                 "Business Email",
                                 "Business Email",
-                                text: TextInputType.emailAddress
-                            );
-
+                                text: TextInputType.emailAddress);
                           }),
-                          Obx((){
+                          Obx(() {
                             return _buildEditableField(
-                                'Website',
+                              'Website',
                               controller.upwebsiteController.value,
                               "Website",
                               "Website",
@@ -1131,8 +1269,6 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
     );
   }
 
-
-
   Widget _buildInfoLine(String title, String subtitle) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10.0),
@@ -1141,7 +1277,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
         children: [
           // Title and Colon
           Container(
-            width: 140,
+            width: 105,
             child: Row(
               children: [
                 Expanded(
@@ -1161,8 +1297,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                     color: Colors.black,
                   ),
                 ),
-                const SizedBox(
-                    width: 8),
+                const SizedBox(width: 8),
               ],
             ),
           ),
@@ -1181,6 +1316,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
       ),
     );
   }
+
   void _showEditOccBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -1196,7 +1332,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
             expand: false,
             initialChildSize: 0.5,
             maxChildSize: 0.95,
-            minChildSize: 0.5, // Minimum half-screen height
+            minChildSize: 0.5,
             builder: (context, scrollController) {
               return Container(
                 padding: const EdgeInsets.all(16),
@@ -1205,7 +1341,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                   borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                 ),
                 child: SingleChildScrollView(
-                  controller: scrollController, // Ensures smooth scrolling
+                  controller: scrollController,
                   child: _EditOccInfoContent(
                     occupation: occupation,
                     occupationProfession: occupationProfession,
@@ -1230,97 +1366,113 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-       Obx((){
-        if(controller.occupationData.value)
-        return Card(
-           elevation: 5,
-           shape: RoundedRectangleBorder(
-             borderRadius: BorderRadius.circular(10),
-           ),
-           color: Colors.white,
-           child: Padding(
-             padding: const EdgeInsets.all(16.0),
-             child: Column(
-               crossAxisAlignment: CrossAxisAlignment.start,
-               children: [
-                 const SizedBox(
-                     height: 8),
-
-                 // Using Row to align info on the left and Edit button on the right
-                 Row(
-                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                   children: [
-                     Expanded(
-                       child: Column(
-                         crossAxisAlignment: CrossAxisAlignment.start,
-                         children: [
-
-                           Obx((){
-                             return  _buildInfoLine('Occupation', controller.occupationController.value.text);
-
-                           }),
-                           Obx((){
-                             return    _buildInfoLine('Profession', controller.occupation_profession_nameController.value.text);
-
-                           }),
-                           Obx((){
-                             return      _buildInfoLine('Specialization', controller.specialization_nameController.value.text);
-
-                           }),
-                           Obx((){
-                             return    _buildInfoLine('Details', controller.detailsController.value.text);
-
-                           }),
-                         ],
-                       ),
-                     ),
-                     TextButton.icon(
-                       onPressed: () => _showEditOccBottomSheet(context),
-                       icon: const Icon(Icons.edit,
-                           color: Colors.red, size: 16),
-                       label: const Text(
-                         "Edit",
-                         style: TextStyle(fontSize: 14, color: Colors.red),
-                       ),
-                       style: TextButton.styleFrom(
-                         foregroundColor: Colors.red,
-                       ),
-                     ),
-                   ],
-                 ),
-               ],
-             ),
-           ),
-         );
-        else
-        return Column(
-           children: [
-             const Text(
-               "No Occupation Detail, Please add by clicking Add Occupation Button",
-               style: TextStyle(
-                   fontSize: 14,
-                   color: Colors.grey,
-                   fontWeight: FontWeight.bold),
-               textAlign: TextAlign.center,
-             ),
-             TextButton.icon(
-               onPressed: () => _showEditOccBottomSheet(context),
-               icon: const Icon(
-                 Icons.add,
-                 color: Colors.red,
-               ),
-               label: const Text(
-                 "Add Occupation",
-                 style: TextStyle(color: Colors.red),
-               ),
-               style: TextButton.styleFrom(
-                 foregroundColor: Colors
-                     .red, // Ensures the text and icon stay red when pressed
-               ),
-             ),
-           ],
-         );
-       })
+          Obx(() {
+            if (controller.occupationData.value)
+              return Card(
+                elevation: 5,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                color: Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Obx(() {
+                                  return _buildInfoLine(
+                                      'Occupation',
+                                      controller
+                                          .occupationController.value.text);
+                                }),
+                                Obx(() {
+                                  return _buildInfoLine(
+                                      'Profession',
+                                      controller
+                                          .occupation_profession_nameController
+                                          .value
+                                          .text);
+                                }),
+                                Obx(() {
+                                  return _buildInfoLine(
+                                      'Specialization',
+                                      controller.specialization_nameController
+                                          .value.text);
+                                }),
+                                Obx(() {
+                                  return _buildInfoLine('Details',
+                                      controller.detailsController.value.text);
+                                }),
+                              ],
+                            ),
+                          ),
+                          TextButton.icon(
+                            onPressed: () => _showEditOccBottomSheet(context),
+                            icon: const Icon(Icons.edit,
+                                size: 12, color: Colors.red),
+                            label: const Text(
+                              "Edit",
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.red,
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: const Color(0xFFDC3545),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              elevation: 4,
+                              shadowColor: Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            else
+              return Column(
+                children: [
+                  const Text(
+                    "No Occupation Detail, Please add by clicking Add Occupation Button",
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                  TextButton.icon(
+                    onPressed: () => _showEditOccBottomSheet(context),
+                    icon: const Icon(
+                      Icons.add,
+                      color: Colors.red,
+                    ),
+                    label: const Text(
+                      "Add Occupation",
+                      style: TextStyle(color: Colors.red),
+                    ),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors
+                          .red, // Ensures the text and icon stay red when pressed
+                    ),
+                  ),
+                ],
+              );
+          })
         ],
       ),
     );
@@ -1352,11 +1504,10 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
   final TextEditingController _specializationController =
       TextEditingController();
 
-  UdateProfileController controller =Get.put(UdateProfileController());
+  UdateProfileController controller = Get.put(UdateProfileController());
   @override
   void initState() {
     super.initState();
-
 
     controller.detailsController.value.text = widget.occupationDetails;
   }
@@ -1369,297 +1520,357 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
     //   _detailsController.text,
     // );
     controller.addAndupdateOccuption();
-
   }
 
   @override
   Widget build(BuildContext context) {
+    // Get the screen height using MediaQuery
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return SafeArea(
-      child: FractionallySizedBox(
-        child: Column(
-          children: [
-            const SizedBox(height: 16),
-
-            // Row for Save & Cancel buttons at the top
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Cancel Button (Left)
-                  TextButton(
-                    onPressed: () =>
-                        Navigator.pop(context), // Close the BottomSheet
-                    style: TextButton.styleFrom(
-                      foregroundColor: ColorHelperClass.getColorFromHex(
-                          ColorResources.red_color), // Grey color for Cancel
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 12, horizontal: 30),
-                    ),
-                    child: const Text('Cancel', style: TextStyle(fontSize: 16)),
-                  ),
-
-                  // Save Button (Right)
-                  TextButton(
-                    onPressed: _saveChanges,
-                    style: TextButton.styleFrom(
-                      foregroundColor: ColorHelperClass.getColorFromHex(
-                          ColorResources.red_color), // Red color for Save
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 12, horizontal: 30),
-                    ),
-                    child: const Text('Save', style: TextStyle(fontSize: 16)),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // TextButton.icon(
-            //   onPressed: (){
-            //
-            //   },
-            //   icon: const Icon(Icons.edit,
-            //       color: Colors.red, size: 16),
-            //   label: const Text(
-            //     "Edit",
-            //     style: TextStyle(fontSize: 14, color: Colors.red),
-            //   ),
-            //   style: TextButton.styleFrom(
-            //     foregroundColor: Colors.red,
-            //   ),
-            // ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: double.infinity,
-                        child: Container(
-                          margin: EdgeInsets.only(left: 5,right: 5),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey),
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          child: Row(
-                            children: [
-                              Obx(() {
-                                if (controller.rxStatusOccupation.value == Status.LOADING) {
-                                  return Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 10,horizontal: 22),
-                                    child: Container(
-                                        alignment: Alignment.centerRight,
-                                        height:24,width:24,child: CircularProgressIndicator(color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),)),
-                                  );
-                                } else if (controller.rxStatusOccupation.value == Status.ERROR) {
-                                  return Center(child: Text('Failed to load occuption'));
-                                } else if (controller.occuptionList.isEmpty) {
-                                  return Center(child: Text('No occuption  available'));
-                                } else {
-                                  return Expanded(
-                                    child: DropdownButton<String>(
-                                      padding: EdgeInsets.symmetric(horizontal: 20),
-                                      isExpanded: true,
-                                      underline: Container(),
-                                      hint: Text('Select Occuption',style: TextStyle(
-                                          fontWeight: FontWeight.bold
-                                      ),), // Hint to show when nothing is selected
-                                      value: controller.selectOccuption.value.isEmpty
-                                          ? null
-                                          : controller.selectOccuption.value,
-
-                                      items: controller.occuptionList.map((OccupationData marital) {
-                                        return DropdownMenuItem<String>(
-                                          value: marital.id.toString(), // Use unique ID or any unique property.
-                                          child: Text(marital.occupation ?? 'Unknown'), // Display name from DataX.
-                                        );
-                                      }).toList(),
-                                      onChanged: (String? newValue) {
-                                        print("fddfdfff"+newValue.toString());
-
-                                        controller.selectOccuption(newValue);
-                                        if (newValue != null) {
-                                          controller.selectOccuption(newValue);
-                                          if(newValue!="other")
-                                          {
-                                            controller.isOccutionList.value=true;
-                                            controller.getOccupationProData(newValue);
-                                          }
-                                          else
-                                          {
-                                            controller.isOccutionList.value=false;
-                                          }
-                                        }
-                                      },
-                                    ),
-                                  );
-                                }
-                              }),
-
-                            ],
-                          ),
+      child: Container(
+        // Set height dynamically based on screen height (e.g., 70% of screen height)
+        height: screenHeight * 0.8,
+        child: FractionallySizedBox(
+          widthFactor: 1.0, // Takes full width
+          heightFactor: 1.0, // Takes full height of the Container
+          child: Column(
+            children: [
+              const SizedBox(height: 30),
+              // Row for Save & Cancel buttons at the top
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Cancel Button (Left)
+                    TextButton(
+                      onPressed: () => Navigator.pop(context), // Close the BottomSheet
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.white, // Matches ElevatedButton
+                        foregroundColor: const Color(0xFFDC3545), // Red text color
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 4, // Adds shadow like ElevatedButton
+                        shadowColor: Colors.black,
+                      ),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                      SizedBox(
-                        height: 20,
+                    ),
+
+                    // Save Button (Right)
+                    TextButton(
+                      onPressed: _saveChanges,
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.white, // Matches ElevatedButton
+                        foregroundColor: const Color(0xFFDC3545), // Red text color
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 4, // Adds shadow like ElevatedButton
+                        shadowColor: Colors.black,
                       ),
-                      Obx((){
-                        return Visibility(
+                      child: const Text(
+                        'Save',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 30),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          child: Container(
+                            margin: EdgeInsets.only(left: 5, right: 5),
+                            child: Row(
+                              children: [
+                                Obx(() {
+                                  if (controller.rxStatusOccupation.value == Status.LOADING) {
+                                    return Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                                      child: Container(
+                                        alignment: Alignment.centerRight,
+                                        height: 24,
+                                        width: 24,
+                                        child: CircularProgressIndicator(
+                                          color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),
+                                        ),
+                                      ),
+                                    );
+                                  } else if (controller.rxStatusOccupation.value == Status.ERROR) {
+                                    return Center(child: Text('Failed to load occupation'));
+                                  } else if (controller.occuptionList.isEmpty) {
+                                    return Center(child: Text('No occupation available'));
+                                  } else {
+                                    return Expanded(
+                                      child: InputDecorator(
+                                        decoration: InputDecoration(
+                                          labelText: 'Occupation *',
+                                          border: OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black26),
+                                          ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black26),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                                          ),
+                                          contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                                          labelStyle: TextStyle(
+                                            color: Colors.black45,
+                                          ),
+                                        ),
+                                        isEmpty: controller.selectOccuption.value.isEmpty,
+                                        child: DropdownButton<String>(
+                                          dropdownColor: Colors.white,
+                                          borderRadius: BorderRadius.circular(10),
+                                          isExpanded: true,
+                                          underline: Container(), // Removes the default underline
+                                          hint: const Text(
+                                            'Select Occupation',
+                                            style: TextStyle(fontWeight: FontWeight.bold),
+                                          ),
+                                          value: controller.selectOccuption.value.isEmpty
+                                              ? null
+                                              : controller.selectOccuption.value,
+                                          items: controller.occuptionList.map((OccupationData marital) {
+                                            return DropdownMenuItem<String>(
+                                              value: marital.id.toString(),
+                                              child: Text(marital.occupation ?? 'Unknown'),
+                                            );
+                                          }).toList(),
+                                          onChanged: (String? newValue) {
+                                            if (newValue != null) {
+                                              controller.selectOccuption(newValue);
+                                              if (newValue != "other") {
+                                                controller.isOccutionList.value = true;
+                                                controller.getOccupationProData(newValue);
+                                              } else {
+                                                controller.isOccutionList.value = false;
+                                              }
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                }),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 30),
+                        Obx(() {
+                          return Visibility(
                             visible: controller.isOccutionList.value,
                             child: Column(
                               children: [
                                 Container(
-                                    width: double.infinity,
-                                    margin: EdgeInsets.only(left: 5,right: 5),
-                                    decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.grey),
-                                      borderRadius: BorderRadius.circular(5),
-                                    ),
-                                    child:Row(
-                                      children: [
-
-                                        Obx(() {
-                                          if (controller.rxStatusOccupationData.value == Status.LOADING) {
-                                            return Padding(
-                                              padding: EdgeInsets.symmetric(vertical: 10,horizontal: 22),
-                                              child: Container(
-                                                  alignment: Alignment.centerRight,
-                                                  height:24,width:24,child: CircularProgressIndicator(color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),)),
-                                            );
-                                          } else if (controller.rxStatusOccupationData.value == Status.ERROR) {
-                                            return Center(child: Text('Failed to load occuption Profession'));
-                                          }
-                                          else if (controller.rxStatusOccupationData.value == Status.IDLE) {
-                                            return Center(child: Padding(
+                                  width: double.infinity,
+                                  margin: EdgeInsets.only(left: 5, right: 5),
+                                  child: Row(
+                                    children: [
+                                      Obx(() {
+                                        if (controller.rxStatusOccupationData.value == Status.LOADING) {
+                                          return Padding(
+                                            padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                                            child: Container(
+                                              alignment: Alignment.centerRight,
+                                              height: 24,
+                                              width: 24,
+                                              child: CircularProgressIndicator(
+                                                color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),
+                                              ),
+                                            ),
+                                          );
+                                        } else if (controller.rxStatusOccupationData.value == Status.ERROR) {
+                                          return Center(child: Text('Failed to load occupation Profession'));
+                                        } else if (controller.rxStatusOccupationData.value == Status.IDLE) {
+                                          return Center(
+                                            child: Padding(
                                               padding: const EdgeInsets.all(12.0),
-                                              child: Text('Select Occuption Profession'),
-                                            ));
-                                          }
-
-
-                                          else if (controller.occuptionProfessionList.isEmpty) {
-                                            return Center(child: Text('No occuption Pro available'));
-                                          } else {
-                                            return Expanded(
+                                              child: Text('Select Occupation Profession *'),
+                                            ),
+                                          );
+                                        } else if (controller.occuptionProfessionList.isEmpty) {
+                                          return Center(child: Text('No occupation Pro available'));
+                                        } else {
+                                          return Expanded(
+                                            child: InputDecorator(
+                                              decoration: InputDecoration(
+                                                labelText: 'Occupation Profession *',
+                                                border: OutlineInputBorder(
+                                                  borderSide: BorderSide(color: Colors.black26),
+                                                ),
+                                                enabledBorder: OutlineInputBorder(
+                                                  borderSide: BorderSide(color: Colors.black26),
+                                                ),
+                                                focusedBorder: OutlineInputBorder(
+                                                  borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                                                ),
+                                                contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                                                labelStyle: TextStyle(
+                                                  color: Colors.black45,
+                                                ),
+                                              ),
+                                              isEmpty: controller.selectOccuptionPro.value.isEmpty,
                                               child: DropdownButton<String>(
-                                                padding: EdgeInsets.symmetric(horizontal: 20,),
+                                                dropdownColor: Colors.white,
+                                                borderRadius: BorderRadius.circular(10),
                                                 isExpanded: true,
-                                                underline: Container(),
-                                                hint: Text('Select Occuption Profession',style: TextStyle(
-                                                    fontWeight: FontWeight.bold
-                                                ),), // Hint to show when nothing is selected
+                                                underline: Container(), // Removes default underline
+                                                hint: const Text(
+                                                  'Select Occupation Profession',
+                                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                                ),
                                                 value: controller.selectOccuptionPro.value.isEmpty
                                                     ? null
                                                     : controller.selectOccuptionPro.value,
-
-                                                items: controller.occuptionProfessionList.map((OccuptionProfessionData marital) {
+                                                items: controller.occuptionProfessionList.map((OccuptionProfessionData profession) {
                                                   return DropdownMenuItem<String>(
-                                                    value: marital.id.toString(), // Use unique ID or any unique property.
-                                                    child: Text(marital.name ?? 'Unknown'), // Display name from DataX.
+                                                    value: profession.id.toString(),
+                                                    child: Text(profession.name ?? 'Unknown'),
                                                   );
-                                                }).toList(), // Convert to List.
+                                                }).toList(),
                                                 onChanged: (String? newValue) {
                                                   if (newValue != null) {
                                                     controller.setSelectOccuptionPro(newValue);
                                                     controller.getOccupationSpectData(newValue);
-
                                                   }
                                                 },
                                               ),
-                                            );
-                                          }
-                                        }),
-                                      ],
-                                    )),
-                                SizedBox(
-                                  height: 20,
+                                            ),
+                                          );
+                                        }
+                                      }),
+                                    ],
+                                  ),
                                 ),
+                                SizedBox(height: 30),
                                 Container(
-                                    width: double.infinity,
-                                    margin: EdgeInsets.only(left: 5,right: 5),
-                                    decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.grey),
-                                      borderRadius: BorderRadius.circular(5),
-                                    ),
-                                    child:Row(
-                                      children: [
-                                        Obx(() {
-                                          if (controller.rxStatusOccupationSpec.value == Status.LOADING) {
-                                            return Padding(
-                                              padding: EdgeInsets.symmetric(vertical: 10,horizontal: 22),
-                                              child: Container(
-                                                  alignment: Alignment.centerRight,
-                                                  height:24,width:24,child: CircularProgressIndicator(color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),)),
-                                            );
-                                          } else if (controller.rxStatusOccupationSpec.value == Status.ERROR) {
-                                            return Center(child: Text('Failed to load occuption specialization',style: TextStyle(
-                                                fontWeight: FontWeight.bold
-                                            ),), );
-                                          }
-                                          else if (controller.rxStatusOccupationSpec.value == Status.IDLE) {
-                                            return Center(child: Padding(
+                                  width: double.infinity,
+                                  margin: EdgeInsets.only(left: 5, right: 5),
+                                  child: Row(
+                                    children: [
+                                      Obx(() {
+                                        if (controller.rxStatusOccupationSpec.value == Status.LOADING) {
+                                          return Padding(
+                                            padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                                            child: Container(
+                                              alignment: Alignment.centerRight,
+                                              height: 24,
+                                              width: 24,
+                                              child: CircularProgressIndicator(
+                                                color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),
+                                              ),
+                                            ),
+                                          );
+                                        } else if (controller.rxStatusOccupationSpec.value == Status.ERROR) {
+                                          return Center(
+                                            child: Text(
+                                              'Failed to load occupation specialization',
+                                              style: TextStyle(fontWeight: FontWeight.bold),
+                                            ),
+                                          );
+                                        } else if (controller.rxStatusOccupationSpec.value == Status.IDLE) {
+                                          return Center(
+                                            child: Padding(
                                               padding: const EdgeInsets.all(12.0),
-                                              child: Text('Select Occuption specialization,',style: TextStyle(
-                                                  fontWeight: FontWeight.bold
-                                              ),),
-                                            ));
-                                          }
-
-                                          else if (controller.occuptionSpeList.isEmpty) {
-                                            return Center(child: Text('No occuption specialization available'));
-                                          } else {
-                                            return Expanded(
+                                              child: Text(
+                                                'Select Occupation specialization,',
+                                                style: TextStyle(fontWeight: FontWeight.bold),
+                                              ),
+                                            ),
+                                          );
+                                        } else if (controller.occuptionSpeList.isEmpty) {
+                                          return Center(child: Text('No occupation specialization available'));
+                                        } else {
+                                          return Expanded(
+                                            child: InputDecorator(
+                                              decoration: InputDecoration(
+                                                labelText: 'Occupation Specialization',
+                                                border: OutlineInputBorder(
+                                                  borderSide: BorderSide(color: Colors.black26),
+                                                ),
+                                                enabledBorder: OutlineInputBorder(
+                                                  borderSide: BorderSide(color: Colors.black26),
+                                                ),
+                                                focusedBorder: OutlineInputBorder(
+                                                  borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                                                ),
+                                                contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                                                labelStyle: TextStyle(
+                                                  color: Colors.black45,
+                                                ),
+                                              ),
+                                              isEmpty: controller.selectOccuptionSpec.value.isEmpty,
                                               child: DropdownButton<String>(
-                                                padding: EdgeInsets.symmetric(horizontal: 20),
+                                                dropdownColor: Colors.white,
+                                                borderRadius: BorderRadius.circular(10),
                                                 isExpanded: true,
-                                                underline: Container(),
-                                                hint: Text('Select Occuption specialization',style: TextStyle(
-                                                    fontWeight: FontWeight.bold
-                                                ),),
+                                                underline: Container(), // Removes default underline
+                                                hint: const Text(
+                                                  'Select Occupation Specialization',
+                                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                                ),
                                                 value: controller.selectOccuptionSpec.value.isEmpty
                                                     ? null
                                                     : controller.selectOccuptionSpec.value,
-
-                                                items: controller.occuptionSpeList.map((OccuptionSpecData marital) {
+                                                items: controller.occuptionSpeList.map((OccuptionSpecData specialization) {
                                                   return DropdownMenuItem<String>(
-                                                    value: marital.id.toString(), // Use unique ID or any unique property.
-                                                    child: Text(marital.name ?? 'Unknown'), // Display name from DataX.
+                                                    value: specialization.id.toString(),
+                                                    child: Text(specialization.name ?? 'Unknown'),
                                                   );
-                                                }).toList(), // Convert to List.
+                                                }).toList(),
                                                 onChanged: (String? newValue) {
                                                   if (newValue != null) {
                                                     controller.setSelectOccuptionSpec(newValue);
                                                   }
                                                 },
                                               ),
-                                            );
-                                          }
-                                        }),
-                                      ],
-                                    )
-
-
+                                            ),
+                                          );
+                                        }
+                                      }),
+                                    ],
+                                  ),
                                 ),
                               ],
-                            ));
-                      }),
-                      //_buildInfoLine('Details', occupationDetails),
-                    ],
+                            ),
+                          );
+                        }),
+                        //_buildInfoLine('Details', occupationDetails),
+                      ],
+                    ),
                   ),
-                ),
-
-              ],
-            ),
-            SizedBox(
-              height: 20,
-            ),
-            _buildEditableField(
-                label: 'Details', controller: controller.detailsController.value),
-          ],
+                ],
+              ),
+              SizedBox(height: 30),
+              _buildEditableField(
+                  label: 'Details',
+                  controller: controller.detailsController.value),
+            ],
+          ),
         ),
       ),
     );
@@ -1669,21 +1880,22 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
       {required String label, required TextEditingController controller}) {
     return Container(
       width: double.infinity,
-      margin: EdgeInsets.only(left: 5,right: 5),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(5),
-        border: Border.all(color: Colors.grey),
-      ),
+      margin: EdgeInsets.only(left: 5, right: 5),
       child: TextField(
-
         controller: controller,
-        decoration:  InputDecoration(
-        hintText: label,
-        border: InputBorder.none,
-        contentPadding: EdgeInsets.symmetric(
-            vertical: 8,horizontal: 22),
-      ),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(color: Colors.black45),
+          border: OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black26),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black26),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black26, width: 1.0),
+          ),
+        ),
       ),
     );
   }

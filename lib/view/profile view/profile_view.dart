@@ -136,15 +136,27 @@ class _ProfileViewState extends State<ProfileView> {
                                 children: [
                                   Obx(() {
                                     return Text(
-                                      controller.userName.value,
+                                      "${controller.firstName.value} ${controller.middleName.value}",
                                       style: const TextStyle(
                                         fontSize: 16,
+                                        fontWeight: FontWeight.bold,
                                         color: Colors.black,
                                       ),
                                     );
                                   }),
                                 ],
                               ),
+                              const SizedBox(height: 4),
+                              Obx(() {
+                                return Text(
+                                  "${controller.surName.value} ${controller.memberCode.value}",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.black87,
+                                  ),
+                                );
+                              }),
                               const SizedBox(height: 4),
                               Obx(() {
                                 return Text(
