@@ -36,6 +36,9 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
           IconButton(
             icon: const Icon(Icons.add,size: 35,),
             onPressed: () {
+              regiController.selectQlification.value="";
+              regiController.selectQualicationMain.value="";
+              regiController.selectQualicationCat.value="";
               _showEditModalSheet(context,"1");
             },
           ),
@@ -125,31 +128,17 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                 ),
                 SizedBox(height: 30),
 
-                /// **Qualification Dropdown**
                 Obx(() {
                   return DropdownButtonFormField<String>(
                     decoration: InputDecoration(
                       labelText: "Select Qualification",
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black26),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black26),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black26, width: 1.5),
-                      ),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 20),
-                      labelStyle: TextStyle(
-                        color: Colors.black45,
-                      ),
+                      border: OutlineInputBorder(),
                     ),
-                    dropdownColor: Colors.white, // Ensures white dropdown background
-                    borderRadius: BorderRadius.circular(10), // Rounded dropdown edges
                     value: regiController.selectQlification.value.isEmpty
                         ? null
                         : regiController.selectQlification.value,
-                    items: regiController.qulicationList.map((QualificationData item) {
+                    items: regiController.qulicationList.value
+                        .map((QualificationData item) {
                       return DropdownMenuItem<String>(
                         value: item.id.toString(),
                         child: Text(item.qualification ?? 'Unknown'),
@@ -157,7 +146,8 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                     }).toList(),
                     onChanged: (String? newValue) {
                       if (newValue != null) {
-                        regiController.selectQlification(newValue);
+                        regiController.selectQlification.value=newValue;
+
                         if (newValue == "other") {
                           regiController.isQualicationList.value = false;
                           regiController.isQualificationDetailVisible.value = true;
@@ -176,49 +166,39 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                 Obx(() {
                   return Visibility(
                     visible: regiController.isQualicationList.value,
-                      child: DropdownButtonFormField<String>(
-                        decoration: InputDecoration(
-                          labelText: "Select Qualification Main",
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black26),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black26),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black26, width: 1.5),
-                          ),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 20),
-                          labelStyle: TextStyle(
-                            color: Colors.black45,
-                          ),
-                        ),
-                        dropdownColor: Colors.white, // Ensures white dropdown background
-                        borderRadius: BorderRadius.circular(10), // Rounded dropdown edges
-                        isExpanded: true, // Makes dropdown take full width
-                        value: regiController.selectQualicationMain.value.isEmpty
-                            ? null
-                            : regiController.selectQualicationMain.value,
-                        items: regiController.qulicationMainList.map((QualicationMainData item) {
-                          return DropdownMenuItem<String>(
-                            value: item.id.toString(),
-                            child: Text(item.name ?? 'Unknown'),
-                          );
-                        }).toList(),
-                        onChanged: (String? newValue) {
-                          if (newValue != null) {
-                            regiController.selectQualicationMain(newValue);
-                            if (newValue == "other") {
-                              regiController.isQualificationCategoryVisible.value = false;
-                              regiController.isQualificationDetailVisible.value = true;
-                            } else {
-                              regiController.isQualificationCategoryVisible.value = true;
-                              regiController.isQualificationDetailVisible.value = false;
-                              regiController.getQualicationCategory(newValue);
-                            }
-                          }
-                        },
+                    child: DropdownButtonFormField<String>(
+                      decoration: InputDecoration(
+                        labelText: "Select Qualification Main",
+                        border: OutlineInputBorder(),
                       ),
+                      value: regiController.selectQualicationMain.value.isEmpty
+                          ? null
+                          : regiController.selectQualicationMain.value,
+                      items: regiController.qulicationMainList.value
+                          .map((QualicationMainData item) {
+                        return DropdownMenuItem<String>(
+                          value: item.id.toString(),
+                          child: Text(item.name ?? 'Unknown'),
+                        );
+                      }).toList(),
+
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          regiController.setSelectQualificationMain(newValue);
+
+                          // regiController.setSelectQualificationMain(newValue);
+                          if (newValue == "other") {
+                            regiController.isQualificationCategoryVisible.value = false;
+                            regiController.isQualificationDetailVisible.value =
+                            true;
+                          } else {
+                            regiController.isQualificationCategoryVisible.value = true;
+                            regiController.isQualificationDetailVisible.value = false;
+                            regiController.getQualicationCategory(newValue);
+                          }
+                        }
+                      },
+                    ),
                   );
                 }),
                 SizedBox(height: 30),
@@ -227,78 +207,49 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                 Obx(() {
                   return Visibility(
                     visible:
-                        regiController.isQualificationCategoryVisible.value,
-                      child: DropdownButtonFormField<String>(
-                        decoration: InputDecoration(
-                          labelText: "Select Qualification Category",
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black26),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black26),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black26, width: 1.5),
-                          ),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 20),
-                          labelStyle: TextStyle(
-                            color: Colors.black45,
-                          ),
-                        ),
-                        dropdownColor: Colors.white, // Ensures white dropdown background
-                        borderRadius: BorderRadius.circular(10), // Rounded dropdown edges
-                        isExpanded: true, // Makes dropdown take full width
-                        value: regiController.selectQualicationCat.value.isEmpty
-                            ? null
-                            : regiController.selectQualicationCat.value,
-                        items: regiController.qulicationCategoryList.map((Qualificationcategorydata item) {
-                          return DropdownMenuItem<String>(
-                            value: item.id.toString(),
-                            child: Text(item.name ?? 'Unknown'),
-                          );
-                        }).toList(),
-                        onChanged: (String? newValue) {
-                          if (newValue != null) {
-                            regiController.selectQualicationCat(newValue);
-                            regiController.isQualificationDetailVisible.value = true;
-                          }
-                        },
+                    regiController.isQualificationCategoryVisible.value,
+                    child: DropdownButtonFormField<String>(
+                      decoration: InputDecoration(
+                        labelText: "Select Qualification Category",
+                        border: OutlineInputBorder(),
                       ),
+                      value: regiController.selectQualicationCat.value.isEmpty
+                          ? null
+                          : regiController.selectQualicationCat.value,
+                      items: regiController.qulicationCategoryList
+                          .map((Qualificationcategorydata item) {
+                        return DropdownMenuItem<String>(
+                          value: item.id.toString(),
+                          child: Text(item.name ?? 'Unknown'),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          regiController.setSelectQualificationCat(newValue);
+                          regiController.isQualificationDetailVisible.value = true;
+                        }
+                      },
+                    ),
                   );
                 }),
                 SizedBox(height: 30),
 
-                /// **Qualification Detail TextField**
+
                 Obx(() {
                   return Visibility(
                     visible: regiController.isQualificationDetailVisible.value,
                     child: TextFormField(
                       keyboardType: TextInputType.text,
                       controller:
-                          regiController.educationdetailController.value,
+                      regiController.educationdetailController.value,
                       decoration: InputDecoration(
                         labelText: "Qualification Detail",
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.black26),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.black26),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.black26, width: 1.5),
-                        ),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                        labelStyle: TextStyle(
-                          color: Colors.black45,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        border: OutlineInputBorder(),
                       ),
-
                     ),
                   );
                 }),
-                SizedBox(height: 30),
-              ],
+                SizedBox(height: 30),            ],
             ),
           ),
         );
@@ -314,23 +265,20 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
       builder: (context) {
         regiController.selectQlification.value=qualification.qualificationId.toString();
         print("fhggh"+regiController.selectQlification.value.toString());
-        if(qualification.qualificationMainId.toString()!="") {
-          regiController.isQualicationList.value=true;
-          regiController.getQualicationMain(qualification.memberQualificationId.toString());
-          regiController.selectQualicationMain.value = qualification.qualificationMainId.toString();
-          regiController.isQualificationCategoryVisible.value=true;
-          regiController.getQualicationCategory(qualification.qualificationCategoryId.toString());
-          regiController.selectQualicationCat.value = qualification.qualificationCategoryId.toString();
-
-
+        if (regiController.selectQualicationMain.value=="") {
+          regiController.isQualicationList.value = true;
+          regiController.getQualicationMain(
+              qualification.qualificationId.toString());
+          regiController.selectQualicationMain.value =
+              qualification.qualificationMainId.toString();
+          regiController.isQualificationCategoryVisible.value = true;
+          regiController.getQualicationCategory(
+              qualification.qualificationCategoryId.toString());
+          regiController.selectQualicationCat.value =
+              qualification.qualificationCategoryId.toString();
         }
-        else
-          {
-            regiController.isQualicationList.value=false;
-            regiController.isQualificationCategoryVisible.value=false;
-          }
 
-        return SingleChildScrollView(
+          return SingleChildScrollView(
           child: Padding(
             padding: EdgeInsets.only(
               left: 16.0,
@@ -381,38 +329,20 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                   ],
                 ),
                 SizedBox(height: 30),
-
-                /// **Qualification Dropdown**
                 Obx(() {
                   return DropdownButtonFormField<String>(
                     decoration: InputDecoration(
                       labelText: "Select Qualification",
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black26),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black26),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black26, width: 1.5),
-                      ),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 20),
-                      labelStyle: TextStyle(
-                        color: Colors.black45,
-                      ),
+                      border: OutlineInputBorder(),
                     ),
-                    dropdownColor: Colors.white, // Sets dropdown list background to white
-                    borderRadius: BorderRadius.circular(10), // Smooth rounded corners
                     value: regiController.selectQlification.value.isEmpty
                         ? null
                         : regiController.selectQlification.value,
-                    items: regiController.qulicationList.map((QualificationData item) {
+                    items: regiController.qulicationList
+                        .map((QualificationData item) {
                       return DropdownMenuItem<String>(
                         value: item.id.toString(),
-                        child: Text(
-                          item.qualification ?? 'Unknown',
-                          style: TextStyle(color: Colors.black), // Ensures text is visible
-                        ),
+                        child: Text(item.qualification ?? 'Unknown'),
                       );
                     }).toList(),
                     onChanged: (String? newValue) {
@@ -425,12 +355,13 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                           regiController.isQualicationList.value = true;
                           regiController.isQualificationDetailVisible.value = false;
                           regiController.getQualicationMain(newValue);
+                          regiController.qulicationMainList.refresh();
                         }
                       }
                     },
                   );
                 }),
-                SizedBox(height: 30),
+                SizedBox(height: 20),
 
                 /// **Qualification Main Dropdown**
                 Obx(() {
@@ -441,10 +372,11 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                         labelText: "Select Qualification Main",
                         border: OutlineInputBorder(),
                       ),
-                      value: regiController.selectQualicationMain.value.isEmpty
-                          ? null
-                          : regiController.selectQualicationMain.value,
-                      items: regiController.qulicationMainList
+                      value: regiController.qulicationMainList.any((item) =>
+                      item.id.toString() == regiController.selectQualicationMain.value)
+                          ? regiController.selectQualicationMain.value
+                          : null,
+                      items: regiController.qulicationMainList.value
                           .map((QualicationMainData item) {
                         return DropdownMenuItem<String>(
                           value: item.id.toString(),
@@ -453,7 +385,9 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                       }).toList(),
                       onChanged: (String? newValue) {
                         if (newValue != null) {
-                          regiController.selectQualicationMain(newValue);
+                          // regiController.setSelectQualificationMain(newValue);
+                          regiController.setSelectQualificationMain(newValue);
+
                           if (newValue == "other") {
                             regiController.isQualificationCategoryVisible.value = false;
                             regiController.isQualificationDetailVisible.value = true;
@@ -461,13 +395,15 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                             regiController.isQualificationCategoryVisible.value = true;
                             regiController.isQualificationDetailVisible.value = false;
                             regiController.getQualicationCategory(newValue);
+
                           }
                         }
                       },
+
                     ),
                   );
                 }),
-                SizedBox(height: 30),
+                SizedBox(height: 20),
 
                 /// **Qualification Category Dropdown**
                 Obx(() {
@@ -478,10 +414,12 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                         labelText: "Select Qualification Category",
                         border: OutlineInputBorder(),
                       ),
-                      value: regiController.selectQualicationCat.value.isEmpty
-                          ? null
-                          : regiController.selectQualicationCat.value,
-                      items: regiController.qulicationCategoryList
+                      value: regiController.qulicationCategoryList.value.any((item) =>
+                      item.id.toString() == regiController.selectQualicationCat.value)
+                          ? regiController.selectQualicationCat.value
+                          : null,
+
+                      items: regiController.qulicationCategoryList.value
                           .map((Qualificationcategorydata item) {
                         return DropdownMenuItem<String>(
                           value: item.id.toString(),
@@ -490,14 +428,14 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                       }).toList(),
                       onChanged: (String? newValue) {
                         if (newValue != null) {
-                          regiController.selectQualicationCat(newValue);
+                          regiController.setSelectQualificationCat(newValue);
                           regiController.isQualificationDetailVisible.value = true;
                         }
                       },
                     ),
                   );
                 }),
-                SizedBox(height: 30),
+                SizedBox(height: 20),
 
                 /// **Qualification Detail TextField**
                 Obx(() {
@@ -506,7 +444,7 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                     child: TextFormField(
                       keyboardType: TextInputType.text,
                       controller:
-                          regiController.educationdetailController.value,
+                      regiController.educationdetailController.value,
                       decoration: InputDecoration(
                         labelText: "Qualification Detail",
                         border: OutlineInputBorder(),
@@ -514,7 +452,9 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                     ),
                   );
                 }),
-                SizedBox(height: 30),
+                SizedBox(height: 20),
+
+
               ],
             ),
           ),

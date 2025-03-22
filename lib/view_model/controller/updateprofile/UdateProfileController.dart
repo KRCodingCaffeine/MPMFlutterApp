@@ -55,31 +55,31 @@ class UdateProfileController extends GetxController {
   var mobileNumber = ''.obs;
   var lmCode = ''.obs;
   var profileImage = ''.obs;
-    Rx<TextEditingController> detailsController = TextEditingController().obs;
-   Rx<TextEditingController> organisationNameController = TextEditingController().obs;
-   Rx<TextEditingController> udorganisationNameController = TextEditingController().obs;
-   Rx<TextEditingController> officePhoneController= TextEditingController().obs;
-   Rx<TextEditingController> udofficePhoneController= TextEditingController().obs;
-   Rx<TextEditingController> addressbusinessinfoNameController= TextEditingController().obs;
-   Rx<TextEditingController> upaddressbusinessinfoNameController= TextEditingController().obs;
+  Rx<TextEditingController> detailsController = TextEditingController().obs;
+  Rx<TextEditingController> organisationNameController = TextEditingController().obs;
+  Rx<TextEditingController> udorganisationNameController = TextEditingController().obs;
+  Rx<TextEditingController> officePhoneController= TextEditingController().obs;
+  Rx<TextEditingController> udofficePhoneController= TextEditingController().obs;
+  Rx<TextEditingController> addressbusinessinfoNameController= TextEditingController().obs;
+  Rx<TextEditingController> upaddressbusinessinfoNameController= TextEditingController().obs;
 
-   Rx<TextEditingController> addressController = TextEditingController().obs;
-   Rx<TextEditingController> areaNameController= TextEditingController().obs;
-   Rx<TextEditingController> udareaNameController= TextEditingController().obs;
-   Rx<TextEditingController> flatnoController= TextEditingController().obs;
-   Rx<TextEditingController> udflatnoController= TextEditingController().obs;
+  Rx<TextEditingController> addressController = TextEditingController().obs;
+  Rx<TextEditingController> areaNameController= TextEditingController().obs;
+  Rx<TextEditingController> udareaNameController= TextEditingController().obs;
+  Rx<TextEditingController> flatnoController= TextEditingController().obs;
+  Rx<TextEditingController> udflatnoController= TextEditingController().obs;
 
-   Rx<TextEditingController> stateNameController = TextEditingController().obs;
-   Rx<TextEditingController> countryNameController = TextEditingController().obs;
-   Rx<TextEditingController> officePincodeController = TextEditingController().obs;
-   Rx<TextEditingController> udofficePincodeController = TextEditingController().obs;
-   Rx<TextEditingController> businessEmailController = TextEditingController().obs;
-   Rx<TextEditingController> udbusinessEmailController = TextEditingController().obs;
-   Rx<TextEditingController> websiteController = TextEditingController().obs;
-   Rx<TextEditingController> upwebsiteController = TextEditingController().obs;
-   Rx<TextEditingController> occupationController = TextEditingController().obs;
-   Rx<TextEditingController> occupation_profession_nameController = TextEditingController().obs;
-   Rx<TextEditingController> specialization_nameController = TextEditingController().obs;
+  Rx<TextEditingController> stateNameController = TextEditingController().obs;
+  Rx<TextEditingController> countryNameController = TextEditingController().obs;
+  Rx<TextEditingController> officePincodeController = TextEditingController().obs;
+  Rx<TextEditingController> udofficePincodeController = TextEditingController().obs;
+  Rx<TextEditingController> businessEmailController = TextEditingController().obs;
+  Rx<TextEditingController> udbusinessEmailController = TextEditingController().obs;
+  Rx<TextEditingController> websiteController = TextEditingController().obs;
+  Rx<TextEditingController> upwebsiteController = TextEditingController().obs;
+  Rx<TextEditingController> occupationController = TextEditingController().obs;
+  Rx<TextEditingController> occupation_profession_nameController = TextEditingController().obs;
+  Rx<TextEditingController> specialization_nameController = TextEditingController().obs;
 
 
 
@@ -178,7 +178,7 @@ class UdateProfileController extends GetxController {
   setOccuptionSpe(List<OccuptionSpecData> _value) =>
       occuptionSpeList.value = _value;
   void setSelectOccuptionPro(String value) {
-    selectOccuptionPro(value);
+    selectOccuptionPro.value=value;
   }
 
   void setRxRequestOccuption(Status _value) =>
@@ -266,17 +266,17 @@ class UdateProfileController extends GetxController {
       blood_group_id.value = getUserData.value.bloodGroupId.toString();
       whatsAppNumber.value = getUserData.value.whatsappNumber.toString();
       if(getUserData.value.maritalStatusId.toString()!="")
-        {
-            userMaritalStatus.value=getUserData.value.maritalStatusId.toString();
-        }
+      {
+        userMaritalStatus.value=getUserData.value.maritalStatusId.toString();
+      }
       if(getUserData.value.membershipApprovalStatusId.toString()!="")
-        {
-          membershipApprovalStatusId.value = getUserData.value.membershipApprovalStatusId.toString();
-        }
+      {
+        membershipApprovalStatusId.value = getUserData.value.membershipApprovalStatusId.toString();
+      }
       if(getUserData.value.isJangana.toString()!="")
-        {
-          isJangana.value = getUserData.value.isJangana.toString();
-        }
+      {
+        isJangana.value = getUserData.value.isJangana.toString();
+      }
       checkReviewApproval();
       marriageAnniversaryDate.value = getUserData.value.marriageAnniversaryDate.toString();
       memberCode.value = getUserData.value.memberCode.toString();
@@ -319,32 +319,30 @@ class UdateProfileController extends GetxController {
         organisationName.value = getUserData.value.occupation!.occupationOtherName.toString();
 
         if(getUserData.value.occupation!.occupationId.toString()!="")
-          {
-            selectOccuption.value = getUserData.value.occupation!.occupationId.toString();
-            getOccupationProData(getUserData.value.occupation!.occupationId.toString());
-            isOccutionList.value = true;
-            selectOccuptionPro.value = getUserData.value.occupation!.occupationProfessionId.toString();
-            if(getUserData.value.occupation!.occupationSpecializationId.toString()!=null) {
-              getOccupationSpectData(getUserData.value.occupation!.occupationProfessionId.toString());
-              selectOccuptionSpec.value = getUserData.value.occupation!.occupationSpecializationId.toString();
-
-            }
-
+        {
+          selectOccuption.value = getUserData.value.occupation!.occupationId.toString();
+          getOccupationProData(getUserData.value.occupation!.occupationId.toString());
+          isOccutionList.value = true;
+          selectOccuptionPro.value = getUserData.value.occupation!.occupationProfessionId.toString();
+          if(getUserData.value.occupation!.occupationSpecializationId.toString()!=null) {
+            getOccupationSpectData(getUserData.value.occupation!.occupationProfessionId.toString());
+            selectOccuptionSpec.value = getUserData.value.occupation!.occupationSpecializationId.toString();
 
           }
+        }
         else
-          {
-            isOccutionList.value = false;
-          }
+        {
+          isOccutionList.value = false;
+        }
         if(getUserData.value.occupation!.occupationProfessionId!=null) {
-           isOccutionList.value=true;
-           occupationController.value.text=getUserData.value.occupation!.occupation.toString();
-           occupation_profession_nameController.value.text=getUserData.value.occupation!.occupationProfessionName.toString();
-           specialization_nameController.value.text=getUserData.value.occupation!.specializationName.toString();
-           getOccupationProData(getUserData.value.occupation!.occupationProfessionId.toString());
-           getOccupationSpectData(getUserData.value.occupation!.occupationSpecializationId.toString());
-           selectOccuptionSpec.value=getUserData.value.occupation!.occupationSpecializationId.toString();
-            selectOccuptionPro.value = getUserData.value.occupation!.occupationProfessionId.toString();
+          isOccutionList.value=true;
+          occupationController.value.text=getUserData.value.occupation!.occupation.toString();
+          occupation_profession_nameController.value.text=getUserData.value.occupation!.occupationProfessionName.toString();
+          specialization_nameController.value.text=getUserData.value.occupation!.specializationName.toString();
+          getOccupationProData(getUserData.value.occupation!.occupationProfessionId.toString());
+          getOccupationSpectData(getUserData.value.occupation!.occupationSpecializationId.toString());
+          selectOccuptionSpec.value=getUserData.value.occupation!.occupationSpecializationId.toString();
+          selectOccuptionPro.value = getUserData.value.occupation!.occupationProfessionId.toString();
         }
         else {
           isOccutionList.value=false;
@@ -352,9 +350,9 @@ class UdateProfileController extends GetxController {
         detailsController.value.text = getUserData.value.occupation!.occupationOtherName.toString();
       }
       else
-        {
-          occupationData.value=false;
-        }
+      {
+        occupationData.value=false;
+      }
       officePhone.value = getUserData.value.mobile.toString();
       if (getUserData.value.qualification != null) {
         qualificationList.value = getUserData.value.qualification!;
@@ -428,18 +426,20 @@ class UdateProfileController extends GetxController {
   var selectOccuption = ''.obs;
   var isOccutionList = false.obs;
   void setSelectOccuptionSpec(String value) {
-    selectOccuptionSpec(value);
+    selectOccuptionSpec.value=value;
   }
   void setSelectQualification(String value) {
-    selectQlification(value);
+    selectQlification.value=value;
+
   }
 
   void setSelectQualificationMain(String value) {
-    selectQualicationMain(value);
+    selectQualicationMain.value=value;
   }
 
+
   void setSelectQualificationCat(String value) {
-    selectQualicationMain(value);
+    selectQualicationCat.value=value;
   }
 
   setQlication(List<QualificationData> _value) => qulicationList.value = _value;
@@ -455,7 +455,7 @@ class UdateProfileController extends GetxController {
     api.userQualification().then((_value) {
       setRxRequestQualification(Status.COMPLETE);
       setQlication(_value.data!);
-      qulicationList.add(QualificationData(
+      qulicationList.value.add(QualificationData(
           id: "other",
           qualification: 'Other',
           status: '1',
@@ -466,15 +466,25 @@ class UdateProfileController extends GetxController {
     });
   }
 
-  void getQualicationMain(String qualification_id) {
+  void getQualicationMain(String qualification_id) async{
     print("cvv"+qualification_id.toString());
+    qulicationMainList.value.clear();
+    qulicationMainList.value = [];
     Map datas = {"qualification_id": qualification_id};
     setRxRequestQualificationMain(Status.LOADING);
-    api.userQualificationMain(datas).then((_value) {
+    await api.userQualificationMain(datas).then((_value) {
       setRxRequestQualificationMain(Status.COMPLETE);
-      qulicationMainList.value.add(_value.data!);
-      print("cvv"+_value.data!.toString());
-     setQualicationMain(qulicationMainList.value);
+      print("gggggg"+_value.data!.name.toString());
+      if (_value.data != null) {
+        print("Received Qualification Main Data: ${_value.data}");
+        qulicationMainList.value =qulicationMainList.value.toSet().toList();
+        qulicationMainList.value.add(_value.data!);
+
+        qulicationMainList.refresh();
+        print("Updated Qualification Main List: ${qulicationMainList.length} items");
+      }
+      print("cvv"+ qulicationMainList.value.first.name.toString());
+      setQualicationMain(qulicationMainList.value);
     }).onError((error, strack) {
       print("cvv"+error.toString());
       setRxRequestQualificationMain(Status.ERROR);
@@ -482,31 +492,34 @@ class UdateProfileController extends GetxController {
   }
 
   void getQualicationCategory(String qualification_main_id) {
+    qulicationCategoryList.value=[];
     print("cvv111"+qualification_main_id.toString());
     Map datas = {"qualification_category_id": qualification_main_id};
     setRxRequestQualificationCat(Status.LOADING);
     api.userQualificationCategory(datas).then((_value) {
       setRxRequestQualificationCat(Status.COMPLETE);
+      qulicationCategoryList.value= qulicationCategoryList.value.toSet().toList();
       qulicationCategoryList.value .add(_value.data!);
+      qulicationCategoryList.refresh();
       setQualicationCategory(qulicationCategoryList.value);
     }).onError((error, strack) {
       setRxRequestQualificationCat(Status.ERROR);
       print("cvv"+error.toString());
     });
   }
-void checkReviewApproval(){
+  void checkReviewApproval(){
     if(userMaritalStatus.value=="1" && membershipApprovalStatusId.value=="6")
+    {
+      if(isJangana.value=="0")
       {
-        if(isJangana.value=="0")
-          {
-            showDashboardReviewFlag.value=true;
-          }
-        else
-          {
-            showDashboardReviewFlag.value=false;
-          }
+        showDashboardReviewFlag.value=true;
       }
-}
+      else
+      {
+        showDashboardReviewFlag.value=false;
+      }
+    }
+  }
   setRxRequestQualification(Status _value) =>
       rxStatusQualification.value = _value;
 
@@ -840,7 +853,7 @@ void checkReviewApproval(){
           snackPosition: SnackPosition.TOP,
         );
         memberId.value = registerResponse.data.toString();
-          getUserProfile();
+        getUserProfile();
         Navigator.of(context!).pop();
 
       } else {
@@ -880,14 +893,14 @@ void checkReviewApproval(){
 
     loading.value = true;
     var area="";
-if(regiController.area_name.value=="")
-  {
-    area=regiController.area_name.value;
-  }
-else
-  {
-    area= regiController.areaController.value.text;
-  }
+    if(regiController.area_name.value=="")
+    {
+      area=regiController.area_name.value;
+    }
+    else
+    {
+      area= regiController.areaController.value.text;
+    }
 
     var building_name = buildingController.value.text;
     var building_id = "";
@@ -961,7 +974,7 @@ else
     else {
       loading.value = false;
       print("ccvv" + await response.reasonPhrase.toString());
-       String responseBody = await response.stream.bytesToString();
+      String responseBody = await response.stream.bytesToString();
       print("" +responseBody);
       // loading.value=false;
       // Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
@@ -1007,7 +1020,7 @@ else
       "proposer_id": userData!.memberId.toString(),
       "first_name": regiController.firstNameController.value.text,
       "last_name": regiController.lastNameController.value.text,
-          "middle_name": regiController.middleNameController.value.text,
+      "middle_name": regiController.middleNameController.value.text,
       "father_name": regiController.fathersnameController.value.text,
       "mother_name": regiController.mothersnameController.value.text,
       "email": regiController.emailController.value.text,
@@ -1022,7 +1035,7 @@ else
       "member_type_id": regiController.selectMemberShipType.value,
       "marriage_anniversary_date": regiController.marriagedateController.value.text,
       "salutation_id": regiController.selectMemberSalutation.value,
-      "created_by": "1"
+      "created_by": userData!.memberId.toString()
     };
     print("ccvv" + payload.toString());
     var request = http.MultipartRequest('POST', url);
@@ -1056,7 +1069,7 @@ else
         regiController.mothersnameController.value.text="";
         regiController.emailController.value.text="";
         regiController.whatappmobileController.value.text="";
-       // regiController.mobileController.value.text="";
+        // regiController.mobileController.value.text="";
         regiController.selectedGender.value="";
         regiController.selectBloodGroup.value="";
         regiController.dateController.text="";
@@ -1067,7 +1080,7 @@ else
         regiController.selectMemberSalutation.value="";
         regiController.selectMemberSalutation.value="";
         getUserProfile();
-         sendOtp(regiController.mobileController.value.text);
+        sendOtp(regiController.mobileController.value.text);
         Navigator.of(context!).pop();
         showOtpBottomSheet(context!,regiController.mobileController.value.text);
         regiController.mobileController.value.text="";
@@ -1084,7 +1097,7 @@ else
     }
     else {
       familyloading.value = false;
-     // print("ccvv" + await response.reasonPhrase.toString());
+      // print("ccvv" + await response.reasonPhrase.toString());
       //  String responseBody = await response.stream.bytesToString();
       print("ccvv" + await response.stream.bytesToString());
       // loading.value=false;
@@ -1219,7 +1232,7 @@ else
         'city_id': memberController.city_id.value,
         'state_id': memberController.state_id.value,
         'country_id': memberController.country_id.value,
-        'created_by': '1',
+        'created_by': memberId.value,
         'pincode':  officePincodeController.value.text
       };
       print("fffh"+payload.toString());
@@ -1290,7 +1303,7 @@ else
         'city_id': memberController.city_id.value,
         'state_id': memberController.state_id.value,
         'country_id': memberController.country_id.value,
-        'created_by': '1',
+        'created_by': memberId.value,
         'pincode': udofficePincodeController.value.text,
         'member_address_id': bussinessinfo.memberAddressId.toString(),
         'member_business_info_id': bussinessinfo.membersBusinessInfoId.toString()
