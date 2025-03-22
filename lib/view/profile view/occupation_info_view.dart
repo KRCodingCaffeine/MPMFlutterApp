@@ -56,43 +56,7 @@ UdateProfileController controller=Get.put(UdateProfileController());
   void _saveChanges() {
     bool isSuccess = _validateFields();
 
-    if (isSuccess) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Changes saved successfully!',
-            style: TextStyle(color: Colors.white),
-          ),
-          backgroundColor: Colors.green,
-        ),
-      );
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => BusinessInformationPage(
-              successMessage: 'Changes saved successfully!'),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Failed to save changes. Please try again.',
-            style: TextStyle(color: Colors.white),
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => BusinessInformationPage(
-              failureMessage: 'Failed to save changes.'),
-        ),
-      );
-    }
   }
 
   bool _validateFields() {
@@ -186,7 +150,7 @@ UdateProfileController controller=Get.put(UdateProfileController());
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20.0),
-      child: TextField(
+      child: TextFormField(
         controller: controller,
         onChanged: onChanged,
         decoration: InputDecoration(

@@ -1151,9 +1151,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                             child: Row(
                               children: [
                                 Obx(() {
-                                  if (regiController
-                                      .rxStatusCountryLoading.value ==
-                                      Status.LOADING) {
+                                  if (regiController.rxStatusCountryLoading.value == Status.LOADING) {
                                     return Padding(
                                       padding: const EdgeInsets.symmetric(
                                           vertical: 10, horizontal: 22),
@@ -1513,12 +1511,7 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
   }
 
   void _saveChanges() {
-    // widget.onOccInfoChanged(
-    //   _occupationController.text,
-    //   _professionController.text,
-    //   _specializationController.text,
-    //   _detailsController.text,
-    // );
+
     controller.addAndupdateOccuption();
   }
 
@@ -1618,7 +1611,18 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
                                       ),
                                     );
                                   } else if (controller.rxStatusOccupation.value == Status.ERROR) {
-                                    return Center(child: Text('Failed to load occupation'));
+                                    return Center(child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.black26, // Background color
+                                        borderRadius: BorderRadius.circular(20), // Rounded corners
+                                        border: Border.all(
+                                          color: Colors.black26, // Border color
+                                          width: 1.5, // Border width
+                                        ),
+                                      ),
+                                      padding: EdgeInsets.symmetric(horizontal: 20,vertical: 6),
+                                      child: Text('Failed to load occupation'),
+                                    ));
                                   } else if (controller.occuptionList.isEmpty) {
                                     return Center(child: Text('No occupation available'));
                                   } else {
@@ -1661,7 +1665,7 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
                                           }).toList(),
                                           onChanged: (String? newValue) {
                                             if (newValue != null) {
-                                              controller.selectOccuption(newValue);
+                                              controller.setSelectOccuptionSpec(newValue);
                                               if (newValue != "other") {
                                                 controller.isOccutionList.value = true;
                                                 controller.getOccupationProData(newValue);
@@ -1693,7 +1697,7 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
                                       Obx(() {
                                         if (controller.rxStatusOccupationData.value == Status.LOADING) {
                                           return Padding(
-                                            padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                                            padding: EdgeInsets.symmetric(vertical: 12, horizontal: 22),
                                             child: Container(
                                               alignment: Alignment.centerRight,
                                               height: 24,
@@ -1704,7 +1708,17 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
                                             ),
                                           );
                                         } else if (controller.rxStatusOccupationData.value == Status.ERROR) {
-                                          return Center(child: Text('Failed to load occupation Profession'));
+                                          return Center(
+                                              child: Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.black26, // Background color
+                                                borderRadius: BorderRadius.circular(20), // Rounded corners
+                                                border: Border.all(
+                                                  color: Colors.black26, // Border color
+                                                  width: 1.5, // Border width
+                                                ),
+                                              ),
+                                              child: Text('Failed to load occupation Profession')));
                                         } else if (controller.rxStatusOccupationData.value == Status.IDLE) {
                                           return Center(
                                             child: Padding(
@@ -1712,7 +1726,7 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
                                               child: Text('Select Occupation Profession *'),
                                             ),
                                           );
-                                        } else if (controller.occuptionProfessionList.isEmpty) {
+                                        } else if (controller.occuptionProfessionList.value.isEmpty) {
                                           return Center(child: Text('No occupation Pro available'));
                                         } else {
                                           return Expanded(
@@ -1746,7 +1760,7 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
                                                 value: controller.selectOccuptionPro.value.isEmpty
                                                     ? null
                                                     : controller.selectOccuptionPro.value,
-                                                items: controller.occuptionProfessionList.map((OccuptionProfessionData profession) {
+                                                items: controller.occuptionProfessionList.value.map((OccuptionProfessionData profession) {
                                                   return DropdownMenuItem<String>(
                                                     value: profession.id.toString(),
                                                     child: Text(profession.name ?? 'Unknown'),
@@ -1866,9 +1880,13 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
                 ],
               ),
               SizedBox(height: 30),
-              _buildEditableField(
-                  label: 'Details',
-                  controller: controller.detailsController.value),
+             Obx((){
+               return Visibility(
+                 visible: controller.isOccutionList.value,
+                   child:  _buildEditableField(
+                   label: 'Details',
+                   controller: controller.detailsController.value));
+             }),
             ],
           ),
         ),
@@ -1877,7 +1895,8 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
   }
 
   Widget _buildEditableField(
-      {required String label, required TextEditingController controller}) {
+      {required String label, required TextEditingController controller}
+      ) {
     return Container(
       width: double.infinity,
       margin: EdgeInsets.only(left: 5, right: 5),

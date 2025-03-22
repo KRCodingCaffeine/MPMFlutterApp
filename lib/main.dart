@@ -1,6 +1,6 @@
 import 'package:device_preview/device_preview.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/route/route_name.dart';
@@ -23,7 +23,12 @@ Future<void> main() async{
   // GetServerKey getServerKey=GetServerKey();
   // String acc= await getServerKey.getServerKey();
   // print("aaa"+acc.toString());
-  runApp(MyApp());
+  // runApp(MyApp());
+  runApp(
+      DevicePreview(
+        enabled: !kReleaseMode,
+        builder: (context) => MyApp(), // Wrap your app
+      ));
 }
 
 class MyApp extends StatelessWidget {
