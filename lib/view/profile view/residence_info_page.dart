@@ -133,13 +133,10 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildInfoBox(
-                          'Document:',
-                          subtitle: controller.getUserData.value.address?.addressType?.toString() ?? "N/A",
-                        ),
+
                         const SizedBox(height: 10),
                         // **Show "View Image" button if an image is uploaded**
-                        if (_image != null)
+                        if (controller.documentDynamicImage.value != null)
                           SizedBox(
                             width: double.infinity, // Full width button
                             child: ElevatedButton.icon(
@@ -179,15 +176,17 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: _image != null
-                ? Image.file(_image!, fit: BoxFit.contain) // Display the image
-                : const Padding(
-              padding: EdgeInsets.all(20),
-              child: Text("No image uploaded", textAlign: TextAlign.center),
-            ),
-          ),
+          child: Obx((){
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: controller.documentDynamicImage.value != null
+                  ? Image.network(controller.documentDynamicImage.value, fit: BoxFit.contain) // Display the image
+                  : const Padding(
+                padding: EdgeInsets.all(20),
+                child: Text("No image uploaded", textAlign: TextAlign.center),
+              ),
+            );
+          }),
         );
       },
     );

@@ -244,7 +244,7 @@ class NewMemberController extends GetxController {
   }
 
   void setSelectedMarital(String value) {
-    selectMarital(value);
+    selectMarital.value=value;
     if(value.toString()=="1")
     {
       MaritalAnnivery.value=true;
@@ -537,7 +537,7 @@ class NewMemberController extends GetxController {
 
 
   void setSelectMemberSalutation(String value) {
-    selectMemberSalutation(value);
+    selectMemberSalutation.value=value;
   }
 
 

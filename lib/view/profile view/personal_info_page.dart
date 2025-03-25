@@ -371,8 +371,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                       String formattedDate =
                                           DateFormat('dd/MM/yyyy')
                                               .format(pickedDate);
-                                      controller.dobController.value.text =
-                                          formattedDate;
+                                      controller.dobController.value.text = formattedDate;
                                     }
                                   },
                                 ),
@@ -571,8 +570,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                             }).toList(),
                                             onChanged: (String? newValue) {
                                               if (newValue != null) {
-                                                controller.blood_group_id
-                                                    .value = newValue;
+                                                controller.blood_group_id.value = newValue;
                                               }
                                             },
                                           ),
@@ -591,9 +589,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                 child: Row(
                                   children: [
                                     Obx(() {
-                                      if (newMemberController
-                                              .rxStatusmarried.value ==
-                                          Status.LOADING) {
+                                      if (newMemberController.rxStatusmarried.value == Status.LOADING) {
                                         return Padding(
                                           padding: const EdgeInsets.symmetric(
                                               vertical: 10, horizontal: 22),
@@ -661,15 +657,15 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                                     fontWeight:
                                                         FontWeight.bold),
                                               ),
-                                              value: newMemberController
+                                              value: controller
                                                       .selectMarital
                                                       .value
                                                       .isEmpty
                                                   ? null
-                                                  : newMemberController
+                                                  : controller
                                                       .selectMarital.value,
                                               items: newMemberController
-                                                  .maritalList
+                                                  .maritalList.value
                                                   .map((MaritalData marital) {
                                                 return DropdownMenuItem<String>(
                                                   value: marital.id.toString(),
@@ -680,9 +676,15 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                               }).toList(),
                                               onChanged: (String? newValue) {
                                                 if (newValue != null) {
-                                                  newMemberController
-                                                      .setSelectedMarital(
-                                                          newValue);
+                                                  controller.selectMarital.value=newValue;
+                                                  if(controller.selectMarital.value=="1") {
+                                                   controller. MaritalAnnivery.value = true;
+                                                  }
+                                                  else
+                                                  {
+                                                    controller.MaritalAnnivery.value = false;
+                                                  }
+
                                                 }
                                               },
                                             ),
@@ -699,7 +701,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                             // Marriage Anniversary
                             Obx(() {
                               return Visibility(
-                                visible: newMemberController
+                                visible: controller
                                         .MaritalAnnivery.value ==
                                     true, // Show only if marital_status_id is "1"
                                 child: Column(
@@ -710,15 +712,11 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                         child: TextFormField(
                                           keyboardType: TextInputType.text,
                                           readOnly: true,
-                                          controller: controller
-                                              .marriageAnniversaryController
-                                              .value,
+                                          controller: controller.marriageAnniversaryController.value,
                                           decoration: InputDecoration(
                                             labelText: 'Marriage Anniversary *',
                                             border: OutlineInputBorder(
-                                              borderSide: BorderSide(
-                                                  color: Colors
-                                                      .black26), // Default border color
+                                              borderSide: BorderSide(color: Colors.black26), // Default border color
                                             ),
                                             enabledBorder: OutlineInputBorder(
                                               borderSide: BorderSide(
@@ -728,8 +726,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                             focusedBorder: OutlineInputBorder(
                                               borderSide: BorderSide(
                                                   color: Colors.black26,
-                                                  width:
-                                                      1.5), // Thicker border when focused
+                                                  width: 1.5), // Thicker border when focused
                                             ),
                                             contentPadding:
                                                 EdgeInsets.symmetric(
@@ -795,13 +792,8 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                             );
 
                                             if (pickedDate != null) {
-                                              String formattedDate =
-                                                  DateFormat('dd/MM/yyyy')
-                                                      .format(pickedDate);
-                                              controller
-                                                  .marriageAnniversaryController
-                                                  .value
-                                                  .text = formattedDate;
+                                              String formattedDate = DateFormat('dd/MM/yyyy').format(pickedDate);
+                                              controller.marriageAnniversaryController.value.text = formattedDate;
                                             }
                                           },
                                         ),
