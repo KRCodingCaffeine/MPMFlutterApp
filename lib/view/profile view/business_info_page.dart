@@ -456,9 +456,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                   child: Row(
                                     children: [
                                       Obx(() {
-                                        if (regiController
-                                                .rxStatusStateLoading.value ==
-                                            Status.LOADING) {
+                                        if (regiController.rxStatusStateLoading.value == Status.LOADING) {
                                           return Padding(
                                             padding: const EdgeInsets.symmetric(
                                                 vertical: 10, horizontal: 22),
@@ -475,17 +473,13 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                                               .pink_color),
                                                 )),
                                           );
-                                        } else if (regiController
-                                                .rxStatusStateLoading.value ==
-                                            Status.ERROR) {
+                                        } else if (regiController.rxStatusStateLoading.value == Status.ERROR) {
                                           return const Center(
-                                              child:
-                                                  Text('Failed to load state'));
+                                              child: Text('Failed to load state'));
                                         } else if (regiController
                                             .stateList.isEmpty) {
                                           return const Center(
-                                              child:
-                                                  Text('No State available'));
+                                              child: Text('No State available'));
                                         } else {
                                           return Expanded(
                                             child: InputDecorator(
@@ -545,9 +539,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                   child: Row(
                                     children: [
                                       Obx(() {
-                                        if (regiController
-                                                .rxStatusCountryLoading.value ==
-                                            Status.LOADING) {
+                                        if (regiController.rxStatusCountryLoading.value == Status.LOADING) {
                                           return Padding(
                                             padding: const EdgeInsets.symmetric(
                                                 vertical: 10, horizontal: 22),
@@ -564,14 +556,12 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                                               .pink_color),
                                                 )),
                                           );
-                                        } else if (regiController
-                                                .rxStatusCountryLoading.value ==
+                                        } else if (regiController.rxStatusCountryLoading.value ==
                                             Status.ERROR) {
                                           return const Center(
                                               child: Text(
                                                   'Failed to load country'));
-                                        } else if (regiController
-                                            .countryList.isEmpty) {
+                                        } else if (regiController.countryList.isEmpty) {
                                           return const Center(
                                               child:
                                                   Text('No Country available'));
@@ -1032,10 +1022,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                             dropdownColor: Colors.white, // Ensures dropdown list background is white
                                             borderRadius: BorderRadius.circular(10),
                                             isExpanded: true,
-                                            hint: const Text(
-                                              'Select City',
-                                              style: TextStyle(fontWeight: FontWeight.bold),
-                                            ),
+
                                             value: regiController.city_id.value.isEmpty
                                                 ? null
                                                 : regiController.city_id.value,
@@ -1116,12 +1103,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                             dropdownColor: Colors.white, // Dropdown list background is white
                                             borderRadius: BorderRadius.circular(10),
                                             isExpanded: true,
-                                            hint: const Text(
-                                              'Select State *',
-                                              style: TextStyle(fontWeight: FontWeight.bold),
-                                            ),
-                                            value: regiController.state_id.value.isEmpty
-                                                ? null
+
+                                            value: regiController.state_id.value.isEmpty ? null
                                                 : regiController.state_id.value,
                                             items: regiController.stateList.map((StateData state) {
                                               return DropdownMenuItem<String>(
@@ -1503,7 +1486,6 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
   @override
   void initState() {
     super.initState();
-
     controller.detailsController.value.text = widget.occupationDetails;
   }
 
@@ -1514,7 +1496,7 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
 
   @override
   Widget build(BuildContext context) {
-    // Get the screen height using MediaQuery
+
     final screenHeight = MediaQuery.of(context).size.height;
 
     return SafeArea(
@@ -1524,7 +1506,6 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
           widthFactor: 1.0, // Takes full width
           heightFactor: 1.0, // Takes full height of the Container
           child: SingleChildScrollView(
-
             child: Column(
               children: [
                 const SizedBox(height: 30),
@@ -1581,7 +1562,6 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
                   ),
                 ),
                 const SizedBox(height: 30),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -1713,7 +1693,6 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
                                                 child: Container(
                                                  width: MediaQuery.of(context).size.width*0.88,
                                                 decoration: BoxDecoration(
-
                                                   borderRadius: BorderRadius.circular(10), // Rounded corners
                                                   border: Border.all(
                                                     color: Colors.black26, // Border color
@@ -1829,7 +1808,7 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
                                              ),
                                            );
                                          }
-                                         else if (controller.occuptionSpeList.isEmpty) {
+                                         else if (controller.occuptionSpeList.value.isEmpty) {
                                            return Center(child: Text('No occupation specialization available'));
                                          } else {
                                            return Expanded(
@@ -1857,9 +1836,7 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
                                                  isExpanded: true,
                                                  underline: Container(), // Removes default underline
 
-                                                 value: controller.selectOccuptionSpec.value.isEmpty
-                                                     ? null
-                                                     : controller.selectOccuptionSpec.value,
+                                                 value: controller.selectOccuptionSpec.value.isEmpty ? null : controller.selectOccuptionSpec.value,
                                                  items: controller.occuptionSpeList.value.map((OccuptionSpecData specialization) {
                                                    return DropdownMenuItem<String>(
                                                      value: specialization.id.toString(),
@@ -1876,9 +1853,6 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
                                                      } else {
                                                        controller.occuptionFlag.value=true;
                                                      }
-
-
-
                                                    }
                                                  },
                                                ),

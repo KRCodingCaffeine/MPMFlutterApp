@@ -50,10 +50,16 @@ class SamitiController extends  GetxController {
     loading2.value=true;
     try {
       var response = await api.searchMember(query);
-      loading2.value = false;
+
       print("Response: " + response.toString());
       var data=SearchLMCodeModel.fromJson(response);
-      searchDataList.value = data.data!;
+    //  searchDataList.value = data.data!;
+      if (response != null && response.isNotEmpty) {
+        searchDataList.value.assignAll(data.data!);
+      } else {
+        searchDataList.value.clear();
+      }
+      loading2.value = false;
     } catch (error) {
       loading2.value = false;
       print("Error: " + error.toString());

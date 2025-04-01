@@ -442,8 +442,7 @@ class NewMemberController extends GetxController {
         } else {
           for (var membership in _value.data!) {
             if (zoneId.isEmpty) {
-              if (membership.membershipName == "Saraswani Member" ||
-                  membership.membershipName == "Guest Member") {
+              if (membership.membershipName == "Saraswani Member" ||  membership.membershipName == "Guest Member") {
                 memberShipList.value.add(MemberShipData(
                   id: membership.id,
                   membershipName: membership.membershipName,

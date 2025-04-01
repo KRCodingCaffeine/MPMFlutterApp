@@ -1,8 +1,6 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import 'package:mpm/OccuptionProfession/OccuptionProfessionData.dart';
 import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/CheckUser/CheckUserData2.dart';
@@ -27,12 +25,10 @@ import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/urls.dart';
 import 'package:http/http.dart' as http;
-import 'package:mpm/view/profile%20view/profile_view.dart';
-import 'package:mpm/view/profile%20view/residence_info_page.dart';
+
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 
-import '../../../view/profile view/family_info_page.dart';
-import '../../../view/profile view/personal_info_page.dart';
+
 
 class UdateProfileController extends GetxController {
   final api = UpdateProfileRepository();
@@ -307,10 +303,8 @@ var   occuptionFlag=false.obs;
       otp.value = getUserData.value.otp.toString();
       verifyOtpStatus.value = getUserData.value.verifyOtpStatus.toString();
       mobileVerifyStatus.value = getUserData.value.mobileVerifyStatus.toString();
-      sangathanApprovalStatus.value =
-          getUserData.value.sangathanApprovalStatus.toString();
-      vyavasthapikaApprovalStatus.value =
-          getUserData.value.vyavasthapikaApprovalStatus.toString();
+      sangathanApprovalStatus.value = getUserData.value.sangathanApprovalStatus.toString();
+      vyavasthapikaApprovalStatus.value = getUserData.value.vyavasthapikaApprovalStatus.toString();
       if (getUserData.value.familyHeadMemberData != null) {
         familyHeadMemberId.value = getUserData.value.familyHeadMemberData!.memberId.toString();
       }
@@ -340,12 +334,11 @@ var   occuptionFlag=false.obs;
           selectOccuption.value = getUserData.value.occupation!.occupationId.toString();
           getOccupationProData(getUserData.value.occupation!.occupationId.toString());
           isOccutionList.value = true;
-
           selectOccuptionPro.value = getUserData.value.occupation!.occupationProfessionId.toString();
           if(getUserData.value.occupation!.occupationSpecializationId.toString()!=null) {
-            getOccupationSpectData(getUserData.value.occupation!.occupationSpecializationId.toString());
+            getOccupationSpectData(getUserData.value.occupation!.occupationProfessionId.toString());
             occupationProData.value=true;
-            selectOccuptionSpec.value = getUserData.value.occupation!.occupationSpecializationId.toString();
+            selectOccuptionSpec.value = getUserData.value.occupation!.occupationProfessionId.toString();
 
           }
 
@@ -362,6 +355,7 @@ var   occuptionFlag=false.obs;
         occupationData.value=false;
       }
       officePhone.value = getUserData.value.mobile.toString();
+
       if (getUserData.value.qualification != null) {
         qualificationList.value = getUserData.value.qualification!;
 
@@ -375,9 +369,6 @@ var   occuptionFlag=false.obs;
         print("hjfhhjj" + getUserData.value.familyMembersData.toString());
         familyDataList.value = getUserData.value.familyMembersData!;
       }
-
-
-
     }).onError((error, strack) {
       loading.value = false;
       print("err" + error.toString());
@@ -424,17 +415,21 @@ var   occuptionFlag=false.obs;
   void getOccupationSpectData(String occupation_profession_id) {
 
     Map datas = {"occupation_profession_id": occupation_profession_id};
+    print("gggggg"+datas.toString());
     setRxRequestOccuptionSpec(Status.LOADING);
     api.userOccutionSpectionCodeApi(datas).then((_value) {
       setRxRequestOccuptionSpec(Status.COMPLETE);
       setOccuptionSpe(_value.data!);
-      occuptionSpeList.value.add(OccuptionSpecData(
+      occuptionSpeList.value.add(
+          OccuptionSpecData(
           id: "other",
           occupationId: "other",
           name: "other",
           status: '1',
           createdAt: null,
-          updatedAt: null));
+          updatedAt: null
+      )
+      );
       print("ggggggggggggggggg"+occupation_profession_id);
     }).onError((error, strack) {
       setRxRequestOccuptionSpec(Status.ERROR);
