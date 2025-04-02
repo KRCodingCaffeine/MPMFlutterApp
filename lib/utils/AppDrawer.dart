@@ -205,7 +205,7 @@ class AppDrawer extends StatelessWidget {
     final box = context.findRenderObject() as RenderBox?;
 
     const String playStoreLink =
-        'https://play.google.com/store/apps/details?id=com.example.yourapp';
+        'https://play.google.com/store/apps/details?id=com.mpm.members';
     const String appStoreLink =
         'https://apps.apple.com/app/id123456789'; // Replace with actual link
 

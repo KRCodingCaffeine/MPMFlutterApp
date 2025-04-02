@@ -244,7 +244,7 @@ class NewMemberController extends GetxController {
   }
 
   void setSelectedMarital(String value) {
-    selectMarital(value);
+    selectMarital.value=value;
     if(value.toString()=="1")
     {
       MaritalAnnivery.value=true;
@@ -442,8 +442,7 @@ class NewMemberController extends GetxController {
         } else {
           for (var membership in _value.data!) {
             if (zoneId.isEmpty) {
-              if (membership.membershipName == "Saraswani Member" ||
-                  membership.membershipName == "Guest Member") {
+              if (membership.membershipName == "Saraswani Member" ||  membership.membershipName == "Guest Member") {
                 memberShipList.value.add(MemberShipData(
                   id: membership.id,
                   membershipName: membership.membershipName,
@@ -537,7 +536,7 @@ class NewMemberController extends GetxController {
 
 
   void setSelectMemberSalutation(String value) {
-    selectMemberSalutation(value);
+    selectMemberSalutation.value=value;
   }
 
 

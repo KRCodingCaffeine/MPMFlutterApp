@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mpm/utils/AppDrawer.dart';
-import 'package:mpm/utils/color_helper.dart';
-import 'package:mpm/utils/color_resources.dart';
+
 
 import 'package:mpm/view_model/controller/samiti/SamitiController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
@@ -66,7 +64,7 @@ class _SearchViewState extends State<SearchView> {
                   return const Center(
                     child: CircularProgressIndicator(color: Color(0xFFe61428)),
                   );
-                } else if (controller.searchDataList.isEmpty) {
+                } else if (controller.searchDataList.value.isEmpty) {
                   return const Center(
                     child: Text(
                       "No members found",
@@ -75,9 +73,9 @@ class _SearchViewState extends State<SearchView> {
                   );
                 } else {
                   return ListView.builder(
-                    itemCount: controller.searchDataList.length,
+                    itemCount: controller.searchDataList.value.length,
                     itemBuilder: (context, index) {
-                      var member = controller.searchDataList[index];
+                      var member = controller.searchDataList.value[index];
                       var firstname = member?.firstName ?? "";
                       var lastname = member?.lastName ?? "";
                       var name = "$firstname $lastname".trim();

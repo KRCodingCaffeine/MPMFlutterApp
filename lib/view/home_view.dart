@@ -9,6 +9,7 @@ import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/images.dart';
 import 'package:mpm/utils/textstyleclass.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
+import 'package:mpm/view_model/controller/paymentgateway/PaymentGatewayController.dart';
 
 import '../model/CheckUser/CheckUserData2.dart';
 import '../utils/Session.dart';
@@ -28,6 +29,7 @@ class _HomeViewState extends State<HomeView> {
   late Timer _timer;
   double screenWidth = 0.0;
   String? membershipApprovalStatus;
+  final PaymentController paymentController = Get.put(PaymentController());
 
   final List<Map<String, dynamic>> gridItems = [
     {'icon': Images.user, 'label': 'My Profile'},
@@ -94,21 +96,31 @@ class _HomeViewState extends State<HomeView> {
             }
           }),
 
-          Obx(() {
-            if (int.tryParse(controller.memberStatusId.value) != null &&
-                int.parse(controller.memberStatusId.value) == 1 &&
-                controller.isJangana.value == '0') {
-              return _buildJanganaNotice();
-            } else {
-              return SizedBox.shrink(); // Return an empty widget when not needed
-            }
-          }),
+          // Obx(() {
+          //   if (int.tryParse(controller.memberStatusId.value) != null &&
+          //       int.parse(controller.memberStatusId.value) == 1 &&
+          //       controller.isJangana.value == '0') {
+          //     return _buildJanganaNotice();
+          //   } else {
+          //     return SizedBox.shrink(); // Return an empty widget when not needed
+          //   }
+          // }),
 
-       /*   Obx((){
+         Obx((){
             return Visibility(
               visible: controller.showDashboardReviewFlag.value,
-                child: _buildAdCard2("assets/images/banner1.jpg"));
-          }),*/
+                child: _buildJanganaNotice());
+          }),
+          Center(
+            child: Obx(() => paymentController.isLoading.value
+                ? CircularProgressIndicator()
+                : ElevatedButton(
+              onPressed: () {
+                paymentController.startICICIPayment(100.0);
+              },
+              child: Text("Pay ₹100"),
+            )),
+          ),
           _buildGridView(),
           _buildAdvertisementTitle(),
           _buildAdvertisementList(),

@@ -456,9 +456,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                   child: Row(
                                     children: [
                                       Obx(() {
-                                        if (regiController
-                                                .rxStatusStateLoading.value ==
-                                            Status.LOADING) {
+                                        if (regiController.rxStatusStateLoading.value == Status.LOADING) {
                                           return Padding(
                                             padding: const EdgeInsets.symmetric(
                                                 vertical: 10, horizontal: 22),
@@ -475,17 +473,13 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                                               .pink_color),
                                                 )),
                                           );
-                                        } else if (regiController
-                                                .rxStatusStateLoading.value ==
-                                            Status.ERROR) {
+                                        } else if (regiController.rxStatusStateLoading.value == Status.ERROR) {
                                           return const Center(
-                                              child:
-                                                  Text('Failed to load state'));
+                                              child: Text('Failed to load state'));
                                         } else if (regiController
                                             .stateList.isEmpty) {
                                           return const Center(
-                                              child:
-                                                  Text('No State available'));
+                                              child: Text('No State available'));
                                         } else {
                                           return Expanded(
                                             child: InputDecorator(
@@ -545,9 +539,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                   child: Row(
                                     children: [
                                       Obx(() {
-                                        if (regiController
-                                                .rxStatusCountryLoading.value ==
-                                            Status.LOADING) {
+                                        if (regiController.rxStatusCountryLoading.value == Status.LOADING) {
                                           return Padding(
                                             padding: const EdgeInsets.symmetric(
                                                 vertical: 10, horizontal: 22),
@@ -564,14 +556,12 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                                               .pink_color),
                                                 )),
                                           );
-                                        } else if (regiController
-                                                .rxStatusCountryLoading.value ==
+                                        } else if (regiController.rxStatusCountryLoading.value ==
                                             Status.ERROR) {
                                           return const Center(
                                               child: Text(
                                                   'Failed to load country'));
-                                        } else if (regiController
-                                            .countryList.isEmpty) {
+                                        } else if (regiController.countryList.isEmpty) {
                                           return const Center(
                                               child:
                                                   Text('No Country available'));
@@ -1032,10 +1022,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                             dropdownColor: Colors.white, // Ensures dropdown list background is white
                                             borderRadius: BorderRadius.circular(10),
                                             isExpanded: true,
-                                            hint: const Text(
-                                              'Select City',
-                                              style: TextStyle(fontWeight: FontWeight.bold),
-                                            ),
+
                                             value: regiController.city_id.value.isEmpty
                                                 ? null
                                                 : regiController.city_id.value,
@@ -1116,12 +1103,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                             dropdownColor: Colors.white, // Dropdown list background is white
                                             borderRadius: BorderRadius.circular(10),
                                             isExpanded: true,
-                                            hint: const Text(
-                                              'Select State *',
-                                              style: TextStyle(fontWeight: FontWeight.bold),
-                                            ),
-                                            value: regiController.state_id.value.isEmpty
-                                                ? null
+
+                                            value: regiController.state_id.value.isEmpty ? null
                                                 : regiController.state_id.value,
                                             items: regiController.stateList.map((StateData state) {
                                               return DropdownMenuItem<String>(
@@ -1497,16 +1480,12 @@ class _EditOccInfoContent extends StatefulWidget {
 }
 
 class _EditOccInfoContentState extends State<_EditOccInfoContent> {
-  final TextEditingController _occupationController = TextEditingController();
-  final TextEditingController _professionController = TextEditingController();
-  final TextEditingController _specializationController =
-      TextEditingController();
+
 
   UdateProfileController controller = Get.put(UdateProfileController());
   @override
   void initState() {
     super.initState();
-
     controller.detailsController.value.text = widget.occupationDetails;
   }
 
@@ -1517,377 +1496,394 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
 
   @override
   Widget build(BuildContext context) {
-    // Get the screen height using MediaQuery
+
     final screenHeight = MediaQuery.of(context).size.height;
 
     return SafeArea(
       child: Container(
-        // Set height dynamically based on screen height (e.g., 70% of screen height)
         height: screenHeight * 0.8,
         child: FractionallySizedBox(
           widthFactor: 1.0, // Takes full width
           heightFactor: 1.0, // Takes full height of the Container
-          child: Column(
-            children: [
-              const SizedBox(height: 30),
-              // Row for Save & Cancel buttons at the top
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                const SizedBox(height: 30),
+                // Row for Save & Cancel buttons at the top
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Cancel Button (Left)
+                      TextButton(
+                        onPressed: () => Navigator.pop(context), // Close the BottomSheet
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.white, // Matches ElevatedButton
+                          foregroundColor: const Color(0xFFDC3545), // Red text color
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          elevation: 4, // Adds shadow like ElevatedButton
+                          shadowColor: Colors.black,
+                        ),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+
+                      // Save Button (Right)
+                      TextButton(
+                        onPressed: _saveChanges,
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.white, // Matches ElevatedButton
+                          foregroundColor: const Color(0xFFDC3545), // Red text color
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          elevation: 4, // Adds shadow like ElevatedButton
+                          shadowColor: Colors.black,
+                        ),
+                        child: const Text(
+                          'Save',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 30),
+                Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Cancel Button (Left)
-                    TextButton(
-                      onPressed: () => Navigator.pop(context), // Close the BottomSheet
-                      style: TextButton.styleFrom(
-                        backgroundColor: Colors.white, // Matches ElevatedButton
-                        foregroundColor: const Color(0xFFDC3545), // Red text color
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        elevation: 4, // Adds shadow like ElevatedButton
-                        shadowColor: Colors.black,
-                      ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            width: double.infinity,
+                            child: Container(
+                              margin: EdgeInsets.only(left: 5, right: 5),
+                              child: Row(
+                                children: [
+                                  Obx(() {
+                                    if (controller.rxStatusOccupation.value == Status.LOADING) {
+                                      return Padding(
+                                        padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                                        child: Container(
+                                          alignment: Alignment.centerRight,
+                                          height: 24,
+                                          width: 24,
+                                          child: CircularProgressIndicator(
+                                            color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),
+                                          ),
+                                        ),
+                                      );
+                                    } else if (controller.rxStatusOccupation.value == Status.ERROR) {
+                                      return Center(
+                                          child: Container(
+                                        width: double.infinity,
+                                        decoration: BoxDecoration(
+                                          color: Colors.black26, // Background color
+                                          borderRadius: BorderRadius.circular(20), // Rounded corners
+                                          border: Border.all(
+                                            color: Colors.black26, // Border color
+                                            width: 1.5, // Border width
+                                          ),
+                                        ),
 
-                    // Save Button (Right)
-                    TextButton(
-                      onPressed: _saveChanges,
-                      style: TextButton.styleFrom(
-                        backgroundColor: Colors.white, // Matches ElevatedButton
-                        foregroundColor: const Color(0xFFDC3545), // Red text color
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        elevation: 4, // Adds shadow like ElevatedButton
-                        shadowColor: Colors.black,
-                      ),
-                      child: const Text(
-                        'Save',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
+                                        child: Text('Failed to load occupation'),
+                                      ));
+                                    } else if (controller.occuptionList.value.isEmpty) {
+                                      return Center(child: Text('No occupation available'));
+                                    } else {
+                                      return Expanded(
+                                        child: InputDecorator(
+                                          decoration: InputDecoration(
+                                            labelText: 'Occupation *',
+                                            border: OutlineInputBorder(
+                                              borderSide: BorderSide(color: Colors.black26),
+                                            ),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(color: Colors.black26),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                                            ),
+                                            contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                                            labelStyle: TextStyle(
+                                              color: Colors.black45,
+                                            ),
+                                          ),
+                                          isEmpty: controller.selectOccuption.value.isEmpty,
+                                          child: DropdownButton<String>(
+                                            dropdownColor: Colors.white,
+                                            borderRadius: BorderRadius.circular(10),
+                                            isExpanded: true,
+                                            underline: Container(), // Removes the default underline
+                                            // hint: const Text(
+                                            //   'Select Occupation',
+                                            //   style: TextStyle(fontWeight: FontWeight.bold),
+                                            // ),
+                                            value: controller.selectOccuption.value.isEmpty ? null : controller.selectOccuption.value,
+                                            items: controller.occuptionList.value.map((OccupationData marital) {
+                                              return DropdownMenuItem<String>(
+                                                value: marital.id.toString(),
+                                                child: Text(marital.occupation ?? 'Unknown',),
+                                              );
+                                            }).toList(),
+                                            onChanged: (String? newValue) {
+                                              if (newValue != null) {
+                                               controller.selectOccuption.value=newValue;
+                                                if (newValue != "other") {
+                                                  controller.occuptionFlag.value=false;
+                                                  controller.occupationProData.value=true;
+                                                  controller.getOccupationProData(newValue);
+                                                } else {
+                                                  controller.occuptionFlag.value=true;
+                                                  controller.occupationProData.value=false;
+                                                }
+                                              }
+                                            },
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  }),
+                                ],
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 30),
+                          Obx(() {
+                            return Visibility(
+                              visible: controller.occupationProData.value,
+                              child: Column(
+                                children: [
+                                  Container(
+                                    width: double.infinity,
+                                    margin: EdgeInsets.only(left: 5, right: 5),
+                                    child: Row(
+                                      children: [
+                                        Obx(() {
+                                          if (controller.rxStatusOccupationData.value == Status.LOADING) {
+                                            return Padding(
+                                              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 22),
+                                              child: Container(
+                                                alignment: Alignment.centerRight,
+                                                height: 24,
+                                                width: 24,
+                                                child: CircularProgressIndicator(
+                                                  color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                          else if (controller.rxStatusOccupationData.value == Status.ERROR) {
+                                            return Center(
+                                                child: Container(
+                                                 width: MediaQuery.of(context).size.width*0.88,
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(10), // Rounded corners
+                                                  border: Border.all(
+                                                    color: Colors.black26, // Border color
+                                                    width: 0.9, // Border width
+                                                  ),
+                                                ),
+                                                padding: EdgeInsets.symmetric(horizontal: 28,vertical: 16),
+                                                child: Text('Failed to load occupation Profession')));
+                                          } else if (controller.rxStatusOccupationData.value == Status.IDLE) {
+                                            return Center(
+                                              child: Padding(
+                                                padding: const EdgeInsets.all(12.0),
+                                                child: Text('Select Occupation Profession *'),
+                                              ),
+                                            );
+                                          } else if (controller.occuptionProfessionList.value.isEmpty) {
+                                            return Center(child: Text('No occupation Pro available'));
+                                          } else {
+                                            return Expanded(
+                                              child: InputDecorator(
+                                                decoration: InputDecoration(
+                                                  labelText: 'Occupation Profession *',
+                                                  border: OutlineInputBorder(
+                                                    borderSide: BorderSide(color: Colors.black26),
+                                                  ),
+                                                  enabledBorder: OutlineInputBorder(
+                                                    borderSide: BorderSide(color: Colors.black26),
+                                                  ),
+                                                  focusedBorder: OutlineInputBorder(
+                                                    borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                                                  ),
+                                                  contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                                                  labelStyle: TextStyle(
+                                                    color: Colors.black45,
+                                                  ),
+                                                ),
+                                                isEmpty: controller.selectOccuptionPro.value.isEmpty,
+                                                child: DropdownButton<String>(
+                                                  dropdownColor: Colors.white,
+                                                  borderRadius: BorderRadius.circular(10),
+                                                  isExpanded: true,
+                                                  underline: Container(), // Removes default underline
+
+                                                  value: controller.selectOccuptionPro.value.isEmpty
+                                                      ? null
+                                                      : controller.selectOccuptionPro.value,
+                                                  items: controller.occuptionProfessionList.value.map((OccuptionProfessionData profession) {
+                                                    return DropdownMenuItem<String>(
+                                                      value: profession.id.toString(),
+                                                      child: Text(profession.name ?? 'Unknown'),
+                                                    );
+                                                  }).toList(),
+                                                  onChanged: (String? newValue) {
+                                                    if (newValue != null) {
+                                                      controller.setSelectOccuptionPro(newValue);
+                                                      if (newValue != "other") {
+                                                        controller.occuptionFlag.value=false;
+                                                        controller.isOccuptionProData.value=true;
+                                                        controller.getOccupationSpectData(newValue);
+                                                      } else {
+                                                        controller.occuptionFlag.value=true;
+                                                        controller.isOccuptionProData.value=false;
+                                                      }
+
+                                                    }
+                                                  },
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        }),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(height: 30),
+                                 Visibility(
+                                     visible: controller.isOccuptionProData.value,
+                                     child:  Container(
+                                   width: double.infinity,
+                                   margin: EdgeInsets.only(left: 5, right: 5),
+                                   child: Row(
+                                     children: [
+                                       Obx(() {
+                                         if (controller.rxStatusOccupationSpec.value == Status.LOADING) {
+                                           return Padding(
+                                             padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                                             child: Container(
+                                               alignment: Alignment.centerRight,
+                                               height: 24,
+                                               width: 24,
+                                               child: CircularProgressIndicator(
+                                                 color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),
+                                               ),
+                                             ),
+                                           );
+                                         }
+                                         else if (controller.rxStatusOccupationSpec.value == Status.ERROR) {
+                                           return Center(
+                                             child: Text(
+                                               'Failed to load occupation specialization',
+                                               style: TextStyle(fontWeight: FontWeight.bold),
+                                             ),
+                                           );
+                                         }
+                                         else if (controller.rxStatusOccupationSpec.value == Status.IDLE) {
+                                           return Center(
+                                             child: Padding(
+                                               padding: const EdgeInsets.all(12.0),
+                                               child: Text(
+                                                 'Select Occupation specialization,',
+                                                 style: TextStyle(fontWeight: FontWeight.bold),
+                                               ),
+                                             ),
+                                           );
+                                         }
+                                         else if (controller.occuptionSpeList.value.isEmpty) {
+                                           return Center(child: Text('No occupation specialization available'));
+                                         } else {
+                                           return Expanded(
+                                             child: InputDecorator(
+                                               decoration: InputDecoration(
+                                                 labelText: 'Occupation Specialization',
+                                                 border: OutlineInputBorder(
+                                                   borderSide: BorderSide(color: Colors.black26),
+                                                 ),
+                                                 enabledBorder: OutlineInputBorder(
+                                                   borderSide: BorderSide(color: Colors.black26),
+                                                 ),
+                                                 focusedBorder: OutlineInputBorder(
+                                                   borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                                                 ),
+                                                 contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                                                 labelStyle: TextStyle(
+                                                   color: Colors.black45,
+                                                 ),
+                                               ),
+                                               isEmpty: controller.selectOccuptionSpec.value.isEmpty,
+                                               child: DropdownButton<String>(
+                                                 dropdownColor: Colors.white,
+                                                 borderRadius: BorderRadius.circular(10),
+                                                 isExpanded: true,
+                                                 underline: Container(), // Removes default underline
+
+                                                 value: controller.selectOccuptionSpec.value.isEmpty ? null : controller.selectOccuptionSpec.value,
+                                                 items: controller.occuptionSpeList.value.map((OccuptionSpecData specialization) {
+                                                   return DropdownMenuItem<String>(
+                                                     value: specialization.id.toString(),
+                                                     child: Text(specialization.name ?? 'Unknown'),
+                                                   );
+                                                 }).toList(),
+                                                 onChanged: (String? newValue) {
+                                                   if (newValue != null) {
+                                                     controller.setSelectOccuptionSpec(newValue);
+
+                                                     if (newValue != "other") {
+                                                       controller.occuptionFlag.value=false;
+
+                                                     } else {
+                                                       controller.occuptionFlag.value=true;
+                                                     }
+                                                   }
+                                                 },
+                                               ),
+                                             ),
+                                           );
+                                         }
+                                       }),
+                                     ],
+                                   ),
+                                 )),
+                                ],
+                              ),
+                            );
+                          }),
+                          //_buildInfoLine('Details', occupationDetails),
+                        ],
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 30),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          width: double.infinity,
-                          child: Container(
-                            margin: EdgeInsets.only(left: 5, right: 5),
-                            child: Row(
-                              children: [
-                                Obx(() {
-                                  if (controller.rxStatusOccupation.value == Status.LOADING) {
-                                    return Padding(
-                                      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
-                                      child: Container(
-                                        alignment: Alignment.centerRight,
-                                        height: 24,
-                                        width: 24,
-                                        child: CircularProgressIndicator(
-                                          color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),
-                                        ),
-                                      ),
-                                    );
-                                  } else if (controller.rxStatusOccupation.value == Status.ERROR) {
-                                    return Center(child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.black26, // Background color
-                                        borderRadius: BorderRadius.circular(20), // Rounded corners
-                                        border: Border.all(
-                                          color: Colors.black26, // Border color
-                                          width: 1.5, // Border width
-                                        ),
-                                      ),
-                                      padding: EdgeInsets.symmetric(horizontal: 20,vertical: 6),
-                                      child: Text('Failed to load occupation'),
-                                    ));
-                                  } else if (controller.occuptionList.isEmpty) {
-                                    return Center(child: Text('No occupation available'));
-                                  } else {
-                                    return Expanded(
-                                      child: InputDecorator(
-                                        decoration: InputDecoration(
-                                          labelText: 'Occupation *',
-                                          border: OutlineInputBorder(
-                                            borderSide: BorderSide(color: Colors.black26),
-                                          ),
-                                          enabledBorder: OutlineInputBorder(
-                                            borderSide: BorderSide(color: Colors.black26),
-                                          ),
-                                          focusedBorder: OutlineInputBorder(
-                                            borderSide: BorderSide(color: Colors.black26, width: 1.5),
-                                          ),
-                                          contentPadding: EdgeInsets.symmetric(horizontal: 20),
-                                          labelStyle: TextStyle(
-                                            color: Colors.black45,
-                                          ),
-                                        ),
-                                        isEmpty: controller.selectOccuption.value.isEmpty,
-                                        child: DropdownButton<String>(
-                                          dropdownColor: Colors.white,
-                                          borderRadius: BorderRadius.circular(10),
-                                          isExpanded: true,
-                                          underline: Container(), // Removes the default underline
-                                          hint: const Text(
-                                            'Select Occupation',
-                                            style: TextStyle(fontWeight: FontWeight.bold),
-                                          ),
-                                          value: controller.selectOccuption.value.isEmpty
-                                              ? null
-                                              : controller.selectOccuption.value,
-                                          items: controller.occuptionList.map((OccupationData marital) {
-                                            return DropdownMenuItem<String>(
-                                              value: marital.id.toString(),
-                                              child: Text(marital.occupation ?? 'Unknown'),
-                                            );
-                                          }).toList(),
-                                          onChanged: (String? newValue) {
-                                            if (newValue != null) {
-                                              controller.setSelectOccuptionSpec(newValue);
-                                              if (newValue != "other") {
-                                                controller.isOccutionList.value = true;
-                                                controller.getOccupationProData(newValue);
-                                              } else {
-                                                controller.isOccutionList.value = false;
-                                              }
-                                            }
-                                          },
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                }),
-                              ],
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 30),
-                        Obx(() {
-                          return Visibility(
-                            visible: controller.isOccutionList.value,
-                            child: Column(
-                              children: [
-                                Container(
-                                  width: double.infinity,
-                                  margin: EdgeInsets.only(left: 5, right: 5),
-                                  child: Row(
-                                    children: [
-                                      Obx(() {
-                                        if (controller.rxStatusOccupationData.value == Status.LOADING) {
-                                          return Padding(
-                                            padding: EdgeInsets.symmetric(vertical: 12, horizontal: 22),
-                                            child: Container(
-                                              alignment: Alignment.centerRight,
-                                              height: 24,
-                                              width: 24,
-                                              child: CircularProgressIndicator(
-                                                color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),
-                                              ),
-                                            ),
-                                          );
-                                        } else if (controller.rxStatusOccupationData.value == Status.ERROR) {
-                                          return Center(
-                                              child: Container(
-                                              decoration: BoxDecoration(
-                                                color: Colors.black26, // Background color
-                                                borderRadius: BorderRadius.circular(20), // Rounded corners
-                                                border: Border.all(
-                                                  color: Colors.black26, // Border color
-                                                  width: 1.5, // Border width
-                                                ),
-                                              ),
-                                              child: Text('Failed to load occupation Profession')));
-                                        } else if (controller.rxStatusOccupationData.value == Status.IDLE) {
-                                          return Center(
-                                            child: Padding(
-                                              padding: const EdgeInsets.all(12.0),
-                                              child: Text('Select Occupation Profession *'),
-                                            ),
-                                          );
-                                        } else if (controller.occuptionProfessionList.value.isEmpty) {
-                                          return Center(child: Text('No occupation Pro available'));
-                                        } else {
-                                          return Expanded(
-                                            child: InputDecorator(
-                                              decoration: InputDecoration(
-                                                labelText: 'Occupation Profession *',
-                                                border: OutlineInputBorder(
-                                                  borderSide: BorderSide(color: Colors.black26),
-                                                ),
-                                                enabledBorder: OutlineInputBorder(
-                                                  borderSide: BorderSide(color: Colors.black26),
-                                                ),
-                                                focusedBorder: OutlineInputBorder(
-                                                  borderSide: BorderSide(color: Colors.black26, width: 1.5),
-                                                ),
-                                                contentPadding: EdgeInsets.symmetric(horizontal: 20),
-                                                labelStyle: TextStyle(
-                                                  color: Colors.black45,
-                                                ),
-                                              ),
-                                              isEmpty: controller.selectOccuptionPro.value.isEmpty,
-                                              child: DropdownButton<String>(
-                                                dropdownColor: Colors.white,
-                                                borderRadius: BorderRadius.circular(10),
-                                                isExpanded: true,
-                                                underline: Container(), // Removes default underline
-                                                hint: const Text(
-                                                  'Select Occupation Profession',
-                                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                                ),
-                                                value: controller.selectOccuptionPro.value.isEmpty
-                                                    ? null
-                                                    : controller.selectOccuptionPro.value,
-                                                items: controller.occuptionProfessionList.value.map((OccuptionProfessionData profession) {
-                                                  return DropdownMenuItem<String>(
-                                                    value: profession.id.toString(),
-                                                    child: Text(profession.name ?? 'Unknown'),
-                                                  );
-                                                }).toList(),
-                                                onChanged: (String? newValue) {
-                                                  if (newValue != null) {
-                                                    controller.setSelectOccuptionPro(newValue);
-                                                    controller.getOccupationSpectData(newValue);
-                                                  }
-                                                },
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      }),
-                                    ],
-                                  ),
-                                ),
-                                SizedBox(height: 30),
-                                Container(
-                                  width: double.infinity,
-                                  margin: EdgeInsets.only(left: 5, right: 5),
-                                  child: Row(
-                                    children: [
-                                      Obx(() {
-                                        if (controller.rxStatusOccupationSpec.value == Status.LOADING) {
-                                          return Padding(
-                                            padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
-                                            child: Container(
-                                              alignment: Alignment.centerRight,
-                                              height: 24,
-                                              width: 24,
-                                              child: CircularProgressIndicator(
-                                                color: ColorHelperClass.getColorFromHex(ColorResources.pink_color),
-                                              ),
-                                            ),
-                                          );
-                                        } else if (controller.rxStatusOccupationSpec.value == Status.ERROR) {
-                                          return Center(
-                                            child: Text(
-                                              'Failed to load occupation specialization',
-                                              style: TextStyle(fontWeight: FontWeight.bold),
-                                            ),
-                                          );
-                                        } else if (controller.rxStatusOccupationSpec.value == Status.IDLE) {
-                                          return Center(
-                                            child: Padding(
-                                              padding: const EdgeInsets.all(12.0),
-                                              child: Text(
-                                                'Select Occupation specialization,',
-                                                style: TextStyle(fontWeight: FontWeight.bold),
-                                              ),
-                                            ),
-                                          );
-                                        } else if (controller.occuptionSpeList.isEmpty) {
-                                          return Center(child: Text('No occupation specialization available'));
-                                        } else {
-                                          return Expanded(
-                                            child: InputDecorator(
-                                              decoration: InputDecoration(
-                                                labelText: 'Occupation Specialization',
-                                                border: OutlineInputBorder(
-                                                  borderSide: BorderSide(color: Colors.black26),
-                                                ),
-                                                enabledBorder: OutlineInputBorder(
-                                                  borderSide: BorderSide(color: Colors.black26),
-                                                ),
-                                                focusedBorder: OutlineInputBorder(
-                                                  borderSide: BorderSide(color: Colors.black26, width: 1.5),
-                                                ),
-                                                contentPadding: EdgeInsets.symmetric(horizontal: 20),
-                                                labelStyle: TextStyle(
-                                                  color: Colors.black45,
-                                                ),
-                                              ),
-                                              isEmpty: controller.selectOccuptionSpec.value.isEmpty,
-                                              child: DropdownButton<String>(
-                                                dropdownColor: Colors.white,
-                                                borderRadius: BorderRadius.circular(10),
-                                                isExpanded: true,
-                                                underline: Container(), // Removes default underline
-                                                hint: const Text(
-                                                  'Select Occupation Specialization',
-                                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                                ),
-                                                value: controller.selectOccuptionSpec.value.isEmpty
-                                                    ? null
-                                                    : controller.selectOccuptionSpec.value,
-                                                items: controller.occuptionSpeList.map((OccuptionSpecData specialization) {
-                                                  return DropdownMenuItem<String>(
-                                                    value: specialization.id.toString(),
-                                                    child: Text(specialization.name ?? 'Unknown'),
-                                                  );
-                                                }).toList(),
-                                                onChanged: (String? newValue) {
-                                                  if (newValue != null) {
-                                                    controller.setSelectOccuptionSpec(newValue);
-                                                  }
-                                                },
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      }),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }),
-                        //_buildInfoLine('Details', occupationDetails),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 30),
-             Obx((){
-               return Visibility(
-                 visible: controller.isOccutionList.value,
-                   child:  _buildEditableField(
-                   label: 'Details',
-                   controller: controller.detailsController.value));
-             }),
-            ],
+                SizedBox(height: 30),
+               Obx((){
+                 return Visibility(
+                    visible: controller.occuptionFlag.value,
+                     child: _buildEditableField(
+                     label: 'Details',
+                     controller: controller.detailsController.value)
+                 );
+               }),
+              ],
+            ),
           ),
         ),
       ),
@@ -1895,7 +1891,10 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
   }
 
   Widget _buildEditableField(
-      {required String label, required TextEditingController controller}
+      {
+        required String label,
+        required TextEditingController controller
+      }
       ) {
     return Container(
       width: double.infinity,

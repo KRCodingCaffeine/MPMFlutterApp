@@ -272,10 +272,8 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
           regiController.selectQualicationMain.value =
               qualification.qualificationMainId.toString();
           regiController.isQualificationCategoryVisible.value = true;
-          regiController.getQualicationCategory(
-              qualification.qualificationCategoryId.toString());
-          regiController.selectQualicationCat.value =
-              qualification.qualificationCategoryId.toString();
+          regiController.getQualicationCategory(qualification.qualificationCategoryId.toString());
+          regiController.selectQualicationCat.value = qualification.qualificationCategoryId.toString();
         }
 
           return SingleChildScrollView(

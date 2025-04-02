@@ -1,8 +1,6 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import 'package:mpm/OccuptionProfession/OccuptionProfessionData.dart';
 import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/CheckUser/CheckUserData2.dart';
@@ -27,12 +25,10 @@ import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/urls.dart';
 import 'package:http/http.dart' as http;
-import 'package:mpm/view/profile%20view/profile_view.dart';
-import 'package:mpm/view/profile%20view/residence_info_page.dart';
+
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 
-import '../../../view/profile view/family_info_page.dart';
-import '../../../view/profile view/personal_info_page.dart';
+
 
 class UdateProfileController extends GetxController {
   final api = UpdateProfileRepository();
@@ -42,6 +38,7 @@ class UdateProfileController extends GetxController {
   var userMaritalStatus="".obs;
   var is_jangana="".obs;
   var membership_approval_status_id="".obs;
+  var documentDynamicImage="".obs;
 
   void changeTab(int index) {
     currentIndex.value = index;
@@ -111,6 +108,7 @@ class UdateProfileController extends GetxController {
   var isMarried = false.obs;
   var bloodGroup = ''.obs;
   var blood_group_id = ''.obs;
+
   var marriageAnniversaryDate = ''.obs;
   var memberCode = ''.obs;
   var memberSalutaitonId = ''.obs;
@@ -130,7 +128,7 @@ class UdateProfileController extends GetxController {
   var isJangana = ''.obs;
   var saraswaniOptionId = ''.obs;
   var addBussinessLoading=false.obs;
-
+var selectMarital=''.obs;
   BuildContext? context=Get.context;
   var zone_id = ''.obs;
   var address = ''.obs;
@@ -168,6 +166,7 @@ class UdateProfileController extends GetxController {
   var occuptionSpeList = <OccuptionSpecData>[].obs;
   var family_head_member_id = "".obs;
   var occupationData=false.obs;
+  var occupationProData=false.obs;
 
   void setOccuption(List<OccupationData> _value) =>
       occuptionList.value = _value;
@@ -203,7 +202,7 @@ class UdateProfileController extends GetxController {
   var familyDataList = <FamilyMembersData>[].obs;
   var areaDataList = <FamilyMembersData>[].obs;
   var selectRelationShipType = ''.obs;
-
+var   occuptionFlag=false.obs;
   final Rx<TextEditingController> firstNameController = TextEditingController().obs;
   final Rx<TextEditingController> middleNameController = TextEditingController().obs;
   final Rx<TextEditingController> surNameController = TextEditingController().obs;
@@ -229,7 +228,7 @@ class UdateProfileController extends GetxController {
   Rx<TextEditingController> updateresidentalAddressController = TextEditingController().obs;
   final Rx<TextEditingController> documentTypeController = TextEditingController().obs;
   final Rx<TextEditingController> documentController = TextEditingController().obs;
-
+  var MaritalAnnivery=false.obs;
   @override
   void onInit() {
     // TODO: implement onInit
@@ -262,6 +261,20 @@ class UdateProfileController extends GetxController {
       marital_status_id.value = getUserData.value.maritalStatusId.toString();
       gender.value = getUserData.value.gender_name.toString();
       gender_id.value = getUserData.value.genderId.toString();
+      if(getUserData.value.maritalStatusId.toString()!="") {
+        selectMarital.value = getUserData.value.maritalStatusId.toString();
+        if(getUserData.value.marital_status=="Married") {
+          MaritalAnnivery.value = true;
+        }
+        else
+          {
+            MaritalAnnivery.value = false;
+          }
+      }
+      if(getUserData.value.addressProof!="")
+        {
+          documentDynamicImage.value=Urls.imagePathUrl+getUserData.value.addressProof;
+        }
       bloodGroup.value = getUserData.value.blood_group.toString();
       blood_group_id.value = getUserData.value.bloodGroupId.toString();
       whatsAppNumber.value = getUserData.value.whatsappNumber.toString();
@@ -290,10 +303,8 @@ class UdateProfileController extends GetxController {
       otp.value = getUserData.value.otp.toString();
       verifyOtpStatus.value = getUserData.value.verifyOtpStatus.toString();
       mobileVerifyStatus.value = getUserData.value.mobileVerifyStatus.toString();
-      sangathanApprovalStatus.value =
-          getUserData.value.sangathanApprovalStatus.toString();
-      vyavasthapikaApprovalStatus.value =
-          getUserData.value.vyavasthapikaApprovalStatus.toString();
+      sangathanApprovalStatus.value = getUserData.value.sangathanApprovalStatus.toString();
+      vyavasthapikaApprovalStatus.value = getUserData.value.vyavasthapikaApprovalStatus.toString();
       if (getUserData.value.familyHeadMemberData != null) {
         familyHeadMemberId.value = getUserData.value.familyHeadMemberData!.memberId.toString();
       }
@@ -326,27 +337,17 @@ class UdateProfileController extends GetxController {
           selectOccuptionPro.value = getUserData.value.occupation!.occupationProfessionId.toString();
           if(getUserData.value.occupation!.occupationSpecializationId.toString()!=null) {
             getOccupationSpectData(getUserData.value.occupation!.occupationProfessionId.toString());
-            selectOccuptionSpec.value = getUserData.value.occupation!.occupationSpecializationId.toString();
+            occupationProData.value=true;
+            selectOccuptionSpec.value = getUserData.value.occupation!.occupationProfessionId.toString();
 
           }
+
         }
-        else
-        {
-          isOccutionList.value = false;
-        }
-        if(getUserData.value.occupation!.occupationProfessionId!=null) {
-          isOccutionList.value=true;
-          occupationController.value.text=getUserData.value.occupation!.occupation.toString();
-          occupation_profession_nameController.value.text=getUserData.value.occupation!.occupationProfessionName.toString();
-          specialization_nameController.value.text=getUserData.value.occupation!.specializationName.toString();
-          getOccupationProData(getUserData.value.occupation!.occupationProfessionId.toString());
-          getOccupationSpectData(getUserData.value.occupation!.occupationSpecializationId.toString());
-          selectOccuptionSpec.value=getUserData.value.occupation!.occupationSpecializationId.toString();
-          selectOccuptionPro.value = getUserData.value.occupation!.occupationProfessionId.toString();
-        }
-        else {
-          isOccutionList.value=false;
-        }
+        occupationController.value.text=getUserData.value.occupation!.occupation.toString();
+        occupation_profession_nameController.value.text=getUserData.value.occupation!.occupationProfessionName.toString();
+        specialization_nameController.value.text=getUserData.value.occupation!.specializationName.toString();
+
+
         detailsController.value.text = getUserData.value.occupation!.occupationOtherName.toString();
       }
       else
@@ -354,6 +355,7 @@ class UdateProfileController extends GetxController {
         occupationData.value=false;
       }
       officePhone.value = getUserData.value.mobile.toString();
+
       if (getUserData.value.qualification != null) {
         qualificationList.value = getUserData.value.qualification!;
 
@@ -367,9 +369,6 @@ class UdateProfileController extends GetxController {
         print("hjfhhjj" + getUserData.value.familyMembersData.toString());
         familyDataList.value = getUserData.value.familyMembersData!;
       }
-
-
-
     }).onError((error, strack) {
       loading.value = false;
       print("err" + error.toString());
@@ -393,24 +392,48 @@ class UdateProfileController extends GetxController {
   }
 
   void getOccupationProData(String occupation_id) {
+
     Map datas = {"occupation_id": occupation_id};
     setRxRequestOccuptionData(Status.LOADING);
     api.userOccutionPreCodeApi(datas).then((_value) {
       setRxRequestOccuptionData(Status.COMPLETE);
       setOccuptionPro(_value.data!);
+      occuptionProfessionList.value.add(OccuptionProfessionData(
+          id: "other",
+          occupationId: "other",
+          name: "other",
+          status: '1',
+          createdAt: null,
+          updatedAt: null));
+      print("sssssssssssssssssssssssssssssssss");
     }).onError((error, strack) {
       setRxRequestOccuptionData(Status.ERROR);
+      print("errordata"+error.toString());
     });
   }
 
   void getOccupationSpectData(String occupation_profession_id) {
+
     Map datas = {"occupation_profession_id": occupation_profession_id};
+    print("gggggg"+datas.toString());
     setRxRequestOccuptionSpec(Status.LOADING);
     api.userOccutionSpectionCodeApi(datas).then((_value) {
       setRxRequestOccuptionSpec(Status.COMPLETE);
       setOccuptionSpe(_value.data!);
+      occuptionSpeList.value.add(
+          OccuptionSpecData(
+          id: "other",
+          occupationId: "other",
+          name: "other",
+          status: '1',
+          createdAt: null,
+          updatedAt: null
+      )
+      );
+      print("ggggggggggggggggg"+occupation_profession_id);
     }).onError((error, strack) {
       setRxRequestOccuptionSpec(Status.ERROR);
+      print("ggggggggggggggggg"+error.toString());
     });
   }
 
@@ -425,6 +448,7 @@ class UdateProfileController extends GetxController {
   var selectOccuptionSpec = ''.obs;
   var selectOccuption = ''.obs;
   var isOccutionList = false.obs;
+  var isOccuptionProData= false.obs;
   void setSelectOccuptionSpec(String value) {
     selectOccuptionSpec.value=value;
   }
@@ -698,13 +722,23 @@ class UdateProfileController extends GetxController {
     print('User ID: ${userData?.memberId}');
     print('User Name: ${userData?.mobile}');
     memberId.value = userData!.memberId.toString();
+    var occuptionSpec="";
+    if(selectOccuptionSpec.value=="other")
+      {
+        occuptionSpec=="null";
+      }
+    else
+      {
+        occuptionSpec="null";
+      }
+
     //addloading.value=true;
     try {
       Map map = {
         "member_id": memberId.value,
         "occupation_id": selectOccuption.value,
         "occupation_profession_id": selectOccuptionPro.value,
-        "occupation_specialization_id": selectOccuptionSpec.value,
+        "occupation_specialization_id": occuptionSpec,
         "occupation_other_name": detailsController.value.text,
         "updated_by": memberId.value
       };
@@ -789,14 +823,11 @@ class UdateProfileController extends GetxController {
   void userUpdateProfile(BuildContext context, String type) async {
     //print("member"+memberId.value);
     CheckUserData2? userData = await SessionManager.getSession();
-
     final url = Uri.parse(Urls.updateProfile_url);
-
     NewMemberController memberController = Get.put(NewMemberController());
-
     loading.value = true;
 
-    if (marital_status_id.value != "1") {
+    if (MaritalAnnivery.value ==false) {
       marriageAnniversaryController.value.text = "";
     }
 
@@ -810,11 +841,10 @@ class UdateProfileController extends GetxController {
       "email": emailController.value.text.trim(),
       "whatsapp_number": whatsAppNumberController.value.text.trim(),
       "gender_id": gender_id.value,
-      "marital_status_id": marital_status_id.value,
+      "marital_status_id": selectMarital.value,
       "blood_group_id": blood_group_id.value,
       "dob": dobController.value.text.trim(),
-      "marriage_anniversary_date":
-      marriageAnniversaryController.value.text,
+      "marriage_anniversary_date": marriageAnniversaryController.value.text,
       "salutation_id": memberSalutaitonId.value,
     };
 
