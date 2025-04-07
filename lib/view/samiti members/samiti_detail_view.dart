@@ -23,6 +23,11 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
     super.initState();
     controller.getSamitiTypeDeatils();
   }
+  @override
+  void dispose() {
+    controller.searchDataList.value.clear();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +67,9 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
                 var lastname = "";
                 var mobile = "";
                 var memberCode = "";
+                var memberImage ="";
+                var memberId ="";
+                var samitiRolesName ="";
                 if (member.firstName.toString() == "null") {
                   firstname = "";
                 } else {
@@ -89,13 +97,29 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
                 } else {
                   memberCode = member.memberCode.toString();
                 }
+                if (member.profileImagePath.toString() == "null") {
+                  memberImage = "";
+                } else {
+                  memberImage = member.profileImagePath.toString();
+                }
+                if (member.memberId.toString() == "null") {
+                  memberId = "";
+                } else {
+                  memberId = member.memberId.toString();
+                }
+                if (member.samitiRolesName.toString() == "null") {
+                  samitiRolesName = "";
+                } else {
+                  samitiRolesName = member.samitiRolesName.toString();
+                }
+
                 return _buildMemberCard(
-                    samitiRoles: member.samitiRolesName.toString(),
+                    samitiRoles: samitiRolesName,
                     lmCode: memberCode,
                     name: name,
                     mobile: mobile,
-                    profileImage: member.profileImagePath,
-                    memberId: member.memberId);
+                    profileImage: memberImage,
+                    memberId: memberId);
               },
             );
           })),
