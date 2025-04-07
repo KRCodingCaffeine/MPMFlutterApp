@@ -16,8 +16,7 @@ class DefaultFirebaseOptions {
               'you can reconfigure this by running the FlutterFire CLI again.',
         );
 
-      default:
-        throw UnsupportedError(
+      default: throw UnsupportedError(
           'DefaultFirebaseOptions are not supported for this platform.',
         );
     }
@@ -26,11 +25,11 @@ class DefaultFirebaseOptions {
 
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyD0OAakQDm23j1-LJMHtWoJ63TD9Yb6bbA',
-    appId: '1:976331994564:android:04a7a0418717324ec92091',
-    messagingSenderId: '976331994564',
-    projectId: 'maheshvari-2d787',
-      storageBucket: "maheshvari-2d787.firebasestorage.app"
+    apiKey: 'AIzaSyCLrgm4scxPlJmIEl3YvkG_YuvU5zAABBA',
+    appId: '1:290556225048:android:626ec848a3e9a24221056d',
+    messagingSenderId: '290556225048',
+    projectId: "maheshvari-309e5",
+      storageBucket: "maheshvari-309e5.firebasestorage.app"
   );
 
   static const FirebaseOptions ios = FirebaseOptions(

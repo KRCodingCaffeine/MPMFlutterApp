@@ -19,7 +19,7 @@ import 'package:mpm/model/UpdateFamilyRelation/UpdateFamilyMember.dart';
 import 'package:mpm/model/relation/RelationData.dart';
 import 'package:mpm/repository/register_repository/register_repo.dart';
 import 'package:mpm/repository/update_repository/UpdateProfileRepository.dart';
-import 'package:mpm/route/route_name.dart';
+
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';

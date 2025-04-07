@@ -563,6 +563,10 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
 
                 /// Qualification Details
                 _buildInfoBox(
+                  'Qualification',
+                  subtitle: qualification.qualification,
+                ),
+                _buildInfoBox(
                   'Qualification Main',
                   subtitle: qualification.qualificationMainName,
                 ),

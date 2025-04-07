@@ -64,19 +64,19 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
 
   void getData() async{
     var mobilenumber="";
-    // await Future.delayed(const Duration(milliseconds: 500), () async {
-    //   final token = await FirebaseMessaging.instance.getToken();
-    //   await PushNotificationService().initialise();
-    //   if (token != null) {
-    //    print('firebase device token >>>>> $token');
-    //     // sharedPreference.saveDeviceToken(token);
-    //   }
-    //   await Permission.notification.isDenied.then((value) {
-    //     if (value) {
-    //       Permission.notification.request();
-    //     }
-    //   });
-    // });
+    await Future.delayed(const Duration(milliseconds: 500), () async {
+      final token = await FirebaseMessaging.instance.getToken();
+      await PushNotificationService().initialise();
+      if (token != null) {
+       print('firebase device token >>>>> $token');
+        // sharedPreference.saveDeviceToken(token);
+      }
+      await Permission.notification.isDenied.then((value) {
+        if (value) {
+          Permission.notification.request();
+        }
+      });
+    });
     Timer(Duration(seconds: 2), () async {
       if(mounted) {
         CheckUserData2? userData = await SessionManager.getSession();

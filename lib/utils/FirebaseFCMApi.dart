@@ -118,7 +118,8 @@ class PushNotificationService {
     // await Firebase.();
     _configureDidReceiveLocalNotificationSubject();
     _configureSelectNotificationSubject(); // foreground notification clicks handle function
-    await generateToken();
+    String? token=await generateToken();
+    print("token"+token.toString());
 
     await FirebaseMessaging.instance
         .setForegroundNotificationPresentationOptions(
