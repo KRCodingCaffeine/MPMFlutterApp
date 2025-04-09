@@ -5,6 +5,7 @@ import 'package:mpm/utils/AppDrawer.dart';
 import 'package:mpm/utils/urls.dart';
 import 'package:mpm/view/home_view.dart';
 import 'package:mpm/view/SearchView.dart';
+import 'package:mpm/view/notification_view.dart';
 import 'package:mpm/view/samiti%20members/samiti_members_view.dart';
 import 'package:mpm/view/login_view.dart';
 import 'package:mpm/utils/Session.dart';
@@ -32,6 +33,7 @@ class _DashboardViewState extends State<DashboardView> {
     const HomeView(),
     const SearchView(),
     const SamitiMembersViewPage(),
+    // const NotificationView(),
   ];
 
   // Titles for AppBar corresponding to each page
@@ -39,6 +41,7 @@ class _DashboardViewState extends State<DashboardView> {
     "Maheshwari Pragati Mandal",
     "Search Members",
     "Samiti Members",
+    // "Notification"
   ];
 
   @override
@@ -85,6 +88,10 @@ class _DashboardViewState extends State<DashboardView> {
               icon: Icon(Icons.account_balance),
               label: "Samiti Member",
             ),
+            // BottomNavigationBarItem(
+            //   icon: Icon(Icons.notifications),
+            //   label: "Notification",
+            // ),
           ],
         ),
       ),
