@@ -41,6 +41,8 @@ class Urls {
   static const  String updateBusinessInfo_url = base_url+"api/update_business_info";
   static const  String updateQualification_url = base_url+"api/update_education";
   static const  String updateJanganaStatus_url = base_url+"api/update_jangana_status";
+  static const  String payment_url = base_url+"payment/processPayment";
+  static const  String updatetoken_url = base_url+"api/set_fcm_device_token";
 
 
   static const String imagePathUrl = base_url+"public/";

@@ -1,11 +1,13 @@
 import 'dart:convert';
 
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
 
 import 'package:mpm/model/CheckUser/CheckModelClass.dart';
 import 'package:mpm/model/CheckUser/CheckUserData.dart';
+import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/repository/login_respository.dart';
 import 'package:mpm/route/route_name.dart';
 import 'package:mpm/utils/Session.dart';
@@ -194,6 +196,51 @@ class LoginController {
 
     }
   }
+  void updateToken() async {
+    CheckUserData2? userData = await SessionManager.getSession();
+    print('User ID: ${userData?.memberId}');
+    print('User Name: ${userData?.mobile}');
+    memberId.value = userData!.memberId.toString();
+
+    try {
+
+      var memberid=userData!.memberId.toString();
+      final token = await FirebaseMessaging.instance.getToken();
+
+
+      Map map = {
+        "member_id": memberid,
+        "device_token": token,
+      };
+       print("ffggghhg"+map.toString());
+
+      await api.userToken(map).then((_value) async {
+        Get.snackbar(
+          "Success",
+          "Update token Successfully",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+
+      }).onError((error, strack) async {
+        print("ddfgfgfgfghgh"+error.toString());
+        Get.snackbar(
+          "Cancel",
+          "Error Successfully",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+
+      });
+    } catch (e) {
+
+      print('Error: $e');
+    } finally {
+
+    }
+  }
 
   void checkOtp(var otps, BuildContext context) {
   loadinng.value=true;
@@ -328,13 +375,11 @@ class LoginController {
       loadinng.value = false;
 
      if(otherMobVisible==true)
-       { var mobiles= mobilecon.value;
+       {
+         var mobiles= mobilecon.value;
 
        Navigator.pushNamedAndRemoveUntil(
-         context!,
-         RouteNames.dashboard,
-             (Route<dynamic> route) => false,
-       );
+         context!, RouteNames.dashboard, (Route<dynamic> route) => false,);
        }else
          {
            Get.snackbar(
@@ -346,7 +391,7 @@ class LoginController {
              duration: Duration(seconds: 3),
            );
          }
-      print(response.reasonPhrase);
+         print(response.reasonPhrase);
     }
   }
 

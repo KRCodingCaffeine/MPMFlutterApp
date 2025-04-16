@@ -26,6 +26,9 @@ class LoginRepo{
     print("vdgvgdv"+response.toString());
     return CheckModel.fromJson(response);
   }
-
+  Future<dynamic> userToken(data) async {
+    dynamic response = await api.postApi(data,Urls.updatetoken_url,"","2");
+    return response;
+  }
 
 }

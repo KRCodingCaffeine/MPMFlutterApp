@@ -8,8 +8,10 @@ import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/images.dart';
 import 'package:mpm/utils/textstyleclass.dart';
+import 'package:mpm/view/payment/CustomDialog.dart';
+import 'package:mpm/view/payment/PaymentScreen.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
-import 'package:mpm/view_model/controller/paymentgateway/PaymentGatewayController.dart';
+
 
 import '../model/CheckUser/CheckUserData2.dart';
 import '../utils/Session.dart';
@@ -29,7 +31,7 @@ class _HomeViewState extends State<HomeView> {
   late Timer _timer;
   double screenWidth = 0.0;
   String? membershipApprovalStatus;
-  final PaymentController paymentController = Get.put(PaymentController());
+
 
   final List<Map<String, dynamic>> gridItems = [
     {'icon': Images.user, 'label': 'My Profile'},
@@ -111,15 +113,35 @@ class _HomeViewState extends State<HomeView> {
               visible: controller.showDashboardReviewFlag.value,
                 child: _buildJanganaNotice());
           }),
+
           Center(
-            child: Obx(() => paymentController.isLoading.value
-                ? CircularProgressIndicator()
-                : ElevatedButton(
-              onPressed: () {
-                paymentController.startICICIPayment(100.0);
-              },
-              child: Text("Pay ₹100"),
-            )),
+            child: Obx((){
+              return Visibility(
+                  visible: controller.isPay.value,
+                  child: SizedBox(
+                    height: 48,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                        ColorHelperClass.getColorFromHex(
+                            ColorResources.red_color),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PaymentScreen(paymentAmount: '1',),
+                          ),
+                        );
+
+                      },
+                      child: Text("Pay Now", style: TextStyleClass.white14style,),
+                    ),
+                  ));
+            }),
           ),
           _buildGridView(),
           _buildAdvertisementTitle(),

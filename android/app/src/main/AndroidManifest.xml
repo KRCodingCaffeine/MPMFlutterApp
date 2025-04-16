@@ -1,4 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.mpm.member">
 
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" />
@@ -10,10 +10,13 @@
     <uses-permission android:name="android.hardware.camera.autofocus"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
+
 
     <application
         android:label="mpm"
         android:usesCleartextTraffic="true"
+
         android:requestLegacyExternalStorage="true"
         android:name="${applicationName}"
         android:icon="@drawable/logo">

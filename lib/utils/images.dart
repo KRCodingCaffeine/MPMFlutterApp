@@ -27,5 +27,7 @@ class Images {
   static const String shiksha = 'assets/images/shiksha.svg';
   static const String vivah = 'assets/images/vivah.svg';
   static const String makenewmember = 'assets/images/newmember.svg';
+  static const String sucess = 'assets/images/check.gif';
+  static const String cancel = 'assets/images/cancel.png';
 
 }

@@ -6,4 +6,6 @@ class Dimensions {
   static const double fontSizeLarge = 18.0;
   static const double fontSizeExtraLarge = 21.0;
   static const double fontSizeOverLarge = 25.0;
+  static const double padding = 16.0;
+  static const double avatarRadius = 66.0;
 }

@@ -37,6 +37,7 @@ class GetProfileData{
   var membershipApprovalStatusId;
   var membershipTypeId;
   // var familyHeadMemberId;
+  var is_payment_received;
   var marital_status;
   var gender_name;
   var tempId;
@@ -90,6 +91,7 @@ class GetProfileData{
         this.membershipApprovalStatusId,
         this.membershipTypeId,
         // this.familyHeadMemberId,
+        this.is_payment_received,
         this.tempId,
         this.isJangana,
         this.saraswaniOptionId,
@@ -144,6 +146,7 @@ class GetProfileData{
     membershipApprovalStatusId = json['membership_approval_status_id'];
     membershipTypeId = json['membership_type_id'];
     //familyHeadMemberId = json['family_head_member_id'];
+    is_payment_received = json['is_payment_received'];
     tempId = json['temp_id'];
     isJangana = json['is_jangana'];
     saraswaniOptionId = json['saraswani_option_id'];
@@ -219,6 +222,7 @@ class GetProfileData{
     data['membership_approval_status_id'] = this.membershipApprovalStatusId;
     data['membership_type_id'] = this.membershipTypeId;
     //data['family_head_member_id'] = this.familyHeadMemberId;
+    data['is_payment_received'] =this.is_payment_received;
     data['temp_id'] = this.tempId;
     data['is_jangana'] = this.isJangana;
     data['saraswani_option_id'] = this.saraswaniOptionId;
