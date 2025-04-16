@@ -10,9 +10,8 @@ import 'package:mpm/model/notification/NotificationModel.dart';
 import 'package:mpm/utils/NotificationDatabase.dart';
 
 
-
-
 const AndroidInitializationSettings android =
+
 AndroidInitializationSettings('@drawable/logo');
 
 class ReceivedNotification {
