@@ -39,6 +39,8 @@ class UdateProfileController extends GetxController {
   var is_jangana="".obs;
   var membership_approval_status_id="".obs;
   var documentDynamicImage="".obs;
+  var isLoadingPayment = false.obs;
+  var isPay =false.obs;
 
   void changeTab(int index) {
     currentIndex.value = index;
@@ -52,6 +54,7 @@ class UdateProfileController extends GetxController {
   var mobileNumber = ''.obs;
   var lmCode = ''.obs;
   var profileImage = ''.obs;
+
   Rx<TextEditingController> detailsController = TextEditingController().obs;
   Rx<TextEditingController> organisationNameController = TextEditingController().obs;
   Rx<TextEditingController> udorganisationNameController = TextEditingController().obs;
@@ -354,6 +357,24 @@ var   occuptionFlag=false.obs;
       {
         occupationData.value=false;
       }
+      var member_type_id=getUserData.value.membershipTypeId.toString();
+      var memberapprovalstatusid= getUserData.value.membershipApprovalStatusId.toString();
+      var isPaymentStatus= getUserData.value.is_payment_received.toString();
+      if(member_type_id=="1" || member_type_id=="3")
+        {
+          if(int.parse(memberapprovalstatusid)<5 && isPaymentStatus=="0")
+            {
+              isPay.value=true;
+            }
+          else
+            {
+              isPay.value=false;
+            }
+        }
+      else
+        {
+          isPay.value=false;
+        }
       officePhone.value = getUserData.value.mobile.toString();
 
       if (getUserData.value.qualification != null) {
@@ -373,6 +394,9 @@ var   occuptionFlag=false.obs;
       loading.value = false;
       print("err" + error.toString());
     });
+  }
+  void isPayButton(){
+
   }
 
   void getOccupationData() {
@@ -702,7 +726,7 @@ var   occuptionFlag=false.obs;
       }).onError((error, strack) async {
         //addloading.value=false;
         print("fvvf" + error.toString());
-        Get.snackbar(
+         Get.snackbar (
           'Error', // Title
           "Some thing went wrong ", // Message
           snackPosition: SnackPosition.BOTTOM,
@@ -820,6 +844,7 @@ var   occuptionFlag=false.obs;
     } finally {}
   }
 
+
   void userUpdateProfile(BuildContext context, String type) async {
     //print("member"+memberId.value);
     CheckUserData2? userData = await SessionManager.getSession();
@@ -863,8 +888,7 @@ var   occuptionFlag=false.obs;
     }
 
 
-    http.StreamedResponse response =
-    await request.send().timeout(Duration(seconds: 60));
+    http.StreamedResponse response = await request.send().timeout(Duration(seconds: 60));
 
     if (response.statusCode == 200) {
       String responseBody = await response.stream.bytesToString();

@@ -1,6 +1,8 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/route/route_name.dart';
+import 'package:mpm/utils/FirebaseFCMApi.dart';
 import 'package:mpm/utils/app_constants.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
@@ -30,6 +32,7 @@ class _LoginPageState extends State<LoginPage> {
     lmController = TextEditingController();
     mobile6666Controller = TextEditingController();
     otherMobileontroller = TextEditingController();
+    getToken();
   }
 
   @override
@@ -318,5 +321,14 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
     );
+  }
+
+  void getToken() async{
+    // final token = await FirebaseMessaging.instance.getToken();
+    // await PushNotificationService().initialise();
+    // if (token != null) {
+    //   print('firebase device token >>>>> $token');
+    //   // sharedPreference.saveDeviceToken(token);
+    // }
   }
 }

@@ -77,7 +77,7 @@ class NetWorkApiService extends BaseApiService{
       ).timeout(Duration(seconds: 60),
       );
       resonseJson= returnResponse(response);
-      print("gfgfg"+response.body.toString());
+      print("gfgfg"+response.statusCode.toString());
     } on SocketException{
       throw InternetExpection("");
     } on RequestTimeOutExpection{

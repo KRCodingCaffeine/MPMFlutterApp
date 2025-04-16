@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.mpm.members"
+    namespace = "com.mpm.member"
     compileSdk = 35
     ndkVersion = "25.1.8937393"
 

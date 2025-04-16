@@ -9,6 +9,7 @@ import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/textstyleclass.dart';
 import 'package:mpm/utils/urls.dart';
 import 'package:mpm/view/login_view.dart';
+import 'package:mpm/view/payment/PaymentScreen.dart';
 import 'package:mpm/view/profile%20view/Education_page_info.dart';
 import 'package:mpm/view/profile%20view/business_info_page.dart';
 import 'package:mpm/view/profile%20view/family_info_page.dart';
@@ -267,6 +268,35 @@ class _ProfileViewState extends State<ProfileView> {
                     )
                 );
               }),
+              Center(
+                child: Obx((){
+                  return Visibility(
+                      visible: controller.isPay.value,
+                      child: SizedBox(
+                        height: 48,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                            ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PaymentScreen(paymentAmount: '1',),
+                              ),
+                            );
+
+                          },
+                          child: Text("Pay Now", style: TextStyleClass.white14style,),
+                        ),
+                      ));
+                }),
+              ),
 
             ],
           ),

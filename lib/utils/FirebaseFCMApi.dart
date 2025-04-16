@@ -6,10 +6,13 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:mpm/model/notification/NotificationModel.dart';
+import 'package:mpm/utils/NotificationDatabase.dart';
 
 
 const AndroidInitializationSettings android =
-AndroidInitializationSettings('ic_notification');
+
+AndroidInitializationSettings('@drawable/logo');
 
 class ReceivedNotification {
   final int id;
@@ -86,8 +89,8 @@ const String urlLaunchActionId = 'id_1';
 const String navigationActionId = 'id_3';
 const String darwinNotificationCategoryText = 'textCategory';
 const String darwinNotificationCategoryPlain = 'plainCategory';
-final StreamController<ReceivedNotification> didReceiveLocalNotificationStream =
-StreamController<ReceivedNotification>.broadcast();
+
+final StreamController<ReceivedNotification> didReceiveLocalNotificationStream = StreamController<ReceivedNotification>.broadcast();
 
 final StreamController<String?> selectNotificationStream =
 StreamController<String?>.broadcast();
@@ -106,9 +109,14 @@ class PushNotificationService {
     final message = await FirebaseMessaging.instance.getInitialMessage();
     if (message != null) {
       final notificationType = message.data[kNotificationType] as String?;
-      final orderId = message.data['id'] as int?;
-      print('order $orderId');
-      _goToScreen(notificationType, orderId);
+      String title = message.notification!.title ?? "No Title";
+      String body = message.notification!.body ?? "No Body";
+      String timestamp = DateTime.now().toIso8601String();
+
+      NotificationDatabase.instance.insertNotification(
+        NotificationModel(title: title, body: body, timestamp: timestamp),
+      );
+      _goToScreen(notificationType, 0);
     }
   }
 
@@ -126,7 +134,7 @@ class PushNotificationService {
 
       sound: true,
     );
-    await flutterLocalNotificationsPlugin.initialize(
+  await flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse: (notificationResponse) {
         switch (notificationResponse.notificationResponseType) {
@@ -220,28 +228,9 @@ class PushNotificationService {
 
   static void _goToScreen(String? notificationType, int? orderId) {
     try {
-      if (notificationType != null && notificationType == 'order') {
-        // NavigationService.navigateTo(OrderDetailScreen.screenId, arguments: {'orderId': orderId, 'fromWhere':'Notification'});
-      }
-      // else if (notificationType != null) {
-      //   // unawaited(
-      //   //   NavigationService.navigateTo(
-      //   //     OrderDetailScreen.screenId,
-      //   //     arguments: MyListingScreenArgs(
-      //   //       screenType: (notificationType == '2' || notificationType == '3')
-      //   //           ? ScreenType.booking
-      //   //           : notificationType == '5'
-      //   //           ? ScreenType.matchList
-      //   //           : ScreenType.requestList,
-      //   //       fromCustomer: GlobalValues.userType != 2,
-      //   //     ),
-      //     ),
-      //   );
-      // }
+
     } on Exception catch (e, s) {
-      // DebugUtils.showLog(
-      //   'Notification Error While sending on other screen > $e $s',
-      // );
+
     }
   }
 
@@ -315,7 +304,7 @@ class PushNotificationService {
     );
     final title = event.notification?.title ?? '';
     final body = event.notification?.body ?? '';
-
+    String timestamp = DateTime.now().toIso8601String();
     await flutterLocalNotificationsPlugin.show(
       Random().nextInt(9999),
       title,
@@ -324,6 +313,9 @@ class PushNotificationService {
 
       payload: json.encode(event.data),
 
+    );
+    NotificationDatabase.instance.insertNotification(
+      NotificationModel(title: title, body: body, timestamp: timestamp),
     );
   }
 }

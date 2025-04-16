@@ -26,8 +26,7 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
       'fileName' : 'karyakarta_form',
       'icon': Icons.picture_as_pdf,
       'color': const Color(0xFFd6d6d6),
-      'url':
-      'https://krcodingcaffeine.com/pragati-mandal-api/public/assets/forms/karyakartha_form.pdf',
+      'url': 'https://members.mumbaimaheshwari.com/api/public/assets/forms/karyakartha_form.pdf',
     },
     {
       'title': 'Scholarship Application Form',
@@ -35,7 +34,7 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
       'icon': Icons.picture_as_pdf,
       'color': const Color(0xFFd6d6d6),
       'url':
-      'https://krcodingcaffeine.com/pragati-mandal-api/public/assets/forms/application_for_loan_scholarship.pdf',
+      'https://members.mumbaimaheshwari.com/api/public/assets/forms/application_for_loan_scholarship.pdf',
     },
     {
       'title': 'Radhakrishna Lahoti Sahayata Kosh Form',
@@ -43,7 +42,7 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
       'icon': Icons.picture_as_pdf,
       'color': const Color(0xFFd6d6d6),
       'url':
-      'https://krcodingcaffeine.com/pragati-mandal-api/public/assets/forms/radhakrishna_lahoti_sahayata_kosh_form.pdf',
+      'https://members.mumbaimaheshwari.com/api/public/assets/forms/radhakrishna_lahoti_sahayata_kosh_form.pdf',
     },
     {
       'title': 'Membership Form',
@@ -51,7 +50,7 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
       'icon': Icons.picture_as_pdf,
       'color': const Color(0xFFd6d6d6),
       'url':
-      'https://krcodingcaffeine.com/pragati-mandal-api/public/assets/forms/membership_form.pdf',
+      'https://members.mumbaimaheshwari.com/api/public/assets/forms/membership_form.pdf',
     },
     {
       'title': 'Shiksha Form',
@@ -59,21 +58,21 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
       'icon': Icons.picture_as_pdf,
       'color': const Color(0xFFd6d6d6),
       'url':
-      'https://krcodingcaffeine.com/pragati-mandal-api/public/assets/forms/shiksha_form.pdf',
+      'https://members.mumbaimaheshwari.com/api/public/assets/forms/shiksha_form.pdf',
     },
     {
       'title': 'Student Prize Application',
       'fileName' : 'student_prize_form',
       'icon': Icons.picture_as_pdf,
       'color': const Color(0xFFd6d6d6),
-      'url':
-      'https://krcodingcaffeine.com/pragati-mandal-api/public/assets/forms/student_price_application_form.pdf',
+      'url': 'https://members.mumbaimaheshwari.com/api/public/assets/forms/student_price_application_form.pdf',
     },
   ];
 
   @override
   void initState() {
     super.initState();
+    _requestPermission();
   }
 
   @override
@@ -161,18 +160,34 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
   }
 
 
+
+
   Future<bool> _requestPermission() async {
-    if (await Permission.storage.isGranted) return true;
+    if (Platform.isAndroid) {
+      if (await Permission.storage.isGranted) return true;
 
-    var status = await Permission.storage.request();
-    if (status.isGranted) return true;
+      if (await Permission.manageExternalStorage.isGranted) return true;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Storage permission denied')),
-    );
+      var status = await Permission.manageExternalStorage.request();
 
-    return false;
+      if (status.isGranted) {
+        return true;
+      } else {
+        // Open settings manually
+        bool opened = await openAppSettings();
+        if (!opened) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please enable storage permission from settings')),
+          );
+        }
+      }
+      return false;
+    }
+
+    return true; // iOS doesn't need this
   }
+
+
 
   Widget buildCard(String title, IconData icon, Color color, String url, String fileName) {
     return GestureDetector(
