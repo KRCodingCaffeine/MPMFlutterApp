@@ -23,7 +23,7 @@ class MainActivity: FlutterActivity() {
                 description = descriptionText
 
                 // Correct the sound URI
-                val soundUri: Uri = Uri.parse("android.resource://${packageName}/raw/noficationaudio")
+                val soundUri: Uri = Uri.parse("android.resource://${packageName}/raw/smileringtone")
                 val audioAttributes = AudioAttributes.Builder()
                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                     .setUsage(AudioAttributes.USAGE_NOTIFICATION)

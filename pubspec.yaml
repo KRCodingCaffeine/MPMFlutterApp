@@ -42,7 +42,7 @@ dependencies:
   shared_preferences: ^2.3.3
   permission_handler: ^11.3.1
   intl: any
-  device_preview: any
+  device_preview: ^1.2.0
   flutter_svg: ^2.0.16
   url_launcher: ^6.3.1
   webview_flutter: ^4.7.0
@@ -88,6 +88,7 @@ flutter:
     - assets/images/
     - assets/fonts/
     - assets/audio/noficationaudio.mp3
+    - assets/audio/smileringtone.mp3
     - assets/webview_page.html
 
   # An image asset can refer to one or more resolution-specific "variants", see
