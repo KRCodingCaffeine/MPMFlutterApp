@@ -158,14 +158,14 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
                           // Placeholder while loading
                           image: NetworkImage(Urls.imagePathUrl + profileImage),
                           imageErrorBuilder: (context, error, stackTrace) {
-                            return Image.asset("assets/images/male.png",
+                            return Image.asset("assets/images/user3.png",
                                 fit: BoxFit.cover);
                           },
                           fit: BoxFit.cover,
                           width: 80,
                           height: 80,
                         )
-                      : Image.asset("assets/images/male.png",
+                      : Image.asset("assets/images/user3.png",
                           fit: BoxFit.cover, width: 80, height: 80),
                 ),
               ),

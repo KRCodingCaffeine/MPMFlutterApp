@@ -150,8 +150,20 @@ class _ProfileViewState extends State<ProfileView> {
                               const SizedBox(height: 4),
                               Obx(() {
                                 return Text(
-                                  "${controller.surName.value} ${controller.memberCode.value}",
+                                  "${controller.surName.value}",
                                   style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.black87,
+                                  ),
+                                );
+                              }),
+                              const SizedBox(height: 4),
+                              Obx(() {
+                                final code = controller.memberCode.value.trim();
+                                return Text(
+                                  "Member Code: ${code.isNotEmpty ? code : " -- "}",
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
                                     color: Colors.black87,

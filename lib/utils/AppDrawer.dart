@@ -82,9 +82,7 @@ class AppDrawer extends StatelessWidget {
                         Text(
                           "Member Code : ${(dashBoardController.memberCode.value.trim().isNotEmpty)
                               ? dashBoardController.memberCode.value
-                              : (dashBoardController.memberId.value.trim().isNotEmpty
-                              ? dashBoardController.memberId.value
-                              : "N/A")}", // Default text if both are empty
+                              : " -- "}", // Default text if both are empty
                           style: const TextStyle(
                             fontSize: 14,
                             color: Colors.white,
@@ -170,14 +168,6 @@ class AppDrawer extends StatelessWidget {
             onTap: () {
               Navigator.pop(context);
               Navigator.pushNamed(context, RouteNames.contactUs);
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.headset_mic),
-            title: Text('Notification'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, RouteNames.notification_view);
             },
           ),
           ListTile(
