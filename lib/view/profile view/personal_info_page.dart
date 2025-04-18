@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -201,8 +202,80 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                         ),
                         ElevatedButton(
                           onPressed: () {
-                            controller.userUpdateProfile(
-                                context, controller.memberId.value);
+                            final mobile = controller.mobileNumberController.value.text.trim();
+                            final whatsapp = controller.whatsAppNumberController.value.text.trim();
+
+                            if (mobile.length != 10 || !RegExp(r'^[0-9]+$').hasMatch(mobile)) {
+                              Get.snackbar(
+                                "", // Empty because we use titleText below
+                                "",
+                                titleText: const Text(
+                                  "Personal Info",
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                messageText: const Text(
+                                  "Invalid Mobile Number.",
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                backgroundColor: Colors.white,
+                                snackPosition: SnackPosition.BOTTOM,
+                                duration: Duration(seconds: 2),
+                                margin: const EdgeInsets.all(12),
+                                borderRadius: 8,
+                                boxShadows: [
+                                  BoxShadow(
+                                    color: Colors.black26,
+                                    blurRadius: 6,
+                                    offset: Offset(0, 2),
+                                  )
+                                ],
+                              );
+                              return;
+                            }
+
+                            if (whatsapp.length != 10 || !RegExp(r'^[0-9]+$').hasMatch(whatsapp)) {
+                              Get.snackbar(
+                                "",
+                                "",
+                                titleText: const Text(
+                                  "Personal Info",
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                messageText: const Text(
+                                  "Invalid WhatsApp Number.",
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                backgroundColor: Colors.white,
+                                snackPosition: SnackPosition.BOTTOM,
+                                duration: Duration(seconds: 2),
+                                margin: const EdgeInsets.all(12),
+                                borderRadius: 8,
+                                boxShadows: [
+                                  BoxShadow(
+                                    color: Colors.black26,
+                                    blurRadius: 6,
+                                    offset: Offset(0, 2),
+                                  )
+                                ],
+                              );
+                              return;
+                            }
+
+                            controller.userUpdateProfile(context, controller.memberId.value);
                             Navigator.pop(context);
                           },
                           style: ElevatedButton.styleFrom(
@@ -248,28 +321,31 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                       : (hasNetworkImage
                                               ? NetworkImage(networkImageUrl)
                                               : const AssetImage(
-                                                  "assets/default_profile.png"))
+                                                  "assets/images/user.svg"))
                                           as ImageProvider,
                                 );
                               })),
                             ),
                             const SizedBox(height: 30),
                             Obx(() {
-                              return _buildEditableField(
+                              return _buildReadOnlyField(
                                 'First Name',
-                                controller.firstNameController.value,
+                                controller.firstNameController.value.text,
                               );
                             }),
                             Obx(() {
-                              return _buildEditableField(
+                              return _buildReadOnlyField(
                                 'Middle Name',
-                                controller.middleNameController.value,
+                                controller.middleNameController.value.text,
                               );
                             }),
                             Obx(() {
-                              return _buildEditableField('SurName',
-                                  controller.surNameController.value);
+                              return _buildReadOnlyField(
+                                'SurName',
+                                controller.surNameController.value.text,
+                              );
                             }),
+
                             Obx(() {
                               return _buildEditableField('Fathers Name',
                                   controller.fathersNameController.value);
@@ -371,7 +447,8 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                       String formattedDate =
                                           DateFormat('dd/MM/yyyy')
                                               .format(pickedDate);
-                                      controller.dobController.value.text = formattedDate;
+                                      controller.dobController.value.text =
+                                          formattedDate;
                                     }
                                   },
                                 ),
@@ -442,7 +519,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                           child: DropdownButton<String>(
                                             dropdownColor: Colors.white,
                                             borderRadius:
-                                            BorderRadius.circular(10),
+                                                BorderRadius.circular(10),
                                             underline: Container(),
                                             isExpanded: true,
                                             hint: const Text(
@@ -570,7 +647,8 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                             }).toList(),
                                             onChanged: (String? newValue) {
                                               if (newValue != null) {
-                                                controller.blood_group_id.value = newValue;
+                                                controller.blood_group_id
+                                                    .value = newValue;
                                               }
                                             },
                                           ),
@@ -589,7 +667,9 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                 child: Row(
                                   children: [
                                     Obx(() {
-                                      if (newMemberController.rxStatusmarried.value == Status.LOADING) {
+                                      if (newMemberController
+                                              .rxStatusmarried.value ==
+                                          Status.LOADING) {
                                         return Padding(
                                           padding: const EdgeInsets.symmetric(
                                               vertical: 10, horizontal: 22),
@@ -623,26 +703,22 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                               labelText: 'Marital Status',
                                               border: OutlineInputBorder(
                                                 borderSide: BorderSide(
-                                                    color: Colors
-                                                        .black26),
+                                                    color: Colors.black26),
                                               ),
                                               enabledBorder: OutlineInputBorder(
                                                 borderSide: BorderSide(
-                                                    color: Colors
-                                                        .black26),
+                                                    color: Colors.black26),
                                               ),
                                               focusedBorder: OutlineInputBorder(
                                                 borderSide: BorderSide(
                                                     color: Colors.black26,
-                                                    width:
-                                                        1.5),
+                                                    width: 1.5),
                                               ),
                                               contentPadding:
                                                   EdgeInsets.symmetric(
                                                       horizontal: 20),
                                               labelStyle: TextStyle(
-                                                color: Colors
-                                                    .black45,
+                                                color: Colors.black45,
                                               ),
                                             ),
                                             child: DropdownButton<String>(
@@ -657,10 +733,8 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                                     fontWeight:
                                                         FontWeight.bold),
                                               ),
-                                              value: controller
-                                                      .selectMarital
-                                                      .value
-                                                      .isEmpty
+                                              value: controller.selectMarital
+                                                      .value.isEmpty
                                                   ? null
                                                   : controller
                                                       .selectMarital.value,
@@ -676,15 +750,17 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                               }).toList(),
                                               onChanged: (String? newValue) {
                                                 if (newValue != null) {
-                                                  controller.selectMarital.value=newValue;
-                                                  if(controller.selectMarital.value=="1") {
-                                                   controller. MaritalAnnivery.value = true;
+                                                  controller.selectMarital
+                                                      .value = newValue;
+                                                  if (controller.selectMarital
+                                                          .value ==
+                                                      "1") {
+                                                    controller.MaritalAnnivery
+                                                        .value = true;
+                                                  } else {
+                                                    controller.MaritalAnnivery
+                                                        .value = false;
                                                   }
-                                                  else
-                                                  {
-                                                    controller.MaritalAnnivery.value = false;
-                                                  }
-
                                                 }
                                               },
                                             ),
@@ -701,8 +777,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                             // Marriage Anniversary
                             Obx(() {
                               return Visibility(
-                                visible: controller
-                                        .MaritalAnnivery.value ==
+                                visible: controller.MaritalAnnivery.value ==
                                     true, // Show only if marital_status_id is "1"
                                 child: Column(
                                   children: [
@@ -712,11 +787,15 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                         child: TextFormField(
                                           keyboardType: TextInputType.text,
                                           readOnly: true,
-                                          controller: controller.marriageAnniversaryController.value,
+                                          controller: controller
+                                              .marriageAnniversaryController
+                                              .value,
                                           decoration: InputDecoration(
                                             labelText: 'Marriage Anniversary *',
                                             border: OutlineInputBorder(
-                                              borderSide: BorderSide(color: Colors.black26), // Default border color
+                                              borderSide: BorderSide(
+                                                  color: Colors
+                                                      .black26), // Default border color
                                             ),
                                             enabledBorder: OutlineInputBorder(
                                               borderSide: BorderSide(
@@ -726,7 +805,8 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                             focusedBorder: OutlineInputBorder(
                                               borderSide: BorderSide(
                                                   color: Colors.black26,
-                                                  width: 1.5), // Thicker border when focused
+                                                  width:
+                                                      1.5), // Thicker border when focused
                                             ),
                                             contentPadding:
                                                 EdgeInsets.symmetric(
@@ -792,8 +872,13 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                             );
 
                                             if (pickedDate != null) {
-                                              String formattedDate = DateFormat('dd/MM/yyyy').format(pickedDate);
-                                              controller.marriageAnniversaryController.value.text = formattedDate;
+                                              String formattedDate =
+                                                  DateFormat('dd/MM/yyyy')
+                                                      .format(pickedDate);
+                                              controller
+                                                  .marriageAnniversaryController
+                                                  .value
+                                                  .text = formattedDate;
                                             }
                                           },
                                         ),
@@ -817,6 +902,20 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
       },
     );
   }
+
+  void showError(String title, String message) {
+    Get.snackbar(
+      title,
+      message,
+      backgroundColor: Colors.white,
+      colorText: Colors.red,
+      snackPosition: SnackPosition.BOTTOM,
+      margin: const EdgeInsets.all(12),
+      borderRadius: 8,
+      duration: Duration(seconds: 2),
+    );
+  }
+
 
   void _showPicker({required BuildContext context}) {
     showModalBottomSheet(
@@ -891,22 +990,58 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
 
   // Method to build editable text fields inside the modal
   Widget _buildEditableField(String label, TextEditingController controller) {
+    final isNumericField = label == "Mobile Number" || label == "WhatsApp Number";
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 30.0),
       child: TextField(
         controller: controller,
+        keyboardType: isNumericField ? TextInputType.number : TextInputType.text,
+        inputFormatters: isNumericField
+            ? [
+          FilteringTextInputFormatter.digitsOnly,
+          LengthLimitingTextInputFormatter(10),
+        ]
+            : null,
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: Colors.black45),
-          border: OutlineInputBorder(
+          labelStyle: const TextStyle(color: Colors.black45),
+          border: const OutlineInputBorder(
             borderSide: BorderSide(color: Colors.black26),
           ),
-          enabledBorder: OutlineInputBorder(
+          enabledBorder: const OutlineInputBorder(
             borderSide: BorderSide(color: Colors.black26),
           ),
-          focusedBorder: OutlineInputBorder(
+          focusedBorder: const OutlineInputBorder(
             borderSide: BorderSide(color: Colors.black26, width: 1.0),
           ),
+        ),
+        style: const TextStyle(
+          fontSize: 14,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReadOnlyField(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 30.0),
+      child: TextField(
+        controller: TextEditingController(text: value),
+        enabled: false,
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(color: Colors.black45),
+          border: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black26),
+          ),
+          disabledBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black26),
+          ),
+        ),
+        style: const TextStyle(
+          color: Colors.black,
+          fontSize: 14,
         ),
       ),
     );

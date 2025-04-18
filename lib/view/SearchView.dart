@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-
 import 'package:mpm/view_model/controller/samiti/SamitiController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../utils/urls.dart';
 
 class SearchView extends StatefulWidget {
   const SearchView({super.key});
@@ -16,10 +18,14 @@ class _SearchViewState extends State<SearchView> {
   SamitiController controller = Get.put(SamitiController());
   final TextEditingController _searchController = TextEditingController();
   final UdateProfileController dashBoardController = Get.find();
-  final String defaultProfile = "assets/images/user3.png";
+  final String defaultProfile = "assets/images/user.png";
 
   void _filterMembers(String query) {
-    controller.getSearchLPM(query);
+    if (query.length >= 4) {
+      controller.getSearchLPM(query);
+    } else {
+      controller.searchDataList.clear();
+    }
   }
 
   @override
@@ -68,7 +74,10 @@ class _SearchViewState extends State<SearchView> {
                   return const Center(
                     child: Text(
                       "No members found",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey),
                     ),
                   );
                 } else {
@@ -86,7 +95,11 @@ class _SearchViewState extends State<SearchView> {
                         lmcode: lmcode,
                         name: name,
                         mobile: member.mobile,
-                        profileImage: member.profileImage!=null?member.profileImage!.isEmpty ? defaultProfile : member.profileImage:defaultProfile,
+                        profileImage: member.profileImage != null
+                            ? member.profileImage!.isEmpty
+                                ? defaultProfile
+                                : member.profileImage
+                            : defaultProfile,
                       );
                     },
                   );
@@ -100,12 +113,12 @@ class _SearchViewState extends State<SearchView> {
   }
 
   Widget buildMemberCard(
-      BuildContext context, {
-        required String lmcode,
-        String? name,
-        String? mobile,
-        String? profileImage,
-      }) {
+    BuildContext context, {
+    required String lmcode,
+    String? name,
+    String? mobile,
+    String? profileImage,
+  }) {
     return InkWell(
       // onTap: () {
       //   // Navigate to MemberDetailPage on tap
@@ -127,7 +140,10 @@ class _SearchViewState extends State<SearchView> {
             children: [
               CircleAvatar(
                 radius: 35,
-                backgroundImage: AssetImage(profileImage.toString()),
+                backgroundImage:
+                (profileImage != null && profileImage.isNotEmpty)
+                    ? NetworkImage(Urls.imagePathUrl + profileImage)
+                  : AssetImage(defaultProfile) as ImageProvider,
                 backgroundColor: Colors.grey[300],
               ),
               const SizedBox(width: 16),
@@ -161,16 +177,36 @@ class _SearchViewState extends State<SearchView> {
                           ),
                           TextSpan(
                             text: lmcode, // Dynamic value in red
-                            style: const TextStyle(color: Color(0xFFDC3545)), // Red color
+                            style: const TextStyle(
+                                color: Color(0xFFDC3545)), // Red color
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      "Mobile: $mobile",
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                    ),
+                    mobile != null && mobile.trim().isNotEmpty
+                        ? GestureDetector(
+                            onTap: () async {
+                              final Uri launchUri =
+                                  Uri(scheme: 'tel', path: mobile);
+
+                              try {
+                                if (!await launchUrl(launchUri)) {
+                                  throw 'Could not launch $launchUri';
+                                }
+                              } catch (e) {
+                                print("Error launching dialer: $e");
+                              }
+                            },
+                            child: Text(
+                              "Mobile: $mobile",
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          )
+                        : SizedBox.shrink(), // This hides the widget completely
                   ],
                 ),
               ),
