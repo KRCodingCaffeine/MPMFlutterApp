@@ -6,6 +6,7 @@ import 'package:mpm/utils/color_resources.dart';
 
 import 'package:mpm/view_model/controller/samiti/SamitiController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SearchView extends StatefulWidget {
   const SearchView({super.key});
@@ -169,9 +170,24 @@ class _SearchViewState extends State<SearchView> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      "Mobile: $mobile",
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    GestureDetector(
+                      onTap: () async {
+                        final Uri launchUri = Uri(scheme: 'tel', path: mobile);
+                        if (await canLaunchUrl(launchUri)) {
+                          await launchUrl(launchUri);
+                        } else {
+                          // Optionally handle error
+                          print('Could not launch dialer');
+                        }
+                      },
+                      child: Text(
+                        "Mobile: $mobile",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.blue, // Indicate it's clickable
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
                     ),
                   ],
                 ),
