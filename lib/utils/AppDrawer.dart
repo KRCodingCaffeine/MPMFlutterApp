@@ -173,6 +173,14 @@ class AppDrawer extends StatelessWidget {
             },
           ),
           ListTile(
+            leading: Icon(Icons.headset_mic),
+            title: Text('Notification'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, RouteNames.notification_view);
+            },
+          ),
+          ListTile(
             leading: Icon(Icons.privacy_tip),
             title: Text('Privacy Policy'),
             onTap: () {

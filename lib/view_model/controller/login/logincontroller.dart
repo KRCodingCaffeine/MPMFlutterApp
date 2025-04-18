@@ -196,51 +196,7 @@ class LoginController {
 
     }
   }
-  void updateToken() async {
-    CheckUserData2? userData = await SessionManager.getSession();
-    print('User ID: ${userData?.memberId}');
-    print('User Name: ${userData?.mobile}');
-    memberId.value = userData!.memberId.toString();
 
-    try {
-
-      var memberid=userData!.memberId.toString();
-      final token = await FirebaseMessaging.instance.getToken();
-
-
-      Map map = {
-        "member_id": memberid,
-        "device_token": token,
-      };
-       print("ffggghhg"+map.toString());
-
-      await api.userToken(map).then((_value) async {
-        Get.snackbar(
-          "Success",
-          "Update token Successfully",
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
-        );
-
-      }).onError((error, strack) async {
-        print("ddfgfgfgfghgh"+error.toString());
-        Get.snackbar(
-          "Cancel",
-          "Error Successfully",
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
-        );
-
-      });
-    } catch (e) {
-
-      print('Error: $e');
-    } finally {
-
-    }
-  }
 
   void checkOtp(var otps, BuildContext context) {
   loadinng.value=true;
@@ -259,7 +215,7 @@ class LoginController {
                 await SessionManager.saveSessionUserData(_value.data!);
                 await SessionManager.saveSessionToken(
                     _value.token.toString());
-
+                updateToken();
                 api.userVerify(_value.token.toString()).then((_value) async {
                   print("Session saved successfully!");
 
@@ -279,6 +235,7 @@ class LoginController {
                         (Route<dynamic> route) => false,
                   );
                 });
+
               }
           else
             {
@@ -324,6 +281,51 @@ class LoginController {
     }
 
 
+  }
+  void updateToken() async {
+    CheckUserData2? userData = await SessionManager.getSession();
+    print('User ID: ${userData?.memberId}');
+    print('User Name: ${userData?.mobile}');
+    memberId.value = userData!.memberId.toString();
+
+    try {
+
+      var memberid=userData!.memberId.toString();
+      final token = await FirebaseMessaging.instance.getToken();
+
+
+      Map map = {
+        "member_id": memberid,
+        "device_token": token,
+      };
+      print("ffggghhg"+map.toString());
+
+      await api.userToken(map).then((_value) async {
+        Get.snackbar(
+          "Success",
+          "Login Successfully",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+
+      }).onError((error, strack) async {
+        print("ddfgfgfgfghgh"+error.toString());
+        Get.snackbar(
+          "Cancel",
+          "Error Successfully",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+
+      });
+    } catch (e) {
+
+      print('Error: $e');
+    } finally {
+
+    }
   }
 
   void validuserlogin(var mobile, BuildContext context) async {
