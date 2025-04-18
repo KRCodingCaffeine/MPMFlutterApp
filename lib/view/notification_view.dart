@@ -41,59 +41,56 @@ class _NotificationViewState extends State<NotificationView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Notifications')),
-      backgroundColor: Colors.grey[100],
-      body: FutureBuilder<List<NotificationModel>>(
-        future: NotificationDatabase.instance.getAllNotifications(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error loading notifications'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('No notifications available'));
-          }
+        backgroundColor: Colors.grey[100],
+        body: FutureBuilder<List<NotificationModel>>(
+            future: NotificationDatabase.instance.getAllNotifications(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text('Error loading notifications'));
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return Center(child: Text('No notifications available'));
+              }
 
-          final notifications = snapshot.data!;
+              final notifications = snapshot.data!;
 
-          return ListView.builder(
-            itemCount: notifications.length,
-            itemBuilder: (context, index) {
-              final notification = notifications[index];
-              return  Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-              color:  Colors.deepPurple[50],
-              borderRadius: BorderRadius.circular(12),
-              ),
-            child: ListTile(
-              leading: CircleAvatar(
-              backgroundColor:  Colors.red,
-              child: Icon(Icons.notifications, color: Colors.white),
-              ),
-            title: Text(
-            notification.title,
-            style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color:  Colors.black54
-               ),
-            ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-              Text(notification.body),
-              SizedBox(height: 4),
-              Text(notification.timestamp,
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-         ],
-    ),)
-
-          );
-        },
-      );
-        }
-          )
-    );
+              return ListView.builder(
+                itemCount: notifications.length,
+                itemBuilder: (context, index) {
+                  final notification = notifications[index];
+                  return Container(
+                      margin: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.deepPurple[50],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.red,
+                          child: Icon(Icons.notifications, color: Colors.white),
+                        ),
+                        title: Text(
+                          notification.title,
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black54),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(notification.body),
+                            SizedBox(height: 4),
+                            Text(
+                              notification.timestamp,
+                              style:
+                                  TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ));
+                },
+              );
+            }));
   }
 }

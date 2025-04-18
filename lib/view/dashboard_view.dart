@@ -33,7 +33,7 @@ class _DashboardViewState extends State<DashboardView> {
     const HomeView(),
     const SearchView(),
     const SamitiMembersViewPage(),
-    // const NotificationView(),
+    const NotificationView(),
   ];
 
   // Titles for AppBar corresponding to each page
@@ -41,7 +41,7 @@ class _DashboardViewState extends State<DashboardView> {
     "Maheshwari Pragati Mandal",
     "Search Members",
     "Samiti Members",
-    // "Notification"
+    "Notification"
   ];
 
   @override
@@ -88,10 +88,10 @@ class _DashboardViewState extends State<DashboardView> {
               icon: Icon(Icons.account_balance),
               label: "Samiti Member",
             ),
-            // BottomNavigationBarItem(
-            //   icon: Icon(Icons.notifications),
-            //   label: "Notification",
-            // ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.notifications),
+              label: "Notification",
+            ),
           ],
         ),
       ),

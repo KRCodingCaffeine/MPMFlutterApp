@@ -138,13 +138,29 @@ class _SearchViewState extends State<SearchView> {
           padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 35,
-                backgroundImage:
-                (profileImage != null && profileImage.isNotEmpty)
-                    ? NetworkImage(Urls.imagePathUrl + profileImage)
-                  : AssetImage(defaultProfile) as ImageProvider,
-                backgroundColor: Colors.grey[300],
+              ClipOval(
+                child: (profileImage != null && profileImage.isNotEmpty)
+                    ? FadeInImage(
+                  placeholder: const AssetImage("assets/images/user3.png"),
+                  image: NetworkImage(Urls.imagePathUrl + profileImage),
+                  imageErrorBuilder: (context, error, stackTrace) {
+                    return Image.asset(
+                      "assets/images/user3.png",
+                      fit: BoxFit.cover,
+                      width: 70,
+                      height: 70,
+                    );
+                  },
+                  fit: BoxFit.cover,
+                  width: 70,
+                  height: 70,
+                )
+                    : Image.asset(
+                  "assets/images/user3.png",
+                  fit: BoxFit.cover,
+                  width: 70,
+                  height: 70,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -172,13 +188,14 @@ class _SearchViewState extends State<SearchView> {
                         ),
                         children: [
                           const TextSpan(
-                            text: "Member Code: ", // Black text
+                            text: "Member Code: ",
                             style: TextStyle(color: Colors.black),
                           ),
                           TextSpan(
-                            text: lmcode, // Dynamic value in red
+                            text: (lmcode.trim().isNotEmpty) ? lmcode : " -- ",
                             style: const TextStyle(
-                                color: Color(0xFFDC3545)), // Red color
+                              color: Color(0xFFDC3545),
+                            ),
                           ),
                         ],
                       ),
