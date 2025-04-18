@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mpm/model/notification/NotificationModel.dart';
+import 'package:mpm/utils/NotificationDatabase.dart';
 import 'package:mpm/view/notification_detail.dart';
 
 class NotificationView extends StatefulWidget {
@@ -39,59 +41,59 @@ class _NotificationViewState extends State<NotificationView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: Text('Notifications')),
       backgroundColor: Colors.grey[100],
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: notifications.length,
-        itemBuilder: (context, index) {
-          final notification = notifications[index];
-          final isRead = notification['isRead'];
+      body: FutureBuilder<List<NotificationModel>>(
+        future: NotificationDatabase.instance.getAllNotifications(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error loading notifications'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Center(child: Text('No notifications available'));
+          }
 
-          return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(
-              color: isRead ? Colors.grey[200] : Colors.deepPurple[50],
+          final notifications = snapshot.data!;
+
+          return ListView.builder(
+            itemCount: notifications.length,
+            itemBuilder: (context, index) {
+              final notification = notifications[index];
+              return  Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+              color:  Colors.deepPurple[50],
               borderRadius: BorderRadius.circular(12),
-            ),
+              ),
             child: ListTile(
               leading: CircleAvatar(
-                backgroundColor:
-                isRead ? Colors.grey[700] : Colors.red,
-                child: Icon(Icons.notifications, color: Colors.white),
+              backgroundColor:  Colors.red,
+              child: Icon(Icons.notifications, color: Colors.white),
               ),
-              title: Text(
-                notification['title'],
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: isRead ? Colors.black54 : Colors.black87,
-                ),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(notification['body']),
-                  SizedBox(height: 4),
-                  Text(
-                    notification['time'],
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                ],
-              ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => NotificationDetailPage(
-                      title: notification['title'],
-                      body: notification['body'],
-                    ),
-                  ),
-                );
-              },
+            title: Text(
+            notification.title,
+            style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color:  Colors.black54
+               ),
             ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+              Text(notification.body),
+              SizedBox(height: 4),
+              Text(notification.timestamp,
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+         ],
+    ),)
+
           );
         },
-      ),
+      );
+        }
+          )
     );
   }
 }

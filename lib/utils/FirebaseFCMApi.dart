@@ -123,7 +123,7 @@ class PushNotificationService {
   Future<void> initialise() async {
     // await Firebase.();
     _configureDidReceiveLocalNotificationSubject();
-    _configureSelectNotificationSubject(); // foreground notification clicks handle function
+    _configureSelectNotificationSubject();
     String? token=await generateToken();
     print("token"+token.toString());
 
@@ -253,10 +253,10 @@ class PushNotificationService {
       final data = json.decode(payload ?? '') as Map<String, dynamic>;
       //DebugUtils.showLog('notificationSelect ssTOP>> $data');
       final notificationType = data[kNotificationType] as String?;
-      final orderId = data['id'] as String?;
-      if (orderId != '') {
-        _goToScreen(notificationType ?? '', int.parse(orderId ?? ''));
-      }
+
+
+        _goToScreen(notificationType ?? '',0);
+
 
     });
   }
