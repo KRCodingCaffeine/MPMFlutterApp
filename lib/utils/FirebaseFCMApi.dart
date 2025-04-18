@@ -261,7 +261,7 @@ class PushNotificationService {
     });
   }
   void playCustomNotificationSound() async {
-    await player.play(AssetSource('audio/noficationaudio.mp3'));
+    await player.play(AssetSource('audio/smileringtone.mp3'));
   }
 
   Future<void> _showNotificationWithActions(RemoteMessage event) async {
