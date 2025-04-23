@@ -799,7 +799,9 @@ var   occuptionFlag=false.obs;
     } catch (e) {
       addloading.value = false;
       print('Error: $e');
-    } finally {}
+    } finally {
+
+    }
   }
   void updateJanganaStatus() async {
     CheckUserData2? userData = await SessionManager.getSession();
