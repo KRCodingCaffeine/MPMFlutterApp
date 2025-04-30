@@ -429,7 +429,7 @@ var   occuptionFlag=false.obs;
           status: '1',
           createdAt: null,
           updatedAt: null));
-      print("sssssssssssssssssssssssssssssssss");
+      print("sssssssssssssssssssssssssssssssss"+occuptionProfessionList.value.first.name.toString());
     }).onError((error, strack) {
       setRxRequestOccuptionData(Status.ERROR);
       print("errordata"+error.toString());
@@ -522,17 +522,17 @@ var   occuptionFlag=false.obs;
     setRxRequestQualificationMain(Status.LOADING);
     await api.userQualificationMain(datas).then((_value) {
       setRxRequestQualificationMain(Status.COMPLETE);
-      print("gggggg"+_value.data!.name.toString());
+
       if (_value.data != null) {
         print("Received Qualification Main Data: ${_value.data}");
-        qulicationMainList.value =qulicationMainList.value.toSet().toList();
-        qulicationMainList.value.add(_value.data!);
 
+        setQualicationMain(_value.data!);
+        qulicationMainList.value =qulicationMainList.value.toSet().toList();
         qulicationMainList.refresh();
         print("Updated Qualification Main List: ${qulicationMainList.length} items");
       }
       print("cvv"+ qulicationMainList.value.first.name.toString());
-      setQualicationMain(qulicationMainList.value);
+
     }).onError((error, strack) {
       print("cvv"+error.toString());
       setRxRequestQualificationMain(Status.ERROR);
@@ -542,14 +542,17 @@ var   occuptionFlag=false.obs;
   void getQualicationCategory(String qualification_main_id) {
     qulicationCategoryList.value=[];
     print("cvv111"+qualification_main_id.toString());
-    Map datas = {"qualification_category_id": qualification_main_id};
+    Map datas = {"qualification_main_id": qualification_main_id};
     setRxRequestQualificationCat(Status.LOADING);
     api.userQualificationCategory(datas).then((_value) {
       setRxRequestQualificationCat(Status.COMPLETE);
+      if (_value.data != null) {
+        setQualicationCategory(_value.data!);
+      }
       qulicationCategoryList.value= qulicationCategoryList.value.toSet().toList();
-      qulicationCategoryList.value .add(_value.data!);
+
       qulicationCategoryList.refresh();
-      setQualicationCategory(qulicationCategoryList.value);
+
     }).onError((error, strack) {
       setRxRequestQualificationCat(Status.ERROR);
       print("cvv"+error.toString());

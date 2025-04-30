@@ -1736,6 +1736,7 @@ class _EditOccInfoContentState extends State<_EditOccInfoContent> {
                                                   isExpanded: true,
                                                   underline: Container(), // Removes default underline
 
+
                                                   value: controller.selectOccuptionPro.value.isEmpty
                                                       ? null
                                                       : controller.selectOccuptionPro.value,
