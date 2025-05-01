@@ -50,6 +50,11 @@ class _NotificationViewState extends State<NotificationView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(notification.body),
+                        Container(
+                         height: 100,
+                          child: Image.network(notification.image,fit: BoxFit.fill,),
+                        ),
+
                         SizedBox(height: 4),
                         Text(
                           notification.timestamp,

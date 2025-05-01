@@ -648,7 +648,7 @@ var   occuptionFlag=false.obs;
         'qualification_other_name': educationdetailController.value.text,
         'updated_by': memberId.value
       };
-      //print("fffh"+map.toString());
+      print("fffh"+map.toString());
       api.updateQualification(map).then((_value) async {
         addloading.value = false;
         if (_value['status'] == true) {

@@ -115,10 +115,11 @@ class PushNotificationService {
       final notificationType = message.data[kNotificationType] as String?;
       String title = message.notification!.title ?? "No Title";
       String body = message.notification!.body ?? "No Body";
+      String image = message.notification!.android!.imageUrl ?? "";
       String timestamp = DateTime.now().toIso8601String();
 
       NotificationDatabase.instance.insertNotification(
-        NotificationModel(title: title, body: body, timestamp: timestamp),
+        NotificationModel(title: title, body: body, image: image, timestamp: timestamp),
       );
       final controller = Get.find<NotificationController>();
       controller.loadNotifications();
@@ -276,128 +277,7 @@ class PushNotificationService {
     await player.play(AssetSource('audio/smileringtone.mp3'));
   }
 
-  // Future<void> _showNotificationWithActions(RemoteMessage event) async {
-  //
-  //   final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
-  //   flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
-  //       AndroidFlutterLocalNotificationsPlugin>();
-  //
-  //
-  //
-  //   const iosNotificationDetails = DarwinNotificationDetails(
-  //     presentAlert: true,
-  //     presentBadge: true,
-  //     presentSound: true,
-  //     categoryIdentifier: darwinNotificationCategoryPlain,
-  //   );
-  //   AndroidNotificationDetails androidNotificationDetails =
-  //   AndroidNotificationDetails(
-  //   "MPM",
-  //     "MPM",
-  //     channelDescription: "MPM",
-  //     importance: Importance.max,
-  //     priority: Priority.high,
-  //
-  //     sound: RawResourceAndroidNotificationSound("smileringtone"), // Use the channel sound
-  //     icon: '@drawable/logo',
-  //     enableLights: true,
-  //     enableVibration: true,
-  //
-  //     styleInformation: MediaStyleInformation(
-  //       htmlFormatContent: true,
-  //       htmlFormatTitle: true,
-  //     ),
-  //     playSound: true,
-  //   );
-  //
-  //   var notificationDetails = NotificationDetails(
-  //     android: androidNotificationDetails,
-  //     iOS: iosNotificationDetails,
-  //   );
-  //   print("dataevent"+event.notification!.toString());
-  //   final title = event.notification?.title ?? '';
-  //   final body = event.notification?.body ?? '';
-  //   String timestamp = DateTime.now().toIso8601String();
-  //   await flutterLocalNotificationsPlugin.show(
-  //     Random().nextInt(9999),
-  //     title,
-  //     body,
-  //     notificationDetails,
-  //
-  //     payload: json.encode(event.data),
-  //
-  //   );
-  //  await NotificationDatabase.instance.insertNotification(
-  //     NotificationModel(title: title, body: body, timestamp: timestamp),
-  //   );
-  //   final controller = Get.put<NotificationController>(NotificationController());
-  //   controller.loadNotifications();
-  //
-  //
-  //
-  // }
-  // Future<void> _showNotificationWithActions(RemoteMessage event) async {
-  //   final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
-  //   flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
-  //       AndroidFlutterLocalNotificationsPlugin>();
-  //
-  //   final String? imageUrl = event.data['image']; // Assume the URL is sent in "image"
-  //
-  //   final String largeIconPath = await _downloadAndSaveFile(
-  //       imageUrl!, 'largeIcon'); // download image from URL
-  //
-  //   final BigPictureStyleInformation bigPictureStyleInformation =
-  //   BigPictureStyleInformation(
-  //     FilePathAndroidBitmap(largeIconPath),
-  //     contentTitle: event.notification?.title,
-  //     summaryText: event.notification?.body,
-  //     htmlFormatContentTitle: true,
-  //     htmlFormatSummaryText: true,
-  //   );
-  //
-  //   final AndroidNotificationDetails androidNotificationDetails =
-  //   AndroidNotificationDetails(
-  //     'MPM',
-  //     'MPM',
-  //     channelDescription: 'MPM Channel',
-  //     styleInformation: bigPictureStyleInformation,
-  //     importance: Importance.max,
-  //     priority: Priority.high,
-  //     sound: RawResourceAndroidNotificationSound('smileringtone'),
-  //     icon: '@drawable/logo',
-  //   );
-  //
-  //   final iosNotificationDetails = DarwinNotificationDetails(
-  //     presentAlert: true,
-  //     presentBadge: true,
-  //     presentSound: true,
-  //   );
-  //
-  //   final notificationDetails = NotificationDetails(
-  //     android: androidNotificationDetails,
-  //     iOS: iosNotificationDetails,
-  //   );
-  //
-  //   String timestamp = DateTime.now().toIso8601String();
-  //   await flutterLocalNotificationsPlugin.show(
-  //     Random().nextInt(9999),
-  //     event.notification?.title,
-  //     event.notification?.body,
-  //     notificationDetails,
-  //     payload: json.encode(event.data),
-  //   );
-  //
-  //   await NotificationDatabase.instance.insertNotification(
-  //     NotificationModel(
-  //       title: event.notification?.title ?? '',
-  //       body: event.notification?.body ?? '',
-  //       timestamp: timestamp,
-  //     ),
-  //   );
-  //
-  //   final controller = Get.put<NotificationController>(NotificationController());
-  //   controller.loadNotifications();
-  // }
+
 
 
   Future<void> _showNotificationWithActions(RemoteMessage event) async {
@@ -430,6 +310,7 @@ class PushNotificationService {
         0,
         event.notification?.title,
         event.notification?.body,
+
         notificationDetails,
       );
     } else {
@@ -469,9 +350,11 @@ class PushNotificationService {
         android: androidNotificationDetails,
         iOS: iosNotificationDetails,
       );
-      print("dataevent"+event.notification!.toString());
+
       final title = event.notification?.title ?? '';
       final body = event.notification?.body ?? '';
+      final image= event.notification!.android!.imageUrl??"";
+      print("dataevent"+image.toString());
       String timestamp = DateTime.now().toIso8601String();
       await flutterLocalNotificationsPlugin.show(
         Random().nextInt(9999),
@@ -483,7 +366,7 @@ class PushNotificationService {
 
       );
       await NotificationDatabase.instance.insertNotification(
-        NotificationModel(title: title, body: body, timestamp: timestamp),
+        NotificationModel(title: title, body: body,image: image, timestamp: timestamp),
       );
       final controller = Get.put<NotificationController>(NotificationController());
       controller.loadNotifications();
@@ -497,12 +380,14 @@ class PushNotificationService {
 
     String title = message.notification!.title ?? "No Title";
     String body = message.notification!.body ?? "No Body";
+    String image = message.notification!.android!.imageUrl ??"";
+
     String timestamp = DateTime.now().toIso8601String();
 
    if(title!="No Title")
      {
        await NotificationDatabase.instance.insertNotification(
-         NotificationModel(title: title, body: body, timestamp: timestamp),
+         NotificationModel(title: title, body: body, image:image,timestamp: timestamp),
        );
 
      }
