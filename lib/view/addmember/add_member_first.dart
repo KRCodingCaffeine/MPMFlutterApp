@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:easy_stepper/easy_stepper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mpm/OccuptionProfession/OccuptionProfessionData.dart';
@@ -106,6 +107,79 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                   width: 130,
                   child: ElevatedButton(
                     onPressed: () {
+                      final mobile = regiController.mobileController.value.text.trim();
+                      final whatsapp = regiController.whatappmobileController.value.text.trim();
+
+                      if (mobile.length != 10 || !RegExp(r'^[0-9]+$').hasMatch(mobile)) {
+                        Get.snackbar(
+                          "", // Empty because we use titleText below
+                          "",
+                          titleText: const Text(
+                            "Make New Member",
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          messageText: const Text(
+                            "Invalid Mobile Number.",
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontSize: 14,
+                            ),
+                          ),
+                          backgroundColor: Colors.white,
+                          snackPosition: SnackPosition.BOTTOM,
+                          duration: Duration(seconds: 2),
+                          margin: const EdgeInsets.all(12),
+                          borderRadius: 8,
+                          boxShadows: [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 6,
+                              offset: Offset(0, 2),
+                            )
+                          ],
+                        );
+                        return;
+                      }
+
+                      if (whatsapp.length != 10 || !RegExp(r'^[0-9]+$').hasMatch(whatsapp)) {
+                        Get.snackbar(
+                          "",
+                          "",
+                          titleText: const Text(
+                            "Make New Member",
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          messageText: const Text(
+                            "Invalid WhatsApp Number.",
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontSize: 14,
+                            ),
+                          ),
+                          backgroundColor: Colors.white,
+                          snackPosition: SnackPosition.BOTTOM,
+                          duration: Duration(seconds: 2),
+                          margin: const EdgeInsets.all(12),
+                          borderRadius: 8,
+                          boxShadows: [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 6,
+                              offset: Offset(0, 2),
+                            )
+                          ],
+                        );
+                        return;
+                      }
+
                       if (_formKeyLogin!.currentState!.validate()) {
                         // Helper function to show a snackbar
                         void showErrorSnackbar(String message) {
@@ -316,37 +390,35 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
 
                           //First Name
                           _buildEditableField(
-                            'First Name *', // Label
-                            regiController
-                                .firstNameController.value, // Controller
-                            'First Name', // Hint Text
-                            '', text: TextInputType.text,
-                            isRequired: true
-                          ),
+                              'First Name *', // Label
+                              regiController
+                                  .firstNameController.value, // Controller
+                              'First Name', // Hint Text
+                              '',
+                              text: TextInputType.text,
+                              isRequired: true),
                           const SizedBox(height: 20),
 
                           //Second Name
                           _buildEditableField(
-                            "Middle Name", // Label
-                            regiController
-                                .middleNameController.value, // Controller
-                            "Middle Name", // Hint Text
-                            "",
+                              "Middle Name", // Label
+                              regiController
+                                  .middleNameController.value, // Controller
+                              "Middle Name", // Hint Text
+                              "",
                               text: TextInputType.text,
-                              isRequired: false
-                          ),
+                              isRequired: false),
                           const SizedBox(height: 20),
 
                           //Third Name
                           _buildEditableField(
-                            "SurName *", // Label
-                            regiController
-                                .lastNameController.value, // Controller
-                            "SurName", // Hint Text
-                            "",
+                              "SurName *", // Label
+                              regiController
+                                  .lastNameController.value, // Controller
+                              "SurName", // Hint Text
+                              "",
                               text: TextInputType.text,
-                              isRequired: true
-                          ),
+                              isRequired: true),
                           const SizedBox(height: 20),
 
                           //Mobile Number
@@ -354,9 +426,10 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                             "Mobile Number *", // Label
                             regiController.mobileController.value, // Controller
                             "Mobile Number", // Hint Text
-                            "",
-                              text: TextInputType.phone,
-                              isRequired: true
+                            "Mobile number is required",
+                            text: TextInputType.phone,
+                            isRequired: true,
+                            maxLength: 10,
                           ),
                           const SizedBox(height: 20),
 
@@ -366,46 +439,44 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                             regiController
                                 .whatappmobileController.value, // Controller
                             "WhatsApp Number", // Hint Text
-                            "",
-                              text: TextInputType.phone,
-                              isRequired: true
+                            "WhatsApp number is required",
+                            text: TextInputType.phone,
+                            isRequired: true,
+                            maxLength: 10,
                           ),
                           const SizedBox(height: 20),
 
                           //Father's Name
                           _buildEditableField(
-                            "Father's Name *", // Label
-                            regiController
-                                .fathersnameController.value, // Controller
-                            "Father's Name", // Hint Text
-                            "",
+                              "Father's Name *", // Label
+                              regiController
+                                  .fathersnameController.value, // Controller
+                              "Father's Name", // Hint Text
+                              "",
                               text: TextInputType.text,
-                              isRequired: true
-                          ),
+                              isRequired: true),
                           const SizedBox(height: 20),
 
                           //Mother's Name
                           _buildEditableField(
-                            "Mother's Name", // Label
-                            regiController
-                                .mothersnameController.value, // Controller
-                            "Mother's Name", // Hint Text
-                            "",
+                              "Mother's Name", // Label
+                              regiController
+                                  .mothersnameController.value, // Controller
+                              "Mother's Name", // Hint Text
+                              "",
                               text: TextInputType.text,
-                              isRequired: true
-                          ),
+                              isRequired: true),
                           const SizedBox(height: 20),
 
                           //Email
                           _buildEditableField(
-                            "Email *", // Label
-                            regiController.emailController.value,
-                            "Email",
-                            '',
-                            obscureText: false,
+                              "Email *", // Label
+                              regiController.emailController.value,
+                              "Email",
+                              '',
+                              obscureText: false,
                               text: TextInputType.emailAddress,
-                              isRequired: true
-                          ),
+                              isRequired: true),
                           const SizedBox(height: 20),
 
                           //Date of Birth
@@ -701,7 +772,8 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                                           }).toList(),
                                           onChanged: (String? newValue) {
                                             if (newValue != null) {
-                                              regiController.setSelectedMarital(newValue);
+                                              regiController
+                                                  .setSelectedMarital(newValue);
                                             }
                                           },
                                         ),
@@ -821,8 +893,9 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
     String hintText,
     String validationMessage, {
     bool obscureText = false,
-        required TextInputType text,
-        bool isRequired = false,
+    required TextInputType text,
+    bool isRequired = false,
+    int? maxLength,
   }) {
     return Container(
       margin: const EdgeInsets.only(left: 5, right: 5),
@@ -830,7 +903,11 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
         keyboardType: text,
         controller: controller,
         obscureText: obscureText,
-        style: const TextStyle(color: Colors.black), // Text color set to black
+        maxLength: maxLength, // Set max length if provided
+        buildCounter: (BuildContext context,
+                {int? currentLength, int? maxLength, bool? isFocused}) =>
+            null,
+        style: const TextStyle(color: Colors.black),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: const TextStyle(
