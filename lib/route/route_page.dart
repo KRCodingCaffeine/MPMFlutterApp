@@ -14,6 +14,7 @@ import 'package:mpm/view/gov_scheme.dart';
 import 'package:mpm/view/home_view.dart';
 import 'package:mpm/view/language_view.dart';
 import 'package:mpm/view/login_view.dart';
+import 'package:mpm/view/notification_detail.dart';
 import 'package:mpm/view/notification_view.dart';
 import 'package:mpm/view/otp_view.dart';
 import 'package:mpm/view/personal_view.dart';
@@ -74,6 +75,7 @@ class RoutePages {
         return _buildRoute(SearchView(), settings);
       case RouteNames.notification_view:
         return _buildRoute(NotificationView(), settings);
+
       default:
         return MaterialPageRoute(builder: (context) {
           return Scaffold(

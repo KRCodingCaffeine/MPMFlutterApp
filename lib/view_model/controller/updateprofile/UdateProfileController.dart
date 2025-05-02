@@ -633,7 +633,7 @@ var   occuptionFlag=false.obs;
       print('Error: $e');
     } finally {}
   }
-  void updateQualification() async {
+  void updateQualification(String member_qualification_id) async {
     CheckUserData2? userData = await SessionManager.getSession();
     print('User ID: ${userData?.memberId}');
     print('User Name: ${userData?.mobile}');
@@ -642,7 +642,8 @@ var   occuptionFlag=false.obs;
     try {
       Map map = {
         'member_id':  memberId.value,
-        'member_qualification_id': selectQlification.value,
+        "qualification_id": selectQlification.value,
+        'member_qualification_id': member_qualification_id,
         'qualification_main_id': selectQualicationMain.value,
         'qualification_category_id': selectQualicationCat.value,
         'qualification_other_name': educationdetailController.value.text,

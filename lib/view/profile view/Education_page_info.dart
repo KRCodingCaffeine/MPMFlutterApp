@@ -308,7 +308,7 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                     ElevatedButton(
                       onPressed: () async {
                         if (regiController.educationdetailController.value.text.isNotEmpty) {
-                          regiController.updateQualification();
+                          regiController.updateQualification(qualification.memberQualificationId.toString());
                         }
                       },
                       style: ElevatedButton.styleFrom(

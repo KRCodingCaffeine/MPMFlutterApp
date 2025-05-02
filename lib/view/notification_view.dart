@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mpm/route/route_name.dart';
+import 'package:mpm/view/notification_detail.dart';
 
 import 'package:mpm/view_model/controller/notification/NotificationController.dart';
 
@@ -36,9 +38,15 @@ class _NotificationViewState extends State<NotificationView> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: ListTile(
+                    onTap: (){
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => NotificationDetailPage(title:  notification.title, body: notification.body,)),
+                      );
+                    },
                     leading: CircleAvatar(
-                      backgroundColor: Colors.red,
-                      child: Icon(Icons.notifications, color: Colors.white),
+                      backgroundColor: notification.image!=""?Colors.transparent:Colors.red,
+                      child: notification.image!=""? Image.network(notification.image,fit: BoxFit.fill,):Icon(Icons.notifications, color: Colors.white),
                     ),
                     title: Text(
                       notification.title,
@@ -50,11 +58,6 @@ class _NotificationViewState extends State<NotificationView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(notification.body),
-                        Container(
-                         height: 100,
-                          child: Image.network(notification.image,fit: BoxFit.fill,),
-                        ),
-
                         SizedBox(height: 4),
                         Text(
                           notification.timestamp,
