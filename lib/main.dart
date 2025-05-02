@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:mpm/route/route_name.dart';
 import 'package:mpm/route/route_page.dart';
@@ -24,7 +25,10 @@ Future<void> main() async   {
     await PushNotificationService().initialise();
     FirebaseMessaging.onBackgroundMessage(PushNotificationService.firebaseMessagingBackgroundHandler);
   }
-
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   // GetServerKey getServerKey=GetServerKey();
   // String acc= await getServerKey.getServerKey();
   // print("aaa"+acc.toString());

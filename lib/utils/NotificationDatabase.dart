@@ -22,7 +22,7 @@ class NotificationDatabase {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT,
         body TEXT,
-        
+        image TEXT,
         timestamp TEXT
       )
     ''');

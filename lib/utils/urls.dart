@@ -13,7 +13,7 @@ class Urls {
   static const  String occuption_specialization_url = base_url+"api/occupation_specialization";
   static const  String qualification_url = base_url+"api/qualification";
   static const  String qualificationmain_url = base_url+"api/qualification_main";
-  static const  String qualificationcategory_url = base_url+"api/qualification_category";
+  static const  String qualificationcategory_url = base_url+"api/qualification_category_by_main";
   static const  String checkPinCode_url = base_url+"api/check_pincode";
   static const  String documentotion_url = base_url+"api/document_option";
   static const  String membership_url = base_url+"api/membership_type";

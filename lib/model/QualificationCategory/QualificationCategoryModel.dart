@@ -1,7 +1,7 @@
 class QualificationCategoryModel {
   bool? status;
   String? message;
-  Qualificationcategorydata? data;
+  List<Qualificationcategorydata>? data;
 
   QualificationCategoryModel({this.status, this.message, this.data});
 
@@ -9,8 +9,13 @@ class QualificationCategoryModel {
     status = json['status'];
     message = json['message'];
 
-      data = json['data'] != null ? new Qualificationcategorydata.fromJson(json['data']) : null;
-
+     // data = json['data'] != null ? new Qualificationcategorydata.fromJson(json['data']) : null;
+    if (json['data'] != null) {
+      data = <Qualificationcategorydata>[];
+      json['data'].forEach((v) {
+        data!.add(new Qualificationcategorydata.fromJson(v));
+      });
+    }
 
   }
 
@@ -18,8 +23,11 @@ class QualificationCategoryModel {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['status'] = this.status;
     data['message'] = this.message;
+    // if (this.data != null) {
+    //   data['data'] = this.data!.toJson();
+    // }
     if (this.data != null) {
-      data['data'] = this.data!.toJson();
+      data['data'] = this.data!.map((v) => v.toJson()).toList();
     }
     return data;
   }

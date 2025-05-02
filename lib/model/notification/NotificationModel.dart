@@ -2,12 +2,14 @@ class NotificationModel {
   final int? id;
   final String title;
   final String body;
+  final String image;
   final String timestamp;
 
   NotificationModel({
     this.id,
     required this.title,
     required this.body,
+    required this.image,
     required this.timestamp,
   });
 
@@ -16,6 +18,7 @@ class NotificationModel {
       'id': id,
       'title': title,
       'body': body,
+      'image':image,
       'timestamp': timestamp,
     };
   }
@@ -25,6 +28,7 @@ class NotificationModel {
       id: map['id'],
       title: map['title'],
       body: map['body'],
+      image: map['image'],
       timestamp: map['timestamp'],
     );
   }
