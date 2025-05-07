@@ -43,7 +43,9 @@ class Urls {
   static const  String updateJanganaStatus_url = base_url+"api/update_jangana_status";
   static const  String payment_url = base_url+"payment/processPayment";
   static const  String updatetoken_url = base_url+"api/set_fcm_device_token";
-
+  static const  String offerdiscount_url = base_url+"api/offer_discounts";
+  static const  String offer_category_url = base_url+"api/offer_discount_category";
+  static const String offer_discount_subcategory_by_category = base_url+"api/offer_discount_subcategory_by_category";
 
   static const String imagePathUrl = base_url+"public/";
 }
