@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:mpm/model/Offer/OfferData.dart';
+import 'package:mpm/model/OfferCategory/OfferCatData.dart';
+import 'package:mpm/repository/offer_cat_repository/offer_cat_repo.dart';
+import 'package:mpm/repository/offer_repository/offer_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
-import 'package:mpm/view/DiscountOfferDetailPage.dart';
+import 'package:mpm/model/Offer/OfferModelClass.dart';
 
 class DiscountofferView extends StatefulWidget {
   const DiscountofferView({super.key});
@@ -17,68 +22,72 @@ class _DiscountofferViewState extends State<DiscountofferView> {
   List<String> pendingSelectedSubcategories = [];
   bool isFilterDrawerOpen = false;
   bool isFilterApplied = false;
+  bool isLoading = true;
+  String errorMessage = '';
 
-  final List<Map<String, dynamic>> allOffers = [
-    {
-      "companyName": "MPM Mumbai",
-      "offerName": "Health Check up",
-      "offerDescription":
-      "Comprehensive health package including blood tests, BP, sugar, and cholesterol screening.",
-      "categoryName": "Health",
-      "subcategoryName": "Medicine",
-      "validFrom": "May 2, 2025",
-      "validTO": "Aug 31, 2025",
-      "companyLogo": "assets/images/logo.png",
-      "tagColor": Colors.redAccent,
-    },
-    {
-      "companyName": "MPM Mumbai",
-      "offerName": "Insurance Policy",
-      "offerDescription":
-      "Comprehensive health check-up package designed for early detection and prevention of lifestyle diseases. This includes a range of diagnostic tests vital for tracking key health parameters, particularly useful for those seeking health insurance or renewing policies.",
-      "categoryName": "Health Insurance",
-      "subcategoryName": "Medicine",
-      "validFrom": "May 2, 2025",
-      "validTO": "July 31, 2025",
-      "companyLogo": "assets/images/logo.png",
-      "tagColor": Colors.redAccent,
-    },
-    {
-      "companyName": "MPM Mumbai",
-      "offerName": "Eye Check up",
-      "offerDescription": "Complete eye examination including vision testing.",
-      "categoryName": "Health",
-      "subcategoryName": "Check Up",
-      "validFrom": "June 31, 2025",
-      "validTO": "Oct 3, 2025",
-      "companyLogo": "assets/images/logo.png",
-      "tagColor": Colors.redAccent,
-    },
-    {
-      "companyName": "MPM Mumbai",
-      "offerName": "Baby Health Check up",
-      "offerDescription":
-      "Full pediatric health check including growth monitoring, immunization review, and nutrition advice.",
-      "categoryName": "Health",
-      "subcategoryName": "Baby Care",
-      "validFrom": "July 1, 2025",
-      "validTO": "Nov 11, 2025",
-      "companyLogo": "assets/images/logo.png",
-      "tagColor": Colors.redAccent,
-    },
-  ];
+  final offerRepo = OfferRepository();
+  final categoryRepo = OrganisationCategoryRepository();
+  List<OfferData> allOffers = [];
+  List<OrganisationCategoryData> allCategoryData = [];
+  List<String> allSubcategories = [];
 
-  final List<String> allCategories = ["Health", "Health Insurance"];
-  final List<String> allSubcategories = ["Medicine", "Check Up", "Baby Care"];
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    try {
+      setState(() {
+        isLoading = true;
+        errorMessage = '';
+      });
+
+      // Fetch data in parallel
+      final results = await Future.wait([
+        offerRepo.fetchOfferDiscounts(),
+        categoryRepo.fetchOrganisationCategories(),
+      ]);
+
+      final offerModel = OfferModelClass.fromJson(results[0]);
+      final categoryModel = OrganisationCategoryModel.fromJson(results[1]);
+
+      if (offerModel.status == true && offerModel.data != null &&
+          categoryModel.status == true && categoryModel.data != null) {
+        setState(() {
+          allOffers = offerModel.data!;
+          allCategoryData = categoryModel.data!;
+          allSubcategories = allOffers
+              .map((e) => e.subcategoryName ?? '')
+              .where((e) => e.isNotEmpty)
+              .toSet()
+              .toList();
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          isLoading = false;
+          errorMessage = offerModel.message ?? categoryModel.message ?? 'Failed to load data';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+        errorMessage = 'Error fetching data: ${e.toString()}';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    List<Map<String, dynamic>> filteredOffers = isFilterApplied
+    List<OfferData> filteredOffers = isFilterApplied
         ? allOffers.where((offer) {
       bool categoryMatch = selectedCategories.isEmpty ||
-          selectedCategories.contains(offer["categoryName"]);
+          (offer.orgCategoryId != null &&
+              selectedCategories.contains(offer.orgCategoryId));
       bool subcategoryMatch = selectedSubcategories.isEmpty ||
-          selectedSubcategories.contains(offer["subcategoryName"]);
+          selectedSubcategories.contains(offer.subcategoryName);
       return categoryMatch && subcategoryMatch;
     }).toList()
         : allOffers;
@@ -86,251 +95,214 @@ class _DiscountofferViewState extends State<DiscountofferView> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        title: const Text(
-          "Discounts & Offers",
-          style: TextStyle(color: Colors.white),
-        ),
+        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        title: const Text("Discounts & Offers", style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Stack(
         children: [
           Column(
             children: [
-              // Filter Button
-              Padding(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                child: InkWell(
-                  onTap: () {
-                    setState(() {
-                      pendingSelectedCategories = List.from(selectedCategories);
-                      pendingSelectedSubcategories =
-                          List.from(selectedSubcategories);
-                      isFilterDrawerOpen = true;
-                    });
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 14),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.white,
-                      border: Border.all(color: Colors.grey.shade400),
-                    ),
-                    child: Row(
+              _buildFilterButton(),
+              if (isLoading)
+                const Expanded(child: Center(child: CircularProgressIndicator()))
+              else if (errorMessage.isNotEmpty)
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "Filter Offers",
-                                style: TextStyle(fontSize: 16),
-                              ),
-                              const SizedBox(height: 4),
-                              Wrap(
-                                spacing: 6,
-                                runSpacing: 4,
-                                children: [
-                                  ...selectedCategories.map(
-                                        (cat) => Chip(
-                                      label: Text(cat),
-                                      labelStyle: const TextStyle(fontSize: 12, color: Colors.white),
-                                      backgroundColor: Colors.redAccent,
-                                      deleteIcon: const Icon(Icons.close, color: Colors.white, size: 18),
-                                      onDeleted: () {
-                                        setState(() {
-                                          selectedCategories.remove(cat);
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                  ...selectedSubcategories.map(
-                                        (subcat) => Chip(
-                                      label: Text(subcat),
-                                      labelStyle: const TextStyle(fontSize: 12, color: Colors.white),
-                                      backgroundColor: Colors.redAccent,
-                                      deleteIcon: const Icon(Icons.close, color: Colors.white, size: 18),
-                                      onDeleted: () {
-                                        setState(() {
-                                          selectedSubcategories.remove(subcat);
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
+                        Text(errorMessage),
+                        ElevatedButton(
+                          onPressed: _fetchData,
+                          child: const Text('Retry'),
                         ),
-                        const Icon(Icons.filter_list),
                       ],
                     ),
                   ),
-                ),
-              ),
-
-              // Offer List
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  itemCount: filteredOffers.length,
-                  itemBuilder: (context, index) {
-                    final offer = filteredOffers[index];
-                    return offerCard(
-                      companyName: offer["companyName"],
-                      OfferName: offer["offerName"],
-                      offerDescription: offer["offerDescription"],
-                      categoryName: offer["categoryName"],
-                      subcategoryName: offer["subcategoryName"],
-                      validFrom: offer["validFrom"],
-                      validTO: offer["validTO"],
-                      companyLogo: offer["companyLogo"],
-                      tagColor: offer["tagColor"],
-                    );
-                  },
-                ),
-              ),
+                )
+              else if (filteredOffers.isEmpty)
+                  const Expanded(child: Center(child: Text('No offers available')))
+                else
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: _fetchData,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        itemCount: filteredOffers.length,
+                        itemBuilder: (context, index) {
+                          return offerCard(filteredOffers[index]);
+                        },
+                      ),
+                    ),
+                  ),
             ],
           ),
-
-          // Right-side filter drawer
-          if (isFilterDrawerOpen)
-            Positioned(
-              right: 0,
-              top: 0,
-              bottom: 0,
-              width: MediaQuery.of(context).size.width * 0.8,
-              child: Material(
-                elevation: 16,
-                child: Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Text("Filter Offers",
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold)),
-                          const Spacer(),
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () {
-                              setState(() {
-                                isFilterDrawerOpen = false;
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-
-                      const Text("Select Category"),
-                      const SizedBox(height: 8),
-                      ...allCategories.map((category) {
-                        return CheckboxListTile(
-                          title: Text(category),
-                          value: pendingSelectedCategories.contains(category),
-                          onChanged: (bool? value) {
-                            setState(() {
-                              if (value == true) {
-                                pendingSelectedCategories.add(category);
-                              } else {
-                                pendingSelectedCategories.remove(category);
-                              }
-                            });
-                          },
-                        );
-                      }).toList(),
-
-                      const SizedBox(height: 20),
-
-                      const Text("Select Subcategories"),
-                      const SizedBox(height: 8),
-                      ...allSubcategories.map((subcategory) {
-                        return CheckboxListTile(
-                          title: Text(subcategory),
-                          value:
-                          pendingSelectedSubcategories.contains(subcategory),
-                          onChanged: (bool? value) {
-                            setState(() {
-                              if (value == true) {
-                                pendingSelectedSubcategories
-                                    .add(subcategory);
-                              } else {
-                                pendingSelectedSubcategories
-                                    .remove(subcategory);
-                              }
-                            });
-                          },
-                        );
-                      }).toList(),
-
-                      const Spacer(),
-
-                      // Apply Filter Button
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.redAccent,
-                            foregroundColor: Colors.white,
-                            textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              selectedCategories = List.from(pendingSelectedCategories);
-                              selectedSubcategories = List.from(pendingSelectedSubcategories);
-                              isFilterApplied = true;
-                              isFilterDrawerOpen = false;
-                            });
-                          },
-                          child: const Text("Apply Filter"),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+          if (isFilterDrawerOpen) _buildFilterDrawer(),
         ],
       ),
     );
   }
 
-  Widget offerCard({
-    required String companyName,
-    required String OfferName,
-    required String offerDescription,
-    required String categoryName,
-    required String subcategoryName,
-    required String validFrom,
-    required String validTO,
-    required String companyLogo,
-    required Color tagColor,
-  }) {
+  Widget _buildFilterButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            pendingSelectedCategories = List.from(selectedCategories);
+            pendingSelectedSubcategories = List.from(selectedSubcategories);
+            isFilterDrawerOpen = true;
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            color: Colors.white,
+            border: Border.all(color: Colors.grey.shade400),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("Filter Offers", style: TextStyle(fontSize: 16)),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        ...selectedCategories.map((catId) {
+                          final category = allCategoryData.firstWhere(
+                                (c) => c.organisationCategoryId == catId,
+                            orElse: () => OrganisationCategoryData(),
+                          );
+                          return Chip(
+                            label: Text(category.organisationCategoryName ?? 'Unknown'),
+                            labelStyle: const TextStyle(fontSize: 12, color: Colors.white),
+                            backgroundColor: Colors.redAccent,
+                            deleteIcon: const Icon(Icons.close, color: Colors.white, size: 18),
+                            onDeleted: () => setState(() => selectedCategories.remove(catId)),
+                          );
+                        }),
+                        ...selectedSubcategories.map(
+                              (subcat) => Chip(
+                            label: Text(subcat),
+                            labelStyle: const TextStyle(fontSize: 12, color: Colors.white),
+                            backgroundColor: Colors.redAccent,
+                            deleteIcon: const Icon(Icons.close, color: Colors.white, size: 18),
+                            onDeleted: () => setState(() => selectedSubcategories.remove(subcat)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.filter_list),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterDrawer() {
+    return Positioned(
+      right: 0,
+      top: 0,
+      bottom: 0,
+      width: MediaQuery.of(context).size.width * 0.8,
+      child: Material(
+        elevation: 16,
+        child: Container(
+          color: Colors.white,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text("Filter Offers", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => setState(() => isFilterDrawerOpen = false),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              const Text("Select Category"),
+              const SizedBox(height: 8),
+              ...allCategoryData.map((category) => CheckboxListTile(
+                title: Text(category.organisationCategoryName ?? 'Unknown'),
+                value: pendingSelectedCategories.contains(category.organisationCategoryId),
+                onChanged: (value) => setState(() {
+                  final catId = category.organisationCategoryId;
+                  if (catId != null) {
+                    value == true
+                        ? pendingSelectedCategories.add(catId)
+                        : pendingSelectedCategories.remove(catId);
+                  }
+                }),
+              )),
+              const SizedBox(height: 20),
+              const Text("Select Subcategories"),
+              const SizedBox(height: 8),
+              ...allSubcategories.map((subcategory) => CheckboxListTile(
+                title: Text(subcategory),
+                value: pendingSelectedSubcategories.contains(subcategory),
+                onChanged: (value) => setState(() {
+                  value == true
+                      ? pendingSelectedSubcategories.add(subcategory)
+                      : pendingSelectedSubcategories.remove(subcategory);
+                }),
+              )),
+              const Spacer(),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      selectedCategories = List.from(pendingSelectedCategories);
+                      selectedSubcategories = List.from(pendingSelectedSubcategories);
+                      isFilterApplied = true;
+                      isFilterDrawerOpen = false;
+                    });
+                  },
+                  child: const Text("Apply Filter"),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget offerCard(OfferData offer) {
+    final category = allCategoryData.firstWhere(
+          (c) => c.organisationCategoryId == offer.orgCategoryId,
+      orElse: () => OrganisationCategoryData(),
+    );
+
     return InkWell(
-      // onTap: () {
-      //   Navigator.push(
-      //     context,
-      //     MaterialPageRoute(
-      //       builder: (context) => DiscountOfferDetailPage(
-      //         companyName: companyName,
-      //         offerName: OfferName,
-      //         offerDescription: offerDescription,
-      //         companyLogo: companyLogo,
-      //       ),
-      //     ),
-      //   );
-      // },
+      onTap: () {
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(
+        //     builder: (context) => DiscountOfferDetailPage(offer: offer),
+        //   ),
+        // );
+      },
       child: Card(
         color: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -344,100 +316,87 @@ class _DiscountofferViewState extends State<DiscountofferView> {
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Image.asset(
-                      companyLogo,
+                    Container(
                       width: 75,
                       height: 75,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: offer.orgLogo != null && offer.orgLogo!.isNotEmpty
+                          ? ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          offer.orgLogo!,
+                          width: 75,
+                          height: 75,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => _buildDefaultLogo(),
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                    : null,
+                              ),
+                            );
+                          },
+                        ),
+                      )
+                          : _buildDefaultLogo(),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      companyName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
+                    const SizedBox(height: 4),
+                    SizedBox(
+                      width: 75,
+                      child: Text(
+                        offer.orgName ?? 'Unknown',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 10,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(width: 12),
-                Container(
-                  width: 1,
-                  color: Colors.grey[400],
-                ),
+                Container(width: 1, color: Colors.grey[400]),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        OfferName,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        offer.offerDiscountName ?? 'No title',
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        offerDescription,
+                        offer.offerDescription ?? 'No description',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: tagColor,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              categoryName,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
+                          if (category.organisationCategoryName != null)
+                            _tag(category.organisationCategoryName!, Colors.redAccent),
                           const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: tagColor,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              subcategoryName,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
+                          if (offer.subcategoryName != null && offer.subcategoryName!.isNotEmpty)
+                            _tag(offer.subcategoryName!, Colors.redAccent),
                         ],
                       ),
                       const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(12),
+                      if (offer.validFrom != null && offer.validTo != null)
+                        _tag(
+                          "${_formatDate(offer.validFrom!)} - ${_formatDate(offer.validTo!)}",
+                          Colors.grey[300]!,
                         ),
-                        child: Text(
-                          "$validFrom - $validTO",
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -447,5 +406,36 @@ class _DiscountofferViewState extends State<DiscountofferView> {
         ),
       ),
     );
+  }
+
+  Widget _buildDefaultLogo() {
+    return Center(
+      child: Image.asset(
+        'assets/images/logo.png',
+        width: 60,
+        height: 60,
+      ),
+    );
+  }
+
+  Widget _tag(String text, Color bgColor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(12)),
+      child: Text(
+          text,
+          style: const TextStyle(fontSize: 12, color: Colors.black)),
+    );
+  }
+}
+
+String _formatDate(String dateString) {
+  try {
+    final date = DateTime.parse(dateString);
+    return DateFormat('d-M-y').format(date);
+  } catch (e) {
+    return dateString;
   }
 }
