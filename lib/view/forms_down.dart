@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:ui';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:mpm/utils/AppDrawer.dart';
@@ -92,19 +93,12 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
     if (!permissionStatus) return;
 
     try {
+      // ✅ Use app-specific external storage
       Directory? directory = await getExternalStorageDirectory();
-      String newPath = "/storage/emulated/0/Download";
-      directory = Directory(newPath);
-
-      if (!directory.existsSync()) {
-        directory.createSync(recursive: true);
-      }
-
-      String filePath = "${directory.path}/$fileName";
+      String filePath = "${directory!.path}/$fileName";
       Dio dio = Dio();
       int progress = 0;
 
-      // Show a persistent Snackbar with a StatefulBuilder
       final scaffoldMessenger = ScaffoldMessenger.of(context);
       StateSetter? setSnackbarState;
 
@@ -112,11 +106,11 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
         SnackBar(
           content: StatefulBuilder(
             builder: (context, setState) {
-              setSnackbarState = setState; // Capture setState function
+              setSnackbarState = setState;
               return Text("Downloading $fileName ... $progress%");
             },
           ),
-          duration: const Duration(days: 1), // Keep it open
+          duration: const Duration(days: 1),
         ),
       );
 
@@ -128,26 +122,23 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
             int newProgress = ((received / total) * 100).toInt();
             if (newProgress != progress) {
               progress = newProgress;
-
-              // Update Snackbar text dynamically
               if (setSnackbarState != null) {
-                setSnackbarState!(() {}); // Update Snackbar text
+                setSnackbarState!(() {});
               }
             }
           }
         },
       );
-      // Hide progress Snackbar
+
       snackBarController.close();
 
-      // Show success Snackbar
       scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text("$fileName - Downloaded successfully."),
           action: SnackBarAction(
             label: "View",
             onPressed: () {
-              OpenFilex.open(filePath);  // Open the downloaded PDF
+              OpenFilex.open(filePath);
             },
           ),
         ),
@@ -162,32 +153,37 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
 
 
 
+
   Future<bool> _requestPermission() async {
     if (Platform.isAndroid) {
-      if (await Permission.storage.isGranted) return true;
+      final androidInfo = await DeviceInfoPlugin().androidInfo;
+      final sdkInt = androidInfo.version.sdkInt;
 
-      if (await Permission.manageExternalStorage.isGranted) return true;
+      if (sdkInt >= 33) {
+        // Android 13+ (use READ_MEDIA_* permissions if needed)
+        return true; // No need to ask if downloading to app-private or using DownloadManager
+      } else if (sdkInt >= 30) {
+        // Android 11 or 12
+        var status = await Permission.storage.request();
+        if (status.isGranted) return true;
 
-      var status = await Permission.manageExternalStorage.request();
-
-      if (status.isGranted) {
-        return true;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Storage permission is needed to download the file.')),
+        );
+        return false;
       } else {
-        // Open settings manually
-        bool opened = await openAppSettings();
-        if (!opened) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please enable storage permission from settings')),
-          );
-        }
+        // Android 10 or below
+        var status = await Permission.storage.request();
+        if (status.isGranted) return true;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Storage permission is needed to download the file.')),
+        );
+        return false;
       }
-      return false;
     }
-
-    return true; // iOS doesn't need this
+    return true;
   }
-
-
 
   Widget buildCard(String title, IconData icon, Color color, String url, String fileName) {
     return GestureDetector(
