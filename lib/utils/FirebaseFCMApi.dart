@@ -119,10 +119,10 @@ class PushNotificationService {
       String timestamp = DateTime.now().toIso8601String();
 
       NotificationDatabase.instance.insertNotification(
-        NotificationModel(title: title, body: body, image: image, timestamp: timestamp),
+        NotificationModel(title: title, body: body, image: image, timestamp: timestamp, isRead: false),
       );
-      final controller = Get.find<NotificationController>();
-      controller.loadNotifications();
+      // final controller = Get.find<NotificationController>();
+      // controller.loadNotifications();
       _goToScreen(notificationType, 0);
     }
   }
@@ -268,6 +268,8 @@ class PushNotificationService {
       final data = json.decode(payload ?? '') as Map<String, dynamic>;
       print('notificationSelect ssTOP>> $data');
       final notificationType = data[kNotificationType] as String?;
+     // await NotificationDatabase.instance.markNotificationAsRead(data);
+
       _goToScreen(notificationType ?? '',0);
 
 
@@ -366,7 +368,7 @@ class PushNotificationService {
 
       );
       await NotificationDatabase.instance.insertNotification(
-        NotificationModel(title: title, body: body,image: image, timestamp: timestamp),
+        NotificationModel(title: title, body: body,image: image, timestamp: timestamp,isRead: false),
       );
       final controller = Get.put<NotificationController>(NotificationController());
       controller.loadNotifications();
@@ -387,9 +389,14 @@ class PushNotificationService {
    if(title!="No Title")
      {
        await NotificationDatabase.instance.insertNotification(
-         NotificationModel(title: title, body: body, image:image,timestamp: timestamp),
+         NotificationModel(title: title, body: body, image:image,timestamp: timestamp,isRead: false),
        );
-
+      // await NotificationDatabase.instance.markAllNotificationsAsRead();
+       NotificationController controller;
+       if (Get.isRegistered<NotificationController>()) {
+         controller = Get.find<NotificationController>();
+         controller.loadNotifications();
+       }
      }
   }
 }
