@@ -23,7 +23,8 @@ class NotificationDatabase {
         title TEXT,
         body TEXT,
         image TEXT,
-        timestamp TEXT
+        timestamp TEXT,
+        isRead INTEGER
       )
     ''');
   }
@@ -42,5 +43,31 @@ class NotificationDatabase {
     final db = await instance.database;
     await db.delete('notifications');
   }
+  // Future<void> markNotificationAsRead(Map<String, dynamic> data) async {
+  //   final db = await database;
+  //   await db.update(
+  //     'notifications',
+  //     {'isRead': 1},
+  //     where: 'timestamp = ?',
+  //     whereArgs: [data['timestamp']], // or use another unique field
+  //   );
+  // }
+  Future<void> markAllNotificationsAsRead() async {
+    final db = await database;
+    await db.update(
+      'notifications',
+      {'isRead': 1},
+      where: 'isRead = 0',
+    );
+  }
 
+  Future<int> getUnreadNotificationCount() async {
+    final db = await database;
+    final result = await db.rawQuery("SELECT COUNT(*) FROM notifications WHERE isRead = 0");
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+  Future close() async {
+    final db = await instance.database;
+    db.close();
+  }
 }

@@ -4,6 +4,7 @@ class NotificationModel {
   final String body;
   final String image;
   final String timestamp;
+   bool isRead;
 
   NotificationModel({
     this.id,
@@ -11,6 +12,7 @@ class NotificationModel {
     required this.body,
     required this.image,
     required this.timestamp,
+    this.isRead = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -18,8 +20,9 @@ class NotificationModel {
       'id': id,
       'title': title,
       'body': body,
-      'image':image,
+      'image': image,
       'timestamp': timestamp,
+      'isRead': isRead ? 1 : 0,
     };
   }
 
@@ -30,6 +33,9 @@ class NotificationModel {
       body: map['body'],
       image: map['image'],
       timestamp: map['timestamp'],
+      isRead: map['isRead'] == 1,
     );
   }
 }
+
+

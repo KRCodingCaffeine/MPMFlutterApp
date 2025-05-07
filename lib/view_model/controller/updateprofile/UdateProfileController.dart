@@ -19,6 +19,7 @@ import 'package:mpm/model/UpdateFamilyRelation/UpdateFamilyMember.dart';
 import 'package:mpm/model/relation/RelationData.dart';
 import 'package:mpm/repository/register_repository/register_repo.dart';
 import 'package:mpm/repository/update_repository/UpdateProfileRepository.dart';
+import 'package:mpm/utils/NotificationDatabase.dart';
 
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
@@ -27,6 +28,7 @@ import 'package:mpm/utils/urls.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
+import 'package:mpm/view_model/controller/notification/NotificationController.dart';
 
 
 
@@ -40,9 +42,19 @@ class UdateProfileController extends GetxController {
   var membership_approval_status_id="".obs;
   var documentDynamicImage="".obs;
   var isLoadingPayment = false.obs;
+
   var isPay =false.obs;
 
-  void changeTab(int index) {
+
+
+  void changeTab(int index) async{
+
+    if(index==3)
+      {
+
+        Get.find<NotificationController>().markAllAsRead();
+
+      }
     currentIndex.value = index;
   }
 
@@ -416,7 +428,6 @@ var   occuptionFlag=false.obs;
   }
 
   void getOccupationProData(String occupation_id) {
-
     Map datas = {"occupation_id": occupation_id};
     setRxRequestOccuptionData(Status.LOADING);
     api.userOccutionPreCodeApi(datas).then((_value) {
@@ -558,7 +569,7 @@ var   occuptionFlag=false.obs;
       print("cvv"+error.toString());
     });
   }
-  void checkReviewApproval(){
+  void checkReviewApproval() {
     if(userMaritalStatus.value=="1" && membershipApprovalStatusId.value=="6")
     {
       if(isJangana.value=="0")
