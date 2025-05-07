@@ -33,15 +33,15 @@ class AppDrawer extends StatelessWidget {
                       Obx(() {
                         return CircleAvatar(
                           radius: 40,
-                          backgroundColor: Colors.grey[300], // Background color while loading
+                          backgroundColor: Colors.grey[300],
                           child: ClipOval(
                             child: (dashBoardController.profileImage.value.isNotEmpty)
                                 ? FadeInImage(
-                              placeholder: const AssetImage("assets/images/user3.png"), // Placeholder while loading
-                              image: NetworkImage(Urls.imagePathUrl + dashBoardController.profileImage.value), // Network image
+                              placeholder: const AssetImage("assets/images/user3.png"),
+                              image: NetworkImage(Urls.imagePathUrl + dashBoardController.profileImage.value),
                               imageErrorBuilder: (context, error, stackTrace) {
                                 return Image.asset(
-                                  "assets/images/male.png", // Fallback image on error
+                                  "assets/images/male.png",
                                   fit: BoxFit.cover,
                                   width: 80,
                                   height: 80,
@@ -52,7 +52,7 @@ class AppDrawer extends StatelessWidget {
                               height: 80,
                             )
                                 : Image.asset(
-                              "assets/images/user3.png", // Default image if profileImage is empty
+                              "assets/images/user3.png",
                               fit: BoxFit.cover,
                               width: 80,
                               height: 80,
@@ -80,11 +80,11 @@ class AppDrawer extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          "Member Code : ${(dashBoardController.memberCode.value.trim().isNotEmpty)
+                          "Membership Code : ${(dashBoardController.memberCode.value.trim().isNotEmpty)
                               ? dashBoardController.memberCode.value
                               : " -- "}", // Default text if both are empty
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 12,
                             color: Colors.white,
                           ),
                         ),
@@ -204,11 +204,9 @@ class AppDrawer extends StatelessWidget {
 
     const String playStoreLink =
         'https://play.google.com/store/apps/details?id=com.mpm.member';
-    const String appStoreLink =
-        'https://apps.apple.com/app/id123456789'; // Replace with actual link
 
     String shareText =
-        "🌟 Welcome to MPM App! \n\n📲 🚀 Check out this amazing app! \n\n📲 Download Now: \n👉 Android: $playStoreLink\n👉 iOS: $appStoreLink";
+        "🌟 Welcome to MPM App! \n\n📲 🚀 Check out this amazing app! \n\n📲 Download Now: \n👉 Android: $playStoreLink";
 
     await Share.share(
       shareText,

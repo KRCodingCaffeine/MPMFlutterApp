@@ -162,7 +162,7 @@ class _ProfileViewState extends State<ProfileView> {
                               Obx(() {
                                 final code = controller.memberCode.value.trim();
                                 return Text(
-                                  "Member Code: ${code.isNotEmpty ? code : " -- "}",
+                                  "Membership Code: ${code.isNotEmpty ? code : " -- "}",
                                   style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
