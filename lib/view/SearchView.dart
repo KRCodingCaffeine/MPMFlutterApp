@@ -188,7 +188,7 @@ class _SearchViewState extends State<SearchView> {
                         ),
                         children: [
                           const TextSpan(
-                            text: "Member Code: ",
+                            text: "Membership Code: ",
                             style: TextStyle(color: Colors.black),
                           ),
                           TextSpan(

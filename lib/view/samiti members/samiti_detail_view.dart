@@ -193,7 +193,7 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      "Member Code : ${lmCode.isNotEmpty ? lmCode : memberId}",
+                      "Membership Code : ${lmCode.isNotEmpty ? lmCode : memberId}",
                       style: const TextStyle(
                         fontSize: 14,
                         color: Color(0xFFDC3545),
