@@ -188,7 +188,7 @@ class _ContactViewPageState extends State<ContactViewPage> {
             // First ExpansionTile - Girgaon
             ExpansionTile(
               title: const Text(
-                'Maheshwari Bhavan - Girgaon',
+                'Maheshwari Pragati Mandal (Main Office)',
                 style: TextStyle(fontSize: 18, color: Colors.black87),
               ),
               children: [
@@ -379,7 +379,7 @@ class _ContactViewPageState extends State<ContactViewPage> {
 
             // Email Section with Icon
             const Text(
-              'Email',
+              'Emails',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),

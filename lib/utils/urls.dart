@@ -8,7 +8,7 @@ class Urls {
   static const  String gender_url = base_url+"api/gender";
   static const  String bloodgroup_url = base_url+"api/blood_group";
   static const  String material_url = base_url+"/api/marital_status";
-   static const  String occuption_url = base_url+"api/occupation";
+  static const  String occuption_url = base_url+"api/occupation";
   static const  String occuption_profession_url = base_url+"api/occupation_profession";
   static const  String occuption_specialization_url = base_url+"api/occupation_specialization";
   static const  String qualification_url = base_url+"api/qualification";
@@ -45,7 +45,7 @@ class Urls {
   static const  String updatetoken_url = base_url+"api/set_fcm_device_token";
   static const  String offerdiscount_url = base_url+"api/offer_discounts";
   static const  String offer_category_url = base_url+"api/offer_discount_category";
-  static const String offer_discount_subcategory_by_category = base_url+"api/offer_discount_subcategory_by_category";
+  static const  String offer_discount_subcategory_by_category = base_url+"api/offer_discount_subcategory_by_category";
 
   static const String imagePathUrl = base_url+"public/";
 }
