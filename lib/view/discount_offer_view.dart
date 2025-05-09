@@ -223,7 +223,7 @@ class _DiscountofferViewState extends State<DiscountofferView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("Filter Offers", style: TextStyle(fontSize: 16)),
+                    const Text("Select Offers", style: TextStyle(fontSize: 16)),
                     const SizedBox(height: 4),
                     Wrap(
                       spacing: 6,
@@ -282,7 +282,7 @@ class _DiscountofferViewState extends State<DiscountofferView> {
             children: [
               Row(
                 children: [
-                  const Text("Filter Offers", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text("Select Offers", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const Spacer(),
                   IconButton(
                     icon: const Icon(Icons.close),
