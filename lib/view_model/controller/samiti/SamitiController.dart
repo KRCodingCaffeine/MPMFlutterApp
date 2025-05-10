@@ -55,17 +55,37 @@ class SamitiController extends GetxController {
     }
 
     loading2.value = true;
+
     try {
       var response = await api.searchMember(query);
       var data = SearchLMCodeModel.fromJson(response);
 
       if (data.data != null && data.data!.isNotEmpty) {
+        final searchText = query.toLowerCase().trim();
+
         var filteredList = data.data!.where((member) {
-          final fullName =
-          "${member.firstName ?? ''} ${member.lastName ?? ''}".toLowerCase();
+          final first = member.firstName?.toLowerCase() ?? '';
+          final middle = member.middleName?.toLowerCase() ?? '';
+          final last = member.lastName?.toLowerCase() ?? '';
           final mobile = member.mobile?.toLowerCase() ?? '';
-          final searchText = query.toLowerCase();
-          return fullName.contains(searchText) || mobile.contains(searchText);
+
+          final nameCombos = [
+            "$first $middle $last",
+            "$first $last $middle",
+            "$middle $first $last",
+            "$middle $last $first",
+            "$last $middle $first",
+            "$last $first $middle",
+            "$first $middle",
+            "$middle $last",
+            "$first $last",
+            "$middle $first",
+            "$last $first",
+            "$last $middle",
+          ];
+
+          return nameCombos.any((combo) => combo.contains(searchText)) ||
+              mobile.contains(searchText);
         }).toList();
 
         searchDataList.value.assignAll(filteredList);
@@ -73,7 +93,7 @@ class SamitiController extends GetxController {
         searchDataList.value.clear();
       }
     } catch (error) {
-      print("Error: " + error.toString());
+      print("Error: $error");
       searchDataList.value.clear();
     } finally {
       loading2.value = false;
