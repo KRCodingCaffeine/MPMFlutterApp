@@ -226,8 +226,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
       appBar: AppBar(
         backgroundColor:
         ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        title:
-        const Text("Avail Offer", style: TextStyle(color: Colors.white)),
+        title: const Text("Avail Offer", style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
@@ -236,54 +235,50 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
           ),
         ],
       ),
-      body: offerList.isEmpty
-          ? ListView(
+      body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Center(
-            child: Text(
-              'No offers added yet!',
-              style: TextStyle(fontSize: 18),
+          if (offerList.isEmpty) ...[
+            const Center(
+              child: Text(
+                'No Prescription added yet!',
+                style: TextStyle(fontSize: 18),
+              ),
             ),
-          ),
-          _buildUploadSection(),
+          ] else ...[
+            ...offerList.asMap().entries.map((entry) {
+              final index = entry.key;
+              final offer = entry.value;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${index + 1}. Medicine Name: ${offer['medicine']}',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '     Product Type: ${offer['container']}',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '     Quantity: ${offer['quantity']}',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 12),
+                  const Divider(
+                    color: Colors.grey,
+                    thickness: 0.5,
+                    height: 20,
+                  ),
+                ],
+              );
+            }),
+            const SizedBox(height: 8),
+            _buildUploadSection(),
+          ],
         ],
-      )
-          : ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: offerList.length + 1,
-        itemBuilder: (context, index) {
-          if (index < offerList.length) {
-            final offer = offerList[index];
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${index + 1}. Medicine Name: ${offer['medicine']}',
-                  style: const TextStyle(fontSize: 16),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '     Product Type: ${offer['container']}',
-                  style: const TextStyle(fontSize: 16),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '     Quantity: ${offer['quantity']}',
-                  style: const TextStyle(fontSize: 16),
-                ),
-                const SizedBox(height: 12),
-                const Divider(
-                  color: Colors.grey,
-                  thickness: 0.5,
-                  height: 20,
-                ),
-              ],
-            );
-          } else {
-            return _buildUploadSection();
-          }
-        },
       ),
     );
   }
