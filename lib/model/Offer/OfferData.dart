@@ -65,7 +65,7 @@ class OfferData {
       orgPincode: json['org_pincode'],
       orgMobile: json['org_mobile'],
       orgEmail: json['org_email'],
-      orgLogo: json['org_logo'],
+      orgLogo: "https://members.mumbaimaheshwari.com/api/public/" +json['org_logo'],
       categoryName: json['category_name'],
       subcategoryName: json['subcategory_name'],
     );
