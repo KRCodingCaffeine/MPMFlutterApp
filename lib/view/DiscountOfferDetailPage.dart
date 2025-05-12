@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mpm/model/GetOfferImage/OfferImageModelClass.dart';
 import 'package:mpm/model/Offer/OfferData.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
@@ -7,10 +8,12 @@ import 'package:mpm/view/avail_offer_page.dart';
 
 class DiscountOfferDetailPage extends StatelessWidget {
   final OfferData offer;
+  final OfferImageModel? offerImageModel; // Add this parameter
 
   const DiscountOfferDetailPage({
     super.key,
     required this.offer,
+    this.offerImageModel, // Make it optional
   });
 
   @override
@@ -33,23 +36,27 @@ class DiscountOfferDetailPage extends StatelessWidget {
             const Divider(thickness: 0.5, color: Colors.grey),
             const SizedBox(height: 16),
 
-            // Offer Image
+            // Offer Image - Updated to use network image if available
             Center(
               child: GestureDetector(
                 onTap: () => _showFullImage(context),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: Image.asset(
-                    'assets/images/discounts.jpg',
+                  child: offerImageModel?.data?.offerImage != null
+                      ? Image.network(
+                    offerImageModel!.data!.offerImage!,
                     height: 300,
                     width: 300,
                     fit: BoxFit.cover,
-                  ),
+                    errorBuilder: (_, __, ___) => _buildDefaultOfferImage(),
+                  )
+                      : _buildDefaultOfferImage(),
                 ),
               ),
             ),
             const SizedBox(height: 24),
 
+            // Rest of your existing widgets...
             // Offer Title
             Center(
               child: Text(
@@ -124,6 +131,53 @@ class DiscountOfferDetailPage extends StatelessWidget {
     );
   }
 
+  // Add this new method for default offer image
+  Widget _buildDefaultOfferImage() {
+    return Container(
+      height: 300,
+      width: 300,
+      color: Colors.grey[200],
+      child: Center(
+        child: Image.asset(
+          'assets/images/discounts.jpg', // Keep as fallback
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
+
+  // Update the full image viewer to use network image if available
+  void _showFullImage(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.black,
+        insetPadding: EdgeInsets.zero,
+        child: GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: InteractiveViewer(
+            child: Center(
+              child: offerImageModel?.data?.offerImage != null
+                  ? Image.network(
+                offerImageModel!.data!.offerImage!,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => Image.asset(
+                  'assets/images/discounts.jpg',
+                  fit: BoxFit.contain,
+                ),
+              )
+                  : Image.asset(
+                'assets/images/discounts.jpg',
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Rest of your existing methods (_buildCompanyInfo, _buildValidityInfo, etc.)...
   Widget _buildCompanyInfo() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -334,28 +388,6 @@ class DiscountOfferDetailPage extends StatelessWidget {
       ),
     );
   }
-
-  void _showFullImage(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.black,
-        insetPadding: EdgeInsets.zero,
-        child: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: InteractiveViewer(
-            child: Center(
-              child: Image.asset(
-                'assets/images/discounts.jpg',
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
 
   String _formatDate(String dateString) {
     try {

@@ -407,12 +407,16 @@ class _DiscountofferViewState extends State<DiscountofferView> {
                           errorBuilder: (context, error, stackTrace) => _buildDefaultLogo(),
                           loadingBuilder: (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
-                            return Center(
-                              child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                                    : null,
+                            return SizedBox(
+                              width: 75,
+                              height: 75,
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                      : null,
+                                ),
                               ),
                             );
                           },
