@@ -1011,7 +1011,6 @@ var   occuptionFlag=false.obs;
     }
     http.StreamedResponse response = await request.send().timeout(
         Duration(seconds: 60));
-    //
     if (response.statusCode == 200) {
       String responseBody = await response.stream.bytesToString();
       loading.value = false;
