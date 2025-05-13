@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mpm/model/GetOfferImage/OfferImageModelClass.dart';
 import 'package:mpm/model/Offer/OfferData.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
@@ -8,12 +7,10 @@ import 'package:mpm/view/avail_offer_page.dart';
 
 class DiscountOfferDetailPage extends StatelessWidget {
   final OfferData offer;
-  final OfferImageModel? offerImageModel; // Add this parameter
 
   const DiscountOfferDetailPage({
     super.key,
     required this.offer,
-    this.offerImageModel, // Make it optional
   });
 
   @override
@@ -30,23 +27,21 @@ class DiscountOfferDetailPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Company Info
             _buildCompanyInfo(),
             const SizedBox(height: 16),
             const Divider(thickness: 0.5, color: Colors.grey),
             const SizedBox(height: 16),
 
-            // Offer Image - Updated to use network image if available
             Center(
               child: GestureDetector(
                 onTap: () => _showFullImage(context),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: offerImageModel?.data?.offerImage != null
+                  child: offer.offerImage != null && offer.offerImage!.isNotEmpty
                       ? Image.network(
-                    offerImageModel!.data!.offerImage!,
-                    height: 300,
-                    width: 300,
+                    offer.offerImage!,
+                    height: 350,
+                    width: 350,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => _buildDefaultOfferImage(),
                   )
@@ -56,8 +51,6 @@ class DiscountOfferDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Rest of your existing widgets...
-            // Offer Title
             Center(
               child: Text(
                 offer.offerDiscountName ?? 'No title',
@@ -70,7 +63,6 @@ class DiscountOfferDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Offer Description
             const Text(
               'Offer Detail:',
               style: TextStyle(
@@ -89,22 +81,19 @@ class DiscountOfferDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Validity Period
             _buildValidityInfo(),
 
-            // Contact Info if available
             if (offer.orgMobile != null || offer.orgEmail != null) ...[
               const SizedBox(height: 24),
               const Divider(thickness: 0.5, color: Colors.grey),
               const SizedBox(height: 16),
               _buildContactInfo(),
             ],
-            const SizedBox(height: 24),
 
+            const SizedBox(height: 24),
             const Divider(thickness: 0.5, color: Colors.grey),
             const SizedBox(height: 16),
 
-            // Avail Offer Button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -131,7 +120,6 @@ class DiscountOfferDetailPage extends StatelessWidget {
     );
   }
 
-  // Add this new method for default offer image
   Widget _buildDefaultOfferImage() {
     return Container(
       height: 300,
@@ -139,14 +127,13 @@ class DiscountOfferDetailPage extends StatelessWidget {
       color: Colors.grey[200],
       child: Center(
         child: Image.asset(
-          'assets/images/discounts.jpg', // Keep as fallback
+          'assets/images/discounts.jpg',
           fit: BoxFit.cover,
         ),
       ),
     );
   }
 
-  // Update the full image viewer to use network image if available
   void _showFullImage(BuildContext context) {
     showDialog(
       context: context,
@@ -157,9 +144,9 @@ class DiscountOfferDetailPage extends StatelessWidget {
           onTap: () => Navigator.pop(context),
           child: InteractiveViewer(
             child: Center(
-              child: offerImageModel?.data?.offerImage != null
+              child: offer.offerImage != null && offer.offerImage!.isNotEmpty
                   ? Image.network(
-                offerImageModel!.data!.offerImage!,
+                offer.offerImage!,
                 fit: BoxFit.contain,
                 errorBuilder: (_, __, ___) => Image.asset(
                   'assets/images/discounts.jpg',
@@ -177,12 +164,10 @@ class DiscountOfferDetailPage extends StatelessWidget {
     );
   }
 
-  // Rest of your existing methods (_buildCompanyInfo, _buildValidityInfo, etc.)...
   Widget _buildCompanyInfo() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Company Logo
         Container(
           width: 80,
           height: 80,
@@ -202,37 +187,25 @@ class DiscountOfferDetailPage extends StatelessWidget {
               : _buildDefaultLogo(),
         ),
         const SizedBox(width: 16),
-
-        // Company Details
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 offer.orgName ?? 'Unknown Company',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
-              if (offer.orgAddress != null) ...[
+              if (offer.orgAddress != null)
                 Text(
                   offer.orgAddress!,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                 ),
-              ],
               if (offer.orgArea != null || offer.orgCity != null) ...[
                 const SizedBox(height: 4),
                 Text(
                   [offer.orgArea, offer.orgCity].where((e) => e != null).join(', '),
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                 ),
               ],
             ],
@@ -263,10 +236,7 @@ class DiscountOfferDetailPage extends StatelessWidget {
               offer.validFrom != null && offer.validTo != null
                   ? '${_formatDate(offer.validFrom!)} - ${_formatDate(offer.validTo!)}'
                   : 'Not specified',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[700],
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey[700]),
             ),
           ],
         ),
@@ -289,92 +259,53 @@ class DiscountOfferDetailPage extends StatelessWidget {
         const SizedBox(height: 8),
         Table(
           columnWidths: const {
-            0: IntrinsicColumnWidth(), // Label
-            1: FixedColumnWidth(10),   // Colon
-            2: FlexColumnWidth(),      // Value
+            0: IntrinsicColumnWidth(),
+            1: FixedColumnWidth(10),
+            2: FlexColumnWidth(),
           },
           children: [
             if (offer.orgMobile != null)
-              TableRow(
-                children: [
-                  Text(
-                    'Mobile Number',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Colors.grey[800],
-                    ),
-                  ),
-                  Center(child: Text(':')),
-                  Text(
-                    offer.orgMobile!,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                ],
-              ),
+              _buildTableRow('Mobile Number', offer.orgMobile!),
             if (offer.orgMobile != null)
-              TableRow(
-                children: [
-                  SizedBox(height: 8),
-                  SizedBox(),
-                  SizedBox(),
-                ],
-              ),
+              _buildSpacerRow(),
             if (offer.orgMobile != null)
-              TableRow(
-                children: [
-                  Text(
-                    'WhatsApp Number',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Colors.grey[800],
-                    ),
-                  ),
-                  Center(child: Text(':')),
-                  Text(
-                    offer.orgMobile!,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                ],
-              ),
+              _buildTableRow('WhatsApp Number', offer.orgMobile!),
             if (offer.orgEmail != null)
-              TableRow(
-                children: [
-                  SizedBox(height: 8),
-                  SizedBox(),
-                  SizedBox(),
-                ],
-              ),
+              _buildSpacerRow(),
             if (offer.orgEmail != null)
-              TableRow(
-                children: [
-                  Text(
-                    'Email',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Colors.grey[800],
-                    ),
-                  ),
-                  Center(child: Text(':')),
-                  Text(
-                    offer.orgEmail!,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                ],
-              ),
+              _buildTableRow('Email', offer.orgEmail!),
           ],
         ),
+      ],
+    );
+  }
+
+  TableRow _buildTableRow(String label, String value) {
+    return TableRow(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            color: Colors.grey[800],
+          ),
+        ),
+        Center(child: Text(':')),
+        Text(
+          value,
+          style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+        ),
+      ],
+    );
+  }
+
+  TableRow _buildSpacerRow() {
+    return const TableRow(
+      children: [
+        SizedBox(height: 8),
+        SizedBox(),
+        SizedBox(),
       ],
     );
   }

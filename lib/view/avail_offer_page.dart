@@ -1,6 +1,11 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:mpm/model/AddOfferDiscountData/AddOfferDiscountData.dart';
+import 'package:mpm/repository/add_offer_discount_repository/add_offer_discount_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 
@@ -12,8 +17,14 @@ class AvailOfferPage extends StatefulWidget {
 }
 
 class _AvailOfferPageState extends State<AvailOfferPage> {
-  final List<Map<String, String>> offerList = [];
+  final List<Map<String, dynamic>> offerList = [];
   XFile? selectedImage;
+
+  final String memberId = '123';
+  final String orgSubcategoryId = "456";
+  final String createdBy = "789";
+
+  final AddOfferDiscountRepository _repository = AddOfferDiscountRepository();
 
   Future<void> pickImage(ImageSource source) async {
     final ImagePicker picker = ImagePicker();
@@ -58,11 +69,24 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
     );
   }
 
+  String getContainerId(String name) {
+    switch (name) {
+      case 'Strips':
+        return '1';
+      case 'Box':
+        return '2';
+      case 'Bottle':
+        return '3';
+      default:
+        return '0';
+    }
+  }
+
   void _showInputDialog() {
     String medicineName = '';
     String? selectedContainer;
     String offerQuantity = '';
-    final List<String> containerOptions = ['Box', 'Strips', 'Bottle'];
+    final List<String> containerOptions = ['Strips', 'Box', 'Bottle'];
 
     showDialog(
       context: context,
@@ -93,10 +117,6 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.grey),
                     ),
                   ),
                   value: selectedContainer,
@@ -150,9 +170,10 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
                     offerQuantity.trim().isNotEmpty) {
                   setState(() {
                     offerList.add({
-                      'medicine': medicineName.trim(),
-                      'container': selectedContainer!,
-                      'quantity': offerQuantity,
+                      'medicine_name': medicineName.trim(),
+                      'medicine_container_id': getContainerId(selectedContainer!).toString(),
+                      'medicine_container_name': selectedContainer,
+                      'quantity': int.tryParse(offerQuantity.trim()) ?? 0,
                     });
                   });
                   Navigator.of(context).pop();
@@ -165,9 +186,83 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
     );
   }
 
+
+  Future<void> submitOffer() async {
+    try {
+      // Prepare model data
+      final offerModel = AddOfferDiscountData(
+        memberId: int.tryParse(memberId),
+        orgSubcategoryId: int.tryParse(orgSubcategoryId),
+        createdBy: int.tryParse(createdBy),
+        medicines: offerList.map((e) => Medicine(
+          medicineName: e['medicine_name'],
+          medicineContainerId: int.tryParse(e['medicine_container_id']),
+          quantity: e['quantity'],
+        )).toList(),
+        prescriptionImage: null, // It's handled via file
+      );
+
+      final response = await _repository.submitOfferDiscount(
+        offerModel,
+        selectedImage != null ? File(selectedImage!.path) : null,
+      );
+
+      if (response['status'] == true) {
+        Get.snackbar(
+          "",
+          "",
+          messageText: const Text(
+            "Offer Claimed successfully.",
+            style: TextStyle(color: Colors.green, fontSize: 14),
+          ),
+          backgroundColor: Colors.white,
+          snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 2),
+          margin: const EdgeInsets.all(12),
+          borderRadius: 8,
+        );
+
+        setState(() {
+          offerList.clear();
+          selectedImage = null;
+        });
+      } else {
+        Get.snackbar(
+          "",
+          "",
+          messageText: Text(
+            response['message'] ?? "Something went wrong",
+            style: const TextStyle(color: Colors.red, fontSize: 14),
+          ),
+          backgroundColor: Colors.white,
+          snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 2),
+          margin: const EdgeInsets.all(12),
+          borderRadius: 8,
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        "",
+        "",
+        messageText: Text(
+          "Something went wrong: $e",
+          style: const TextStyle(color: Colors.red, fontSize: 14),
+        ),
+        backgroundColor: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 2),
+        margin: const EdgeInsets.all(12),
+        borderRadius: 8,
+      );
+    }
+  }
+
   Widget _buildUploadSection() {
+    if (offerList.isEmpty) return const SizedBox.shrink();
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
       child: Column(
         children: [
           if (selectedImage != null) ...[
@@ -213,7 +308,6 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
               style: const TextStyle(fontSize: 16),
             ),
           ),
-          const SizedBox(height: 8),
         ],
       ),
     );
@@ -224,8 +318,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: const Text("Avail Offer", style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
@@ -240,9 +333,12 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
         children: [
           if (offerList.isEmpty) ...[
             const Center(
-              child: Text(
-                'No Prescription added yet!',
-                style: TextStyle(fontSize: 18),
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 30),
+                child: Text(
+                  'No prescription offers added yet!',
+                  style: TextStyle(fontSize: 16, color: Colors.black54),
+                ),
               ),
             ),
           ] else ...[
@@ -253,17 +349,17 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${index + 1}. Medicine Name: ${offer['medicine']}',
+                    '${index + 1}. Medicine Name: ${offer['medicine_name']}',
                     style: const TextStyle(fontSize: 16),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '     Product Type: ${offer['container']}',
+                    '     Product Type ID: ${offer['medicine_container_name']}',
                     style: const TextStyle(fontSize: 16),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '     Quantity: ${offer['quantity']}',
+                    '     Quantity: ${offer['quantity'].toString()}',
                     style: const TextStyle(fontSize: 16),
                   ),
                   const SizedBox(height: 12),
@@ -275,10 +371,33 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
                 ],
               );
             }),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             _buildUploadSection(),
+            const SizedBox(height: 80),
           ],
         ],
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(16),
+        child: ElevatedButton(
+          onPressed: (offerList.isNotEmpty && selectedImage != null)
+              ? submitOffer
+              : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.redAccent,
+            foregroundColor: Colors.white,
+            disabledForegroundColor: Colors.white.withOpacity(0.6),
+            disabledBackgroundColor: Colors.redAccent.withOpacity(0.6),
+            minimumSize: const Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: const Text(
+            "Claim Offer",
+            style: TextStyle(fontSize: 16),
+          ),
+        ),
       ),
     );
   }

@@ -48,6 +48,8 @@ class Urls {
   static const  String offer_discount_subcategory_by_category = base_url+"api/offer_discount_subcategory_by_category";
   static const  String partner_logo = base_url+"api/upload_organisation_partner_image";
   static const  String offer_image = base_url+"api/api/upload_offer_dicount_image";
+  static const  String discount_offer_url = base_url+"api/offer_discounts_by_id";
+  static const  String add_offer_discount_url = base_url+"api/add_offer_dicount_data";
 
   static const String imagePathUrl = base_url+"public/";
 }
