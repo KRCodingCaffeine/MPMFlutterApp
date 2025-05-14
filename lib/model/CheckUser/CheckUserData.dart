@@ -1,4 +1,4 @@
-class CheckUserData{
+class CheckUserData {
   String? id;
   String? lMCode;
   var refrenceId;
@@ -10,7 +10,7 @@ class CheckUserData{
   String? bloodGroupId;
   String? genderId;
   String? maritalStatusId;
- var  name;
+  var name;
   String? email;
   String? mobile;
   String? password;
@@ -20,68 +20,66 @@ class CheckUserData{
   String? documentType;
   String? image;
   String? isApproved;
- var otp;
+  var otp;
   String? status;
   var createdAt;
   var updatedAt;
 
-
   CheckUserData(
       {this.id,
-        this.lMCode,
-        this.refrenceId,
-        this.countryId,
-        this.stateId,
-        this.cityId,
-        this.zoneId,
-        this.pincodeId,
-        this.bloodGroupId,
-        this.genderId,
-        this.name,
-        this.maritalStatusId,
-        this.email,
-        this.mobile,
-        this.password,
-        this.dob,
-        this.buildingName,
-        this.fullAddress,
-        this.documentType,
-        this.image,
-        this.isApproved,
-        this.status,
-        this.createdAt,
-        this.updatedAt});
+      this.lMCode,
+      this.refrenceId,
+      this.countryId,
+      this.stateId,
+      this.cityId,
+      this.zoneId,
+      this.pincodeId,
+      this.bloodGroupId,
+      this.genderId,
+      this.name,
+      this.maritalStatusId,
+      this.email,
+      this.mobile,
+      this.password,
+      this.dob,
+      this.buildingName,
+      this.fullAddress,
+      this.documentType,
+      this.image,
+      this.isApproved,
+      this.status,
+      this.createdAt,
+      this.updatedAt});
 
- factory CheckUserData.fromJson(Map<String, dynamic> json) {
-   return CheckUserData(
-    id  :json['id'],
-    lMCode : json['LM_code'],
-    refrenceId :json['refrence_id'],
-    countryId: json['country_id'],
-    stateId : json['state_id'],
-    cityId :json['city_id'],
-    zoneId :json['zone_id'],
-       name :json['name'],
-    pincodeId: json['pincode_id'],
-    bloodGroupId :json['blood_group_id'],
-    genderId :json['gender_id'],
-    maritalStatusId :json['marital_status_id'],
-    email :json['email'],
-    mobile : json['mobile'],
-    password :json['password'],
-    dob :json['dob'],
-    buildingName : json['building_name'],
-    fullAddress :json['full_address'],
-    documentType : json['document_type'],
-    image: json['image'],
-    isApproved: json['is_approved'],
-    status : json['status'],
-    createdAt : json['created_at'],
-    updatedAt : json['updated_at']
-   );
+  factory CheckUserData.fromJson(Map<String, dynamic> json) {
+    return CheckUserData(
+        id: json['id'],
+        lMCode: json['LM_code'],
+        refrenceId: json['refrence_id'],
+        countryId: json['country_id'],
+        stateId: json['state_id'],
+        cityId: json['city_id'],
+        zoneId: json['zone_id'],
+        name: json['name'],
+        pincodeId: json['pincode_id'],
+        bloodGroupId: json['blood_group_id'],
+        genderId: json['gender_id'],
+        maritalStatusId: json['marital_status_id'],
+        email: json['email'],
+        mobile: json['mobile'],
+        password: json['password'],
+        dob: json['dob'],
+        buildingName: json['building_name'],
+        fullAddress: json['full_address'],
+        documentType: json['document_type'],
+        image: json['image'],
+        isApproved: json['is_approved'],
+        status: json['status'],
+        createdAt: json['created_at'],
+        updatedAt: json['updated_at']);
   }
 
-      Map<String, dynamic> toJson() {
+  Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['id'] = this.id;
     data['LM_code'] = this.lMCode;
@@ -109,13 +107,14 @@ class CheckUserData{
     data['updated_at'] = this.updatedAt;
     return data;
   }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-          other is CheckUserData && runtimeType == other.runtimeType && id == other.id;
+      other is CheckUserData &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
 
   @override
   int get hashCode => id.hashCode;
 }
-
-

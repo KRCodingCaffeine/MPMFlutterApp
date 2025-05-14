@@ -37,15 +37,21 @@ class DiscountOfferDetailPage extends StatelessWidget {
                 onTap: () => _showFullImage(context),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: offer.offerImage != null && offer.offerImage!.isNotEmpty
-                      ? Image.network(
-                    offer.offerImage!,
-                    height: 350,
-                    width: 350,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _buildDefaultOfferImage(),
-                  )
-                      : _buildDefaultOfferImage(),
+                  child: Container(
+                    constraints: const BoxConstraints(
+                      maxHeight: 300,
+                      maxWidth: 400,
+                    ),
+                    child: offer.offerImage != null && offer.offerImage!.isNotEmpty
+                        ? Image.network(
+                      offer.offerImage!,
+                      fit: BoxFit.fill,
+                      width: double.infinity,
+                      height: double.infinity,
+                      errorBuilder: (_, __, ___) => _buildDefaultOfferImage(),
+                    )
+                        : _buildDefaultOfferImage(),
+                  ),
                 ),
               ),
             ),
@@ -106,10 +112,50 @@ class DiscountOfferDetailPage extends StatelessWidget {
                   ),
                 ),
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const AvailOfferPage()),
-                  );
+                  if (offer.orgSubcategoryId?.toString() == '1') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const AvailOfferPage()),
+                    );
+                  } else {
+                    String testName = '';
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: const Text("Enter the Test Name"),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              TextField(
+                                decoration: const InputDecoration(
+                                  labelText: "Test Name",
+                                  border: OutlineInputBorder(),
+                                ),
+                                onChanged: (value) {
+                                  testName = value;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                "This offer is eligible for direct availing.",
+                                style: TextStyle(fontSize: 14),
+                              ),
+                            ],
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                print("Entered Test Name: $testName");
+                              },
+                              child: const Text("OK"),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }
                 },
                 child: const Text("Avail Offer", style: TextStyle(fontSize: 16)),
               ),
@@ -128,7 +174,7 @@ class DiscountOfferDetailPage extends StatelessWidget {
       child: Center(
         child: Image.asset(
           'assets/images/discounts.jpg',
-          fit: BoxFit.cover,
+          fit: BoxFit.fill,
         ),
       ),
     );
@@ -264,16 +310,11 @@ class DiscountOfferDetailPage extends StatelessWidget {
             2: FlexColumnWidth(),
           },
           children: [
-            if (offer.orgMobile != null)
-              _buildTableRow('Mobile Number', offer.orgMobile!),
-            if (offer.orgMobile != null)
-              _buildSpacerRow(),
-            if (offer.orgMobile != null)
-              _buildTableRow('WhatsApp Number', offer.orgMobile!),
-            if (offer.orgEmail != null)
-              _buildSpacerRow(),
-            if (offer.orgEmail != null)
-              _buildTableRow('Email', offer.orgEmail!),
+            if (offer.orgMobile != null) _buildTableRow('Mobile Number', offer.orgMobile!),
+            if (offer.orgMobile != null) _buildSpacerRow(),
+            if (offer.orgMobile != null) _buildTableRow('WhatsApp Number', offer.orgMobile!),
+            if (offer.orgEmail != null) _buildSpacerRow(),
+            if (offer.orgEmail != null) _buildTableRow('Email', offer.orgEmail!),
           ],
         ),
       ],
@@ -291,7 +332,7 @@ class DiscountOfferDetailPage extends StatelessWidget {
             color: Colors.grey[800],
           ),
         ),
-        Center(child: Text(':')),
+        const Center(child: Text(':')),
         Text(
           value,
           style: TextStyle(fontSize: 14, color: Colors.grey[700]),

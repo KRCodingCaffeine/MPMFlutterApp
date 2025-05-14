@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mpm/model/Offer/OfferData.dart';
 import 'package:mpm/model/OfferCategory/OfferCatData.dart';
+import 'package:mpm/model/OfferDiscountById/OfferDiscountByIdData.dart';
 import 'package:mpm/model/OfferSubcategory/OfferSubcatData.dart';
 import 'package:mpm/model/OfferSubcategory/OfferSubcatModelClass.dart';
 import 'package:mpm/repository/offer_cat_repository/offer_cat_repo.dart';

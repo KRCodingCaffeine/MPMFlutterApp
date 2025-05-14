@@ -46,7 +46,7 @@ class OfferDiscountByIdData {
       offerDescription: json['offer_description'],
       validFrom: json['valid_from'],
       validTo: json['valid_to'],
-      offerImage: json['offer_image'],
+      offerImage: "https://members.mumbaimaheshwari.com/api/public/" + json['offer_image'],
       orgName: json['org_name'],
       orgCategoryId: json['org_category_id'],
       orgSubcategoryId: json['org_subcategory_id'],
@@ -57,7 +57,7 @@ class OfferDiscountByIdData {
       orgPincode: json['org_pincode'],
       orgMobile: json['org_mobile'],
       orgEmail: json['org_email'],
-      orgLogo: json['org_logo'],
+      orgLogo: "https://members.mumbaimaheshwari.com/api/public/" +json['org_logo'],
 
     );
   }
