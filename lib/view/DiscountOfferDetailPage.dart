@@ -123,13 +123,15 @@ class DiscountOfferDetailPage extends StatelessWidget {
                       context: context,
                       builder: (context) {
                         return AlertDialog(
-                          title: const Text("Enter the Test Name"),
+                          backgroundColor: Colors.white,
+                          title: const Text("Enter Applicant Name"),
                           content: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               TextField(
                                 decoration: const InputDecoration(
-                                  labelText: "Test Name",
+                                  labelText: "Applicant Name",
+                                  fillColor: Colors.black,
                                   border: OutlineInputBorder(),
                                 ),
                                 onChanged: (value) {
@@ -147,8 +149,11 @@ class DiscountOfferDetailPage extends StatelessWidget {
                             TextButton(
                               onPressed: () {
                                 Navigator.pop(context);
-                                print("Entered Test Name: $testName");
+                                print("Entered Applicant Name: $testName");
                               },
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
+                              ),
                               child: const Text("OK"),
                             ),
                           ],
@@ -262,6 +267,18 @@ class DiscountOfferDetailPage extends StatelessWidget {
   }
 
   Widget _buildValidityInfo() {
+    // Determine what to display based on the available dates
+    String validityText;
+    if (offer.validFrom != null && offer.validTo != null) {
+      validityText = '${_formatDate(offer.validFrom!)} - ${_formatDate(offer.validTo!)}';
+    } else if (offer.validTo != null) {
+      validityText = 'Valid until ${_formatDate(offer.validTo!)}';
+    } else if (offer.validFrom != null) {
+      validityText = 'Valid from ${_formatDate(offer.validFrom!)}';
+    } else {
+      return const SizedBox(); // Return empty widget if no dates are available
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -279,9 +296,7 @@ class DiscountOfferDetailPage extends StatelessWidget {
             Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
             const SizedBox(width: 8),
             Text(
-              offer.validFrom != null && offer.validTo != null
-                  ? '${_formatDate(offer.validFrom!)} - ${_formatDate(offer.validTo!)}'
-                  : 'Not specified',
+              validityText,
               style: TextStyle(fontSize: 14, color: Colors.grey[700]),
             ),
           ],

@@ -374,6 +374,27 @@ class _DiscountofferViewState extends State<DiscountofferView> {
       orElse: () => OrganisationSubcategoryData(),
     );
 
+    // Handle date display logic
+    Widget? dateTag;
+    if (offer.validFrom != null || offer.validTo != null) {
+      String dateText = '';
+      if (offer.validFrom != null && offer.validTo != null) {
+        dateText = "Till : ${_formatDate(offer.validFrom!)} - ${_formatDate(offer.validTo!)}";
+      } else if (offer.validTo != null) {
+        dateText = "Till : ${_formatDate(offer.validTo!)}";
+      } else if (offer.validFrom != null) {
+        dateText = "From : ${_formatDate(offer.validFrom!)}";
+      }
+
+      if (dateText.isNotEmpty) {
+        dateTag = _buildTag(
+          dateText,
+          Colors.grey[300]!,
+          textColor: Colors.black45,
+        );
+      }
+    }
+
     return InkWell(
       onTap: () {
         Navigator.push(
@@ -471,12 +492,10 @@ class _DiscountofferViewState extends State<DiscountofferView> {
                             _buildTag(subcategory.organisationSubcategoryName!, Colors.redAccent),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      _buildTag(
-                        "Till : ${_formatDate(offer.validFrom!)} - ${_formatDate(offer.validTo!)}",
-                        Colors.grey[300]!,
-                        textColor: Colors.black45,
-                      ),
+                      if (dateTag != null) ...[
+                        const SizedBox(height: 8),
+                        dateTag!,
+                      ],
                     ],
                   ),
                 ),
