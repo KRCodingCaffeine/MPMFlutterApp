@@ -51,6 +51,7 @@ class _OTPScreenState extends State<OTPScreen> {
     // TODO: implement initState
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      print("hjhjhjhjhj"+controller.mobilecon.value);
       Get.find<LoginController>().sendOtp(controller.mobilecon.value);
     });
   }

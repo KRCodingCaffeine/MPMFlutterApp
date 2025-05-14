@@ -5,10 +5,7 @@ import 'package:mpm/utils/NotificationDatabase.dart';
 
 class NotificationController extends GetxController with WidgetsBindingObserver {
   RxList<NotificationModel> notificationList = <NotificationModel>[].obs;
-  //var unreadCount = 0.obs;
-  // Future<void> loadUnreadCount() async {
-  //   unreadCount.value = await NotificationDatabase.instance.countUnreadNotifications();
-  // }
+
 
 
   var unreadCount = 0.obs;
@@ -22,9 +19,7 @@ class NotificationController extends GetxController with WidgetsBindingObserver 
     notif.isRead = true;
     notificationList.refresh(); // Update the UI
   }
-  // Future<int> getUnreadNotificationCount() async {
-  //   return await NotificationDatabase.instance.countUnreadNotifications();
-  // }
+
 
   @override
   void onInit() {
