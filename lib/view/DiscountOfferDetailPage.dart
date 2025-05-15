@@ -21,7 +21,7 @@ class DiscountOfferDetailPage extends StatelessWidget {
         backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Text(
           offer.offerDiscountName ?? 'Offer Details',
-          style: const TextStyle(color: Colors.white, fontSize: 16),
+          style: const TextStyle(color: Colors.white, fontSize: 24),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -32,148 +32,129 @@ class DiscountOfferDetailPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: GestureDetector(
-                onTap: () => _showFullImage(context),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    constraints: const BoxConstraints(
-                      maxHeight: 300,
-                      maxWidth: 400,
+            if (offer.offerImage != null && offer.offerImage!.isNotEmpty) ...[
+              Center(
+                child: GestureDetector(
+                  onTap: () => _showFullImage(context),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      constraints: const BoxConstraints(
+                        maxHeight: 300,
+                        maxWidth: 400,
+                      ),
+                      child: Image.network(
+                        offer.offerImage!,
+                        fit: BoxFit.fill,
+                        width: double.infinity,
+                        height: double.infinity,
+                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                      ),
                     ),
-                    child: offer.offerImage != null && offer.offerImage!.isNotEmpty
-                        ? Image.network(
-                      offer.offerImage!,
-                      fit: BoxFit.fill,
-                      width: double.infinity,
-                      height: double.infinity,
-                      errorBuilder: (_, __, ___) => _buildDefaultOfferImage(),
-                    )
-                        : _buildDefaultOfferImage(),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
-
+              const SizedBox(height: 24),
+            ],
             const Text(
-              'Description:',
+              'Offer Details:',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 18,
                 fontWeight: FontWeight.w500,
-                color: Colors.black54,
+                color: Colors.black,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              offer.offerDescription ?? 'No description available',
+              offer.offerDescription ?? 'No Offer detail available',
               style: const TextStyle(
                 fontSize: 15,
                 height: 1.5,
               ),
             ),
             const SizedBox(height: 24),
-
             _buildValidityInfo(),
-
             if (offer.orgMobile != null || offer.orgEmail != null) ...[
               const SizedBox(height: 24),
-              const Divider(thickness: 0.5, color: Colors.grey),
+              const Divider(thickness: 1, color: Colors.grey),
               const SizedBox(height: 16),
-
               _buildCompanyInfo(),
               const SizedBox(height: 16),
-              const Divider(thickness: 0.5, color: Colors.grey),
-              const SizedBox(height: 16),
-
               _buildContactInfo(),
             ],
-
             const SizedBox(height: 24),
-            const Divider(thickness: 0.5, color: Colors.grey),
-            const SizedBox(height: 16),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                onPressed: () {
-                  if (offer.orgSubcategoryId?.toString() == '1') {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const AvailOfferPage()),
-                    );
-                  } else {
-                    String testName = '';
-                    showDialog(
-                      context: context,
-                      builder: (context) {
-                        return AlertDialog(
-                          backgroundColor: Colors.white,
-                          title: const Text("Enter Applicant Name"),
-                          content: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              TextField(
-                                decoration: const InputDecoration(
-                                  labelText: "Applicant Name",
-                                  fillColor: Colors.black,
-                                  border: OutlineInputBorder(),
-                                ),
-                                onChanged: (value) {
-                                  testName = value;
-                                },
-                              ),
-                              const SizedBox(height: 16),
-                              const Text(
-                                "This offer is eligible for direct availing.",
-                                style: TextStyle(fontSize: 14),
-                              ),
-                            ],
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                                print("Entered Applicant Name: $testName");
-                              },
-                              style: TextButton.styleFrom(
-                                foregroundColor: Colors.red,
-                              ),
-                              child: const Text("OK"),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  }
-                },
-                child: const Text("Avail Offer", style: TextStyle(fontSize: 16)),
-              ),
-            ),
+            const Divider(thickness: 1, color: Colors.grey),
+            const SizedBox(height: 50),
           ],
         ),
       ),
-    );
-  }
 
-  Widget _buildDefaultOfferImage() {
-    return Container(
-      height: 300,
-      width: 300,
-      color: Colors.grey[200],
-      child: Center(
-        child: Image.asset(
-          'assets/images/discounts.jpg',
-          fit: BoxFit.fill,
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: () {
+              if (offer.orgSubcategoryId?.toString() == '1') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AvailOfferPage()),
+                );
+              } else {
+                // String testName = '';
+                // showDialog(
+                //   context: context,
+                //   builder: (context) {
+                //     return AlertDialog(
+                //       backgroundColor: Colors.white,
+                //       title: const Text("Enter Applicant Name"),
+                //       content: Column(
+                //         mainAxisSize: MainAxisSize.min,
+                //         children: [
+                //           TextField(
+                //             decoration: const InputDecoration(
+                //               labelText: "Applicant Name",
+                //               fillColor: Colors.black,
+                //               border: OutlineInputBorder(),
+                //             ),
+                //             onChanged: (value) {
+                //               testName = value;
+                //             },
+                //           ),
+                //           const SizedBox(height: 16),
+                //           const Text(
+                //             "This offer is eligible for direct availing.",
+                //             style: TextStyle(fontSize: 14),
+                //           ),
+                //         ],
+                //       ),
+                //       actions: [
+                //         TextButton(
+                //           onPressed: () {
+                //             Navigator.pop(context);
+                //             print("Entered Applicant Name: $testName");
+                //           },
+                //           style: TextButton.styleFrom(
+                //             foregroundColor: Colors.red,
+                //           ),
+                //           child: const Text("OK"),
+                //         ),
+                //       ],
+                //     );
+                //   },
+                // );
+              }
+            },
+            child: const Text("Claim Offer", style: TextStyle(fontSize: 16)),
+          ),
         ),
       ),
     );
@@ -270,7 +251,7 @@ class DiscountOfferDetailPage extends StatelessWidget {
     } else if (offer.validFrom != null) {
       validityText = 'Valid from ${_formatDate(offer.validFrom!)}';
     } else {
-      return const SizedBox(); // Return empty widget if no dates are available
+      return const SizedBox();
     }
 
     return Column(
@@ -320,8 +301,6 @@ class DiscountOfferDetailPage extends StatelessWidget {
           },
           children: [
             if (offer.orgMobile != null) _buildTableRow('Mobile Number', offer.orgMobile!),
-            if (offer.orgMobile != null) _buildSpacerRow(),
-            if (offer.orgMobile != null) _buildTableRow('WhatsApp Number', offer.orgMobile!),
             if (offer.orgEmail != null) _buildSpacerRow(),
             if (offer.orgEmail != null) _buildTableRow('Email', offer.orgEmail!),
           ],
@@ -363,7 +342,7 @@ class DiscountOfferDetailPage extends StatelessWidget {
   Widget _buildDefaultLogo() {
     return Center(
       child: Image.asset(
-        'assets/images/logo.png',
+        'assets/images/med-3.png',
         width: 75,
         height: 75,
       ),

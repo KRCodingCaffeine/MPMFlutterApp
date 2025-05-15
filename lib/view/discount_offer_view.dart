@@ -12,6 +12,7 @@ import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/model/Offer/OfferModelClass.dart';
 import 'package:mpm/view/DiscountOfferDetailPage.dart';
+import 'package:mpm/view/offer_claimed_view.dart';
 
 class DiscountofferView extends StatefulWidget {
   const DiscountofferView({super.key});
@@ -152,8 +153,25 @@ class _DiscountofferViewState extends State<DiscountofferView> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        title: const Text("Discounts & Offers", style: TextStyle(color: Colors.white)),
+        title: const Text(
+          "Discounts & Offers",
+          style: TextStyle(color: Colors.white),
+        ),
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.local_offer, color: Colors.white),
+            tooltip: 'Filter Offers',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ClaimedOfferListPage(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -415,7 +433,7 @@ class _DiscountofferViewState extends State<DiscountofferView> {
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    offer.orgLogo != null && offer.orgLogo!.isNotEmpty
+                    (offer.orgLogo != null && offer.orgLogo!.isNotEmpty)
                         ? ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: Image.network(
@@ -442,7 +460,7 @@ class _DiscountofferViewState extends State<DiscountofferView> {
                       ),
                     )
                         : _buildDefaultLogo(),
-                    const SizedBox(height: 4),
+                  const SizedBox(height: 4),
                     SizedBox(
                       width: 75,
                       child: Text(
@@ -534,7 +552,7 @@ class _DiscountofferViewState extends State<DiscountofferView> {
   Widget _buildDefaultLogo() {
     return Center(
       child: Image.asset(
-        'assets/images/logo.png',
+        'assets/images/med-3.png',
         width: 75,
         height: 75,
       ),

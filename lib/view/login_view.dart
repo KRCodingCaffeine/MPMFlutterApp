@@ -101,14 +101,14 @@ class _LoginPageState extends State<LoginPage> {
                                     controller: mobileController,
                                     keyboardType: TextInputType.text,
                                     decoration: const InputDecoration(
-                                      hintText: 'Enter Your Mobile / LM Code',
+                                      hintText: 'Enter Your Mobile / Membership Code',
                                       border: InputBorder.none,
                                       contentPadding:
                                           EdgeInsets.symmetric(vertical: 8),
                                     ),
                                     validator: (value) {
                                       if (value!.isEmpty) {
-                                        return 'Enter lm code / mobile number';
+                                        return 'Enter Membeship code / Mobile number';
                                       } else if (RegExp(r'^[0-9]+$')
                                           .hasMatch(value)) {
                                         // If input contains only numbers
@@ -155,7 +155,7 @@ class _LoginPageState extends State<LoginPage> {
                                             controller: lmController,
                                             keyboardType: TextInputType.text,
                                             decoration: const InputDecoration(
-                                              hintText: 'Enter LM Code',
+                                              hintText: 'Enter Membership Code',
                                               border: InputBorder.none,
                                               contentPadding:
                                                   EdgeInsets.symmetric(
@@ -163,7 +163,7 @@ class _LoginPageState extends State<LoginPage> {
                                             ),
                                             validator: (value) {
                                               if (value!.isEmpty) {
-                                                return 'Enter LM code';
+                                                return 'Enter Membership code';
                                               } else {
                                                 return null;
                                               }
