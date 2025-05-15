@@ -23,6 +23,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
   final String memberId = '123';
   final String orgSubcategoryId = "456";
   final String createdBy = "789";
+  String orgDetailsID = '1';
 
   final AddOfferDiscountRepository _repository = AddOfferDiscountRepository();
 
@@ -93,11 +94,28 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          title: const Text('Enter Offer Details'),
+          title: const Text('Enter Medicine Name'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                TextField(
+                  keyboardType: TextInputType.text,
+                  onChanged: (value) {
+                    setState(() {
+                      orgDetailsID = value;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Applicant Name',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 TextField(
                   onChanged: (value) => medicineName = value,
                   decoration: InputDecoration(
@@ -112,7 +130,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   decoration: InputDecoration(
-                    labelText: 'Product Type',
+                    labelText: 'Container Type',
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -171,7 +189,8 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
                   setState(() {
                     offerList.add({
                       'medicine_name': medicineName.trim(),
-                      'medicine_container_id': getContainerId(selectedContainer!).toString(),
+                      'medicine_container_id':
+                      getContainerId(selectedContainer!).toString(),
                       'medicine_container_name': selectedContainer,
                       'quantity': int.tryParse(offerQuantity.trim()) ?? 0,
                     });
@@ -186,20 +205,22 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
     );
   }
 
-
   Future<void> submitOffer() async {
     try {
       // Prepare model data
       final offerModel = AddOfferDiscountData(
         memberId: int.tryParse(memberId),
         orgSubcategoryId: int.tryParse(orgSubcategoryId),
+        orgDetailsID: int.tryParse(orgDetailsID),
         createdBy: int.tryParse(createdBy),
-        medicines: offerList.map((e) => Medicine(
-          medicineName: e['medicine_name'],
-          medicineContainerId: int.tryParse(e['medicine_container_id']),
-          quantity: e['quantity'],
-        )).toList(),
-        prescriptionImage: null, // It's handled via file
+        medicines: offerList
+            .map((e) => Medicine(
+                  medicineName: e['medicine_name'],
+                  medicineContainerId: int.tryParse(e['medicine_container_id']),
+                  quantity: e['quantity'],
+                ))
+            .toList(),
+        prescriptionImage: null,
       );
 
       final response = await _repository.submitOfferDiscount(
@@ -212,7 +233,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
           "",
           "",
           messageText: const Text(
-            "Offer Claimed successfully.",
+            "Offer Claimed and Order Placed successfully.",
             style: TextStyle(color: Colors.green, fontSize: 14),
           ),
           backgroundColor: Colors.white,
@@ -259,55 +280,80 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
   }
 
   Widget _buildUploadSection() {
-    if (offerList.isEmpty) return const SizedBox.shrink();
-
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start, // Ensures left alignment
         children: [
           if (selectedImage != null) ...[
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(8),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(
+                'Prescription',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+                textAlign: TextAlign.left,
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.file(
-                  File(selectedImage!.path),
-                  width: double.infinity,
-                  height: 200,
-                  fit: BoxFit.cover,
+            ),
+            Stack(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(
+                      File(selectedImage!.path),
+                      width: double.infinity,
+                      height: 200,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 8,
+                  right: 8,
+                  child: GestureDetector(
+                    onTap: () => showImagePickerOptions(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: const BoxDecoration(
+                        color: Colors.black54,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.edit,
+                        color: Colors.redAccent,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+          ] else ...[
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: () => setState(() => selectedImage = null),
+              onPressed: () => showImagePickerOptions(context),
               child: const Text(
-                'Remove Prescription',
-                style: TextStyle(color: Colors.red),
+                "Add Prescription",
+                style: TextStyle(fontSize: 16),
               ),
             ),
-            const SizedBox(height: 8),
           ],
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 50),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            onPressed: () => showImagePickerOptions(context),
-            child: Text(
-              selectedImage == null
-                  ? "Upload Prescription"
-                  : "Change Prescription",
-              style: const TextStyle(fontSize: 16),
-            ),
-          ),
         ],
       ),
     );
@@ -318,30 +364,49 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        title: const Text("Avail Offer", style: TextStyle(color: Colors.white)),
+        backgroundColor:
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        title: const Text("Medicine Details",
+            style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add, color: Colors.white),
-            onPressed: _showInputDialog,
-          ),
-        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          if (offerList.isEmpty) ...[
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 30),
-                child: Text(
-                  'No prescription offers added yet!',
-                  style: TextStyle(fontSize: 16, color: Colors.black54),
+          _buildUploadSection(),
+          const SizedBox(height: 16),
+          if (selectedImage != null) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Medicine List',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
-              ),
+                TextButton(
+                  onPressed: _showInputDialog,
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.redAccent,
+                    backgroundColor: Colors.white,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    textStyle: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  child: const Text("Add Medicine"),
+                ),
+              ],
             ),
-          ] else ...[
+            const SizedBox(height: 12),
+          ],
+          if (offerList.isNotEmpty)
             ...offerList.asMap().entries.map((entry) {
               final index = entry.key;
               final offer = entry.value;
@@ -354,7 +419,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '     Product Type ID: ${offer['medicine_container_name']}',
+                    '     Container Type Name: ${offer['medicine_container_name']}',
                     style: const TextStyle(fontSize: 16),
                   ),
                   const SizedBox(height: 4),
@@ -371,34 +436,31 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
                 ],
               );
             }),
-            const SizedBox(height: 12),
-            _buildUploadSection(),
-            const SizedBox(height: 80),
-          ],
+          const SizedBox(height: 80),
         ],
       ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(16),
-        child: ElevatedButton(
-          onPressed: (offerList.isNotEmpty && selectedImage != null)
-              ? submitOffer
-              : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.redAccent,
-            foregroundColor: Colors.white,
-            disabledForegroundColor: Colors.white.withOpacity(0.6),
-            disabledBackgroundColor: Colors.redAccent.withOpacity(0.6),
-            minimumSize: const Size(double.infinity, 50),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          child: const Text(
-            "Claim Offer",
-            style: TextStyle(fontSize: 16),
-          ),
-        ),
-      ),
+      bottomNavigationBar: selectedImage != null
+          ? Container(
+              padding: const EdgeInsets.all(16),
+              child: ElevatedButton(
+                onPressed: offerList.isNotEmpty ? submitOffer : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  foregroundColor: Colors.white,
+                  disabledForegroundColor: Colors.white.withOpacity(0.6),
+                  disabledBackgroundColor: Colors.redAccent.withOpacity(0.6),
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  "Place Order",
+                  style: TextStyle(fontSize: 16),
+                ),
+              ),
+            )
+          : null,
     );
   }
 }

@@ -4,6 +4,7 @@ class AddOfferDiscountData {
   List<Medicine>? medicines;
   int? createdBy;
   String? prescriptionImage;
+  int? orgDetailsID;
 
   AddOfferDiscountData({
     this.memberId,
@@ -11,6 +12,7 @@ class AddOfferDiscountData {
     this.medicines,
     this.createdBy,
     this.prescriptionImage,
+    this.orgDetailsID,
   });
 
   factory AddOfferDiscountData.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,7 @@ class AddOfferDiscountData {
           : null,
       createdBy: json['created_by'],
       prescriptionImage: json['prescription_image'],
+      orgDetailsID: json['org_details_id'],
     );
   }
 
@@ -33,16 +36,19 @@ class AddOfferDiscountData {
       'medicines': medicines?.map((x) => x.toJson()).toList(),
       'created_by': createdBy,
       'prescription_image': prescriptionImage,
+      'org_details_id': orgDetailsID
     };
   }
 }
 
 class Medicine {
+  int? orgDetailsID;
   String? medicineName;
   int? medicineContainerId;
   int? quantity;
 
   Medicine({
+    this.orgDetailsID,
     this.medicineName,
     this.medicineContainerId,
     this.quantity,
@@ -50,6 +56,7 @@ class Medicine {
 
   factory Medicine.fromJson(Map<String, dynamic> json) {
     return Medicine(
+      orgDetailsID: json['org_details_id'],
       medicineName: json['medicine_name'],
       medicineContainerId: json['medicine_container_id'],
       quantity: json['quantity'],
@@ -58,6 +65,7 @@ class Medicine {
 
   Map<String, dynamic> toJson() {
     return {
+      'org_details_id': orgDetailsID,
       'medicine_name': medicineName,
       'medicine_container_id': medicineContainerId,
       'quantity': quantity,
