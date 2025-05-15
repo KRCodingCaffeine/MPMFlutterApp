@@ -19,7 +19,12 @@ class DiscountOfferDetailPage extends StatelessWidget {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        title: const Text("Offer Details", style: TextStyle(color: Colors.white)),
+        title: Text(
+          offer.offerDiscountName ?? 'Offer Details',
+          style: const TextStyle(color: Colors.white, fontSize: 16),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
@@ -27,11 +32,6 @@ class DiscountOfferDetailPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildCompanyInfo(),
-            const SizedBox(height: 16),
-            const Divider(thickness: 0.5, color: Colors.grey),
-            const SizedBox(height: 16),
-
             Center(
               child: GestureDetector(
                 onTap: () => _showFullImage(context),
@@ -57,20 +57,8 @@ class DiscountOfferDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            Center(
-              child: Text(
-                offer.offerDiscountName ?? 'No title',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
             const Text(
-              'Offer Detail:',
+              'Description:',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -93,6 +81,12 @@ class DiscountOfferDetailPage extends StatelessWidget {
               const SizedBox(height: 24),
               const Divider(thickness: 0.5, color: Colors.grey),
               const SizedBox(height: 16),
+
+              _buildCompanyInfo(),
+              const SizedBox(height: 16),
+              const Divider(thickness: 0.5, color: Colors.grey),
+              const SizedBox(height: 16),
+
               _buildContactInfo(),
             ],
 

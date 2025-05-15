@@ -364,11 +364,6 @@ class _DiscountofferViewState extends State<DiscountofferView> {
   }
 
   Widget _buildOfferCard(OfferData offer) {
-    final category = allCategories.firstWhere(
-          (c) => c.organisationCategoryId == offer.orgCategoryId,
-      orElse: () => OrganisationCategoryData(),
-    );
-
     final subcategory = allSubcategories.firstWhere(
           (s) => s.organisationSubcategoryId == offer.orgSubcategoryId,
       orElse: () => OrganisationSubcategoryData(),
@@ -391,6 +386,8 @@ class _DiscountofferViewState extends State<DiscountofferView> {
           dateText,
           Colors.grey[300]!,
           textColor: Colors.black45,
+          fontSize: 10,
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         );
       }
     }
@@ -414,38 +411,37 @@ class _DiscountofferViewState extends State<DiscountofferView> {
           child: IntrinsicHeight(
             child: Row(
               children: [
+                // Left Logo & Name
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      child: offer.orgLogo != null && offer.orgLogo!.isNotEmpty
-                          ? ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          offer.orgLogo!,
-                          width: 75,
-                          height: 75,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => _buildDefaultLogo(),
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return SizedBox(
-                              width: 75,
-                              height: 75,
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  value: loadingProgress.expectedTotalBytes != null
-                                      ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
-                                      : null,
-                                ),
+                    offer.orgLogo != null && offer.orgLogo!.isNotEmpty
+                        ? ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        offer.orgLogo!,
+                        width: 75,
+                        height: 75,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => _buildDefaultLogo(),
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return SizedBox(
+                            width: 75,
+                            height: 75,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                    : null,
                               ),
-                            );
-                          },
-                        ),
-                      )
-                          : _buildDefaultLogo(),
-                    ),
+                            ),
+                          );
+                        },
+                      ),
+                    )
+                        : _buildDefaultLogo(),
                     const SizedBox(height: 4),
                     SizedBox(
                       width: 75,
@@ -462,40 +458,49 @@ class _DiscountofferViewState extends State<DiscountofferView> {
                     ),
                   ],
                 ),
+
                 const SizedBox(width: 12),
                 Container(width: 1, color: Colors.grey[400]),
                 const SizedBox(width: 12),
+
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Stack(
                     children: [
-                      Text(
-                        offer.offerDiscountName ?? 'No title',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 30),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              offer.offerDiscountName ?? 'No title',
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              offer.offerDescription ?? 'No description',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                            ),
+                            const SizedBox(height: 8),
+                            if (dateTag != null) dateTag!,
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        offer.offerDescription ?? 'No description',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          if (category.organisationCategoryName != null &&
-                              category.organisationCategoryName!.isNotEmpty)
-                            _buildTag(category.organisationCategoryName!, Colors.redAccent),
-                          const SizedBox(width: 8),
-                          if (subcategory.organisationSubcategoryName != null &&
-                              subcategory.organisationSubcategoryName!.isNotEmpty)
-                            _buildTag(subcategory.organisationSubcategoryName!, Colors.redAccent),
-                        ],
-                      ),
-                      if (dateTag != null) ...[
-                        const SizedBox(height: 8),
-                        dateTag!,
-                      ],
+
+                      if (subcategory.organisationSubcategoryName != null &&
+                          subcategory.organisationSubcategoryName!.isNotEmpty)
+                        Positioned(
+                          top: 4,
+                          right: 0,
+                          child: _buildTag(
+                            subcategory.organisationSubcategoryName!,
+                            Colors.redAccent,
+                            textColor: Colors.white,
+                            fontSize: 10,
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -507,30 +512,31 @@ class _DiscountofferViewState extends State<DiscountofferView> {
     );
   }
 
+  Widget _buildTag(String text, Color bgColor,
+      {Color textColor = Colors.white, double fontSize = 12, EdgeInsets padding = const EdgeInsets.symmetric(horizontal: 8, vertical: 4)}) {
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: textColor,
+          fontSize: fontSize,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
   Widget _buildDefaultLogo() {
     return Center(
       child: Image.asset(
         'assets/images/logo.png',
         width: 75,
         height: 75,
-      ),
-    );
-  }
-
-  Widget _buildTag(String text, Color backgroundColor, {Color textColor = Colors.white}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: textColor,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
       ),
     );
   }
