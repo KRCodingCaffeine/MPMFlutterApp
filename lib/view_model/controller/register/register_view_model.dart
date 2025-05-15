@@ -347,8 +347,6 @@ class RegisterController extends GetxController  {
                }
              }
            }
-
-
          }
        }
     }).onError((error,strack) {
@@ -447,7 +445,7 @@ class RegisterController extends GetxController  {
     }
     return age < 18;
   }
- void userRegister(var LM_code,BuildContext context) async{
+ void userRegister(var LM_code,BuildContext context) async {
     print("member"+memberId.value);
     final url = Uri.parse(Urls.register_url);
    var first=firstNameController.value.text;
@@ -471,14 +469,13 @@ class RegisterController extends GetxController  {
      {
         building_id=selectBuilding.value;
      }
-     var document_type=selectDocumentType.value;
-
-   var flat_no=housenoController.value.text;
-   var whatsapp_number=whatappmobileController.value.text.trim();
-   loading.value=true;
-var profile_image=userprofile.value;
-var document_image=userdocumentImage.value;
-   Map<String,String> payload = {
+     var document_type = selectDocumentType.value;
+   var flat_no = housenoController.value.text;
+   var whatsapp_number = whatappmobileController.value.text.trim();
+   loading.value = true;
+   var profile_image=userprofile.value;
+   var document_image=userdocumentImage.value;
+     Map<String,String> payload = {
      "proposer_id":memberId.value,
      "first_name":firstNameController.value.text.trim(),
       "last_name": lastNameController.value.text.trim(),
@@ -507,7 +504,7 @@ var document_image=userdocumentImage.value;
      "address":  addressMemberController.value.text
 
    };
-   print("ccvv"+payload.toString());
+     print("ccvv"+payload.toString());
    var request = http.MultipartRequest('POST',url);
     request.fields.addAll(payload);
     request.files.add(await http.MultipartFile.fromPath('document_image',document_image));
@@ -516,71 +513,71 @@ var document_image=userdocumentImage.value;
     }
 
     http.StreamedResponse response = await request.send().timeout(Duration(seconds: 60));
+      if (response.statusCode == 200) {
+        String responseBody = await response.stream.bytesToString();
+        loading.value=false;
+        Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
+        print("vfbb"+jsonResponse.toString());
+        RegisterModelClass registerResponse = RegisterModelClass.fromJson(jsonResponse);
+        if(registerResponse.status==true)
+          {
+            Get.snackbar(
+              "Success",
+              "Registration Successfully",
+              backgroundColor: Colors.green,
+              colorText: Colors.white,
+              snackPosition: SnackPosition.TOP,
+            );
+            memberId.value=registerResponse.data.toString();
+            firstNameController.value.text="";
+            lastNameController.value.text="";
+            middleNameController.value.text="";
+            fathersnameController.value.text="";
+            mothersnameController.value.text="";
+            emailController.value.text="";
+            housenoController.value.text="";
+            whatappmobileController.value.text="";
+            marriagedateController.value.text="";
+            addressMemberController.value.text="";
+            selectMemberSalutation.value="";
+            country_id.value="";
+            state_id.value="";
+            zone_id.value="";
+            city_id.value="";
+            Navigator.pushReplacementNamed(context!,
+                RouteNames.otp_screen,arguments: {
+                "memeberId":memberId.value,
+                "page_type_direct":"2",
+                "mobile":mobile
+            });
+          }
+        else
+          {
+            Get.snackbar(
+              "Error",
+              registerResponse.message.toString(),
+              backgroundColor: Colors.red,
+              colorText: Colors.white,
+              snackPosition: SnackPosition.TOP,
+            );
+          }
+      }
+      else {
+        loading.value=false;
+       // print(""+await response.stream.bytesToString());
+        String responseBody = await response.stream.bytesToString();
+        loading.value=false;
+        Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
+        RegisterModelClass registerResponse = RegisterModelClass.fromJson(jsonResponse);
 
-    if (response.statusCode == 200) {
-      String responseBody = await response.stream.bytesToString();
-      loading.value=false;
-      Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
-      print("vfbb"+jsonResponse.toString());
-      RegisterModelClass registerResponse = RegisterModelClass.fromJson(jsonResponse);
-      if(registerResponse.status==true)
-        {
-          Get.snackbar(
-            "Success",
-            "Registration Successfully",
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-            snackPosition: SnackPosition.TOP,
-          );
-          memberId.value=registerResponse.data.toString();
-          firstNameController.value.text="";
-          lastNameController.value.text="";
-          middleNameController.value.text="";
-          fathersnameController.value.text="";
-          mothersnameController.value.text="";
-          emailController.value.text="";
-          housenoController.value.text="";
-          whatappmobileController.value.text="";
-          marriagedateController.value.text="";
-          addressMemberController.value.text="";
-          selectMemberSalutation.value="";
-          country_id.value="";
-          state_id.value="";
-          zone_id.value="";
-          city_id.value="";
-          Navigator.pushReplacementNamed(context!, RouteNames.otp_screen,arguments: {
-            "memeberId":memberId.value,
-            "page_type_direct":"2",
-            "mobile":mobile
-          });
-        }
-      else
-        {
-          Get.snackbar(
-            "Error",
-            registerResponse.message.toString(),
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
-            snackPosition: SnackPosition.TOP,
-          );
-        }
-    }
-    else {
-      loading.value=false;
-     // print(""+await response.stream.bytesToString());
-      String responseBody = await response.stream.bytesToString();
-      loading.value=false;
-      Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
-      RegisterModelClass registerResponse = RegisterModelClass.fromJson(jsonResponse);
-
-      Get.snackbar(
-        "Error",
-       ""+registerResponse.message.toString(),
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-      );
-    }
+        Get.snackbar(
+          "Error",
+         ""+registerResponse.message.toString(),
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+      }
   }
   void checkLMcode(String lmCode) {
     setRxMemberRequest(Status.LOADING);

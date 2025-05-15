@@ -72,7 +72,7 @@ class LoginController {
          else
            {
              flag.value="2";
-             mobilecon.value = mobile;
+             mobilecon.value = mob;
            }
 
 
@@ -118,6 +118,7 @@ class LoginController {
       if (registerResponse.status == false) {
         print("" + registerResponse.message.toString());
         if (registerResponse.message.toString() == "Sorry! Data Not Found") {
+          print("fhgefhefh"+mobilecon.value);
           mobilecon.value = mobile;
 
           if(lmCodeVisible.value==false)
@@ -128,7 +129,7 @@ class LoginController {
                       Navigator.pushNamed(context!, RouteNames.otp_screen,arguments: {
                         "memeberId":memberId.value,
                         "page_type_direct":"2",
-                        "mobile": otherMobVisible.value
+                        "mobile": mobilecon.value
                       });
                     }
                   else
@@ -143,7 +144,7 @@ class LoginController {
 
               "memeberId":memberId.value,
                 "page_type_direct":"2",
-                "mobile":otherMobVisible.value
+                "mobile":mobilecon.value
 
               });
             }
@@ -165,6 +166,7 @@ class LoginController {
 
 
   void sendOtp(var mobile) async {
+    print("mobi"+mobile);
      try {
        Map<String,String> map={
          "mobile_number":mobile
@@ -504,7 +506,7 @@ class LoginController {
                 Navigator.pushNamed(context, RouteNames.otp_screen,arguments: {
                   "memeberId":memberId.value,
                   "page_type_direct":"2",
-                  "mobile":otherMobVisible.value
+                  "mobile": lmDyanmicMobNo.value
                 });
               },
               child: const Text("Yes"),
