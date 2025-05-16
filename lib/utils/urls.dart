@@ -50,6 +50,7 @@ class Urls {
   static const  String offer_image = base_url+"api/api/upload_offer_dicount_image";
   static const  String discount_offer_url = base_url+"api/offer_discounts_by_id";
   static const  String add_offer_discount_url = base_url+"api/add_offer_dicount_data";
+  static const  String claimed_offer = base_url+"api/get_claimed_offer_by_member_id";
 
   static const String imagePathUrl = base_url+"public/";
 }
