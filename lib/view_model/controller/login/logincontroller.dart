@@ -62,49 +62,49 @@ class LoginController {
           Navigator.pushNamed(context!, RouteNames.registration_screen);
         }
       } else {
-         var lmcode = registerResponse.data!.memberCode.toString();
-         print("ghhhhhhhhhhh"+lmcode);
-         var mob=registerResponse.data!.mobile.toString();
-         if(lmcode==mobile)
-           {
-             flag.value="1";
-           }
-         else
-           {
-             flag.value="2";
-             mobilecon.value = mob;
-           }
+        var lmcode = registerResponse.data!.memberCode.toString();
+        print("ghhhhhhhhhhh"+lmcode);
+        var mob=registerResponse.data!.mobile.toString();
+        if(lmcode==mobile)
+        {
+          flag.value="1";
+        }
+        else
+        {
+          flag.value="2";
+          mobilecon.value = mob;
+        }
 
 
-          if(flag.value=="2")
-            {
-              if(lmCodeVisible.value==false)
-              {
-                memberId.value=registerResponse.data!.memberId.toString();
-                mobile=registerResponse.data!.mobile.toString();
-                Navigator.pushNamed(context!, RouteNames.otp_screen,arguments: {
-                  "memeberId":memberId.value,
-                  "page_type_direct":"2",
-                  "mobile":mobile
-                });
-              }
-              else
-              {
-                lmDyanmicMobNo.value= registerResponse.data!.mobile.toString();
-                mobilecon.value=registerResponse.data!.mobile.toString();
-                memberId.value=registerResponse.data!.memberId.toString();
-                _showLoginAlert2(context);
-              }
-            }
+        if(flag.value=="2")
+        {
+          if(lmCodeVisible.value==false)
+          {
+            memberId.value=registerResponse.data!.memberId.toString();
+            mobile=registerResponse.data!.mobile.toString();
+            Navigator.pushNamed(context!, RouteNames.otp_screen,arguments: {
+              "memeberId":memberId.value,
+              "page_type_direct":"2",
+              "mobile":mobile
+            });
+          }
           else
-            {  if(otherMobVisible.value==false)
-              {
-                lmDyanmicMobNo.value= registerResponse.data!.mobile.toString();
-                memberId.value=registerResponse.data!.memberId.toString();
-                mobilecon.value=registerResponse.data!.mobile.toString();
-                _showLoginAlert2(context);
-              }
-            }
+          {
+            lmDyanmicMobNo.value= registerResponse.data!.mobile.toString();
+            mobilecon.value=registerResponse.data!.mobile.toString();
+            memberId.value=registerResponse.data!.memberId.toString();
+            _showLoginAlert2(context);
+          }
+        }
+        else
+        {  if(otherMobVisible.value==false)
+        {
+          lmDyanmicMobNo.value= registerResponse.data!.mobile.toString();
+          memberId.value=registerResponse.data!.memberId.toString();
+          mobilecon.value=registerResponse.data!.mobile.toString();
+          _showLoginAlert2(context);
+        }
+        }
 
 
       }
@@ -122,40 +122,40 @@ class LoginController {
           mobilecon.value = mobile;
 
           if(lmCodeVisible.value==false)
-            {
+          {
 
-                  if(otherMobVisible.value==true)
-                    {
-                      Navigator.pushNamed(context!, RouteNames.otp_screen,arguments: {
-                        "memeberId":memberId.value,
-                        "page_type_direct":"2",
-                        "mobile": mobilecon.value
-                      });
-                    }
-                  else
-                    {
-                      _showLoginAlert(context);
-                    }
-            }
-
-          else if(otherMobVisible.value==true)
+            if(otherMobVisible.value==true)
             {
               Navigator.pushNamed(context!, RouteNames.otp_screen,arguments: {
-
-              "memeberId":memberId.value,
+                "memeberId":memberId.value,
                 "page_type_direct":"2",
-                "mobile":mobilecon.value
-
+                "mobile": mobilecon.value
               });
             }
+            else
+            {
+              _showLoginAlert(context);
+            }
+          }
+
+          else if(otherMobVisible.value==true)
+          {
+            Navigator.pushNamed(context!, RouteNames.otp_screen,arguments: {
+
+              "memeberId":memberId.value,
+              "page_type_direct":"2",
+              "mobile":mobilecon.value
+
+            });
+          }
           else {
-              lmCodeVisible.value=false;
-              Navigator.pushNamed(context!, RouteNames.registration_screen);
+            lmCodeVisible.value=false;
+            Navigator.pushNamed(context!, RouteNames.registration_screen);
           }
         }
       }
 
-     // print(response.reasonPhrase);
+      // print(response.reasonPhrase);
     }
   }
 
@@ -167,31 +167,31 @@ class LoginController {
 
   void sendOtp(var mobile) async {
     print("mobi"+mobile);
-     try {
-       Map<String,String> map={
-         "mobile_number":mobile
-       };
-       api.sendOTP(map).then((_value) async {
-         if(_value.status==true)
-           {
+    try {
+      Map<String,String> map={
+        "mobile_number":mobile
+      };
+      api.sendOTP(map).then((_value) async {
+        if(_value.status==true)
+        {
 
-           }
-         else
-           {
+        }
+        else
+        {
 
-           }
+        }
 
-       }).onError((error, strack) async {
-         Get.snackbar(
-                 'Error', // Title
-                "Something went wrong", // Message
-                 snackPosition: SnackPosition.BOTTOM,
-                 backgroundColor: Colors.pink,
-                 colorText: Colors.white,
-                 duration: Duration(seconds: 3),
-               );
+      }).onError((error, strack) async {
+        Get.snackbar(
+          'Error', // Title
+          "Something went wrong", // Message
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.pink,
+          colorText: Colors.white,
+          duration: Duration(seconds: 3),
+        );
 
-       });
+      });
     } catch (e) {
       print('Error: $e');
     } finally {
@@ -201,7 +201,7 @@ class LoginController {
 
 
   void checkOtp(var otps, BuildContext context) {
-  loadinng.value=true;
+    loadinng.value=true;
     try {
       Map map={
         "member_id":memberId.value,
@@ -213,40 +213,40 @@ class LoginController {
         if(_value.status==true)
         {
           if(dontSaveDataNewMeb.value=="2")
-              {
-                await SessionManager.saveSessionUserData(_value.data!);
-                await SessionManager.saveSessionToken(
-                    _value.token.toString());
-                updateToken();
-                api.userVerify(_value.token.toString()).then((_value) async {
-                  print("Session saved successfully!");
+          {
+            await SessionManager.saveSessionUserData(_value.data!);
+            await SessionManager.saveSessionToken(
+                _value.token.toString());
+            updateToken();
+            api.userVerify(_value.token.toString()).then((_value) async {
+              print("Session saved successfully!");
 
 
 
-                  Navigator.pushNamedAndRemoveUntil(
-                    context!,
-                    RouteNames.dashboard,
-                        (Route<dynamic> route) => false,
-                  );
-                }).onError((error, strack) async {
-                  print("Session saved successfully!");
-
-                  Navigator.pushNamedAndRemoveUntil(
-                    context!,
-                    RouteNames.dashboard,
-                        (Route<dynamic> route) => false,
-                  );
-                });
-
-              }
-          else
-            {
               Navigator.pushNamedAndRemoveUntil(
                 context!,
                 RouteNames.dashboard,
                     (Route<dynamic> route) => false,
               );
-            }
+            }).onError((error, strack) async {
+              print("Session saved successfully!");
+
+              Navigator.pushNamedAndRemoveUntil(
+                context!,
+                RouteNames.dashboard,
+                    (Route<dynamic> route) => false,
+              );
+            });
+
+          }
+          else
+          {
+            Navigator.pushNamedAndRemoveUntil(
+              context!,
+              RouteNames.dashboard,
+                  (Route<dynamic> route) => false,
+            );
+          }
         }
 
 
@@ -378,24 +378,24 @@ class LoginController {
     else {
       loadinng.value = false;
 
-     if(otherMobVisible==true)
-       {
-         var mobiles= mobilecon.value;
+      if(otherMobVisible==true)
+      {
+        var mobiles= mobilecon.value;
 
-       Navigator.pushNamedAndRemoveUntil(
-         context!, RouteNames.dashboard, (Route<dynamic> route) => false,);
-       }else
-         {
-           Get.snackbar(
-             'Error', // Title
-             "Something went wrong", // Message
-             snackPosition: SnackPosition.BOTTOM,
-             backgroundColor: Colors.pink,
-             colorText: Colors.white,
-             duration: Duration(seconds: 3),
-           );
-         }
-         print(response.reasonPhrase);
+        Navigator.pushNamedAndRemoveUntil(
+          context!, RouteNames.dashboard, (Route<dynamic> route) => false,);
+      }else
+      {
+        Get.snackbar(
+          'Error', // Title
+          "Something went wrong", // Message
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.pink,
+          colorText: Colors.white,
+          duration: Duration(seconds: 3),
+        );
+      }
+      print(response.reasonPhrase);
     }
   }
 
@@ -413,49 +413,82 @@ class LoginController {
   void _showLoginAlert(BuildContext context) {
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-            backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15.0),
-            ),
-            title: const Row(
-              children: [
-                SizedBox(width: 10),
-                Text("Login"),
-              ],
-            ),
-            content: const Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text("Are You a Member of a Maheshwari Pragati Mandal"),
-                SizedBox(height: 10),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  Navigator.pushNamed(context, RouteNames.registration_screen);
-                },
-                style: TextButton.styleFrom(
-                  backgroundColor: ColorHelperClass.getColorFromHex(
-                      ColorResources.red_color),
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  Images.logoImage,
+                  height: 40,
+                  width: 40,
                 ),
-                child: const Text("No", style: TextStyle(color: Colors.white)),
               ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  lmCodeVisible.value = true;
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: ColorHelperClass.getColorFromHex(
-                      ColorResources.red_color),
+              const SizedBox(width: 12),
+              Text(
+                "Login Verification",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
                 ),
-                child: const Text("Yes", style: TextStyle(color: Colors.white)),
               ),
-            ]);
+            ],
+          ),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "Are you a member of Maheshwari Pragati Mandal?",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.black87,
+                ),
+              ),
+              SizedBox(height: 20),
+            ],
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.pushNamed(context, RouteNames.registration_screen);
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.redAccent,
+                side: const BorderSide(color: Colors.redAccent),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("No"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                lmCodeVisible.value = true;
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorHelperClass.getColorFromHex(
+                    ColorResources.red_color),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Yes"),
+            ),
+          ],
+        );
       },
     );
   }
@@ -465,51 +498,95 @@ class LoginController {
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext context) {
         String maskedNumber = maskMobileNumber(lmDyanmicMobNo.value);
-
         print("fggfghghjjkklj" + maskedNumber.toString());
+
         return AlertDialog(
+          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15.0),
+            borderRadius: BorderRadius.circular(20.0),
           ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
           title: Row(
             children: [
-              Image.asset(
-                Images.logoImage,
-                height: 50,
-                width: 50,
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  Images.logoImage,
+                  height: 40,
+                  width: 40,
+                ),
               ),
-              const SizedBox(width: 10),
-              const Text("Login Verification"),
+              const SizedBox(width: 12),
+              const Text(
+                "Login Verification",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text("Verify OTP for mobile $maskedNumber"),
+              Text(
+                "We need to verify your mobile number.",
+                style: TextStyle(color: Colors.grey[700]),
+              ),
               const SizedBox(height: 10),
+              Text(
+                "Send OTP to: $maskedNumber?",
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 20),
             ],
           ),
           actions: [
-            TextButton(
+            OutlinedButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 otherMobVisible.value = true;
               },
-              child: const Text("No"),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.redAccent,
+                side: BorderSide(color: Colors.redAccent),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Use Another Number"),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
-
-                Navigator.pushNamed(context, RouteNames.otp_screen,arguments: {
-                  "memeberId":memberId.value,
-                  "page_type_direct":"2",
-                  "mobile": lmDyanmicMobNo.value
-                });
+                Navigator.pushNamed(
+                  context,
+                  RouteNames.otp_screen,
+                  arguments: {
+                    "memeberId": memberId.value,
+                    "page_type_direct": "2",
+                    "mobile": lmDyanmicMobNo.value,
+                  },
+                );
               },
-              child: const Text("Yes"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorHelperClass.getColorFromHex(
+                  ColorResources.red_color,
+                ),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Send OTP"),
             ),
           ],
         );
@@ -517,4 +594,3 @@ class LoginController {
     );
   }
 }
-
