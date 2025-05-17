@@ -5,12 +5,22 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:mpm/model/AddOfferDiscountData/AddOfferDiscountData.dart';
+import 'package:mpm/model/Offer/OfferData.dart';
 import 'package:mpm/repository/add_offer_discount_repository/add_offer_discount_repo.dart';
+import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/view/DiscountOfferDetailPage.dart';
 
 class AvailOfferPage extends StatefulWidget {
-  const AvailOfferPage({super.key});
+  final String orgDetailsID;
+  final String orgSubcategoryId;
+
+  const AvailOfferPage({
+    super.key,
+    required this.orgDetailsID,
+    required this.orgSubcategoryId,
+  });
 
   @override
   State<AvailOfferPage> createState() => _AvailOfferPageState();
@@ -19,13 +29,40 @@ class AvailOfferPage extends StatefulWidget {
 class _AvailOfferPageState extends State<AvailOfferPage> {
   final List<Map<String, dynamic>> offerList = [];
   XFile? selectedImage;
-
-  final String memberId = '123';
-  final String orgSubcategoryId = "456";
-  final String createdBy = "789";
-  String orgDetailsID = '1';
+  String? memberId;
+  bool isLoading = true;
 
   final AddOfferDiscountRepository _repository = AddOfferDiscountRepository();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final userData = await SessionManager.getSession();
+      setState(() {
+        memberId = userData?.memberId.toString();
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      Get.snackbar(
+        "Error",
+        "Failed to load user data",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  String get orgSubcategoryId => widget.orgSubcategoryId;
+  String get orgDetailsID => widget.orgDetailsID;
+  String get createdBy => memberId ?? '';
 
   Future<void> pickImage(ImageSource source) async {
     final ImagePicker picker = ImagePicker();
@@ -99,23 +136,6 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(
-                  keyboardType: TextInputType.text,
-                  onChanged: (value) {
-                    setState(() {
-                      orgDetailsID = value;
-                    });
-                  },
-                  decoration: InputDecoration(
-                    labelText: 'Applicant Name',
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
                 TextField(
                   onChanged: (value) => medicineName = value,
                   decoration: InputDecoration(
@@ -205,22 +225,25 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
     );
   }
 
-  Future<void> submitOffer() async {
+  Future<void> _submitOffer() async {
+    if (memberId == null) {
+      await _showErrorDialog("User session not available");
+      return;
+    }
+
     try {
-      // Prepare model data
       final offerModel = AddOfferDiscountData(
-        memberId: int.tryParse(memberId),
+        memberId: int.tryParse(memberId!),
         orgSubcategoryId: int.tryParse(orgSubcategoryId),
         orgDetailsID: int.tryParse(orgDetailsID),
-        createdBy: int.tryParse(createdBy),
+        createdBy: int.tryParse(memberId!),
         medicines: offerList
             .map((e) => Medicine(
-                  medicineName: e['medicine_name'],
-                  medicineContainerId: int.tryParse(e['medicine_container_id']),
-                  quantity: e['quantity'],
-                ))
+          medicineName: e['medicine_name'],
+          medicineContainerId: int.tryParse(e['medicine_container_id']),
+          quantity: e['quantity'],
+        ))
             .toList(),
-        prescriptionImage: null,
       );
 
       final response = await _repository.submitOfferDiscount(
@@ -229,61 +252,182 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
       );
 
       if (response['status'] == true) {
-        Get.snackbar(
-          "",
-          "",
-          messageText: const Text(
-            "Offer Claimed and Order Placed successfully.",
-            style: TextStyle(color: Colors.green, fontSize: 14),
-          ),
-          backgroundColor: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-          duration: const Duration(seconds: 2),
-          margin: const EdgeInsets.all(12),
-          borderRadius: 8,
+        bool? result = await _showSuccessDialog(
+          "Offer Claimed and Order Placed successfully.",
+          response['data'],
         );
 
-        setState(() {
-          offerList.clear();
-          selectedImage = null;
-        });
+        if (result == true) {
+          setState(() {
+            offerList.clear();
+            selectedImage = null;
+          });
+        }
       } else {
-        Get.snackbar(
-          "",
-          "",
-          messageText: Text(
-            response['message'] ?? "Something went wrong",
-            style: const TextStyle(color: Colors.red, fontSize: 14),
-          ),
-          backgroundColor: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-          duration: const Duration(seconds: 2),
-          margin: const EdgeInsets.all(12),
-          borderRadius: 8,
-        );
+        await _showErrorDialog(response['message'] ?? "Something went wrong");
       }
     } catch (e) {
-      Get.snackbar(
-        "",
-        "",
-        messageText: Text(
-          "Something went wrong: $e",
-          style: const TextStyle(color: Colors.red, fontSize: 14),
-        ),
-        backgroundColor: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-        duration: const Duration(seconds: 2),
-        margin: const EdgeInsets.all(12),
-        borderRadius: 8,
-      );
+      await _showErrorDialog("Something went wrong: $e");
     }
+  }
+
+  Future<bool?> _showSuccessDialog(String message, dynamic responseData) async {
+    // Convert the response data to OfferData
+    final offerData = OfferData.fromJson(responseData); // Assuming you have a fromJson method in OfferData
+
+    return await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  'assets/images/men-3.png',
+                  height: 40,
+                  width: 40,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                "Success",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context, false),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.redAccent,
+                side: const BorderSide(color: Colors.redAccent),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context, true);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => DiscountOfferDetailPage(offer: offerData),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showErrorDialog(String message) async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  'assets/images/med-3.png',
+                  height: 40,
+                  width: 40,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                "Error",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildUploadSection() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start, // Ensures left alignment
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (selectedImage != null) ...[
             const Padding(
@@ -361,11 +505,34 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (memberId == null) {
+      return Scaffold(
+        appBar: AppBar(
+          backgroundColor:
+          ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+          title: const Text("Medicine Details",
+              style: TextStyle(color: Colors.white)),
+          iconTheme: const IconThemeData(color: Colors.white),
+        ),
+        body: const Center(
+          child: Text("Failed to load user data. Please try again."),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor:
-            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: const Text("Medicine Details",
             style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
@@ -393,7 +560,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
                     foregroundColor: Colors.redAccent,
                     backgroundColor: Colors.white,
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(6),
                     ),
@@ -441,25 +608,29 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
       ),
       bottomNavigationBar: selectedImage != null
           ? Container(
-              padding: const EdgeInsets.all(16),
-              child: ElevatedButton(
-                onPressed: offerList.isNotEmpty ? submitOffer : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
-                  foregroundColor: Colors.white,
-                  disabledForegroundColor: Colors.white.withOpacity(0.6),
-                  disabledBackgroundColor: Colors.redAccent.withOpacity(0.6),
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  "Place Order",
-                  style: TextStyle(fontSize: 16),
-                ),
-              ),
-            )
+        padding: const EdgeInsets.all(16),
+        child: ElevatedButton(
+          onPressed: offerList.isNotEmpty
+              ? () {
+            _submitOffer();
+          }
+              : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.redAccent,
+            foregroundColor: Colors.white,
+            disabledForegroundColor: Colors.white.withOpacity(0.6),
+            disabledBackgroundColor: Colors.redAccent.withOpacity(0.6),
+            minimumSize: const Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: const Text(
+            "Place Order",
+            style: TextStyle(fontSize: 16),
+          ),
+        ),
+      )
           : null,
     );
   }

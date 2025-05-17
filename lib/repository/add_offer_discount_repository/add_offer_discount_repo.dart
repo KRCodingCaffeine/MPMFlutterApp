@@ -14,18 +14,17 @@ class AddOfferDiscountRepository {
   Future<dynamic> submitOfferDiscount(
       AddOfferDiscountData dataModel, File? imageFile) async {
     try {
-      final uri =
-          Uri.parse(Urls.add_offer_discount_url);
+      final uri = Uri.parse(Urls.add_offer_discount_url);
 
       var request = http.MultipartRequest('POST', uri);
 
-      request.fields['member_id'] = dataModel.memberId.toString();
+      // In your submitOfferDiscount method, ensure all fields have values:
+      request.fields['member_id'] = dataModel.memberId?.toString() ?? '';
       request.fields['org_subcategory_id'] =
-          dataModel.orgSubcategoryId.toString();
-      request.fields['created_by'] = dataModel.createdBy.toString();
-
-      request.fields['medicines'] =
-          jsonEncode(dataModel.medicines?.map((e) => e.toJson()).toList());
+          dataModel.orgSubcategoryId?.toString() ?? '';
+      request.fields['org_details_id'] =
+          dataModel.orgDetailsID?.toString() ?? '';
+      request.fields['created_by'] = dataModel.memberId?.toString() ?? '';
 
       if (imageFile != null) {
         final mimeType = lookupMimeType(imageFile.path);

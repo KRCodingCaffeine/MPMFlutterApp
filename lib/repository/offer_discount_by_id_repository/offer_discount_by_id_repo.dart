@@ -25,7 +25,7 @@ class OfferDiscountByIdRepository {
   Future<OfferDiscountByIdData> fetchDiscountOfferById(String id) async {
     try {
       final requestBody = {
-        "organisation_offer_discount_id": id // Changed from "offer_id" to match API expectation
+        "organisation_offer_discount_id": id
       };
 
       final response = await api.postApi(

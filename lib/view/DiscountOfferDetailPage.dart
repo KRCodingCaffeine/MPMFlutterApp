@@ -4,6 +4,7 @@ import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:intl/intl.dart';
 import 'package:mpm/view/avail_offer_page.dart';
+import 'package:get/get.dart';
 
 class DiscountOfferDetailPage extends StatelessWidget {
   final OfferData offer;
@@ -15,6 +16,19 @@ class DiscountOfferDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Handle messages from navigation
+    final args = Get.arguments as Map<String, dynamic>?;
+    if (args != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Get.snackbar(
+          args['success'] ? "Success" : "Error",
+          args['message'],
+          backgroundColor: args['success'] ? Colors.green : Colors.red,
+          colorText: Colors.white,
+        );
+      });
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
@@ -88,7 +102,6 @@ class DiscountOfferDetailPage extends StatelessWidget {
           ],
         ),
       ),
-
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         child: SizedBox(
@@ -104,53 +117,31 @@ class DiscountOfferDetailPage extends StatelessWidget {
             ),
             onPressed: () {
               if (offer.orgSubcategoryId?.toString() == '1') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const AvailOfferPage()),
-                );
+                Get.to(
+                      () => AvailOfferPage(
+                    orgDetailsID: offer.organisationOfferDiscountId.toString(),
+                    orgSubcategoryId: offer.orgSubcategoryId.toString(),
+                  ),
+                )?.then((_) {
+                  // This will handle any messages when returning from AvailOfferPage
+                  if (Get.arguments != null) {
+                    final args = Get.arguments as Map<String, dynamic>;
+                    Get.snackbar(
+                      args['success'] ? "Success" : "Error",
+                      args['message'],
+                      backgroundColor: args['success'] ? Colors.green : Colors.red,
+                      colorText: Colors.white,
+                    );
+                  }
+                });
               } else {
-                // String testName = '';
-                // showDialog(
-                //   context: context,
-                //   builder: (context) {
-                //     return AlertDialog(
-                //       backgroundColor: Colors.white,
-                //       title: const Text("Enter Applicant Name"),
-                //       content: Column(
-                //         mainAxisSize: MainAxisSize.min,
-                //         children: [
-                //           TextField(
-                //             decoration: const InputDecoration(
-                //               labelText: "Applicant Name",
-                //               fillColor: Colors.black,
-                //               border: OutlineInputBorder(),
-                //             ),
-                //             onChanged: (value) {
-                //               testName = value;
-                //             },
-                //           ),
-                //           const SizedBox(height: 16),
-                //           const Text(
-                //             "This offer is eligible for direct availing.",
-                //             style: TextStyle(fontSize: 14),
-                //           ),
-                //         ],
-                //       ),
-                //       actions: [
-                //         TextButton(
-                //           onPressed: () {
-                //             Navigator.pop(context);
-                //             print("Entered Applicant Name: $testName");
-                //           },
-                //           style: TextButton.styleFrom(
-                //             foregroundColor: Colors.red,
-                //           ),
-                //           child: const Text("OK"),
-                //         ),
-                //       ],
-                //     );
-                //   },
-                // );
+                // Handle other offer types if needed
+                Get.snackbar(
+                  "Info",
+                  "This offer doesn't require prescription",
+                  backgroundColor: Colors.blue,
+                  colorText: Colors.white,
+                );
               }
             },
             child: const Text("Claim Offer", style: TextStyle(fontSize: 16)),
@@ -242,7 +233,6 @@ class DiscountOfferDetailPage extends StatelessWidget {
   }
 
   Widget _buildValidityInfo() {
-    // Determine what to display based on the available dates
     String validityText;
     if (offer.validFrom != null && offer.validTo != null) {
       validityText = '${_formatDate(offer.validFrom!)} - ${_formatDate(offer.validTo!)}';
