@@ -17,6 +17,7 @@ class OfferData {
   String? orgState;
   String? orgPincode;
   String? orgMobile;
+  String? orgWhatsApp;
   String? orgEmail;
   String? orgLogo;
   String? categoryName;
@@ -41,6 +42,7 @@ class OfferData {
     this.orgState,
     this.orgPincode,
     this.orgMobile,
+    this.orgWhatsApp,
     this.orgEmail,
     this.orgLogo,
     this.categoryName,
@@ -67,6 +69,7 @@ class OfferData {
       orgState: json['org_state'],
       orgPincode: json['org_pincode'],
       orgMobile: json['org_mobile'],
+      orgWhatsApp: json['org_whatsapp'],
       orgEmail: json['org_email'],
       orgLogo: "https://members.mumbaimaheshwari.com/api/public/" +json['org_logo'],
       categoryName: json['category_name'],
@@ -94,6 +97,7 @@ class OfferData {
     data['org_state'] = orgState;
     data['org_pincode'] = orgPincode;
     data['org_mobile'] = orgMobile;
+    data['org_whatsapp'] = orgWhatsApp;
     data['org_email'] = orgEmail;
     data['org_logo'] = orgLogo;
     data['category_name'] = categoryName;

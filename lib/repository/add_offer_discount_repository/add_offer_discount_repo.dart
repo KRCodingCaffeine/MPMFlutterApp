@@ -18,14 +18,25 @@ class AddOfferDiscountRepository {
 
       var request = http.MultipartRequest('POST', uri);
 
-      // In your submitOfferDiscount method, ensure all fields have values:
+      // Add all required fields
       request.fields['member_id'] = dataModel.memberId?.toString() ?? '';
       request.fields['org_subcategory_id'] =
           dataModel.orgSubcategoryId?.toString() ?? '';
       request.fields['org_details_id'] =
           dataModel.orgDetailsID?.toString() ?? '';
-      request.fields['created_by'] = dataModel.memberId?.toString() ?? '';
+      request.fields['created_by'] = dataModel.createdBy?.toString() ?? '';
 
+      // Convert medicines list to JSON string
+      if (dataModel.medicines != null && dataModel.medicines!.isNotEmpty) {
+        final medicinesJson = jsonEncode(dataModel.medicines!
+            .map((medicine) => medicine.toJson())
+            .toList());
+        request.fields['medicines'] = medicinesJson;
+      } else {
+        request.fields['medicines'] = '[]';
+      }
+
+      // Add image if available
       if (imageFile != null) {
         final mimeType = lookupMimeType(imageFile.path);
         request.files.add(

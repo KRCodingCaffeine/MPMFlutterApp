@@ -32,7 +32,8 @@ class DiscountOfferDetailPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        backgroundColor:
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Text(
           offer.offerDiscountName ?? 'Offer Details',
           style: const TextStyle(color: Colors.white, fontSize: 24),
@@ -118,7 +119,7 @@ class DiscountOfferDetailPage extends StatelessWidget {
             onPressed: () {
               if (offer.orgSubcategoryId?.toString() == '1') {
                 Get.to(
-                      () => AvailOfferPage(
+                  () => AvailOfferPage(
                     orgDetailsID: offer.organisationOfferDiscountId.toString(),
                     orgSubcategoryId: offer.orgSubcategoryId.toString(),
                   ),
@@ -129,19 +130,12 @@ class DiscountOfferDetailPage extends StatelessWidget {
                     Get.snackbar(
                       args['success'] ? "Success" : "Error",
                       args['message'],
-                      backgroundColor: args['success'] ? Colors.green : Colors.red,
+                      backgroundColor:
+                          args['success'] ? Colors.green : Colors.red,
                       colorText: Colors.white,
                     );
                   }
                 });
-              } else {
-                // Handle other offer types if needed
-                Get.snackbar(
-                  "Info",
-                  "This offer doesn't require prescription",
-                  backgroundColor: Colors.blue,
-                  colorText: Colors.white,
-                );
               }
             },
             child: const Text("Claim Offer", style: TextStyle(fontSize: 16)),
@@ -163,17 +157,17 @@ class DiscountOfferDetailPage extends StatelessWidget {
             child: Center(
               child: offer.offerImage != null && offer.offerImage!.isNotEmpty
                   ? Image.network(
-                offer.offerImage!,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => Image.asset(
-                  'assets/images/discounts.jpg',
-                  fit: BoxFit.contain,
-                ),
-              )
+                      offer.offerImage!,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => Image.asset(
+                        'assets/images/discounts.jpg',
+                        fit: BoxFit.contain,
+                      ),
+                    )
                   : Image.asset(
-                'assets/images/discounts.jpg',
-                fit: BoxFit.contain,
-              ),
+                      'assets/images/discounts.jpg',
+                      fit: BoxFit.contain,
+                    ),
             ),
           ),
         ),
@@ -194,13 +188,13 @@ class DiscountOfferDetailPage extends StatelessWidget {
           ),
           child: offer.orgLogo != null && offer.orgLogo!.isNotEmpty
               ? ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.network(
-              offer.orgLogo!,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _buildDefaultLogo(),
-            ),
-          )
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    offer.orgLogo!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _buildDefaultLogo(),
+                  ),
+                )
               : _buildDefaultLogo(),
         ),
         const SizedBox(width: 16),
@@ -210,7 +204,8 @@ class DiscountOfferDetailPage extends StatelessWidget {
             children: [
               Text(
                 offer.orgName ?? 'Unknown Company',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
               if (offer.orgAddress != null)
@@ -221,7 +216,9 @@ class DiscountOfferDetailPage extends StatelessWidget {
               if (offer.orgArea != null || offer.orgCity != null) ...[
                 const SizedBox(height: 4),
                 Text(
-                  [offer.orgArea, offer.orgCity].where((e) => e != null).join(', '),
+                  [offer.orgArea, offer.orgCity]
+                      .where((e) => e != null)
+                      .join(', '),
                   style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                 ),
               ],
@@ -235,7 +232,8 @@ class DiscountOfferDetailPage extends StatelessWidget {
   Widget _buildValidityInfo() {
     String validityText;
     if (offer.validFrom != null && offer.validTo != null) {
-      validityText = '${_formatDate(offer.validFrom!)} - ${_formatDate(offer.validTo!)}';
+      validityText =
+          '${_formatDate(offer.validFrom!)} - ${_formatDate(offer.validTo!)}';
     } else if (offer.validTo != null) {
       validityText = 'Valid until ${_formatDate(offer.validTo!)}';
     } else if (offer.validFrom != null) {
@@ -290,9 +288,14 @@ class DiscountOfferDetailPage extends StatelessWidget {
             2: FlexColumnWidth(),
           },
           children: [
-            if (offer.orgMobile != null) _buildTableRow('Mobile Number', offer.orgMobile!),
+            if (offer.orgMobile != null)
+              _buildTableRow('Mobile Number', offer.orgMobile!),
+            if (offer.orgWhatsApp != null) _buildSpacerRow(),
+            if (offer.orgWhatsApp != null)
+              _buildTableRow('WhatsApp', offer.orgWhatsApp!),
             if (offer.orgEmail != null) _buildSpacerRow(),
-            if (offer.orgEmail != null) _buildTableRow('Email', offer.orgEmail!),
+            if (offer.orgEmail != null)
+              _buildTableRow('Email', offer.orgEmail!),
           ],
         ),
       ],

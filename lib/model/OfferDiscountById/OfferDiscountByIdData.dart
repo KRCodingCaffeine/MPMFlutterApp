@@ -5,6 +5,7 @@ class OfferDiscountByIdData {
   String? validFrom;
   String? validTo;
   String? offerImage;
+  String? orgDetailsID;
   String? orgName;
   int? orgCategoryId;
   int? orgSubcategoryId;
@@ -14,6 +15,7 @@ class OfferDiscountByIdData {
   String? orgState;
   String? orgPincode;
   String? orgMobile;
+  String? orgWhatsApp;
   String? orgEmail;
   String? orgLogo;
 
@@ -25,6 +27,7 @@ class OfferDiscountByIdData {
     this.validFrom,
     this.validTo,
     this.offerImage,
+    this.orgDetailsID,
     this.orgName,
     this.orgCategoryId,
     this.orgSubcategoryId,
@@ -34,6 +37,7 @@ class OfferDiscountByIdData {
     this.orgState,
     this.orgPincode,
     this.orgMobile,
+    this.orgWhatsApp,
     this.orgEmail,
     this.orgLogo,
 
@@ -47,6 +51,7 @@ class OfferDiscountByIdData {
       validFrom: json['valid_from'],
       validTo: json['valid_to'],
       offerImage: "https://members.mumbaimaheshwari.com/api/public/" + json['offer_image'],
+      orgDetailsID: json['org_details_id'],
       orgName: json['org_name'],
       orgCategoryId: json['org_category_id'],
       orgSubcategoryId: json['org_subcategory_id'],
@@ -56,6 +61,7 @@ class OfferDiscountByIdData {
       orgState: json['org_state'],
       orgPincode: json['org_pincode'],
       orgMobile: json['org_mobile'],
+      orgWhatsApp: json['org_whatsapp'],
       orgEmail: json['org_email'],
       orgLogo: "https://members.mumbaimaheshwari.com/api/public/" +json['org_logo'],
 
@@ -70,6 +76,7 @@ class OfferDiscountByIdData {
       'valid_from': validFrom,
       'valid_to': validTo,
       'offer_image': offerImage,
+      'org_details_id': orgDetailsID,
       'org_name': orgName,
       'org_category_id': orgCategoryId,
       'org_subcategory_id': orgSubcategoryId,
@@ -79,6 +86,7 @@ class OfferDiscountByIdData {
       'org_state': orgState,
       'org_pincode': orgPincode,
       'org_mobile': orgMobile,
+      'org_whatsapp': orgWhatsApp,
       'org_email': orgEmail,
       'org_logo': orgLogo,
     
