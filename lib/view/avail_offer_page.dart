@@ -11,6 +11,7 @@ import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/DiscountOfferDetailPage.dart';
+import 'package:mpm/view/offer_claimed_view.dart';
 
 class AvailOfferPage extends StatefulWidget {
   final String orgDetailsID;
@@ -210,12 +211,19 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
                     offerList.add({
                       'medicine_name': medicineName.trim(),
                       'medicine_container_id':
-                      getContainerId(selectedContainer!).toString(),
+                          getContainerId(selectedContainer!).toString(),
                       'medicine_container_name': selectedContainer,
                       'quantity': int.tryParse(offerQuantity.trim()) ?? 0,
                     });
                   });
                   Navigator.of(context).pop();
+                } else {
+                  Get.snackbar(
+                    "Error",
+                    "Please fill all fields",
+                    backgroundColor: Colors.red,
+                    colorText: Colors.white,
+                  );
                 }
               },
             ),
@@ -226,24 +234,34 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
   }
 
   Future<void> _submitOffer() async {
-    if (memberId == null) {
+    if (memberId == null || memberId!.isEmpty) {
       await _showErrorDialog("User session not available");
       return;
     }
 
+    if (offerList.isEmpty) {
+      await _showErrorDialog("Please add at least one medicine");
+      return;
+    }
+
     try {
+      final medicines = offerList
+          .map((e) => Medicine(
+                orgDetailsID: int.tryParse(orgDetailsID) ?? 0,
+                medicineName: e['medicine_name']?.toString() ?? '',
+                medicineContainerId: int.tryParse(
+                        e['medicine_container_id']?.toString() ?? '0') ??
+                    0,
+                quantity: (e['quantity'] as int?) ?? 1,
+              ))
+          .toList();
+
       final offerModel = AddOfferDiscountData(
-        memberId: int.tryParse(memberId!),
-        orgSubcategoryId: int.tryParse(orgSubcategoryId),
-        orgDetailsID: int.tryParse(orgDetailsID),
-        createdBy: int.tryParse(memberId!),
-        medicines: offerList
-            .map((e) => Medicine(
-          medicineName: e['medicine_name'],
-          medicineContainerId: int.tryParse(e['medicine_container_id']),
-          quantity: e['quantity'],
-        ))
-            .toList(),
+        memberId: int.tryParse(memberId!) ?? 0,
+        orgSubcategoryId: int.tryParse(orgSubcategoryId) ?? 0,
+        orgDetailsID: int.tryParse(orgDetailsID) ?? 0,
+        createdBy: int.tryParse(memberId!) ?? 0,
+        medicines: medicines,
       );
 
       final response = await _repository.submitOfferDiscount(
@@ -251,30 +269,37 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
         selectedImage != null ? File(selectedImage!.path) : null,
       );
 
-      if (response['status'] == true) {
-        bool? result = await _showSuccessDialog(
-          "Offer Claimed and Order Placed successfully.",
-          response['data'],
+      if (response != null &&
+          response is Map<String, dynamic> &&
+          (response['status'] as bool?) == true) {
+        final success = await _showSuccessDialog(
+          "Offer claimed successfully!",
+          response['data'] ?? {},
         );
 
-        if (result == true) {
+        if (success == true) {
           setState(() {
             offerList.clear();
             selectedImage = null;
           });
+          if (mounted) {
+            Navigator.pop(context, {
+              'success': true,
+              'message': 'Offer claimed successfully',
+              'org_details_id': orgDetailsID,
+            });
+          }
         }
       } else {
-        await _showErrorDialog(response['message'] ?? "Something went wrong");
+        await _showErrorDialog(
+            response?['message']?.toString() ?? "Failed to submit offer");
       }
     } catch (e) {
-      await _showErrorDialog("Something went wrong: $e");
+      await _showErrorDialog("Error: ${e.toString()}");
     }
   }
 
   Future<bool?> _showSuccessDialog(String message, dynamic responseData) async {
-    // Convert the response data to OfferData
-    final offerData = OfferData.fromJson(responseData); // Assuming you have a fromJson method in OfferData
-
     return await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -287,18 +312,11 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
           titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
           contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
           actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-          title: Row(
+          title: const Row(
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.asset(
-                  'assets/images/men-3.png',
-                  height: 40,
-                  width: 40,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text(
+              Icon(Icons.check_circle, color: Colors.green, size: 32),
+              SizedBox(width: 12),
+              Text(
                 "Success",
                 style: TextStyle(
                   fontSize: 18,
@@ -322,35 +340,37 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
             ],
           ),
           actions: [
-            OutlinedButton(
+            TextButton(
               onPressed: () => Navigator.pop(context, false),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.redAccent,
-                side: const BorderSide(color: Colors.redAccent),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Text("Cancel"),
+              child: const Text("Close", style: TextStyle(color: Colors.redAccent),),
             ),
             ElevatedButton(
               onPressed: () {
-                Navigator.pop(context, true);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => DiscountOfferDetailPage(offer: offerData),
-                  ),
-                );
+                try {
+                  final offerData = OfferData.fromJson(responseData ?? {});
+                  Navigator.pop(context, true);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DiscountOfferDetailPage(
+                        offer: offerData,
+                      ),
+                    ),
+                  );
+                } catch (e) {
+                  Navigator.pop(context, true);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ClaimedOfferListPage(),
+                    ),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+                backgroundColor: Colors.redAccent,
               ),
-              child: const Text("OK"),
+              child: const Text("View Details", style: TextStyle(color: Colors.white),),
             ),
           ],
         );
@@ -371,18 +391,11 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
           titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
           contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
           actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-          title: Row(
+          title: const Row(
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.asset(
-                  'assets/images/med-3.png',
-                  height: 40,
-                  width: 40,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text(
+              Icon(Icons.error_outline, color: Colors.red, size: 32),
+              SizedBox(width: 12),
+              Text(
                 "Error",
                 style: TextStyle(
                   fontSize: 18,
@@ -410,10 +423,6 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
               ),
               child: const Text("OK"),
             ),
@@ -517,7 +526,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
       return Scaffold(
         appBar: AppBar(
           backgroundColor:
-          ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+              ColorHelperClass.getColorFromHex(ColorResources.logo_color),
           title: const Text("Medicine Details",
               style: TextStyle(color: Colors.white)),
           iconTheme: const IconThemeData(color: Colors.white),
@@ -532,7 +541,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: const Text("Medicine Details",
             style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
@@ -560,7 +569,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
                     foregroundColor: Colors.redAccent,
                     backgroundColor: Colors.white,
                     padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(6),
                     ),
@@ -608,29 +617,29 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
       ),
       bottomNavigationBar: selectedImage != null
           ? Container(
-        padding: const EdgeInsets.all(16),
-        child: ElevatedButton(
-          onPressed: offerList.isNotEmpty
-              ? () {
-            _submitOffer();
-          }
-              : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.redAccent,
-            foregroundColor: Colors.white,
-            disabledForegroundColor: Colors.white.withOpacity(0.6),
-            disabledBackgroundColor: Colors.redAccent.withOpacity(0.6),
-            minimumSize: const Size(double.infinity, 50),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          child: const Text(
-            "Place Order",
-            style: TextStyle(fontSize: 16),
-          ),
-        ),
-      )
+              padding: const EdgeInsets.all(16),
+              child: ElevatedButton(
+                onPressed: offerList.isNotEmpty
+                    ? () {
+                        _submitOffer();
+                      }
+                    : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  foregroundColor: Colors.white,
+                  disabledForegroundColor: Colors.white.withOpacity(0.6),
+                  disabledBackgroundColor: Colors.redAccent.withOpacity(0.6),
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  "Place Order",
+                  style: TextStyle(fontSize: 16),
+                ),
+              ),
+            )
           : null,
     );
   }

@@ -45,20 +45,23 @@ class Medicine {
   int? orgDetailsID;
   String? medicineName;
   int? medicineContainerId;
+  String? medicineContainerName;
   int? quantity;
 
   Medicine({
     this.orgDetailsID,
     this.medicineName,
     this.medicineContainerId,
+    this.medicineContainerName,
     this.quantity,
   });
 
   factory Medicine.fromJson(Map<String, dynamic> json) {
     return Medicine(
       orgDetailsID: json['org_details_id'],
-      medicineName: json['medicine_name'],
+      medicineName: json['medicine_name']?.toString() ?? '',
       medicineContainerId: json['medicine_container_id'],
+      medicineContainerName: json['medicine_container_name'],
       quantity: json['quantity'],
     );
   }
@@ -68,6 +71,7 @@ class Medicine {
       'org_details_id': orgDetailsID,
       'medicine_name': medicineName,
       'medicine_container_id': medicineContainerId,
+      'medicine_container_name': medicineContainerName,
       'quantity': quantity,
     };
   }
