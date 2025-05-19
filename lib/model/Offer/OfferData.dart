@@ -4,6 +4,7 @@ class OfferData {
   String? offerDescription;
   String? validFrom;
   String? validTo;
+  String? orgDetailsID;
   String? offerImage;
   String? mpmAuthorizedName;
   String? mpmAuthorizedMobile;
@@ -29,6 +30,7 @@ class OfferData {
     this.offerDescription,
     this.validFrom,
     this.validTo,
+    this.orgDetailsID,
     this.offerImage,
     this.mpmAuthorizedName,
     this.mpmAuthorizedMobile,
@@ -56,6 +58,7 @@ class OfferData {
       offerDescription: json['offer_description'],
       validFrom: json['valid_from'],
       validTo: json['valid_to'],
+      orgDetailsID: json['org_details_id'],
       offerImage: "https://members.mumbaimaheshwari.com/api/public/" +json['offer_image'],
       mpmAuthorizedName: json['mpm_authorized_name'],
       mpmAuthorizedMobile: json['mpm_authorized_mobile'],
@@ -84,6 +87,7 @@ class OfferData {
     data['offer_description'] = offerDescription;
     data['valid_from'] = validFrom;
     data['valid_to'] = validTo;
+    data['org_details_id'] = orgDetailsID;
     data['offer_image'] = offerImage;
     data['mpm_authorized_name'] = mpmAuthorizedName;
     data['mpm_authorized_mobile'] = mpmAuthorizedMobile;

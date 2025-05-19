@@ -120,7 +120,8 @@ class DiscountOfferDetailPage extends StatelessWidget {
               if (offer.orgSubcategoryId?.toString() == '1') {
                 Get.to(
                   () => AvailOfferPage(
-                    orgDetailsID: offer.organisationOfferDiscountId.toString(),
+                    orgDetailsID: offer.orgDetailsID.toString(),
+                    organisationOfferDiscountId: offer.organisationOfferDiscountId.toString(),
                     orgSubcategoryId: offer.orgSubcategoryId.toString(),
                   ),
                 )?.then((_) {

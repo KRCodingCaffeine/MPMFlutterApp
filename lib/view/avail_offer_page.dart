@@ -14,13 +14,15 @@ import 'package:mpm/view/DiscountOfferDetailPage.dart';
 import 'package:mpm/view/offer_claimed_view.dart';
 
 class AvailOfferPage extends StatefulWidget {
-  final String orgDetailsID;
+  final String organisationOfferDiscountId;
   final String orgSubcategoryId;
+  final String orgDetailsID;
 
   const AvailOfferPage({
     super.key,
-    required this.orgDetailsID,
+    required this.organisationOfferDiscountId,
     required this.orgSubcategoryId,
+    required this.orgDetailsID,
   });
 
   @override
@@ -62,6 +64,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
   }
 
   String get orgSubcategoryId => widget.orgSubcategoryId;
+  String get organisationOfferDiscountId => widget.organisationOfferDiscountId;
   String get orgDetailsID => widget.orgDetailsID;
   String get createdBy => memberId ?? '';
 
@@ -247,7 +250,8 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
     try {
       final medicines = offerList
           .map((e) => Medicine(
-                orgDetailsID: int.tryParse(orgDetailsID) ?? 0,
+          organisationOfferDiscountId: int.tryParse(organisationOfferDiscountId) ?? 0,
+        orgDetailsID: int.tryParse(orgDetailsID) ?? 0,
                 medicineName: e['medicine_name']?.toString() ?? '',
                 medicineContainerId: int.tryParse(
                         e['medicine_container_id']?.toString() ?? '0') ??
@@ -260,6 +264,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
         memberId: int.tryParse(memberId!) ?? 0,
         orgSubcategoryId: int.tryParse(orgSubcategoryId) ?? 0,
         orgDetailsID: int.tryParse(orgDetailsID) ?? 0,
+        organisationOfferDiscountId: int.tryParse(organisationOfferDiscountId) ?? 0,
         createdBy: int.tryParse(memberId!) ?? 0,
         medicines: medicines,
       );
@@ -347,22 +352,21 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
             ElevatedButton(
               onPressed: () {
                 try {
-                  final offerData = OfferData.fromJson(responseData ?? {});
+
                   Navigator.pop(context, true);
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => DiscountOfferDetailPage(
-                        offer: offerData,
+                      builder: (context) => ClaimedOfferListPage(
                       ),
                     ),
                   );
                 } catch (e) {
-                  Navigator.pop(context, true);
+                  final offerData = OfferData.fromJson(responseData ?? {});
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ClaimedOfferListPage(),
+                      builder: (context) => DiscountOfferDetailPage(offer: offerData,),
                     ),
                   );
                 }

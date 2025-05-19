@@ -97,6 +97,21 @@ class _ClaimedOfferListPageState extends State<ClaimedOfferListPage> {
     );
   }
 
+  String _formatDate(String? dateString) {
+    if (dateString == null) return 'N/A';
+    try {
+      final dateTime = DateTime.parse(dateString);
+      final hour = dateTime.hour;
+      final minute = dateTime.minute;
+      final period = hour < 12 ? 'AM' : 'PM';
+      final twelveHour = hour > 12 ? hour - 12 : hour == 0 ? 12 : hour;
+
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year} $twelveHour:${minute.toString().padLeft(2, '0')} $period';
+    } catch (e) {
+      return dateString;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -199,20 +214,6 @@ class _ClaimedOfferListPageState extends State<ClaimedOfferListPage> {
                                   ),
                                 )
                                     : _buildDefaultLogo(),
-                                const SizedBox(height: 4),
-                                SizedBox(
-                                  width: 75,
-                                  child: Text(
-                                    offer.orgName ?? 'Unknown',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 10,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
                               ],
                             ),
 
@@ -229,20 +230,13 @@ class _ClaimedOfferListPageState extends State<ClaimedOfferListPage> {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          'Ordered By: $userName',
+                                          offer.orgName ?? 'Unknown',
                                           style: const TextStyle(
-                                            fontSize: 12,
+                                            fontSize: 16,
                                             fontWeight: FontWeight.w500,
                                           ),
                                         ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          'Claimed on: ${_formatDate(offer.createdAt)}',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey[600],
-                                          ),
-                                        ),
+                                        const SizedBox(height: 4),
                                         if (offer.medicines != null && offer.medicines!.isNotEmpty) ...[
                                           const SizedBox(height: 8),
                                           Text(
@@ -254,14 +248,24 @@ class _ClaimedOfferListPageState extends State<ClaimedOfferListPage> {
                                             ),
                                           ),
                                           const SizedBox(height: 4),
-                                          ...offer.medicines!.map((medicine) => Padding(
-                                            padding: const EdgeInsets.symmetric(vertical: 2.0),
-                                            child: Text(
-                                              '• ${medicine.medicineName} (Container Type: ${medicine.medicineContainerId} , Qty: ${medicine.quantity})',
-                                              style: const TextStyle(fontSize: 12),
-                                            ),
-                                          )).toList(),
+                                          Text(
+                                            '• ${offer.medicines!.first.medicineName} '
+                                                '(Container Type: ${offer.medicines!.first.medicineContainerId}, '
+                                                'Qty: ${offer.medicines!.first.quantity})'
+                                                '${offer.medicines!.length > 1 ? ' ...' : ''}',
+                                            style: const TextStyle(fontSize: 12),
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 1,
+                                          ),
                                         ],
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Claimed on: ${_formatDate(offer.createdAt)}',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -294,15 +298,5 @@ class _ClaimedOfferListPageState extends State<ClaimedOfferListPage> {
         },
       ),
     );
-  }
-
-  String _formatDate(String? dateString) {
-    if (dateString == null) return 'N/A';
-    try {
-      final dateTime = DateTime.parse(dateString);
-      return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
-    } catch (e) {
-      return dateString;
-    }
   }
 }
