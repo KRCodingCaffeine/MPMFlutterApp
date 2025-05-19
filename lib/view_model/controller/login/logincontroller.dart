@@ -523,7 +523,7 @@ class LoginController {
               ),
               const SizedBox(width: 12),
               const Text(
-                "Login Verification",
+                "Login ",
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -535,12 +535,12 @@ class LoginController {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                "We need to verify your mobile number.",
+                "Please verify your mobile number.",
                 style: TextStyle(color: Colors.grey[700]),
               ),
               const SizedBox(height: 10),
               Text(
-                "Send OTP to: $maskedNumber?",
+                "Send OTP: $maskedNumber?",
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,

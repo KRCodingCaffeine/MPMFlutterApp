@@ -24,7 +24,9 @@ class AddOfferDiscountRepository {
           dataModel.orgSubcategoryId?.toString() ?? '';
       request.fields['org_details_id'] =
           dataModel.orgDetailsID?.toString() ?? '';
-      request.fields['created_by'] = dataModel.createdBy?.toString() ?? '';
+      request.fields['organisation_offer_discount_id'] =
+          dataModel.organisationOfferDiscountId?.toString() ?? '';
+      request.fields['created_by'] = dataModel.memberId?.toString() ?? '';
 
       // Convert medicines list to JSON string
       if (dataModel.medicines != null && dataModel.medicines!.isNotEmpty) {

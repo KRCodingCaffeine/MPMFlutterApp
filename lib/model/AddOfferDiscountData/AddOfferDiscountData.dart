@@ -5,6 +5,7 @@ class AddOfferDiscountData {
   int? createdBy;
   String? prescriptionImage;
   int? orgDetailsID;
+  int? organisationOfferDiscountId;
 
   AddOfferDiscountData({
     this.memberId,
@@ -13,6 +14,7 @@ class AddOfferDiscountData {
     this.createdBy,
     this.prescriptionImage,
     this.orgDetailsID,
+    this.organisationOfferDiscountId,
   });
 
   factory AddOfferDiscountData.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,7 @@ class AddOfferDiscountData {
       createdBy: json['created_by'],
       prescriptionImage: json['prescription_image'],
       orgDetailsID: json['org_details_id'],
+        organisationOfferDiscountId: json['organisation_offer_discount_id'],
     );
   }
 
@@ -36,12 +39,14 @@ class AddOfferDiscountData {
       'medicines': medicines?.map((x) => x.toJson()).toList(),
       'created_by': createdBy,
       'prescription_image': prescriptionImage,
-      'org_details_id': orgDetailsID
+      'org_details_id': orgDetailsID,
+      'organisation_offer_discount_id': organisationOfferDiscountId,
     };
   }
 }
 
 class Medicine {
+  int? organisationOfferDiscountId;
   int? orgDetailsID;
   String? medicineName;
   int? medicineContainerId;
@@ -49,6 +54,7 @@ class Medicine {
   int? quantity;
 
   Medicine({
+    this.organisationOfferDiscountId,
     this.orgDetailsID,
     this.medicineName,
     this.medicineContainerId,
@@ -58,6 +64,7 @@ class Medicine {
 
   factory Medicine.fromJson(Map<String, dynamic> json) {
     return Medicine(
+      organisationOfferDiscountId: json['organisation_offer_discount_id'],
       orgDetailsID: json['org_details_id'],
       medicineName: json['medicine_name']?.toString() ?? '',
       medicineContainerId: json['medicine_container_id'],
@@ -68,6 +75,7 @@ class Medicine {
 
   Map<String, dynamic> toJson() {
     return {
+      'organisation_offer_discount_id': organisationOfferDiscountId,
       'org_details_id': orgDetailsID,
       'medicine_name': medicineName,
       'medicine_container_id': medicineContainerId,
