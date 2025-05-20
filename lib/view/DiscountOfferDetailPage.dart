@@ -125,7 +125,6 @@ class DiscountOfferDetailPage extends StatelessWidget {
                     orgSubcategoryId: offer.orgSubcategoryId.toString(),
                   ),
                 )?.then((_) {
-                  // This will handle any messages when returning from AvailOfferPage
                   if (Get.arguments != null) {
                     final args = Get.arguments as Map<String, dynamic>;
                     Get.snackbar(
@@ -138,6 +137,72 @@ class DiscountOfferDetailPage extends StatelessWidget {
                   }
                 });
               }
+              // } else {
+              //   String applicantName = '';
+              //
+              //   showDialog(
+              //     context: Get.context!,
+              //     builder: (context) {
+              //       return AlertDialog(
+              //         backgroundColor: Colors.white,
+              //         title: const Text("Enter Applicant Name"),
+              //         content: Column(
+              //           mainAxisSize: MainAxisSize.min,
+              //           children: [
+              //             TextField(
+              //               decoration: const InputDecoration(
+              //                 labelText: "Applicant Name",
+              //                 border: OutlineInputBorder(),
+              //               ),
+              //               onChanged: (value) {
+              //                 applicantName = value;
+              //               },
+              //             ),
+              //             const SizedBox(height: 16),
+              //             const Text(
+              //               "This offer is not eligible for direct availing.",
+              //               style: TextStyle(fontSize: 14),
+              //             ),
+              //           ],
+              //         ),
+              //         actions: [
+              //           OutlinedButton(
+              //             style: OutlinedButton.styleFrom(
+              //               foregroundColor: Colors.redAccent,
+              //               side: const BorderSide(color: Colors.redAccent),
+              //             ),
+              //             onPressed: () {
+              //               Navigator.pop(context);
+              //             },
+              //             child: const Text("Cancel"),
+              //           ),
+              //           ElevatedButton(
+              //             style: ElevatedButton.styleFrom(
+              //               backgroundColor: Colors.redAccent,
+              //               foregroundColor: Colors.white,
+              //             ),
+              //             onPressed: () {
+              //               Navigator.pop(context);
+              //               print("Entered Applicant Name: $applicantName");
+              //
+              //               if (applicantName.isEmpty) {
+              //                 Get.snackbar(
+              //                   "Error",
+              //                   "Please enter applicant name",
+              //                   backgroundColor: Colors.red,
+              //                   colorText: Colors.white,
+              //                 );
+              //               } else {
+              //
+              //               }
+              //             },
+              //             child: const Text("OK"),
+              //           ),
+              //         ],
+              //       );
+              //     },
+              //   );
+              // }
             },
             child: const Text("Claim Offer", style: TextStyle(fontSize: 16)),
           ),
