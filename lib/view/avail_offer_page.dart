@@ -1,16 +1,12 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:mpm/model/AddOfferDiscountData/AddOfferDiscountData.dart';
-import 'package:mpm/model/Offer/OfferData.dart';
 import 'package:mpm/repository/add_offer_discount_repository/add_offer_discount_repo.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
-import 'package:mpm/view/DiscountOfferDetailPage.dart';
 import 'package:mpm/view/offer_claimed_view.dart';
 
 class AvailOfferPage extends StatefulWidget {
@@ -336,45 +332,40 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   color: Colors.black87,
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
             ],
           ),
           actions: [
-            TextButton(
+            OutlinedButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text("Close", style: TextStyle(color: Colors.redAccent),),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.redAccent,
+                side: const BorderSide(color: Colors.redAccent),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Cancel"),
             ),
             ElevatedButton(
               onPressed: () {
-                try {
-
-                  Navigator.pop(context, true);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ClaimedOfferListPage(
-                      ),
-                    ),
-                  );
-                } catch (e) {
-                  final offerData = OfferData.fromJson(responseData ?? {});
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => DiscountOfferDetailPage(offer: offerData,),
-                    ),
-                  );
-                }
+                Navigator.pop(context, true);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ClaimedOfferListPage(),
+                  ),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.redAccent,
               ),
-              child: const Text("View Details", style: TextStyle(color: Colors.white),),
+              child: const Text("View Details", style: TextStyle(color: Colors.white)),
             ),
           ],
         );
