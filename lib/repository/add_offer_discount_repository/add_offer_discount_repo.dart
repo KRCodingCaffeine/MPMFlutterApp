@@ -18,25 +18,43 @@ class AddOfferDiscountRepository {
 
       var request = http.MultipartRequest('POST', uri);
 
-      // In your submitOfferDiscount method, ensure all fields have values:
+      // Add all required fields
       request.fields['member_id'] = dataModel.memberId?.toString() ?? '';
       request.fields['org_subcategory_id'] =
           dataModel.orgSubcategoryId?.toString() ?? '';
       request.fields['org_details_id'] =
           dataModel.orgDetailsID?.toString() ?? '';
+      request.fields['organisation_offer_discount_id'] =
+          dataModel.organisationOfferDiscountId?.toString() ?? '';
       request.fields['created_by'] = dataModel.memberId?.toString() ?? '';
 
-      if (imageFile != null) {
+      // Convert medicines list to JSON string
+      if (dataModel.medicines != null && dataModel.medicines!.isNotEmpty) {
+        final medicinesJson = jsonEncode(dataModel.medicines!
+            .map((medicine) => medicine.toJson())
+            .toList());
+        request.fields['medicines'] = medicinesJson;
+      } else {
+        request.fields['medicines'] = '[]';
+      }
+
+      // Add image if available
+      if (imageFile != null && imageFile.existsSync()) {
         final mimeType = lookupMimeType(imageFile.path);
-        request.files.add(
-          await http.MultipartFile.fromPath(
-            'prescription_image',
-            imageFile.path,
-            contentType: mimeType != null
-                ? MediaType.parse(mimeType)
-                : MediaType('image', 'jpeg'),
-          ),
+        var fileStream = http.ByteStream(imageFile.openRead());
+        var length = await imageFile.length();
+
+        var multipartFile = http.MultipartFile(
+          'prescription_image',
+          fileStream,
+          length,
+          filename: imageFile.path.split('/').last,
+          contentType: mimeType != null
+              ? MediaType.parse(mimeType)
+              : MediaType('image', 'jpeg'),
         );
+
+        request.files.add(multipartFile);
       }
 
       final streamedResponse = await request.send();

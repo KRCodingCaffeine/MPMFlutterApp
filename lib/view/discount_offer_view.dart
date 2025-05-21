@@ -200,6 +200,7 @@ class _DiscountofferViewState extends State<DiscountofferView> {
                 else
                   Expanded(
                     child: RefreshIndicator(
+                      color: Colors.red,
                       onRefresh: _fetchData,
                       child: ListView.builder(
                         padding: const EdgeInsets.only(bottom: 12),

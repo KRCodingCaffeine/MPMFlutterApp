@@ -528,10 +528,12 @@ BuildContext? context= Get.context;
           ),
           title: Row(
             children: [
+
               Image.asset(
                 Images.logoImage,
                 height: 50,
                 width: 50,
+
               ),
               const SizedBox(width: 10),
               const Text("Login Verification"),
@@ -540,8 +542,10 @@ BuildContext? context= Get.context;
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+
               Text("Verify OTP for mobile $maskedNumber"),
               const SizedBox(height: 10),
+
             ],
           ),
           actions: [

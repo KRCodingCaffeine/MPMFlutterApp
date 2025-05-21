@@ -4,6 +4,7 @@ class OfferData {
   String? offerDescription;
   String? validFrom;
   String? validTo;
+  String? orgDetailsID;
   String? offerImage;
   String? mpmAuthorizedName;
   String? mpmAuthorizedMobile;
@@ -17,6 +18,7 @@ class OfferData {
   String? orgState;
   String? orgPincode;
   String? orgMobile;
+  String? orgWhatsApp;
   String? orgEmail;
   String? orgLogo;
   String? categoryName;
@@ -28,6 +30,7 @@ class OfferData {
     this.offerDescription,
     this.validFrom,
     this.validTo,
+    this.orgDetailsID,
     this.offerImage,
     this.mpmAuthorizedName,
     this.mpmAuthorizedMobile,
@@ -41,6 +44,7 @@ class OfferData {
     this.orgState,
     this.orgPincode,
     this.orgMobile,
+    this.orgWhatsApp,
     this.orgEmail,
     this.orgLogo,
     this.categoryName,
@@ -54,6 +58,7 @@ class OfferData {
       offerDescription: json['offer_description'],
       validFrom: json['valid_from'],
       validTo: json['valid_to'],
+      orgDetailsID: json['org_details_id'],
       offerImage: "https://members.mumbaimaheshwari.com/api/public/" +json['offer_image'],
       mpmAuthorizedName: json['mpm_authorized_name'],
       mpmAuthorizedMobile: json['mpm_authorized_mobile'],
@@ -67,6 +72,7 @@ class OfferData {
       orgState: json['org_state'],
       orgPincode: json['org_pincode'],
       orgMobile: json['org_mobile'],
+      orgWhatsApp: json['org_whatsapp'],
       orgEmail: json['org_email'],
       orgLogo: "https://members.mumbaimaheshwari.com/api/public/" +json['org_logo'],
       categoryName: json['category_name'],
@@ -81,6 +87,7 @@ class OfferData {
     data['offer_description'] = offerDescription;
     data['valid_from'] = validFrom;
     data['valid_to'] = validTo;
+    data['org_details_id'] = orgDetailsID;
     data['offer_image'] = offerImage;
     data['mpm_authorized_name'] = mpmAuthorizedName;
     data['mpm_authorized_mobile'] = mpmAuthorizedMobile;
@@ -94,6 +101,7 @@ class OfferData {
     data['org_state'] = orgState;
     data['org_pincode'] = orgPincode;
     data['org_mobile'] = orgMobile;
+    data['org_whatsapp'] = orgWhatsApp;
     data['org_email'] = orgEmail;
     data['org_logo'] = orgLogo;
     data['category_name'] = categoryName;
