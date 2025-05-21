@@ -62,9 +62,10 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
               ColorHelperClass.getColorFromHex(ColorResources.logo_color),
           iconTheme: const IconThemeData(color: Colors.white),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.grey[100],
         bottomNavigationBar: Container(
-          margin: const EdgeInsets.only(bottom: 20, left: 20, right: 20, top: 10),
+          margin:
+              const EdgeInsets.only(bottom: 20, left: 20, right: 20, top: 10),
           height: 50,
           child: Padding(
             padding: const EdgeInsets.only(left: 6.0, right: 6),
@@ -101,7 +102,8 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                               Get.snackbar(
                                 "Error",
                                 message,
-                                backgroundColor: ColorHelperClass.getColorFromHex(
+                                backgroundColor:
+                                    ColorHelperClass.getColorFromHex(
                                         ColorResources.red_color),
                                 colorText: Colors.white,
                                 snackPosition: SnackPosition.TOP,
@@ -200,7 +202,7 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                             child: Container(
                               margin: const EdgeInsets.only(left: 5, right: 5),
                               decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey),
+                                border: Border.all(color: Colors.black),
                                 borderRadius: BorderRadius.circular(5),
                               ),
                               child: Row(
@@ -208,15 +210,14 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                   Expanded(
                                     child: TextFormField(
                                       keyboardType: TextInputType.phone,
-                                      controller: regiController
-                                          .pincodeController.value,
+                                      controller: regiController.pincodeController.value,
                                       decoration: const InputDecoration(
                                         hintText: 'Pin Code *',
-                                        border: InputBorder
-                                            .none, // Remove the internal border
+                                        border: InputBorder.none,
                                         contentPadding: EdgeInsets.symmetric(
-                                            vertical: 8,
-                                            horizontal: 20), // Adjust padding
+                                          vertical: 8,
+                                          horizontal: 20,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -225,18 +226,10 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                     height: 48,
                                     child: ElevatedButton(
                                       onPressed: () {
-                                        print("fghjjhjjh" +
-                                            regiController
-                                                .pincodeController.value.text);
-                                        if (regiController
-                                                .pincodeController.value.text !=
-                                            '') {
-                                          var pincode = regiController
-                                              .pincodeController.value.text;
-                                          regiController
-                                              .zoneController.value.text = "";
-                                          regiController
-                                              .getCheckPinCode(pincode);
+                                        if (regiController.pincodeController.value.text != '') {
+                                          var pincode = regiController.pincodeController.value.text;
+                                          regiController.zoneController.value.text = "";
+                                          regiController.getCheckPinCode(pincode);
                                         } else {
                                           Get.snackbar(
                                             "Error",
@@ -248,12 +241,10 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                         }
                                       },
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            ColorHelperClass.getColorFromHex(
-                                                ColorResources.red_color),
+                                        backgroundColor: ColorHelperClass.getColorFromHex(
+                                            ColorResources.red_color),
                                         shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(5),
+                                          borderRadius: BorderRadius.circular(5),
                                         ),
                                       ),
                                       child: const Icon(
@@ -266,151 +257,105 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                               ),
                             ),
                           ),
-                          Obx((){
-                           return Visibility(
-                             visible: regiController.MandalZoneFlag.value,
-                               child:  Column(
-                                 children: [
-                                   const SizedBox(height: 20),
-                                   SizedBox(
-                                     width: double.infinity,
-                                     child: Container(
-                                       margin: const EdgeInsets.only(left: 5, right: 5),
-                                       decoration: BoxDecoration(
-                                         border: Border.all(color: Colors.grey),
-                                         borderRadius: BorderRadius.circular(5),
-                                       ),
-                                       child: Row(
-                                         children: [
-                                           Obx(() {
-                                             if (regiController.rxStatusBuilding.value ==
-                                                 Status.LOADING) {
-                                               return Padding(
-                                                 padding: const EdgeInsets.symmetric(
-                                                     vertical: 8, horizontal: 20),
-                                                 child: Container(
-                                                   alignment: Alignment.centerRight,
-                                                   height: 20,
-                                                   width: 20,
-                                                   child: CircularProgressIndicator(
-                                                     color: ColorHelperClass
-                                                         .getColorFromHex(
-                                                         ColorResources.pink_color),
-                                                   ),
-                                                 ),
-                                               );
-                                             } else if (regiController
-                                                 .rxStatusBuilding.value ==
-                                                 Status.ERROR) {
-                                               return const Center(
-                                                   child: Padding(
-                                                     padding: const EdgeInsets.symmetric(
-                                                         vertical: 13, horizontal: 20),
-                                                     child: Text(
-                                                         'Failed to load Building Name'),
-                                                   ));
-                                             } else if (regiController
-                                                 .rxStatusBuilding.value ==
-                                                 Status.IDLE) {
-                                               return const Center(
-                                                 child: Padding(
-                                                   padding: EdgeInsets.all(12.0),
-                                                   child: Text('Building Name *'),
-                                                 ),
-                                               );
-                                             } else if (regiController
-                                                 .checkPinCodeList.isEmpty) {
-                                               return const Center(
-                                                   child: Padding(
-                                                     padding: const EdgeInsets.symmetric(
-                                                         vertical: 13, horizontal: 24),
-                                                     child:
-                                                     Text('No Building Name available'),
-                                                   ));
-                                             } else {
-                                               return Expanded(
-                                                 child: DropdownButton<String>(
-                                                   padding: const EdgeInsets.symmetric(
-                                                       vertical: 8, horizontal: 20),
-                                                   isExpanded: true,
-                                                   underline: Container(),
-                                                   hint: const Text(
-                                                     'Select Building Name',
-                                                     style: TextStyle(
-                                                         fontWeight: FontWeight.bold),
-                                                   ),
-                                                   value: regiController
-                                                       .selectBuilding.value.isEmpty
-                                                       ? null
-                                                       : regiController
-                                                       .selectBuilding.value,
-                                                   items: regiController.checkPinCodeList
-                                                       .map((Building marital) {
-                                                     return DropdownMenuItem<String>(
-                                                       value: marital.id.toString(),
-                                                       child: Text(
-                                                           marital.buildingName ??
-                                                               'Unknown'),
-                                                     );
-                                                   }).toList(),
-                                                   onChanged: (String? newValue) {
-                                                     if (newValue != null) {
-                                                       regiController
-                                                           .selectBuilding(newValue);
-                                                       regiController.isBuilding.value =
-                                                           newValue == 'other';
-                                                     }
-                                                   },
-                                                 ),
-                                               );
-                                             }
-                                           }),
-                                           Obx(() {
-                                             return Visibility(
-                                               visible: regiController.isBuilding.value,
-                                               child: Expanded(
-                                                 child: TextFormField(
-                                                   controller: regiController
-                                                       .buildingController.value,
-                                                   keyboardType: TextInputType.text,
-                                                   validator: (value) {
-                                                     if (value!.isEmpty) {
-                                                       return 'Enter Building';
-                                                     }
-                                                     return null;
-                                                   },
-                                                   decoration: InputDecoration(
-                                                     hintText: 'Building Name',
-                                                     border: OutlineInputBorder(
-                                                       borderRadius:
-                                                       BorderRadius.circular(5),
-                                                       borderSide: BorderSide(
-                                                           color: Colors.grey),
-                                                     ),
-                                                     contentPadding:
-                                                     const EdgeInsets.symmetric(
-                                                         vertical: 8,
-                                                         horizontal: 20),
-                                                   ),
-                                                 ),
-                                               ),
-                                             );
-                                           }),
-                                         ],
-                                       ),
-                                     ),
-                                   ),
-                                   const SizedBox(height: 20),
-                                                           _buildEditableField(
-                                                                "Mandal Zone *",
-                                                                regiController.zoneController.value,
-                                                                "Mandal Zone *",
-                                                                "",
-                                                              readOnly: true
-                                                              ),
-                                 ],
-                               ));
-                         }),
+                          const SizedBox(height: 20),
+
+                          // Building Name
+                          Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(left: 5, right: 5),
+                            child: Row(
+                              children: [
+                                Obx(() {
+                                  if (regiController.rxStatusBuilding.value == Status.LOADING) {
+                                    return const Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                                      child: SizedBox(
+                                        height: 24,
+                                        width: 24,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.redAccent,
+                                        ),
+                                      ),
+                                    );
+                                  } else if (regiController.rxStatusBuilding.value == Status.ERROR) {
+                                    return const Center(
+                                      child: Text('Failed to load Building Name'),
+                                    );
+                                  } else {
+                                    final selectedValue = regiController.selectBuilding.value;
+                                    return Expanded(
+                                      child: InputDecorator(
+                                        decoration: InputDecoration(
+                                          labelText:
+                                          selectedValue.isNotEmpty ? 'Building Name *' : null,
+                                          border: const OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black),
+                                          ),
+                                          enabledBorder: const OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black),
+                                          ),
+                                          focusedBorder: const OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black38, width: 1),
+                                          ),
+                                          contentPadding:
+                                          const EdgeInsets.symmetric(horizontal: 20),
+                                          labelStyle: const TextStyle(color: Colors.black),
+                                        ),
+                                        child: DropdownButton<String>(
+                                          isExpanded: true,
+                                          underline: Container(),
+                                          dropdownColor: Colors.white,
+                                          borderRadius: BorderRadius.circular(10),
+                                          hint: const Text(
+                                            'Select Building *',
+                                            style: TextStyle(fontWeight: FontWeight.bold),
+                                          ),
+                                          value: selectedValue.isNotEmpty ? selectedValue : null,
+                                          items: regiController.checkPinCodeList.isEmpty
+                                              ? [
+                                            const DropdownMenuItem<String>(
+                                              value: '',
+                                              child: Text('Select Building'),
+                                            )
+                                          ]
+                                              : regiController.checkPinCodeList
+                                              .map((building) => DropdownMenuItem<String>(
+                                            value: building.id.toString(),
+                                            child:
+                                            Text(building.buildingName ?? 'Unknown'),
+                                          ))
+                                              .toList(),
+                                          onChanged: (String? newValue) {
+                                            if (newValue != null) {
+                                              regiController.selectBuilding(newValue);
+                                              regiController.isBuilding.value = newValue == 'other';
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                }),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          _buildEditableField(
+                              "Mandal Zone *",
+                              regiController.zoneController.value,
+                              "Mandal Zone *",
+                              "",
+                              readOnly: true),
+                          const SizedBox(height: 20),
+
+                          // Address
+                          _buildEditableField(
+                            'Address *',
+                            regiController.addressMemberController.value,
+                            'Enter Address',
+                            '',
+                          ),
                           const SizedBox(height: 20),
 
                           // Flat No
@@ -421,24 +366,18 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                             '',
                           ),
                           const SizedBox(height: 20),
-                          _buildEditableField(
-                            'Address *',
-                            regiController.addressMemberController.value,
-                            'Enter Address',
-                            '',
-                          ),
-                          const SizedBox(height: 20),
 
                           // Area
-                        Obx((){
-                          return   _buildEditableField(
-                              'Area *',
-                              regiController.areaController.value,
-                              'Enter Area Name',
-                              '',
-                              readOnly: regiController.countryNotFound.value?true: false
-                          );
-                        }),
+                          Obx(() {
+                            return _buildEditableField(
+                                'Area *',
+                                regiController.areaController.value,
+                                'Enter Area Name',
+                                '',
+                                readOnly: regiController.countryNotFound.value
+                                    ? true
+                                    : false);
+                          }),
                           Obx(() {
                             return Visibility(
                                 visible: regiController.countryNotFound.value,
@@ -490,13 +429,9 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                   children: [
                                     const SizedBox(height: 20),
                                     Container(
+                                      width: double.infinity,
                                       margin: const EdgeInsets.only(
                                           left: 5, right: 5),
-                                      width: double.infinity,
-                                      decoration: BoxDecoration(
-                                        border: Border.all(color: Colors.grey),
-                                        borderRadius: BorderRadius.circular(5),
-                                      ),
                                       child: Row(
                                         children: [
                                           Obx(() {
@@ -504,97 +439,124 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                                     .rxStatusCityLoading
                                                     .value ==
                                                 Status.LOADING) {
-                                              return Padding(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        vertical: 10,
-                                                        horizontal: 22),
-                                                child: Container(
-                                                    alignment:
-                                                        Alignment.centerRight,
-                                                    height: 24,
-                                                    width: 24,
-                                                    child:
-                                                        CircularProgressIndicator(
-                                                      color: ColorHelperClass
-                                                          .getColorFromHex(
-                                                              ColorResources
-                                                                  .pink_color),
-                                                    )),
+                                              return const Padding(
+                                                padding: EdgeInsets.symmetric(
+                                                    vertical: 10,
+                                                    horizontal: 22),
+                                                child: SizedBox(
+                                                  height: 24,
+                                                  width: 24,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    color: Colors.redAccent,
+                                                  ),
+                                                ),
                                               );
                                             } else if (regiController
                                                     .rxStatusCityLoading
                                                     .value ==
                                                 Status.ERROR) {
                                               return const Center(
-                                                  child: Padding(
-                                                padding: EdgeInsets.all(8.0),
-                                                child:
-                                                    Text('Failed to load city'),
-                                              ));
+                                                child: Padding(
+                                                  padding: EdgeInsets.all(8.0),
+                                                  child: Text(
+                                                      'Failed to load city'),
+                                                ),
+                                              );
                                             } else if (regiController
                                                 .cityList.isEmpty) {
                                               return const Center(
-                                                  child: Padding(
-                                                padding: EdgeInsets.all(8.0),
-                                                child:
-                                                    Text('No City available'),
-                                              ));
+                                                child: Padding(
+                                                  padding: EdgeInsets.all(8.0),
+                                                  child:
+                                                      Text('No City available'),
+                                                ),
+                                              );
                                             } else {
+                                              final selectedCity =
+                                                  regiController.city_id.value;
                                               return Expanded(
-                                                child: DropdownButton<String>(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                      horizontal: 20),
-                                                  underline: Container(),
-                                                  isExpanded: true,
-                                                  hint: const Text(
-                                                    'Select City *',
-                                                    style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
+                                                child: InputDecorator(
+                                                  decoration: InputDecoration(
+                                                    labelText:
+                                                        selectedCity.isNotEmpty
+                                                            ? 'City *'
+                                                            : null,
+                                                    border:
+                                                        const OutlineInputBorder(
+                                                      borderSide: BorderSide(
+                                                          color: Colors.black),
                                                     ),
+                                                    enabledBorder:
+                                                        const OutlineInputBorder(
+                                                      borderSide: BorderSide(
+                                                          color: Colors.black),
+                                                    ),
+                                                    focusedBorder:
+                                                        const OutlineInputBorder(
+                                                      borderSide: BorderSide(
+                                                          color: Colors.black38,
+                                                          width: 1),
+                                                    ),
+                                                    contentPadding:
+                                                        const EdgeInsets
+                                                            .symmetric(
+                                                            horizontal: 20,
+                                                            vertical: 0),
+                                                    labelStyle: const TextStyle(
+                                                        color: Colors.black),
                                                   ),
-                                                  value: regiController
-                                                          .city_id.value.isEmpty
-                                                      ? null
-                                                      : regiController
-                                                          .city_id.value,
-                                                  items: regiController.cityList
-                                                      .map((CityData gender) {
-                                                    return DropdownMenuItem<
-                                                        String>(
-                                                      value:
-                                                          gender.id.toString(),
-                                                      child: Text(
-                                                          gender.cityName ??
-                                                              'Unknown'),
-                                                    );
-                                                  }).toList(),
-                                                  onChanged:
-                                                      (String? newValue) {
-                                                    if (newValue != null) {
-                                                      regiController
-                                                          .setSelectedCity(
-                                                              newValue);
-                                                    }
-                                                  },
+                                                  child: DropdownButton<String>(
+                                                    dropdownColor: Colors.white,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10),
+                                                    isExpanded: true,
+                                                    underline: Container(),
+                                                    hint: const Text(
+                                                      'Select City *',
+                                                      style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold),
+                                                    ),
+                                                    value:
+                                                        selectedCity.isNotEmpty
+                                                            ? selectedCity
+                                                            : null,
+                                                    items: regiController
+                                                        .cityList
+                                                        .map((CityData city) {
+                                                      return DropdownMenuItem<
+                                                          String>(
+                                                        value:
+                                                            city.id.toString(),
+                                                        child: Text(
+                                                            city.cityName ??
+                                                                'Unknown'),
+                                                      );
+                                                    }).toList(),
+                                                    onChanged:
+                                                        (String? newValue) {
+                                                      if (newValue != null) {
+                                                        regiController
+                                                            .setSelectedCity(
+                                                                newValue);
+                                                      }
+                                                    },
+                                                  ),
                                                 ),
                                               );
                                             }
-                                          })
+                                          }),
                                         ],
                                       ),
                                     ),
                                     const SizedBox(height: 20),
+
                                     Container(
+                                      width: double.infinity,
                                       margin: const EdgeInsets.only(
                                           left: 5, right: 5),
-                                      width: double.infinity,
-                                      decoration: BoxDecoration(
-                                        border: Border.all(color: Colors.grey),
-                                        borderRadius: BorderRadius.circular(5),
-                                      ),
                                       child: Row(
                                         children: [
                                           Obx(() {
@@ -602,92 +564,124 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                                     .rxStatusStateLoading
                                                     .value ==
                                                 Status.LOADING) {
-                                              return Padding(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        vertical: 10,
-                                                        horizontal: 22),
-                                                child: Container(
-                                                    alignment:
-                                                        Alignment.centerRight,
-                                                    height: 24,
-                                                    width: 24,
-                                                    child:
-                                                        CircularProgressIndicator(
-                                                      color: ColorHelperClass
-                                                          .getColorFromHex(
-                                                              ColorResources
-                                                                  .pink_color),
-                                                    )),
+                                              return const Padding(
+                                                padding: EdgeInsets.symmetric(
+                                                    vertical: 10,
+                                                    horizontal: 22),
+                                                child: SizedBox(
+                                                  height: 24,
+                                                  width: 24,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    color: Colors.redAccent,
+                                                  ),
+                                                ),
                                               );
                                             } else if (regiController
                                                     .rxStatusStateLoading
                                                     .value ==
                                                 Status.ERROR) {
                                               return const Center(
+                                                child: Padding(
+                                                  padding: EdgeInsets.all(8.0),
                                                   child: Text(
-                                                      'Failed to load state'));
+                                                      'Failed to load state'),
+                                                ),
+                                              );
                                             } else if (regiController
                                                 .stateList.isEmpty) {
                                               return const Center(
+                                                child: Padding(
+                                                  padding: EdgeInsets.all(8.0),
                                                   child: Text(
-                                                      'No State available'));
+                                                      'No State available'),
+                                                ),
+                                              );
                                             } else {
+                                              final selectedState =
+                                                  regiController.state_id.value;
                                               return Expanded(
-                                                child: DropdownButton<String>(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                      horizontal: 20),
-                                                  underline: Container(),
-                                                  isExpanded: true,
-                                                  hint: const Text(
-                                                    'Select State *',
-                                                    style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
+                                                child: InputDecorator(
+                                                  decoration: InputDecoration(
+                                                    labelText:
+                                                        selectedState.isNotEmpty
+                                                            ? 'State *'
+                                                            : null,
+                                                    border:
+                                                        const OutlineInputBorder(
+                                                      borderSide: BorderSide(
+                                                          color: Colors.black),
                                                     ),
+                                                    enabledBorder:
+                                                        const OutlineInputBorder(
+                                                      borderSide: BorderSide(
+                                                          color: Colors.black),
+                                                    ),
+                                                    focusedBorder:
+                                                        const OutlineInputBorder(
+                                                      borderSide: BorderSide(
+                                                          color: Colors.black38,
+                                                          width: 1),
+                                                    ),
+                                                    contentPadding:
+                                                        const EdgeInsets
+                                                            .symmetric(
+                                                            horizontal: 20,
+                                                            vertical: 0),
+                                                    labelStyle: const TextStyle(
+                                                        color: Colors.black),
                                                   ),
-                                                  value: regiController.state_id
-                                                          .value.isEmpty
-                                                      ? null
-                                                      : regiController
-                                                          .state_id.value,
-                                                  items: regiController
-                                                      .stateList
-                                                      .map((StateData gender) {
-                                                    return DropdownMenuItem<
-                                                        String>(
-                                                      value:
-                                                          gender.id.toString(),
-                                                      child: Text(
-                                                          gender.stateName ??
-                                                              'Unknown'),
-                                                    );
-                                                  }).toList(),
-                                                  onChanged:
-                                                      (String? newValue) {
-                                                    if (newValue != null) {
-                                                      regiController
-                                                          .setSelectedState(
-                                                              newValue);
-                                                    }
-                                                  },
+                                                  child: DropdownButton<String>(
+                                                    dropdownColor: Colors.white,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10),
+                                                    isExpanded: true,
+                                                    underline: Container(),
+                                                    hint: const Text(
+                                                      'Select State *',
+                                                      style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold),
+                                                    ),
+                                                    value:
+                                                        selectedState.isNotEmpty
+                                                            ? selectedState
+                                                            : null,
+                                                    items: regiController
+                                                        .stateList
+                                                        .map((StateData state) {
+                                                      return DropdownMenuItem<
+                                                          String>(
+                                                        value:
+                                                            state.id.toString(),
+                                                        child: Text(
+                                                            state.stateName ??
+                                                                'Unknown'),
+                                                      );
+                                                    }).toList(),
+                                                    onChanged:
+                                                        (String? newValue) {
+                                                      if (newValue != null) {
+                                                        regiController
+                                                            .setSelectedState(
+                                                                newValue);
+                                                      }
+                                                    },
+                                                  ),
                                                 ),
                                               );
                                             }
-                                          })
+                                          }),
                                         ],
                                       ),
                                     ),
                                     const SizedBox(height: 20),
+
                                     Container(
+                                      width: double.infinity,
                                       margin: const EdgeInsets.only(
                                           left: 5, right: 5),
-                                      width: double.infinity,
-                                      decoration: BoxDecoration(
-                                        border: Border.all(color: Colors.grey),
-                                        borderRadius: BorderRadius.circular(5),
-                                      ),
                                       child: Row(
                                         children: [
                                           Obx(() {
@@ -695,83 +689,116 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                                     .rxStatusCountryLoading
                                                     .value ==
                                                 Status.LOADING) {
-                                              return Padding(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        vertical: 10,
-                                                        horizontal: 22),
-                                                child: Container(
-                                                    alignment:
-                                                        Alignment.centerRight,
-                                                    height: 24,
-                                                    width: 24,
-                                                    child:
-                                                        CircularProgressIndicator(
-                                                      color: ColorHelperClass
-                                                          .getColorFromHex(
-                                                              ColorResources
-                                                                  .pink_color),
-                                                    )),
+                                              return const Padding(
+                                                padding: EdgeInsets.symmetric(
+                                                    vertical: 10,
+                                                    horizontal: 22),
+                                                child: SizedBox(
+                                                  height: 24,
+                                                  width: 24,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    color: Colors.redAccent,
+                                                  ),
+                                                ),
                                               );
                                             } else if (regiController
                                                     .rxStatusCountryLoading
                                                     .value ==
                                                 Status.ERROR) {
                                               return const Center(
+                                                child: Padding(
+                                                  padding: EdgeInsets.all(8.0),
                                                   child: Text(
-                                                      'Failed to load country'));
+                                                      'Failed to load country'),
+                                                ),
+                                              );
                                             } else if (regiController
                                                 .countryList.isEmpty) {
                                               return const Center(
+                                                child: Padding(
+                                                  padding: EdgeInsets.all(8.0),
                                                   child: Text(
-                                                      'No Country available'));
+                                                      'No Country available'),
+                                                ),
+                                              );
                                             } else {
+                                              final selectedCountry =
+                                                  regiController
+                                                      .country_id.value;
                                               return Expanded(
-                                                child: DropdownButton<String>(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                      horizontal: 20),
-                                                  underline: Container(),
-                                                  isExpanded: true,
-                                                  hint: const Text(
-                                                    'Select Country *',
-                                                    style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
+                                                child: InputDecorator(
+                                                  decoration: InputDecoration(
+                                                    labelText: selectedCountry
+                                                            .isNotEmpty
+                                                        ? 'Country *'
+                                                        : null,
+                                                    border:
+                                                        const OutlineInputBorder(
+                                                      borderSide: BorderSide(
+                                                          color: Colors.black),
                                                     ),
+                                                    enabledBorder:
+                                                        const OutlineInputBorder(
+                                                      borderSide: BorderSide(
+                                                          color: Colors.black),
+                                                    ),
+                                                    focusedBorder:
+                                                        const OutlineInputBorder(
+                                                      borderSide: BorderSide(
+                                                          color: Colors.black38,
+                                                          width: 1),
+                                                    ),
+                                                    contentPadding:
+                                                        const EdgeInsets
+                                                            .symmetric(
+                                                            horizontal: 20),
+                                                    labelStyle: const TextStyle(
+                                                        color: Colors.black),
                                                   ),
-                                                  value: regiController
-                                                          .country_id
-                                                          .value
-                                                          .isEmpty
-                                                      ? null
-                                                      : regiController
-                                                          .country_id.value,
-                                                  items: regiController
-                                                      .countryList
-                                                      .map(
-                                                          (CountryData gender) {
-                                                    return DropdownMenuItem<
-                                                        String>(
-                                                      value:
-                                                          gender.id.toString(),
-                                                      child: Text(
-                                                          gender.countryName ??
-                                                              'Unknown'),
-                                                    );
-                                                  }).toList(),
-                                                  onChanged:
-                                                      (String? newValue) {
-                                                    if (newValue != null) {
-                                                      regiController
-                                                          .setSelectedCountry(
-                                                              newValue);
-                                                    }
-                                                  },
+                                                  child: DropdownButton<String>(
+                                                    dropdownColor: Colors.white,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10),
+                                                    isExpanded: true,
+                                                    underline: Container(),
+                                                    hint: const Text(
+                                                      'Select Country *',
+                                                      style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold),
+                                                    ),
+                                                    value: selectedCountry
+                                                            .isNotEmpty
+                                                        ? selectedCountry
+                                                        : null,
+                                                    items: regiController
+                                                        .countryList
+                                                        .map((CountryData
+                                                            country) {
+                                                      return DropdownMenuItem<
+                                                          String>(
+                                                        value: country.id
+                                                            .toString(),
+                                                        child: Text(country
+                                                                .countryName ??
+                                                            'Unknown'),
+                                                      );
+                                                    }).toList(),
+                                                    onChanged:
+                                                        (String? newValue) {
+                                                      if (newValue != null) {
+                                                        regiController
+                                                            .setSelectedCountry(
+                                                                newValue);
+                                                      }
+                                                    },
+                                                  ),
                                                 ),
                                               );
                                             }
-                                          })
+                                          }),
                                         ],
                                       ),
                                     ),
@@ -786,94 +813,73 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                           Container(
                             width: double.infinity,
                             margin: const EdgeInsets.only(left: 5, right: 5),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(5),
-                            ),
                             child: Row(
                               children: [
                                 Obx(() {
-                                  if (regiController.withoutcheckotp.value ==
-                                      false) {
-                                  } else {
-                                    if (fal.value == false) {
-                                      regiController.getMemberShip();
-                                      fal.value = true;
-                                    }
+                                  if (!fal.value) {
+                                    regiController.getMemberShip();
+                                    fal.value = true;
                                   }
-                                  if (regiController
-                                          .rxStatusMemberShipTYpe.value ==
-                                      Status.LOADING) {
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 10, horizontal: 22),
-                                      child: Container(
-                                          alignment: Alignment.centerRight,
-                                          height: 24,
-                                          width: 24,
-                                          child: CircularProgressIndicator(
-                                            color: ColorHelperClass
-                                                .getColorFromHex(
-                                                    ColorResources.red_color),
-                                          )),
-                                    );
-                                  } else if (regiController
-                                          .rxStatusMemberShipTYpe.value ==
-                                      Status.ERROR) {
-                                    return const Center(
-                                        child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 13, horizontal: 20),
-                                      child: Text(' No Data'),
-                                    ));
-                                  } else if (regiController
-                                      .memberShipList.isEmpty) {
-                                    return const Center(
-                                        child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 13, horizontal: 20),
-                                      child: Text('No  Membership available'),
-                                    ));
-                                  } else {
-                                    return Expanded(
-                                      child: DropdownButton<String>(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 20),
-                                        isExpanded: true,
-                                        underline: Container(),
-                                        hint: const Text(
-                                          'MemberShip *',
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold),
-                                        ), // Hint to show when nothing is selected
-                                        value: regiController
-                                                .selectMemberShipType
-                                                .value
-                                                .isEmpty
-                                            ? null
-                                            : regiController
-                                                .selectMemberShipType.value,
 
-                                        items: regiController.memberShipList
-                                            .map((MemberShipData marital) {
-                                          return DropdownMenuItem<String>(
-                                            value: marital.id
-                                                .toString(), // Use unique ID or any unique property.
-                                            child: Text("" +
-                                                marital.membershipName
-                                                    .toString() +
-                                                "- " +
-                                                "Rs " +
-                                                marital.price
-                                                    .toString()), // Display name from DataX.
-                                          );
-                                        }).toList(), // Convert to List.
-                                        onChanged: (String? newValue) {
-                                          if (newValue != null) {
-                                            regiController
-                                                .selectMemberShipType(newValue);
-                                          }
-                                        },
+                                  if (regiController.rxStatusMemberShipTYpe.value == Status.LOADING) {
+                                    return const Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                                      child: SizedBox(
+                                        height: 24,
+                                        width: 24,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.redAccent,
+                                        ),
+                                      ),
+                                    );
+                                  } else if (regiController.rxStatusMemberShipTYpe.value == Status.ERROR) {
+                                    return const Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 13, horizontal: 20),
+                                      child: Text('No Data'),
+                                    );
+                                  } else if (regiController.memberShipList.isEmpty) {
+                                    return const Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 13, horizontal: 20),
+                                      child: Text('No Membership available'),
+                                    );
+                                  } else {
+                                    final selectedMember = regiController.selectMemberShipType.value;
+                                    return Expanded(
+                                      child: InputDecorator(
+                                        decoration: InputDecoration(
+                                          labelText: selectedMember.isNotEmpty ? 'Membership *' : null,
+                                          border: const OutlineInputBorder(),
+                                          enabledBorder: const OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black),
+                                          ),
+                                          focusedBorder: const OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black38, width: 1),
+                                          ),
+                                          contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                          labelStyle: const TextStyle(color: Colors.black),
+                                        ),
+                                        child: DropdownButton<String>(
+                                          dropdownColor: Colors.white,
+                                          borderRadius: BorderRadius.circular(10),
+                                          isExpanded: true,
+                                          underline: Container(),
+                                          hint: const Text(
+                                            'Membership *',
+                                            style: TextStyle(fontWeight: FontWeight.bold),
+                                          ),
+                                          value: selectedMember.isNotEmpty ? selectedMember : null,
+                                          items: regiController.memberShipList.map((MemberShipData ms) {
+                                            return DropdownMenuItem<String>(
+                                              value: ms.id.toString(),
+                                              child: Text("${ms.membershipName ?? 'Unknown'} - Rs ${ms.price ?? '0'}"),
+                                            );
+                                          }).toList(),
+                                          onChanged: (String? newValue) {
+                                            if (newValue != null) {
+                                              regiController.selectMemberShipType(newValue);
+                                            }
+                                          },
+                                        ),
                                       ),
                                     );
                                   }
@@ -887,76 +893,96 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                           Container(
                             width: double.infinity,
                             margin: const EdgeInsets.only(left: 5, right: 5),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(5),
-                            ),
                             child: Row(
                               children: [
                                 Obx(() {
                                   if (regiController.rxStatusDocument.value ==
                                       Status.LOADING) {
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(
+                                    return const Padding(
+                                      padding: EdgeInsets.symmetric(
                                           vertical: 10, horizontal: 22),
-                                      child: Container(
-                                          alignment: Alignment.centerRight,
-                                          height: 24,
-                                          width: 24,
-                                          child: CircularProgressIndicator(
-                                            color: ColorHelperClass
-                                                .getColorFromHex(
-                                                    ColorResources.red_color),
-                                          )),
+                                      child: SizedBox(
+                                        height: 24,
+                                        width: 24,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.redAccent,
+                                        ),
+                                      ),
                                     );
                                   } else if (regiController
                                           .rxStatusDocument.value ==
                                       Status.ERROR) {
-                                    return const Center(
-                                        child: Padding(
-                                      padding: const EdgeInsets.symmetric(
+                                    return const Padding(
+                                      padding: EdgeInsets.symmetric(
                                           vertical: 10, horizontal: 22),
-                                      child: Text(' No Data'),
-                                    ));
+                                      child: Text('No Data'),
+                                    );
                                   } else if (regiController
                                       .documntTypeList.isEmpty) {
-                                    return const Center(
-                                        child: Text(
-                                            'No  Address Proof available'));
+                                    return const Padding(
+                                      padding: EdgeInsets.all(8.0),
+                                      child: Text('No Address Proof available'),
+                                    );
                                   } else {
+                                    final selectedProof =
+                                        regiController.selectDocumentType.value;
                                     return Expanded(
-                                      child: DropdownButton<String>(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 20),
-                                        isExpanded: true,
-                                        underline: Container(),
-                                        hint: const Text(
-                                          'Address Proof *',
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold),
-                                        ), // Hint to show when nothing is selected
-                                        value: regiController.selectDocumentType
-                                                .value.isEmpty
-                                            ? null
-                                            : regiController
-                                                .selectDocumentType.value,
-
-                                        items: regiController.documntTypeList
-                                            .map((DocumentTypeData marital) {
-                                          return DropdownMenuItem<String>(
-                                            value: marital.id
-                                                .toString(), // Use unique ID or any unique property.
-                                            child: Text(marital.documentType
-                                                    .toString() ??
-                                                'Unknown'), // Display name from DataX.
-                                          );
-                                        }).toList(), // Convert to List.
-                                        onChanged: (String? newValue) {
-                                          if (newValue != null) {
-                                            regiController
-                                                .setDocumentType(newValue);
-                                          }
-                                        },
+                                      child: InputDecorator(
+                                        decoration: InputDecoration(
+                                          labelText: selectedProof.isNotEmpty
+                                              ? 'Address Proof *'
+                                              : null,
+                                          border: const OutlineInputBorder(
+                                            borderSide:
+                                                BorderSide(color: Colors.black),
+                                          ),
+                                          enabledBorder:
+                                              const OutlineInputBorder(
+                                            borderSide:
+                                                BorderSide(color: Colors.black),
+                                          ),
+                                          focusedBorder:
+                                              const OutlineInputBorder(
+                                            borderSide: BorderSide(
+                                                color: Colors.black38,
+                                                width: 1),
+                                          ),
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  horizontal: 20),
+                                          labelStyle: const TextStyle(
+                                              color: Colors.black),
+                                        ),
+                                        child: DropdownButton<String>(
+                                          dropdownColor: Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          isExpanded: true,
+                                          underline: Container(),
+                                          hint: const Text(
+                                            'Address Proof *',
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                          value: selectedProof.isNotEmpty
+                                              ? selectedProof
+                                              : null,
+                                          items: regiController.documntTypeList
+                                              .map((DocumentTypeData doc) {
+                                            return DropdownMenuItem<String>(
+                                              value: doc.id.toString(),
+                                              child: Text(doc.documentType
+                                                      ?.toString() ??
+                                                  'Unknown'),
+                                            );
+                                          }).toList(),
+                                          onChanged: (String? newValue) {
+                                            if (newValue != null) {
+                                              regiController
+                                                  .setDocumentType(newValue);
+                                            }
+                                          },
+                                        ),
                                       ),
                                     );
                                   }
@@ -977,23 +1003,23 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                     child: Wrap(
                                       children: <Widget>[
                                         ListTile(
-                                          leading:
-                                              const Icon(Icons.photo_library),
-                                          title:
-                                              const Text('Pick from Gallery'),
-                                          onTap: () async {
-                                            Navigator.pop(context);
-                                            await _pickImage(
-                                                ImageSource.gallery);
-                                          },
-                                        ),
-                                        ListTile(
-                                          leading: const Icon(Icons.camera_alt),
+                                          leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
                                           title: const Text('Take a Picture'),
                                           onTap: () async {
                                             Navigator.pop(context);
                                             await _pickImage(
                                                 ImageSource.camera);
+                                          },
+                                        ),
+                                        ListTile(
+                                          leading:
+                                              const Icon(Icons.photo_library, color: Colors.redAccent),
+                                          title:
+                                              const Text('Choose from Gallery'),
+                                          onTap: () async {
+                                            Navigator.pop(context);
+                                            await _pickImage(
+                                                ImageSource.gallery);
                                           },
                                         ),
                                       ],
@@ -1071,9 +1097,7 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
 
   Widget _buildEditableField(String label, TextEditingController controller,
       String hintText, String validationMessage,
-      {bool obscureText = false,
-        bool readOnly = false
-      }) {
+      {bool obscureText = false, bool readOnly = false}) {
     return Container(
       margin: const EdgeInsets.only(left: 5, right: 5),
       child: TextFormField(
@@ -1090,13 +1114,13 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
           hintStyle: const TextStyle(
               color: Colors.black54), // Slightly dimmed black for hint text
           border: const OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.grey),
+            borderSide: BorderSide(color: Colors.black),
           ),
           enabledBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.grey),
+            borderSide: BorderSide(color: Colors.black),
           ),
           focusedBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.grey, width: 0.5),
+            borderSide: BorderSide(color: Colors.black38, width: 1),
           ),
           contentPadding: const EdgeInsets.symmetric(
             vertical: 12,
@@ -1113,7 +1137,7 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
     );
   }
 
-   Future<void> _pickImage(ImageSource source) async {
+  Future<void> _pickImage(ImageSource source) async {
     final XFile? pickedFile = await _picker.pickImage(source: source);
     if (pickedFile != null) {
       setState(() {

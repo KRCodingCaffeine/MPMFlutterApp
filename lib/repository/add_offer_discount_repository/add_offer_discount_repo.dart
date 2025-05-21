@@ -39,17 +39,22 @@ class AddOfferDiscountRepository {
       }
 
       // Add image if available
-      if (imageFile != null) {
+      if (imageFile != null && imageFile.existsSync()) {
         final mimeType = lookupMimeType(imageFile.path);
-        request.files.add(
-          await http.MultipartFile.fromPath(
-            'prescription_image',
-            imageFile.path,
-            contentType: mimeType != null
-                ? MediaType.parse(mimeType)
-                : MediaType('image', 'jpeg'),
-          ),
+        var fileStream = http.ByteStream(imageFile.openRead());
+        var length = await imageFile.length();
+
+        var multipartFile = http.MultipartFile(
+          'prescription_image',
+          fileStream,
+          length,
+          filename: imageFile.path.split('/').last,
+          contentType: mimeType != null
+              ? MediaType.parse(mimeType)
+              : MediaType('image', 'jpeg'),
         );
+
+        request.files.add(multipartFile);
       }
 
       final streamedResponse = await request.send();

@@ -244,18 +244,27 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
     }
 
     try {
-      final medicines = offerList
-          .map((e) => Medicine(
-          organisationOfferDiscountId: int.tryParse(organisationOfferDiscountId) ?? 0,
-        orgDetailsID: int.tryParse(orgDetailsID) ?? 0,
-                medicineName: e['medicine_name']?.toString() ?? '',
-                medicineContainerId: int.tryParse(
-                        e['medicine_container_id']?.toString() ?? '0') ??
-                    0,
-                quantity: (e['quantity'] as int?) ?? 1,
-              ))
-          .toList();
+      // Verify image file exists if selected
+      File? imageFile;
+      if (selectedImage != null) {
+        imageFile = File(selectedImage!.path);
+        if (!imageFile.existsSync()) {
+          await _showErrorDialog("Selected image file not found");
+          return;
+        }
+      }
 
+      // Prepare medicines list
+      final medicines = offerList.map((e) => Medicine(
+        organisationOfferDiscountId: int.tryParse(organisationOfferDiscountId) ?? 0,
+        orgDetailsID: int.tryParse(orgDetailsID) ?? 0,
+        medicineName: e['medicine_name']?.toString() ?? '',
+        medicineContainerId: int.tryParse(e['medicine_container_id']?.toString() ?? '0') ?? 0,
+        medicineContainerName: e['medicine_container_name']?.toString(),
+        quantity: (e['quantity'] as int?) ?? 1,
+      )).toList();
+
+      // Prepare offer model
       final offerModel = AddOfferDiscountData(
         memberId: int.tryParse(memberId!) ?? 0,
         orgSubcategoryId: int.tryParse(orgSubcategoryId) ?? 0,
@@ -265,38 +274,50 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
         medicines: medicines,
       );
 
-      final response = await _repository.submitOfferDiscount(
-        offerModel,
-        selectedImage != null ? File(selectedImage!.path) : null,
-      );
+      // Debug print the data being sent
+      debugPrint('Submitting offer with data: ${offerModel.toJson()}');
+      if (imageFile != null) {
+        debugPrint('Image file path: ${imageFile.path}');
+        debugPrint('Image file exists: ${imageFile.existsSync()}');
+      }
 
-      if (response != null &&
-          response is Map<String, dynamic> &&
-          (response['status'] as bool?) == true) {
-        final success = await _showSuccessDialog(
-          "Offer claimed successfully!",
-          response['data'] ?? {},
-        );
+      // Submit the offer
+      final response = await _repository.submitOfferDiscount(offerModel, imageFile);
 
-        if (success == true) {
-          setState(() {
-            offerList.clear();
-            selectedImage = null;
-          });
-          if (mounted) {
-            Navigator.pop(context, {
-              'success': true,
-              'message': 'Offer claimed successfully',
-              'org_details_id': orgDetailsID,
+      // Handle response
+      if (response != null && response is Map<String, dynamic>) {
+        if (response['status'] == true) {
+          final success = await _showSuccessDialog(
+            "Offer claimed successfully!",
+            response['data'] ?? {},
+          );
+
+          if (success == true) {
+            setState(() {
+              offerList.clear();
+              selectedImage = null;
             });
+            if (mounted) {
+              Navigator.pop(context, {
+                'success': true,
+                'message': 'Offer claimed successfully',
+                'org_details_id': orgDetailsID,
+              });
+            }
           }
+        } else {
+          await _showErrorDialog(
+            response['message']?.toString() ?? "Failed to submit offer",
+          );
         }
       } else {
-        await _showErrorDialog(
-            response?['message']?.toString() ?? "Failed to submit offer");
+        await _showErrorDialog("Invalid response from server");
       }
     } catch (e) {
-      await _showErrorDialog("Error: ${e.toString()}");
+      debugPrint('Error submitting offer: $e');
+      await _showErrorDialog(
+        "Error: ${e.toString().replaceAll('Exception:', '').trim()}",
+      );
     }
   }
 
@@ -354,13 +375,15 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
             ),
             ElevatedButton(
               onPressed: () {
-                Navigator.pop(context, true);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ClaimedOfferListPage(),
-                  ),
-                );
+                Navigator.of(context).pop(true); // Close the dialog first
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ClaimedOfferListPage(),
+                    ),
+                  );
+                });
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.redAccent,
