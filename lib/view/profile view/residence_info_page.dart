@@ -616,7 +616,7 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                                   width: double.infinity,
                                   child: _buildTextField(
                                     label:   'Country *',
-                                    controller:   regiController.countryController,
+                                    controller: regiController.countryController,
                                     empty:   'Enter Country Name',
                                       text: TextInputType.text,
                                       readOnly: true),
@@ -662,11 +662,11 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                                                 child: Text('Failed to load city'),
                                               ));
                                         } else if (regiController
-                                            .cityList.isEmpty) {
+                                            .cityList.value.length>0) {
                                           return const Center(
                                               child: Padding(
                                                 padding: EdgeInsets.all(8.0),
-                                                child: Text('No City available'),
+                                                child: Text('please search pincode'),
                                               ));
                                         } else {
                                           return Expanded(

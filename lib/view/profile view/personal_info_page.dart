@@ -120,8 +120,10 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                             subtitle: controller.email.value);
                       }),
                       SizedBox(height: 20),
-                      _buildInfoBox('Date of Birth',
-                          subtitle: controller.dob.value),
+                      Obx((){
+                        return _buildInfoBox('Date of Birth',
+                            subtitle: controller.dob.value);
+                      }),
                       SizedBox(height: 20),
                       Obx(() {
                         return _buildInfoBox('Gender',

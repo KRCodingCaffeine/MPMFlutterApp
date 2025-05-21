@@ -2,7 +2,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/route/route_name.dart';
-import 'package:mpm/utils/FirebaseFCMApi.dart';
+
 import 'package:mpm/utils/app_constants.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
@@ -180,18 +180,40 @@ class _LoginPageState extends State<LoginPage> {
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: Colors.grey),
                             ),
-                            child: CompositedTransformTarget(
-                              link: _layerLink,
-                              child: TextFormField(
-                                focusNode: _mobileFocusNode,
-                                controller: mobileController,
-                                keyboardType: TextInputType.text,
-                                decoration: const InputDecoration(
-                                  hintText:
-                                      'Enter Your Mobile / Membership Code',
-                                  border: InputBorder.none,
-                                  contentPadding:
-                                      EdgeInsets.symmetric(vertical: 8),
+                            child: Row(
+                              children: [
+                                const SizedBox(width: 18),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: mobileController,
+                                    keyboardType: TextInputType.text,
+                                    decoration: const InputDecoration(
+                                      hintText: 'Enter Your Mobile / Membership Code',
+                                      border: InputBorder.none,
+                                      contentPadding:
+                                          EdgeInsets.symmetric(vertical: 8),
+                                    ),
+                                    validator: (value) {
+                                      if (value!.isEmpty) {
+                                        return 'Enter Membeship code / Mobile number';
+                                      } else if (RegExp(r'^[0-9]+$')
+                                          .hasMatch(value)) {
+                                        // If input contains only numbers
+
+                                         controller.isMobileValid.value = true;
+
+
+                                      } else if (RegExp(r'^[a-zA-Z]+$')
+                                          .hasMatch(value)) {
+
+
+                                        controller.isMobileValid.value = false;
+                                      } else {
+                                        return null;
+                                      }
+                                    },
+                                  ),
+
                                 ),
                                 validator: (value) {
                                   if (value!.isEmpty) {
@@ -337,13 +359,10 @@ class _LoginPageState extends State<LoginPage> {
                                           mobileController!.text, context);
                                     }
                                   } else {
-                                    if (controller.otherMobVisible.value ==
-                                        false) {
-                                      controller.checkUser(
-                                          lmController!.text, context);
+                                    if (controller.otherMobVisible.value == false) {
+                                      controller.checkUser(lmController!.text, context);
                                     } else {
-                                      controller.checkUser(
-                                          otherMobileontroller!.text, context);
+                                      controller.updatemobileno(otherMobileontroller!.text,);
                                     }
                                   }
                                 }

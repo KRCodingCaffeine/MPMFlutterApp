@@ -221,6 +221,9 @@ class NewMemberController extends GetxController {
     api.CityApi().then((_value) {
       setRxRequestCity(Status.COMPLETE);
       setCity(_value.data!);
+      final ids = cityList.map((e) => e.id.toString()).toList();
+      final duplicates = ids.toSet().where((id) => ids.where((x) => x == id).length > 1);
+      print('Duplicate IDs: $duplicates');
     }).onError((error,strack) {
       setRxRequestCity(Status.ERROR);
     });
@@ -236,7 +239,7 @@ class NewMemberController extends GetxController {
   void setSelectedState(String value) {
     state_id(value);
   }void setSelectedCity(String value) {
-    city_id(value);
+    city_id.value=value;
   }
 
   void setSelectedBuilding(String value) {
