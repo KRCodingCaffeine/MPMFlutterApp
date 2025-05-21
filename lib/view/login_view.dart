@@ -2,7 +2,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/route/route_name.dart';
-import 'package:mpm/utils/FirebaseFCMApi.dart';
+
 import 'package:mpm/utils/app_constants.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
@@ -112,10 +112,15 @@ class _LoginPageState extends State<LoginPage> {
                                       } else if (RegExp(r'^[0-9]+$')
                                           .hasMatch(value)) {
                                         // If input contains only numbers
-                                        controller.isNumber.value = true;
+
+                                         controller.isMobileValid.value = true;
+
+
                                       } else if (RegExp(r'^[a-zA-Z]+$')
                                           .hasMatch(value)) {
-                                        controller.isNumber.value = false;
+
+
+                                        controller.isMobileValid.value = false;
                                       } else {
                                         return null;
                                       }
@@ -254,13 +259,10 @@ class _LoginPageState extends State<LoginPage> {
                                           mobileController!.text, context);
                                     }
                                   } else {
-                                    if (controller.otherMobVisible.value ==
-                                        false) {
-                                      controller.checkUser(
-                                          lmController!.text, context);
+                                    if (controller.otherMobVisible.value == false) {
+                                      controller.checkUser(lmController!.text, context);
                                     } else {
-                                      controller.checkUser(
-                                          otherMobileontroller!.text, context);
+                                      controller.updatemobileno(otherMobileontroller!.text,);
                                     }
                                   }
                                 }
