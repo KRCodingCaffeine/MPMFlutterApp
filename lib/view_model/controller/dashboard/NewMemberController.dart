@@ -33,13 +33,15 @@ import 'package:mpm/repository/register_repository/register_repo.dart';
 import 'package:http/http.dart' as http;
 import 'package:mpm/route/route_name.dart';
 import 'package:mpm/utils/Session.dart';
+import 'package:mpm/utils/color_helper.dart';
+import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/images.dart';
 import 'package:mpm/utils/urls.dart';
 
 class NewMemberController extends GetxController {
   final api = RegisterRepository();
   var loading = false.obs;
-  var withoutcheckotp=false.obs;
+  var withoutcheckotp = false.obs;
   RxBool isChecked = false.obs;
   final rxStatusCountryLoading = Status.IDLE.obs;
   final rxStatusStateLoading = Status.IDLE.obs;
@@ -56,19 +58,18 @@ class NewMemberController extends GetxController {
   final rxStatusDocument = Status.LOADING.obs;
   final rxStatusMemberShipTYpe = Status.LOADING.obs;
 
-  var arg_page="".obs;
-  var state_id="".obs;
-  var city_id="".obs;
-  var area_name="".obs;
-  var zone_id="".obs;
-  var country_id="".obs;
+  var arg_page = "".obs;
+  var state_id = "".obs;
+  var city_id = "".obs;
+  var area_name = "".obs;
+  var zone_id = "".obs;
+  var country_id = "".obs;
   var genderList = <DataX>[].obs;
   var selectedGender = ''.obs;
   var maritalList = <MaritalData>[].obs;
   var selectMarital = ''.obs;
   var selectMember = CheckUserData().obs;
-  var MandalZoneFlag=false.obs;
-
+  var MandalZoneFlag = false.obs;
 
   var selectQlification = ''.obs;
   var selectQualicationMain = ''.obs;
@@ -81,7 +82,6 @@ class NewMemberController extends GetxController {
 
   var memberList = <CheckUserData>[].obs;
   var ducumentList = <CheckUserData>[].obs;
-
 
   var qulicationList = <QualificationData>[].obs;
   var qulicationMainList = <QualicationMainData>[].obs;
@@ -97,41 +97,48 @@ class NewMemberController extends GetxController {
   var isBuilding = false.obs;
   var isRelation = false.obs;
   var isMarried = false.obs; //
-  var memberId="".obs;
-  var MaritalAnnivery=false.obs;
-  var selectMemberSalutation =''.obs;
-  BuildContext? context=Get.context;
+  var memberId = "".obs;
+  var MaritalAnnivery = false.obs;
+  var selectMemberSalutation = ''.obs;
+  BuildContext? context = Get.context;
   var countryList = <CountryData>[].obs;
   var stateList = <StateData>[].obs;
   var cityList = <CityData>[].obs;
-  var countryNotFound=false.obs;
+  var countryNotFound = false.obs;
   final rxStatusMemberSalutation = Status.LOADING.obs;
-  void setRxRequestCountry(Status _value) => rxStatusCountryLoading.value=_value;
-  void setRxRequestState(Status _value) => rxStatusStateLoading.value=_value;
-  void setRxRequestCity(Status _value) => rxStatusCityLoading.value=_value;
-  void setRxRequestMemberSalutation(Status _value) => rxStatusMemberSalutation.value=_value;
-  Rx<TextEditingController> housenoController=TextEditingController().obs;
-  Rx<TextEditingController> stateController=TextEditingController().obs;
-  Rx<TextEditingController> cityController=TextEditingController().obs;
-  Rx<TextEditingController> zoneController=TextEditingController().obs;
-  Rx<TextEditingController> areaController=TextEditingController().obs;
+  void setRxRequestCountry(Status _value) =>
+      rxStatusCountryLoading.value = _value;
+  void setRxRequestState(Status _value) => rxStatusStateLoading.value = _value;
+  void setRxRequestCity(Status _value) => rxStatusCityLoading.value = _value;
+  void setRxRequestMemberSalutation(Status _value) =>
+      rxStatusMemberSalutation.value = _value;
+  Rx<TextEditingController> housenoController = TextEditingController().obs;
+  Rx<TextEditingController> stateController = TextEditingController().obs;
+  Rx<TextEditingController> cityController = TextEditingController().obs;
+  Rx<TextEditingController> zoneController = TextEditingController().obs;
+  Rx<TextEditingController> areaController = TextEditingController().obs;
   Rx<TextEditingController> fathersnameController = TextEditingController().obs;
   Rx<TextEditingController> mothersnameController = TextEditingController().obs;
-  Rx<TextEditingController>   pincodeController=TextEditingController().obs;
-  Rx<TextEditingController>   firstNameController=TextEditingController().obs;
-  Rx<TextEditingController>   lastNameController=TextEditingController().obs;
-  Rx<TextEditingController>   middleNameController=TextEditingController().obs;
-  Rx<TextEditingController>   mobileController=TextEditingController().obs;
-  Rx<TextEditingController>   whatappmobileController=TextEditingController().obs;
+  Rx<TextEditingController> pincodeController = TextEditingController().obs;
+  Rx<TextEditingController> firstNameController = TextEditingController().obs;
+  Rx<TextEditingController> lastNameController = TextEditingController().obs;
+  Rx<TextEditingController> middleNameController = TextEditingController().obs;
+  Rx<TextEditingController> mobileController = TextEditingController().obs;
+  Rx<TextEditingController> whatappmobileController =
+      TextEditingController().obs;
   Rx<TextEditingController> countryController = TextEditingController().obs;
-  Rx<TextEditingController>   emailController=TextEditingController().obs;
-  Rx<TextEditingController>   buildingController=TextEditingController().obs;
-  Rx<TextEditingController>   occuptiondetailController=TextEditingController().obs;
-  Rx<TextEditingController>   educationdetailController=TextEditingController().obs;
+  Rx<TextEditingController> emailController = TextEditingController().obs;
+  Rx<TextEditingController> buildingController = TextEditingController().obs;
+  Rx<TextEditingController> occuptiondetailController =
+      TextEditingController().obs;
+  Rx<TextEditingController> educationdetailController =
+      TextEditingController().obs;
   TextEditingController dateController = TextEditingController();
-  Rx<TextEditingController> marriagedateController = TextEditingController().obs;
-  Rx<TextEditingController> addressMemberController = TextEditingController().obs;
-  var memberSalutationList =<MemberSalutationData>[].obs;
+  Rx<TextEditingController> marriagedateController =
+      TextEditingController().obs;
+  Rx<TextEditingController> addressMemberController =
+      TextEditingController().obs;
+  var memberSalutationList = <MemberSalutationData>[].obs;
   void setRxRequest(Status _value) => rxStatusLoading.value = _value;
   void setRxMemberRequest(Status _value) =>
       rxStatusMemberLoading.value = _value;
@@ -153,9 +160,9 @@ class NewMemberController extends GetxController {
   void setMaritalStatus(List<MaritalData> _value) => maritalList.value = _value;
   void setBloodStatus(List<BloodGroupData> _value) =>
       bloodgroupList.value = _value;
-  void setCountry(List<CountryData> _value) => countryList.value =_value;
-  void setState(List<StateData> _value) => stateList.value =_value;
-  void setCity(List<CityData> _value) => cityList.value =_value;
+  void setCountry(List<CountryData> _value) => countryList.value = _value;
+  void setState(List<StateData> _value) => stateList.value = _value;
+  void setCity(List<CityData> _value) => cityList.value = _value;
   void setMember(List<CheckUserData> _value) => memberList.value = _value;
 
   setQlication(List<QualificationData> _value) => qulicationList.value = _value;
@@ -169,7 +176,8 @@ class NewMemberController extends GetxController {
   setMemberShipType(List<MemberShipData> _value) =>
       memberShipList.value = _value;
 
-  setMemberSalutation(List<MemberSalutationData> _value) => memberSalutationList.value =_value;
+  setMemberSalutation(List<MemberSalutationData> _value) =>
+      memberSalutationList.value = _value;
 
   var dropdownItems = <String>[].obs;
   var selectedValue = ''.obs;
@@ -179,12 +187,13 @@ class NewMemberController extends GetxController {
   void toggleCheckbox(bool? value) {
     isChecked.value = value ?? false;
   }
-  void getMemberSalutation(){
+
+  void getMemberSalutation() {
     setRxRequestMemberSalutation(Status.LOADING);
     api.userMemberSalutation().then((_value) {
       setRxRequestMemberSalutation(Status.COMPLETE);
       setMemberSalutation(_value.data!);
-    }).onError((error,strack) {
+    }).onError((error, strack) {
       setRxRequestMemberSalutation(Status.ERROR);
     });
   }
@@ -198,33 +207,37 @@ class NewMemberController extends GetxController {
       setRxRequest2(Status.ERROR);
     });
   }
-  void getCountry(){
+
+  void getCountry() {
     setRxRequestCountry(Status.LOADING);
     api.CountryApi().then((_value) {
       setRxRequestCountry(Status.COMPLETE);
       setCountry(_value.data!);
-    }).onError((error,strack) {
+    }).onError((error, strack) {
       setRxRequestCountry(Status.ERROR);
     });
   }
-  void getState(){
+
+  void getState() {
     setRxRequestState(Status.LOADING);
     api.StateApi().then((_value) {
       setRxRequestState(Status.COMPLETE);
       setState(_value.data!);
-    }).onError((error,strack) {
+    }).onError((error, strack) {
       setRxRequestState(Status.ERROR);
     });
   }
-  void getCity(){
+
+  void getCity() {
     setRxRequestCity(Status.LOADING);
     api.CityApi().then((_value) {
       setRxRequestCity(Status.COMPLETE);
       setCity(_value.data!);
       final ids = cityList.map((e) => e.id.toString()).toList();
-      final duplicates = ids.toSet().where((id) => ids.where((x) => x == id).length > 1);
+      final duplicates =
+          ids.toSet().where((id) => ids.where((x) => x == id).length > 1);
       print('Duplicate IDs: $duplicates');
-    }).onError((error,strack) {
+    }).onError((error, strack) {
       setRxRequestCity(Status.ERROR);
     });
   }
@@ -236,10 +249,13 @@ class NewMemberController extends GetxController {
   void setSelectedCountry(String value) {
     country_id(value);
   }
+
   void setSelectedState(String value) {
     state_id(value);
-  }void setSelectedCity(String value) {
-    city_id.value=value;
+  }
+
+  void setSelectedCity(String value) {
+    city_id.value = value;
   }
 
   void setSelectedBuilding(String value) {
@@ -247,14 +263,11 @@ class NewMemberController extends GetxController {
   }
 
   void setSelectedMarital(String value) {
-    selectMarital.value=value;
-    if(value.toString()=="1")
-    {
-      MaritalAnnivery.value=true;
-    }
-    else
-    {
-      MaritalAnnivery.value=false;
+    selectMarital.value = value;
+    if (value.toString() == "1") {
+      MaritalAnnivery.value = true;
+    } else {
+      MaritalAnnivery.value = false;
     }
   }
 
@@ -269,10 +282,6 @@ class NewMemberController extends GetxController {
   void setDocumentType(String value) {
     selectDocumentType(value);
   }
-
-
-
-
 
   void setSelectQualification(String value) {
     selectQlification(value);
@@ -289,8 +298,6 @@ class NewMemberController extends GetxController {
   void setSelectMemberShip(String value) {
     selectMemberShipType(value);
   }
-
-
 
   void getMaritalStatus() {
     setRxRequestMarried(Status.LOADING);
@@ -316,7 +323,7 @@ class NewMemberController extends GetxController {
     setRxRequestMemberShip(Status.LOADING);
     api.userMemberShip().then((_value) {
       setRxRequestMemberShip(Status.COMPLETE);
-      var date=dateController.value.text;
+      var date = dateController.value.text;
       DateFormat inputFormat = DateFormat("dd/MM/yyyy");
       DateFormat outputFormat = DateFormat("yyyy-MM-dd");
 
@@ -324,32 +331,23 @@ class NewMemberController extends GetxController {
       String formattedDate = outputFormat.format(dob);
 
       print(formattedDate);
-      if(withoutcheckotp.value==false)
-      {
+      if (withoutcheckotp.value == false) {
         print('hhh');
         setMemberShipType(_value.data!);
-
-      }
-      else if(withoutcheckotp.value==true)
-      {
-
-        if(isUnder18(dob))
-        {
-          if(zoneController.value.text=="")
-          {
+      } else if (withoutcheckotp.value == true) {
+        if (isUnder18(dob)) {
+          if (zoneController.value.text == "") {
             print('hhh');
             _showLoginAlert(context!);
-          }
-          else
-          {
+          } else {
             memberShipList.value.clear();
 
-            for(int i=0;i<_value.data!.length;i++)
-            {
-              var memName= _value.data![i].membershipName;
-              var id=_value.data![i].id;
-              if(memName=="Non Member") {
-                memberShipList.value.add(MemberShipData(id: id,
+            for (int i = 0; i < _value.data!.length; i++) {
+              var memName = _value.data![i].membershipName;
+              var id = _value.data![i].id;
+              if (memName == "Non Member") {
+                memberShipList.value.add(MemberShipData(
+                    id: id,
                     membershipName: memName,
                     price: _value.data![i].price.toString(),
                     status: _value.data![i].status.toString(),
@@ -358,30 +356,26 @@ class NewMemberController extends GetxController {
               }
             }
           }
-        }
-        else {
+        } else {
           print('hhh222');
           memberShipList.value.clear();
-          for(int i=0;i<_value.data!.length;i++)
-          {
-
-            var memName= _value.data![i].membershipName;
-            var id=_value.data![i].id;
-            if(zoneController.value.text=="")
-            {
-              if(memName=="Saraswani Member" || memName=="Guest Member")
-              {
-                memberShipList.value.add(MemberShipData(id: id,
+          for (int i = 0; i < _value.data!.length; i++) {
+            var memName = _value.data![i].membershipName;
+            var id = _value.data![i].id;
+            if (zoneController.value.text == "") {
+              if (memName == "Saraswani Member" || memName == "Guest Member") {
+                memberShipList.value.add(MemberShipData(
+                    id: id,
                     membershipName: memName,
                     price: _value.data![i].price.toString(),
                     status: _value.data![i].status.toString(),
                     updatedAt: null,
                     createdAt: null));
               }
-            }
-            else {
+            } else {
               if (memName == "Non Member" || memName == "Life Member") {
-                memberShipList.value.add(MemberShipData(id: id,
+                memberShipList.value.add(MemberShipData(
+                    id: id,
                     membershipName: memName,
                     price: _value.data![i].price.toString(),
                     status: _value.data![i].status.toString(),
@@ -390,8 +384,6 @@ class NewMemberController extends GetxController {
               }
             }
           }
-
-
         }
       }
     }).onError((error, strack) {
@@ -402,7 +394,8 @@ class NewMemberController extends GetxController {
   bool isUnder18(DateTime dateOfBirth) {
     final today = DateTime.now();
     final age = today.year - dateOfBirth.year;
-    if (dateOfBirth.month > today.month || (dateOfBirth.month == today.month && dateOfBirth.day > today.day)) {
+    if (dateOfBirth.month > today.month ||
+        (dateOfBirth.month == today.month && dateOfBirth.day > today.day)) {
       return age - 1 < 18;
     }
     return age < 18;
@@ -423,54 +416,54 @@ class NewMemberController extends GetxController {
 
       print("Formatted DOB: $formattedDate, Zone ID: $zoneId");
 
-        memberShipList.value.clear();
+      memberShipList.value.clear();
 
-        if (isUnder18(dobDate)) {
-          if (zoneId.isEmpty) {
-            _showLoginAlert(context!);
-          } else {
-            for (var membership in _value.data!) {
-              if (membership.membershipName == "Non Member") {
-                memberShipList.value.add(MemberShipData(
-                  id: membership.id,
-                  membershipName: membership.membershipName,
-                  price: membership.price.toString(),
-                  status: membership.status.toString(),
-                  updatedAt: null,
-                  createdAt: null,
-                ));
-              }
-            }
-          }
+      if (isUnder18(dobDate)) {
+        if (zoneId.isEmpty) {
+          _showLoginAlert(context!);
         } else {
           for (var membership in _value.data!) {
-            if (zoneId.isEmpty) {
-              if (membership.membershipName == "Saraswani Member" ||  membership.membershipName == "Guest Member") {
-                memberShipList.value.add(MemberShipData(
-                  id: membership.id,
-                  membershipName: membership.membershipName,
-                  price: membership.price.toString(),
-                  status: membership.status.toString(),
-                  updatedAt: null,
-                  createdAt: null,
-                ));
-              }
-            } else {
-              if (membership.membershipName == "Non Member" ||
-                  membership.membershipName == "Life Member") {
-                memberShipList.value.add(MemberShipData(
-                  id: membership.id,
-                  membershipName: membership.membershipName,
-                  price: membership.price.toString(),
-                  status: membership.status.toString(),
-                  updatedAt: null,
-                  createdAt: null,
-                ));
-              }
+            if (membership.membershipName == "Non Member") {
+              memberShipList.value.add(MemberShipData(
+                id: membership.id,
+                membershipName: membership.membershipName,
+                price: membership.price.toString(),
+                status: membership.status.toString(),
+                updatedAt: null,
+                createdAt: null,
+              ));
             }
           }
         }
-
+      } else {
+        for (var membership in _value.data!) {
+          if (zoneId.isEmpty) {
+            if (membership.membershipName == "Saraswani Member" ||
+                membership.membershipName == "Guest Member") {
+              memberShipList.value.add(MemberShipData(
+                id: membership.id,
+                membershipName: membership.membershipName,
+                price: membership.price.toString(),
+                status: membership.status.toString(),
+                updatedAt: null,
+                createdAt: null,
+              ));
+            }
+          } else {
+            if (membership.membershipName == "Non Member" ||
+                membership.membershipName == "Life Member") {
+              memberShipList.value.add(MemberShipData(
+                id: membership.id,
+                membershipName: membership.membershipName,
+                price: membership.price.toString(),
+                status: membership.status.toString(),
+                updatedAt: null,
+                createdAt: null,
+              ));
+            }
+          }
+        }
+      }
     }).onError((error, stack) {
       setRxRequestMemberShip(Status.ERROR);
       print("Error fetching membership: $error");
@@ -482,48 +475,87 @@ class NewMemberController extends GetxController {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15.0),
           ),
-          title: Row(
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Image.asset(Images.logoImage,
-                height: 50,
-                width: 50,
+              Row(
+                children: [
+                  Image.asset(
+                    Images.logoImage,
+                    height: 50,
+                    width: 50,
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    "Age",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(width: 10),
-              Text("Age"),
+              const SizedBox(height: 8),
+              const Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
             ],
           ),
-          content: Column(
+          content: const Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text("Your are not eligible .your age 18 year under. "),
+              Text(
+                "You are not eligible. Your age is under 18 years.",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.black87,
+                ),
+              ),
               SizedBox(height: 10),
             ],
           ),
           actions: [
-            TextButton(
+            OutlinedButton(
               onPressed: () {
-                   Navigator.of(context).pop();
-                },
-              child: Text("No"),
+                Navigator.of(context).pop();
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.redAccent,
+                side: const BorderSide(color: Colors.redAccent),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("No"),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
-
               },
-              child: Text("Yes"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorHelperClass.getColorFromHex(
+                  ColorResources.red_color,
+                ),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Yes"),
             ),
           ],
         );
       },
     );
   }
-
-
-
 
   void getDocumentType() {
     setRxRequestDocument(Status.LOADING);
@@ -535,13 +567,9 @@ class NewMemberController extends GetxController {
     });
   }
 
-
-
-
   void setSelectMemberSalutation(String value) {
-    selectMemberSalutation.value=value;
+    selectMemberSalutation.value = value;
   }
-
 
   void getCheckPinCode(var pincode) async {
     setRxRequestBuilding(Status.LOADING);
@@ -553,7 +581,7 @@ class NewMemberController extends GetxController {
     print("ccvv" + payload.toString());
     var headers = {
       'Authorization':
-      'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJsb2NhbGhvc3QiLCJzdWIiOiI2IiwiaWF0IjoxNzMyNjA4ODc0LCJleHAiOjE3MzI2MTI0NzR9.5soj-FTXfHfGbr8qfJowy9RCJHJv65jRg1wx6hy_OCc'
+          'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJsb2NhbGhvc3QiLCJzdWIiOiI2IiwiaWF0IjoxNzMyNjA4ODc0LCJleHAiOjE3MzI2MTI0NzR9.5soj-FTXfHfGbr8qfJowy9RCJHJv65jRg1wx6hy_OCc'
     };
     var request = http.MultipartRequest('POST', url);
     request.fields.addAll({'pincode': pincode});
@@ -562,18 +590,18 @@ class NewMemberController extends GetxController {
     http.StreamedResponse response = await request.send();
 
     if (response.statusCode == 200) {
-      withoutcheckotp.value=true;
-      countryNotFound.value=true;
-    MandalZoneFlag.value=true;
+      withoutcheckotp.value = true;
+      countryNotFound.value = true;
+      MandalZoneFlag.value = true;
       getMemberShip();
       setRxRequestBuilding(Status.COMPLETE);
       //  print(await response.stream.bytesToString());
       String responseBody = await response.stream.bytesToString();
 
       Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
-      print("ggggggggggg"+jsonResponse.toString());
+      print("ggggggggggg" + jsonResponse.toString());
       CheckPinCodeModel pincodeResponse =
-      CheckPinCodeModel.fromJson(jsonResponse);
+          CheckPinCodeModel.fromJson(jsonResponse);
       print('Status: ${pincodeResponse.status}');
       print('Message: ${pincodeResponse.message}');
       setcheckPinCode(pincodeResponse.data!.building!);
@@ -586,70 +614,66 @@ class NewMemberController extends GetxController {
           updatedAt: null));
       // housenoController.value.text= _value.data.country;
 
-      state_id.value=pincodeResponse.data!.state!.id.toString();
-      city_id.value=pincodeResponse.data!.city!.id.toString();
-      area_name.value=pincodeResponse.data!.areaName!.toString();
-      zone_id.value=pincodeResponse.data!.zone!.id.toString();
-      country_id.value=pincodeResponse.data!.country!.id.toString();
-      countryController.value.text=pincodeResponse.data!.country!.name.toString();
-      stateController.value.text= pincodeResponse.data!.state!.name.toString();
-      cityController.value.text=pincodeResponse.data!.city!.name.toString();
-      zoneController.value.text= pincodeResponse.data!.zone!.name.toString();
-      areaController.value.text =pincodeResponse.data!.areaName!.toString();
-    }
-    else {
-      MandalZoneFlag.value=false;
-      countryNotFound.value=false;
-      withoutcheckotp.value=true;
-      areaController.value.text="";
+      state_id.value = pincodeResponse.data!.state!.id.toString();
+      city_id.value = pincodeResponse.data!.city!.id.toString();
+      area_name.value = pincodeResponse.data!.areaName!.toString();
+      zone_id.value = pincodeResponse.data!.zone!.id.toString();
+      country_id.value = pincodeResponse.data!.country!.id.toString();
+      countryController.value.text =
+          pincodeResponse.data!.country!.name.toString();
+      stateController.value.text = pincodeResponse.data!.state!.name.toString();
+      cityController.value.text = pincodeResponse.data!.city!.name.toString();
+      zoneController.value.text = pincodeResponse.data!.zone!.name.toString();
+      areaController.value.text = pincodeResponse.data!.areaName!.toString();
+    } else {
+      MandalZoneFlag.value = false;
+      countryNotFound.value = false;
+      withoutcheckotp.value = true;
+      areaController.value.text = "";
       getMemberShip();
       String responseBody = await response.stream.bytesToString();
 
       Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
-      print("vvvvvvv"+responseBody.toString());
+      print("vvvvvvv" + responseBody.toString());
       setRxRequestBuilding(Status.COMPLETE);
     }
   }
 
-
-  void userRegister(var LM_code,BuildContext context) async{
-    print("member"+memberId.value);
+  void userRegister(var LM_code, BuildContext context) async {
+    print("member" + memberId.value);
     final url = Uri.parse(Urls.register_url);
-    var first=firstNameController.value.text;
-    var last=lastNameController.value.text.trim();
-    var name= first+""+last;
-    var email=emailController.value.text.trim();
-    var mobile=mobileController.value.text.trim();
-    var pincode=pincodeController.value.text.trim();
-    var blood_group_id=selectBloodGroup.value;
-    var gender_id=selectedGender.value;
-    var marital_status_id= selectMarital.value;
-    var dob= dateController.value.text.trim();
+    var first = firstNameController.value.text;
+    var last = lastNameController.value.text.trim();
+    var name = first + "" + last;
+    var email = emailController.value.text.trim();
+    var mobile = mobileController.value.text.trim();
+    var pincode = pincodeController.value.text.trim();
+    var blood_group_id = selectBloodGroup.value;
+    var gender_id = selectedGender.value;
+    var marital_status_id = selectMarital.value;
+    var dob = dateController.value.text.trim();
     var building_name = buildingController.value.text.trim();
-    var building_id="";
-    var membership_type_id= selectMemberShipType.value;
-    if(selectBuilding.value=="other")
-    {
-      building_id="";
+    var building_id = "";
+    var membership_type_id = selectMemberShipType.value;
+    if (selectBuilding.value == "other") {
+      building_id = "";
+    } else {
+      building_id = selectBuilding.value;
     }
-    else
-    {
-      building_id=selectBuilding.value;
-    }
-    var document_type=selectDocumentType.value;
+    var document_type = selectDocumentType.value;
 
-    var flat_no=housenoController.value.text.trim();
-    var whatsapp_number=whatappmobileController.value.text.trim();
-    loading.value=true;
-    var profile_image=userprofile.value;
-    var document_image=userdocumentImage.value;
-    Map<String,String> payload = {
-      "proposer_id":memberId.value,
-      "first_name":firstNameController.value.text.trim(),
+    var flat_no = housenoController.value.text.trim();
+    var whatsapp_number = whatappmobileController.value.text.trim();
+    loading.value = true;
+    var profile_image = userprofile.value;
+    var document_image = userdocumentImage.value;
+    Map<String, String> payload = {
+      "proposer_id": memberId.value,
+      "first_name": firstNameController.value.text.trim(),
       "last_name": lastNameController.value.text.trim(),
-          "middle_name": middleNameController.value.text.trim(),
+      "middle_name": middleNameController.value.text.trim(),
       "father_name": fathersnameController.value.text.trim(),
-      "mother_name":mothersnameController.value.text.trim(),
+      "mother_name": mothersnameController.value.text.trim(),
       "email": email,
       "whatsapp_number": whatsapp_number.trim(),
       "mobile": mobile,
@@ -660,38 +684,39 @@ class NewMemberController extends GetxController {
       "dob": dob,
       "document_type": document_type,
       "building_id": building_id,
-      "member_type_id":  membership_type_id,
+      "member_type_id": membership_type_id,
       "flat_no": flat_no,
-      "state_id":state_id.value.toString(),
-      "city_id":city_id.value.toString(),
-      "area_name":area_name.value.toString(),
-      "zone_id":zone_id.value.toString(),
-      "country_id":country_id.value.toString(),
+      "state_id": state_id.value.toString(),
+      "city_id": city_id.value.toString(),
+      "area_name": area_name.value.toString(),
+      "zone_id": zone_id.value.toString(),
+      "country_id": country_id.value.toString(),
       "marriage_anniversary_date": marriagedateController.value.text,
       "salutation_id": selectMemberSalutation.value,
-      "address":addressMemberController.value.text,
+      "address": addressMemberController.value.text,
       "created_by": memberId.value
-
     };
-    print("ccvv"+payload.toString());
-    var request = http.MultipartRequest('POST',url);
+    print("ccvv" + payload.toString());
+    var request = http.MultipartRequest('POST', url);
     request.fields.addAll(payload);
-    request.files.add(await http.MultipartFile.fromPath('document_image',document_image));
-    if(profile_image!="") {
+    request.files.add(
+        await http.MultipartFile.fromPath('document_image', document_image));
+    if (profile_image != "") {
       request.files.add(
           await http.MultipartFile.fromPath("image_profile", profile_image));
     }
 
-    http.StreamedResponse response = await request.send().timeout(Duration(seconds: 60));
+    http.StreamedResponse response =
+        await request.send().timeout(Duration(seconds: 60));
 
     if (response.statusCode == 200) {
       String responseBody = await response.stream.bytesToString();
-      loading.value=false;
+      loading.value = false;
       Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
-      print("vfbb"+jsonResponse.toString());
-      RegisterModelClass registerResponse = RegisterModelClass.fromJson(jsonResponse);
-      if(registerResponse.status==true)
-      {
+      print("vfbb" + jsonResponse.toString());
+      RegisterModelClass registerResponse =
+          RegisterModelClass.fromJson(jsonResponse);
+      if (registerResponse.status == true) {
         Get.snackbar(
           "Success",
           "New Member Add Successfully",
@@ -699,16 +724,15 @@ class NewMemberController extends GetxController {
           colorText: Colors.white,
           snackPosition: SnackPosition.TOP,
         );
-        memberId.value=registerResponse.data.toString();
+        memberId.value = registerResponse.data.toString();
 
-        Navigator.pushReplacementNamed(context!, RouteNames.otp_screen,arguments: {
-          "memeberId":memberId.value,
-          "page_type_direct":"1",
-          "mobile": mobile
-        });
-      }
-      else
-      {
+        Navigator.pushReplacementNamed(context!, RouteNames.otp_screen,
+            arguments: {
+              "memeberId": memberId.value,
+              "page_type_direct": "1",
+              "mobile": mobile
+            });
+      } else {
         Get.snackbar(
           "Error",
           registerResponse.message.toString(),
@@ -717,10 +741,9 @@ class NewMemberController extends GetxController {
           snackPosition: SnackPosition.TOP,
         );
       }
-    }
-    else {
-      loading.value=false;
-       print("ddddddd"+await response.stream.bytesToString());
+    } else {
+      loading.value = false;
+      print("ddddddd" + await response.stream.bytesToString());
       // String responseBody = await response.stream.bytesToString();
       // loading.value=false;
       // Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
@@ -743,7 +766,7 @@ class NewMemberController extends GetxController {
     api.userCheckLMCodeApi(datas).then((_value) {
       setRxMemberRequest(Status.COMPLETE);
       lmCodeValue.value = lmCode;
-     // setMember(_value.data!);
+      // setMember(_value.data!);
     }).onError((error, strack) {
       setRxMemberRequest(Status.ERROR);
       print("cvbcvbc" + error.toString());
@@ -768,6 +791,4 @@ class NewMemberController extends GetxController {
     otp.value = otpBuffer.toString();
     print("fgfggghg" + otp.value);
   }
-
-
 }
