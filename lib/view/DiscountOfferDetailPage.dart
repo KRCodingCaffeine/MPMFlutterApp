@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:mpm/model/AddOfferDiscountData/AddOfferDiscountData.dart';
 import 'package:mpm/model/Offer/OfferData.dart';
+import 'package:mpm/repository/add_offer_discount_repository/add_offer_discount_repo.dart';
+import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:intl/intl.dart';
 import 'package:mpm/view/avail_offer_page.dart';
 import 'package:get/get.dart';
+import 'package:mpm/view/offer_claimed_view.dart';
 
 class DiscountOfferDetailPage extends StatelessWidget {
   final OfferData offer;
@@ -118,8 +122,9 @@ class DiscountOfferDetailPage extends StatelessWidget {
             ),
             onPressed: () {
               if (offer.orgSubcategoryId?.toString() == '1') {
+                // Medical offer - go to AvailOfferPage
                 Get.to(
-                  () => AvailOfferPage(
+                      () => AvailOfferPage(
                     orgDetailsID: offer.orgDetailsID.toString(),
                     organisationOfferDiscountId: offer.organisationOfferDiscountId.toString(),
                     orgSubcategoryId: offer.orgSubcategoryId.toString(),
@@ -130,84 +135,264 @@ class DiscountOfferDetailPage extends StatelessWidget {
                     Get.snackbar(
                       args['success'] ? "Success" : "Error",
                       args['message'],
-                      backgroundColor:
-                          args['success'] ? Colors.green : Colors.red,
+                      backgroundColor: args['success'] ? Colors.green : Colors.red,
                       colorText: Colors.white,
                     );
                   }
                 });
+              } else {
+                // Non-medical offer - show dialog
+                String applicantName = '';
+
+                showDialog(
+                  context: Get.context!,
+                  builder: (context) {
+                    return AlertDialog(
+                      backgroundColor: Colors.white,
+                      title: const Text("Enter Applicant Name"),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextField(
+                            decoration: const InputDecoration(
+                              labelText: "Applicant Name",
+                              border: OutlineInputBorder(),
+                            ),
+                            onChanged: (value) {
+                              applicantName = value;
+                            },
+                          ),
+                        ],
+                      ),
+                      actions: [
+                        OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.redAccent,
+                            side: const BorderSide(color: Colors.redAccent),
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text("Cancel"),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.redAccent,
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () async {
+                            if (applicantName.isEmpty) {
+                              Get.snackbar(
+                                "Error",
+                                "Please enter applicant name",
+                                backgroundColor: Colors.red,
+                                colorText: Colors.white,
+                              );
+                              return;
+                            }
+
+                            Navigator.pop(context); // Close the dialog
+
+                            try {
+                              final repository = AddOfferDiscountRepository();
+                              final userData = await SessionManager.getSession();
+
+                              // Create medicine with just the applicant name
+                              final medicine = Medicine(
+                                organisationOfferDiscountId: int.parse(offer.organisationOfferDiscountId.toString()),
+                                orgDetailsID: int.parse(offer.orgDetailsID.toString()),
+                                medicineName: applicantName,
+                                medicineContainerId: null,
+                                medicineContainerName: null,
+                                quantity: null,
+                              );
+
+                              // Create offer data
+                              final offerData = AddOfferDiscountData(
+                                memberId: int.parse(userData?.memberId.toString() ?? '0'),
+                                orgSubcategoryId: int.parse(offer.orgSubcategoryId.toString()),
+                                orgDetailsID: int.parse(offer.orgDetailsID.toString()),
+                                organisationOfferDiscountId: int.parse(offer.organisationOfferDiscountId.toString()),
+                                createdBy: int.parse(userData?.memberId.toString() ?? '0'),
+                                medicines: [medicine],
+                              );
+
+                              // Show loading indicator
+                              Get.dialog(
+                                const Center(child: CircularProgressIndicator()),
+                                barrierDismissible: false,
+                              );
+
+                              // Submit with null image
+                              final response = await repository.submitOfferDiscount(offerData, null);
+
+                              // Remove loading indicator
+                              Get.back();
+
+                              if (response['status'] == true) {
+                                // Show success dialog
+                                final success = await _showSuccessDialog(
+                                  "Offer claimed successfully!",
+                                  response['data'] ?? {},
+                                );
+
+                                if (success == true) {
+                                  Get.to(() => ClaimedOfferListPage());
+                                } else {
+                                  Get.back(result: {
+                                    'success': true,
+                                    'message': 'Offer claimed successfully',
+                                    'org_details_id': offer.orgDetailsID.toString(),
+                                  });
+                                }
+                              } else {
+                                // Show error dialog
+                                await _showErrorDialog(
+                                  response['message'] ?? 'Failed to claim offer',
+                                );
+                              }
+                            } catch (e) {
+                              // Remove loading indicator if still showing
+                              if (Get.isDialogOpen ?? false) Get.back();
+
+                              // Show error dialog
+                              await _showErrorDialog(
+                                "Failed to claim offer: ${e.toString().replaceAll('Exception:', '').trim()}",
+                              );
+                            }
+                          },
+                          child: const Text("Submit"),
+                        ),                      ],
+                    );
+                  },
+                );
               }
-              // } else {
-              //   String applicantName = '';
-              //
-              //   showDialog(
-              //     context: Get.context!,
-              //     builder: (context) {
-              //       return AlertDialog(
-              //         backgroundColor: Colors.white,
-              //         title: const Text("Enter Applicant Name"),
-              //         content: Column(
-              //           mainAxisSize: MainAxisSize.min,
-              //           children: [
-              //             TextField(
-              //               decoration: const InputDecoration(
-              //                 labelText: "Applicant Name",
-              //                 border: OutlineInputBorder(),
-              //               ),
-              //               onChanged: (value) {
-              //                 applicantName = value;
-              //               },
-              //             ),
-              //             const SizedBox(height: 16),
-              //             const Text(
-              //               "This offer is not eligible for direct availing.",
-              //               style: TextStyle(fontSize: 14),
-              //             ),
-              //           ],
-              //         ),
-              //         actions: [
-              //           OutlinedButton(
-              //             style: OutlinedButton.styleFrom(
-              //               foregroundColor: Colors.redAccent,
-              //               side: const BorderSide(color: Colors.redAccent),
-              //             ),
-              //             onPressed: () {
-              //               Navigator.pop(context);
-              //             },
-              //             child: const Text("Cancel"),
-              //           ),
-              //           ElevatedButton(
-              //             style: ElevatedButton.styleFrom(
-              //               backgroundColor: Colors.redAccent,
-              //               foregroundColor: Colors.white,
-              //             ),
-              //             onPressed: () {
-              //               Navigator.pop(context);
-              //               print("Entered Applicant Name: $applicantName");
-              //
-              //               if (applicantName.isEmpty) {
-              //                 Get.snackbar(
-              //                   "Error",
-              //                   "Please enter applicant name",
-              //                   backgroundColor: Colors.red,
-              //                   colorText: Colors.white,
-              //                 );
-              //               } else {
-              //
-              //               }
-              //             },
-              //             child: const Text("OK"),
-              //           ),
-              //         ],
-              //       );
-              //     },
-              //   );
-              // }
             },
             child: const Text("Claim Offer", style: TextStyle(fontSize: 16)),
           ),
         ),
       ),
+    );
+  }
+
+  Future<bool?> _showSuccessDialog(String message, dynamic responseData) async {
+    return await showDialog<bool>(
+      context: Get.context!,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green, size: 32),
+              SizedBox(width: 12),
+              Text(
+                "Success",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context, false),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.redAccent,
+                side: const BorderSide(color: Colors.redAccent),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Done"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context, true); // Close the dialog
+                Get.to(() => ClaimedOfferListPage());
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+              ),
+              child: const Text("View Details",
+                  style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showErrorDialog(String message) async {
+    await showDialog(
+      context: Get.context!,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: const Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.red, size: 32),
+              SizedBox(width: 12),
+              Text(
+                "Error",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+              ),
+              child: const Text("OK"),
+            ),
+          ],
+        );
+      },
     );
   }
 

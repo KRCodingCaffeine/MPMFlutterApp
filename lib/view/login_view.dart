@@ -2,7 +2,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/route/route_name.dart';
-
+import 'package:mpm/utils/FirebaseFCMApi.dart';
 import 'package:mpm/utils/app_constants.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
@@ -62,8 +62,7 @@ class _LoginPageState extends State<LoginPage> {
                           shape: BoxShape.circle,
                         ),
                         padding: const EdgeInsets.all(6),
-                        child: const Icon(Icons.info_outline,
-                            color: Colors.redAccent, size: 18),
+                        child: const Icon(Icons.info_outline, color: Colors.redAccent, size: 18),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -180,49 +179,23 @@ class _LoginPageState extends State<LoginPage> {
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: Colors.grey),
                             ),
-                            child: Row(
-                              children: [
-                                const SizedBox(width: 18),
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: mobileController,
-                                    keyboardType: TextInputType.text,
-                                    decoration: const InputDecoration(
-                                      hintText: 'Enter Your Mobile / Membership Code',
-                                      border: InputBorder.none,
-                                      contentPadding:
-                                          EdgeInsets.symmetric(vertical: 8),
-                                    ),
-                                    validator: (value) {
-                                      if (value!.isEmpty) {
-                                        return 'Enter Membeship code / Mobile number';
-                                      } else if (RegExp(r'^[0-9]+$')
-                                          .hasMatch(value)) {
-                                        // If input contains only numbers
-
-                                         controller.isMobileValid.value = true;
-
-
-                                      } else if (RegExp(r'^[a-zA-Z]+$')
-                                          .hasMatch(value)) {
-
-
-                                        controller.isMobileValid.value = false;
-                                      } else {
-                                        return null;
-                                      }
-                                    },
-                                  ),
-
+                            child: CompositedTransformTarget(
+                              link: _layerLink,
+                              child: TextFormField(
+                                focusNode: _mobileFocusNode,
+                                controller: mobileController,
+                                keyboardType: TextInputType.text,
+                                decoration: const InputDecoration(
+                                  hintText: 'Enter Your Mobile / Membership Code',
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.symmetric(vertical: 8),
                                 ),
                                 validator: (value) {
                                   if (value!.isEmpty) {
                                     return 'Enter Membership code / Mobile number';
-                                  } else if (RegExp(r'^[0-9]+$')
-                                      .hasMatch(value)) {
+                                  } else if (RegExp(r'^[0-9]+$').hasMatch(value)) {
                                     controller.isNumber.value = true;
-                                  } else if (RegExp(r'^[a-zA-Z]+$')
-                                      .hasMatch(value)) {
+                                  } else if (RegExp(r'^[a-zA-Z]+$').hasMatch(value)) {
                                     controller.isNumber.value = false;
                                   } else {
                                     return null;
@@ -263,8 +236,8 @@ class _LoginPageState extends State<LoginPage> {
                                               hintText: 'Enter Membership Code',
                                               border: InputBorder.none,
                                               contentPadding:
-                                                  EdgeInsets.symmetric(
-                                                      vertical: 8),
+                                              EdgeInsets.symmetric(
+                                                  vertical: 8),
                                             ),
                                             validator: (value) {
                                               if (value!.isEmpty) {
@@ -315,8 +288,8 @@ class _LoginPageState extends State<LoginPage> {
                                               hintText: 'Mobile Number',
                                               border: InputBorder.none,
                                               contentPadding:
-                                                  EdgeInsets.symmetric(
-                                                      vertical: 8),
+                                              EdgeInsets.symmetric(
+                                                  vertical: 8),
                                             ),
                                             validator: (value) {
                                               if (value!.isEmpty) {
@@ -346,7 +319,7 @@ class _LoginPageState extends State<LoginPage> {
                         child: Padding(
                           padding: const EdgeInsets.only(left: 6.0, right: 6),
                           child: Obx(
-                            () => ElevatedButton(
+                                () => ElevatedButton(
                               onPressed: () async {
                                 if (_formKeyLogin!.currentState!.validate()) {
                                   if (controller.lmCodeVisible.value == false) {
@@ -359,32 +332,35 @@ class _LoginPageState extends State<LoginPage> {
                                           mobileController!.text, context);
                                     }
                                   } else {
-                                    if (controller.otherMobVisible.value == false) {
-                                      controller.checkUser(lmController!.text, context);
+                                    if (controller.otherMobVisible.value ==
+                                        false) {
+                                      controller.checkUser(
+                                          lmController!.text, context);
                                     } else {
-                                      controller.updatemobileno(otherMobileontroller!.text,);
+                                      controller.checkUser(
+                                          otherMobileontroller!.text, context);
                                     }
                                   }
                                 }
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
-                                    ColorHelperClass.getColorFromHex(
-                                        ColorResources.red_color),
+                                ColorHelperClass.getColorFromHex(
+                                    ColorResources.red_color),
                                 padding:
-                                    const EdgeInsets.symmetric(vertical: 14),
+                                const EdgeInsets.symmetric(vertical: 14),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                               child: controller.loadinng.value
                                   ? const CircularProgressIndicator(
-                                      color: Colors.white,
-                                    )
+                                color: Colors.white,
+                              )
                                   : Text(
-                                      AppConstants.continues,
-                                      style: TextStyleClass.white16style,
-                                    ),
+                                AppConstants.continues,
+                                style: TextStyleClass.white16style,
+                              ),
                             ),
                           ),
                         ),
@@ -408,7 +384,7 @@ class _LoginPageState extends State<LoginPage> {
                   backgroundColor: ColorHelperClass.getColorFromHex(
                       ColorResources.red_color),
                   padding:
-                      const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                  const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -425,7 +401,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  void getToken() async {
+  void getToken() async{
     // final token = await FirebaseMessaging.instance.getToken();
     // await PushNotificationService().initialise();
     // if (token != null) {
