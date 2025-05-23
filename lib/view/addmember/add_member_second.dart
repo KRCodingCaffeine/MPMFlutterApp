@@ -260,12 +260,13 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                           const SizedBox(height: 20),
 
                           // Building Name
-                          Container(
-                            width: double.infinity,
-                            margin: const EdgeInsets.only(left: 5, right: 5),
-                            child: Row(
-                              children: [
-                                Obx(() {
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: double.infinity,
+                                margin: const EdgeInsets.only(left: 5, right: 5),
+                                child: Obx(() {
                                   if (regiController.rxStatusBuilding.value == Status.LOADING) {
                                     return const Padding(
                                       padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
@@ -283,61 +284,87 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                     );
                                   } else {
                                     final selectedValue = regiController.selectBuilding.value;
-                                    return Expanded(
-                                      child: InputDecorator(
-                                        decoration: InputDecoration(
-                                          labelText:
-                                          selectedValue.isNotEmpty ? 'Building Name *' : null,
-                                          border: const OutlineInputBorder(
-                                            borderSide: BorderSide(color: Colors.black),
-                                          ),
-                                          enabledBorder: const OutlineInputBorder(
-                                            borderSide: BorderSide(color: Colors.black),
-                                          ),
-                                          focusedBorder: const OutlineInputBorder(
-                                            borderSide: BorderSide(color: Colors.black38, width: 1),
-                                          ),
-                                          contentPadding:
-                                          const EdgeInsets.symmetric(horizontal: 20),
-                                          labelStyle: const TextStyle(color: Colors.black),
+                                    return InputDecorator(
+                                      decoration: InputDecoration(
+                                        labelText: selectedValue.isNotEmpty ? 'Building Name *' : null,
+                                        border: const OutlineInputBorder(
+                                          borderSide: BorderSide(color: Colors.black),
                                         ),
-                                        child: DropdownButton<String>(
-                                          isExpanded: true,
-                                          underline: Container(),
-                                          dropdownColor: Colors.white,
-                                          borderRadius: BorderRadius.circular(10),
-                                          hint: const Text(
-                                            'Select Building *',
-                                            style: TextStyle(fontWeight: FontWeight.bold),
-                                          ),
-                                          value: selectedValue.isNotEmpty ? selectedValue : null,
-                                          items: regiController.checkPinCodeList.isEmpty
-                                              ? [
-                                            const DropdownMenuItem<String>(
-                                              value: '',
-                                              child: Text('Select Building'),
-                                            )
-                                          ]
-                                              : regiController.checkPinCodeList
-                                              .map((building) => DropdownMenuItem<String>(
-                                            value: building.id.toString(),
-                                            child:
-                                            Text(building.buildingName ?? 'Unknown'),
-                                          ))
-                                              .toList(),
-                                          onChanged: (String? newValue) {
-                                            if (newValue != null) {
-                                              regiController.selectBuilding(newValue);
-                                              regiController.isBuilding.value = newValue == 'other';
-                                            }
-                                          },
+                                        enabledBorder: const OutlineInputBorder(
+                                          borderSide: BorderSide(color: Colors.black),
                                         ),
+                                        focusedBorder: const OutlineInputBorder(
+                                          borderSide: BorderSide(color: Colors.black38, width: 1),
+                                        ),
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                        labelStyle: const TextStyle(color: Colors.black),
+                                      ),
+                                      child: DropdownButton<String>(
+                                        isExpanded: true,
+                                        underline: Container(),
+                                        dropdownColor: Colors.white,
+                                        borderRadius: BorderRadius.circular(10),
+                                        hint: const Text(
+                                          'Select Building *',
+                                          style: TextStyle(fontWeight: FontWeight.bold),
+                                        ),
+                                        value: selectedValue.isNotEmpty ? selectedValue : null,
+                                        items: regiController.checkPinCodeList.isEmpty
+                                            ? [
+                                          const DropdownMenuItem<String>(
+                                            value: '',
+                                            child: Text('Select Building'),
+                                          )
+                                        ]
+                                            : regiController.checkPinCodeList
+                                            .map((building) => DropdownMenuItem<String>(
+                                          value: building.id.toString(),
+                                          child: Text(building.buildingName ?? 'Unknown'),
+                                        ))
+                                            .toList(),
+                                        onChanged: (String? newValue) {
+                                          if (newValue != null) {
+                                            regiController.selectBuilding(newValue);
+                                            regiController.isBuilding.value = newValue == 'other';
+                                          }
+                                        },
                                       ),
                                     );
                                   }
                                 }),
-                              ],
-                            ),
+                              ),
+                              Obx(() {
+                                return Visibility(
+                                  visible: regiController.isBuilding.value,
+                                  child: Container(
+                                    width: double.infinity,
+                                    margin: const EdgeInsets.only(left: 5, right: 5, top: 20),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: Colors.black),
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                                      child: TextFormField(
+                                        controller: regiController.buildingController.value,
+                                        keyboardType: TextInputType.text,
+                                        validator: (value) {
+                                          if (regiController.isBuilding.value && value!.isEmpty) {
+                                            return 'Please enter building name';
+                                          }
+                                          return null;
+                                        },
+                                        decoration: const InputDecoration(
+                                          hintText: 'Enter Building Name *',
+                                          border: InputBorder.none,
+                                          contentPadding: EdgeInsets.symmetric(vertical: 12),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ],
                           ),
                           const SizedBox(height: 20),
 
@@ -821,7 +848,9 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                     fal.value = true;
                                   }
 
-                                  if (regiController.rxStatusMemberShipTYpe.value == Status.LOADING) {
+                                  final status = regiController.rxStatusMemberShipTYpe.value;
+
+                                  if (status == Status.LOADING) {
                                     return const Padding(
                                       padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
                                       child: SizedBox(
@@ -832,57 +861,78 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                         ),
                                       ),
                                     );
-                                  } else if (regiController.rxStatusMemberShipTYpe.value == Status.ERROR) {
-                                    return const Padding(
-                                      padding: EdgeInsets.symmetric(vertical: 13, horizontal: 20),
-                                      child: Text('No Data'),
-                                    );
+                                  }
+
+                                  String? message;
+                                  if (status == Status.ERROR) {
+                                    message = 'No Data';
                                   } else if (regiController.memberShipList.isEmpty) {
-                                    return const Padding(
-                                      padding: EdgeInsets.symmetric(vertical: 13, horizontal: 20),
-                                      child: Text('No Membership available'),
-                                    );
-                                  } else {
-                                    final selectedMember = regiController.selectMemberShipType.value;
+                                    message = 'No Membership available under 18';
+                                  }
+
+                                  if (message != null) {
                                     return Expanded(
                                       child: InputDecorator(
-                                        decoration: InputDecoration(
-                                          labelText: selectedMember.isNotEmpty ? 'Membership *' : null,
-                                          border: const OutlineInputBorder(),
-                                          enabledBorder: const OutlineInputBorder(
+                                        decoration: const InputDecoration(
+                                          labelText: 'Membership *',
+                                          border: OutlineInputBorder(),
+                                          enabledBorder: OutlineInputBorder(
                                             borderSide: BorderSide(color: Colors.black),
                                           ),
-                                          focusedBorder: const OutlineInputBorder(
+                                          focusedBorder: OutlineInputBorder(
                                             borderSide: BorderSide(color: Colors.black38, width: 1),
                                           ),
-                                          contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                                          labelStyle: const TextStyle(color: Colors.black),
+                                          contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                                          labelStyle: TextStyle(color: Colors.black),
                                         ),
-                                        child: DropdownButton<String>(
-                                          dropdownColor: Colors.white,
-                                          borderRadius: BorderRadius.circular(10),
-                                          isExpanded: true,
-                                          underline: Container(),
-                                          hint: const Text(
-                                            'Membership *',
-                                            style: TextStyle(fontWeight: FontWeight.bold),
-                                          ),
-                                          value: selectedMember.isNotEmpty ? selectedMember : null,
-                                          items: regiController.memberShipList.map((MemberShipData ms) {
-                                            return DropdownMenuItem<String>(
-                                              value: ms.id.toString(),
-                                              child: Text("${ms.membershipName ?? 'Unknown'} - Rs ${ms.price ?? '0'}"),
-                                            );
-                                          }).toList(),
-                                          onChanged: (String? newValue) {
-                                            if (newValue != null) {
-                                              regiController.selectMemberShipType(newValue);
-                                            }
-                                          },
+                                        child: Text(
+                                          message,
+                                          style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
                                         ),
                                       ),
                                     );
                                   }
+
+                                  // Normal Dropdown UI
+                                  final selectedMember = regiController.selectMemberShipType.value;
+                                  return Expanded(
+                                    child: InputDecorator(
+                                      decoration: InputDecoration(
+                                        labelText: selectedMember.isNotEmpty ? 'Membership *' : null,
+                                        border: const OutlineInputBorder(),
+                                        enabledBorder: const OutlineInputBorder(
+                                          borderSide: BorderSide(color: Colors.black),
+                                        ),
+                                        focusedBorder: const OutlineInputBorder(
+                                          borderSide: BorderSide(color: Colors.black38, width: 1),
+                                        ),
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                        labelStyle: const TextStyle(color: Colors.black),
+                                      ),
+                                      child: DropdownButton<String>(
+                                        dropdownColor: Colors.white,
+                                        borderRadius: BorderRadius.circular(10),
+                                        isExpanded: true,
+                                        underline: Container(),
+                                        hint: const Text(
+                                          'Membership *',
+                                          style: TextStyle(fontWeight: FontWeight.bold),
+                                        ),
+                                        value: selectedMember.isNotEmpty ? selectedMember : null,
+                                        items: regiController.memberShipList.map((MemberShipData ms) {
+                                          return DropdownMenuItem<String>(
+                                            value: ms.id.toString(),
+                                            child: Text("${ms.membershipName ?? 'Unknown'} - Rs ${ms.price ?? '0'}"),
+                                          );
+                                        }).toList(),
+                                        onChanged: (String? newValue) {
+                                          if (newValue != null) {
+                                            regiController.selectMemberShipType(newValue);
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                  );
                                 }),
                               ],
                             ),

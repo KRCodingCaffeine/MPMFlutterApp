@@ -323,74 +323,76 @@ class NewMemberController extends GetxController {
     setRxRequestMemberShip(Status.LOADING);
     api.userMemberShip().then((_value) {
       setRxRequestMemberShip(Status.COMPLETE);
-      var date = dateController.value.text;
-      DateFormat inputFormat = DateFormat("dd/MM/yyyy");
-      DateFormat outputFormat = DateFormat("yyyy-MM-dd");
 
-      DateTime dob = inputFormat.parse(date);
-      String formattedDate = outputFormat.format(dob);
+      try {
+        var date = dateController.value.text;
+        if (date.isEmpty) {
+          setRxRequestMemberShip(Status.ERROR);
+          return;
+        }
 
-      print(formattedDate);
-      if (withoutcheckotp.value == false) {
-        print('hhh');
-        setMemberShipType(_value.data!);
-      } else if (withoutcheckotp.value == true) {
-        if (isUnder18(dob)) {
-          if (zoneController.value.text == "") {
-            print('hhh');
-            _showLoginAlert(context!);
-          } else {
-            memberShipList.value.clear();
+        DateFormat inputFormat = DateFormat("dd/MM/yyyy");
+        DateTime dob = inputFormat.parse(date);
 
-            for (int i = 0; i < _value.data!.length; i++) {
-              var memName = _value.data![i].membershipName;
-              var id = _value.data![i].id;
-              if (memName == "Non Member") {
-                memberShipList.value.add(MemberShipData(
-                    id: id,
-                    membershipName: memName,
-                    price: _value.data![i].price.toString(),
-                    status: _value.data![i].status.toString(),
-                    updatedAt: null,
-                    createdAt: null));
-              }
-            }
-          }
+        // Clear existing list
+        memberShipList.clear();
+
+        if (withoutcheckotp.value == false) {
+          // Normal case - show all memberships
+          setMemberShipType(_value.data!);
         } else {
-          print('hhh222');
-          memberShipList.value.clear();
-          for (int i = 0; i < _value.data!.length; i++) {
-            var memName = _value.data![i].membershipName;
-            var id = _value.data![i].id;
-            if (zoneController.value.text == "") {
-              if (memName == "Saraswani Member" || memName == "Guest Member") {
-                memberShipList.value.add(MemberShipData(
-                    id: id,
-                    membershipName: memName,
-                    price: _value.data![i].price.toString(),
-                    status: _value.data![i].status.toString(),
-                    updatedAt: null,
-                    createdAt: null));
+          // Special cases based on age and pincode status
+          if (isUnder18(dob)) {
+            // For under 18
+            if (zoneController.value.text.isEmpty) {
+              _showLoginAlert(context!);
+            } else {
+              // Show only Non Member option
+              _addMembershipIfMatches(_value.data!, "Non Member");
+            }
+          } else {
+            // For above 18
+            if (countryNotFound.value) {
+              // Pincode exists - show options based on zone
+              if (zoneController.value.text.isEmpty) {
+                // Show Saraswani Member and Guest Member
+                _addMembershipIfMatches(_value.data!, "Saraswani Member");
+                _addMembershipIfMatches(_value.data!, "Guest Member");
+              } else {
+                // Show Non Member and Life Member
+                _addMembershipIfMatches(_value.data!, "Non Member");
+                _addMembershipIfMatches(_value.data!, "Life Member");
               }
             } else {
-              if (memName == "Non Member" || memName == "Life Member") {
-                memberShipList.value.add(MemberShipData(
-                    id: id,
-                    membershipName: memName,
-                    price: _value.data![i].price.toString(),
-                    status: _value.data![i].status.toString(),
-                    updatedAt: null,
-                    createdAt: null));
-              }
+              // Pincode doesn't exist - show only Saraswani Member
+              _addMembershipIfMatches(_value.data!, "Saraswani Member");
             }
           }
         }
+      } catch (e) {
+        print("Error parsing date: $e");
+        setRxRequestMemberShip(Status.ERROR);
       }
     }).onError((error, strack) {
       setRxRequestMemberShip(Status.ERROR);
     });
   }
 
+// Helper method to add membership if it matches the name
+  void _addMembershipIfMatches(List<MemberShipData> memberships, String name) {
+    for (var membership in memberships) {
+      if (membership.membershipName == name) {
+        memberShipList.add(MemberShipData(
+          id: membership.id,
+          membershipName: membership.membershipName,
+          price: membership.price.toString(),
+          status: membership.status.toString(),
+          updatedAt: null,
+          createdAt: null,
+        ));
+      }
+    }
+  }
   bool isUnder18(DateTime dateOfBirth) {
     final today = DateTime.now();
     final age = today.year - dateOfBirth.year;
@@ -631,6 +633,7 @@ class NewMemberController extends GetxController {
       withoutcheckotp.value = true;
       areaController.value.text = "";
       getMemberShip();
+
       String responseBody = await response.stream.bytesToString();
 
       Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
