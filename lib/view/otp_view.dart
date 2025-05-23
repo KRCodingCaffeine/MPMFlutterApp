@@ -97,7 +97,7 @@ class _OTPScreenState extends State<OTPScreen> {
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.grey[100],
         body: SingleChildScrollView(
           child: Container(
             margin: EdgeInsets.only(left: 16, right: 16),
@@ -131,7 +131,7 @@ class _OTPScreenState extends State<OTPScreen> {
                     Expanded(
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Colors.grey[100],
                           border:
                               Border.all(color: Colors.grey), // Black border
                           borderRadius:

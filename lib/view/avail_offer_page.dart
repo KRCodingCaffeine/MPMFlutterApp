@@ -150,7 +150,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   decoration: InputDecoration(
-                    labelText: 'Container Type',
+                    labelText: 'Taking Type',
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(

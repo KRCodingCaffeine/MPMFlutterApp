@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/route/route_name.dart';
 import 'package:mpm/utils/Session.dart';
+import 'package:mpm/utils/color_helper.dart';
+import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/urls.dart';
 import 'package:mpm/view/login_view.dart';
 
@@ -242,22 +244,66 @@ class AppDrawer extends StatelessWidget {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          title: const Text("Logout"),
-          content: const Text("Are you sure you want to logout?"),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Logout",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+          content: const Text(
+            "Are you sure you want to logout?",
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
           actions: [
-            TextButton(
+            OutlinedButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text("No", style: TextStyle(color: Colors.red)),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("No"),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () {
                 SessionManager.clearSession();
-                Navigator.pushReplacement(context,
-                    MaterialPageRoute(builder: (context) => LoginPage()));
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginPage()),
+                );
               },
-              child: const Text("Yes", style: TextStyle(color: Colors.red)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Yes"),
             ),
           ],
         );
