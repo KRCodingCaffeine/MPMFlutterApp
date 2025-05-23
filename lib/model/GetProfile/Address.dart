@@ -47,7 +47,7 @@ class Address {
     memberId = json['member_id'];
     addressType = json['address_type'];
     flatNo = json['flat_no'];
-    buildingNameId = json['building_name_id'];
+    buildingNameId = json['building_name'];
     address = json['address'];
     areaName = json['area_name'];
     city_id = json['city_id'];
@@ -71,7 +71,7 @@ class Address {
     data['member_id'] = this.memberId;
     data['address_type'] = this.addressType;
     data['flat_no'] = this.flatNo;
-    data['building_name_id'] = this.buildingNameId;
+    data['building_name'] = this.buildingNameId;
     data['address'] = this.address;
     data['area_name'] = this.areaName;
     data['city_id'] = this.city_id;

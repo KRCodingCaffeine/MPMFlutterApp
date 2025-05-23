@@ -263,6 +263,7 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // Building Name Dropdown
                               Container(
                                 width: double.infinity,
                                 margin: const EdgeInsets.only(left: 5, right: 5),
@@ -283,10 +284,9 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                       child: Text('Failed to load Building Name'),
                                     );
                                   } else {
-                                    final selectedValue = regiController.selectBuilding.value;
                                     return InputDecorator(
                                       decoration: InputDecoration(
-                                        labelText: selectedValue.isNotEmpty ? 'Building Name *' : null,
+                                        labelText: 'Building Name *',
                                         border: const OutlineInputBorder(
                                           borderSide: BorderSide(color: Colors.black),
                                         ),
@@ -308,24 +308,31 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                           'Select Building *',
                                           style: TextStyle(fontWeight: FontWeight.bold),
                                         ),
-                                        value: selectedValue.isNotEmpty ? selectedValue : null,
-                                        items: regiController.checkPinCodeList.isEmpty
-                                            ? [
-                                          const DropdownMenuItem<String>(
-                                            value: '',
-                                            child: Text('Select Building'),
-                                          )
-                                        ]
-                                            : regiController.checkPinCodeList
-                                            .map((building) => DropdownMenuItem<String>(
-                                          value: building.id.toString(),
-                                          child: Text(building.buildingName ?? 'Unknown'),
-                                        ))
-                                            .toList(),
+                                        value: regiController.selectBuilding.value.isNotEmpty
+                                            ? regiController.selectBuilding.value
+                                            : null,
+                                        items: [
+                                          // Show only "Can't find" option when no buildings exist
+                                          if (regiController.checkPinCodeList.isEmpty)
+                                            const DropdownMenuItem<String>(
+                                              value: 'other',
+                                              child: Text('Can\'t find your building'),
+                                            )
+                                          // Otherwise show only the actual buildings
+                                          else
+                                            ...regiController.checkPinCodeList.map((building) {
+                                              return DropdownMenuItem<String>(
+                                                value: building.id.toString(),
+                                                child: Text(building.buildingName ?? 'Unknown'),
+                                              );
+                                            }).toList(),
+                                        ],
                                         onChanged: (String? newValue) {
                                           if (newValue != null) {
                                             regiController.selectBuilding(newValue);
-                                            regiController.isBuilding.value = newValue == 'other';
+                                            // Show input field only when pincode doesn't exist
+                                            regiController.isBuilding.value =
+                                                regiController.checkPinCodeList.isEmpty;
                                           }
                                         },
                                       ),
@@ -333,6 +340,8 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                   }
                                 }),
                               ),
+
+                              // Building Name Input Field (shown only when pincode doesn't exist)
                               Obx(() {
                                 return Visibility(
                                   visible: regiController.isBuilding.value,
@@ -349,7 +358,8 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                         controller: regiController.buildingController.value,
                                         keyboardType: TextInputType.text,
                                         validator: (value) {
-                                          if (regiController.isBuilding.value && value!.isEmpty) {
+                                          if (regiController.isBuilding.value &&
+                                              (value == null || value.isEmpty)) {
                                             return 'Please enter building name';
                                           }
                                           return null;

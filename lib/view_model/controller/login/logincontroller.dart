@@ -525,7 +525,7 @@ class LoginController {
                 otherMobVisible.value = true;
               },
               style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.redAccent,
+                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: const BorderSide(color: Colors.redAccent),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),

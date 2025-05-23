@@ -137,7 +137,7 @@ class _LoginPageState extends State<LoginPage> {
         FocusManager.instance.primaryFocus?.unfocus();
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.grey[100],
         body: Stack(
           children: [
             SingleChildScrollView(
@@ -175,7 +175,7 @@ class _LoginPageState extends State<LoginPage> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: Colors.grey[100],
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: Colors.grey),
                             ),
@@ -221,7 +221,7 @@ class _LoginPageState extends State<LoginPage> {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: Colors.white,
+                                      color: Colors.grey[100],
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(color: Colors.grey),
                                     ),
