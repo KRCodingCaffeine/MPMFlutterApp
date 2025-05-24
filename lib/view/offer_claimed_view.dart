@@ -4,6 +4,7 @@ import 'package:mpm/repository/claimed_offer_by_id_repository/claimed_offer_by_i
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/view/ClaimedOfferDetailPage.dart';
 
 class ClaimedOfferListPage extends StatefulWidget {
   @override
@@ -173,7 +174,16 @@ class _ClaimedOfferListPageState extends State<ClaimedOfferListPage> {
                 itemCount: offers.length,
                 itemBuilder: (context, index) {
                   final offer = offers[index];
-                  return Card(
+                  return InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ClaimedOfferDetailPage(offer: offer),
+                          ),
+                        );
+                      },
+                  child: Card(
                     color: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     elevation: 2,
@@ -290,6 +300,7 @@ class _ClaimedOfferListPageState extends State<ClaimedOfferListPage> {
                         ),
                       ),
                     ),
+                  ),
                   );
                 },
               ),

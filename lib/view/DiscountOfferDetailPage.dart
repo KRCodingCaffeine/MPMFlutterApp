@@ -149,13 +149,13 @@ class DiscountOfferDetailPage extends StatelessWidget {
                   builder: (context) {
                     return AlertDialog(
                       backgroundColor: Colors.white,
-                      title: const Text("Enter Applicant Name"),
+                      title: const Text("Enter Test Name"),
                       content: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           TextField(
                             decoration: const InputDecoration(
-                              labelText: "Applicant Name",
+                              labelText: "Test Name",
                               border: OutlineInputBorder(),
                             ),
                             onChanged: (value) {
@@ -182,7 +182,7 @@ class DiscountOfferDetailPage extends StatelessWidget {
                             if (applicantName.isEmpty) {
                               Get.snackbar(
                                 "Error",
-                                "Please enter applicant name",
+                                "Please enter test name",
                                 backgroundColor: Colors.red,
                                 colorText: Colors.white,
                               );
