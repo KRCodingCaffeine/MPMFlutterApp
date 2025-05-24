@@ -230,7 +230,7 @@ class LoginController {
           'Error', // Title
           "Something went wrong", // Message
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.pink,
+          backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
           colorText: Colors.white,
           duration: Duration(seconds: 3),
         );
@@ -300,7 +300,7 @@ class LoginController {
             'Error', // Title
             "Sorry! OTP doesn't match", // Message
             snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.pink,
+            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
             colorText: Colors.white,
             duration: Duration(seconds: 3),
           );
@@ -310,7 +310,7 @@ class LoginController {
             'Error', // Title
             "Some thing went wrong ", // Message
             snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.pink,
+            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
             colorText: Colors.white,
             duration: Duration(seconds: 3),
           );
@@ -432,7 +432,7 @@ class LoginController {
           'Error', // Title
           "Something went wrong", // Message
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.pink,
+          backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
           colorText: Colors.white,
           duration: Duration(seconds: 3),
         );
@@ -455,97 +455,135 @@ class LoginController {
   void _showLoginAlert(BuildContext context) {
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-            backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15.0),
-            ),
-            title: const Row(
-              children: [
-                SizedBox(width: 10),
-                Text("Login"),
-              ],
-            ),
-            content: const Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text("Are You a Member of a Maheshwari Pragati Mandal"),
-                SizedBox(height: 10),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  Navigator.pushNamed(context, RouteNames.registration_screen);
-                },
-                style: TextButton.styleFrom(
-                  backgroundColor: ColorHelperClass.getColorFromHex(
-                      ColorResources.red_color),
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Login Verification",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
                 ),
-                child: const Text("No", style: TextStyle(color: Colors.white)),
               ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  final numberRegExp = RegExp(r'^-?\d+(\.\d+)?$'); // Matches integer or decimal
-
-                  if (numberRegExp.hasMatch(mobilecon.value.trim())) {
-                    lmCodeVisible.value=true;
-                    otherMobVisible.value=false;
-                  }
-                  else
-                  {
-                    otherMobVisible.value=true;
-                    lmCodeVisible.value=false;
-
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: ColorHelperClass.getColorFromHex(
-                      ColorResources.red_color),
+              const SizedBox(height: 8),
+              const Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+          content: const Text(
+            "Are you a member of Maheshwari Pragati Mandal?",
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.pushNamed(context, RouteNames.registration_screen);
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.redAccent),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Text("Yes", style: TextStyle(color: Colors.white)),
               ),
-            ]);
+              child: const Text("No"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                final numberRegExp = RegExp(r'^-?\d+(\.\d+)?$');
+
+                if (numberRegExp.hasMatch(mobilecon.value.trim())) {
+                  lmCodeVisible.value = true;
+                  otherMobVisible.value = false;
+                } else {
+                  otherMobVisible.value = true;
+                  lmCodeVisible.value = false;
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Yes"),
+            ),
+          ],
+        );
       },
     );
   }
 
   void _showLoginAlert2(BuildContext context) {
-    print("fggh" + lmDyanmicMobNo.value.toString());
+    print("Mobile: ${lmDyanmicMobNo.value}");
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext context) {
         String maskedNumber = maskMobileNumber(lmDyanmicMobNo.value);
+        print("Masked Mobile: $maskedNumber");
 
-        print("fggfghghjjkklj" + maskedNumber.toString());
         return AlertDialog(
+          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15.0),
+            borderRadius: BorderRadius.circular(20.0),
           ),
-          title: Row(
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
-              Image.asset(
-                Images.logoImage,
-                height: 50,
-                width: 50,
-
+              const Text(
+                "Login",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
               ),
-              const SizedBox(width: 10),
-              const Text("Login Verification"),
+              const SizedBox(height: 8),
+              const Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
             ],
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-
-              Text("Verify OTP for mobile $maskedNumber"),
-              const SizedBox(height: 10),
-
+              Text(
+                "Enter OTP sent on mobile $maskedNumber",
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.black87,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
             ],
           ),
           actions: [
@@ -554,18 +592,35 @@ class LoginController {
                 Navigator.of(context).pop();
                 otherMobVisible.value = true;
               },
-              child: const Text("No"),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.redAccent),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Another Number"),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
-
-                Navigator.pushNamed(context, RouteNames.otp_screen,arguments: {
-                  "memeberId":memberId.value,
-                  "page_type_direct":"2",
-                  "mobile": lmDyanmicMobNo.value
-                });
+                Navigator.pushNamed(
+                  context,
+                  RouteNames.otp_screen,
+                  arguments: {
+                    "memeberId": memberId.value,
+                    "page_type_direct": "2",
+                    "mobile": lmDyanmicMobNo.value,
+                  },
+                );
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
               child: const Text("Yes"),
             ),
           ],
