@@ -1,24 +1,34 @@
 class GetClaimedOfferData {
   int? memberClaimOfferId;
   String? orderNo;
+  String? medicinePrescriptionDocument;
+  String? memberClaimDocument;
   int? memberId;
   int? orgDetailsId;
   int? organisationSubcategoryId;
-  String? organisationSubcategoryName; // Added new field
+  String? organisationSubcategoryName;
   int? createdBy;
   String? createdAt;
-  String? orgName; // Added new field
-  String? orgAddress; // Added new field
-  String? orgCity; // Added new field
-  String? orgState; // Added new field
-  String? orgMobile; // Added new field
-  String? orgEmail; // Added new field
-  String? orgLogo; // Added new field
+  String? orgName;
+  String? orgAddress;
+  String? orgCity;
+  String? orgState;
+  String? orgMobile;
+  String? orgEmail;
+  String? orgLogo;
+  int? organisationOfferDiscountId;
+  String? offerDiscountName;
+  String? offerDescription;
+  String? validFrom;
+  String? validTo;
+  String? offerImage;
   List<ClaimedMedicine>? medicines;
 
   GetClaimedOfferData({
     this.memberClaimOfferId,
     this.orderNo,
+    this.medicinePrescriptionDocument,
+    this.memberClaimDocument,
     this.memberId,
     this.orgDetailsId,
     this.organisationSubcategoryId,
@@ -32,51 +42,80 @@ class GetClaimedOfferData {
     this.orgMobile,
     this.orgEmail,
     this.orgLogo,
+    this.organisationOfferDiscountId,
+    this.offerDiscountName,
+    this.offerDescription,
+    this.validFrom,
+    this.validTo,
+    this.offerImage,
     this.medicines,
   });
 
   factory GetClaimedOfferData.fromJson(Map<String, dynamic> json) {
     return GetClaimedOfferData(
       memberClaimOfferId: _toInt(json['member_claim_offer_id']),
-      orderNo: json['order_no'] as String?,
+      orderNo: json['order_no'],
+      medicinePrescriptionDocument: json['medicine_prescription_document']
+                  ?.isNotEmpty ==
+              true
+          ? "https://members.mumbaimaheshwari.com/api/public/${json['medicine_prescription_document']}"
+          : null,
+      memberClaimDocument: json['member_claim_document'],
       memberId: _toInt(json['member_id']),
       orgDetailsId: _toInt(json['org_details_id']),
       organisationSubcategoryId: _toInt(json['organisation_subcategory_id']),
-      organisationSubcategoryName: json['organisation_subcategory_name'] as String?,
+      organisationSubcategoryName: json['organisation_subcategory_name'],
       createdBy: _toInt(json['created_by']),
-      createdAt: json['created_at'] as String?,
-      orgName: json['org_name'] as String?,
-      orgAddress: json['org_address'] as String?,
-      orgCity: json['org_city'] as String?,
-      orgState: json['org_state'] as String?,
-      orgMobile: json['org_mobile'] as String?,
-      orgEmail: json['org_email'] as String?,
-      orgLogo: "https://members.mumbaimaheshwari.com/api/public/" +json['org_logo'],
+      createdAt: json['created_at'],
+      orgName: json['org_name'],
+      orgAddress: json['org_address'],
+      orgCity: json['org_city'],
+      orgState: json['org_state'],
+      orgMobile: json['org_mobile'],
+      orgEmail: json['org_email'],
+      orgLogo: json['org_logo']?.isNotEmpty == true
+          ? "https://members.mumbaimaheshwari.com/api/public/${json['org_logo']}"
+          : null,
+      organisationOfferDiscountId:
+          _toInt(json['organisation_offer_discount_id']),
+      offerDiscountName: json['offer_discount_name'],
+      offerDescription: json['offer_description'],
+      validFrom: json['valid_from'],
+      validTo: json['valid_to'],
+      offerImage: json['offer_image'],
       medicines: json['medicines'] != null
           ? List<ClaimedMedicine>.from(
-          json['medicines'].map((x) => ClaimedMedicine.fromJson(x)))
+              json['medicines'].map((x) => ClaimedMedicine.fromJson(x)))
           : null,
     );
   }
 
   Map<String, dynamic> toJson() => {
-    'member_claim_offer_id': memberClaimOfferId,
-    'order_no': orderNo,
-    'member_id': memberId,
-    'org_details_id': orgDetailsId,
-    'organisation_subcategory_id': organisationSubcategoryId,
-    'organisation_subcategory_name': organisationSubcategoryName,
-    'created_by': createdBy,
-    'created_at': createdAt,
-    'org_name': orgName,
-    'org_address': orgAddress,
-    'org_city': orgCity,
-    'org_state': orgState,
-    'org_mobile': orgMobile,
-    'org_email': orgEmail,
-    'org_logo': orgLogo,
-    'medicines': medicines?.map((x) => x.toJson()).toList(),
-  };
+        'member_claim_offer_id': memberClaimOfferId,
+        'order_no': orderNo,
+        'medicine_prescription_document': medicinePrescriptionDocument,
+        'member_claim_document': memberClaimDocument,
+        'member_id': memberId,
+        'org_details_id': orgDetailsId,
+        'organisation_subcategory_id': organisationSubcategoryId,
+        'organisation_subcategory_name': organisationSubcategoryName,
+        'created_by': createdBy,
+        'created_at': createdAt,
+        'org_name': orgName,
+        'org_address': orgAddress,
+        'org_city': orgCity,
+        'org_state': orgState,
+        'org_mobile': orgMobile,
+        'org_email': orgEmail,
+        'org_logo': orgLogo,
+        'organisation_offer_discount_id': organisationOfferDiscountId,
+        'offer_discount_name': offerDiscountName,
+        'offer_description': offerDescription,
+        'valid_from': validFrom,
+        'valid_to': validTo,
+        'offer_image': offerImage,
+        'medicines': medicines?.map((x) => x.toJson()).toList(),
+      };
 
   static int? _toInt(dynamic value) {
     if (value == null) return null;
@@ -102,18 +141,18 @@ class ClaimedMedicine {
   factory ClaimedMedicine.fromJson(Map<String, dynamic> json) {
     return ClaimedMedicine(
       memberMedicineOrderId: _toInt(json['member_medicine_order_id']),
-      medicineName: json['medicine_name'] as String?,
+      medicineName: json['medicine_name'],
       medicineContainerId: _toInt(json['medicine_container_id']),
       quantity: _toInt(json['quantity']),
     );
   }
 
   Map<String, dynamic> toJson() => {
-    'member_medicine_order_id': memberMedicineOrderId,
-    'medicine_name': medicineName,
-    'medicine_container_id': medicineContainerId,
-    'quantity': quantity,
-  };
+        'member_medicine_order_id': memberMedicineOrderId,
+        'medicine_name': medicineName,
+        'medicine_container_id': medicineContainerId,
+        'quantity': quantity,
+      };
 
   static int? _toInt(dynamic value) {
     if (value == null) return null;
