@@ -60,7 +60,9 @@ class GetClaimedOfferData {
               true
           ? "https://members.mumbaimaheshwari.com/api/public/${json['medicine_prescription_document']}"
           : null,
-      memberClaimDocument: json['member_claim_document'],
+      memberClaimDocument: json['member_claim_document']?.isNotEmpty == true
+          ? "https://members.mumbaimaheshwari.com/api/public/${json['member_claim_document']}"
+          : null,
       memberId: _toInt(json['member_id']),
       orgDetailsId: _toInt(json['org_details_id']),
       organisationSubcategoryId: _toInt(json['organisation_subcategory_id']),

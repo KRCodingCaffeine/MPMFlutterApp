@@ -24,11 +24,6 @@ class ClaimedOfferDetailPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Organisation Name
-            Text('Organization: ${offer.orgName}',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            SizedBox(height: 20),
-
             // Prescription Document
             if (offer.medicinePrescriptionDocument != null &&
                 offer.medicinePrescriptionDocument!.isNotEmpty)
@@ -43,7 +38,7 @@ class ClaimedOfferDetailPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                     child: Image.network(
                       offer.medicinePrescriptionDocument!,
-                      height: 160,
+                      height: 300,
                       width: double.infinity,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) =>
