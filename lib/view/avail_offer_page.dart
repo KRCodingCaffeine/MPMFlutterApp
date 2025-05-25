@@ -198,7 +198,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
             ),
             TextButton(
               style: TextButton.styleFrom(
-                backgroundColor: Colors.redAccent,
+                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
               ),
               child: const Text('OK'),
@@ -365,7 +365,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
             OutlinedButton(
               onPressed: () => Navigator.pop(context, false),
               style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.redAccent,
+                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: const BorderSide(color: Colors.redAccent),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -386,7 +386,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
                 });
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
+                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
               ),
               child: const Text("View Details", style: TextStyle(color: Colors.white)),
             ),
@@ -511,7 +511,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
           ] else ...[
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
+                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(
@@ -584,7 +584,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
                 TextButton(
                   onPressed: _showInputDialog,
                   style: TextButton.styleFrom(
-                    foregroundColor: Colors.redAccent,
+                    foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
                     backgroundColor: Colors.white,
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -643,7 +643,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
                       }
                     : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
+                  backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
                   foregroundColor: Colors.white,
                   disabledForegroundColor: Colors.white.withOpacity(0.6),
                   disabledBackgroundColor: Colors.redAccent.withOpacity(0.6),

@@ -37,7 +37,7 @@ class DiscountOfferDetailPage extends StatelessWidget {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor:
-            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Text(
           offer.offerDiscountName ?? 'Offer Details',
           style: const TextStyle(color: Colors.white, fontSize: 24),
@@ -113,164 +113,118 @@ class DiscountOfferDetailPage extends StatelessWidget {
           width: double.infinity,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
+              backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            onPressed: () {
-              if (offer.orgSubcategoryId?.toString() == '1') {
-                // Medical offer - go to AvailOfferPage
-                Get.to(
-                      () => AvailOfferPage(
-                    orgDetailsID: offer.orgDetailsID.toString(),
-                    organisationOfferDiscountId: offer.organisationOfferDiscountId.toString(),
-                    orgSubcategoryId: offer.orgSubcategoryId.toString(),
-                  ),
-                )?.then((_) {
-                  if (Get.arguments != null) {
-                    final args = Get.arguments as Map<String, dynamic>;
-                    Get.snackbar(
-                      args['success'] ? "Success" : "Error",
-                      args['message'],
-                      backgroundColor: args['success'] ? Colors.green : Colors.red,
-                      colorText: Colors.white,
-                    );
-                  }
-                });
-              } else {
-                // Non-medical offer - show dialog
-                String applicantName = '';
-
-                showDialog(
-                  context: Get.context!,
-                  builder: (context) {
-                    return AlertDialog(
-                      backgroundColor: Colors.white,
-                      title: const Text("Enter Test Name"),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          TextField(
-                            decoration: const InputDecoration(
-                              labelText: "Test Name",
-                              border: OutlineInputBorder(),
-                            ),
-                            onChanged: (value) {
-                              applicantName = value;
-                            },
-                          ),
-                        ],
-                      ),
-                      actions: [
-                        OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.redAccent,
-                            side: const BorderSide(color: Colors.redAccent),
-                          ),
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text("Cancel"),
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.redAccent,
-                            foregroundColor: Colors.white,
-                          ),
-                          onPressed: () async {
-                            if (applicantName.isEmpty) {
-                              Get.snackbar(
-                                "Error",
-                                "Please enter test name",
-                                backgroundColor: Colors.red,
-                                colorText: Colors.white,
-                              );
-                              return;
-                            }
-
-                            Navigator.pop(context); // Close the dialog
-
-                            try {
-                              final repository = AddOfferDiscountRepository();
-                              final userData = await SessionManager.getSession();
-
-                              // Create medicine with just the applicant name
-                              final medicine = Medicine(
-                                organisationOfferDiscountId: int.parse(offer.organisationOfferDiscountId.toString()),
-                                orgDetailsID: int.parse(offer.orgDetailsID.toString()),
-                                medicineName: applicantName,
-                                medicineContainerId: null,
-                                medicineContainerName: null,
-                                quantity: null,
-                              );
-
-                              // Create offer data
-                              final offerData = AddOfferDiscountData(
-                                memberId: int.parse(userData?.memberId.toString() ?? '0'),
-                                orgSubcategoryId: int.parse(offer.orgSubcategoryId.toString()),
-                                orgDetailsID: int.parse(offer.orgDetailsID.toString()),
-                                organisationOfferDiscountId: int.parse(offer.organisationOfferDiscountId.toString()),
-                                createdBy: int.parse(userData?.memberId.toString() ?? '0'),
-                                medicines: [medicine],
-                              );
-
-                              // Show loading indicator
-                              Get.dialog(
-                                const Center(child: CircularProgressIndicator()),
-                                barrierDismissible: false,
-                              );
-
-                              // Submit with null image
-                              final response = await repository.submitOfferDiscount(offerData, null);
-
-                              // Remove loading indicator
-                              Get.back();
-
-                              if (response['status'] == true) {
-                                // Show success dialog
-                                final success = await _showSuccessDialog(
-                                  "Offer claimed successfully!",
-                                  response['data'] ?? {},
-                                );
-
-                                if (success == true) {
-                                  Get.to(() => ClaimedOfferListPage());
-                                } else {
-                                  Get.back(result: {
-                                    'success': true,
-                                    'message': 'Offer claimed successfully',
-                                    'org_details_id': offer.orgDetailsID.toString(),
-                                  });
-                                }
-                              } else {
-                                // Show error dialog
-                                await _showErrorDialog(
-                                  response['message'] ?? 'Failed to claim offer',
-                                );
-                              }
-                            } catch (e) {
-                              // Remove loading indicator if still showing
-                              if (Get.isDialogOpen ?? false) Get.back();
-
-                              // Show error dialog
-                              await _showErrorDialog(
-                                "Failed to claim offer: ${e.toString().replaceAll('Exception:', '').trim()}",
-                              );
-                            }
-                          },
-                          child: const Text("Submit"),
-                        ),                      ],
-                    );
-                  },
-                );
-              }
-            },
+            onPressed: () => _handleClaimOffer(),
             child: const Text("Claim Offer", style: TextStyle(fontSize: 16)),
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _handleClaimOffer() async {
+    if (offer.orgSubcategoryId?.toString() == '1') {
+      // Medical offer - go to AvailOfferPage
+      Get.to(
+            () => AvailOfferPage(
+          orgDetailsID: offer.orgDetailsID.toString(),
+          organisationOfferDiscountId: offer.organisationOfferDiscountId.toString(),
+          orgSubcategoryId: offer.orgSubcategoryId.toString(),
+        ),
+      )?.then((_) {
+        if (Get.arguments != null) {
+          final args = Get.arguments as Map<String, dynamic>;
+          Get.snackbar(
+            args['success'] ? "Success" : "Error",
+            args['message'],
+            backgroundColor: args['success'] ? Colors.green : Colors.red,
+            colorText: Colors.white,
+          );
+        }
+      });
+    } else {
+      // Non-medical offer - automatically set name and claim
+      await _claimNonMedicalOffer();
+    }
+  }
+
+  Future<void> _claimNonMedicalOffer() async {
+    try {
+      final repository = AddOfferDiscountRepository();
+      final userData = await SessionManager.getSession();
+
+      // Set fixed name for non-medical offers
+      const applicantName = "Pathological Tests at Concessional Charges";
+
+      // Create medicine with the fixed applicant name
+      final medicine = Medicine(
+        organisationOfferDiscountId: int.parse(offer.organisationOfferDiscountId.toString()),
+        orgDetailsID: int.parse(offer.orgDetailsID.toString()),
+        medicineName: applicantName,
+        medicineContainerId: null,
+        medicineContainerName: null,
+        quantity: null,
+      );
+
+      // Create offer data
+      final offerData = AddOfferDiscountData(
+        memberId: int.parse(userData?.memberId.toString() ?? '0'),
+        orgSubcategoryId: int.parse(offer.orgSubcategoryId.toString()),
+        orgDetailsID: int.parse(offer.orgDetailsID.toString()),
+        organisationOfferDiscountId: int.parse(offer.organisationOfferDiscountId.toString()),
+        createdBy: int.parse(userData?.memberId.toString() ?? '0'),
+        medicines: [medicine],
+      );
+
+      // Show loading indicator
+      Get.dialog(
+        const Center(child: CircularProgressIndicator()),
+        barrierDismissible: false,
+      );
+
+      // Submit with null image
+      final response = await repository.submitOfferDiscount(offerData, null);
+
+      // Remove loading indicator
+      Get.back();
+
+      if (response['status'] == true) {
+        // Show success dialog
+        final success = await _showSuccessDialog(
+          "Offer claimed successfully!",
+          response['data'] ?? {},
+        );
+
+        if (success == true) {
+          Get.to(() => ClaimedOfferListPage());
+        } else {
+          Get.back(result: {
+            'success': true,
+            'message': 'Offer claimed successfully',
+            'org_details_id': offer.orgDetailsID.toString(),
+          });
+        }
+      } else {
+        // Show error dialog
+        await _showErrorDialog(
+          response['message'] ?? 'Failed to claim offer',
+        );
+      }
+    } catch (e) {
+      // Remove loading indicator if still showing
+      if (Get.isDialogOpen ?? false) Get.back();
+
+      // Show error dialog
+      await _showErrorDialog(
+        "Failed to claim offer: ${e.toString().replaceAll('Exception:', '').trim()}",
+      );
+    }
   }
 
   Future<bool?> _showSuccessDialog(String message, dynamic responseData) async {
@@ -317,7 +271,7 @@ class DiscountOfferDetailPage extends StatelessWidget {
             OutlinedButton(
               onPressed: () => Navigator.pop(context, false),
               style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.redAccent,
+                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: const BorderSide(color: Colors.redAccent),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -331,7 +285,7 @@ class DiscountOfferDetailPage extends StatelessWidget {
                 Get.to(() => ClaimedOfferListPage());
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
+                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
               ),
               child: const Text("View Details",
                   style: TextStyle(color: Colors.white)),
@@ -386,7 +340,7 @@ class DiscountOfferDetailPage extends StatelessWidget {
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
               ),
               child: const Text("OK"),
             ),
@@ -408,17 +362,17 @@ class DiscountOfferDetailPage extends StatelessWidget {
             child: Center(
               child: offer.offerImage != null && offer.offerImage!.isNotEmpty
                   ? Image.network(
-                      offer.offerImage!,
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => Image.asset(
-                        'assets/images/discounts.jpg',
-                        fit: BoxFit.contain,
-                      ),
-                    )
+                offer.offerImage!,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => Image.asset(
+                  'assets/images/discounts.jpg',
+                  fit: BoxFit.contain,
+                ),
+              )
                   : Image.asset(
-                      'assets/images/discounts.jpg',
-                      fit: BoxFit.contain,
-                    ),
+                'assets/images/discounts.jpg',
+                fit: BoxFit.contain,
+              ),
             ),
           ),
         ),
@@ -439,13 +393,13 @@ class DiscountOfferDetailPage extends StatelessWidget {
           ),
           child: offer.orgLogo != null && offer.orgLogo!.isNotEmpty
               ? ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    offer.orgLogo!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _buildDefaultLogo(),
-                  ),
-                )
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(
+              offer.orgLogo!,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _buildDefaultLogo(),
+            ),
+          )
               : _buildDefaultLogo(),
         ),
         const SizedBox(width: 16),
@@ -456,7 +410,7 @@ class DiscountOfferDetailPage extends StatelessWidget {
               Text(
                 offer.orgName ?? 'Unknown Company',
                 style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
               if (offer.orgAddress != null)
@@ -484,7 +438,7 @@ class DiscountOfferDetailPage extends StatelessWidget {
     String validityText;
     if (offer.validFrom != null && offer.validTo != null) {
       validityText =
-          '${_formatDate(offer.validFrom!)} - ${_formatDate(offer.validTo!)}';
+      '${_formatDate(offer.validFrom!)} - ${_formatDate(offer.validTo!)}';
     } else if (offer.validTo != null) {
       validityText = 'Valid until ${_formatDate(offer.validTo!)}';
     } else if (offer.validFrom != null) {

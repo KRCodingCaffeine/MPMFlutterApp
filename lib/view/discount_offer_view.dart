@@ -257,7 +257,7 @@ class _DiscountofferViewState extends State<DiscountofferView> {
                           return Chip(
                             label: Text(category.organisationCategoryName ?? 'Unknown'),
                             labelStyle: const TextStyle(fontSize: 12, color: Colors.white),
-                            backgroundColor: Colors.redAccent,
+                            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
                             deleteIcon: const Icon(Icons.close, color: Colors.white, size: 18),
                             onDeleted: () => setState(() => selectedCategories.remove(catId)),
                           );
@@ -266,7 +266,7 @@ class _DiscountofferViewState extends State<DiscountofferView> {
                               (subcat) => Chip(
                             label: Text(subcat),
                             labelStyle: const TextStyle(fontSize: 12, color: Colors.white),
-                            backgroundColor: Colors.redAccent,
+                            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
                             deleteIcon: const Icon(Icons.close, color: Colors.white, size: 18),
                             onDeleted: () => setState(() => selectedSubcategories.remove(subcat)),
                           ),
@@ -357,7 +357,7 @@ class _DiscountofferViewState extends State<DiscountofferView> {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
+                    backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -514,7 +514,7 @@ class _DiscountofferViewState extends State<DiscountofferView> {
                           right: 0,
                           child: _buildTag(
                             subcategory.organisationSubcategoryName!,
-                            Colors.redAccent,
+                            ColorHelperClass.getColorFromHex(ColorResources.red_color),
                             textColor: Colors.white,
                             fontSize: 10,
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
