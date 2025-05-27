@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -30,6 +31,7 @@ class FamilyInfoPage extends StatefulWidget {
 }
 
 class _FamilyInfoPageState extends State<FamilyInfoPage> {
+  bool isSpeedDialOpen = false;
   final ImagePicker _picker = ImagePicker();
   File? _profileImage;
 
@@ -47,7 +49,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     regiController.getGender();
     regiController.getMaritalStatus();
@@ -68,7 +69,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
       appBar: AppBar(
         title: const Text('Family Info', style: TextStyle(color: Colors.white)),
         backgroundColor:
-            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Stack(
@@ -89,16 +90,39 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
               ],
             ),
           ),
-          // Add Button at the bottom right
-          Positioned(
-            bottom: 20, // Distance from the bottom
-            right: 20, // Distance from the right
-            child: FloatingActionButton(
-              onPressed: () => _showAddModalSheet(context),
-              backgroundColor: ColorHelperClass.getColorFromHex(
-                  ColorResources.red_color), // Button color
-              child: const Icon(Icons.add, color: Colors.white), // Add icon
-            ),
+        ],
+      ),
+      floatingActionButton: SpeedDial(
+        icon: isSpeedDialOpen ? Icons.close : Icons.add,
+        activeIcon: Icons.close,
+        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+        foregroundColor: Colors.white,
+        overlayOpacity: 0.5,
+        spacing: 10,
+        spaceBetweenChildren: 10,
+        onOpen: () => setState(() => isSpeedDialOpen = true),
+        onClose: () => setState(() => isSpeedDialOpen = false),
+        children: [
+          SpeedDialChild(
+            child: const Icon(Icons.person_add),
+            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+            foregroundColor: Colors.white,
+            label: 'New Member',
+            labelStyle: TextStyle(fontSize: 16),
+            onTap: () {
+              _showAddModalSheet(context);
+            },
+          ),
+          SpeedDialChild(
+            child: const Icon(Icons.person),
+            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+            foregroundColor: Colors.white,
+            label: 'Existing Member',
+            labelStyle: TextStyle(fontSize: 16),
+            onTap: () {
+              // Handle existing member logic
+              print('Existing Member tapped');
+            },
           ),
         ],
       ),
@@ -118,7 +142,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
           backgroundImage:
               (member.profileImage != null && member.profileImage.isNotEmpty)
                   ? NetworkImage(Urls.imagePathUrl + member.profileImage)
-                  : const AssetImage("assets/images/male.png") as ImageProvider,
+                  : const AssetImage("assets/images/user3.png") as ImageProvider,
           backgroundColor: Colors.grey[300],
         ),
         title: Column(
