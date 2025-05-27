@@ -2,6 +2,8 @@ class OfferData {
   String? organisationOfferDiscountId;
   String? offerDiscountName;
   String? offerDescription;
+  String? offerContactPersonName;
+  String? offerContactPersonMobile;
   String? validFrom;
   String? validTo;
   String? orgDetailsID;
@@ -28,6 +30,8 @@ class OfferData {
     this.organisationOfferDiscountId,
     this.offerDiscountName,
     this.offerDescription,
+    this.offerContactPersonName,
+    this.offerContactPersonMobile,
     this.validFrom,
     this.validTo,
     this.orgDetailsID,
@@ -56,6 +60,8 @@ class OfferData {
       organisationOfferDiscountId: json['organisation_offer_discount_id']?.toString(),
       offerDiscountName: json['offer_discount_name'],
       offerDescription: json['offer_description'],
+      offerContactPersonName: json['org_contact_person_name'],
+      offerContactPersonMobile: json['org_contact_person_mobile'],
       validFrom: json['valid_from'],
       validTo: json['valid_to'],
       orgDetailsID: json['org_details_id'],
@@ -85,6 +91,8 @@ class OfferData {
     data['organisation_offer_discount_id'] = organisationOfferDiscountId;
     data['offer_discount_name'] = offerDiscountName;
     data['offer_description'] = offerDescription;
+    data['org_contact_person_name'] = offerContactPersonName;
+    data['org_contact_person_mobile'] = offerContactPersonMobile;
     data['valid_from'] = validFrom;
     data['valid_to'] = validTo;
     data['org_details_id'] = orgDetailsID;

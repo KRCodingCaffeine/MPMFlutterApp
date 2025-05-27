@@ -493,12 +493,22 @@ class DiscountOfferDetailPage extends StatelessWidget {
             2: FlexColumnWidth(),
           },
           children: [
+            if (offer.offerContactPersonName != null)
+              _buildTableRow('Contact Person Name', offer.offerContactPersonName!),
+            if (offer.offerContactPersonName != null) _buildSpacerRow(),
+
+            if (offer.offerContactPersonMobile != null)
+              _buildTableRow('Contact Person Mobile Number', offer.offerContactPersonMobile!),
+            if (offer.offerContactPersonMobile != null) _buildSpacerRow(),
+
             if (offer.orgMobile != null)
               _buildTableRow('Mobile Number', offer.orgMobile!),
-            if (offer.orgWhatsApp != null) _buildSpacerRow(),
+            if (offer.orgMobile != null) _buildSpacerRow(),
+
             if (offer.orgWhatsApp != null)
               _buildTableRow('WhatsApp', offer.orgWhatsApp!),
-            if (offer.orgEmail != null) _buildSpacerRow(),
+            if (offer.orgWhatsApp != null) _buildSpacerRow(),
+
             if (offer.orgEmail != null)
               _buildTableRow('Email', offer.orgEmail!),
           ],
