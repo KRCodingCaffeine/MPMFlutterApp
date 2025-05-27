@@ -439,15 +439,15 @@ class _DiscountofferViewState extends State<DiscountofferView> {
                       borderRadius: BorderRadius.circular(8),
                       child: Image.network(
                         offer.orgLogo!,
-                        width: 75,
-                        height: 75,
+                        width: 40,
+                        height: 40,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => _buildDefaultLogo(),
                         loadingBuilder: (context, child, loadingProgress) {
                           if (loadingProgress == null) return child;
                           return SizedBox(
-                            width: 75,
-                            height: 75,
+                            width: 50,
+                            height: 50,
                             child: Center(
                               child: CircularProgressIndicator(
                                 value: loadingProgress.expectedTotalBytes != null
@@ -463,12 +463,12 @@ class _DiscountofferViewState extends State<DiscountofferView> {
                         : _buildDefaultLogo(),
                   const SizedBox(height: 4),
                     SizedBox(
-                      width: 75,
+                      width: 95,
                       child: Text(
                         offer.orgName ?? 'Unknown',
                         style: const TextStyle(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -492,7 +492,7 @@ class _DiscountofferViewState extends State<DiscountofferView> {
                           children: [
                             Text(
                               offer.offerDiscountName ?? 'No title',
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -554,8 +554,8 @@ class _DiscountofferViewState extends State<DiscountofferView> {
     return Center(
       child: Image.asset(
         'assets/images/med-3.png',
-        width: 75,
-        height: 75,
+        width: 40,
+        height: 40,
       ),
     );
   }

@@ -2,6 +2,8 @@ class OfferDiscountByIdData {
   int? organisationOfferDiscountId;
   String? offerDiscountName;
   String? offerDescription;
+  String? offerContactPersonName;
+  String? offerContactPersonMobile;
   String? validFrom;
   String? validTo;
   String? offerImage;
@@ -24,6 +26,8 @@ class OfferDiscountByIdData {
     this.organisationOfferDiscountId,
     this.offerDiscountName,
     this.offerDescription,
+    this.offerContactPersonName,
+    this.offerContactPersonMobile,
     this.validFrom,
     this.validTo,
     this.offerImage,
@@ -48,6 +52,8 @@ class OfferDiscountByIdData {
       organisationOfferDiscountId: json['organisation_offer_discount_id'],
       offerDiscountName: json['offer_discount_name'],
       offerDescription: json['offer_description'],
+      offerContactPersonName: json['org_contact_person_name'],
+      offerContactPersonMobile: json['org_contact_person_mobile'],
       validFrom: json['valid_from'],
       validTo: json['valid_to'],
       offerImage: "https://members.mumbaimaheshwari.com/api/public/" + json['offer_image'],
@@ -73,6 +79,8 @@ class OfferDiscountByIdData {
       'organisation_offer_discount_id': organisationOfferDiscountId,
       'offer_discount_name': offerDiscountName,
       'offer_description': offerDescription,
+      'org_contact_person_name': offerContactPersonName,
+      'org_contact_person_name': offerContactPersonMobile,
       'valid_from': validFrom,
       'valid_to': validTo,
       'offer_image': offerImage,
