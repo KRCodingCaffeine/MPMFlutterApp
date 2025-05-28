@@ -5,6 +5,7 @@ import 'package:mpm/OccuptionProfession/OccuptionProfessionData.dart';
 import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/model/GetProfile/BusinessInfo.dart';
+import 'package:mpm/model/GetProfile/FamilyHeadMemberData.dart';
 import 'package:mpm/model/GetProfile/FamilyMembersData.dart';
 import 'package:mpm/model/GetProfile/GetProfileData.dart';
 import 'package:mpm/model/GetProfile/Qualification.dart';
@@ -215,6 +216,7 @@ var selectMarital=''.obs;
   var selectQualicationCat = ''.obs;
   final rxStatusRelationType = Status.LOADING.obs;
   var familyDataList = <FamilyMembersData>[].obs;
+  var familyHeadData = Rxn<FamilyHeadMemberData>();
   var areaDataList = <FamilyMembersData>[].obs;
   var selectRelationShipType = ''.obs;
 var   occuptionFlag=false.obs;
@@ -401,6 +403,11 @@ var   occuptionFlag=false.obs;
       if (getUserData.value.familyMembersData != null) {
         print("hjfhhjj" + getUserData.value.familyMembersData.toString());
         familyDataList.value = getUserData.value.familyMembersData!;
+      }
+
+      if (getUserData.value.familyHeadMemberData != null) {
+        familyHeadMemberId.value = getUserData.value.familyHeadMemberData!.memberId.toString();
+        familyHeadData.value = getUserData.value.familyHeadMemberData!; // Add this line
       }
     }).onError((error, strack) {
       loading.value = false;
