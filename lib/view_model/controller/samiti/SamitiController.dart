@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:mpm/data/response/status.dart';
+import 'package:mpm/model/GetProfile/GetProfileData.dart';
 import 'package:mpm/model/samiti/SamitiDetailData.dart';
 import 'package:mpm/model/samiti/SamitiDetailModel.dart';
 import 'package:mpm/model/search/SearchData.dart';
@@ -18,6 +19,7 @@ class SamitiController extends GetxController {
   var samitiId = "".obs;
   var samitiDetailList = <SamitiDetailData>[].obs;
   var searchDataList = <SearchData>[].obs;
+  var selectedMember = RxString('');
 
   void getSamitiType() async {
     loading.value = true;
