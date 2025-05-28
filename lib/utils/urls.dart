@@ -53,4 +53,5 @@ class Urls {
   static const  String claimed_offer = base_url+"api/get_claimed_offer_by_member_id";
   static const String updatemobileno = base_url+"api/update_mobile";
   static const String imagePathUrl = base_url+"public/";
+  static const String addExistingmemberUrl = base_url+"api/add_existing_member_into_family";
 }
