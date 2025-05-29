@@ -54,4 +54,5 @@ class Urls {
   static const String updatemobileno = base_url+"api/update_mobile";
   static const String imagePathUrl = base_url+"public/";
   static const String addExistingmemberUrl = base_url+"api/add_existing_member_into_family";
+  static const String changeFamilyHeadUrl = base_url+"api/change_family_head_info";
 }

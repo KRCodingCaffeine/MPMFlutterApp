@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:mpm/OccuptionProfession/OccuptionProfessionData.dart';
 import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/AddExistingFamilyMember/addExistingFamilyMemberData.dart';
+import 'package:mpm/model/ChangeFamilyHead/changeFamilyHeadData.dart';
 import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/model/GetProfile/BusinessInfo.dart';
 import 'package:mpm/model/GetProfile/FamilyHeadMemberData.dart';
@@ -20,6 +21,7 @@ import 'package:mpm/model/Register/RegisterModelClass.dart';
 import 'package:mpm/model/UpdateFamilyRelation/UpdateFamilyMember.dart';
 import 'package:mpm/model/relation/RelationData.dart';
 import 'package:mpm/repository/add_existing_family_member_repository/add_existing_family_member_repo.dart';
+import 'package:mpm/repository/change_family_head_repository/change_family_head_repo.dart';
 import 'package:mpm/repository/register_repository/register_repo.dart';
 import 'package:mpm/repository/update_repository/UpdateProfileRepository.dart';
 import 'package:mpm/utils/NotificationDatabase.dart';
@@ -44,6 +46,7 @@ class UdateProfileController extends GetxController {
   var documentDynamicImage = "".obs;
   var isLoadingPayment = false.obs;
   final AddExistingMemberIntoFamilyRepository addExistingMemberRepo = AddExistingMemberIntoFamilyRepository();
+  final ChangeFamilyHeadRepository _changeHeadRepo = ChangeFamilyHeadRepository();
 
   var isPay = false.obs;
 
@@ -199,52 +202,6 @@ class UdateProfileController extends GetxController {
   void setSelectOccuptionPro(String value) {
     selectOccuptionPro.value = value;
   }
-
-  Future<bool> addExistingFamilyMember(String memberId, String relationId) async {
-    try {
-      familyloading.value = true;
-
-      // Create the data model
-      final data = AddExistingMemberIntoFamilyData(
-        memberId: int.parse(memberId),
-        relationId: int.parse(relationId),
-        currentMemberId: int.parse(familyHeadData.value!.memberId!), // Assuming you have access to current member ID
-      );
-
-      // Call the API
-      final response = await addExistingMemberRepo.addExistingMember(data);
-
-      if (response['status'] == true) {
-
-        Get.snackbar(
-          "Success",
-          "Member added successfully",
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
-        return true;
-      } else {
-        Get.snackbar(
-          "Error",
-          response['message'] ?? "Failed to add member",
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-        return false;
-      }
-    } catch (e) {
-      Get.snackbar(
-        "Error",
-        "Failed to add member: ${e.toString()}",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      return false;
-    } finally {
-      familyloading.value = false;
-    }
-  }
-
 
   void setRxRequestOccuption(Status _value) =>
       rxStatusOccupation.value = _value;
@@ -1524,5 +1481,97 @@ class UdateProfileController extends GetxController {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("OTP Resent Successfully")),
     );
+  }
+
+  Future<bool> addExistingFamilyMember(String memberId, String relationId) async {
+    try {
+      familyloading.value = true;
+
+      final data = AddExistingMemberIntoFamilyData(
+        memberId: int.parse(memberId),
+        relationId: int.parse(relationId),
+        currentMemberId: int.parse(familyHeadData.value!.memberId!),
+      );
+
+      final response = await addExistingMemberRepo.addExistingMember(data);
+
+      if (response['status'] == true) {
+        Get.back(result: true);
+        Get.snackbar(
+          "Success",
+          "Member added successfully",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+        return true;
+      } else {
+        Get.snackbar(
+          "Error",
+          response['message'] ?? "Failed to add member",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return false;
+      }
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        "Member already related with another family. We can't add this member into your family.",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return false;
+    } finally {
+      familyloading.value = false;
+    }
+  }
+
+  Future<bool> changeFamilyHead(String newHeadId, String relationId) async {
+    try {
+      familyloading(true);
+
+      // Get current family head ID
+      final currentHeadId = familyHeadData.value?.memberId;
+
+      // Prepare the request data
+      final data = ChangeFamilyHeadData(
+        currentFamilyHeadId: int.tryParse(currentHeadId ?? ''),
+        newFamilyHeadId: int.tryParse(newHeadId),
+        relationshipId: int.tryParse(relationId),
+        memberId: int.tryParse(newHeadId),
+      );
+
+      // Call the API
+      final response = await _changeHeadRepo.changeFamilyHead(data);
+
+      if (response['status'] == true) {
+        // Refresh family data after successful change
+        Get.snackbar(
+          'Success',
+          response['message'] ?? 'Family head changed successfully',
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+        return true;
+      } else {
+        Get.snackbar(
+          'Error',
+          response['message'] ?? 'Failed to change family head',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return false;
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to change family head: ${e.toString()}',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return false;
+    } finally {
+      familyloading(false);
+    }
   }
 }
