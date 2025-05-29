@@ -5,8 +5,10 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:mpm/data/response/status.dart';
+import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/model/GetProfile/FamilyHeadMemberData.dart';
 import 'package:mpm/model/relation/RelationData.dart';
+import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/urls.dart';
@@ -36,6 +38,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
   bool isSpeedDialOpen = false;
   final ImagePicker _picker = ImagePicker();
   File? _profileImage;
+  String? currentMemberId;
 
   Rx<File?> selectimage = Rx<File?>(null);
   UdateProfileController controller = Get.put(UdateProfileController());
@@ -62,6 +65,14 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
     regiController.getCountry();
     regiController.getState();
     regiController.getCity();
+    _loadSessionData();
+  }
+
+  void _loadSessionData() async {
+    CheckUserData2? userData = await SessionManager.getSession();
+    setState(() {
+      currentMemberId = userData?.memberId?.toString();
+    });
   }
 
   // Update your build method:
@@ -182,34 +193,290 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
             ),
           ],
         ),
-        trailing: Container(
-          child: ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFFDC3545),
-              elevation: 4,
-              shadowColor: Colors.black,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
+        trailing: (headData.memberId == currentMemberId)
+            ? ElevatedButton(
+                onPressed: () {
+                  _showChangeHeadDialog(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFFDC3545),
+                  elevation: 4,
+                  shadowColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                ),
+                child: const Text(
                   'Change Head',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-              ],
-            ),
-          ),
-        ),
+              )
+            : const SizedBox.shrink(), // Hide button if not the head
       ),
+    );
+  }
+
+  void _showChangeHeadDialog(BuildContext context) {
+    final selectedMember = Rxn<String>();
+    final isRelationSelected = false.obs;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          backgroundColor: Colors.grey[100],
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Obx(() {
+              final isChangeEnabled = selectedMember.value != null &&
+                  controller.selectRelationShipType.value.isNotEmpty;
+
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Change Family Head",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  const Divider(thickness: 1, color: Colors.black38),
+                  const SizedBox(height: 16),
+
+                  // Current Head Info
+                  Obx(() {
+                    final headData = controller.familyHeadData.value;
+                    if (headData != null) {
+                      return Text(
+                        "Current Head: ${headData.firstName ?? ''} ${headData.lastName ?? ''}".trim(),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  }),
+                  const SizedBox(height: 20),
+
+                  // New Head Dropdown
+                  Column(
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 5),
+                        width: double.infinity,
+                        child: InputDecorator(
+                          decoration: InputDecoration(
+                            labelText: selectedMember.value != null
+                                ? 'Select New Head *'
+                                : null,
+                            border: const OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.black)),
+                            enabledBorder: const OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.black)),
+                            focusedBorder: const OutlineInputBorder(
+                                borderSide:
+                                BorderSide(color: Colors.black38, width: 1)),
+                            contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 20),
+                            labelStyle: const TextStyle(color: Colors.black),
+                          ),
+                          child: DropdownButton<String>(
+                            dropdownColor: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            isExpanded: true,
+                            underline: const SizedBox(),
+                            hint: const Text(
+                              'Select New Head *',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            value: selectedMember.value,
+                            items: controller.familyDataList.value
+                                .where((member) =>
+                            member.memberId !=
+                                controller.familyHeadData.value?.memberId)
+                                .map((member) {
+                              return DropdownMenuItem<String>(
+                                value: member.memberId,
+                                child: Text(
+                                    "${member.firstName ?? ''} ${member.lastName ?? ''}".trim()),
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              selectedMember.value = newValue;
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                    ],
+                  ),
+
+                  // Relation Dropdown
+                  Column(
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 5),
+                        width: double.infinity,
+                        child: Row(
+                          children: [
+                            Obx(() {
+                              if (controller.rxStatusRelationType.value ==
+                                  Status.LOADING) {
+                                return const Padding(
+                                  padding: EdgeInsets.symmetric(
+                                      vertical: 10, horizontal: 22),
+                                  child: SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.redAccent,
+                                    ),
+                                  ),
+                                );
+                              } else if (controller.rxStatusRelationType.value ==
+                                  Status.ERROR) {
+                                return const Expanded(
+                                    child:
+                                    Text('Failed to load relation types'));
+                              } else if (controller
+                                  .relationShipTypeList.isEmpty) {
+                                return const Expanded(
+                                    child: Text('No relation available'));
+                              } else {
+                                final selectedValue =
+                                    controller.selectRelationShipType.value;
+                                return Expanded(
+                                  child: InputDecorator(
+                                    decoration: InputDecoration(
+                                      labelText: selectedValue.isNotEmpty
+                                          ? 'Select Relation *'
+                                          : null,
+                                      border: const OutlineInputBorder(
+                                          borderSide:
+                                          BorderSide(color: Colors.black)),
+                                      enabledBorder: const OutlineInputBorder(
+                                          borderSide:
+                                          BorderSide(color: Colors.black)),
+                                      focusedBorder: const OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                              color: Colors.black38, width: 1)),
+                                      contentPadding: const EdgeInsets.symmetric(
+                                          horizontal: 20),
+                                      labelStyle:
+                                      const TextStyle(color: Colors.black),
+                                    ),
+                                    child: DropdownButton<String>(
+                                      dropdownColor: Colors.white,
+                                      borderRadius: BorderRadius.circular(10),
+                                      isExpanded: true,
+                                      underline: Container(),
+                                      hint: const Text(
+                                        'Select Relation *',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      value: selectedValue.isNotEmpty
+                                          ? selectedValue
+                                          : null,
+                                      items: controller.relationShipTypeList
+                                          .map((RelationData relation) {
+                                        return DropdownMenuItem<String>(
+                                          value: relation.id.toString(),
+                                          child: Text(
+                                              relation.name ?? 'Unknown'),
+                                        );
+                                      }).toList(),
+                                      onChanged: (String? newValue) {
+                                        if (newValue != null) {
+                                          controller.setSelectRelationShip(
+                                              newValue);
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                );
+                              }
+                            }),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                    ],
+                  ),
+
+                  // Footer Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor:
+                            ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color),
+                            side: BorderSide(
+                                color: ColorHelperClass.getColorFromHex(
+                                    ColorResources.red_color)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: const Text("Cancel"),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: isChangeEnabled
+                              ? () async {
+                            if (selectedMember.value != null &&
+                                controller.selectRelationShipType.value.isNotEmpty) {
+                              final success = await controller.changeFamilyHead(
+                                selectedMember.value!,
+                                controller.selectRelationShipType.value,
+                              );
+                              if (success) {
+                                Navigator.pop(context);
+                              }
+                            }
+                          }
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                            ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: Obx(() {
+                            return controller.familyloading.value
+                                ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                                : const Text("Change Head");
+                          }),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            }),
+          ),
+        );
+      },
     );
   }
 
@@ -305,8 +572,9 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
       context: context,
       builder: (context) {
         return Obx(() {
-          final isAddEnabled = samitiController.selectedMember.value.isNotEmpty &&
-              controller.selectRelationShipType.value.isNotEmpty;
+          final isAddEnabled =
+              samitiController.selectedMember.value.isNotEmpty &&
+                  controller.selectRelationShipType.value.isNotEmpty;
 
           return Dialog(
             shape: RoundedRectangleBorder(
@@ -351,11 +619,11 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                               if (debounceTimer != null) {
                                 debounceTimer.cancel();
                               }
-                                if (value.length >= 3) {
-                                  samitiController.getSearchLPM(value);
-                                } else {
-                                  samitiController.searchDataList.clear();
-                                }
+                              if (value.length >= 3) {
+                                samitiController.getSearchLPM(value);
+                              } else {
+                                samitiController.searchDataList.clear();
+                              }
                             },
                           ),
                         ),
@@ -363,7 +631,8 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                           icon: const Icon(Icons.search),
                           onPressed: () {
                             if (searchController.text.isNotEmpty) {
-                              samitiController.getSearchLPM(searchController.text);
+                              samitiController
+                                  .getSearchLPM(searchController.text);
                             }
                           },
                         ),
@@ -392,7 +661,8 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                         itemBuilder: (context, index) {
                           final member = samitiController.searchDataList[index];
                           return Card(
-                            color: samitiController.selectedMember.value == member.memberId
+                            color: samitiController.selectedMember.value ==
+                                    member.memberId
                                 ? Colors.grey[200]
                                 : Colors.white,
                             margin: const EdgeInsets.only(bottom: 12),
@@ -404,14 +674,19 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                               padding: const EdgeInsets.all(8.0),
                               child: ListTile(
                                 onTap: () {
-                                  samitiController.selectedMember.value = member.memberId!;
+                                  samitiController.selectedMember.value =
+                                      member.memberId!;
                                 },
                                 leading: CircleAvatar(
                                   radius: 23,
-                                  backgroundImage: member.profileImage != null &&
-                                      member.profileImage!.isNotEmpty
-                                      ? NetworkImage(Urls.imagePathUrl + member.profileImage!)
-                                      : const AssetImage("assets/images/user3.png") as ImageProvider,
+                                  backgroundImage:
+                                      member.profileImage != null &&
+                                              member.profileImage!.isNotEmpty
+                                          ? NetworkImage(Urls.imagePathUrl +
+                                              member.profileImage!)
+                                          : const AssetImage(
+                                                  "assets/images/user3.png")
+                                              as ImageProvider,
                                   backgroundColor: Colors.grey[300],
                                 ),
                                 title: Column(
@@ -419,7 +694,8 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(
-                                      "${member.firstName ?? ''} ${member.lastName ?? ''}".trim(),
+                                      "${member.firstName ?? ''} ${member.lastName ?? ''}"
+                                          .trim(),
                                       style: const TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.bold,
@@ -444,7 +720,8 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                         ),
                                       ],
                                     ),
-                                    if (member.mobile != null && member.mobile!.isNotEmpty)
+                                    if (member.mobile != null &&
+                                        member.mobile!.isNotEmpty)
                                       Row(
                                         children: [
                                           Text(
@@ -482,9 +759,11 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                           child: Row(
                             children: [
                               Obx(() {
-                                if (controller.rxStatusRelationType.value == Status.LOADING) {
+                                if (controller.rxStatusRelationType.value ==
+                                    Status.LOADING) {
                                   return const Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                                    padding: EdgeInsets.symmetric(
+                                        vertical: 10, horizontal: 22),
                                     child: SizedBox(
                                       height: 24,
                                       width: 24,
@@ -493,27 +772,41 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                       ),
                                     ),
                                   );
-                                } else if (controller.rxStatusRelationType.value == Status.ERROR) {
-                                  return const Center(child: Text('Failed to load relation'));
-                                } else if (controller.relationShipTypeList.isEmpty) {
-                                  return const Center(child: Text('No relation available'));
+                                } else if (controller
+                                        .rxStatusRelationType.value ==
+                                    Status.ERROR) {
+                                  return const Center(
+                                      child: Text('Failed to load relation'));
+                                } else if (controller
+                                    .relationShipTypeList.isEmpty) {
+                                  return const Center(
+                                      child: Text('No relation available'));
                                 } else {
-                                  final selectedValue = controller.selectRelationShipType.value;
+                                  final selectedValue =
+                                      controller.selectRelationShipType.value;
                                   return Expanded(
                                     child: InputDecorator(
                                       decoration: InputDecoration(
-                                        labelText: selectedValue.isNotEmpty ? 'Select Relation *' : null,
+                                        labelText: selectedValue.isNotEmpty
+                                            ? 'Select Relation *'
+                                            : null,
                                         border: const OutlineInputBorder(
-                                          borderSide: BorderSide(color: Colors.black),
+                                          borderSide:
+                                              BorderSide(color: Colors.black),
                                         ),
                                         enabledBorder: const OutlineInputBorder(
-                                          borderSide: BorderSide(color: Colors.black),
+                                          borderSide:
+                                              BorderSide(color: Colors.black),
                                         ),
                                         focusedBorder: const OutlineInputBorder(
-                                          borderSide: BorderSide(color: Colors.black38, width: 1),
+                                          borderSide: BorderSide(
+                                              color: Colors.black38, width: 1),
                                         ),
-                                        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                                        labelStyle: const TextStyle(color: Colors.black),
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                                horizontal: 20),
+                                        labelStyle: const TextStyle(
+                                            color: Colors.black),
                                       ),
                                       child: DropdownButton<String>(
                                         dropdownColor: Colors.white,
@@ -522,18 +815,24 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                         underline: Container(),
                                         hint: const Text(
                                           'Select Relation *',
-                                          style: TextStyle(fontWeight: FontWeight.bold),
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold),
                                         ),
-                                        value: selectedValue.isNotEmpty ? selectedValue : null,
-                                        items: controller.relationShipTypeList.map((RelationData relation) {
+                                        value: selectedValue.isNotEmpty
+                                            ? selectedValue
+                                            : null,
+                                        items: controller.relationShipTypeList
+                                            .map((RelationData relation) {
                                           return DropdownMenuItem<String>(
                                             value: relation.id.toString(),
-                                            child: Text(relation.name ?? 'Unknown'),
+                                            child: Text(
+                                                relation.name ?? 'Unknown'),
                                           );
                                         }).toList(),
                                         onChanged: (String? newValue) {
                                           if (newValue != null) {
-                                            controller.setSelectRelationShip(newValue);
+                                            controller.setSelectRelationShip(
+                                                newValue);
                                           }
                                         },
                                       ),
@@ -555,38 +854,47 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                       OutlinedButton(
                         onPressed: () => Navigator.pop(context),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                          side: BorderSide(color: ColorHelperClass.getColorFromHex(ColorResources.red_color)),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          foregroundColor: ColorHelperClass.getColorFromHex(
+                              ColorResources.red_color),
+                          side: BorderSide(
+                              color: ColorHelperClass.getColorFromHex(
+                                  ColorResources.red_color)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
                         ),
                         child: const Text("Cancel"),
                       ),
                       ElevatedButton(
-                        onPressed: isAddEnabled ? () async {
-                          final success = await controller.addExistingFamilyMember(
-                            samitiController.selectedMember.value,
-                            controller.selectRelationShipType.value,
-                          );
+                        onPressed: isAddEnabled
+                            ? () async {
+                                final success =
+                                    await controller.addExistingFamilyMember(
+                                  samitiController.selectedMember.value,
+                                  controller.selectRelationShipType.value,
+                                );
 
-                          if (success) {
-                            Navigator.pop(context);
-                          }
-                        } : null,
+                                if (success) {
+                                  Navigator.pop(context);
+                                }
+                              }
+                            : null,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                          backgroundColor: ColorHelperClass.getColorFromHex(
+                              ColorResources.red_color),
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
                         ),
                         child: Obx(() {
                           return controller.familyloading.value
                               ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
                               : const Text("Add");
                         }),
                       ),
@@ -605,6 +913,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
       searchController.clear();
     });
   }
+
   void _showEditModalSheet(BuildContext context, String index) {
     showModalBottomSheet(
       context: context,

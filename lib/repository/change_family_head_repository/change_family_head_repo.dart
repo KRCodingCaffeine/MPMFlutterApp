@@ -3,15 +3,15 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:mpm/data/network/network_api_service.dart';
-import 'package:mpm/model/AddExistingFamilyMember/addExistingFamilyMemberData.dart';
+import 'package:mpm/model/ChangeFamilyHead/changeFamilyHeadData.dart';
 import 'package:mpm/utils/urls.dart';
 
-class AddExistingMemberIntoFamilyRepository {
+class ChangeFamilyHeadRepository {
   final api = NetWorkApiService();
 
-  Future<Map<String, dynamic>> addExistingMember(AddExistingMemberIntoFamilyData dataModel) async {
+  Future<Map<String, dynamic>> changeFamilyHead(ChangeFamilyHeadData dataModel) async {
     try {
-      final uri = Uri.parse(Urls.addExistingmemberUrl);
+      final uri = Uri.parse(Urls.changeFamilyHeadUrl);
       final response = await http.post(
         uri,
         headers: {
@@ -19,13 +19,14 @@ class AddExistingMemberIntoFamilyRepository {
           'Accept': 'application/json',
         },
         body: {
-          'relation_id': dataModel.relationId?.toString() ?? '',
+          'current_family_head_id': dataModel.currentFamilyHeadId?.toString() ?? '',
+          'new_family_head_id': dataModel.newFamilyHeadId?.toString() ?? '',
+          'relationship_id': dataModel.relationshipId?.toString() ?? '',
           'member_id': dataModel.memberId?.toString() ?? '',
-          'current_member_id': dataModel.currentMemberId?.toString() ?? '',
         },
       );
 
-      debugPrint('Response Body: ${response.body}');
+      debugPrint('ChangeFamilyHead API Response: ${response.body}');
 
       if (response.statusCode == 200) {
         return json.decode(response.body);
@@ -36,7 +37,7 @@ class AddExistingMemberIntoFamilyRepository {
         );
       }
     } catch (e) {
-      debugPrint("Error adding existing member to family: ${e.toString()}");
+      debugPrint("Error in changeFamilyHead: ${e.toString()}");
       rethrow;
     }
   }
@@ -45,11 +46,10 @@ class AddExistingMemberIntoFamilyRepository {
     if (response.statusCode != 200) {
       throw HttpException(
         'Request failed with status ${response.statusCode}',
-        uri: Uri.parse(Urls.addExistingmemberUrl),
+        uri: Uri.parse(Urls.changeFamilyHeadUrl),
       );
     }
 
-    final decoded = response.body;
-    return decoded;
+    return json.decode(response.body);
   }
 }
