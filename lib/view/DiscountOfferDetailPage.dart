@@ -1,3 +1,10 @@
+import 'dart:io';
+import 'package:flutter/cupertino.dart' as pw;
+import 'package:flutter/cupertino.dart' show Page, TextStyle;
+import 'package:flutter/material.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mpm/model/AddOfferDiscountData/AddOfferDiscountData.dart';
 import 'package:mpm/model/Offer/OfferData.dart';
@@ -9,6 +16,9 @@ import 'package:intl/intl.dart';
 import 'package:mpm/view/avail_offer_page.dart';
 import 'package:get/get.dart';
 import 'package:mpm/view/offer_claimed_view.dart';
+import 'package:path/path.dart' as pw;
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 class DiscountOfferDetailPage extends StatelessWidget {
   final OfferData offer;
@@ -195,38 +205,63 @@ class DiscountOfferDetailPage extends StatelessWidget {
       Get.back();
 
       if (response['status'] == true) {
-        // Show success dialog
-        final success = await _showSuccessDialog(
-          "Offer claimed successfully!",
-          response['data'] ?? {},
-        );
-
-        if (success == true) {
-          Get.to(() => ClaimedOfferListPage());
-        } else {
-          Get.back(result: {
-            'success': true,
-            'message': 'Offer claimed successfully',
-            'org_details_id': offer.orgDetailsID.toString(),
-          });
-        }
+        // For non-medical offers - generate and open PDF
+        await _generateAndOpenPdf(response['data']);
       } else {
-        // Show error dialog
-        await _showErrorDialog(
+        // For non-medical offers, just show a snackbar for errors
+        Get.snackbar(
+          "Error",
           response['message'] ?? 'Failed to claim offer',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
         );
       }
     } catch (e) {
       // Remove loading indicator if still showing
       if (Get.isDialogOpen ?? false) Get.back();
 
-      // Show error dialog
-      await _showErrorDialog(
+      // For non-medical offers, just show a snackbar for errors
+      Get.snackbar(
+        "Error",
         "Failed to claim offer: ${e.toString().replaceAll('Exception:', '').trim()}",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
       );
     }
   }
 
+  Future<void> _generateAndOpenPdf(dynamic responseData) async {
+    try {
+      // Show loading indicator
+      Get.dialog(
+        const Center(child: CircularProgressIndicator()),
+        barrierDismissible: false,
+      );
+
+      // Generate PDF
+      final pdf = pw.Document();
+
+      // Save the PDF file
+      final output = await getTemporaryDirectory();
+      final file = File('${output.path}/offer_claim_${DateTime.now().millisecondsSinceEpoch}.pdf');
+      await file.writeAsBytes(await pdf.save());
+
+      // Close loading dialog
+      Get.back();
+
+      // Open the PDF file
+      await OpenFile.open(file.path);
+
+    } catch (e) {
+      if (Get.isDialogOpen ?? false) Get.back();
+      Get.snackbar(
+        "Error",
+        "Failed to generate PDF: ${e.toString()}",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
   Future<bool?> _showSuccessDialog(String message, dynamic responseData) async {
     return await showDialog<bool>(
       context: Get.context!,

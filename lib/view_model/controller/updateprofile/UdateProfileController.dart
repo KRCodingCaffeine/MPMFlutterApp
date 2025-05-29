@@ -278,7 +278,7 @@ class UdateProfileController extends GetxController {
     selectRelationShipType(value);
   }
 
-  void getUserProfile() async {
+  Future<void> getUserProfile() async {
     CheckUserData2? userData = await SessionManager.getSession();
     loading.value = true;
     var id = userData?.memberId.toString();
@@ -1496,36 +1496,49 @@ class UdateProfileController extends GetxController {
       final response = await addExistingMemberRepo.addExistingMember(data);
 
       if (response['status'] == true) {
-        Get.back(result: true);
+        // Refresh family data
+        await getUserProfile();
+
         Get.snackbar(
-          "Success",
-          "Member added successfully",
+          'Success', // Title
+          response['message'] ?? "Member added successfully", // Message
+          snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.green,
           colorText: Colors.white,
+          duration: Duration(seconds: 3),
         );
+
+        // Close any open dialogs
+        if (Get.isDialogOpen ?? false) {
+          Get.back();
+        }
+
         return true;
       } else {
         Get.snackbar(
-          "Error",
-          response['message'] ?? "Failed to add member",
+          'Error', // Title
+          response['message'] ?? "Failed to add member", // Message
+          snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.red,
           colorText: Colors.white,
+          duration: Duration(seconds: 3),
         );
         return false;
       }
     } catch (e) {
       Get.snackbar(
-        "Error",
-        "Member already related with another family. We can't add this member into your family.",
+        'Error', // Title
+        "Member already related with another family. We can't add this member into your family.", // Message
+        snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
+        duration: Duration(seconds: 3),
       );
       return false;
     } finally {
       familyloading.value = false;
     }
   }
-
   Future<bool> changeFamilyHead(String newHeadId, String relationId) async {
     try {
       familyloading(true);
@@ -1546,32 +1559,45 @@ class UdateProfileController extends GetxController {
 
       if (response['status'] == true) {
         // Refresh family data after successful change
+        await getUserProfile();
+
         Get.snackbar(
-          'Success',
-          response['message'] ?? 'Family head changed successfully',
+          'Success', // Title
+          response['message'] ?? 'Family head changed successfully', // Message
+          snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.green,
           colorText: Colors.white,
+          duration: Duration(seconds: 3),
         );
+
+        // Close any open dialogs
+        if (Get.isDialogOpen ?? false) {
+          Get.back();
+        }
+
         return true;
       } else {
         Get.snackbar(
-          'Error',
-          response['message'] ?? 'Failed to change family head',
+          'Error', // Title
+          response['message'] ?? 'Failed to change family head', // Message
+          snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.red,
           colorText: Colors.white,
+          duration: Duration(seconds: 3),
         );
         return false;
       }
     } catch (e) {
       Get.snackbar(
-        'Error',
-        'Failed to change family head: ${e.toString()}',
+        'Error', // Title
+        'Failed to change family head: ${e.toString()}', // Message
+        snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
+        duration: Duration(seconds: 3),
       );
       return false;
     } finally {
       familyloading(false);
     }
-  }
-}
+  }}
