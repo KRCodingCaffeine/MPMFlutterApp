@@ -2,7 +2,8 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart' as pw;
 import 'package:flutter/cupertino.dart' show Page, TextStyle;
 import 'package:flutter/material.dart';
-import 'package:open_file/open_file.dart';
+import 'package:http/http.dart' as http;
+import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -169,8 +170,17 @@ class DiscountOfferDetailPage extends StatelessWidget {
       final repository = AddOfferDiscountRepository();
       final userData = await SessionManager.getSession();
 
-      // Set fixed name for non-medical offers
-      const applicantName = "Pathological Tests at Concessional Charges";
+      // Determine applicant name based on subcategory
+      String applicantName = '';
+      final subcategoryId = int.parse(offer.orgSubcategoryId.toString());
+
+      if (subcategoryId == 2) {
+        applicantName = "Pathological Tests at Concessional Charges";
+      } else if (subcategoryId == 3) {
+        applicantName = "Hospital Services at Concessional Charges";
+      } else {
+        applicantName = "Concessional Services";
+      }
 
       // Create medicine with the fixed applicant name
       final medicine = Medicine(
@@ -205,10 +215,21 @@ class DiscountOfferDetailPage extends StatelessWidget {
       Get.back();
 
       if (response['status'] == true) {
-        // For non-medical offers - generate and open PDF
-        await _generateAndOpenPdf(response['data']);
+        final data = response['data'];
+        final memberClaimDocument = data['member_claim_document'];
+
+        if (memberClaimDocument != null && memberClaimDocument.toString().isNotEmpty) {
+          final fileUrl = "https://members.mumbaimaheshwari.com/api/public/$memberClaimDocument";
+          await _downloadAndOpenFile(fileUrl);
+        } else {
+          Get.snackbar(
+            "Notice",
+            "Offer claimed successfully, but no claim document found.",
+            backgroundColor: Colors.orange,
+            colorText: Colors.white,
+          );
+        }
       } else {
-        // For non-medical offers, just show a snackbar for errors
         Get.snackbar(
           "Error",
           response['message'] ?? 'Failed to claim offer',
@@ -217,10 +238,7 @@ class DiscountOfferDetailPage extends StatelessWidget {
         );
       }
     } catch (e) {
-      // Remove loading indicator if still showing
       if (Get.isDialogOpen ?? false) Get.back();
-
-      // For non-medical offers, just show a snackbar for errors
       Get.snackbar(
         "Error",
         "Failed to claim offer: ${e.toString().replaceAll('Exception:', '').trim()}",
@@ -230,38 +248,41 @@ class DiscountOfferDetailPage extends StatelessWidget {
     }
   }
 
-  Future<void> _generateAndOpenPdf(dynamic responseData) async {
+  Future<void> _downloadAndOpenFile(String url) async {
     try {
-      // Show loading indicator
       Get.dialog(
         const Center(child: CircularProgressIndicator()),
         barrierDismissible: false,
       );
 
-      // Generate PDF
-      final pdf = pw.Document();
-
-      // Save the PDF file
-      final output = await getTemporaryDirectory();
-      final file = File('${output.path}/offer_claim_${DateTime.now().millisecondsSinceEpoch}.pdf');
-      await file.writeAsBytes(await pdf.save());
-
-      // Close loading dialog
-      Get.back();
-
-      // Open the PDF file
-      await OpenFile.open(file.path);
-
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final output = await getTemporaryDirectory();
+        final filePath = '${output.path}/claimed_offer_${DateTime.now().millisecondsSinceEpoch}.pdf';
+        final file = File(filePath);
+        await file.writeAsBytes(response.bodyBytes);
+        Get.back();
+        await OpenFilex.open(file.path);
+      } else {
+        Get.back();
+        Get.snackbar(
+          "Error",
+          "Unable to download claim document",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
     } catch (e) {
       if (Get.isDialogOpen ?? false) Get.back();
       Get.snackbar(
         "Error",
-        "Failed to generate PDF: ${e.toString()}",
+        "Failed to open claim document: ${e.toString()}",
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
     }
   }
+
   Future<bool?> _showSuccessDialog(String message, dynamic responseData) async {
     return await showDialog<bool>(
       context: Get.context!,
@@ -528,24 +549,19 @@ class DiscountOfferDetailPage extends StatelessWidget {
             2: FlexColumnWidth(),
           },
           children: [
-            if (offer.offerContactPersonName != null)
-              _buildTableRow('Contact Person Name', offer.offerContactPersonName!),
-            if (offer.offerContactPersonName != null) _buildSpacerRow(),
+            _buildTableRow('Person Name', offer.offerContactPersonName ?? '--'),
+            _buildSpacerRow(),
 
-            if (offer.offerContactPersonMobile != null)
-              _buildTableRow('Contact Person Mobile Number', offer.offerContactPersonMobile!),
-            if (offer.offerContactPersonMobile != null) _buildSpacerRow(),
+            _buildTableRow('Person Mobile Number', offer.offerContactPersonMobile ?? '--'),
+            _buildSpacerRow(),
 
-            if (offer.orgMobile != null)
-              _buildTableRow('Mobile Number', offer.orgMobile!),
-            if (offer.orgMobile != null) _buildSpacerRow(),
+            _buildTableRow('Mobile Number', offer.orgMobile ?? '--'),
+            _buildSpacerRow(),
 
-            if (offer.orgWhatsApp != null)
-              _buildTableRow('WhatsApp', offer.orgWhatsApp!),
-            if (offer.orgWhatsApp != null) _buildSpacerRow(),
+            _buildTableRow('WhatsApp', offer.orgWhatsApp ?? '--'),
+            _buildSpacerRow(),
 
-            if (offer.orgEmail != null)
-              _buildTableRow('Email', offer.orgEmail!),
+            _buildTableRow('Email', offer.orgEmail ?? '--'),
           ],
         ),
       ],
