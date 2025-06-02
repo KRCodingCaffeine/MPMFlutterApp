@@ -1,12 +1,14 @@
 import 'dart:io';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart' as pw;
 import 'package:flutter/cupertino.dart' show Page, TextStyle;
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:mpm/repository/get_offer_claimed_by_offfer_id_repository/get_offer_claimed_by_offer_id_repo.dart';
 import 'package:open_filex/open_filex.dart';
+import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:mpm/model/AddOfferDiscountData/AddOfferDiscountData.dart';
 import 'package:mpm/model/Offer/OfferData.dart';
 import 'package:mpm/repository/add_offer_discount_repository/add_offer_discount_repo.dart';
@@ -17,14 +19,14 @@ import 'package:intl/intl.dart';
 import 'package:mpm/view/avail_offer_page.dart';
 import 'package:get/get.dart';
 import 'package:mpm/view/offer_claimed_view.dart';
-import 'package:path/path.dart' as pw;
-import 'package:path_provider/path_provider.dart';
-import 'package:pdf/widgets.dart' as pw;
+import 'package:permission_handler/permission_handler.dart';
 
 class DiscountOfferDetailPage extends StatelessWidget {
   final OfferData offer;
+  final Dio _dio = Dio();
+  final MemberClaimOfferRepository _memberClaimOfferRepo = MemberClaimOfferRepository();
 
-  const DiscountOfferDetailPage({
+  DiscountOfferDetailPage({
     super.key,
     required this.offer,
   });
@@ -141,7 +143,6 @@ class DiscountOfferDetailPage extends StatelessWidget {
 
   Future<void> _handleClaimOffer() async {
     if (offer.orgSubcategoryId?.toString() == '1') {
-      // Medical offer - go to AvailOfferPage
       Get.to(
             () => AvailOfferPage(
           orgDetailsID: offer.orgDetailsID.toString(),
@@ -160,7 +161,6 @@ class DiscountOfferDetailPage extends StatelessWidget {
         }
       });
     } else {
-      // Non-medical offer - automatically set name and claim
       await _claimNonMedicalOffer();
     }
   }
@@ -169,8 +169,8 @@ class DiscountOfferDetailPage extends StatelessWidget {
     try {
       final repository = AddOfferDiscountRepository();
       final userData = await SessionManager.getSession();
+      final memberClaimOfferId = userData?.memberId.toString() ?? '0';
 
-      // Determine applicant name based on subcategory
       String applicantName = '';
       final subcategoryId = int.parse(offer.orgSubcategoryId.toString());
 
@@ -182,7 +182,6 @@ class DiscountOfferDetailPage extends StatelessWidget {
         applicantName = "Concessional Services";
       }
 
-      // Create medicine with the fixed applicant name
       final medicine = Medicine(
         organisationOfferDiscountId: int.parse(offer.organisationOfferDiscountId.toString()),
         orgDetailsID: int.parse(offer.orgDetailsID.toString()),
@@ -192,7 +191,6 @@ class DiscountOfferDetailPage extends StatelessWidget {
         quantity: null,
       );
 
-      // Create offer data
       final offerData = AddOfferDiscountData(
         memberId: int.parse(userData?.memberId.toString() ?? '0'),
         orgSubcategoryId: int.parse(offer.orgSubcategoryId.toString()),
@@ -202,30 +200,30 @@ class DiscountOfferDetailPage extends StatelessWidget {
         medicines: [medicine],
       );
 
-      // Show loading indicator
       Get.dialog(
         const Center(child: CircularProgressIndicator()),
         barrierDismissible: false,
       );
 
-      // Submit with null image
       final response = await repository.submitOfferDiscount(offerData, null);
 
-      // Remove loading indicator
       Get.back();
 
       if (response['status'] == true) {
-        final data = response['data'];
-        final memberClaimDocument = data['member_claim_document'];
 
-        if (memberClaimDocument != null && memberClaimDocument.toString().isNotEmpty) {
-          final fileUrl = "https://members.mumbaimaheshwari.com/api/public/$memberClaimDocument";
-          await _downloadAndOpenFile(fileUrl);
+        final claimedOffer = await _memberClaimOfferRepo.fetchClaimedOfferByOfferId(
+          offer.organisationOfferDiscountId.toString(),
+            memberClaimOfferId
+        );
+
+        if (claimedOffer.memberClaimDocument != null && claimedOffer.memberClaimDocument!.isNotEmpty) {
+          final fileName = 'Offer_${offer.organisationOfferDiscountId}.pdf';
+          await _downloadFile(claimedOffer.memberClaimDocument, fileName);
         } else {
           Get.snackbar(
-            "Notice",
-            "Offer claimed successfully, but no claim document found.",
-            backgroundColor: Colors.orange,
+            "Success",
+            "Offer claimed successfully, but no document is available for download.",
+            backgroundColor: Colors.green,
             colorText: Colors.white,
           );
         }
@@ -248,39 +246,98 @@ class DiscountOfferDetailPage extends StatelessWidget {
     }
   }
 
-  Future<void> _downloadAndOpenFile(String url) async {
-    try {
-      Get.dialog(
-        const Center(child: CircularProgressIndicator()),
-        barrierDismissible: false,
-      );
-
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-        final output = await getTemporaryDirectory();
-        final filePath = '${output.path}/claimed_offer_${DateTime.now().millisecondsSinceEpoch}.pdf';
-        final file = File(filePath);
-        await file.writeAsBytes(response.bodyBytes);
-        Get.back();
-        await OpenFilex.open(file.path);
-      } else {
-        Get.back();
-        Get.snackbar(
-          "Error",
-          "Unable to download claim document",
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-      }
-    } catch (e) {
-      if (Get.isDialogOpen ?? false) Get.back();
+  Future<void> _downloadFile(String? url, String? fileName) async {
+    if (url == null || fileName == null) {
       Get.snackbar(
         "Error",
-        "Failed to open claim document: ${e.toString()}",
+        "Invalid file URL or file name",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    final permissionStatus = await _requestPermission();
+    if (!permissionStatus) return;
+
+    try {
+      Directory? directory = await getExternalStorageDirectory();
+      String filePath = "${directory!.path}/$fileName";
+      int progress = 0;
+
+      final scaffoldMessenger = ScaffoldMessenger.of(Get.context!);
+      StateSetter? setSnackbarState;
+
+      final snackBarController = scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: StatefulBuilder(
+            builder: (context, setState) {
+              setSnackbarState = setState;
+              return Text("Downloading $fileName ... $progress%");
+            },
+          ),
+          duration: const Duration(days: 1),
+        ),
+      );
+
+      await _dio.download(
+        url,
+        filePath,
+        onReceiveProgress: (received, total) {
+          if (total > 0) {
+            int newProgress = ((received / total) * 100).toInt();
+            if (newProgress != progress) {
+              progress = newProgress;
+              if (setSnackbarState != null) {
+                setSnackbarState!(() {});
+              }
+            }
+          }
+        },
+      );
+
+      snackBarController.close();
+
+      await OpenFilex.open(filePath);
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        "Download failed: $e",
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
     }
+  }
+
+  Future<bool> _requestPermission() async {
+    if (Platform.isAndroid) {
+      final androidInfo = await DeviceInfoPlugin().androidInfo;
+      final sdkInt = androidInfo.version.sdkInt;
+
+      if (sdkInt >= 33) {
+        // Android 13+ (use READ_MEDIA_* permissions if needed)
+        return true; // No need to ask if downloading to app-private or using DownloadManager
+      } else if (sdkInt >= 30) {
+        // Android 11 or 12
+        var status = await Permission.storage.request();
+        if (status.isGranted) return true;
+
+        ScaffoldMessenger.of(context as pw.BuildContext).showSnackBar(
+          const SnackBar(content: Text('Storage permission is needed to download the file.')),
+        );
+        return false;
+      } else {
+        // Android 10 or below
+        var status = await Permission.storage.request();
+        if (status.isGranted) return true;
+
+        ScaffoldMessenger.of(context as pw.BuildContext).showSnackBar(
+          const SnackBar(content: Text('Storage permission is needed to download the file.')),
+        );
+        return false;
+      }
+    }
+    return true;
   }
 
   Future<bool?> _showSuccessDialog(String message, dynamic responseData) async {

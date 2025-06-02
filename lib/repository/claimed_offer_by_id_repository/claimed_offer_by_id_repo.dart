@@ -16,8 +16,8 @@ class ClaimOfferRepository {
       final response = await api.postApi(
         requestBody,
         Urls.claimed_offer,
-        "", // Empty header if not needed
-        "2", // Version parameter
+        "",
+        "2",
       );
 
       debugPrint("Claimed Offers Response: $response");
