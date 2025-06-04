@@ -286,7 +286,6 @@ class _RegisterViewState extends State<RegisterView> {
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 20),
 
                       // OTP Validation
@@ -330,7 +329,7 @@ class _RegisterViewState extends State<RegisterView> {
                                         'Error', // Title
                                         "Enter OTP Or 4 digit OTP", // Message
                                         snackPosition: SnackPosition.BOTTOM,
-                                        backgroundColor: Colors.pink,
+                                        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
                                         colorText: Colors.white,
                                         duration: Duration(seconds: 3),
                                       );

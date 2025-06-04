@@ -933,18 +933,19 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const SizedBox(height: 30),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  ElevatedButton(
+                  OutlinedButton(
                     onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFFDC3545),
-                      elevation: 4,
-                      shadowColor: Colors.black,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor:
+                      ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
+                      side: const BorderSide(color: Colors.red),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
                     child: const Text("Cancel"),
@@ -954,12 +955,12 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                       controller.updateFamilyRelation(context, index);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFFDC3545),
-                      elevation: 4,
-                      shadowColor: Colors.black,
+                      backgroundColor:
+                      ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
                     child: const Text("Save"),
@@ -2267,28 +2268,29 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
     showModalBottomSheet(
       backgroundColor: Colors.white,
       context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+      ),
       builder: (BuildContext context) {
-        return SafeArea(
-          child: Wrap(
-            children: <Widget>[
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Choose Photo From Gallery'),
-                onTap: () async {
-                  getImage(ImageSource.gallery);
-                  Navigator.of(context).pop();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_camera),
-                title: const Text('Take a Picture'),
-                onTap: () {
-                  getImage(ImageSource.camera);
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          ),
+        return Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
+              title: const Text('Take a Picture'),
+              onTap: () {
+                Navigator.of(context).pop();
+                getImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo, color: Colors.redAccent),
+              title: const Text('Choose from Gallery'),
+              onTap: () {
+                Navigator.of(context).pop();
+                getImage(ImageSource.gallery);
+              },
+            ),
+          ],
         );
       },
     );

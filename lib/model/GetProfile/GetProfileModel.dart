@@ -1,28 +1,35 @@
 import 'package:mpm/model/GetProfile/GetProfileData.dart';
 
 class GetUserProfileModel {
-  bool? status;
-  int? code;
-  String? message;
-  GetProfileData? data;
+  final bool? status;
+  final int? code;
+  final String? message;
+  final GetProfileData? data;
 
-  GetUserProfileModel({this.status, this.code, this.message, this.data});
+  GetUserProfileModel({
+    this.status,
+    this.code,
+    this.message,
+    this.data,
+  });
 
-  GetUserProfileModel.fromJson(Map<String, dynamic> json) {
-    status = json['status'];
-    code = json['code'];
-    message = json['message'];
-    data = json['data'] != null ? new GetProfileData.fromJson(json['data']) : null;
+  factory GetUserProfileModel.fromJson(Map<String, dynamic> json) {
+    return GetUserProfileModel(
+      status: json['status'] as bool?,
+      code: json['code'] as int?,
+      message: json['message']?.toString(),
+      data: json['data'] != null
+          ? GetProfileData.fromJson(json['data'] as Map<String, dynamic>)
+          : null,
+    );
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['status'] = this.status;
-    data['code'] = this.code;
-    data['message'] = this.message;
-    if (this.data != null) {
-      data['data'] = this.data!.toJson();
-    }
-    return data;
+    return {
+      'status': status,
+      'code': code,
+      'message': message,
+      'data': data?.toJson(),
+    };
   }
 }

@@ -99,15 +99,15 @@ class _ProfileViewState extends State<ProfileView> {
                             Obx(() {
                               return CircleAvatar(
                                 radius: 40,
-                                backgroundColor: Colors.grey[300], // Background color while loading
+                                backgroundColor: Colors.grey[300],
                                 child: ClipOval(
                                   child: (controller.profileImage.value.isNotEmpty)
                                       ? FadeInImage(
-                                    placeholder: const AssetImage("assets/images/user3.png"), // Placeholder while loading
-                                    image: NetworkImage(Urls.imagePathUrl + controller.profileImage.value), // Network image
+                                    placeholder: const AssetImage("assets/images/user3.png"),
+                                    image: NetworkImage(Urls.imagePathUrl + controller.profileImage.value),
                                     imageErrorBuilder: (context, error, stackTrace) {
                                       return Image.asset(
-                                        "assets/images/male.png", // Fallback image on error
+                                        "assets/images/male.png",
                                         fit: BoxFit.cover,
                                         width: 80,
                                         height: 80,
@@ -118,7 +118,7 @@ class _ProfileViewState extends State<ProfileView> {
                                     height: 80,
                                   )
                                       : Image.asset(
-                                    "assets/images/user3.png", // Default image if profileImage is empty
+                                    "assets/images/user3.png",
                                     fit: BoxFit.cover,
                                     width: 80,
                                     height: 80,
