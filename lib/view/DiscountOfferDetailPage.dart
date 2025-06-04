@@ -210,19 +210,17 @@ class DiscountOfferDetailPage extends StatelessWidget {
       Get.back();
 
       if (response['status'] == true) {
+        final memberClaimOfferId = response['data']['member_claim_offer_id'].toString();
 
-        final claimedOffer = await _memberClaimOfferRepo.fetchClaimedOfferByOfferId(
-          offer.organisationOfferDiscountId.toString(),
-            memberClaimOfferId
-        );
+        final claimedOffer = await _memberClaimOfferRepo.fetchClaimedOfferByOfferId(memberClaimOfferId);
 
         if (claimedOffer.memberClaimDocument != null && claimedOffer.memberClaimDocument!.isNotEmpty) {
-          final fileName = 'Offer_${offer.organisationOfferDiscountId}.pdf';
+          final fileName = 'Claimed_Offer_${memberClaimOfferId}.pdf';
           await _downloadFile(claimedOffer.memberClaimDocument, fileName);
         } else {
           Get.snackbar(
             "Success",
-            "Offer claimed successfully, but no document is available for download.",
+            "Offer claimed successfully! Member Claim ID: $memberClaimOfferId",
             backgroundColor: Colors.green,
             colorText: Colors.white,
           );
@@ -245,7 +243,6 @@ class DiscountOfferDetailPage extends StatelessWidget {
       );
     }
   }
-
   Future<void> _downloadFile(String? url, String? fileName) async {
     if (url == null || fileName == null) {
       Get.snackbar(
