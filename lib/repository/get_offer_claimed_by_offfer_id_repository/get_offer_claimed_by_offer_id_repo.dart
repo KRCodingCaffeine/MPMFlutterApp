@@ -7,12 +7,10 @@ class MemberClaimOfferRepository {
   final _apiService = NetWorkApiService();
 
   Future<GetofferclaimedbyofferidData> fetchClaimedOfferByOfferId(
-    String offerId,
     String memberClaimOfferId,
   ) async {
     try {
       final requestBody = {
-        'organisation_offer_discount_id': offerId,
         'member_claim_offer_id': memberClaimOfferId,
       };
 
