@@ -15,12 +15,29 @@ import 'package:mpm/utils/urls.dart';
 
 class UpdateProfileRepository {
   var api=NetWorkApiService();
-  Future<GetUserProfileModel> getUserData(data) async {
-    var url=Urls.getProfile_url+"?member_id=$data";
-   // print("urls"+url.toString());
-    dynamic response = await api.getApi(Urls.getProfile_url+"?member_id=$data","");
-    print("Profile Data"+response.toString());
-    return GetUserProfileModel.fromJson(response);
+  Future<GetUserProfileModel> getUserData(String memberId) async {
+    try {
+      final url = Uri.parse(Urls.getProfile_url).replace(
+        queryParameters: {'member_id': memberId},
+      );
+
+      final response = await api.getApi(url.toString(), "");
+
+      if (response == null) {
+        throw Exception("Null response from API");
+      }
+
+      final parsedResponse = GetUserProfileModel.fromJson(response);
+
+      if (parsedResponse.data == null) {
+        throw Exception("Profile data is null in API response");
+      }
+
+      return parsedResponse;
+    } catch (e) {
+      print("Error fetching user data: $e");
+      rethrow;
+    }
   }
   Future<dynamic> addQualification(data) async {
     dynamic response = await api.postApi(data,Urls.addEducation_url,"","2");

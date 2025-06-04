@@ -10,6 +10,7 @@ import 'package:mpm/model/GetProfile/BusinessInfo.dart';
 import 'package:mpm/model/GetProfile/FamilyHeadMemberData.dart';
 import 'package:mpm/model/GetProfile/FamilyMembersData.dart';
 import 'package:mpm/model/GetProfile/GetProfileData.dart';
+import 'package:mpm/model/GetProfile/Occupation.dart';
 import 'package:mpm/model/GetProfile/Qualification.dart';
 import 'package:mpm/model/Occupation/OccupationData.dart';
 import 'package:mpm/model/Occupation/addoccuption/AddOccuptionModel.dart';
@@ -283,7 +284,7 @@ class UdateProfileController extends GetxController {
     loading.value = true;
     var id = userData?.memberId.toString();
     //id="1";
-    api.getUserData(id).then((_value) async {
+    api.getUserData(id!).then((_value) async {
       loading.value = false;
       getUserData.value = _value.data!;
       memberId.value = id.toString();
@@ -297,23 +298,26 @@ class UdateProfileController extends GetxController {
       mobileNumber.value = getUserData.value.mobile.toString();
       email.value = getUserData.value.email.toString();
       dob.value = getUserData.value.dob.toString();
-      maritalStatus.value = getUserData.value.marital_status.toString();
+      maritalStatus.value = getUserData.value.maritalStatus.toString();
       marital_status_id.value = getUserData.value.maritalStatusId.toString();
-      gender.value = getUserData.value.gender_name.toString();
+      gender.value = getUserData.value.genderName.toString();
       gender_id.value = getUserData.value.genderId.toString();
       if (getUserData.value.maritalStatusId.toString() != "") {
         selectMarital.value = getUserData.value.maritalStatusId.toString();
-        if (getUserData.value.marital_status == "Married") {
+        if (getUserData.value.maritalStatus == "Married") {
           MaritalAnnivery.value = true;
         } else {
           MaritalAnnivery.value = false;
         }
       }
       if (getUserData.value.addressProof != "") {
-        documentDynamicImage.value =
-            Urls.imagePathUrl + getUserData.value.addressProof;
+        if (getUserData.value.addressProof != null) {
+          documentDynamicImage.value = Urls.imagePathUrl + getUserData.value.addressProof!;
+        } else {
+          documentDynamicImage.value = ''; // or some default value
+        }
       }
-      bloodGroup.value = getUserData.value.blood_group.toString();
+      bloodGroup.value = getUserData.value.bloodGroup.toString();
       blood_group_id.value = getUserData.value.bloodGroupId.toString();
       whatsAppNumber.value = getUserData.value.whatsappNumber.toString();
       if (getUserData.value.maritalStatusId.toString() != "") {
@@ -368,41 +372,23 @@ class UdateProfileController extends GetxController {
       maritalStatusController.value.text = maritalStatus.value;
       marriageAnniversaryController.value.text = marriageAnniversaryDate.value;
       bloodGroupController.value.text = bloodGroup.value;
+
+      // Occupation
       if (getUserData.value.occupation != null) {
-        occupationData.value = true;
-        organisationName.value =
-            getUserData.value.occupation!.occupationOtherName.toString();
+        currentOccupation.value = getUserData.value.occupation!;
+        hasOccupationData.value = true;
 
-        if (getUserData.value.occupation!.occupationId.toString() != "") {
-          selectOccuption.value =
-              getUserData.value.occupation!.occupationId.toString();
-          getOccupationProData(
-              getUserData.value.occupation!.occupationId.toString());
-          isOccutionList.value = true;
-          selectOccuptionPro.value =
-              getUserData.value.occupation!.occupationProfessionId.toString();
-          if (getUserData.value.occupation!.occupationSpecializationId
-                  .toString() !=
-              null) {
-            getOccupationSpectData(getUserData
-                .value.occupation!.occupationProfessionId
-                .toString());
-            occupationProData.value = true;
-            selectOccuptionSpec.value =
-                getUserData.value.occupation!.occupationProfessionId.toString();
-          }
-        }
-        occupationController.value.text =
-            getUserData.value.occupation!.occupation.toString();
+        // Update all occupation fields including null checks
+        occupationController.value.text = getUserData.value.occupation?.occupation ?? '';
         occupation_profession_nameController.value.text =
-            getUserData.value.occupation!.occupationProfessionName.toString();
+            getUserData.value.occupation?.occupationProfessionName ?? '';
         specialization_nameController.value.text =
-            getUserData.value.occupation!.specializationName.toString();
-
+            getUserData.value.occupation?.specializationName ?? '';
         detailsController.value.text =
-            getUserData.value.occupation!.occupationOtherName.toString();
-      } else {
-        occupationData.value = false;
+            getUserData.value.occupation?.occupationOtherName ?? '';
+
+        // Add debug prints to verify values
+        print('Occupation Data: ${getUserData.value.occupation?.toJson()}');
       }
       var member_type_id = getUserData.value.membershipTypeId.toString();
       var memberapprovalstatusid =
@@ -445,61 +431,260 @@ class UdateProfileController extends GetxController {
 
   void isPayButton() {}
 
-  void getOccupationData() {
-    setRxRequestOccuption(Status.LOADING);
-    api.userOccupationDataApi().then((_value) {
-      setRxRequestOccuption(Status.COMPLETE);
-      setOccuption(_value.data!);
+
+  // Occupation Controller
+  final Rx<Occupation?> currentOccupation = Rx<Occupation?>(null);
+  final RxBool hasOccupationData = false.obs;
+  final RxString selectedOccupation = RxString('');
+  final RxString selectedProfession = RxString('');
+  final RxString selectedSpecialization = RxString('');
+  final RxBool showDetailsField = RxBool(false);
+  final RxBool isOccupationLoading = RxBool(false);
+
+  void resetDependentFields() {
+    selectedProfession.value = '';
+    selectedSpecialization.value = '';
+    showDetailsField.value = false;
+    occuptionProfessionList.clear();
+    occuptionSpeList.clear();
+  }
+
+  Future<void> getOccupationData() async {
+    try {
+      rxStatusOccupation.value = Status.LOADING;
+      final response = await api.userOccupationDataApi();
+      occuptionList.value = response.data ?? [];
+
       occuptionList.add(OccupationData(
-          id: "other",
-          occupation: 'Other',
-          status: '1',
-          createdAt: null,
-          updatedAt: null));
-    }).onError((error, strack) {
-      setRxRequestOccuption(Status.ERROR);
-    });
+        id: "0",
+        occupation: 'Other',
+        status: '1',
+        createdAt: null,
+        updatedAt: null,
+      ));
+
+      rxStatusOccupation.value = Status.COMPLETE;
+    } catch (error) {
+      rxStatusOccupation.value = Status.ERROR;
+      Get.snackbar(
+        'Error',
+        'Failed to load occupations',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
   }
 
-  void getOccupationProData(String occupation_id) {
-    Map datas = {"occupation_id": occupation_id};
-    setRxRequestOccuptionData(Status.LOADING);
-    api.userOccutionPreCodeApi(datas).then((_value) {
-      setRxRequestOccuptionData(Status.COMPLETE);
-      setOccuptionPro(_value.data!);
-      occuptionProfessionList.value.add(OccuptionProfessionData(
-          id: "other",
-          occupationId: "other",
-          name: "other",
+  Future<void> getOccupationProData(String occupationId) async {
+    if (occupationId.isEmpty) return;
+
+    try {
+      rxStatusOccupationData.value = Status.LOADING;
+      final response = await api.userOccutionPreCodeApi({"occupation_id": occupationId});
+      occuptionProfessionList.value = response.data ?? [];
+
+      if (occuptionProfessionList.isEmpty) {
+        showDetailsField.value = true;
+      } else {
+        occuptionProfessionList.add(OccuptionProfessionData(
+          id: "Other",
+          name: "Other",
+          occupationId: occupationId,
           status: '1',
           createdAt: null,
-          updatedAt: null));
-      print("sssssssssssssssssssssssssssssssss" +
-          occuptionProfessionList.value.first.name.toString());
-    }).onError((error, strack) {
-      setRxRequestOccuptionData(Status.ERROR);
-      print("errordata" + error.toString());
-    });
+          updatedAt: null,
+        ));
+      }
+
+      rxStatusOccupationData.value = Status.COMPLETE;
+    } catch (error) {
+      rxStatusOccupationData.value = Status.ERROR;
+      Get.snackbar(
+        'Error',
+        'Failed to load professions',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
   }
 
-  void getOccupationSpectData(String occupation_profession_id) {
-    Map datas = {"occupation_profession_id": occupation_profession_id};
-    print("gggggg" + datas.toString());
-    setRxRequestOccuptionSpec(Status.LOADING);
-    api.userOccutionSpectionCodeApi(datas).then((_value) {
-      setRxRequestOccuptionSpec(Status.COMPLETE);
-      setOccuptionSpe(_value.data!);
-      occuptionSpeList.value.add(OccuptionSpecData(
-          id: "other",
-          occupationId: "other",
-          name: "other",
+  Future<void> getOccupationSpectData(String professionId) async {
+    if (professionId.isEmpty) return;
+
+    try {
+      rxStatusOccupationSpec.value = Status.LOADING;
+      final response = await api.userOccutionSpectionCodeApi({
+        "occupation_profession_id": professionId
+      });
+      occuptionSpeList.value = response.data ?? [];
+
+      if (occuptionSpeList.isEmpty) {
+        showDetailsField.value = true;
+      } else {
+        occuptionSpeList.add(OccuptionSpecData(
+          id: "Other",
+          name: "Other",
+          occupationId: professionId,
           status: '1',
           createdAt: null,
-          updatedAt: null));
-      print("ggggggggggggggggg" + occupation_profession_id);
-    }).onError((error, strack) {
-      setRxRequestOccuptionSpec(Status.ERROR);
-      print("ggggggggggggggggg" + error.toString());
+          updatedAt: null,
+        ));
+      }
+
+      rxStatusOccupationSpec.value = Status.COMPLETE;
+    } catch (error) {
+      rxStatusOccupationSpec.value = Status.ERROR;
+      Get.snackbar(
+        'Error',
+        'Failed to load specializations',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+
+  Future<void> addAndupdateOccuption() async {
+    try {
+      isOccupationLoading.value = true;
+      final userData = await SessionManager.getSession();
+      if (userData == null) throw Exception("User not logged in");
+
+      // Validate required fields
+      if (selectedOccupation.value.isEmpty) {
+        throw Exception("Please select an occupation");
+      }
+
+      // Prepare the data
+      final Map<String, dynamic> data = {
+        "member_id": userData.memberId.toString(),
+        "occupation_id": selectedOccupation.value,
+        "occupation_profession_id": selectedProfession.value.isEmpty
+            ? ""
+            : selectedProfession.value,
+        "occupation_specialization_id": selectedSpecialization.value.isEmpty
+            ? ""
+            : selectedSpecialization.value,
+        "occupation_other_name": showDetailsField.value
+            ? detailsController.value.text
+            : "",
+        "updated_by": userData.memberId.toString()
+      };
+
+      // Call API
+      final response = await api.updateOrAddOccuption(data);
+
+      if (response.status == true) {
+        // Update local state
+        currentOccupation.value = Occupation(
+          occupationId: selectedOccupation.value,
+          occupation: occuptionList.firstWhere(
+                (occ) => occ.id == selectedOccupation.value,
+            orElse: () => OccupationData(id: '', occupation: '', status: '', createdAt: null, updatedAt: null),
+          ).occupation,
+          occupationProfessionId: selectedProfession.value.isEmpty ? null : selectedProfession.value,
+          occupationProfessionName: selectedProfession.value.isEmpty ? null :
+          occuptionProfessionList.firstWhere(
+                (prof) => prof.id == selectedProfession.value,
+            orElse: () => OccuptionProfessionData(id: '', name: ''),
+          ).name,
+          occupationSpecializationId: selectedSpecialization.value.isEmpty ? null : selectedSpecialization.value,
+          specializationName: selectedSpecialization.value.isEmpty ? null :
+          occuptionSpeList.firstWhere(
+                (spec) => spec.id == selectedSpecialization.value,
+            orElse: () => OccuptionSpecData(id: '', name: ''),
+          ).name,
+          occupationOtherName: showDetailsField.value ? detailsController.value.text : null,
+        );
+
+        hasOccupationData.value = true;
+
+        // Update display controllers
+        occupationController.value.text = currentOccupation.value?.occupation ?? '';
+        occupation_profession_nameController.value.text =
+            currentOccupation.value?.occupationProfessionName ?? '';
+        specialization_nameController.value.text =
+            currentOccupation.value?.specializationName ?? '';
+        detailsController.value.text =
+            currentOccupation.value?.occupationOtherName ?? '';
+
+        Get.back();
+
+        Get.snackbar(
+          'Success',
+          response.message ?? 'Occupation saved successfully',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+
+        // Close the bottom sheet after a delay
+        Future.delayed(const Duration(milliseconds: 1000), () {
+          if (Get.isBottomSheetOpen ?? false) {
+            Get.back();
+          }
+        });
+      } else {
+        throw Exception(response.message ?? 'Failed to save occupation');
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        e.toString(),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isOccupationLoading.value = false;
+    }
+  }
+
+  void initOccupationData(Occupation? occupation) {
+    // Reset all fields first
+    resetDependentFields();
+    detailsController.value.clear();
+
+    if (occupation == null) return;
+
+    // Set existing values
+    selectedOccupation.value = occupation.occupationId ?? '';
+    detailsController.value.text = occupation.occupationOtherName ?? '';
+
+    // If occupation is "Other"
+    if (selectedOccupation.value == "0") {
+      showDetailsField.value = true;
+      return;
+    }
+
+    // Load profession data
+    getOccupationProData(selectedOccupation.value).then((_) {
+      if (occupation.occupationProfessionId != null &&
+          occupation.occupationProfessionId!.isNotEmpty) {
+        selectedProfession.value = occupation.occupationProfessionId!;
+
+        // If profession is "Other"
+        if (selectedProfession.value == "Other") {
+          showDetailsField.value = true;
+          return;
+        }
+
+        // Load specialization data
+        getOccupationSpectData(selectedProfession.value).then((_) {
+          if (occupation.occupationSpecializationId != null &&
+              occupation.occupationSpecializationId!.isNotEmpty) {
+            selectedSpecialization.value = occupation.occupationSpecializationId!;
+
+            // If specialization is "Other"
+            if (selectedSpecialization.value == "Other") {
+              showDetailsField.value = true;
+            }
+          }
+        });
+      }
     });
   }
 
@@ -784,64 +969,6 @@ class UdateProfileController extends GetxController {
     } finally {}
   }
 
-  void addAndupdateOccuption() async {
-    CheckUserData2? userData = await SessionManager.getSession();
-    print('User ID: ${userData?.memberId}');
-    print('User Name: ${userData?.mobile}');
-    memberId.value = userData!.memberId.toString();
-    var occuptionSpec = "";
-    if (selectOccuptionSpec.value == "other") {
-      occuptionSpec == "null";
-    } else {
-      occuptionSpec = "null";
-    }
-
-    //addloading.value=true;
-    try {
-      Map map = {
-        "member_id": memberId.value,
-        "occupation_id": selectOccuption.value,
-        "occupation_profession_id": selectOccuptionPro.value,
-        "occupation_specialization_id": occuptionSpec,
-        "occupation_other_name": detailsController.value.text,
-        "updated_by": memberId.value
-      };
-      print("fffh" + map.toString());
-      await api
-          .updateOrAddOccuption(map)
-          .then((AddOccuptionModel _value) async {
-        // addloading.value=false;
-        print("gnfg" + _value.message.toString());
-        if (_value.status == true) {
-          Get.snackbar(
-            'Success', // Title
-            "Update Relation SuccessFully", // Message
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-            duration: Duration(seconds: 3),
-          );
-          getUserProfile();
-          Navigator.of(context!).pop();
-        }
-      }).onError((error, strack) async {
-        //addloading.value=false;
-        print("fvvf" + error.toString());
-        Get.snackbar(
-          'Error', // Title
-          "Some thing went wrong ", // Message
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.pink,
-          colorText: Colors.white,
-          duration: Duration(seconds: 3),
-        );
-      });
-    } catch (e) {
-      addloading.value = false;
-      print('Error: $e');
-    } finally {}
-  }
-
   void updateJanganaStatus() async {
     CheckUserData2? userData = await SessionManager.getSession();
     print('User ID: ${userData?.memberId}');
@@ -1029,6 +1156,7 @@ class UdateProfileController extends GetxController {
     }
     http.StreamedResponse response =
         await request.send().timeout(Duration(seconds: 60));
+
     if (response.statusCode == 200) {
       String responseBody = await response.stream.bytesToString();
       loading.value = false;
