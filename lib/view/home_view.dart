@@ -11,8 +11,6 @@ import 'package:mpm/utils/textstyleclass.dart';
 import 'package:mpm/view/payment/CustomDialog.dart';
 import 'package:mpm/view/payment/PaymentScreen.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
-
-
 import '../model/CheckUser/CheckUserData2.dart';
 import '../utils/Session.dart';
 import '../view_model/controller/updateprofile/UdateProfileController.dart';
@@ -37,6 +35,7 @@ class _HomeViewState extends State<HomeView> {
     {'icon': Images.user, 'label': 'My Profile'},
     {'icon': Images.makenewmember, 'label': 'Make New Member'},
     {'icon': Images.discount, 'label': 'Discounts & Offers'},
+    {'icon': Images.events, 'label': 'Events'},
   ];
 
   final List<Map<String, dynamic>> bhawanItems = [
@@ -284,6 +283,8 @@ class _HomeViewState extends State<HomeView> {
       Navigator.pushNamed(context, RouteNames.profile);
     } else if (label == "Discounts & Offers") {
       Navigator.pushNamed(context, RouteNames.discount_offer_view);
+    } else if (label == "Events") {
+      Navigator.pushNamed(context, RouteNames.event_view);
     }
   }
 
