@@ -10,6 +10,7 @@ import 'package:mpm/utils/urls.dart';
 import 'package:mpm/view/login_view.dart';
 
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -289,11 +290,28 @@ class AppDrawer extends StatelessWidget {
               child: const Text("No"),
             ),
             ElevatedButton(
-              onPressed: () {
-                SessionManager.clearSession();
-                Navigator.pushReplacement(
+              onPressed: () async {
+                // Clear session data
+                await SessionManager.clearSession();
+
+                // Clear GetX controller variables if needed
+                Get.delete<UdateProfileController>(); // Optional: If you want to reset controller values
+
+                // Clear cache files (temporary files etc.)
+                try {
+                  final tempDir = await getTemporaryDirectory();
+                  if (tempDir.existsSync()) {
+                    tempDir.deleteSync(recursive: true);
+                  }
+                } catch (e) {
+                  debugPrint("Error clearing cache: $e");
+                }
+
+                // Navigate to login page and remove all routes
+                Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (context) => LoginPage()),
+                      (route) => false,
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -304,7 +322,7 @@ class AppDrawer extends StatelessWidget {
                 ),
               ),
               child: const Text("Yes"),
-            ),
+            )
           ],
         );
       },
