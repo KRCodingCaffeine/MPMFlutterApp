@@ -46,8 +46,10 @@ class UdateProfileController extends GetxController {
   var membership_approval_status_id = "".obs;
   var documentDynamicImage = "".obs;
   var isLoadingPayment = false.obs;
-  final AddExistingMemberIntoFamilyRepository addExistingMemberRepo = AddExistingMemberIntoFamilyRepository();
-  final ChangeFamilyHeadRepository _changeHeadRepo = ChangeFamilyHeadRepository();
+  final AddExistingMemberIntoFamilyRepository addExistingMemberRepo =
+      AddExistingMemberIntoFamilyRepository();
+  final ChangeFamilyHeadRepository _changeHeadRepo =
+      ChangeFamilyHeadRepository();
 
   var isPay = false.obs;
 
@@ -312,7 +314,8 @@ class UdateProfileController extends GetxController {
       }
       if (getUserData.value.addressProof != "") {
         if (getUserData.value.addressProof != null) {
-          documentDynamicImage.value = Urls.imagePathUrl + getUserData.value.addressProof!;
+          documentDynamicImage.value =
+              Urls.imagePathUrl + getUserData.value.addressProof!;
         } else {
           documentDynamicImage.value = ''; // or some default value
         }
@@ -379,7 +382,8 @@ class UdateProfileController extends GetxController {
         hasOccupationData.value = true;
 
         // Update all occupation fields including null checks
-        occupationController.value.text = getUserData.value.occupation?.occupation ?? '';
+        occupationController.value.text =
+            getUserData.value.occupation?.occupation ?? '';
         occupation_profession_nameController.value.text =
             getUserData.value.occupation?.occupationProfessionName ?? '';
         specialization_nameController.value.text =
@@ -431,7 +435,6 @@ class UdateProfileController extends GetxController {
 
   void isPayButton() {}
 
-
   // Occupation Controller
   final Rx<Occupation?> currentOccupation = Rx<Occupation?>(null);
   final RxBool hasOccupationData = false.obs;
@@ -481,7 +484,8 @@ class UdateProfileController extends GetxController {
 
     try {
       rxStatusOccupationData.value = Status.LOADING;
-      final response = await api.userOccutionPreCodeApi({"occupation_id": occupationId});
+      final response =
+          await api.userOccutionPreCodeApi({"occupation_id": occupationId});
       occuptionProfessionList.value = response.data ?? [];
 
       if (occuptionProfessionList.isEmpty) {
@@ -515,9 +519,8 @@ class UdateProfileController extends GetxController {
 
     try {
       rxStatusOccupationSpec.value = Status.LOADING;
-      final response = await api.userOccutionSpectionCodeApi({
-        "occupation_profession_id": professionId
-      });
+      final response = await api.userOccutionSpectionCodeApi(
+          {"occupation_profession_id": professionId});
       occuptionSpeList.value = response.data ?? [];
 
       if (occuptionSpeList.isEmpty) {
@@ -546,7 +549,6 @@ class UdateProfileController extends GetxController {
     }
   }
 
-
   Future<void> addAndupdateOccuption() async {
     try {
       isOccupationLoading.value = true;
@@ -562,15 +564,13 @@ class UdateProfileController extends GetxController {
       final Map<String, dynamic> data = {
         "member_id": userData.memberId.toString(),
         "occupation_id": selectedOccupation.value,
-        "occupation_profession_id": selectedProfession.value.isEmpty
-            ? ""
-            : selectedProfession.value,
+        "occupation_profession_id":
+            selectedProfession.value.isEmpty ? "" : selectedProfession.value,
         "occupation_specialization_id": selectedSpecialization.value.isEmpty
             ? ""
             : selectedSpecialization.value,
-        "occupation_other_name": showDetailsField.value
-            ? detailsController.value.text
-            : "",
+        "occupation_other_name":
+            showDetailsField.value ? detailsController.value.text : "",
         "updated_by": userData.memberId.toString()
       };
 
@@ -581,29 +581,48 @@ class UdateProfileController extends GetxController {
         // Update local state
         currentOccupation.value = Occupation(
           occupationId: selectedOccupation.value,
-          occupation: occuptionList.firstWhere(
+          occupation: occuptionList
+              .firstWhere(
                 (occ) => occ.id == selectedOccupation.value,
-            orElse: () => OccupationData(id: '', occupation: '', status: '', createdAt: null, updatedAt: null),
-          ).occupation,
-          occupationProfessionId: selectedProfession.value.isEmpty ? null : selectedProfession.value,
-          occupationProfessionName: selectedProfession.value.isEmpty ? null :
-          occuptionProfessionList.firstWhere(
-                (prof) => prof.id == selectedProfession.value,
-            orElse: () => OccuptionProfessionData(id: '', name: ''),
-          ).name,
-          occupationSpecializationId: selectedSpecialization.value.isEmpty ? null : selectedSpecialization.value,
-          specializationName: selectedSpecialization.value.isEmpty ? null :
-          occuptionSpeList.firstWhere(
-                (spec) => spec.id == selectedSpecialization.value,
-            orElse: () => OccuptionSpecData(id: '', name: ''),
-          ).name,
-          occupationOtherName: showDetailsField.value ? detailsController.value.text : null,
+                orElse: () => OccupationData(
+                    id: '',
+                    occupation: '',
+                    status: '',
+                    createdAt: null,
+                    updatedAt: null),
+              )
+              .occupation,
+          occupationProfessionId: selectedProfession.value.isEmpty
+              ? null
+              : selectedProfession.value,
+          occupationProfessionName: selectedProfession.value.isEmpty
+              ? null
+              : occuptionProfessionList
+                  .firstWhere(
+                    (prof) => prof.id == selectedProfession.value,
+                    orElse: () => OccuptionProfessionData(id: '', name: ''),
+                  )
+                  .name,
+          occupationSpecializationId: selectedSpecialization.value.isEmpty
+              ? null
+              : selectedSpecialization.value,
+          specializationName: selectedSpecialization.value.isEmpty
+              ? null
+              : occuptionSpeList
+                  .firstWhere(
+                    (spec) => spec.id == selectedSpecialization.value,
+                    orElse: () => OccuptionSpecData(id: '', name: ''),
+                  )
+                  .name,
+          occupationOtherName:
+              showDetailsField.value ? detailsController.value.text : null,
         );
 
         hasOccupationData.value = true;
 
         // Update display controllers
-        occupationController.value.text = currentOccupation.value?.occupation ?? '';
+        occupationController.value.text =
+            currentOccupation.value?.occupation ?? '';
         occupation_profession_nameController.value.text =
             currentOccupation.value?.occupationProfessionName ?? '';
         specialization_nameController.value.text =
@@ -676,7 +695,8 @@ class UdateProfileController extends GetxController {
         getOccupationSpectData(selectedProfession.value).then((_) {
           if (occupation.occupationSpecializationId != null &&
               occupation.occupationSpecializationId!.isNotEmpty) {
-            selectedSpecialization.value = occupation.occupationSpecializationId!;
+            selectedSpecialization.value =
+                occupation.occupationSpecializationId!;
 
             // If specialization is "Other"
             if (selectedSpecialization.value == "Other") {
@@ -688,6 +708,7 @@ class UdateProfileController extends GetxController {
     });
   }
 
+  // Qualification Controller
   final rxStatusQualification = Status.LOADING.obs;
   final rxStatusQualificationMain = Status.IDLE.obs;
   final rxStatusQualificationCat = Status.IDLE.obs;
@@ -715,6 +736,15 @@ class UdateProfileController extends GetxController {
   void setSelectQualificationCat(String value) {
     selectQualicationCat.value = value;
   }
+
+  setRxRequestQualification(Status _value) =>
+      rxStatusQualification.value = _value;
+
+  void setRxRequestQualificationMain(Status _value) =>
+      rxStatusQualificationMain.value = _value;
+
+  void setRxRequestQualificationCat(Status _value) =>
+      rxStatusQualificationCat.value = _value;
 
   setQlication(List<QualificationData> _value) => qulicationList.value = _value;
 
@@ -749,16 +779,18 @@ class UdateProfileController extends GetxController {
     await api.userQualificationMain(datas).then((_value) {
       setRxRequestQualificationMain(Status.COMPLETE);
 
-      if (_value.data != null) {
-        print("Received Qualification Main Data: ${_value.data}");
-
+      if (_value.data != null && _value.data!.isNotEmpty) {
         setQualicationMain(_value.data!);
         qulicationMainList.value = qulicationMainList.value.toSet().toList();
+        qulicationMainList.value.add(QualicationMainData(
+            id: "0",
+            qualificationId: qualification_id,
+            name: 'Other',
+            status: '1',
+            createdAt: null,
+            updatedAt: null));
         qulicationMainList.refresh();
-        print(
-            "Updated Qualification Main List: ${qulicationMainList.length} items");
       }
-      print("cvv" + qulicationMainList.value.first.name.toString());
     }).onError((error, strack) {
       print("cvv" + error.toString());
       setRxRequestQualificationMain(Status.ERROR);
@@ -772,72 +804,70 @@ class UdateProfileController extends GetxController {
     setRxRequestQualificationCat(Status.LOADING);
     api.userQualificationCategory(datas).then((_value) {
       setRxRequestQualificationCat(Status.COMPLETE);
-      if (_value.data != null) {
-        setQualicationCategory(_value.data!);
-      }
-      qulicationCategoryList.value =
-          qulicationCategoryList.value.toSet().toList();
 
-      qulicationCategoryList.refresh();
+      if (_value.data != null && _value.data!.isNotEmpty) {
+        setQualicationCategory(_value.data!);
+        qulicationCategoryList.value = qulicationCategoryList.value.toSet().toList();
+        qulicationCategoryList.value.add(Qualificationcategorydata(
+            id: "0",
+            qualificationId: "",
+            qualificationMainId: qualification_main_id,
+            name: 'Other',
+            status: '1',
+            createdAt: null,
+            updatedAt: null));
+        qulicationCategoryList.refresh();
+        isQualificationCategoryVisible.value = true;
+        isQualificationDetailVisible.value = false;
+      } else {
+        isQualificationCategoryVisible.value = false;
+        isQualificationDetailVisible.value = true;
+      }
     }).onError((error, strack) {
       setRxRequestQualificationCat(Status.ERROR);
       print("cvv" + error.toString());
     });
   }
 
-  void checkReviewApproval() {
-    if (userMaritalStatus.value == "1" &&
-        membershipApprovalStatusId.value == "6") {
-      if (isJangana.value == "0") {
-        showDashboardReviewFlag.value = true;
-      } else {
-        showDashboardReviewFlag.value = false;
-      }
-    }
-  }
-
-  setRxRequestQualification(Status _value) =>
-      rxStatusQualification.value = _value;
-
-  void setRxRequestQualificationMain(Status _value) =>
-      rxStatusQualificationMain.value = _value;
-
-  void setRxRequestQualificationCat(Status _value) =>
-      rxStatusQualificationCat.value = _value;
-
-  void setRxRelationType(Status _value) => rxStatusRelationType.value = _value;
-
   void addQualification() async {
     CheckUserData2? userData = await SessionManager.getSession();
     print('User ID: ${userData?.memberId}');
-    print('User Name: ${userData?.mobile}');
     memberId.value = userData!.memberId.toString();
     addloading.value = true;
     try {
-      Map map = {
+      final qualificationIdToSend =
+      selectQlification.value == "other" ? null : selectQlification.value;
+      final qualificationMainIdToSend =
+      selectQualicationMain.value == "0" || selectQlification.value == "other"
+          ? null
+          : selectQualicationMain.value;
+      final qualificationCategoryIdToSend =
+      selectQualicationCat.value == "0" || selectQlification.value == "other"
+          ? null
+          : selectQualicationCat.value;
+
+      Map<String, dynamic> map = {
         "member_id": memberId.value,
-        "qualification_id": selectQlification.value,
-        "qualification_main_id": selectQualicationMain.value,
-        "qualification_category_id": selectQualicationCat.value,
+        if (qualificationIdToSend != null) "qualification_id": qualificationIdToSend,
+        if (qualificationMainIdToSend != null)
+          "qualification_main_id": qualificationMainIdToSend,
+        if (qualificationCategoryIdToSend != null)
+          "qualification_category_id": qualificationCategoryIdToSend,
         "qualification_other_name": educationdetailController.value.text,
-        "created_by": memberId.value
+        "created_by": memberId.value,
       };
       //print("fffh"+map.toString());
       api.addQualification(map).then((_value) async {
         addloading.value = false;
         if (_value['status'] == true) {
           Get.snackbar(
-            'Success', // Title
-            "Add Education Successfully", // Message
+            'Success',
+            "Add Education Successfully",
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Colors.green,
             colorText: Colors.white,
             duration: Duration(seconds: 3),
           );
-          selectQlification.value = "";
-          selectQualicationMain.value = "";
-          selectQualicationCat.value = "";
-          educationdetailController.value.text = "";
           getUserProfile();
           Navigator.of(context!).pop();
         }
@@ -907,6 +937,20 @@ class UdateProfileController extends GetxController {
       print('Error: $e');
     } finally {}
   }
+
+  void checkReviewApproval() {
+    if (userMaritalStatus.value == "1" &&
+        membershipApprovalStatusId.value == "6") {
+      if (isJangana.value == "0") {
+        showDashboardReviewFlag.value = true;
+      } else {
+        showDashboardReviewFlag.value = false;
+      }
+    }
+  }
+
+  // Family Relation
+  void setRxRelationType(Status _value) => rxStatusRelationType.value = _value;
 
   void getRelation() {
     Map datas = {"attribute_id": "1"};
@@ -1611,7 +1655,8 @@ class UdateProfileController extends GetxController {
     );
   }
 
-  Future<bool> addExistingFamilyMember(String memberId, String relationId) async {
+  Future<bool> addExistingFamilyMember(
+      String memberId, String relationId) async {
     try {
       familyloading.value = true;
 
@@ -1667,6 +1712,7 @@ class UdateProfileController extends GetxController {
       familyloading.value = false;
     }
   }
+
   Future<bool> changeFamilyHead(String newHeadId, String relationId) async {
     try {
       familyloading(true);
@@ -1728,4 +1774,5 @@ class UdateProfileController extends GetxController {
     } finally {
       familyloading(false);
     }
-  }}
+  }
+}
