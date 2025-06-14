@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:get/get.dart';
 import 'package:mpm/OccuptionProfession/OccuptionProfessionModel.dart';
 import 'package:mpm/data/network/network_api_Service.dart';
@@ -15,6 +17,8 @@ import 'package:mpm/utils/urls.dart';
 
 class UpdateProfileRepository {
   var api = NetWorkApiService();
+  var http;
+
   Future<GetUserProfileModel> getUserData(String memberId) async {
     try {
       final url = Uri.parse(Urls.getProfile_url).replace(
@@ -38,6 +42,18 @@ class UpdateProfileRepository {
       print("Error fetching user data: $e");
       rethrow;
     }
+  }
+  
+  // Residential Info 
+  Future<dynamic> updateAddress(Map<String, dynamic> data) async {
+    final response = await api.postApi(
+      data,
+      Urls.updateMemberAddress_url, // Replace with your actual endpoint variable
+      "",
+      "2", // Pass token or version if required
+    );
+    print("updateAddress Response: ${response.toString()} | URL: ${Urls.updateMemberAddress_url}");
+    return response;
   }
 
   // Qualification

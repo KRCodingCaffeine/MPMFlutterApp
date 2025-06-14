@@ -319,8 +319,9 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                         ),
                       ),
                       ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           if (formKeyLogin!.currentState!.validate()) {
+                            // Validate required fields
                             void showErrorSnackbar(String message) {
                               Get.snackbar(
                                 "Error",
@@ -331,27 +332,29 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                               );
                             }
 
-                            if (regiController.country_id.value == "") {
+                            if (regiController.country_id.value.isEmpty) {
                               showErrorSnackbar("Select Country");
                               return;
                             }
-                            if (regiController.state_id.value == "") {
+                            if (regiController.state_id.value.isEmpty) {
                               showErrorSnackbar("Select State");
                               return;
                             }
-                            if (regiController.city_id.value == "") {
+                            if (regiController.city_id.value.isEmpty) {
                               showErrorSnackbar("Select City");
                               return;
                             }
-                            if (controller.pincodeController.value.text == "") {
+                            if (controller.pincodeController.value.text.isEmpty) {
                               showErrorSnackbar("Enter PinCode");
                               return;
                             }
-                            if (regiController.selectDocumentType.value == "") {
-                              showErrorSnackbar("Select Document Type");
+                            if (regiController.selectDocumentType.value.isEmpty) {
+                              showErrorSnackbar("Please select an address proof type");
                               return;
                             }
-                            controller.userResidentalProfile(context);
+
+                            // Call the update method
+                            await controller.userResidentalProfile(context);
                           }
                         },
                         style: ElevatedButton.styleFrom(

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/OccuptionProfession/OccuptionProfessionData.dart';
@@ -1146,105 +1147,128 @@ class UdateProfileController extends GetxController {
     }
   }
 
-  void userResidentalProfile(BuildContext context) async {
+// Add this method to your UdateProfileController class
+  Future<void> userResidentalProfile(BuildContext context) async {
     CheckUserData2? userData = await SessionManager.getSession();
+    if (userData == null) return;
 
-    final url = Uri.parse(Urls.updateMemberAddress_url);
-    print("vcgdhfh" +
-        Urls.updateMemberAddress_url +
-        "ggg" +
-        updateresidentalAddressController.value.text);
-    NewMemberController regiController = Get.put(NewMemberController());
-
+    final NewMemberController regiController = Get.find<NewMemberController>();
     loading.value = true;
-    var area = "";
-    if (regiController.area_name.value == "") {
-      area = regiController.area_name.value;
-    } else {
-      area = regiController.areaController.value.text;
-    }
 
-    var building_name = buildingController.value.text;
-    var building_id = "";
+    try {
+      // Validate required fields
+      if (regiController.selectDocumentType.value.isEmpty) {
+        Get.snackbar("Error", "Please select address proof type");
+        return;
+      }
 
-    if (regiController.selectBuilding.value == "other") {
-      building_id = "";
-    } else {
-      building_id = regiController.selectBuilding.value;
-    }
-    var document_type = regiController.selectDocumentType.value;
-    var document_image = userdocumentImage.value;
-    print("vvb" + document_image);
+      // Prepare the data with correct field names
+      final Map<String, dynamic> data = {
+        "member_id": userData.memberId.toString(),
+        "flat_no": flatNoController.value.text,
+        "area": regiController.areaController.value.text.isNotEmpty
+            ? regiController.areaController.value.text
+            : regiController.area_name.value,
+        "building_id": regiController.selectBuilding.value == "other"
+            ? ""
+            : regiController.selectBuilding.value,
+        "building_name": regiController.selectBuilding.value == "other"
+            ? regiController.buildingController.value.text
+            : "",
+        "zone_id": regiController.zone_id.value,
+        "address": updateresidentalAddressController.value.text,
+        "city_id": regiController.city_id.value,
+        "state_id": regiController.state_id.value,
+        "country_id": regiController.country_id.value,
+        "document_type": regiController.selectDocumentType.value,
+        "pincode": pincodeController.value.text,
+        "updated_by": userData.memberId.toString(),
+      };
 
-    var payload = {
-      "member_id": userData!.memberId.toString(),
-      "flat_no": flatNoController.value.text.toString(),
-      "area": area,
-      "building_id": building_id,
-      "zone_id": regiController.zone_id.value,
-      "city_id": regiController.city_id.value,
-      "state_id": regiController.state_id.value,
-      "country_id": regiController.country_id.value,
-      "document_type": document_type,
-      "address": updateresidentalAddressController.value.text,
-      "pincode": pincodeController.value.text,
-      "updated_by": userData!.memberId.toString()
-    };
+      // Handle image upload
+      if (userdocumentImage.value.isNotEmpty) {
+        data['document_image'] = userdocumentImage.value;
+      }
 
-    print("ccvv" + payload.toString());
-    var request = http.MultipartRequest('POST', url);
-    request.fields.addAll(payload);
-    if (document_image != "") {
-      request.files.add(
-          await http.MultipartFile.fromPath('document_image', document_image));
-    }
-    http.StreamedResponse response =
-        await request.send().timeout(Duration(seconds: 60));
+      print("Sending residential update: ${jsonEncode(data)}");
 
-    if (response.statusCode == 200) {
-      String responseBody = await response.stream.bytesToString();
-      loading.value = false;
-      Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
-      print("ccvv" + jsonResponse.toString());
-      RegisterModelClass registerResponse =
-          RegisterModelClass.fromJson(jsonResponse);
-      if (registerResponse.status == true) {
+      final response = await updateAddress(data);
+      print("Update response: $response");
+
+      if (response['status'] == true) {
+        // Force a complete refresh of user data
+        await getUserProfile();
+
         Get.snackbar(
           "Success",
-          "Update Successfully",
+          "Residential info updated successfully",
           backgroundColor: Colors.green,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
         );
 
-        pincodeController.value.text = "";
-        getUserProfile();
-        Navigator.of(context!).pop();
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
       } else {
-        Get.snackbar(
-          "Error",
-          registerResponse.message.toString(),
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
-        );
+        throw Exception(response['message'] ?? "Update failed");
       }
-    } else {
+    } catch (e) {
+      print("Update error: $e");
+      Get.snackbar(
+        "Error",
+        e.toString(),
+        backgroundColor: Colors.red,
+      );
+    } finally {
       loading.value = false;
-      print("ccvv" + await response.reasonPhrase.toString());
-      String responseBody = await response.stream.bytesToString();
-      print("" + responseBody);
-      // loading.value=false;
-      // Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
-      // RegisterModelClass registerResponse = RegisterModelClass.fromJson(jsonResponse);
-      //
-      // Get.snackbar(
-      //   "Error",
-      //   ""+registerResponse.message.toString(),
-      //   backgroundColor: Colors.red,
-      //   colorText: Colors.white,
-      //   snackPosition: SnackPosition.TOP,
-      // );
+    }
+  }
+
+  Future<dynamic> updateAddress(Map<String, dynamic> data) async {
+    try {
+      // Convert to multipart request if image is included
+      if (data.containsKey('document_image')) {
+        final file = File(data['document_image']);
+        final request = http.MultipartRequest(
+            'POST',
+            Uri.parse(Urls.updateMemberAddress_url)
+        );
+
+        // Add fields
+        data.forEach((key, value) {
+          if (key != 'document_image') {
+            request.fields[key] = value.toString();
+          }
+        });
+
+        // Add file
+        request.files.add(
+            await http.MultipartFile.fromPath(
+              'document_image',
+              file.path,
+            )
+        );
+
+        // Add headers
+        request.headers['token'] = "2"; // Your token
+
+        final response = await request.send();
+        final responseData = await response.stream.bytesToString();
+        return jsonDecode(responseData);
+      } else {
+        // Regular POST request if no image
+        final response = await http.post(
+          Uri.parse(Urls.updateMemberAddress_url),
+          body: data,
+          headers: {
+            'token': '2', // Your token
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        );
+        return jsonDecode(response.body);
+      }
+    } catch (e) {
+      print('Error updating address: $e');
+      return {'status': false, 'message': 'Failed to update address'};
     }
   }
 
