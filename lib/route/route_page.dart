@@ -9,7 +9,7 @@ import 'package:mpm/view/condition_about/privacy_policy_view.dart';
 import 'package:mpm/view/condition_about/terms&condition_view.dart';
 import 'package:mpm/view/dashboard_view.dart';
 import 'package:mpm/view/discount_offer_view.dart';
-import 'package:mpm/view/event_view.dart';
+import 'package:mpm/view/Events/event_view.dart';
 import 'package:mpm/view/forms_down.dart';
 import 'package:mpm/view/gov_scheme.dart';
 import 'package:mpm/view/home_view.dart';
