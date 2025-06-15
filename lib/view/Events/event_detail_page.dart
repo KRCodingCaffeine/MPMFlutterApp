@@ -1,0 +1,533 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:mpm/model/EventRegesitration/EventRegistrationData.dart';
+import 'package:mpm/model/GetEventsList/GetEventsListData.dart';
+import 'package:mpm/repository/event_register_repository/event_register_repo.dart';
+import 'package:mpm/utils/color_helper.dart';
+import 'package:mpm/utils/color_resources.dart';
+import 'package:dio/dio.dart';
+import 'package:mpm/view/Events/event_view.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:mpm/utils/Session.dart';
+
+class EventDetailPage extends StatefulWidget {
+  final EventData event;
+
+  const EventDetailPage({Key? key, required this.event}) : super(key: key);
+
+  @override
+  _EventDetailPageState createState() => _EventDetailPageState();
+}
+
+class _EventDetailPageState extends State<EventDetailPage> {
+  final Dio _dio = Dio();
+  bool _isDownloading = false;
+  int _downloadProgress = 0;
+  bool _isRegistering = false;
+  bool _isRegistered = false;
+  final EventRegistrationRepository _registrationRepo =
+      EventRegistrationRepository();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkRegistrationStatus();
+  }
+
+  Future<void> _checkRegistrationStatus() async {
+    setState(() {
+      _isRegistered = false;
+    });
+  }
+
+  Future<void> _registerForEvent() async {
+    if (_isRegistering || _isRegistered) return;
+
+    setState(() {
+      _isRegistering = true;
+    });
+
+    try {
+      final userData = await SessionManager.getSession();
+      if (userData == null || userData.memberId == null) {
+        throw Exception('User not logged in');
+      }
+
+      final now = DateTime.now();
+      final registrationData = EventRegistrationData(
+        memberId: int.tryParse(userData.memberId.toString()),
+        eventId: int.tryParse(widget.event.eventId.toString()),
+        eventRegisteredDate: DateFormat('yyyy-MM-dd').format(now),
+        addedBy: int.tryParse(userData.memberId.toString()),
+        dateAdded: DateFormat('yyyy-MM-dd HH:mm:ss').format(now),
+      );
+
+      final response = await _registrationRepo.registerForEvent(registrationData);
+
+      if (response['status'] == true) {
+        setState(() {
+          _isRegistered = true;
+        });
+        await _showSuccessDialog(response['message'] ?? 'Successfully registered for event');
+        _redirectToEventsList();
+      } else {
+        throw Exception(response['message'] ?? 'Failed to register for event');
+      }
+    } on HttpException catch (e) {
+      if (e.message.contains('409')) {
+        setState(() {
+          _isRegistered = true;
+        });
+        await _showSuccessDialog('You already registered for this event');
+      } else {
+        await _showErrorDialog('Registration failed: ${e.message}');
+      }
+    } catch (e) {
+      await _showErrorDialog('Registration failed: ${e.toString()}');
+    } finally {
+      setState(() {
+        _isRegistering = false;
+      });
+    }
+  }
+
+  Future<void> _showSuccessDialog(String message) async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green, size: 32),
+              SizedBox(width: 12),
+              Text(
+                "Success",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+                _redirectToEventsList();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              ),
+              child: const Text("OK", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showErrorDialog(String message) async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: const Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.red, size: 32),
+              SizedBox(width: 12),
+              Text(
+                "Error",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+              ),
+              child: const Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // void _redirectToEventsList() {
+  //   Navigator.push(
+  //     context,
+  //     MaterialPageRoute(
+  //       builder: (context) => const EventsPage(),
+  //     ),
+  //   );
+  // }
+
+  void _redirectToEventsList() {
+    // This will pop all routes until we're back to the events list
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final parsedDate =
+        DateTime.tryParse(widget.event.dateStartsFrom ?? '') ?? DateTime.now();
+    final formattedDate = DateFormat('EEEE, MMMM d, y').format(parsedDate);
+    final time = DateFormat('h:mm a').format(parsedDate);
+
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(
+        backgroundColor:
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        title: Text(
+          widget.event.eventName ?? 'Event Details',
+          style: const TextStyle(color: Colors.white, fontSize: 16),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (widget.event.eventImage != null &&
+                widget.event.eventImage!.isNotEmpty) ...[
+              Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    constraints: const BoxConstraints(
+                      maxHeight: 300,
+                      maxWidth: 400,
+                    ),
+                    child: Image.network(
+                      widget.event.eventImage!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+            const Text(
+              'Event Description:',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              widget.event.eventDescription ?? 'No event description available',
+              style: const TextStyle(
+                fontSize: 15,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            _buildEventInfo(formattedDate, time),
+            const SizedBox(height: 24),
+
+            if (widget.event.eventOrganiserName != null ||
+                widget.event.eventOrganiserMobile != null) ...[
+              const Divider(thickness: 1, color: Colors.grey),
+              const SizedBox(height: 16),
+              _buildOrganiserInfo(),
+              const SizedBox(height: 24),
+            ],
+
+            if (widget.event.eventTermsAndConditionDocument != null &&
+                widget.event.eventTermsAndConditionDocument!.isNotEmpty) ...[
+              const Text(
+                'Terms and Conditions:',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey[200],
+                    foregroundColor: Colors.black87,
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 12, horizontal: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  icon: const Icon(Icons.picture_as_pdf, color: Colors.red),
+                  label: _isDownloading
+                      ? LinearProgressIndicator(
+                          value: _downloadProgress / 100,
+                          backgroundColor: Colors.grey[300],
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                              ColorHelperClass.getColorFromHex(
+                                  ColorResources.red_color)),
+                        )
+                      : const Text("Download & View PDF"),
+                  onPressed: _isDownloading
+                      ? null
+                      : () => _downloadAndOpenPdf(
+                          widget.event.eventTermsAndConditionDocument!,
+                          'Event_Terms_${widget.event.eventId}.pdf'),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+
+            const SizedBox(height: 50),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _isRegistered
+                  ? Colors.green
+                  : ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: _isRegistered ? null : _registerForEvent,
+            child: _isRegistering
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Text(
+                   "Register Here",
+                    style: const TextStyle(fontSize: 16),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<bool> _requestPermission() async {
+    if (Platform.isAndroid) {
+      final androidInfo = await DeviceInfoPlugin().androidInfo;
+      final sdkInt = androidInfo.version.sdkInt;
+
+      if (sdkInt >= 33) {
+        return true;
+      } else if (sdkInt >= 30) {
+        var status = await Permission.storage.request();
+        if (status.isGranted) return true;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content:
+                  Text('Storage permission is needed to download the file.')),
+        );
+        return false;
+      } else {
+        var status = await Permission.storage.request();
+        if (status.isGranted) return true;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content:
+                  Text('Storage permission is needed to download the file.')),
+        );
+        return false;
+      }
+    }
+    return true;
+  }
+
+  Future<void> _downloadAndOpenPdf(String url, String fileName) async {
+    final permissionStatus = await _requestPermission();
+    if (!permissionStatus) return;
+
+    setState(() {
+      _isDownloading = true;
+      _downloadProgress = 0;
+    });
+
+    try {
+      Directory? directory = await getExternalStorageDirectory();
+      String filePath = "${directory!.path}/$fileName";
+
+      await _dio.download(
+        url,
+        filePath,
+        onReceiveProgress: (received, total) {
+          if (total > 0) {
+            int newProgress = ((received / total) * 100).toInt();
+            setState(() {
+              _downloadProgress = newProgress;
+            });
+          }
+        },
+      );
+
+      setState(() {
+        _isDownloading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("$fileName - Downloaded successfully."),
+          action: SnackBarAction(
+            label: "View",
+            onPressed: () {
+              OpenFilex.open(filePath);
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      setState(() {
+        _isDownloading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Download failed: $e")),
+      );
+    }
+  }
+
+  Widget _buildEventInfo(String date, String time) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Event Date & Time:',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black54,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
+            const SizedBox(width: 8),
+            Text(date, style: TextStyle(fontSize: 14, color: Colors.grey[700])),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
+            const SizedBox(width: 8),
+            Text(time, style: TextStyle(fontSize: 14, color: Colors.grey[700])),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOrganiserInfo() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Organiser Information:',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black54,
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (widget.event.eventOrganiserName != null) ...[
+          Row(
+            children: [
+              Icon(Icons.person, size: 16, color: Colors.grey[600]),
+              const SizedBox(width: 8),
+              Text(widget.event.eventOrganiserName!,
+                  style: TextStyle(fontSize: 14, color: Colors.grey[700])),
+            ],
+          ),
+          const SizedBox(height: 8),
+        ],
+        if (widget.event.eventOrganiserMobile != null) ...[
+          Row(
+            children: [
+              Icon(Icons.phone, size: 16, color: Colors.grey[600]),
+              const SizedBox(width: 8),
+              Text(widget.event.eventOrganiserMobile!,
+                  style: TextStyle(fontSize: 14, color: Colors.grey[700])),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}

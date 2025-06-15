@@ -1,7 +1,7 @@
 
 class Urls {
  //static const  String base_url = "https://krcodingcaffeine.com/pragati-mandal-api/";
-  static const  String base_url = "https://members.mumbaimaheshwari.com/api/";
+  static const  String base_url = "https://members.mumbaimaheshwari.com/staging/api/";
   static const  String register_url = base_url+"api/make_new_member";
   static const  String login_url = base_url+"api/login";
   static const  String check_url = base_url+"api/check_lm_code_or_mobile";
@@ -56,4 +56,8 @@ class Urls {
   static const String addExistingmemberUrl = base_url+"api/add_existing_member_into_family";
   static const String changeFamilyHeadUrl = base_url+"api/change_family_head_info";
   static const String offerClaimedByOfferId = base_url+"api/get_claimed_offer_by_offer_id";
+  static const String eventList_url = base_url+"api/get_all_events";
+  static const String event_register_url = base_url+"api/member_register_event";
+  static const String event_attendees = base_url+"api/get_member_registered_events";
+
 }
