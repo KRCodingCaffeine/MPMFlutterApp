@@ -23,6 +23,10 @@ class _EventsPageState extends State<EventsPage> {
   String? _error;
   int _selectedTabIndex = 0;
 
+  List<String> _zoneList = ["North", "South", "East", "West"];
+  List<String> _selectedZones = [];
+  bool _isFilterDrawerOpen = false;
+
   @override
   void initState() {
     super.initState();
@@ -55,8 +59,12 @@ class _EventsPageState extends State<EventsPage> {
         past.sort((a, b) => b.dateStartsFrom!.compareTo(a.dateStartsFrom!));
 
         setState(() {
-          _upcomingEvents = upcoming;
-          _pastEvents = past;
+          _upcomingEvents = _selectedZones.isNotEmpty
+              ? upcoming.where((e) => _selectedZones.contains(e.zone)).toList()
+              : upcoming;
+          _pastEvents = _selectedZones.isNotEmpty
+              ? past.where((e) => _selectedZones.contains(e.zone)).toList()
+              : past;
           _isLoading = false;
           _error = null;
         });
@@ -146,8 +154,8 @@ class _EventsPageState extends State<EventsPage> {
                     ),
                     const SizedBox(height: 4),
                     Text('Hosted by ${event.eventOrganiserName ?? 'Unknown'}',
-                        style: TextStyle(
-                            color: Colors.grey[600], fontSize: 13)),
+                        style:
+                            TextStyle(color: Colors.grey[600], fontSize: 13)),
                   ],
                 ),
               ),
@@ -210,52 +218,197 @@ class _EventsPageState extends State<EventsPage> {
     );
   }
 
+  Widget _buildFilterButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _isFilterDrawerOpen = true;
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            color: Colors.white,
+            border: Border.all(color: Colors.grey.shade400),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("Select Zone",
+                        style: TextStyle(fontSize: 16)),
+                    const SizedBox(height: 4),
+                    if (_selectedZones.isNotEmpty)
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: _selectedZones
+                            .map((zone) => Chip(
+                                  label: Text(zone),
+                                  labelStyle: const TextStyle(
+                                      fontSize: 12, color: Colors.white),
+                                  backgroundColor:
+                                      ColorHelperClass.getColorFromHex(
+                                          ColorResources.red_color),
+                                  deleteIcon: const Icon(Icons.close,
+                                      color: Colors.white, size: 18),
+                                  onDeleted: () {
+                                    setState(() {
+                                      _selectedZones.remove(zone);
+                                      _fetchEvents();
+                                    });
+                                  },
+                                ))
+                            .toList(),
+                      )
+                  ],
+                ),
+              ),
+              const Icon(Icons.filter_list),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterDrawer() {
+    return Positioned(
+      right: 0,
+      top: 0,
+      bottom: 0,
+      width: MediaQuery.of(context).size.width * 0.8,
+      child: Material(
+        elevation: 16,
+        child: Container(
+          color: Colors.white,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text("Select Zone",
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () =>
+                        setState(() => _isFilterDrawerOpen = false),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Expanded(
+                child: ListView(
+                  children: _zoneList
+                      .map((zone) => CheckboxListTile(
+                            title: Text(zone),
+                            value: _selectedZones.contains(zone),
+                            onChanged: (bool? value) {
+                              setState(() {
+                                if (value == true) {
+                                  _selectedZones.add(zone);
+                                } else {
+                                  _selectedZones.remove(zone);
+                                }
+                              });
+                            },
+                          ))
+                      .toList(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColorHelperClass.getColorFromHex(
+                            ColorResources.red_color),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isFilterDrawerOpen = false;
+                          _fetchEvents();
+                        });
+                      },
+                      child: const Text("Apply"),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
         backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: const Text("Events", style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
             icon: const Icon(Icons.local_offer, color: Colors.white),
-            tooltip: 'Filter Offers',
+            tooltip: 'Registered Events',
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => RegisteredEventsListPage()),
+                MaterialPageRoute(
+                    builder: (context) => RegisteredEventsListPage()),
               );
             },
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-          ? Center(child: Text(_error!))
-          : RefreshIndicator(
-        color: Colors.redAccent,
-        onRefresh: _fetchEvents,
-        child: Column(
-          children: [
-            _buildEventFilterTabs(),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.only(top: 4),
-                itemCount: _selectedTabIndex == 0
-                    ? _upcomingEvents.length
-                    : _pastEvents.length,
-                itemBuilder: (context, index) => _buildEventCard(
-                    _selectedTabIndex == 0
-                        ? _upcomingEvents[index]
-                        : _pastEvents[index]),
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              _buildEventFilterTabs(),
+              _buildFilterButton(),
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _error != null
+                        ? Center(child: Text(_error!))
+                        : RefreshIndicator(
+                            color: Colors.redAccent,
+                            onRefresh: _fetchEvents,
+                            child: ListView.builder(
+                              padding: const EdgeInsets.only(top: 4),
+                              itemCount: _selectedTabIndex == 0
+                                  ? _upcomingEvents.length
+                                  : _pastEvents.length,
+                              itemBuilder: (context, index) => _buildEventCard(
+                                  _selectedTabIndex == 0
+                                      ? _upcomingEvents[index]
+                                      : _pastEvents[index]),
+                            ),
+                          ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
+          if (_isFilterDrawerOpen) _buildFilterDrawer(),
+        ],
       ),
     );
   }

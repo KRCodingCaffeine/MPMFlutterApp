@@ -15,6 +15,7 @@ class EventData {
   String? eventAmount;
   String? eventRegistrationLastDate;
   String? eventsTypeId;
+  String? zone;
   String? addedBy;
   String? dateAdded;
   String? updatedBy;
@@ -37,6 +38,7 @@ class EventData {
     this.eventAmount,
     this.eventRegistrationLastDate,
     this.eventsTypeId,
+    this.zone,
     this.addedBy,
     this.dateAdded,
     this.updatedBy,
@@ -65,6 +67,7 @@ class EventData {
       eventAmount: json['event_amount'],
       eventRegistrationLastDate: json['event_registration_last_date'],
       eventsTypeId: json['events_type_id']?.toString(),
+      zone: json['zone'],
       addedBy: json['added_by']?.toString(),
       dateAdded: json['date_added'],
       updatedBy: json['updated_by'],
@@ -90,6 +93,7 @@ class EventData {
     data['event_amount'] = eventAmount;
     data['event_registration_last_date'] = eventRegistrationLastDate;
     data['events_type_id'] = eventsTypeId;
+    data['zone'] = zone;
     data['added_by'] = addedBy;
     data['date_added'] = dateAdded;
     data['updated_by'] = updatedBy;
