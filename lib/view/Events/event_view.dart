@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mpm/model/GetEventsList/GetEventsListData.dart';
 import 'package:mpm/model/GetEventsList/GetEventsListModelClass.dart';
+import 'package:mpm/model/Zone/ZoneData.dart';
 import 'package:mpm/repository/get_events_list_repository/get_events_list_repo.dart';
+import 'package:mpm/repository/zone_repository/zone_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/Events/event_detail_page.dart';
@@ -17,24 +19,46 @@ class EventsPage extends StatefulWidget {
 
 class _EventsPageState extends State<EventsPage> {
   final EventRepository _eventRepo = EventRepository();
+  final ZoneRepository _zoneRepo = ZoneRepository();
+
   List<EventData> _upcomingEvents = [];
   List<EventData> _pastEvents = [];
+  List<EventData> _allEvents = [];
   bool _isLoading = true;
   String? _error;
   int _selectedTabIndex = 0;
 
-  List<String> _zoneList = ["North", "South", "East", "West"];
-  List<String> _selectedZones = [];
+  List<ZoneData> _zoneList = [];
+  List<ZoneData> _selectedZones = [];
   bool _isFilterDrawerOpen = false;
+  DateTime? _startDate;
+  DateTime? _endDate;
+  bool _isAllSelected = false;
 
   @override
   void initState() {
     super.initState();
+    _fetchZones();
     _fetchEvents();
   }
 
+  Future<void> _fetchZones() async {
+    try {
+      final response = await _zoneRepo.ZoneApi();
+      setState(() {
+        _zoneList = response.data ?? [];
+        _zoneList.insert(0, ZoneData(id: '1', zoneName: "All"));
+      });
+    } catch (e) {
+      print("Zone API Error: $e");
+    }
+  }
+
   Future<void> _fetchEvents() async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
       final json = await _eventRepo.fetchEvents();
       final eventModel = EventModelClass.fromJson(json);
@@ -59,15 +83,13 @@ class _EventsPageState extends State<EventsPage> {
         past.sort((a, b) => b.dateStartsFrom!.compareTo(a.dateStartsFrom!));
 
         setState(() {
-          _upcomingEvents = _selectedZones.isNotEmpty
-              ? upcoming.where((e) => _selectedZones.contains(e.zone)).toList()
-              : upcoming;
-          _pastEvents = _selectedZones.isNotEmpty
-              ? past.where((e) => _selectedZones.contains(e.zone)).toList()
-              : past;
+          _allEvents = eventModel.data!;
+          _upcomingEvents = upcoming;
+          _pastEvents = past;
           _isLoading = false;
           _error = null;
         });
+        _applyFilters();
       } else {
         setState(() {
           _error = eventModel.message ?? 'Failed to load events';
@@ -78,6 +100,87 @@ class _EventsPageState extends State<EventsPage> {
       setState(() {
         _error = 'Error: $e';
         _isLoading = false;
+      });
+    }
+  }
+
+  void _applyFilters() {
+    setState(() {
+      List<EventData> filteredEvents = _allEvents;
+
+      // Apply zone filter
+      if (_selectedZones.isNotEmpty) {
+        filteredEvents = filteredEvents.where((e) {
+          // If event is for all zones (isAllZone = 1), include it only if "All" is selected
+          if (e.isAllZone == '1') {
+            return _isAllSelected;
+          }
+          // For zone-specific events (isAllZone = 0), check if they match selected zones
+          else {
+            return _selectedZones.any((zone) =>
+            e.zones?.any((eventZone) => eventZone.id == zone.id) ?? false);
+          }
+        }).toList();
+      }
+
+      // Apply date range filter
+      if (_startDate != null && _endDate != null) {
+        filteredEvents = filteredEvents.where((e) {
+          final eventStartDate = DateTime.tryParse(e.dateStartsFrom ?? '');
+          final eventEndDate = DateTime.tryParse(e.dateEndTo ?? '');
+
+          if (eventStartDate == null || eventEndDate == null) return false;
+
+          return (eventStartDate.isBefore(_endDate!) ||
+              eventStartDate.isAtSameMomentAs(_endDate!)) &&
+              (eventEndDate.isAfter(_startDate!) ||
+                  eventEndDate.isAtSameMomentAs(_startDate!));
+        }).toList();
+      }
+
+      // Split into upcoming/past
+      final today = DateTime.now();
+      final upcoming = <EventData>[];
+      final past = <EventData>[];
+
+      for (var e in filteredEvents) {
+        final date = DateTime.tryParse(e.dateStartsFrom ?? '');
+        if (date != null) {
+          if (date.isAfter(today) || date.isAtSameMomentAs(today)) {
+            upcoming.add(e);
+          } else {
+            past.add(e);
+          }
+        }
+      }
+
+      _upcomingEvents = upcoming;
+      _pastEvents = past;
+    });
+  }
+
+  Future<void> _selectDate(BuildContext context, bool isStartDate) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: isStartDate
+          ? _startDate ?? DateTime.now()
+          : _endDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      setState(() {
+        if (isStartDate) {
+          _startDate = picked;
+          if (_endDate != null && _startDate!.isAfter(_endDate!)) {
+            _endDate = _startDate;
+          }
+        } else {
+          _endDate = picked;
+          if (_startDate != null && _endDate!.isBefore(_startDate!)) {
+            _startDate = _endDate;
+          }
+        }
       });
     }
   }
@@ -240,31 +343,82 @@ class _EventsPageState extends State<EventsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("Select Zone",
-                        style: TextStyle(fontSize: 16)),
+                    const Text("Filters", style: TextStyle(fontSize: 16)),
                     const SizedBox(height: 4),
-                    if (_selectedZones.isNotEmpty)
+                    if (_isAllSelected || _selectedZones.isNotEmpty || _startDate != null || _endDate != null)
                       Wrap(
                         spacing: 6,
                         runSpacing: 4,
-                        children: _selectedZones
-                            .map((zone) => Chip(
-                                  label: Text(zone),
-                                  labelStyle: const TextStyle(
-                                      fontSize: 12, color: Colors.white),
-                                  backgroundColor:
-                                      ColorHelperClass.getColorFromHex(
-                                          ColorResources.red_color),
-                                  deleteIcon: const Icon(Icons.close,
-                                      color: Colors.white, size: 18),
-                                  onDeleted: () {
-                                    setState(() {
-                                      _selectedZones.remove(zone);
-                                      _fetchEvents();
-                                    });
-                                  },
-                                ))
-                            .toList(),
+                        children: [
+                          if (_isAllSelected)
+                            Chip(
+                              label: const Text("All Zones"),
+                              labelStyle: const TextStyle(
+                                  fontSize: 12, color: Colors.white),
+                              backgroundColor: ColorHelperClass.getColorFromHex(
+                                  ColorResources.red_color),
+                              deleteIcon: const Icon(Icons.close,
+                                  color: Colors.white, size: 18),
+                              onDeleted: () {
+                                setState(() {
+                                  _isAllSelected = false;
+                                  _applyFilters();
+                                });
+                              },
+                            ),
+                          ..._selectedZones
+                              .map((zone) => Chip(
+                            label: Text(zone.zoneName ?? ''),
+                            labelStyle: const TextStyle(
+                                fontSize: 12, color: Colors.white),
+                            backgroundColor:
+                            ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color),
+                            deleteIcon: const Icon(Icons.close,
+                                color: Colors.white, size: 18),
+                            onDeleted: () {
+                              setState(() {
+                                _selectedZones.remove(zone);
+                                _applyFilters();
+                              });
+                            },
+                          ))
+                              .toList(),
+                          if (_startDate != null)
+                            Chip(
+                              label: Text(
+                                  "From: ${DateFormat('dd-MM-yyyy').format(_startDate!)}"),
+                              labelStyle: const TextStyle(
+                                  fontSize: 12, color: Colors.white),
+                              backgroundColor: ColorHelperClass.getColorFromHex(
+                                  ColorResources.red_color),
+                              deleteIcon: const Icon(Icons.close,
+                                  color: Colors.white, size: 18),
+                              onDeleted: () {
+                                setState(() {
+                                  _startDate = null;
+                                  _applyFilters();
+                                });
+                              },
+                            ),
+                          if (_endDate != null)
+                            Chip(
+                              label: Text(
+                                  "To: ${DateFormat('dd-MM-yyyy').format(_endDate!)}"),
+                              labelStyle: const TextStyle(
+                                  fontSize: 12, color: Colors.white),
+                              backgroundColor: ColorHelperClass.getColorFromHex(
+                                  ColorResources.red_color),
+                              deleteIcon: const Icon(Icons.close,
+                                  color: Colors.white, size: 18),
+                              onDeleted: () {
+                                setState(() {
+                                  _endDate = null;
+                                  _applyFilters();
+                                });
+                              },
+                            ),
+                        ],
                       )
                   ],
                 ),
@@ -276,7 +430,7 @@ class _EventsPageState extends State<EventsPage> {
       ),
     );
   }
-
+  
   Widget _buildFilterDrawer() {
     return Positioned(
       right: 0,
@@ -293,36 +447,72 @@ class _EventsPageState extends State<EventsPage> {
             children: [
               Row(
                 children: [
-                  const Text("Select Zone",
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text("Filters",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const Spacer(),
                   IconButton(
                     icon: const Icon(Icons.close),
-                    onPressed: () =>
-                        setState(() => _isFilterDrawerOpen = false),
+                    onPressed: () => setState(() => _isFilterDrawerOpen = false),
                   ),
                 ],
               ),
               const SizedBox(height: 20),
+              const Text("Zones",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              CheckboxListTile(
+                title: const Text("All Zones"),
+                value: _isAllSelected,
+                onChanged: (bool? value) {
+                  setState(() {
+                    _isAllSelected = value ?? false;
+                    if (_isAllSelected) {
+                      _selectedZones.clear();
+                    }
+                  });
+                },
+              ),
               Expanded(
                 child: ListView(
                   children: _zoneList
+                      .where((zone) => zone.id != '1') // Exclude "All" from list
                       .map((zone) => CheckboxListTile(
-                            title: Text(zone),
-                            value: _selectedZones.contains(zone),
-                            onChanged: (bool? value) {
-                              setState(() {
-                                if (value == true) {
-                                  _selectedZones.add(zone);
-                                } else {
-                                  _selectedZones.remove(zone);
-                                }
-                              });
-                            },
-                          ))
+                    title: Text(zone.zoneName ?? ''),
+                    value: _selectedZones.contains(zone),
+                    onChanged: (bool? value) {
+                      setState(() {
+                        if (value == true) {
+                          _selectedZones.add(zone);
+                          _isAllSelected = false;
+                        } else {
+                          _selectedZones.remove(zone);
+                        }
+                      });
+                    },
+                  ))
                       .toList(),
                 ),
+              ),
+              const SizedBox(height: 16),
+              const Text("Date Range",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              ListTile(
+                title: Text(
+                  _startDate == null
+                      ? "Select Start Date"
+                      : "Start: ${DateFormat('dd-MM-yyyy').format(_startDate!)}",
+                ),
+                trailing: const Icon(Icons.calendar_today),
+                onTap: () => _selectDate(context, true),
+              ),
+              ListTile(
+                title: Text(
+                  _endDate == null
+                      ? "Select End Date"
+                      : "End: ${DateFormat('dd-MM-yyyy').format(_endDate!)}",
+                ),
+                trailing: const Icon(Icons.calendar_today),
+                onTap: () => _selectDate(context, false),
               ),
               const SizedBox(height: 16),
               Row(
@@ -330,8 +520,8 @@ class _EventsPageState extends State<EventsPage> {
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: ColorHelperClass.getColorFromHex(
-                            ColorResources.red_color),
+                        backgroundColor:
+                        ColorHelperClass.getColorFromHex(ColorResources.red_color),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
@@ -341,10 +531,10 @@ class _EventsPageState extends State<EventsPage> {
                       onPressed: () {
                         setState(() {
                           _isFilterDrawerOpen = false;
-                          _fetchEvents();
+                          _applyFilters();
                         });
                       },
-                      child: const Text("Apply"),
+                      child: const Text("Apply Filters"),
                     ),
                   ),
                 ],
@@ -355,7 +545,6 @@ class _EventsPageState extends State<EventsPage> {
       ),
     );
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

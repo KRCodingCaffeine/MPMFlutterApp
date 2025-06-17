@@ -59,5 +59,6 @@ class Urls {
   static const String eventList_url = base_url+"api/get_all_events";
   static const String event_register_url = base_url+"api/member_register_event";
   static const String event_attendees = base_url+"api/get_member_registered_events";
+  static const String zone_url = base_url+"api/get_zone_data";
 
 }
