@@ -1,3 +1,5 @@
+import 'package:mpm/model/Zone/ZoneData.dart';
+
 class EventData {
   String? eventId;
   String? eventName;
@@ -15,11 +17,12 @@ class EventData {
   String? eventAmount;
   String? eventRegistrationLastDate;
   String? eventsTypeId;
-  String? zone;
+  String? isAllZone;
   String? addedBy;
   String? dateAdded;
   String? updatedBy;
   String? dateUpdated;
+  List<ZoneData>? zones;
 
   EventData({
     this.eventId,
@@ -38,11 +41,12 @@ class EventData {
     this.eventAmount,
     this.eventRegistrationLastDate,
     this.eventsTypeId,
-    this.zone,
+    this.isAllZone,
     this.addedBy,
     this.dateAdded,
     this.updatedBy,
     this.dateUpdated,
+    this.zones,
   });
 
   factory EventData.fromJson(Map<String, dynamic> json) {
@@ -55,23 +59,26 @@ class EventData {
       dateStartsFrom: json['date_starts_from'],
       dateEndTo: json['date_end_to'],
       eventImage: json['event_image'] != null
-          ? "https://members.mumbaimaheshwari.com/staging/api/public/" + json['event_image']
+          ? "https://members.mumbaimaheshwari.com/staging/api/public/${json['event_image']}"
           : null,
       eventTermsAndConditionDocument: json['event_terms_and_condition_document'] != null
-          ? "https://members.mumbaimaheshwari.com/staging/api/public/" + json['event_terms_and_condition_document']
+          ? "https://members.mumbaimaheshwari.com/staging/api/public/${json['event_terms_and_condition_document']}"
           : null,
       approvalStatus: json['approval_status'],
-      approvedBy: json['approved_by'],
+      approvedBy: json['approved_by']?.toString(),
       approvedDate: json['approved_date'],
       eventCostType: json['event_cost_type'],
-      eventAmount: json['event_amount'],
+      eventAmount: json['event_amount']?.toString(),
       eventRegistrationLastDate: json['event_registration_last_date'],
       eventsTypeId: json['events_type_id']?.toString(),
-      zone: json['zone'],
+      isAllZone: json['is_all_zone']?.toString(),
       addedBy: json['added_by']?.toString(),
       dateAdded: json['date_added'],
-      updatedBy: json['updated_by'],
+      updatedBy: json['updated_by']?.toString(),
       dateUpdated: json['date_updated'],
+      zones: json['zones'] != null
+          ? (json['zones'] as List).map((zone) => ZoneData.fromJson(zone)).toList()
+          : null,
     );
   }
 
@@ -93,11 +100,14 @@ class EventData {
     data['event_amount'] = eventAmount;
     data['event_registration_last_date'] = eventRegistrationLastDate;
     data['events_type_id'] = eventsTypeId;
-    data['zone'] = zone;
+    data['is_all_zone'] = isAllZone;
     data['added_by'] = addedBy;
     data['date_added'] = dateAdded;
     data['updated_by'] = updatedBy;
     data['date_updated'] = dateUpdated;
+    if (zones != null) {
+      data['zones'] = zones!.map((zone) => zone.toJson()).toList();
+    }
     return data;
   }
 }
