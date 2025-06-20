@@ -30,12 +30,23 @@ class _EventDetailPageState extends State<EventDetailPage> {
   bool _isRegistering = false;
   bool _isRegistered = false;
   final EventRegistrationRepository _registrationRepo =
-      EventRegistrationRepository();
+  EventRegistrationRepository();
+  bool _isPastEvent = false;
 
   @override
   void initState() {
     super.initState();
     _checkRegistrationStatus();
+    _checkEventDate();
+  }
+
+  void _checkEventDate() {
+    final eventDate = DateTime.tryParse(widget.event.dateStartsFrom ?? '');
+    if (eventDate != null) {
+      setState(() {
+        _isPastEvent = eventDate.isBefore(DateTime.now());
+      });
+    }
   }
 
   Future<void> _checkRegistrationStatus() async {
@@ -206,172 +217,123 @@ class _EventDetailPageState extends State<EventDetailPage> {
     );
   }
 
-  // void _redirectToEventsList() {
-  //   Navigator.push(
-  //     context,
-  //     MaterialPageRoute(
-  //       builder: (context) => const EventsPage(),
-  //     ),
-  //   );
-  // }
-
   void _redirectToEventsList() {
-    // This will pop all routes until we're back to the events list
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final parsedDate =
-        DateTime.tryParse(widget.event.dateStartsFrom ?? '') ?? DateTime.now();
-    final formattedDate = DateFormat('EEEE, MMMM d, y').format(parsedDate);
-    final time = DateFormat('h:mm a').format(parsedDate);
-
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        backgroundColor:
-            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        title: Text(
-          widget.event.eventName ?? 'Event Details',
-          style: const TextStyle(color: Colors.white, fontSize: 16),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
+  Widget _buildEventInfo(String date, String time) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Event Date & Time:',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black54,
+          ),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        const SizedBox(height: 8),
+        Row(
           children: [
-            if (widget.event.eventImage != null &&
-                widget.event.eventImage!.isNotEmpty) ...[
-              Center(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    constraints: const BoxConstraints(
-                      maxHeight: 300,
-                      maxWidth: 400,
-                    ),
-                    child: Image.network(
-                      widget.event.eventImage!,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: double.infinity,
-                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-            const Text(
-              'Event Description:',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              widget.event.eventDescription ?? 'No event description available',
-              style: const TextStyle(
-                fontSize: 15,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 24),
-            _buildEventInfo(formattedDate, time),
-            const SizedBox(height: 24),
-
-            if (widget.event.eventOrganiserName != null ||
-                widget.event.eventOrganiserMobile != null) ...[
-              const Divider(thickness: 1, color: Colors.grey),
-              const SizedBox(height: 16),
-              _buildOrganiserInfo(),
-              const SizedBox(height: 24),
-            ],
-
-            if (widget.event.eventTermsAndConditionDocument != null &&
-                widget.event.eventTermsAndConditionDocument!.isNotEmpty) ...[
-              const Text(
-                'Terms and Conditions:',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black54,
-                ),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey[200],
-                    foregroundColor: Colors.black87,
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 12, horizontal: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    elevation: 0,
-                  ),
-                  icon: const Icon(Icons.picture_as_pdf, color: Colors.red),
-                  label: _isDownloading
-                      ? LinearProgressIndicator(
-                          value: _downloadProgress / 100,
-                          backgroundColor: Colors.grey[300],
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                              ColorHelperClass.getColorFromHex(
-                                  ColorResources.red_color)),
-                        )
-                      : const Text("Download & View PDF"),
-                  onPressed: _isDownloading
-                      ? null
-                      : () => _downloadAndOpenPdf(
-                          widget.event.eventTermsAndConditionDocument!,
-                          'Event_Terms_${widget.event.eventId}.pdf'),
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-
-            const SizedBox(height: 50),
+            Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
+            const SizedBox(width: 8),
+            Text(date, style: TextStyle(fontSize: 14, color: Colors.grey[700])),
           ],
         ),
-      ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _isRegistered
-                  ? Colors.green
-                  : ColorHelperClass.getColorFromHex(ColorResources.red_color),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+      ],
+    );
+  }
+
+  Widget _buildEventCostInfo() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Event Cost:',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black54,
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (widget.event.eventCostType != null && widget.event.eventCostType!.isNotEmpty) ...[
+          Row(
+            children: [
+              Icon(Icons.attach_money, size: 16, color: Colors.grey[600]),
+              const SizedBox(width: 8),
+              Text(
+                'Cost: ${widget.event.eventCostType}',
+                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
               ),
+              if (widget.event.eventAmount != null && widget.event.eventAmount!.isNotEmpty) ...[
+                const SizedBox(width: 8),
+                Text(
+                  '(${widget.event.eventAmount})',
+                  style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildRegisterButton() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _isRegistered
+                ? Colors.green
+                : ColorHelperClass.getColorFromHex(ColorResources.red_color),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
             ),
-            onPressed: _isRegistered ? null : _registerForEvent,
-            child: _isRegistering
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : Text(
-                   "Register Here",
-                    style: const TextStyle(fontSize: 16),
-                  ),
+          ),
+          onPressed: _isRegistered ? null : _registerForEvent,
+          child: _isRegistering
+              ? const SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          )
+              : Text(
+            _isRegistered ? "Registered" : "Register Here",
+            style: const TextStyle(fontSize: 16),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPastEventBottomBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.grey,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          onPressed: null,
+          child: const Text(
+            "Event Ended",
+            style: TextStyle(fontSize: 16),
           ),
         ),
       ),
@@ -392,7 +354,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
-                  Text('Storage permission is needed to download the file.')),
+              Text('Storage permission is needed to download the file.')),
         );
         return false;
       } else {
@@ -402,7 +364,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
-                  Text('Storage permission is needed to download the file.')),
+              Text('Storage permission is needed to download the file.')),
         );
         return false;
       }
@@ -461,38 +423,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
   }
 
-  Widget _buildEventInfo(String date, String time) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Event Date & Time:',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Colors.black54,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
-            const SizedBox(width: 8),
-            Text(date, style: TextStyle(fontSize: 14, color: Colors.grey[700])),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
-            const SizedBox(width: 8),
-            Text(time, style: TextStyle(fontSize: 14, color: Colors.grey[700])),
-          ],
-        ),
-      ],
-    );
-  }
-
   Widget _buildOrganiserInfo() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -528,6 +458,190 @@ class _EventDetailPageState extends State<EventDetailPage> {
           ),
         ],
       ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final parsedDate =
+        DateTime.tryParse(widget.event.dateStartsFrom ?? '') ?? DateTime.now();
+    final formattedDate = DateFormat('EEEE, MMMM d, y').format(parsedDate);
+    final time = DateFormat('h:mm a').format(parsedDate);
+
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(
+        backgroundColor:
+        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        title: Text(
+          widget.event.eventName ?? 'Event Details',
+          style: const TextStyle(color: Colors.white, fontSize: 16),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (widget.event.eventImage != null &&
+                widget.event.eventImage!.isNotEmpty) ...[
+              Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    constraints: const BoxConstraints(
+                      maxHeight: 300,
+                      maxWidth: 400,
+                    ),
+                    child: Image.network(
+                      widget.event.eventImage!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+            const Text(
+              'Event Description:',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              widget.event.eventDescription ?? 'No event description available',
+              style: const TextStyle(
+                fontSize: 15,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            _buildEventInfo(formattedDate, time),
+            const SizedBox(height: 24),
+            _buildEventCostInfo(),
+            const SizedBox(height: 24),
+            if (widget.event.eventOrganiserName != null ||
+                widget.event.eventOrganiserMobile != null) ...[
+              const Divider(thickness: 1, color: Colors.grey),
+              const SizedBox(height: 16),
+              _buildOrganiserInfo(),
+              const SizedBox(height: 24),
+            ],
+            if (widget.event.eventTermsAndConditionDocument != null &&
+                widget.event.eventTermsAndConditionDocument!.isNotEmpty) ...[
+              const Text(
+                'Terms and Conditions:',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Builder(
+                builder: (context) {
+                  final docUrl = widget.event.eventTermsAndConditionDocument!;
+                  final fileExtension = docUrl.split('.').last.toLowerCase();
+
+                  // Supported image formats
+                  if (['jpg', 'jpeg', 'png', 'gif'].contains(fileExtension)) {
+                    return GestureDetector(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => Dialog(
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              child: InteractiveViewer(
+                                child: Image.network(
+                                  docUrl,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) =>
+                                  const Center(child: Text('Failed to load image')),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          docUrl,
+                          height: 200,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                        ),
+                      ),
+                    );
+                  }
+
+                  // PDF and DOCX downloads
+                  else if (['pdf', 'docx'].contains(fileExtension)) {
+                    return SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[200],
+                          foregroundColor: Colors.black87,
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 12, horizontal: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          elevation: 0,
+                        ),
+                        icon: Icon(
+                          fileExtension == 'pdf' ? Icons.picture_as_pdf : Icons.description,
+                          color: fileExtension == 'pdf' ? Colors.red : Colors.blue,
+                        ),
+                        label: _isDownloading
+                            ? LinearProgressIndicator(
+                          value: _downloadProgress / 100,
+                          backgroundColor: Colors.grey[300],
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color),
+                          ),
+                        )
+                            : Text("Download & View ${fileExtension.toUpperCase()}"),
+                        onPressed: _isDownloading
+                            ? null
+                            : () => _downloadAndOpenPdf(
+                          docUrl,
+                          'Event_Terms_${widget.event.eventId}.$fileExtension',
+                        ),
+                      ),
+                    );
+                  }
+
+                  // Unsupported files
+                  else {
+                    return const Text(
+                      "Unsupported file format",
+                      style: TextStyle(color: Colors.red),
+                    );
+                  }
+                },
+              ),
+              const SizedBox(height: 24),
+            ],
+            const SizedBox(height: 50),
+          ],
+        ),
+      ),
+      bottomNavigationBar: _isPastEvent
+          ? _buildPastEventBottomBar()
+          : _buildRegisterButton(),
     );
   }
 }

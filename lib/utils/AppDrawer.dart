@@ -222,7 +222,7 @@ class AppDrawer extends StatelessWidget {
     final box = context.findRenderObject() as RenderBox?;
 
     const String membershipFormLink =
-        'https://members.mumbaimaheshwari.com/member/registration';
+        'https://members.mumbaimaheshwari.com/staging/member/registration';
 
     String shareText =
         "We invite you to join us! 🎉\n\n"
