@@ -29,11 +29,16 @@ class _EventsPageState extends State<EventsPage> {
   int _selectedTabIndex = 0;
 
   List<ZoneData> _zoneList = [];
-  List<ZoneData> _selectedZones = [];
-  bool _isFilterDrawerOpen = false;
-  DateTime? _startDate;
-  DateTime? _endDate;
-  bool _isAllSelected = false;
+  List<ZoneData> _selectedUpcomingZones = [];
+  List<ZoneData> _selectedPastZones = [];
+  DateTime? _upcomingStartDate;
+  DateTime? _upcomingEndDate;
+  DateTime? _pastStartDate;
+  DateTime? _pastEndDate;
+  bool _isUpcomingAllSelected = false;
+  bool _isPastAllSelected = false;
+  bool _isUpcomingFilterDrawerOpen = false;
+  bool _isPastFilterDrawerOpen = false;
 
   @override
   void initState() {
@@ -64,28 +69,8 @@ class _EventsPageState extends State<EventsPage> {
       final eventModel = EventModelClass.fromJson(json);
 
       if (eventModel.status == true && eventModel.data != null) {
-        final today = DateTime.now();
-        final upcoming = <EventData>[];
-        final past = <EventData>[];
-
-        for (var e in eventModel.data!) {
-          final date = DateTime.tryParse(e.dateStartsFrom ?? '');
-          if (date != null) {
-            if (date.isAfter(today) || date.isAtSameMomentAs(today)) {
-              upcoming.add(e);
-            } else {
-              past.add(e);
-            }
-          }
-        }
-
-        upcoming.sort((a, b) => a.dateStartsFrom!.compareTo(b.dateStartsFrom!));
-        past.sort((a, b) => b.dateStartsFrom!.compareTo(a.dateStartsFrom!));
-
         setState(() {
           _allEvents = eventModel.data!;
-          _upcomingEvents = upcoming;
-          _pastEvents = past;
           _isLoading = false;
           _error = null;
         });
@@ -108,33 +93,35 @@ class _EventsPageState extends State<EventsPage> {
     setState(() {
       List<EventData> filteredEvents = _allEvents;
 
-      // Apply zone filter
-      if (_selectedZones.isNotEmpty) {
+      List<ZoneData> selectedZones = _selectedTabIndex == 0 ? _selectedUpcomingZones : _selectedPastZones;
+      bool isAllSelected = _selectedTabIndex == 0 ? _isUpcomingAllSelected : _isPastAllSelected;
+
+      if (selectedZones.isNotEmpty || isAllSelected) {
         filteredEvents = filteredEvents.where((e) {
-          // If event is for all zones (isAllZone = 1), include it only if "All" is selected
           if (e.isAllZone == '1') {
-            return _isAllSelected;
+            return isAllSelected;
           }
-          // For zone-specific events (isAllZone = 0), check if they match selected zones
-          else {
-            return _selectedZones.any((zone) =>
-            e.zones?.any((eventZone) => eventZone.id == zone.id) ?? false);
-          }
+
+          return selectedZones.any((zone) =>
+          e.zones?.any((eventZone) => eventZone.id == zone.id) ?? false);
         }).toList();
       }
 
-      // Apply date range filter
-      if (_startDate != null && _endDate != null) {
+
+      DateTime? startDate = _selectedTabIndex == 0 ? _upcomingStartDate : _pastStartDate;
+      DateTime? endDate = _selectedTabIndex == 0 ? _upcomingEndDate : _pastEndDate;
+
+      if (startDate != null && endDate != null) {
         filteredEvents = filteredEvents.where((e) {
           final eventStartDate = DateTime.tryParse(e.dateStartsFrom ?? '');
           final eventEndDate = DateTime.tryParse(e.dateEndTo ?? '');
 
           if (eventStartDate == null || eventEndDate == null) return false;
 
-          return (eventStartDate.isBefore(_endDate!) ||
-              eventStartDate.isAtSameMomentAs(_endDate!)) &&
-              (eventEndDate.isAfter(_startDate!) ||
-                  eventEndDate.isAtSameMomentAs(_startDate!));
+          return (eventStartDate.isBefore(endDate!) ||
+              eventStartDate.isAtSameMomentAs(endDate!)) &&
+              (eventEndDate.isAfter(startDate!) ||
+                  eventEndDate.isAtSameMomentAs(startDate!));
         }).toList();
       }
 
@@ -159,37 +146,11 @@ class _EventsPageState extends State<EventsPage> {
     });
   }
 
-  Future<void> _selectDate(BuildContext context, bool isStartDate) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: isStartDate
-          ? _startDate ?? DateTime.now()
-          : _endDate ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    );
-    if (picked != null) {
-      setState(() {
-        if (isStartDate) {
-          _startDate = picked;
-          if (_endDate != null && _startDate!.isAfter(_endDate!)) {
-            _endDate = _startDate;
-          }
-        } else {
-          _endDate = picked;
-          if (_startDate != null && _endDate!.isBefore(_startDate!)) {
-            _startDate = _endDate;
-          }
-        }
-      });
-    }
-  }
-
   Widget _buildEventCard(EventData event) {
-    final parsedDate =
-        DateTime.tryParse(event.dateStartsFrom ?? '') ?? DateTime.now();
+    final parsedDate = DateTime.tryParse(event.dateStartsFrom ?? '') ?? DateTime.now();
     final day = DateFormat('d').format(parsedDate);
     final month = DateFormat('MMM').format(parsedDate);
+    final isPastEvent = parsedDate.isBefore(DateTime.now());
 
     return GestureDetector(
       onTap: () {
@@ -258,7 +219,19 @@ class _EventsPageState extends State<EventsPage> {
                     const SizedBox(height: 4),
                     Text('Hosted by ${event.eventOrganiserName ?? 'Unknown'}',
                         style:
-                            TextStyle(color: Colors.grey[600], fontSize: 13)),
+                        TextStyle(color: Colors.grey[600], fontSize: 13)),
+                    if (isPastEvent)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          'Event Ended',
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -322,12 +295,22 @@ class _EventsPageState extends State<EventsPage> {
   }
 
   Widget _buildFilterButton() {
+    final isUpcomingTab = _selectedTabIndex == 0;
+    final selectedZones = isUpcomingTab ? _selectedUpcomingZones : _selectedPastZones;
+    final isAllSelected = isUpcomingTab ? _isUpcomingAllSelected : _isPastAllSelected;
+    final startDate = isUpcomingTab ? _upcomingStartDate : _pastStartDate;
+    final endDate = isUpcomingTab ? _upcomingEndDate : _pastEndDate;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
       child: InkWell(
         onTap: () {
           setState(() {
-            _isFilterDrawerOpen = true;
+            if (isUpcomingTab) {
+              _isUpcomingFilterDrawerOpen = true;
+            } else {
+              _isPastFilterDrawerOpen = true;
+            }
           });
         },
         child: Container(
@@ -343,14 +326,15 @@ class _EventsPageState extends State<EventsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("Filters", style: TextStyle(fontSize: 16)),
+                    Text("${isUpcomingTab ? 'Upcoming' : 'Past'} Events",
+                        style: TextStyle(fontSize: 16)),
                     const SizedBox(height: 4),
-                    if (_isAllSelected || _selectedZones.isNotEmpty || _startDate != null || _endDate != null)
+                    if (isAllSelected || selectedZones.isNotEmpty || startDate != null || endDate != null)
                       Wrap(
                         spacing: 6,
                         runSpacing: 4,
                         children: [
-                          if (_isAllSelected)
+                          if (isAllSelected)
                             Chip(
                               label: const Text("All Zones"),
                               labelStyle: const TextStyle(
@@ -361,12 +345,16 @@ class _EventsPageState extends State<EventsPage> {
                                   color: Colors.white, size: 18),
                               onDeleted: () {
                                 setState(() {
-                                  _isAllSelected = false;
+                                  if (isUpcomingTab) {
+                                    _isUpcomingAllSelected = false;
+                                  } else {
+                                    _isPastAllSelected = false;
+                                  }
                                   _applyFilters();
                                 });
                               },
                             ),
-                          ..._selectedZones
+                          ...selectedZones
                               .map((zone) => Chip(
                             label: Text(zone.zoneName ?? ''),
                             labelStyle: const TextStyle(
@@ -378,16 +366,20 @@ class _EventsPageState extends State<EventsPage> {
                                 color: Colors.white, size: 18),
                             onDeleted: () {
                               setState(() {
-                                _selectedZones.remove(zone);
+                                if (isUpcomingTab) {
+                                  _selectedUpcomingZones.remove(zone);
+                                } else {
+                                  _selectedPastZones.remove(zone);
+                                }
                                 _applyFilters();
                               });
                             },
                           ))
                               .toList(),
-                          if (_startDate != null)
+                          if (startDate != null)
                             Chip(
                               label: Text(
-                                  "From: ${DateFormat('dd-MM-yyyy').format(_startDate!)}"),
+                                  "From: ${DateFormat('dd-MM-yyyy').format(startDate)}"),
                               labelStyle: const TextStyle(
                                   fontSize: 12, color: Colors.white),
                               backgroundColor: ColorHelperClass.getColorFromHex(
@@ -396,15 +388,19 @@ class _EventsPageState extends State<EventsPage> {
                                   color: Colors.white, size: 18),
                               onDeleted: () {
                                 setState(() {
-                                  _startDate = null;
+                                  if (isUpcomingTab) {
+                                    _upcomingStartDate = null;
+                                  } else {
+                                    _pastStartDate = null;
+                                  }
                                   _applyFilters();
                                 });
                               },
                             ),
-                          if (_endDate != null)
+                          if (endDate != null)
                             Chip(
                               label: Text(
-                                  "To: ${DateFormat('dd-MM-yyyy').format(_endDate!)}"),
+                                  "To: ${DateFormat('dd-MM-yyyy').format(endDate)}"),
                               labelStyle: const TextStyle(
                                   fontSize: 12, color: Colors.white),
                               backgroundColor: ColorHelperClass.getColorFromHex(
@@ -413,7 +409,11 @@ class _EventsPageState extends State<EventsPage> {
                                   color: Colors.white, size: 18),
                               onDeleted: () {
                                 setState(() {
-                                  _endDate = null;
+                                  if (isUpcomingTab) {
+                                    _upcomingEndDate = null;
+                                  } else {
+                                    _pastEndDate = null;
+                                  }
                                   _applyFilters();
                                 });
                               },
@@ -430,8 +430,13 @@ class _EventsPageState extends State<EventsPage> {
       ),
     );
   }
-  
-  Widget _buildFilterDrawer() {
+
+  Widget _buildFilterDrawer(bool isUpcoming) {
+    final selectedZones = isUpcoming ? _selectedUpcomingZones : _selectedPastZones;
+    final isAllSelected = isUpcoming ? _isUpcomingAllSelected : _isPastAllSelected;
+    final startDate = isUpcoming ? _upcomingStartDate : _pastStartDate;
+    final endDate = isUpcoming ? _upcomingEndDate : _pastEndDate;
+
     return Positioned(
       right: 0,
       top: 0,
@@ -447,12 +452,18 @@ class _EventsPageState extends State<EventsPage> {
             children: [
               Row(
                 children: [
-                  const Text("Filters",
+                  Text("${isUpcoming ? 'Upcoming' : 'Past'} Events",
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const Spacer(),
                   IconButton(
                     icon: const Icon(Icons.close),
-                    onPressed: () => setState(() => _isFilterDrawerOpen = false),
+                    onPressed: () => setState(() {
+                      if (isUpcoming) {
+                        _isUpcomingFilterDrawerOpen = false;
+                      } else {
+                        _isPastFilterDrawerOpen = false;
+                      }
+                    }),
                   ),
                 ],
               ),
@@ -461,12 +472,19 @@ class _EventsPageState extends State<EventsPage> {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               CheckboxListTile(
                 title: const Text("All Zones"),
-                value: _isAllSelected,
+                value: isAllSelected,
                 onChanged: (bool? value) {
                   setState(() {
-                    _isAllSelected = value ?? false;
-                    if (_isAllSelected) {
-                      _selectedZones.clear();
+                    if (isUpcoming) {
+                      _isUpcomingAllSelected = value ?? false;
+                      if (_isUpcomingAllSelected) {
+                        _selectedUpcomingZones.clear();
+                      }
+                    } else {
+                      _isPastAllSelected = value ?? false;
+                      if (_isPastAllSelected) {
+                        _selectedPastZones.clear();
+                      }
                     }
                   });
                 },
@@ -477,14 +495,23 @@ class _EventsPageState extends State<EventsPage> {
                       .where((zone) => zone.id != '1') // Exclude "All" from list
                       .map((zone) => CheckboxListTile(
                     title: Text(zone.zoneName ?? ''),
-                    value: _selectedZones.contains(zone),
+                    value: selectedZones.contains(zone),
                     onChanged: (bool? value) {
                       setState(() {
                         if (value == true) {
-                          _selectedZones.add(zone);
-                          _isAllSelected = false;
+                          if (isUpcoming) {
+                            _selectedUpcomingZones.add(zone);
+                            _isUpcomingAllSelected = false;
+                          } else {
+                            _selectedPastZones.add(zone);
+                            _isPastAllSelected = false;
+                          }
                         } else {
-                          _selectedZones.remove(zone);
+                          if (isUpcoming) {
+                            _selectedUpcomingZones.remove(zone);
+                          } else {
+                            _selectedPastZones.remove(zone);
+                          }
                         }
                       });
                     },
@@ -498,21 +525,65 @@ class _EventsPageState extends State<EventsPage> {
               const SizedBox(height: 8),
               ListTile(
                 title: Text(
-                  _startDate == null
+                  startDate == null
                       ? "Select Start Date"
-                      : "Start: ${DateFormat('dd-MM-yyyy').format(_startDate!)}",
+                      : "Start: ${DateFormat('dd-MM-yyyy').format(startDate)}",
                 ),
                 trailing: const Icon(Icons.calendar_today),
-                onTap: () => _selectDate(context, true),
+                onTap: () async {
+                  final DateTime? picked = await showDatePicker(
+                    context: context,
+                    initialDate: startDate ?? DateTime.now(),
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime(2100),
+                  );
+                  if (picked != null) {
+                    setState(() {
+                      if (isUpcoming) {
+                        _upcomingStartDate = picked;
+                        if (_upcomingEndDate != null && _upcomingStartDate!.isAfter(_upcomingEndDate!)) {
+                          _upcomingEndDate = _upcomingStartDate;
+                        }
+                      } else {
+                        _pastStartDate = picked;
+                        if (_pastEndDate != null && _pastStartDate!.isAfter(_pastEndDate!)) {
+                          _pastEndDate = _pastStartDate;
+                        }
+                      }
+                    });
+                  }
+                },
               ),
               ListTile(
                 title: Text(
-                  _endDate == null
+                  endDate == null
                       ? "Select End Date"
-                      : "End: ${DateFormat('dd-MM-yyyy').format(_endDate!)}",
+                      : "End: ${DateFormat('dd-MM-yyyy').format(endDate)}",
                 ),
                 trailing: const Icon(Icons.calendar_today),
-                onTap: () => _selectDate(context, false),
+                onTap: () async {
+                  final DateTime? picked = await showDatePicker(
+                    context: context,
+                    initialDate: endDate ?? DateTime.now(),
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime(2100),
+                  );
+                  if (picked != null) {
+                    setState(() {
+                      if (isUpcoming) {
+                        _upcomingEndDate = picked;
+                        if (_upcomingStartDate != null && _upcomingEndDate!.isBefore(_upcomingStartDate!)) {
+                          _upcomingStartDate = _upcomingEndDate;
+                        }
+                      } else {
+                        _pastEndDate = picked;
+                        if (_pastStartDate != null && _pastEndDate!.isBefore(_pastStartDate!)) {
+                          _pastStartDate = _pastEndDate;
+                        }
+                      }
+                    });
+                  }
+                },
               ),
               const SizedBox(height: 16),
               Row(
@@ -530,7 +601,11 @@ class _EventsPageState extends State<EventsPage> {
                       ),
                       onPressed: () {
                         setState(() {
-                          _isFilterDrawerOpen = false;
+                          if (isUpcoming) {
+                            _isUpcomingFilterDrawerOpen = false;
+                          } else {
+                            _isPastFilterDrawerOpen = false;
+                          }
                           _applyFilters();
                         });
                       },
@@ -545,13 +620,14 @@ class _EventsPageState extends State<EventsPage> {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
         backgroundColor:
-            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: const Text("Events", style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
@@ -578,25 +654,26 @@ class _EventsPageState extends State<EventsPage> {
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : _error != null
-                        ? Center(child: Text(_error!))
-                        : RefreshIndicator(
-                            color: Colors.redAccent,
-                            onRefresh: _fetchEvents,
-                            child: ListView.builder(
-                              padding: const EdgeInsets.only(top: 4),
-                              itemCount: _selectedTabIndex == 0
-                                  ? _upcomingEvents.length
-                                  : _pastEvents.length,
-                              itemBuilder: (context, index) => _buildEventCard(
-                                  _selectedTabIndex == 0
-                                      ? _upcomingEvents[index]
-                                      : _pastEvents[index]),
-                            ),
-                          ),
+                    ? Center(child: Text(_error!))
+                    : RefreshIndicator(
+                  color: Colors.redAccent,
+                  onRefresh: _fetchEvents,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.only(top: 4),
+                    itemCount: _selectedTabIndex == 0
+                        ? _upcomingEvents.length
+                        : _pastEvents.length,
+                    itemBuilder: (context, index) => _buildEventCard(
+                        _selectedTabIndex == 0
+                            ? _upcomingEvents[index]
+                            : _pastEvents[index]),
+                  ),
+                ),
               ),
             ],
           ),
-          if (_isFilterDrawerOpen) _buildFilterDrawer(),
+          if (_isUpcomingFilterDrawerOpen) _buildFilterDrawer(true),
+          if (_isPastFilterDrawerOpen) _buildFilterDrawer(false),
         ],
       ),
     );
