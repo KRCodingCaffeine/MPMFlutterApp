@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:in_app_update/in_app_update.dart';
 
 import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/route/route_name.dart';
@@ -18,6 +19,8 @@ class SplashView extends StatefulWidget {
 class _SplashViewState extends State<SplashView> with SingleTickerProviderStateMixin{
   late AnimationController _controller;
   late Animation<double> _animation;
+  AppUpdateInfo? _updateInfo;
+
   @override
   void initState() {
     super.initState();
@@ -73,7 +76,10 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
               Permission.notification.request();
             }
           });
-      final token = await FirebaseMessaging.instance.getToken();
+
+          await _checkForUpdate();
+
+          final token = await FirebaseMessaging.instance.getToken();
       await PushNotificationService().initialise();
       if (token != null) {
         print('firebase device token >>>>> $token');
@@ -99,5 +105,18 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
 
       }
     });
+  }
+
+  Future<void> _checkForUpdate() async {
+    try {
+      _updateInfo = await InAppUpdate.checkForUpdate();
+      if (_updateInfo?.updateAvailability == UpdateAvailability.updateAvailable) {
+        await InAppUpdate.performImmediateUpdate().catchError((e) {
+          print("Update error: $e");
+        });
+      }
+    } catch (e) {
+      print("Failed to check or perform update: $e");
+    }
   }
 }
