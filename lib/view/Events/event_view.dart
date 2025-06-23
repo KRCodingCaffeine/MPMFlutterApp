@@ -210,28 +210,22 @@ class _EventsPageState extends State<EventsPage> {
                         style: const TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 15)),
                     const SizedBox(height: 4),
-                    Text(
-                      event.eventDescription ?? '',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 13),
+                    SizedBox(
+                      width: double.infinity,
+                      child: Text(
+                        event.eventDescription ?? '',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 13),
+                      ),
                     ),
                     const SizedBox(height: 4),
-                    Text('Hosted by ${event.eventOrganiserName ?? 'Unknown'}',
-                        style:
-                        TextStyle(color: Colors.grey[600], fontSize: 13)),
-                    if (isPastEvent)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          'Event Ended',
-                          style: TextStyle(
-                            color: Colors.red,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                    Text(
+                      'Hosted by ${event.eventOrganiserName ?? 'Unknown'}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    ),
                   ],
                 ),
               ),
@@ -624,7 +618,7 @@ class _EventsPageState extends State<EventsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[200],
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor:
         ColorHelperClass.getColorFromHex(ColorResources.logo_color),
