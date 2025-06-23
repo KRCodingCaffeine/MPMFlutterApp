@@ -332,7 +332,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           ),
           onPressed: null,
           child: const Text(
-            "Event Ended",
+            "Register Here",
             style: TextStyle(fontSize: 16),
           ),
         ),
@@ -475,8 +475,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
         ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Text(
           widget.event.eventName ?? 'Event Details',
-          style: const TextStyle(color: Colors.white, fontSize: 16),
-          maxLines: 2,
+          style: const TextStyle(color: Colors.white),
+          maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
         iconTheme: const IconThemeData(color: Colors.white),
