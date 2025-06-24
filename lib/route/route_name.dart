@@ -24,6 +24,7 @@ class RouteNames {
   static const String event_view = "event_view";
   static const String forms = "forms_down";
   static const String gov_scheme = "gov_scheme";
+  static const String add_enquiry_form = "add_enquiry_form";
   static const String profile = "profile_view";
   static const String notification_view = "notification_view";
 
