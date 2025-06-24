@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mpm/route/route_name.dart';
+import 'package:mpm/view/EnquiryForm/add_enquiry_form.dart';
 
 import 'package:mpm/view/addmember/add_member_first.dart';
 import 'package:mpm/view/addmember/add_member_second.dart';
@@ -72,6 +73,16 @@ class RoutePages {
         return _buildRoute(const FormsDownloadView(), settings);
       case RouteNames.gov_scheme:
         return _buildRoute(GovSchemeView(), settings);
+      case RouteNames.add_enquiry_form:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        return _buildRoute(
+          AddEnquiryFormView(
+            memberId: args['memberId'] ?? 'memberId',
+            createdBy: args['memberId'] ?? 'memberId',
+            addedBy: args['memberId'] ?? 'memberId',
+          ),
+          settings,
+        );
       case RouteNames.profile:
         return _buildRoute(const ProfileView(), settings);
       case RouteNames.searchmember:

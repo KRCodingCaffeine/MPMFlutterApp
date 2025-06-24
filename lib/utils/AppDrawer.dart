@@ -158,6 +158,14 @@ class AppDrawer extends StatelessWidget {
           //   },
           // ),
           ListTile(
+            leading: const Icon(Icons.contact_page),
+            title: const Text('Enquiry Form'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, RouteNames.add_enquiry_form);
+            },
+          ),
+          ListTile(
             leading: Icon(Icons.info),
             title: Text('About Us'),
             onTap: () {
