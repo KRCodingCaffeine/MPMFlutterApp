@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mpm/route/route_name.dart';
+import 'package:mpm/utils/Session.dart';
 import 'package:mpm/view/EnquiryForm/add_enquiry_form.dart';
 
 import 'package:mpm/view/addmember/add_member_first.dart';
@@ -74,15 +75,11 @@ class RoutePages {
       case RouteNames.gov_scheme:
         return _buildRoute(GovSchemeView(), settings);
       case RouteNames.add_enquiry_form:
-        final args = settings.arguments as Map<String, dynamic>? ?? {};
         return _buildRoute(
-          AddEnquiryFormView(
-            memberId: args['memberId'] ?? 'memberId',
-            createdBy: args['memberId'] ?? 'memberId',
-            addedBy: args['memberId'] ?? 'memberId',
-          ),
+          const EnquiryFormLoader(), // Wrapper widget
           settings,
         );
+
       case RouteNames.profile:
         return _buildRoute(const ProfileView(), settings);
       case RouteNames.searchmember:
@@ -122,3 +119,45 @@ class RoutePages {
     );
   }
 }
+
+class EnquiryFormLoader extends StatelessWidget {
+  const EnquiryFormLoader({super.key});
+
+  Future<AddEnquiryFormView> _loadForm() async {
+    final userData = await SessionManager.getSession();
+    if (userData == null || userData.memberId == null) {
+      throw Exception('User not logged in');
+    }
+
+    final memberId = userData.memberId.toString();
+
+    return AddEnquiryFormView(
+      memberId: memberId,
+      createdBy: memberId,
+      addedBy: memberId,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<AddEnquiryFormView>(
+      future: _loadForm(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        } else if (snapshot.hasError) {
+          return Scaffold(
+            body: Center(
+              child: Text('Error: ${snapshot.error}'),
+            ),
+          );
+        } else {
+          return snapshot.data!;
+        }
+      },
+    );
+  }
+}
+
