@@ -59,15 +59,18 @@ class _AddEnquiryFormViewState extends State<AddEnquiryFormView> {
 
       if (!mounted) return;
 
+      final bool isSuccess = response['status'] == true;
+      final String responseMessage = response['msg'] ?? 'Unknown error';
+
       setState(() {
-        _lastSubmissionStatus = response.status ? 'success' : 'failed';
+        _lastSubmissionStatus = isSuccess ? 'success' : 'failed';
       });
 
-      if (response.status) {
+      if (isSuccess) {
         _messageController.clear();
         _showSuccessSnackbar('Enquiry submitted successfully!');
       } else {
-        _showErrorSnackbar(response.message);
+        _showErrorSnackbar(responseMessage);
       }
     } catch (e) {
       if (!mounted) return;
@@ -107,7 +110,7 @@ class _AddEnquiryFormViewState extends State<AddEnquiryFormView> {
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       drawer: AppDrawer(),
@@ -118,21 +121,21 @@ class _AddEnquiryFormViewState extends State<AddEnquiryFormView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (_lastSubmissionStatus == 'success')
-                _buildStatusIndicator('Enquiry submitted successfully!', true),
-              if (_lastSubmissionStatus == 'failed')
-                _buildStatusIndicator(
-                    'Submission failed. Please try again.', false),
-
               const SizedBox(height: 16),
-
               TextFormField(
                 controller: _messageController,
                 maxLines: 5,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Message',
+                  labelStyle: TextStyle(color: Colors.black),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.black),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black, width: 1.0),
                   ),
                 ),
                 validator: (value) {
@@ -142,76 +145,42 @@ class _AddEnquiryFormViewState extends State<AddEnquiryFormView> {
                   return null;
                 },
               ),
-
               const SizedBox(height: 24),
-
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _submitEnquiry,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorHelperClass.getColorFromHex(
-                        ColorResources.red_color),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(10),
                     ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   child: _isLoading
                       ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 3,
-                    ),
-                  )
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 3,
+                          ),
+                        )
                       : const Text(
-                    'SUBMIT ENQUIRY',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                          'SUBMIT',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
-
               const SizedBox(height: 32),
-
               _buildContactInfoSection(),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildStatusIndicator(String message, bool isSuccess) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isSuccess ? Colors.green[50] : Colors.red[50],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isSuccess ? Colors.green : Colors.red,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            isSuccess ? Icons.check_circle : Icons.error,
-            color: isSuccess ? Colors.green : Colors.red,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              message,
-              style: TextStyle(
-                color: isSuccess ? Colors.green[800] : Colors.red[800],
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -236,9 +205,7 @@ class _AddEnquiryFormViewState extends State<AddEnquiryFormView> {
               height: 1.5,
             ),
             children: [
-              TextSpan(
-                  text:
-                  'For urgent help, you may WhatsApp or call:\n\n'),
+              TextSpan(text: 'For urgent help, you may WhatsApp or call:\n\n'),
               TextSpan(
                 text: 'Ramavtar ji Chandak\n',
                 style: TextStyle(fontWeight: FontWeight.w600),
