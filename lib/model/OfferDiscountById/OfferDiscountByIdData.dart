@@ -1,3 +1,5 @@
+import 'package:mpm/utils/urls.dart';
+
 class OfferDiscountByIdData {
   int? organisationOfferDiscountId;
   String? offerDiscountName;
@@ -56,7 +58,7 @@ class OfferDiscountByIdData {
       offerContactPersonMobile: json['org_contact_person_mobile'],
       validFrom: json['valid_from'],
       validTo: json['valid_to'],
-      offerImage: "https://members.mumbaimaheshwari.com/api/public/" + json['offer_image'],
+      offerImage: Urls.imagePathUrl + (json['offer_image'] ?? ''),
       orgDetailsID: json['org_details_id'],
       orgName: json['org_name'],
       orgCategoryId: json['org_category_id'],
@@ -69,8 +71,7 @@ class OfferDiscountByIdData {
       orgMobile: json['org_mobile'],
       orgWhatsApp: json['org_whatsapp'],
       orgEmail: json['org_email'],
-      orgLogo: "https://members.mumbaimaheshwari.com/api/public/" +json['org_logo'],
-
+      orgLogo: Urls.imagePathUrl + (json['org_logo'] ?? ''),
     );
   }
 

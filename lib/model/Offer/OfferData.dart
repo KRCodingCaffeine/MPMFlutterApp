@@ -1,3 +1,5 @@
+import 'package:mpm/utils/urls.dart';
+
 class OfferData {
   String? organisationOfferDiscountId;
   String? offerDiscountName;
@@ -65,7 +67,7 @@ class OfferData {
       validFrom: json['valid_from'],
       validTo: json['valid_to'],
       orgDetailsID: json['org_details_id'],
-      offerImage: "https://members.mumbaimaheshwari.com/api/public/" +json['offer_image'],
+      offerImage: Urls.imagePathUrl + (json['offer_image'] ?? ''),
       mpmAuthorizedName: json['mpm_authorized_name'],
       mpmAuthorizedMobile: json['mpm_authorized_mobile'],
       mpmAuthorizedEmail: json['mpm_authorized_email'],
@@ -80,7 +82,7 @@ class OfferData {
       orgMobile: json['org_mobile'],
       orgWhatsApp: json['org_whatsapp'],
       orgEmail: json['org_email'],
-      orgLogo: "https://members.mumbaimaheshwari.com/api/public/" +json['org_logo'],
+      orgLogo: Urls.imagePathUrl + (json['org_logo'] ?? ''),
       categoryName: json['category_name'],
       subcategoryName: json['subcategory_name'],
     );

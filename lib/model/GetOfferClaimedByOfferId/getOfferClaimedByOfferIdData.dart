@@ -1,3 +1,5 @@
+import 'package:mpm/utils/urls.dart';
+
 class GetofferclaimedbyofferidData {
   String? memberClaimOfferId;
   String? orderNo;
@@ -55,13 +57,11 @@ class GetofferclaimedbyofferidData {
     return GetofferclaimedbyofferidData(
       memberClaimOfferId: json['member_claim_offer_id']?.toString(),
       orderNo: json['order_no'],
-      medicinePrescriptionDocument: json['medicine_prescription_document']
-          ?.isNotEmpty ==
-          true
-          ? "https://members.mumbaimaheshwari.com/api/public/${json['medicine_prescription_document']}"
+      medicinePrescriptionDocument: json['medicine_prescription_document']?.isNotEmpty == true
+          ? Urls.imagePathUrl + json['medicine_prescription_document']
           : null,
       memberClaimDocument: json['member_claim_document']?.isNotEmpty == true
-          ? "https://members.mumbaimaheshwari.com/api/public/${json['member_claim_document']}"
+          ? Urls.imagePathUrl + json['member_claim_document']
           : null,
       memberId: json['member_id']?.toString(),
       orgDetailsId: json['org_details_id']?.toString(),
@@ -75,20 +75,19 @@ class GetofferclaimedbyofferidData {
       orgState: json['org_state'],
       orgMobile: json['org_mobile'],
       orgEmail: json['org_email'],
-      orgLogo: json['org_logo'] != null
-          ? "https://members.mumbaimaheshwari.com/api/public/${json['org_logo']}"
+      orgLogo: json['org_logo']?.isNotEmpty == true
+          ? Urls.imagePathUrl + json['org_logo']
           : null,
       organisationOfferDiscountId: json['organisation_offer_discount_id']?.toString(),
       offerDiscountName: json['offer_discount_name'],
       offerDescription: json['offer_description'],
       validFrom: json['valid_from'],
       validTo: json['valid_to'],
-      offerImage: json['offer_image'] != null
-          ? "https://members.mumbaimaheshwari.com/api/public/${json['offer_image']}"
+      offerImage: json['offer_image']?.isNotEmpty == true
+          ? Urls.imagePathUrl + json['offer_image']
           : null,
       medicines: json['medicines'] != null
-          ? List<MedicineOrder>.from(
-          json['medicines'].map((x) => MedicineOrder.fromJson(x)))
+          ? List<MedicineOrder>.from(json['medicines'].map((x) => MedicineOrder.fromJson(x)))
           : null,
     );
   }
