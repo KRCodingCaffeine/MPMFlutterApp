@@ -62,5 +62,6 @@ class Urls {
   static const String event_attendees = base_url+"api/get_member_registered_events";
   static const String zone_url = base_url+"api/get_zone_data";
   static const String submit_enquiry_url = base_url+"api/add_enquiry_form";
+  static const String saraswani_option_url = base_url+"api/saraswani";
 
 }

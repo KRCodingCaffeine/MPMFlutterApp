@@ -18,6 +18,7 @@ import 'package:mpm/model/Qualification/QualificationData.dart';
 import 'package:mpm/model/QualificationCategory/QualificationCategoryModel.dart';
 import 'package:mpm/model/QualificationMain/QualicationMainData.dart';
 import 'package:mpm/model/Register/RegisterModelClass.dart';
+import 'package:mpm/model/SaraswaniOption/SaraswaniOptionData.dart';
 import 'package:mpm/model/State/StateData.dart';
 
 import 'package:mpm/model/bloodgroup/BloodData.dart';
@@ -75,6 +76,8 @@ class NewMemberController extends GetxController {
   var selectQualicationMain = ''.obs;
   var selectQualicationCat = ''.obs;
   var bloodgroupList = <BloodGroupData>[].obs;
+  var saraswaniOptionList = <SaraswaniOptionData>[].obs;
+  var saraswaniOptionId = ''.obs;
   var selectBloodGroup = ''.obs;
   var selectBuilding = ''.obs;
   var selectDocumentType = ''.obs;
