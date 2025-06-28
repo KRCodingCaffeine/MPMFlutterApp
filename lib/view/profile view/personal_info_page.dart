@@ -663,6 +663,76 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                             ),
                             const SizedBox(height: 30),
 
+                            // Saraswani Option
+                            Container(
+                              child: Row(
+                                children: [
+                                  Obx(() {
+                                    if (newMemberController.rxStatusLoading.value == Status.LOADING) {
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                                        child: Container(
+                                          alignment: Alignment.centerRight,
+                                          height: 24,
+                                          width: 24,
+                                          child: CircularProgressIndicator(
+                                            color: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                                          ),
+                                        ),
+                                      );
+                                    } else if (newMemberController.rxStatusLoading.value == Status.ERROR) {
+                                      return const Center(child: Text('Failed to load Saraswani options'));
+                                    } else if (newMemberController.saraswaniOptionList.isEmpty) {
+                                      return const Center(child: Text('No Saraswani option available'));
+                                    } else {
+                                      return Expanded(
+                                        child: InputDecorator(
+                                          decoration: InputDecoration(
+                                            labelText: 'Saraswani Option',
+                                            border: OutlineInputBorder(
+                                              borderSide: BorderSide(color: Colors.black26),
+                                            ),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(color: Colors.black26),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                                            ),
+                                            contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                                            labelStyle: TextStyle(color: Colors.black45),
+                                          ),
+                                          child: DropdownButton<String>(
+                                            dropdownColor: Colors.white,
+                                            borderRadius: BorderRadius.circular(10),
+                                            isExpanded: true,
+                                            underline: Container(),
+                                            hint: const Text(
+                                              'Select Saraswani Option',
+                                              style: TextStyle(fontWeight: FontWeight.bold),
+                                            ),
+                                            value: controller.saraswaniOptionId.value.isNotEmpty
+                                                ? controller.saraswaniOptionId.value
+                                                : null,
+                                            items: newMemberController.saraswaniOptionList.map((option) {
+                                              return DropdownMenuItem<String>(
+                                                value: option.id.toString(),
+                                                child: Text(option.saraswaniOption ?? 'Unknown'),
+                                              );
+                                            }).toList(),
+                                            onChanged: (String? newValue) {
+                                              if (newValue != null) {
+                                                controller.saraswaniOptionId.value = newValue;
+                                              }
+                                            },
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  }),
+                                ],
+                              ),
+                            ),
+
                             // Marital Status
                             SizedBox(
                               child: Container(
