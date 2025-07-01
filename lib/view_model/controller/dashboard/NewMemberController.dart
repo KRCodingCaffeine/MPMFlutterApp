@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:mpm/OccuptionProfession/OccuptionProfessionData.dart';
 import 'package:mpm/data/response/status.dart';
+import 'package:mpm/model/CheckMobileExists/CheckMobileExistsModelClass.dart';
 import 'package:mpm/model/CheckPinCode/Building.dart';
 
 import 'package:mpm/model/CheckPinCode/CheckPinCodeModel.dart';
@@ -30,8 +31,10 @@ import 'package:mpm/model/marital/MaritalData.dart';
 import 'package:mpm/model/membersalutation/MemberSalutationData.dart';
 import 'package:mpm/model/membership/MemberShipData.dart';
 import 'package:mpm/model/relation/RelationData.dart';
+import 'package:mpm/repository/check_mobile_exists_repository/check_mobile_exists_repo.dart';
 import 'package:mpm/repository/register_repository/register_repo.dart';
 import 'package:http/http.dart' as http;
+import 'package:mpm/repository/saraswani_option_repository/saraswani_option_repo.dart';
 import 'package:mpm/route/route_name.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
@@ -76,8 +79,6 @@ class NewMemberController extends GetxController {
   var selectQualicationMain = ''.obs;
   var selectQualicationCat = ''.obs;
   var bloodgroupList = <BloodGroupData>[].obs;
-  var saraswaniOptionList = <SaraswaniOptionData>[].obs;
-  var saraswaniOptionId = ''.obs;
   var selectBloodGroup = ''.obs;
   var selectBuilding = ''.obs;
   var selectDocumentType = ''.obs;
@@ -85,14 +86,12 @@ class NewMemberController extends GetxController {
 
   var memberList = <CheckUserData>[].obs;
   var ducumentList = <CheckUserData>[].obs;
-
   var qulicationList = <QualificationData>[].obs;
   var qulicationMainList = <QualicationMainData>[].obs;
   var qulicationCategoryList = <Qualificationcategorydata>[].obs;
   var checkPinCodeList = <Building>[].obs;
   var memberShipList = <MemberShipData>[].obs;
   var documntTypeList = <DocumentTypeData>[].obs;
-
   var isButtonEnabled = false.obs;
   var lmCodeValue = ''.obs;
   var userprofile = ''.obs;
@@ -103,6 +102,48 @@ class NewMemberController extends GetxController {
   var memberId = "".obs;
   var MaritalAnnivery = false.obs;
   var selectMemberSalutation = ''.obs;
+
+  RxBool isCheckingMobile = false.obs;
+  RxString mobileExistsMessage = ''.obs;
+  RxBool isMobileValid = false.obs;
+
+  final CheckMobileRepository _mobileRepo = CheckMobileRepository();
+
+  Future<void> checkMobileExists(String mobileNumber) async {
+    isCheckingMobile.value = true;
+    mobileExistsMessage.value = '';
+    isMobileValid.value = false;
+
+    try {
+      final response = await _mobileRepo.checkMobileNumberExists(mobileNumber);
+
+      if (response.status == true) {
+        if (response.code == 101) {
+          // Mobile number does not exist, valid to proceed
+          mobileExistsMessage.value = '';
+          isMobileValid.value = true;
+        } else if (response.code == 102) {
+          // Mobile number already exists
+          mobileExistsMessage.value = 'Mobile number already exists.';
+          isMobileValid.value = false;
+        } else {
+          // Unexpected code
+          mobileExistsMessage.value = response.message ?? 'Unexpected response';
+          isMobileValid.value = false;
+        }
+      } else {
+        mobileExistsMessage.value = response.message ?? 'Invalid response';
+        isMobileValid.value = false;
+      }
+    } catch (e) {
+      debugPrint("Error: $e");
+      mobileExistsMessage.value = 'Something went wrong';
+      isMobileValid.value = false;
+    } finally {
+      isCheckingMobile.value = false;
+    }
+  }
+
   BuildContext? context = Get.context;
   var countryList = <CountryData>[].obs;
   var stateList = <StateData>[].obs;
@@ -115,6 +156,11 @@ class NewMemberController extends GetxController {
   void setRxRequestCity(Status _value) => rxStatusCityLoading.value = _value;
   void setRxRequestMemberSalutation(Status _value) =>
       rxStatusMemberSalutation.value = _value;
+  RxString saraswaniOptionId = ''.obs;
+  RxList<SaraswaniOptionData> saraswaniOptionList = <SaraswaniOptionData>[].obs;
+  // This line ensures you can bind and display filtered options in the UI.
+  RxList<SaraswaniOptionData> filteredSaraswaniOptionList =
+      <SaraswaniOptionData>[].obs;
   Rx<TextEditingController> housenoController = TextEditingController().obs;
   Rx<TextEditingController> stateController = TextEditingController().obs;
   Rx<TextEditingController> cityController = TextEditingController().obs;
@@ -245,6 +291,10 @@ class NewMemberController extends GetxController {
     });
   }
 
+  void setSaraswaniOption(String value) {
+    saraswaniOptionId.value = value;
+  }
+
   void setSelectedGender(String value) {
     selectedGender(value);
   }
@@ -322,6 +372,17 @@ class NewMemberController extends GetxController {
     });
   }
 
+  void fetchSaraswaniOptions() async {
+    rxStatusLoading.value = Status.LOADING;
+    try {
+      final response = await SaraswaniOptionRepository().SaraswaniOptionApi();
+      saraswaniOptionList.value = response.data ?? [];
+      rxStatusLoading.value = Status.COMPLETE;
+    } catch (e) {
+      rxStatusLoading.value = Status.ERROR;
+    }
+  }
+
   void getMemberShip() {
     setRxRequestMemberShip(Status.LOADING);
     api.userMemberShip().then((_value) {
@@ -343,32 +404,55 @@ class NewMemberController extends GetxController {
         if (withoutcheckotp.value == false) {
           // Normal case - show all memberships
           setMemberShipType(_value.data!);
+
+          // In this case, show all Saraswani options
+          filteredSaraswaniOptionList.value = saraswaniOptionList;
         } else {
           // Special cases based on age and pincode status
           if (isUnder18(dob)) {
-            // For under 18
+            // Under 18
             if (zoneController.value.text.isEmpty) {
               _showLoginAlert(context!);
             } else {
-              // Show only Non Member option
+              // Show only Non Member
               _addMembershipIfMatches(_value.data!, "Non Member");
+
+              filteredSaraswaniOptionList.value = saraswaniOptionList
+                  .where((option) =>
+                      (option.saraswaniOption?.toLowerCase() ?? '')
+                          .contains('soft'))
+                  .toList();
             }
           } else {
-            // For above 18
+            // Above 18
             if (countryNotFound.value) {
-              // Pincode exists - show options based on zone
               if (zoneController.value.text.isEmpty) {
-                // Show Saraswani Member and Guest Member
                 _addMembershipIfMatches(_value.data!, "Saraswani Member");
                 _addMembershipIfMatches(_value.data!, "Guest Member");
+
+                filteredSaraswaniOptionList.value = saraswaniOptionList;
               } else {
-                // Show Non Member and Life Member
                 _addMembershipIfMatches(_value.data!, "Non Member");
                 _addMembershipIfMatches(_value.data!, "Life Member");
+
+                final hasNonMember = memberShipList.any((ms) =>
+                    (ms.membershipName?.toLowerCase() ?? '') == 'non member');
+
+                if (hasNonMember) {
+                  filteredSaraswaniOptionList.value = saraswaniOptionList
+                      .where((option) =>
+                          (option.saraswaniOption?.toLowerCase() ?? '')
+                              .contains('soft'))
+                      .toList();
+                } else {
+                  filteredSaraswaniOptionList.value = saraswaniOptionList;
+                }
               }
             } else {
               // Pincode doesn't exist - show only Saraswani Member
               _addMembershipIfMatches(_value.data!, "Saraswani Member");
+
+              filteredSaraswaniOptionList.value = saraswaniOptionList;
             }
           }
         }
@@ -396,6 +480,7 @@ class NewMemberController extends GetxController {
       }
     }
   }
+
   bool isUnder18(DateTime dateOfBirth) {
     final today = DateTime.now();
     final age = today.year - dateOfBirth.year;
@@ -645,6 +730,58 @@ class NewMemberController extends GetxController {
     }
   }
 
+  @override
+  void onInit() {
+    super.onInit();
+    fetchSaraswaniOptions();
+    // add other fetch functions if needed
+  }
+
+  void clearForm() {
+    firstNameController.value.clear();
+    lastNameController.value.clear();
+    middleNameController.value.clear();
+    fathersnameController.value.clear();
+    mothersnameController.value.clear();
+    mobileController.value.clear();
+    whatappmobileController.value.clear();
+    emailController.value.clear();
+    buildingController.value.clear();
+    occuptiondetailController.value.clear();
+    educationdetailController.value.clear();
+    dateController.clear();
+    marriagedateController.value.clear();
+    addressMemberController.value.clear();
+    pincodeController.value.clear();
+    housenoController.value.clear();
+    stateController.value.clear();
+    cityController.value.clear();
+    zoneController.value.clear();
+    areaController.value.clear();
+    countryController.value.clear();
+
+    // Reset dropdowns and observable variables
+    selectedGender.value = '';
+    selectMarital.value = '';
+    selectBloodGroup.value = '';
+    selectBuilding.value = '';
+    selectDocumentType.value = '';
+    selectMemberShipType.value = '';
+    saraswaniOptionId.value = '';
+    selectMemberSalutation.value = '';
+
+    userprofile.value = '';
+    userdocumentImage.value = '';
+    isChecked.value = false;
+
+    state_id.value = '';
+    city_id.value = '';
+    area_name.value = '';
+    zone_id.value = '';
+    country_id.value = '';
+    memberId.value = '';
+  }
+
   void userRegister(var LM_code, BuildContext context) async {
     print("member" + memberId.value);
     final url = Uri.parse(Urls.register_url);
@@ -661,6 +798,7 @@ class NewMemberController extends GetxController {
     var building_name = buildingController.value.text.trim();
     var building_id = "";
     var membership_type_id = selectMemberShipType.value;
+    var saraswani_option_id = saraswaniOptionId.value;
     if (selectBuilding.value == "other") {
       building_id = "";
     } else {
@@ -691,6 +829,7 @@ class NewMemberController extends GetxController {
       "document_type": document_type,
       "building_id": building_id,
       "member_type_id": membership_type_id,
+      "saraswani_option_id": saraswaniOptionId.value,
       "flat_no": flat_no,
       "state_id": state_id.value.toString(),
       "city_id": city_id.value.toString(),
@@ -716,6 +855,7 @@ class NewMemberController extends GetxController {
         await request.send().timeout(Duration(seconds: 60));
 
     if (response.statusCode == 200) {
+      clearForm();
       String responseBody = await response.stream.bytesToString();
       loading.value = false;
       Map<String, dynamic> jsonResponse = jsonDecode(responseBody);

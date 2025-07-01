@@ -428,14 +428,56 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                           const SizedBox(height: 20),
 
                           //Mobile Number
-                          _buildEditableField(
-                            "Mobile Number *",
-                            regiController.mobileController.value,
-                            "Mobile Number",
-                            "Mobile number is required",
-                            text: TextInputType.phone,
-                            isRequired: true,
-                            maxLength: 10,
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildEditableField(
+                                "Mobile Number *",
+                                regiController.mobileController.value,
+                                "Mobile Number",
+                                "Mobile number is required",
+                                text: TextInputType.phone,
+                                isRequired: true,
+                                maxLength: 10,
+                                onChanged: (value) {
+                                  if (value.length == 10) {
+                                    regiController.checkMobileExists(value);
+                                  } else {
+                                    regiController.mobileExistsMessage.value = '';
+                                    regiController.isMobileValid.value = false;
+                                  }
+                                },
+                              ),
+                              Obx(() {
+                                if (regiController.isCheckingMobile.value) {
+                                  return const Padding(
+                                    padding: EdgeInsets.only(left: 8.0, top: 4),
+                                    child: SizedBox(
+                                      height: 16,
+                                      width: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.redAccent,
+                                      ),
+                                    ),
+                                  );
+                                } else if (regiController.mobileExistsMessage.value.isNotEmpty) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(left: 8.0, top: 4),
+                                    child: Text(
+                                      regiController.mobileExistsMessage.value,
+                                      style: TextStyle(
+                                        color: regiController.isMobileValid.value
+                                            ? Colors.green
+                                            : Colors.red,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return const SizedBox.shrink();
+                              })
+                            ],
                           ),
                           const SizedBox(height: 20),
 
@@ -965,15 +1007,16 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
   }
 
   Widget _buildEditableField(
-    String label,
-    TextEditingController controller,
-    String hintText,
-    String validationMessage, {
-    bool obscureText = false,
-    required TextInputType text,
-    bool isRequired = false,
-    int? maxLength,
-  }) {
+      String label,
+      TextEditingController controller,
+      String hintText,
+      String validationMessage, {
+        bool obscureText = false,
+        required TextInputType text,
+        bool isRequired = false,
+        int? maxLength,
+        ValueChanged<String>? onChanged,
+      }) {
     return Container(
       margin: const EdgeInsets.only(left: 5, right: 5),
       child: TextFormField(
@@ -981,9 +1024,10 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
         controller: controller,
         obscureText: obscureText,
         maxLength: maxLength,
+        onChanged: onChanged,
         buildCounter: (BuildContext context,
-                {int? currentLength, int? maxLength, bool? isFocused}) =>
-            null,
+            {int? currentLength, int? maxLength, bool? isFocused}) =>
+        null,
         style: const TextStyle(color: Colors.black),
         decoration: InputDecoration(
           labelText: label,
@@ -1007,6 +1051,11 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
         validator: (value) {
           if (isRequired && (value == null || value.isEmpty)) {
             return validationMessage;
+          }
+          if (value != null &&
+              value.length == 10 &&
+              regiController.mobileExistsMessage.value.contains('already exists')) {
+            return 'Mobile number already exists';
           }
           return null;
         },

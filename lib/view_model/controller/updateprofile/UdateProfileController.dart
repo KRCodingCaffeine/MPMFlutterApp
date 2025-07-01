@@ -20,6 +20,7 @@ import 'package:mpm/model/Qualification/QualificationData.dart';
 import 'package:mpm/model/QualificationCategory/QualificationCategoryModel.dart';
 import 'package:mpm/model/QualificationMain/QualicationMainData.dart';
 import 'package:mpm/model/Register/RegisterModelClass.dart';
+import 'package:mpm/model/SaraswaniOption/SaraswaniOptionData.dart';
 import 'package:mpm/model/UpdateFamilyRelation/UpdateFamilyMember.dart';
 import 'package:mpm/model/relation/RelationData.dart';
 import 'package:mpm/repository/add_existing_family_member_repository/add_existing_family_member_repo.dart';
@@ -256,6 +257,8 @@ class UdateProfileController extends GetxController {
       TextEditingController().obs;
   final Rx<TextEditingController> bloodGroupController =
       TextEditingController().obs;
+  final saraswaniOptionController = TextEditingController(); // if applicable
+  RxList<SaraswaniOptionData> saraswaniOptionList = <SaraswaniOptionData>[].obs;
   Rx<TextEditingController> countryController = TextEditingController().obs;
   Rx<TextEditingController> buildingController = TextEditingController().obs;
   Rx<TextEditingController> flatNoController = TextEditingController().obs;
@@ -321,6 +324,8 @@ class UdateProfileController extends GetxController {
           documentDynamicImage.value = ''; // or some default value
         }
       }
+      saraswaniOptionId.value = getUserData.value.saraswaniOptionId.toString();
+
       bloodGroup.value = getUserData.value.bloodGroup.toString();
       blood_group_id.value = getUserData.value.bloodGroupId.toString();
       whatsAppNumber.value = getUserData.value.whatsappNumber.toString();
@@ -376,6 +381,7 @@ class UdateProfileController extends GetxController {
       maritalStatusController.value.text = maritalStatus.value;
       marriageAnniversaryController.value.text = marriageAnniversaryDate.value;
       bloodGroupController.value.text = bloodGroup.value;
+      saraswaniOptionController.text = saraswaniOptionId.value;
 
       // Occupation
       if (getUserData.value.occupation != null) {
@@ -1077,6 +1083,7 @@ class UdateProfileController extends GetxController {
       "gender_id": gender_id.value,
       "marital_status_id": selectMarital.value,
       "blood_group_id": blood_group_id.value,
+      "saraswani_option_id": saraswaniOptionId.value,
       "dob": dobController.value.text.trim(),
       "marriage_anniversary_date": marriageAnniversaryController.value.text,
       "salutation_id": memberSalutaitonId.value,

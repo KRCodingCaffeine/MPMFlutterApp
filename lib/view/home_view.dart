@@ -2,18 +2,19 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:mpm/model/DashBoardEvents/DashBoardEventsData.dart';
+import 'package:mpm/model/GetEventsList/GetEventsListData.dart';
+import 'package:mpm/repository/dashboard_events_repository/dashboard_events_repo.dart';
 import 'package:mpm/route/route_name.dart';
-import 'package:mpm/utils/AppDrawer.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/images.dart';
 import 'package:mpm/utils/textstyleclass.dart';
-import 'package:mpm/view/payment/CustomDialog.dart';
 import 'package:mpm/view/payment/PaymentScreen.dart';
+import 'package:mpm/view/Events/event_detail_page.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
-import '../model/CheckUser/CheckUserData2.dart';
-import '../utils/Session.dart';
-import '../view_model/controller/updateprofile/UdateProfileController.dart';
+import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -24,12 +25,22 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> {
   final regiController = Get.put(NewMemberController());
-  UdateProfileController controller =Get.put(UdateProfileController());
+  final controller = Get.put(UdateProfileController());
   final ScrollController _scrollController = ScrollController();
   late Timer _timer;
   double screenWidth = 0.0;
-  String? membershipApprovalStatus;
 
+  String _formatDate(String dateString) {
+    try {
+      final date = DateFormat('dd-MM-yyyy').parse(dateString);
+      return DateFormat('d-M-y').format(date);
+    } catch (e) {
+      debugPrint("Date parse error: $e");
+      return dateString;
+    }
+  }
+
+  List<DashboardEventData> dashboardEvents = [];
 
   final List<Map<String, dynamic>> gridItems = [
     {'icon': Images.user, 'label': 'My Profile'},
@@ -38,26 +49,24 @@ class _HomeViewState extends State<HomeView> {
     {'icon': Images.events, 'label': 'Events'},
   ];
 
-  final List<Map<String, dynamic>> bhawanItems = [
-    {"imagePath": "assets/images/banner1.jpg"},
-    {"imagePath": "assets/images/banner2.jpg"},
-    {"imagePath": "assets/images/banner3.jpg"},
-    {"imagePath": "assets/images/banner4.jpg"},
-    {"imagePath": "assets/images/banner5.jpg"},
-    {"imagePath": "assets/images/banner6.jpg"},
-  ];
-
   @override
   void initState() {
     super.initState();
-    controller.getUserProfile();
+    controller.getUserProfile().then((_) {
+      final memberId = int.tryParse(controller.memberId.value);
+      if (memberId != null && memberId > 0) {
+        fetchDashboardEvents(memberId);
+      } else {
+        debugPrint("❌ Invalid or missing member ID.");
+      }
+    });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       screenWidth = MediaQuery.of(context).size.width * 0.7;
       _timer = Timer.periodic(const Duration(seconds: 2), (Timer timer) {
         if (_scrollController.hasClients) {
-          final double maxScroll = _scrollController.position.maxScrollExtent;
-          final double currentScroll = _scrollController.offset;
+          final maxScroll = _scrollController.position.maxScrollExtent;
+          final currentScroll = _scrollController.offset;
 
           if (currentScroll >= maxScroll) {
             _scrollController.jumpTo(0);
@@ -71,6 +80,21 @@ class _HomeViewState extends State<HomeView> {
         }
       });
     });
+  }
+
+  Future<void> fetchDashboardEvents(int memberId) async {
+    try {
+      final response = await DashboardEventsRepository().getDashboardEvents(memberId);
+      if (response.status == true && response.data != null) {
+        setState(() {
+          dashboardEvents = response.data!;
+        });
+      } else {
+        debugPrint("⚠️ Failed to load dashboard events: ${response.message}");
+      }
+    } catch (e) {
+      debugPrint("❌ Dashboard events fetch error: $e");
+    }
   }
 
   @override
@@ -88,63 +112,42 @@ class _HomeViewState extends State<HomeView> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Obx(() {
-            if (int.tryParse(controller.membershipApprovalStatusId.value) != null &&
-                int.parse(controller.membershipApprovalStatusId.value) < 6) {
-              return _buildMembershipNotice();
-            } else {
-              return SizedBox.shrink(); // Return an empty widget when not needed
-            }
-          }),
+          Obx(() => int.tryParse(controller.membershipApprovalStatusId.value) != null &&
+              int.parse(controller.membershipApprovalStatusId.value) < 6
+              ? _buildMembershipNotice()
+              : const SizedBox.shrink()),
 
-          // Obx(() {
-          //   if (int.tryParse(controller.memberStatusId.value) != null &&
-          //       int.parse(controller.memberStatusId.value) == 1 &&
-          //       controller.isJangana.value == '0') {
-          //     return _buildJanganaNotice();
-          //   } else {
-          //     return SizedBox.shrink(); // Return an empty widget when not needed
-          //   }
-          // }),
-
-         Obx((){
-            return Visibility(
+          Obx(() => Visibility(
               visible: controller.showDashboardReviewFlag.value,
-                child: _buildJanganaNotice());
-          }),
+              child: _buildJanganaNotice())),
 
           Center(
-            child: Obx((){
-              return Visibility(
-                  visible: controller.isPay.value,
-                  child: SizedBox(
-                    height: 48,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                        ColorHelperClass.getColorFromHex(
-                            ColorResources.red_color),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                      ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => PaymentScreen(paymentAmount: '1',),
-                          ),
-                        );
-
-                      },
-                      child: Text("Pay Now", style: TextStyleClass.white14style,),
+            child: Obx(() => Visibility(
+              visible: controller.isPay.value,
+              child: SizedBox(
+                height: 48,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(5),
                     ),
-                  ));
-            }),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => PaymentScreen(paymentAmount: '1')),
+                    );
+                  },
+                  child: Text("Pay Now", style: TextStyleClass.white14style),
+                ),
+              ),
+            )),
           ),
+
           _buildGridView(),
           _buildAdvertisementTitle(),
-          _buildAdvertisementList(),
+          _buildDashboardEventsList(),
           const SizedBox(height: 20),
         ],
       ),
@@ -152,23 +155,25 @@ class _HomeViewState extends State<HomeView> {
   }
 
   Widget _buildMembershipNotice() {
-    String message;
-    switch (controller.membershipApprovalStatusId.value.trim()) {
-      case '2':
-        message = "Your membership is currently under review for Sangathan Samiti approval.";
-        break;
-      case '3':
-        message = "Your membership currently under review for Vyaspathika Samiti approval.";
-        break;
-      case '4':
-        message = "Your payment is pending.";
-        break;
-      case '5':
-        message = "We received your payment and its under approval .";
-        break;
-      default:
-        message = "Membership status unknown. Please check your account.";
-    }
+    final status = controller.membershipApprovalStatusId.value.trim();
+    final message = {
+      '2': "Your membership is under Sangathan Samiti review.",
+      '3': "Your membership is under Vyaspathika Samiti review.",
+      '4': "Your payment is pending.",
+      '5': "We received your payment and it's under approval."
+    }[status] ?? "Membership status unknown. Please check your account.";
+
+    return _buildNoticeContainer(message);
+  }
+
+  Widget _buildJanganaNotice() {
+    return GestureDetector(
+      onTap: () => Navigator.pushNamed(context, RouteNames.profile),
+      child: _buildNoticeContainer("Your Janaganana is pending. Please click here to complete it."),
+    );
+  }
+
+  Widget _buildNoticeContainer(String message) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Container(
@@ -181,46 +186,8 @@ class _HomeViewState extends State<HomeView> {
           children: [
             const Icon(Icons.error, color: Color(0xFFe61428)),
             const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                message,
-                style: const TextStyle(color: Colors.black),
-              ),
-            ),
-
+            Expanded(child: Text(message, style: const TextStyle(color: Colors.black))),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildJanganaNotice() {
-    String janganaMessage = "Your Janaganana is pending. Please click here to complete Janganana.";
-
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: GestureDetector(
-        onTap: () async{
-          Navigator.pushNamed(context, RouteNames.profile);
-        },
-        child: Container(
-          padding: const EdgeInsets.all(16.0),
-          decoration: BoxDecoration(
-            color: Colors.grey[200],
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.error, color: Color(0xFFe61428)),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  janganaMessage,
-                  style: const TextStyle(color: Colors.black),
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -232,13 +199,13 @@ class _HomeViewState extends State<HomeView> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: GridView.builder(
           itemCount: gridItems.length,
+          physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
             childAspectRatio: 1.2,
           ),
-          physics: const NeverScrollableScrollPhysics(),
           itemBuilder: (context, index) {
             final item = gridItems[index];
             return GestureDetector(
@@ -246,24 +213,13 @@ class _HomeViewState extends State<HomeView> {
               child: Card(
                 color: Colors.white,
                 elevation: 4.0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SvgPicture.asset(
-                      item['icon'],
-                      height: 50.0,
-                      width: 50.0,
-                      allowDrawingOutsideViewBox: true,
-                    ),
+                    SvgPicture.asset(item['icon'], height: 50, width: 50),
                     const SizedBox(height: 8),
-                    Text(
-                      item['label'],
-                      style: TextStyleClass.pink14style,
-                      textAlign: TextAlign.center,
-                    ),
+                    Text(item['label'], style: TextStyleClass.pink14style, textAlign: TextAlign.center),
                   ],
                 ),
               ),
@@ -275,74 +231,163 @@ class _HomeViewState extends State<HomeView> {
   }
 
   void _handleGridItemClick(String label) {
-    if (label == "Make New Member") {
-      regiController.isRelation.value = false;
-      Navigator.pushNamed(context, RouteNames.newMember);
-    } else if (label == "My Profile") {
-      regiController.isRelation.value = false;
-      Navigator.pushNamed(context, RouteNames.profile);
-    } else if (label == "Discounts & Offers") {
-      Navigator.pushNamed(context, RouteNames.discount_offer_view);
-    } else if (label == "Events") {
-      Navigator.pushNamed(context, RouteNames.event_view);
+    switch (label) {
+      case "Make New Member":
+        regiController.isRelation.value = false;
+        Navigator.pushNamed(context, RouteNames.newMember);
+        break;
+      case "My Profile":
+        regiController.isRelation.value = false;
+        Navigator.pushNamed(context, RouteNames.profile);
+        break;
+      case "Discounts & Offers":
+        Navigator.pushNamed(context, RouteNames.discount_offer_view);
+        break;
+      case "Events":
+        Navigator.pushNamed(context, RouteNames.event_view);
+        break;
     }
   }
 
   Widget _buildAdvertisementTitle() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
-      child: Text(
-        "Advertisement",
-        style: TextStyleClass.black12style.copyWith(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+      child: Text("Upcoming Events", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
     );
   }
 
-  Widget _buildAdvertisementList() {
+  Widget _buildDashboardEventsList() {
+    if (dashboardEvents.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20.0),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return SizedBox(
-      height: 120,
+      height: 150,
       child: ListView.builder(
         controller: _scrollController,
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: bhawanItems.length,
+        itemCount: dashboardEvents.length,
         itemBuilder: (context, index) {
-          return _buildAdCard(bhawanItems[index]["imagePath"]);
+          final event = dashboardEvents[index];
+          return GestureDetector(
+            onTap: () {
+              final eventData = convertToEventData(event);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => EventDetailPage(event: eventData)),
+              );
+            },
+            child: _buildEventCard(event),
+          );
         },
       ),
     );
   }
 
-  Widget _buildAdCard2(String imagePath) {
-    return GestureDetector(
-      onTap: () async{
-        Navigator.pushNamed(context, RouteNames.profile);
-      },
-      child: Container(
-        width: MediaQuery.of(context).size.width,
-        height: 150,
-        margin:  EdgeInsets.only(right: 16.0),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8.0),
-          child: Padding(padding: EdgeInsets.symmetric(vertical: 10,horizontal: 10),
-          child: Text("Your Janaganana is pending. Please click here to complete Janganana."),),
-        ),
+  Widget _buildEventCard(DashboardEventData event) {
+    Widget? dateTag;
+    if (event.date != null && event.date!.isNotEmpty) {
+      final dateText = "Till : ${_formatDate(event.date!)}";
+      dateTag = _buildTag(
+        dateText,
+        Colors.grey[300]!,
+        textColor: Colors.black45,
+        fontSize: 10,
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      );
+    }
+
+
+    return Container(
+      width: 350,
+      margin: const EdgeInsets.only(right: 16.0),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            blurRadius: 3,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: Image.network(
+              event.thumbnailImg ?? '',
+              height: 80,
+              width: 80,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                height: 80,
+                width: 80,
+                color: Colors.grey[300],
+                child: const Icon(Icons.image_not_supported, size: 30),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(width: 1, color: Colors.grey[400]),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  event.title ?? '',
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Hosted by ${event.organizedBy ?? ''}',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                ),
+                const SizedBox(height: 4),
+                if (dateTag != null) dateTag!,
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildAdCard(String imagePath) {
+  EventData convertToEventData(DashboardEventData dashboardEvent) {
+    return EventData(
+      eventId: dashboardEvent.id?.toString(),
+      eventName: dashboardEvent.title,
+      eventImage: dashboardEvent.thumbnailImg,
+      dateStartsFrom: dashboardEvent.date,
+      eventDescription: dashboardEvent.desc ?? '',
+      eventOrganiserName: dashboardEvent.organizedBy,
+    );
+  }
+
+  Widget _buildTag(String text, Color bgColor,
+      {Color textColor = Colors.white, double fontSize = 12, EdgeInsets? padding}) {
     return Container(
-      width: 300,
-      height: 150,
-      margin: const EdgeInsets.only(right: 16.0),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8.0),
-        child: Image.asset(imagePath, fit: BoxFit.fill),
+      padding: padding ?? const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(fontSize: fontSize, color: textColor),
       ),
     );
   }
+
 }

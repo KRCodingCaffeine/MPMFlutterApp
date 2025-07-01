@@ -63,5 +63,7 @@ class Urls {
   static const String zone_url = base_url+"api/get_zone_data";
   static const String submit_enquiry_url = base_url+"api/add_enquiry_form";
   static const String saraswani_option_url = base_url+"api/saraswani";
+  static const String check_mobile_exists_url = base_url+"api/check_mobile_exists";
+  static const String get_dashboard_events_url = base_url+"api/get_dashboard_events";
 
 }
