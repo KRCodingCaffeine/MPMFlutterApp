@@ -57,7 +57,7 @@ class _HomeViewState extends State<HomeView> {
       if (memberId != null && memberId > 0) {
         fetchDashboardEvents(memberId);
       } else {
-        debugPrint("❌ Invalid or missing member ID.");
+        debugPrint("Invalid or missing member ID.");
       }
     });
 
@@ -90,10 +90,10 @@ class _HomeViewState extends State<HomeView> {
           dashboardEvents = response.data!;
         });
       } else {
-        debugPrint("⚠️ Failed to load dashboard events: ${response.message}");
+        debugPrint("Failed to load dashboard events: ${response.message}");
       }
     } catch (e) {
-      debugPrint("❌ Dashboard events fetch error: $e");
+      debugPrint("Dashboard events fetch error: $e");
     }
   }
 
