@@ -63,7 +63,7 @@ class _HomeViewState extends State<HomeView> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       screenWidth = MediaQuery.of(context).size.width * 0.7;
-      _timer = Timer.periodic(const Duration(seconds: 2), (Timer timer) {
+      _timer = Timer.periodic(const Duration(seconds: 5), (Timer timer) {
         if (_scrollController.hasClients) {
           final maxScroll = _scrollController.position.maxScrollExtent;
           final currentScroll = _scrollController.offset;
@@ -252,7 +252,7 @@ class _HomeViewState extends State<HomeView> {
   Widget _buildAdvertisementTitle() {
     return const Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
-      child: Text("Upcoming Events", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+      child: Text("Advertisement", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
     );
   }
 
@@ -348,11 +348,15 @@ class _HomeViewState extends State<HomeView> {
                 Text(
                   event.title ?? '',
                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Hosted by ${event.organizedBy ?? ''}',
                   style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 if (dateTag != null) dateTag!,

@@ -1,4 +1,5 @@
 import 'package:mpm/model/Zone/ZoneData.dart';
+import 'package:mpm/utils/urls.dart';
 
 class EventData {
   String? eventId;
@@ -18,6 +19,7 @@ class EventData {
   String? eventRegistrationLastDate;
   String? eventsTypeId;
   String? isAllZone;
+  String? youtubeUrl;
   String? addedBy;
   String? dateAdded;
   String? updatedBy;
@@ -42,6 +44,7 @@ class EventData {
     this.eventRegistrationLastDate,
     this.eventsTypeId,
     this.isAllZone,
+    this.youtubeUrl,
     this.addedBy,
     this.dateAdded,
     this.updatedBy,
@@ -59,10 +62,10 @@ class EventData {
       dateStartsFrom: json['date_starts_from'],
       dateEndTo: json['date_end_to'],
       eventImage: json['event_image'] != null
-          ? "https://members.mumbaimaheshwari.com/staging/api/public/${json['event_image']}"
+          ? Urls.imagePathUrl + json['event_image']
           : null,
       eventTermsAndConditionDocument: json['event_terms_and_condition_document'] != null
-          ? "https://members.mumbaimaheshwari.com/staging/api/public/${json['event_terms_and_condition_document']}"
+          ? Urls.imagePathUrl +json['event_terms_and_condition_document']
           : null,
       approvalStatus: json['approval_status'],
       approvedBy: json['approved_by']?.toString(),
@@ -72,6 +75,7 @@ class EventData {
       eventRegistrationLastDate: json['event_registration_last_date'],
       eventsTypeId: json['events_type_id']?.toString(),
       isAllZone: json['is_all_zone']?.toString(),
+      youtubeUrl: json['youtube_url'],
       addedBy: json['added_by']?.toString(),
       dateAdded: json['date_added'],
       updatedBy: json['updated_by']?.toString(),
@@ -101,6 +105,7 @@ class EventData {
     data['event_registration_last_date'] = eventRegistrationLastDate;
     data['events_type_id'] = eventsTypeId;
     data['is_all_zone'] = isAllZone;
+    data['youtube_url'] = youtubeUrl;
     data['added_by'] = addedBy;
     data['date_added'] = dateAdded;
     data['updated_by'] = updatedBy;
