@@ -533,37 +533,37 @@ class _EventDetailPageState extends State<EventDetailPage> {
               ),
             ),
             const SizedBox(height: 24),
-            if (_isPastEvent) ...[
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorHelperClass.getColorFromHex(
-                        ColorResources.red_color),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  icon: const Icon(Icons.play_circle_fill),
-                  label: const Text("View Events Video"),
-                  onPressed: () {
-                    final url = widget.event.youtubeUrl;
-                    if (url != null && url.isNotEmpty) {
-                      _launchYoutubeUrl(url);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text("No event video available")),
-                      );
-                    }
-                  },
-                ),
-              ),
-            ],
-            const SizedBox(height: 24),
+            // if (_isPastEvent) ...[
+            //   const SizedBox(height: 16),
+            //   SizedBox(
+            //     width: double.infinity,
+            //     child: ElevatedButton.icon(
+            //       style: ElevatedButton.styleFrom(
+            //         backgroundColor: ColorHelperClass.getColorFromHex(
+            //             ColorResources.red_color),
+            //         foregroundColor: Colors.white,
+            //         padding: const EdgeInsets.symmetric(vertical: 14),
+            //         shape: RoundedRectangleBorder(
+            //           borderRadius: BorderRadius.circular(8),
+            //         ),
+            //       ),
+            //       icon: const Icon(Icons.play_circle_fill),
+            //       label: const Text("View Events Video"),
+            //       onPressed: () {
+            //         final url = widget.event.youtubeUrl;
+            //         if (url != null && url.isNotEmpty) {
+            //           _launchYoutubeUrl(url);
+            //         } else {
+            //           ScaffoldMessenger.of(context).showSnackBar(
+            //             const SnackBar(
+            //                 content: Text("No event video available")),
+            //           );
+            //         }
+            //       },
+            //     ),
+            //   ),
+            // ],
+            // const SizedBox(height: 24),
             _buildEventInfo(formattedDate, time),
             const SizedBox(height: 24),
             _buildEventCostInfo(),
