@@ -1,3 +1,5 @@
+import 'package:mpm/utils/urls.dart';
+
 class GetClaimedOfferData {
   int? memberClaimOfferId;
   String? orderNo;
@@ -55,13 +57,12 @@ class GetClaimedOfferData {
     return GetClaimedOfferData(
       memberClaimOfferId: _toInt(json['member_claim_offer_id']),
       orderNo: json['order_no'],
-      medicinePrescriptionDocument: json['medicine_prescription_document']
-                  ?.isNotEmpty ==
-              true
-          ? "https://members.mumbaimaheshwari.com/api/public/${json['medicine_prescription_document']}"
-          : null,
+      medicinePrescriptionDocument:
+          json['medicine_prescription_document']?.isNotEmpty == true
+              ? Urls.imagePathUrl + json['medicine_prescription_document']
+              : null,
       memberClaimDocument: json['member_claim_document']?.isNotEmpty == true
-          ? "https://members.mumbaimaheshwari.com/api/public/${json['member_claim_document']}"
+          ? Urls.imagePathUrl + json['member_claim_document']
           : null,
       memberId: _toInt(json['member_id']),
       orgDetailsId: _toInt(json['org_details_id']),
@@ -76,7 +77,7 @@ class GetClaimedOfferData {
       orgMobile: json['org_mobile'],
       orgEmail: json['org_email'],
       orgLogo: json['org_logo']?.isNotEmpty == true
-          ? "https://members.mumbaimaheshwari.com/api/public/${json['org_logo']}"
+          ? Urls.imagePathUrl + json['org_logo']
           : null,
       organisationOfferDiscountId:
           _toInt(json['organisation_offer_discount_id']),
@@ -84,7 +85,9 @@ class GetClaimedOfferData {
       offerDescription: json['offer_description'],
       validFrom: json['valid_from'],
       validTo: json['valid_to'],
-      offerImage: json['offer_image'],
+      offerImage: json['offer_image']?.isNotEmpty == true
+          ? Urls.imagePathUrl + json['offer_image']
+          : null,
       medicines: json['medicines'] != null
           ? List<ClaimedMedicine>.from(
               json['medicines'].map((x) => ClaimedMedicine.fromJson(x)))

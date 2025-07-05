@@ -1,3 +1,5 @@
+import 'package:mpm/utils/urls.dart';
+
 class EventAttendeeData {
   int? eventAttendeesId;
   String? eventAttendeesCode;
@@ -53,11 +55,11 @@ class EventAttendeeData {
       dateStartsFrom: json['date_starts_from'],
       dateEndTo: json['date_end_to'],
       eventImage: json['event_image']?.isNotEmpty == true
-          ? "https://members.mumbaimaheshwari.com/api/public/${json['event_image']}"
+          ? Urls.imagePathUrl + json['event_image']
           : null,
       eventTermsAndConditionDocument:
       json['event_terms_and_condition_document']?.isNotEmpty == true
-          ? "https://members.mumbaimaheshwari.com/api/public/${json['event_terms_and_condition_document']}"
+          ? Urls.imagePathUrl + json['event_terms_and_condition_document']
           : null,
       eventCostType: json['event_cost_type'],
       eventAmount: _toInt(json['event_amount']),

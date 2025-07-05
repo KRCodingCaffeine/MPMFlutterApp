@@ -949,6 +949,99 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                           ),
                           const SizedBox(height: 20),
 
+                          // Saraswani Option
+                          Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(left: 5, right: 5),
+                            child: Row(
+                              children: [
+                                Obx(() {
+                                  if (regiController.rxStatusLoading.value == Status.LOADING) {
+                                    return const Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                                      child: SizedBox(
+                                        height: 24,
+                                        width: 24,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.redAccent,
+                                        ),
+                                      ),
+                                    );
+                                  } else if (regiController.rxStatusLoading.value == Status.ERROR) {
+                                    return const Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                                      child: Text('Failed to load Saraswani options'),
+                                    );
+                                  } else if (regiController.saraswaniOptionList.isEmpty) {
+                                    return const Padding(
+                                      padding: EdgeInsets.all(8.0),
+                                      child: Text('No Saraswani option available'),
+                                    );
+                                  } else {
+                                    // Check if selected membership is "Non Member"
+                                    bool isNonMember = false;
+                                    if (regiController.selectMemberShipType.value.isNotEmpty) {
+                                      final selectedMembership = regiController.memberShipList.firstWhere(
+                                            (ms) => ms.id.toString() == regiController.selectMemberShipType.value,
+                                        orElse: () => MemberShipData(),
+                                      );
+                                      isNonMember = (selectedMembership.membershipName?.toLowerCase() ?? '') == 'non member';
+                                    }
+
+                                    // Filter options based on membership type
+                                    final filteredOptions = isNonMember
+                                        ? regiController.saraswaniOptionList.where(
+                                            (option) => (option.saraswaniOption?.toLowerCase() ?? '').contains('soft'))
+                                        : regiController.saraswaniOptionList;
+
+                                    final selectedOption = regiController.saraswaniOptionId.value;
+                                    return Expanded(
+                                      child: InputDecorator(
+                                        decoration: InputDecoration(
+                                          labelText: selectedOption.isNotEmpty ? 'Saraswani Option *' : null,
+                                          border: const OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black),
+                                          ),
+                                          enabledBorder: const OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black),
+                                          ),
+                                          focusedBorder: const OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black38, width: 1),
+                                          ),
+                                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                                          labelStyle: const TextStyle(color: Colors.black),
+                                        ),
+                                        child: DropdownButton<String>(
+                                          dropdownColor: Colors.white,
+                                          borderRadius: BorderRadius.circular(10),
+                                          isExpanded: true,
+                                          underline: Container(),
+                                          hint: const Text(
+                                            'Saraswani Option *',
+                                            style: TextStyle(fontWeight: FontWeight.bold),
+                                          ),
+                                          value: selectedOption.isNotEmpty ? selectedOption : null,
+                                          items: filteredOptions.map((option) {
+                                            return DropdownMenuItem<String>(
+                                              value: option.id.toString(),
+                                              child: Text(option.saraswaniOption?.toString() ?? 'Unknown'),
+                                            );
+                                          }).toList(),
+                                          onChanged: (String? newValue) {
+                                            if (newValue != null) {
+                                              regiController.saraswaniOptionId.value = newValue;
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                }),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
                           //Address Proof
                           Container(
                             width: double.infinity,

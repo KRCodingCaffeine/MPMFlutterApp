@@ -23,13 +23,13 @@ class DashboardView extends StatefulWidget {
 
 class _DashboardViewState extends State<DashboardView> {
   final UdateProfileController controller = Get.put(UdateProfileController());
-final NotificationController notificationController=Get.put(NotificationController());
+  final NotificationController notificationController =
+      Get.put(NotificationController());
   @override
   void initState() {
     super.initState();
     getUserSessionData();
-  // notificationController.loadUnreadCount();
-
+    // notificationController.loadUnreadCount();
   }
 
   final List<Widget> pages = [
@@ -49,7 +49,6 @@ final NotificationController notificationController=Get.put(NotificationControll
 
   @override
   Widget build(BuildContext context) {
-
     return Obx(
       () => Scaffold(
         appBar: AppBar(
@@ -68,52 +67,51 @@ final NotificationController notificationController=Get.put(NotificationControll
         drawer: AppDrawer(),
         backgroundColor: Colors.grey[100],
         body: pages[controller.currentIndex.value],
-
-        bottomNavigationBar: Obx(() => BottomNavigationBar(
+        bottomNavigationBar: Obx(
+          () => BottomNavigationBar(
             backgroundColor: Colors.white,
-            selectedItemColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+            selectedItemColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
             unselectedItemColor: Colors.grey,
-
-          currentIndex: controller.currentIndex.value,
-          onTap: controller.changeTab,
-          items: [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.home),
-                  label: "Home",
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.search),
-                  label: "Search",
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.account_balance),
-                  label: "Samiti Member",
-                ),
-                // BottomNavigationBarItem(
-                //   icon: Icon(Icons.notifications),
-                //   label: "Notification",
-                // ),
-                BottomNavigationBarItem(
-                  icon: Obx(() {
-                    final count = Get.find<NotificationController>().unreadCount.value;
-                    return Badge(
-                      label: count > 0 ? Text(count.toString()) : null,
-                      child: Icon(Icons.notifications),
-                    );
-                  }),
-                  label: "Notification",
-                ),
-                ],
-
-
-
-        ))
+            currentIndex: controller.currentIndex.value,
+            onTap: controller.changeTab,
+            items: [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home),
+                label: "Home",
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.search),
+                label: "Search",
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.account_balance),
+                label: "Samiti Member",
+              ),
+              // BottomNavigationBarItem(
+              //   icon: Icon(Icons.notifications),
+              //   label: "Notification",
+              // ),
+              BottomNavigationBarItem(
+                icon: Obx(() {
+                  final count =
+                      Get.find<NotificationController>().unreadCount.value;
+                  return Badge(
+                    label: count > 0 ? Text(count.toString()) : null,
+                    child: Icon(Icons.notifications),
+                  );
+                }),
+                label: "Notification",
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Future<void> getUserSessionData() async {
-  // count= await NotificationDatabase.instance.countUnreadNotifications();
+    // count= await NotificationDatabase.instance.countUnreadNotifications();
 
     CheckUserData2? userData = await SessionManager.getSession();
     if (userData != null) {

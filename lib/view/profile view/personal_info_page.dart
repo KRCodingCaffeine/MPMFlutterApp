@@ -120,7 +120,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                             subtitle: controller.email.value);
                       }),
                       SizedBox(height: 20),
-                      Obx((){
+                      Obx(() {
                         return _buildInfoBox('Date of Birth',
                             subtitle: controller.dob.value);
                       }),
@@ -151,6 +151,11 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                       Obx(() {
                         return _buildInfoBox('Blood Group',
                             subtitle: controller.bloodGroup.value);
+                      }),
+                      SizedBox(height: 20),
+                      Obx(() {
+                        return _buildInfoBox('Saraswani Name',
+                            subtitle: controller.saraswaniOptionId.value);
                       }),
                     ],
                   ),
@@ -192,8 +197,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                             Navigator.pop(context);
                           },
                           style: OutlinedButton.styleFrom(
-                            foregroundColor:
-                            ColorHelperClass.getColorFromHex(
+                            foregroundColor: ColorHelperClass.getColorFromHex(
                                 ColorResources.red_color),
                             side: const BorderSide(color: Colors.red),
                             shape: RoundedRectangleBorder(
@@ -204,10 +208,15 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                         ),
                         ElevatedButton(
                           onPressed: () {
-                            final mobile = controller.mobileNumberController.value.text.trim();
-                            final whatsapp = controller.whatsAppNumberController.value.text.trim();
+                            final mobile = controller
+                                .mobileNumberController.value.text
+                                .trim();
+                            final whatsapp = controller
+                                .whatsAppNumberController.value.text
+                                .trim();
 
-                            if (mobile.length != 10 || !RegExp(r'^[0-9]+$').hasMatch(mobile)) {
+                            if (mobile.length != 10 ||
+                                !RegExp(r'^[0-9]+$').hasMatch(mobile)) {
                               Get.snackbar(
                                 "", // Empty because we use titleText below
                                 "",
@@ -242,7 +251,8 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                               return;
                             }
 
-                            if (whatsapp.length != 10 || !RegExp(r'^[0-9]+$').hasMatch(whatsapp)) {
+                            if (whatsapp.length != 10 ||
+                                !RegExp(r'^[0-9]+$').hasMatch(whatsapp)) {
                               Get.snackbar(
                                 "",
                                 "",
@@ -277,18 +287,18 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                               return;
                             }
 
-                            controller.userUpdateProfile(context, controller.memberId.value);
+                            controller.userUpdateProfile(
+                                context, controller.memberId.value);
                             Navigator.pop(context);
                           },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                              ColorHelperClass.getColorFromHex(
-                                  ColorResources.red_color),
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
                             ),
+                          ),
                           child: const Text('Save'),
                         ),
                       ],
@@ -663,6 +673,110 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                             ),
                             const SizedBox(height: 30),
 
+                            // Saraswani Option
+                            Container(
+                              child: Row(
+                                children: [
+                                  Obx(() {
+                                    if (newMemberController
+                                            .rxStatusLoading.value ==
+                                        Status.LOADING) {
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 10, horizontal: 22),
+                                        child: SizedBox(
+                                          height: 24,
+                                          width: 24,
+                                          child: CircularProgressIndicator(
+                                            color: ColorHelperClass
+                                                .getColorFromHex(
+                                                    ColorResources.red_color),
+                                          ),
+                                        ),
+                                      );
+                                    } else if (newMemberController
+                                            .rxStatusLoading.value ==
+                                        Status.ERROR) {
+                                      return const Expanded(
+                                        child: Text(
+                                            'Failed to load Saraswani options'),
+                                      );
+                                    } else if (newMemberController
+                                        .saraswaniOptionList.isEmpty) {
+                                      return const Expanded(
+                                        child: Text(
+                                            'No Saraswani option available'),
+                                      );
+                                    } else {
+                                      return Expanded(
+                                        child: InputDecorator(
+                                          decoration: InputDecoration(
+                                            labelText: 'Saraswani Option',
+                                            border: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.black26),
+                                            ),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.black26),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.black26,
+                                                  width: 1.5),
+                                            ),
+                                            contentPadding:
+                                                EdgeInsets.symmetric(
+                                                    horizontal: 20),
+                                            labelStyle: TextStyle(
+                                                color: Colors.black45),
+                                          ),
+                                          child: DropdownButtonHideUnderline(
+                                            child: DropdownButton<String>(
+                                              isExpanded: true,
+                                              dropdownColor: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              hint: const Text(
+                                                'Select Saraswani Option',
+                                                style: TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                              value: controller
+                                                      .saraswaniOptionId
+                                                      .value
+                                                      .isNotEmpty
+                                                  ? controller
+                                                      .saraswaniOptionId.value
+                                                  : null,
+                                              items: newMemberController
+                                                  .saraswaniOptionList
+                                                  .map((option) {
+                                                return DropdownMenuItem<String>(
+                                                  value: option.id.toString(),
+                                                  child: Text(
+                                                      option.saraswaniOption ??
+                                                          'Unknown'),
+                                                );
+                                              }).toList(),
+                                              onChanged: (String? newValue) {
+                                                if (newValue != null) {
+                                                  controller.saraswaniOptionId
+                                                      .value = newValue;
+                                                }
+                                              },
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  }),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 30),
+
                             // Marital Status
                             SizedBox(
                               child: Container(
@@ -918,7 +1032,6 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
     );
   }
 
-
   void _showPicker({required BuildContext context}) {
     showModalBottomSheet(
       context: context,
@@ -993,18 +1106,20 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
 
   // Method to build editable text fields inside the modal
   Widget _buildEditableField(String label, TextEditingController controller) {
-    final isNumericField = label == "Mobile Number" || label == "WhatsApp Number";
+    final isNumericField =
+        label == "Mobile Number" || label == "WhatsApp Number";
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 30.0),
       child: TextField(
         controller: controller,
-        keyboardType: isNumericField ? TextInputType.number : TextInputType.text,
+        keyboardType:
+            isNumericField ? TextInputType.number : TextInputType.text,
         inputFormatters: isNumericField
             ? [
-          FilteringTextInputFormatter.digitsOnly,
-          LengthLimitingTextInputFormatter(10),
-        ]
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(10),
+              ]
             : null,
         decoration: InputDecoration(
           labelText: label,
