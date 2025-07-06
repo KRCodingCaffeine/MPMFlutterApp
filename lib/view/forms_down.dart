@@ -94,7 +94,10 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
 
     try {
       // ✅ Use app-specific external storage
-      Directory? directory = await getExternalStorageDirectory();
+      Directory directory = Platform.isAndroid
+          ? (await getExternalStorageDirectory())!
+          : await getApplicationDocumentsDirectory();
+
       String filePath = "${directory!.path}/$fileName";
       Dio dio = Dio();
       int progress = 0;

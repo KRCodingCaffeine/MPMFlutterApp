@@ -258,7 +258,9 @@ class DiscountOfferDetailPage extends StatelessWidget {
     if (!permissionStatus) return;
 
     try {
-      Directory? directory = await getExternalStorageDirectory();
+      Directory? directory = Platform.isAndroid
+          ? (await getExternalStorageDirectory())!
+          : await getApplicationDocumentsDirectory();
       String filePath = "${directory!.path}/$fileName";
       int progress = 0;
 
