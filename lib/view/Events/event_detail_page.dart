@@ -17,6 +17,8 @@ import 'package:url_launcher/url_launcher.dart' show canLaunchUrl, launchUrl;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+import 'YouTubeBottomSheet.dart';
+
 class EventDetailPage extends StatefulWidget {
   final EventData event;
 
@@ -390,7 +392,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
     });
 
     try {
-      Directory? directory = await getExternalStorageDirectory();
+      Directory? directory = Platform.isAndroid
+          ? (await getExternalStorageDirectory())!
+          : await getApplicationDocumentsDirectory();
+
       String filePath = "${directory!.path}/$fileName";
 
       await _dio.download(
@@ -533,37 +538,44 @@ class _EventDetailPageState extends State<EventDetailPage> {
               ),
             ),
             const SizedBox(height: 24),
-            // if (_isPastEvent) ...[
-            //   const SizedBox(height: 16),
-            //   SizedBox(
-            //     width: double.infinity,
-            //     child: ElevatedButton.icon(
-            //       style: ElevatedButton.styleFrom(
-            //         backgroundColor: ColorHelperClass.getColorFromHex(
-            //             ColorResources.red_color),
-            //         foregroundColor: Colors.white,
-            //         padding: const EdgeInsets.symmetric(vertical: 14),
-            //         shape: RoundedRectangleBorder(
-            //           borderRadius: BorderRadius.circular(8),
-            //         ),
-            //       ),
-            //       icon: const Icon(Icons.play_circle_fill),
-            //       label: const Text("View Events Video"),
-            //       onPressed: () {
-            //         final url = widget.event.youtubeUrl;
-            //         if (url != null && url.isNotEmpty) {
-            //           _launchYoutubeUrl(url);
-            //         } else {
-            //           ScaffoldMessenger.of(context).showSnackBar(
-            //             const SnackBar(
-            //                 content: Text("No event video available")),
-            //           );
-            //         }
-            //       },
-            //     ),
-            //   ),
-            // ],
-            // const SizedBox(height: 24),
+            if (_isPastEvent) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ColorHelperClass.getColorFromHex(
+                        ColorResources.red_color),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  icon: const Icon(Icons.play_circle_fill),
+                  label: const Text("View Events Video"),
+                  onPressed: () {
+                    final url = widget.event.youtubeUrl;
+                    if (url != null && url.isNotEmpty) {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.black,
+                        builder: (_) => const YouTubeBottomSheet(
+                          youtubeUrl: 'https://www.youtube.com/watch?v=ix9cRaBkVe0',
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text("No event video available")),
+                      );
+                    }
+                  },
+                ),
+              ),
+            ],
+            const SizedBox(height: 24),
             _buildEventInfo(formattedDate, time),
             const SizedBox(height: 24),
             _buildEventCostInfo(),
@@ -688,12 +700,20 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<void> _launchYoutubeUrl(String url) async {
-    if (await canLaunchUrlString(url)) {
-      await launchUrlString(url, mode: LaunchMode.externalApplication);
+    final Uri youtubeUri = Uri.parse(url);
+
+    if (await canLaunchUrl(youtubeUri)) {
+      await launchUrl(
+        youtubeUri,
+        mode: LaunchMode.externalApplication,
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Could not open YouTube.')),
       );
     }
   }
+
+  // Function to extract YouTube video ID from a full URL
+
 }
