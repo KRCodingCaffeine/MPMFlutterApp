@@ -225,12 +225,17 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text(
-          "Forms Download",
-          style: TextStyle(color: Colors.white),
-        ),
         backgroundColor:
         ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        title: Builder(
+          builder: (context) {
+            double fontSize = MediaQuery.of(context).size.width * 0.045;
+            return Text(
+              'Forms Download',
+              style: TextStyle(color: Colors.white, fontSize: fontSize, fontWeight: FontWeight.w500),
+            );
+          },
+        ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       drawer: AppDrawer(),

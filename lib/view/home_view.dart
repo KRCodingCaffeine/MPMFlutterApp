@@ -63,7 +63,7 @@ class _HomeViewState extends State<HomeView> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       screenWidth = MediaQuery.of(context).size.width * 0.7;
-      _timer = Timer.periodic(const Duration(seconds: 5), (Timer timer) {
+      _timer = Timer.periodic(const Duration(seconds: 10), (Timer timer) {
         if (_scrollController.hasClients) {
           final maxScroll = _scrollController.position.maxScrollExtent;
           final currentScroll = _scrollController.offset;
@@ -268,7 +268,8 @@ class _HomeViewState extends State<HomeView> {
 
     return SizedBox(
       height: 150,
-      child: ListView.builder(
+      child: dashboardEvents.length > 1
+          ? ListView.builder(
         controller: _scrollController,
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -280,12 +281,27 @@ class _HomeViewState extends State<HomeView> {
               final eventData = convertToEventData(event);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => EventDetailPage(event: eventData)),
+                MaterialPageRoute(
+                    builder: (_) => EventDetailPage(event: eventData)),
               );
             },
             child: _buildEventCard(event),
           );
         },
+      )
+          : Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: GestureDetector(
+          onTap: () {
+            final eventData = convertToEventData(dashboardEvents.first);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => EventDetailPage(event: eventData)),
+            );
+          },
+          child: _buildEventCard(dashboardEvents.first),
+        ),
       ),
     );
   }

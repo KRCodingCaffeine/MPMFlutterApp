@@ -558,10 +558,16 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor:
-            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        title: const Text("Medicine Details",
-            style: TextStyle(color: Colors.white)),
+        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        title: Builder(
+          builder: (context) {
+            double fontSize = MediaQuery.of(context).size.width * 0.045;
+            return Text(
+              "Medicine Details",
+              style: TextStyle(color: Colors.white, fontSize: fontSize, fontWeight: FontWeight.w500),
+            );
+          },
+        ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: ListView(
@@ -586,13 +592,14 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
                   style: TextButton.styleFrom(
                     foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
                     backgroundColor: Colors.white,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(6),
                     ),
                     textStyle: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w600),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   child: const Text("Add Medicine"),
                 ),
@@ -635,29 +642,25 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
       ),
       bottomNavigationBar: selectedImage != null
           ? Container(
-              padding: const EdgeInsets.all(16),
-              child: ElevatedButton(
-                onPressed: offerList.isNotEmpty
-                    ? () {
-                        _submitOffer();
-                      }
-                    : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                  foregroundColor: Colors.white,
-                  disabledForegroundColor: Colors.white.withOpacity(0.6),
-                  disabledBackgroundColor: Colors.redAccent.withOpacity(0.6),
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  "Place Order",
-                  style: TextStyle(fontSize: 16),
-                ),
-              ),
-            )
+        padding: const EdgeInsets.all(16),
+        child: ElevatedButton(
+          onPressed: offerList.isNotEmpty ? _submitOffer : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+            foregroundColor: Colors.white,
+            disabledForegroundColor: Colors.white.withOpacity(0.6),
+            disabledBackgroundColor: Colors.redAccent.withOpacity(0.6),
+            minimumSize: const Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: const Text(
+            "Place Order",
+            style: TextStyle(fontSize: 16),
+          ),
+        ),
+      )
           : null,
     );
   }

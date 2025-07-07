@@ -81,9 +81,21 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Family Info', style: TextStyle(color: Colors.white)),
         backgroundColor:
             ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        title: Builder(
+          builder: (context) {
+            double fontSize = MediaQuery.of(context).size.width * 0.045;
+            return Text(
+              "Family Info",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: fontSize,
+                fontWeight: FontWeight.w500,
+              ),
+            );
+          },
+        ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Stack(

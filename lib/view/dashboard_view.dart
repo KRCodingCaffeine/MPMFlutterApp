@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import
+'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/utils/AppDrawer.dart';
@@ -24,7 +25,7 @@ class DashboardView extends StatefulWidget {
 class _DashboardViewState extends State<DashboardView> {
   final UdateProfileController controller = Get.put(UdateProfileController());
   final NotificationController notificationController =
-      Get.put(NotificationController());
+  Get.put(NotificationController());
   @override
   void initState() {
     super.initState();
@@ -50,10 +51,10 @@ class _DashboardViewState extends State<DashboardView> {
   @override
   Widget build(BuildContext context) {
     return Obx(
-      () => Scaffold(
+          () => Scaffold(
         appBar: AppBar(
           backgroundColor:
-              ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+          ColorHelperClass.getColorFromHex(ColorResources.logo_color),
           title: Text(
             appBarTitles[controller.currentIndex.value],
             style: TextStyle(
@@ -68,10 +69,10 @@ class _DashboardViewState extends State<DashboardView> {
         backgroundColor: Colors.grey[100],
         body: pages[controller.currentIndex.value],
         bottomNavigationBar: Obx(
-          () => BottomNavigationBar(
+              () => BottomNavigationBar(
             backgroundColor: Colors.white,
             selectedItemColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+            ColorHelperClass.getColorFromHex(ColorResources.red_color),
             unselectedItemColor: Colors.grey,
             currentIndex: controller.currentIndex.value,
             onTap: controller.changeTab,
@@ -94,12 +95,41 @@ class _DashboardViewState extends State<DashboardView> {
               // ),
               BottomNavigationBarItem(
                 icon: Obx(() {
-                  final count =
-                      Get.find<NotificationController>().unreadCount.value;
-                  return Badge(
-                    label: count > 0 ? Text(count.toString()) : null,
-                    child: Icon(Icons.notifications),
-                  );
+                  final count = Get.find<NotificationController>().unreadCount.value;
+                  if (count > 0) {
+                    return Stack(
+                      alignment: Alignment.topRight,
+                      children: [
+                        const Icon(Icons.notifications),
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 18,
+                              minHeight: 18,
+                            ),
+                            child: Text(
+                              '$count',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  } else {
+                    return const Icon(Icons.notifications);
+                  }
                 }),
                 label: "Notification",
               ),

@@ -33,7 +33,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   bool _isRegistering = false;
   bool _isRegistered = false;
   final EventRegistrationRepository _registrationRepo =
-      EventRegistrationRepository();
+  EventRegistrationRepository();
   bool _isPastEvent = false;
 
   @override
@@ -81,7 +81,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       );
 
       final response =
-          await _registrationRepo.registerForEvent(registrationData);
+      await _registrationRepo.registerForEvent(registrationData);
 
       if (response['status'] == true) {
         setState(() {
@@ -159,7 +159,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
               ),
               child: const Text("OK", style: TextStyle(color: Colors.white)),
             ),
@@ -268,7 +268,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             widget.event.eventCostType!.isNotEmpty) ...[
           Row(
             children: [
-              Icon(Icons.attach_money, size: 16, color: Colors.grey[600]),
+              Icon(Icons.currency_rupee, size: 16, color: Colors.grey[600]),
               const SizedBox(width: 8),
               Text(
                 'Cost: ${widget.event.eventCostType}',
@@ -308,17 +308,17 @@ class _EventDetailPageState extends State<EventDetailPage> {
           onPressed: _isRegistered ? null : _registerForEvent,
           child: _isRegistering
               ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          )
               : Text(
-                  _isRegistered ? "Registered" : "Register Here",
-                  style: const TextStyle(fontSize: 16),
-                ),
+            _isRegistered ? "Registered" : "Register Here",
+            style: const TextStyle(fontSize: 16),
+          ),
         ),
       ),
     );
@@ -362,7 +362,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
-                  Text('Storage permission is needed to download the file.')),
+              Text('Storage permission is needed to download the file.')),
         );
         return false;
       } else {
@@ -372,7 +372,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
-                  Text('Storage permission is needed to download the file.')),
+              Text('Storage permission is needed to download the file.')),
         );
         return false;
       }
@@ -480,12 +480,18 @@ class _EventDetailPageState extends State<EventDetailPage> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor:
-            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        title: Text(
-          widget.event.eventName ?? 'Event Details',
-          style: const TextStyle(color: Colors.white),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        title: Builder(
+          builder: (context) {
+            double fontSize = MediaQuery.of(context).size.width * 0.045;
+            return Text(
+              widget.event.eventName ?? 'Event Details',
+              style: TextStyle(color: Colors.white, fontSize: fontSize,
+                  fontWeight: FontWeight.w500),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            );
+          },
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -533,37 +539,37 @@ class _EventDetailPageState extends State<EventDetailPage> {
               ),
             ),
             const SizedBox(height: 24),
-            // if (_isPastEvent) ...[
-            //   const SizedBox(height: 16),
-            //   SizedBox(
-            //     width: double.infinity,
-            //     child: ElevatedButton.icon(
-            //       style: ElevatedButton.styleFrom(
-            //         backgroundColor: ColorHelperClass.getColorFromHex(
-            //             ColorResources.red_color),
-            //         foregroundColor: Colors.white,
-            //         padding: const EdgeInsets.symmetric(vertical: 14),
-            //         shape: RoundedRectangleBorder(
-            //           borderRadius: BorderRadius.circular(8),
-            //         ),
-            //       ),
-            //       icon: const Icon(Icons.play_circle_fill),
-            //       label: const Text("View Events Video"),
-            //       onPressed: () {
-            //         final url = widget.event.youtubeUrl;
-            //         if (url != null && url.isNotEmpty) {
-            //           _launchYoutubeUrl(url);
-            //         } else {
-            //           ScaffoldMessenger.of(context).showSnackBar(
-            //             const SnackBar(
-            //                 content: Text("No event video available")),
-            //           );
-            //         }
-            //       },
-            //     ),
-            //   ),
-            // ],
-            // const SizedBox(height: 24),
+            if (_isPastEvent) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ColorHelperClass.getColorFromHex(
+                        ColorResources.red_color),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  icon: const Icon(Icons.play_circle_fill),
+                  label: const Text("View Events Video"),
+                  onPressed: () {
+                    final url = widget.event.youtubeUrl;
+                    if (url != null && url.isNotEmpty) {
+                      _launchYoutubeUrl(url);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text("No event video available")),
+                      );
+                    }
+                  },
+                ),
+              ),
+            ],
+            const SizedBox(height: 24),
             _buildEventInfo(formattedDate, time),
             const SizedBox(height: 24),
             _buildEventCostInfo(),
@@ -644,25 +650,25 @@ class _EventDetailPageState extends State<EventDetailPage> {
                               ? Icons.picture_as_pdf
                               : Icons.description,
                           color:
-                              fileExtension == 'pdf' ? Colors.red : Colors.blue,
+                          fileExtension == 'pdf' ? Colors.red : Colors.blue,
                         ),
                         label: _isDownloading
                             ? LinearProgressIndicator(
-                                value: _downloadProgress / 100,
-                                backgroundColor: Colors.grey[300],
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  ColorHelperClass.getColorFromHex(
-                                      ColorResources.red_color),
-                                ),
-                              )
+                          value: _downloadProgress / 100,
+                          backgroundColor: Colors.grey[300],
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color),
+                          ),
+                        )
                             : Text(
-                                "Download & View ${fileExtension.toUpperCase()}"),
+                            "Download & View ${fileExtension.toUpperCase()}"),
                         onPressed: _isDownloading
                             ? null
                             : () => _downloadAndOpenPdf(
-                                  docUrl,
-                                  'Event_Terms_${widget.event.eventId}.$fileExtension',
-                                ),
+                          docUrl,
+                          'Event_Terms_${widget.event.eventId}.$fileExtension',
+                        ),
                       ),
                     );
                   }
@@ -683,7 +689,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         ),
       ),
       bottomNavigationBar:
-          _isPastEvent ? _buildPastEventBottomBar() : _buildRegisterButton(),
+      _isPastEvent ? _buildPastEventBottomBar() : _buildRegisterButton(),
     );
   }
 

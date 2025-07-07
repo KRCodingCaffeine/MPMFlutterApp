@@ -24,7 +24,7 @@ class ResidenceInformationPage extends StatefulWidget {
 }
 
 class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
-  File? _image; // Add this field to store the selected image
+  File? _image;
   UdateProfileController controller = Get.put(UdateProfileController());
   NewMemberController regiController = Get.put(NewMemberController());
   GlobalKey<FormState>? formKeyLogin = GlobalKey<FormState>();
@@ -33,12 +33,21 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text(
-          'Residential Info',
-          style: TextStyle(color: Colors.white),
-        ),
         backgroundColor:
             ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        title: Builder(
+          builder: (context) {
+            double fontSize = MediaQuery.of(context).size.width * 0.045;
+            return Text(
+              "Residential Info",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: fontSize,
+                fontWeight: FontWeight.w500,
+              ),
+            );
+          },
+        ),
         iconTheme: IconThemeData(color: Colors.white),
         actions: [
           IconButton(

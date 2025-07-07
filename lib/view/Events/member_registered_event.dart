@@ -144,8 +144,15 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
       appBar: AppBar(
         backgroundColor:
             ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        title: const Text("Registered Events List",
-            style: TextStyle(color: Colors.white)),
+        title: Builder(
+          builder: (context) {
+            double fontSize = MediaQuery.of(context).size.width * 0.045;
+            return Text(
+              'Registered Events List',
+              style: TextStyle(color: Colors.white, fontSize: fontSize, fontWeight: FontWeight.w500),
+            );
+          },
+        ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: FutureBuilder<EventAttendeesModelClass>(
