@@ -517,29 +517,61 @@ class _EventsPageState extends State<EventsPage> {
               const Text("Date Range",
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              ListTile(
-                title: Text(
-                  startDate == null
-                      ? "Select Start Date"
-                      : "Start: ${DateFormat('dd-MM-yyyy').format(startDate)}",
+              // Start Date Field
+              TextFormField(
+                readOnly: true,
+                controller: TextEditingController(
+                  text: startDate != null ? DateFormat('dd/MM/yyyy').format(startDate!) : '',
                 ),
-                trailing: const Icon(Icons.calendar_today),
+                decoration: InputDecoration(
+                  labelText: 'Start Date *',
+                  hintText: 'Select Start Date',
+                  border: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black26),
+                  ),
+                  enabledBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black26),
+                  ),
+                  focusedBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                  labelStyle: const TextStyle(color: Colors.black45),
+                ),
                 onTap: () async {
-                  final DateTime? picked = await showDatePicker(
+                  final DateTime? pickedDate = await showDatePicker(
                     context: context,
                     initialDate: startDate ?? DateTime.now(),
                     firstDate: DateTime(2000),
                     lastDate: DateTime(2100),
+                    builder: (BuildContext context, Widget? child) {
+                      return Theme(
+                        data: Theme.of(context).copyWith(
+                          colorScheme: ColorScheme.light(
+                            primary: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                            onPrimary: Colors.white,
+                            onSurface: Colors.black,
+                          ),
+                          textButtonTheme: TextButtonThemeData(
+                            style: TextButton.styleFrom(
+                              foregroundColor:
+                              ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                            ),
+                          ),
+                        ),
+                        child: child!,
+                      );
+                    },
                   );
-                  if (picked != null) {
+                  if (pickedDate != null) {
                     setState(() {
                       if (isUpcoming) {
-                        _upcomingStartDate = picked;
+                        _upcomingStartDate = pickedDate;
                         if (_upcomingEndDate != null && _upcomingStartDate!.isAfter(_upcomingEndDate!)) {
                           _upcomingEndDate = _upcomingStartDate;
                         }
                       } else {
-                        _pastStartDate = picked;
+                        _pastStartDate = pickedDate;
                         if (_pastEndDate != null && _pastStartDate!.isAfter(_pastEndDate!)) {
                           _pastEndDate = _pastStartDate;
                         }
@@ -548,29 +580,64 @@ class _EventsPageState extends State<EventsPage> {
                   }
                 },
               ),
-              ListTile(
-                title: Text(
-                  endDate == null
-                      ? "Select End Date"
-                      : "End: ${DateFormat('dd-MM-yyyy').format(endDate)}",
+
+              const SizedBox(height: 16),
+
+              // End Date Field
+              TextFormField(
+                readOnly: true,
+                controller: TextEditingController(
+                  text: endDate != null ? DateFormat('dd/MM/yyyy').format(endDate!) : '',
                 ),
-                trailing: const Icon(Icons.calendar_today),
+                decoration: InputDecoration(
+                  labelText: 'End Date *',
+                  hintText: 'Select End Date',
+                  border: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black26),
+                  ),
+                  enabledBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black26),
+                  ),
+                  focusedBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                  labelStyle: const TextStyle(color: Colors.black45),
+                ),
                 onTap: () async {
-                  final DateTime? picked = await showDatePicker(
+                  final DateTime? pickedDate = await showDatePicker(
                     context: context,
                     initialDate: endDate ?? DateTime.now(),
                     firstDate: DateTime(2000),
                     lastDate: DateTime(2100),
+                    builder: (BuildContext context, Widget? child) {
+                      return Theme(
+                        data: Theme.of(context).copyWith(
+                          colorScheme: ColorScheme.light(
+                            primary: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                            onPrimary: Colors.white,
+                            onSurface: Colors.black,
+                          ),
+                          textButtonTheme: TextButtonThemeData(
+                            style: TextButton.styleFrom(
+                              foregroundColor:
+                              ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                            ),
+                          ),
+                        ),
+                        child: child!,
+                      );
+                    },
                   );
-                  if (picked != null) {
+                  if (pickedDate != null) {
                     setState(() {
                       if (isUpcoming) {
-                        _upcomingEndDate = picked;
+                        _upcomingEndDate = pickedDate;
                         if (_upcomingStartDate != null && _upcomingEndDate!.isBefore(_upcomingStartDate!)) {
                           _upcomingStartDate = _upcomingEndDate;
                         }
                       } else {
-                        _pastEndDate = picked;
+                        _pastEndDate = pickedDate;
                         if (_pastStartDate != null && _pastEndDate!.isBefore(_pastStartDate!)) {
                           _pastStartDate = _pastEndDate;
                         }
@@ -633,16 +700,27 @@ class _EventsPageState extends State<EventsPage> {
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.local_offer, color: Colors.white),
-            tooltip: 'Registered Events',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => RegisteredEventsListPage()),
-              );
-            },
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: OutlinedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => RegisteredEventsListPage()),
+                );
+              },
+              child: const Text(
+                'Registered',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.white,
+                side: const BorderSide(color: Colors.white),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
           ),
         ],
       ),
