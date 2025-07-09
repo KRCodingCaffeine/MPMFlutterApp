@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mpm/model/GetMemberRegisteredEvents/GetMemberRegisteredEventsData.dart';
 import 'package:mpm/model/GetMemberRegisteredEvents/GetMemberRegisteredEventsModelClass.dart';
+import 'package:mpm/model/UpdateEventByMember/UpdateEventByMemberModelClass.dart';
 import 'package:mpm/repository/get_member_registered_events_repository/get_member_registered_events_repo.dart';
+import 'package:mpm/repository/update_event_by_member_repository/update_event_by_member_repo.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
@@ -16,6 +18,11 @@ class RegisteredEventsListPage extends StatefulWidget {
 class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
   late Future<EventAttendeesModelClass> _registeredEventsFuture;
   final EventAttendeesRepository _repository = EventAttendeesRepository();
+  final CancelEventRepository _cancelRepo = CancelEventRepository();
+
+  List<EventAttendeeData> _events = [];
+  Set<int> _cancelledEventIds = {};
+
   String memberName = 'Loading...';
 
   @override
@@ -29,15 +36,20 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
       final userData = await SessionManager.getSession();
       if (userData != null) {
         final name = _getUserName(
-          userData.firstName,
-          userData.middleName,
-          userData.lastName,
-        );
+            userData.firstName, userData.middleName, userData.lastName);
 
         setState(() {
           memberName = name;
-          _registeredEventsFuture = _repository.fetchEventAttendeesByMemberId(
-              int.tryParse(userData.memberId.toString()) ?? 0);
+          _registeredEventsFuture = _repository
+              .fetchEventAttendeesByMemberId(
+              int.tryParse(userData.memberId.toString()) ?? 0)
+              .then((response) {
+            setState(() {
+              _events = response.data ?? [];
+              _cancelledEventIds.clear(); // Clear previously tracked cancellations
+            });
+            return response;
+          });
         });
         return;
       }
@@ -57,6 +69,8 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
     final day = DateFormat('d').format(parsedDate);
     final month = DateFormat('MMM').format(parsedDate);
 
+    final bool isCancelled = _cancelledEventIds.contains(event.eventId);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
@@ -73,50 +87,154 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
           ],
         ),
         padding: const EdgeInsets.all(12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 60,
-              padding: const EdgeInsets.only(top: 4),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(day,
-                      style: const TextStyle(
-                          fontSize: 24, fontWeight: FontWeight.bold)),
-                  Text(month,
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w500)),
-                ],
+        child: InkWell(
+          onTap: isCancelled ? null : () => _showCancelConfirmationDialog(event),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 60,
+                padding: const EdgeInsets.only(top: 4),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(day,
+                        style: const TextStyle(
+                            fontSize: 24, fontWeight: FontWeight.bold)),
+                    Text(month,
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w500)),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              height: 60,
-              width: 1,
-              color: Colors.grey[400],
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(event.eventName ?? '',
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 15)),
-                  const SizedBox(height: 6),
-                  Text('Member: $memberName',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13)),
-                  const SizedBox(height: 4),
-                  Text('Registered on: ${_formatDate(event.registrationDate)}',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13)),
-                ],
+              const SizedBox(width: 8),
+              Container(
+                height: 60,
+                width: 1,
+                color: Colors.grey[400],
               ),
-            ),
-          ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(event.eventName ?? '',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 15)),
+                    const SizedBox(height: 6),
+                    Text('Member: $memberName',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                    const SizedBox(height: 4),
+                    Text(
+                      isCancelled
+                          ? 'You cancelled registration for this event.'
+                          : 'Registered on: ${_formatDate(event.registrationDate)}',
+                      style: TextStyle(
+                          color:
+                          isCancelled ? Colors.red : Colors.grey[600],
+                          fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Future<void> _showCancelConfirmationDialog(EventAttendeeData event) async {
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Cancel Registration",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              SizedBox(height: 8),
+              Divider(thickness: 1, color: Colors.grey),
+            ],
+          ),
+          content: const Text(
+            "Are you sure you want to cancel your registration for this event?",
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16, color: Colors.black87),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("No"),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: ColorHelperClass.getColorFromHex(
+                    ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _cancelEventRegistration(event);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorHelperClass.getColorFromHex(
+                    ColorResources.red_color),
+              ),
+              child: const Text("Yes", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _cancelEventRegistration(EventAttendeeData event) async {
+    try {
+      final userData = await SessionManager.getSession();
+      if (userData == null) throw Exception("User not logged in");
+
+      final response = await _cancelRepo.cancelEventRegistration(
+        memberId: userData.memberId.toString(),
+        eventId: event.eventId.toString(),
+      );
+
+      final parsed = UpdateEventBYMemberModelClass.fromJson(response);
+
+      if (parsed.status == true) {
+        setState(() {
+          _cancelledEventIds.add(event.eventId!);
+        });
+        _showSuccessSnackbar("Cancelled this event registration successfully");
+      } else {
+        throw Exception("Failed to cancel this event registration");
+      }
+    } catch (e) {
+      _showErrorSnackbar("Error: ${e.toString()}");
+    }
+  }
+
+  void _showSuccessSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.green),
+    );
+  }
+
+  void _showErrorSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
@@ -143,15 +261,13 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
         backgroundColor:
-            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        title: Builder(
-          builder: (context) {
-            double fontSize = MediaQuery.of(context).size.width * 0.045;
-            return Text(
-              'Registered Events List',
-              style: TextStyle(color: Colors.white, fontSize: fontSize, fontWeight: FontWeight.w500),
-            );
-          },
+        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        title: Text(
+          'Registered Events List',
+          style: TextStyle(
+              color: Colors.white,
+              fontSize: MediaQuery.of(context).size.width * 0.045,
+              fontWeight: FontWeight.w500),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -159,42 +275,34 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
         future: _registeredEventsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            // Handle API error response
-            final error = snapshot.error.toString();
-            if (error.contains('No events found for this member')) {
-              return _buildEmptyState();
-            }
             return RefreshIndicator(
               onRefresh: _loadUserDataAndFetchEvents,
               child: SingleChildScrollView(
-                physics: AlwaysScrollableScrollPhysics(),
+                physics: const AlwaysScrollableScrollPhysics(),
                 child: SizedBox(
                   height: MediaQuery.of(context).size.height,
                   child: Center(
                     child: Text(
                       'Error: ${snapshot.error}',
-                      style: TextStyle(color: Colors.red),
+                      style: const TextStyle(color: Colors.red),
                       textAlign: TextAlign.center,
                     ),
                   ),
                 ),
               ),
             );
-          } else if (!snapshot.hasData ||
-              snapshot.data!.data == null ||
-              snapshot.data!.data!.isEmpty) {
+          } else if (_events.isEmpty) {
             return _buildEmptyState();
           } else {
-            final events = snapshot.data!.data!;
             return RefreshIndicator(
-              color: Colors.red,
               onRefresh: _loadUserDataAndFetchEvents,
               child: ListView.builder(
                 padding: const EdgeInsets.only(top: 8),
-                itemCount: events.length,
-                itemBuilder: (context, index) => _buildEventCard(events[index]),
+                itemCount: _events.length,
+                itemBuilder: (context, index) =>
+                    _buildEventCard(_events[index]),
               ),
             );
           }
@@ -205,10 +313,9 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
 
   Widget _buildEmptyState() {
     return RefreshIndicator(
-      color: Colors.redAccent,
       onRefresh: _loadUserDataAndFetchEvents,
       child: SingleChildScrollView(
-        physics: AlwaysScrollableScrollPhysics(),
+        physics: const AlwaysScrollableScrollPhysics(),
         child: SizedBox(
           height: MediaQuery.of(context).size.height,
           child: Center(
@@ -216,21 +323,15 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.event_available, size: 34, color: Colors.grey[400]),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Text(
                   'Not yet registered to any event',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 18, color: Colors.grey[600]),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
                   'Register for events from the Events section',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[500],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[500]),
                   textAlign: TextAlign.center,
                 ),
               ],
