@@ -45,8 +45,11 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
               int.tryParse(userData.memberId.toString()) ?? 0)
               .then((response) {
             setState(() {
-              _events = response.data ?? [];
-              _cancelledEventIds.clear(); // Clear previously tracked cancellations
+              _events = (response.data ?? []).where((event) {
+                final endDate = DateTime.tryParse(event.dateEndTo ?? '');
+                if (endDate == null) return false;
+                return endDate.isAfter(DateTime.now()) || endDate.isAtSameMomentAs(DateTime.now());
+              }).toList();
             });
             return response;
           });
@@ -69,7 +72,7 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
     final day = DateFormat('d').format(parsedDate);
     final month = DateFormat('MMM').format(parsedDate);
 
-    final bool isCancelled = _cancelledEventIds.contains(event.eventId);
+    final bool isCancelled = event.cancelledDate != null && event.cancelledDate!.isNotEmpty;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -127,11 +130,10 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
                     const SizedBox(height: 4),
                     Text(
                       isCancelled
-                          ? 'You cancelled registration for this event.'
+                          ? 'Cancelled on: ${_formatDate(event.cancelledDate)}'
                           : 'Registered on: ${_formatDate(event.registrationDate)}',
                       style: TextStyle(
-                          color:
-                          isCancelled ? Colors.red : Colors.grey[600],
+                          color: isCancelled ? Colors.red : Colors.grey[600],
                           fontSize: 13),
                     ),
                   ],
@@ -216,6 +218,7 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
       if (parsed.status == true) {
         setState(() {
           _cancelledEventIds.add(event.eventId!);
+          event.cancelledDate = DateTime.now().toIso8601String();
         });
         _showSuccessSnackbar("Cancelled this event registration successfully");
       } else {
@@ -297,6 +300,7 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
             return _buildEmptyState();
           } else {
             return RefreshIndicator(
+              color: Colors.redAccent,
               onRefresh: _loadUserDataAndFetchEvents,
               child: ListView.builder(
                 padding: const EdgeInsets.only(top: 8),

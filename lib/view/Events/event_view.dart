@@ -131,9 +131,11 @@ class _EventsPageState extends State<EventsPage> {
       final past = <EventData>[];
 
       for (var e in filteredEvents) {
-        final date = DateTime.tryParse(e.dateStartsFrom ?? '');
-        if (date != null) {
-          if (date.isAfter(today) || date.isAtSameMomentAs(today)) {
+        final startDate = DateTime.tryParse(e.dateStartsFrom ?? '');
+        final endDate = DateTime.tryParse(e.dateEndTo ?? '');
+
+        if (startDate != null && endDate != null) {
+          if (endDate.isAfter(today) || endDate.isAtSameMomentAs(today)) {
             upcoming.add(e);
           } else {
             past.add(e);
@@ -141,8 +143,21 @@ class _EventsPageState extends State<EventsPage> {
         }
       }
 
+      upcoming.sort((a, b) {
+        final aDate = DateTime.tryParse(a.dateStartsFrom ?? '') ?? DateTime.now();
+        final bDate = DateTime.tryParse(b.dateStartsFrom ?? '') ?? DateTime.now();
+        return aDate.compareTo(bDate);
+      });
+
+      past.sort((a, b) {
+        final aDate = DateTime.tryParse(a.dateStartsFrom ?? '') ?? DateTime.now();
+        final bDate = DateTime.tryParse(b.dateStartsFrom ?? '') ?? DateTime.now();
+        return bDate.compareTo(aDate);
+      });
+
       _upcomingEvents = upcoming;
       _pastEvents = past;
+
     });
   }
 
@@ -220,6 +235,10 @@ class _EventsPageState extends State<EventsPage> {
                       ),
                     ),
                     const SizedBox(height: 4),
+                    Text(
+                      'Ends on: ${event.dateEndTo != null ? DateFormat('dd MMM yyyy').format(DateTime.parse(event.dateEndTo!)) : 'N/A'}',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    ),
                     Text(
                       'Hosted by ${event.eventOrganiserName ?? 'Unknown'}',
                       maxLines: 2,
