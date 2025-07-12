@@ -17,6 +17,8 @@ import 'package:url_launcher/url_launcher.dart' show canLaunchUrl, launchUrl;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+import 'YouTubeBottomSheet.dart';
+
 class EventDetailPage extends StatefulWidget {
   final EventData event;
 
@@ -466,7 +468,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
     });
 
     try {
-      Directory? directory = await getExternalStorageDirectory();
+      Directory? directory = Platform.isAndroid
+          ? (await getExternalStorageDirectory())!
+          : await getApplicationDocumentsDirectory();
+
       String filePath = "${directory!.path}/$fileName";
 
       await _dio.download(
@@ -636,7 +641,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   onPressed: () {
                     final url = widget.event.youtubeUrl;
                     if (url != null && url.isNotEmpty) {
-                      _launchYoutubeUrl(url);
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.black,
+                        builder: (_) => const YouTubeBottomSheet(
+                          youtubeUrl: 'https://www.youtube.com/watch?v=ix9cRaBkVe0',
+                        ),
+                      );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -772,12 +784,18 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<void> _launchYoutubeUrl(String url) async {
-    if (await canLaunchUrlString(url)) {
-      await launchUrlString(url, mode: LaunchMode.externalApplication);
+    final Uri youtubeUri = Uri.parse(url);
+
+    if (await canLaunchUrl(youtubeUri)) {
+      await launchUrl(
+        youtubeUri,
+        mode: LaunchMode.externalApplication,
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Could not open YouTube.')),
       );
     }
   }
+
 }
