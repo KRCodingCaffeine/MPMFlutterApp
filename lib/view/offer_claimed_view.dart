@@ -226,9 +226,14 @@ class _ClaimedOfferListPageState extends State<ClaimedOfferListPage> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        title: const Text(
-          'Claimed Offers',
-          style: TextStyle(color: Colors.white),
+        title: Builder(
+          builder: (context) {
+            double fontSize = MediaQuery.of(context).size.width * 0.045;
+            return Text(
+              'Claimed Offers',
+              style: TextStyle(color: Colors.white, fontSize: fontSize, fontWeight: FontWeight.w500),
+            );
+          },
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),

@@ -54,12 +54,21 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text(
-            "Make New Member",
-            style: TextStyle(color: Colors.white),
-          ),
           backgroundColor:
               ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+          title: Builder(
+            builder: (context) {
+              double fontSize = MediaQuery.of(context).size.width * 0.045;
+              return Text(
+                'Make New Member',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w500,
+                ),
+              );
+            },
+          ),
           iconTheme: const IconThemeData(color: Colors.white),
         ),
         backgroundColor: Colors.grey[100],

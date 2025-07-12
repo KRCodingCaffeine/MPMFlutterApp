@@ -60,6 +60,82 @@ class _EventDetailPageState extends State<EventDetailPage> {
     });
   }
 
+  Future<void> _showRegistrationConfirmationDialog() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+
+          // Combine title and divider here
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Text(
+                "Confirm Registration",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+
+          content: const Text(
+            "Are you sure you want to register for this event?",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+              style: OutlinedButton.styleFrom(
+                foregroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _registerForEvent();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              ),
+              child: const Text(
+                "Yes, Register",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _registerForEvent() async {
     if (_isRegistering || _isRegistered) return;
 
@@ -270,7 +346,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             widget.event.eventCostType!.isNotEmpty) ...[
           Row(
             children: [
-              Icon(Icons.attach_money, size: 16, color: Colors.grey[600]),
+              Icon(Icons.currency_rupee, size: 16, color: Colors.grey[600]),
               const SizedBox(width: 8),
               Text(
                 'Cost: ${widget.event.eventCostType}',
@@ -307,7 +383,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          onPressed: _isRegistered ? null : _registerForEvent,
+          onPressed: _isRegistered ? null : _showRegistrationConfirmationDialog,
           child: _isRegistering
               ? const SizedBox(
                   width: 20,
@@ -486,11 +562,19 @@ class _EventDetailPageState extends State<EventDetailPage> {
       appBar: AppBar(
         backgroundColor:
             ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        title: Text(
-          widget.event.eventName ?? 'Event Details',
-          style: const TextStyle(color: Colors.white),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        title: Builder(
+          builder: (context) {
+            double fontSize = MediaQuery.of(context).size.width * 0.045;
+            return Text(
+              widget.event.eventName ?? 'Event Details',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w500),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            );
+          },
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -713,7 +797,5 @@ class _EventDetailPageState extends State<EventDetailPage> {
       );
     }
   }
-
-  // Function to extract YouTube video ID from a full URL
 
 }

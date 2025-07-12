@@ -69,11 +69,20 @@ class _ProfileViewState extends State<ProfileView> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          "My Profile",
-          style: TextStyle(color: Colors.white),
+        title: Builder(
+          builder: (context) {
+            double fontSize = MediaQuery.of(context).size.width * 0.045;
+            return Text(
+              "My Profile",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: fontSize,
+                fontWeight: FontWeight.w500,
+              ),
+            );
+          },
         ),
+        iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
       ),
       drawer: AppDrawer(),

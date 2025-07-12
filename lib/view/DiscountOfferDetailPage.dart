@@ -51,11 +51,16 @@ class DiscountOfferDetailPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor:
         ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        title: Text(
-          offer.offerDiscountName ?? 'Offer Details',
-          style: const TextStyle(color: Colors.white, fontSize: 24),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        title: Builder(
+          builder: (context) {
+            double fontSize = MediaQuery.of(context).size.width * 0.045;
+            return Text(
+              offer.offerDiscountName ?? 'Offer Details',
+              style: TextStyle(color: Colors.white, fontSize: fontSize, fontWeight: FontWeight.w500),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            );
+          },
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),

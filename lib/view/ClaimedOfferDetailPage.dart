@@ -13,11 +13,17 @@ class ClaimedOfferDetailPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor:
-            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        title: Text(offer.orgName ?? 'Offer Details',
-            style: TextStyle(color: Colors.white)),
-        iconTheme: IconThemeData(color: Colors.white),
+        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        title: Builder(
+          builder: (context) {
+            double fontSize = MediaQuery.of(context).size.width * 0.045;
+            return Text(
+              offer.orgName ?? 'Offer Details',
+              style: TextStyle(color: Colors.white, fontSize: fontSize, fontWeight: FontWeight.w500),
+            );
+          },
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -30,10 +36,11 @@ class ClaimedOfferDetailPage extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Prescription:',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                  SizedBox(height: 8),
+                  const Text(
+                    'Prescription:',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: Image.network(
@@ -42,21 +49,21 @@ class ClaimedOfferDetailPage extends StatelessWidget {
                       width: double.infinity,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) =>
-                          const Text('Image not available'),
+                      const Text('Image not available'),
                       loadingBuilder: (context, child, loadingProgress) {
                         if (loadingProgress == null) return child;
                         return Center(
                           child: CircularProgressIndicator(
                             value: loadingProgress.expectedTotalBytes != null
                                 ? loadingProgress.cumulativeBytesLoaded /
-                                    (loadingProgress.expectedTotalBytes!)
+                                (loadingProgress.expectedTotalBytes!)
                                 : null,
                           ),
                         );
                       },
                     ),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                 ],
               ),
 
@@ -65,39 +72,54 @@ class ClaimedOfferDetailPage extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Medicines:',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  const Text(
+                    'Medicines:',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
                   ...offer.medicines!.map((medicine) => Padding(
-                        padding: const EdgeInsets.only(top: 4.0),
-                        child: Text(
-                          '• ${medicine.medicineName} (Container ID: ${medicine.medicineContainerId}, Qty: ${medicine.quantity})',
-                          style: TextStyle(fontSize: 13),
-                        ),
-                      )),
+                    padding: const EdgeInsets.only(top: 4.0),
+                    child: Text(
+                      '• ${medicine.medicineName} (Container ID: ${medicine.medicineContainerId}, Qty: ${medicine.quantity})',
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  )),
                 ],
               ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-            Text('Claimed On:',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            Text('Claimed on: ${offer.createdAt}',
-                style: TextStyle(color: Colors.grey[600], fontSize: 13)),
-            SizedBox(height: 20),
+            const Text(
+              'Claimed On:',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            Text(
+              'Claimed on: ${offer.createdAt}',
+              style: TextStyle(color: Colors.grey[600], fontSize: 13),
+            ),
+            const SizedBox(height: 20),
 
-            // Organization Address
-            Text('Address:',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            Text('${offer.orgAddress}, ${offer.orgCity}, ${offer.orgState}',
-                style: TextStyle(fontSize: 14)),
-            SizedBox(height: 20),
+            const Text(
+              'Address:',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            Text(
+              '${offer.orgAddress}, ${offer.orgCity}, ${offer.orgState}',
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 20),
 
-            // Contact Info
-            Text('Contact Info:',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            Text('Contact: ${offer.orgMobile}', style: TextStyle(fontSize: 14)),
-            SizedBox(height: 4),
-            Text('Email: ${offer.orgEmail}', style: TextStyle(fontSize: 14)),
+            const Text(
+              'Contact Info:',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            Text(
+              'Contact: ${offer.orgMobile}',
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Email: ${offer.orgEmail}',
+              style: const TextStyle(fontSize: 14),
+            ),
           ],
         ),
       ),
