@@ -585,12 +585,34 @@ class _EventDetailPageState extends State<EventDetailPage> {
           children: [
             if (widget.event.eventImage != null &&
                 widget.event.eventImage!.isNotEmpty) ...[
-              Center(
+              GestureDetector(
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (_) => Dialog(
+                      backgroundColor: Colors.black,
+                      insetPadding: const EdgeInsets.all(10),
+                      child: InteractiveViewer(
+                        panEnabled: true,
+                        boundaryMargin: const EdgeInsets.all(20),
+                        minScale: 0.5,
+                        maxScale: 4.0,
+                        child: Image.network(
+                          widget.event.eventImage!,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => const Center(
+                            child: Icon(Icons.broken_image, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
                     constraints: const BoxConstraints(
-                      maxHeight: 300,
+                      maxHeight: 500,
                       maxWidth: 400,
                     ),
                     child: Image.network(

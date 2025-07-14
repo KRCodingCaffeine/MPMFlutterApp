@@ -242,7 +242,8 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
       context: context,
       builder: (context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           backgroundColor: Colors.grey[100],
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -266,7 +267,8 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                     final headData = controller.familyHeadData.value;
                     if (headData != null) {
                       return Text(
-                        "Current Head: ${headData.firstName ?? ''} ${headData.lastName ?? ''}".trim(),
+                        "Current Head: ${headData.firstName ?? ''} ${headData.lastName ?? ''}"
+                            .trim(),
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       );
                     }
@@ -290,10 +292,10 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                             enabledBorder: const OutlineInputBorder(
                                 borderSide: BorderSide(color: Colors.black)),
                             focusedBorder: const OutlineInputBorder(
-                                borderSide:
-                                BorderSide(color: Colors.black38, width: 1)),
+                                borderSide: BorderSide(
+                                    color: Colors.black38, width: 1)),
                             contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 20),
+                                const EdgeInsets.symmetric(horizontal: 20),
                             labelStyle: const TextStyle(color: Colors.black),
                           ),
                           child: DropdownButton<String>(
@@ -308,13 +310,14 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                             value: selectedMember.value,
                             items: controller.familyDataList.value
                                 .where((member) =>
-                            member.memberId !=
-                                controller.familyHeadData.value?.memberId)
+                                    member.memberId !=
+                                    controller.familyHeadData.value?.memberId)
                                 .map((member) {
                               return DropdownMenuItem<String>(
                                 value: member.memberId,
                                 child: Text(
-                                    "${member.firstName ?? ''} ${member.lastName ?? ''}".trim()),
+                                    "${member.firstName ?? ''} ${member.lastName ?? ''}"
+                                        .trim()),
                               );
                             }).toList(),
                             onChanged: (String? newValue) {
@@ -349,11 +352,12 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                     ),
                                   ),
                                 );
-                              } else if (controller.rxStatusRelationType.value ==
+                              } else if (controller
+                                      .rxStatusRelationType.value ==
                                   Status.ERROR) {
                                 return const Expanded(
                                     child:
-                                    Text('Failed to load relation types'));
+                                        Text('Failed to load relation types'));
                               } else if (controller
                                   .relationShipTypeList.isEmpty) {
                                 return const Expanded(
@@ -369,17 +373,18 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                           : null,
                                       border: const OutlineInputBorder(
                                           borderSide:
-                                          BorderSide(color: Colors.black)),
+                                              BorderSide(color: Colors.black)),
                                       enabledBorder: const OutlineInputBorder(
                                           borderSide:
-                                          BorderSide(color: Colors.black)),
+                                              BorderSide(color: Colors.black)),
                                       focusedBorder: const OutlineInputBorder(
                                           borderSide: BorderSide(
                                               color: Colors.black38, width: 1)),
-                                      contentPadding: const EdgeInsets.symmetric(
-                                          horizontal: 20),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 20),
                                       labelStyle:
-                                      const TextStyle(color: Colors.black),
+                                          const TextStyle(color: Colors.black),
                                     ),
                                     child: DropdownButton<String>(
                                       dropdownColor: Colors.white,
@@ -398,14 +403,14 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                           .map((RelationData relation) {
                                         return DropdownMenuItem<String>(
                                           value: relation.id.toString(),
-                                          child: Text(
-                                              relation.name ?? 'Unknown'),
+                                          child:
+                                              Text(relation.name ?? 'Unknown'),
                                         );
                                       }).toList(),
                                       onChanged: (String? newValue) {
                                         if (newValue != null) {
-                                          controller.setSelectRelationShip(
-                                              newValue);
+                                          controller
+                                              .setSelectRelationShip(newValue);
                                         }
                                       },
                                     ),
@@ -427,8 +432,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                         child: OutlinedButton(
                           onPressed: () => Navigator.pop(context),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor:
-                            ColorHelperClass.getColorFromHex(
+                            foregroundColor: ColorHelperClass.getColorFromHex(
                                 ColorResources.red_color),
                             side: BorderSide(
                                 color: ColorHelperClass.getColorFromHex(
@@ -441,26 +445,26 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                         ),
                       ),
                       const SizedBox(width: 10),
-
                       Expanded(
                         child: ElevatedButton(
                           onPressed: isChangeEnabled
                               ? () async {
-                            if (selectedMember.value != null &&
-                                controller.selectRelationShipType.value.isNotEmpty) {
-                              final success = await controller.changeFamilyHead(
-                                selectedMember.value!,
-                                controller.selectRelationShipType.value,
-                              );
-                              if (success) {
-                                Navigator.pop(context);
-                              }
-                            }
-                          }
+                                  if (selectedMember.value != null &&
+                                      controller.selectRelationShipType.value
+                                          .isNotEmpty) {
+                                    final success =
+                                        await controller.changeFamilyHead(
+                                      selectedMember.value!,
+                                      controller.selectRelationShipType.value,
+                                    );
+                                    if (success) {
+                                      Navigator.pop(context);
+                                    }
+                                  }
+                                }
                               : null,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                            ColorHelperClass.getColorFromHex(
+                            backgroundColor: ColorHelperClass.getColorFromHex(
                                 ColorResources.red_color),
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
@@ -470,13 +474,13 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                           child: Obx(() {
                             return controller.familyloading.value
                                 ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
                                 : const Text("Change Head");
                           }),
                         ),
@@ -952,8 +956,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                   OutlinedButton(
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor:
-                      ColorHelperClass.getColorFromHex(
+                      foregroundColor: ColorHelperClass.getColorFromHex(
                           ColorResources.red_color),
                       side: const BorderSide(color: Colors.red),
                       shape: RoundedRectangleBorder(
@@ -967,8 +970,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                       controller.updateFamilyRelation(context, index);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                      ColorHelperClass.getColorFromHex(
+                      backgroundColor: ColorHelperClass.getColorFromHex(
                           ColorResources.red_color),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
@@ -1154,6 +1156,86 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                         colorText: Colors.white,
                                         snackPosition: SnackPosition.BOTTOM,
                                       );
+                                    }
+
+                                    final mobile = regiController
+                                        .mobileController.value.text
+                                        .trim();
+                                    final whatsapp = regiController
+                                        .whatappmobileController.value.text
+                                        .trim();
+
+                                    if (mobile.length != 10 ||
+                                        !RegExp(r'^[0-9]+$').hasMatch(mobile)) {
+                                      Get.snackbar(
+                                        "", // Empty because we use titleText below
+                                        "",
+                                        titleText: const Text(
+                                          "Add New Family Member",
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        messageText: const Text(
+                                          "Invalid Mobile Number.",
+                                          style: TextStyle(
+                                            color: Colors.red,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        backgroundColor: Colors.white,
+                                        snackPosition: SnackPosition.BOTTOM,
+                                        duration: Duration(seconds: 2),
+                                        margin: const EdgeInsets.all(12),
+                                        borderRadius: 8,
+                                        boxShadows: [
+                                          BoxShadow(
+                                            color: Colors.black26,
+                                            blurRadius: 6,
+                                            offset: Offset(0, 2),
+                                          )
+                                        ],
+                                      );
+                                      return;
+                                    }
+
+                                    if (whatsapp.length != 10 ||
+                                        !RegExp(r'^[0-9]+$')
+                                            .hasMatch(whatsapp)) {
+                                      Get.snackbar(
+                                        "",
+                                        "",
+                                        titleText: const Text(
+                                          "Add New Family Member",
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        messageText: const Text(
+                                          "Invalid WhatsApp Number.",
+                                          style: TextStyle(
+                                            color: Colors.red,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        backgroundColor: Colors.white,
+                                        snackPosition: SnackPosition.BOTTOM,
+                                        duration: Duration(seconds: 2),
+                                        margin: const EdgeInsets.all(12),
+                                        borderRadius: 8,
+                                        boxShadows: [
+                                          BoxShadow(
+                                            color: Colors.black26,
+                                            blurRadius: 6,
+                                            offset: Offset(0, 2),
+                                          )
+                                        ],
+                                      );
+                                      return;
                                     }
 
                                     if (regiController
@@ -1524,22 +1606,110 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                 const SizedBox(height: 30),
 
                                 // Mobile Number Field
-                                _buildEditableField(
-                                  "Mobile Number *",
-                                  regiController.mobileController.value,
-                                  "Mobile Number",
-                                  "",
-                                  text: TextInputType.phone,
+
+                                // Mobile Number Field with validation
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildEditableField(
+                                      "Mobile Number *",
+                                      regiController.mobileController.value,
+                                      "Mobile Number",
+                                      "Mobile number is required",
+                                      text: TextInputType.phone,
+                                      isRequired: true,
+                                      maxLength: 10,
+                                      onChanged: (value) {
+                                        if (value.length == 10) {
+                                          regiController
+                                              .checkMobileExists(value);
+                                        } else {
+                                          regiController
+                                              .mobileExistsMessage.value = '';
+                                          regiController.isMobileValid.value =
+                                              false;
+                                        }
+                                      },
+                                    ),
+                                    Obx(() {
+                                      if (regiController
+                                          .isCheckingMobile.value) {
+                                        return const Padding(
+                                          padding: EdgeInsets.only(
+                                              left: 8.0, top: 4),
+                                          child: SizedBox(
+                                            height: 16,
+                                            width: 16,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.redAccent,
+                                            ),
+                                          ),
+                                        );
+                                      } else if (regiController
+                                          .mobileExistsMessage
+                                          .value
+                                          .isNotEmpty) {
+                                        return Padding(
+                                          padding: const EdgeInsets.only(
+                                              left: 8.0, top: 4),
+                                          child: Text(
+                                            regiController
+                                                .mobileExistsMessage.value,
+                                            style: TextStyle(
+                                              color: regiController
+                                                      .isMobileValid.value
+                                                  ? Colors.green
+                                                  : Colors.red,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                      return const SizedBox.shrink();
+                                    })
+                                  ],
                                 ),
                                 const SizedBox(height: 30),
 
-                                // WhatsApp Number Field
-                                _buildEditableField(
-                                  "WhatsApp Number *",
-                                  regiController.whatappmobileController.value,
-                                  "WhatsApp Number",
-                                  "",
-                                  text: TextInputType.phone,
+                                // WhatsApp Number Field with validation
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildEditableField(
+                                      "WhatsApp Number *",
+                                      regiController
+                                          .whatappmobileController.value,
+                                      "WhatsApp Number",
+                                      "WhatsApp number is required",
+                                      text: TextInputType.phone,
+                                      isRequired: true,
+                                      maxLength: 10,
+                                    ),
+                                    Obx(() {
+                                      if (regiController.whatappmobileController
+                                                  .value.text.length ==
+                                              10 &&
+                                          !RegExp(r'^[0-9]+$').hasMatch(
+                                              regiController
+                                                  .whatappmobileController
+                                                  .value
+                                                  .text)) {
+                                        return const Padding(
+                                          padding: EdgeInsets.only(
+                                              left: 8.0, top: 4),
+                                          child: Text(
+                                            "Invalid WhatsApp number",
+                                            style: TextStyle(
+                                              color: Colors.red,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                      return const SizedBox.shrink();
+                                    })
+                                  ],
                                 ),
                                 const SizedBox(height: 30),
 
@@ -2335,6 +2505,8 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
     bool obscureText = false,
     required TextInputType text,
     bool isRequired = false,
+    int? maxLength,
+    ValueChanged<String>? onChanged,
     bool readOnly = false,
   }) {
     return Container(
@@ -2343,6 +2515,11 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
         keyboardType: text,
         controller: controller,
         obscureText: obscureText,
+        maxLength: maxLength,
+        onChanged: onChanged,
+        buildCounter: (BuildContext context,
+                {int? currentLength, int? maxLength, bool? isFocused}) =>
+            null,
         readOnly: readOnly,
         style: const TextStyle(color: Colors.black),
         decoration: InputDecoration(
@@ -2367,6 +2544,24 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
         validator: (value) {
           if (isRequired && (value == null || value.isEmpty)) {
             return validationMessage;
+          }
+          if (text == TextInputType.phone &&
+              value != null &&
+              value.length != 10) {
+            return 'Mobile number must be 10 digits';
+          }
+          if (value != null &&
+              value.length == 10 &&
+              text == TextInputType.phone &&
+              !RegExp(r'^[0-9]+$').hasMatch(value)) {
+            return 'Invalid mobile number';
+          }
+          if (value != null &&
+              value.length == 10 &&
+              controller == regiController.mobileController.value &&
+              regiController.mobileExistsMessage.value
+                  .contains('already exists')) {
+            return 'Mobile number already exists';
           }
           return null;
         },

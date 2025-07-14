@@ -121,6 +121,11 @@ class _HomeViewState extends State<HomeView> {
               visible: controller.showDashboardReviewFlag.value,
               child: _buildJanganaNotice())),
 
+          Obx(() => Visibility(
+            visible: controller.showEmailVerifyBanner.value,
+            child: _buildEmailVerifyBanner(),
+          )),
+
           Center(
             child: Obx(() => Visibility(
               visible: controller.isPay.value,
@@ -172,6 +177,36 @@ class _HomeViewState extends State<HomeView> {
       child: _buildNoticeContainer("Your Janaganana is pending. Please click here to complete it."),
     );
   }
+
+  Widget _buildEmailVerifyBanner() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Container(
+        padding: const EdgeInsets.all(16.0),
+        decoration: BoxDecoration(
+          color: Colors.orange[100],
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.email_outlined, color: Colors.deepOrange),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                "Your email is not verified. Click the button to send verification email.",
+                style: const TextStyle(color: Colors.black),
+              ),
+            ),
+            TextButton(
+              onPressed: () => controller.sendVerificationEmail(),
+              child: const Text("Verify"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
 
   Widget _buildNoticeContainer(String message) {
     return Padding(

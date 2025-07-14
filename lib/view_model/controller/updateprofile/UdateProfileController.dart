@@ -14,7 +14,6 @@ import 'package:mpm/model/GetProfile/GetProfileData.dart';
 import 'package:mpm/model/GetProfile/Occupation.dart';
 import 'package:mpm/model/GetProfile/Qualification.dart';
 import 'package:mpm/model/Occupation/OccupationData.dart';
-import 'package:mpm/model/Occupation/addoccuption/AddOccuptionModel.dart';
 import 'package:mpm/model/OccupationSpec/OccuptionSpecData.dart';
 import 'package:mpm/model/Qualification/QualificationData.dart';
 import 'package:mpm/model/QualificationCategory/QualificationCategoryModel.dart';
@@ -26,15 +25,13 @@ import 'package:mpm/model/relation/RelationData.dart';
 import 'package:mpm/repository/add_existing_family_member_repository/add_existing_family_member_repo.dart';
 import 'package:mpm/repository/change_family_head_repository/change_family_head_repo.dart';
 import 'package:mpm/repository/register_repository/register_repo.dart';
+import 'package:mpm/repository/send_verification_email_repository/send_verification_email_repo.dart';
 import 'package:mpm/repository/update_repository/UpdateProfileRepository.dart';
-import 'package:mpm/utils/NotificationDatabase.dart';
-
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/urls.dart';
 import 'package:http/http.dart' as http;
-
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/notification/NotificationController.dart';
 
@@ -45,6 +42,7 @@ class UdateProfileController extends GetxController {
   var showDashboardReviewFlag = false.obs;
   var userMaritalStatus = "".obs;
   var is_jangana = "".obs;
+  var emailVerificationStatus = 0.obs; // 0 means not verified, 1 means verified
   var membership_approval_status_id = "".obs;
   var documentDynamicImage = "".obs;
   var isLoadingPayment = false.obs;
@@ -54,6 +52,7 @@ class UdateProfileController extends GetxController {
       ChangeFamilyHeadRepository();
 
   var isPay = false.obs;
+  RxBool showEmailVerifyBanner = false.obs;
 
   void changeTab(int index) async {
     if (index == 3) {
@@ -404,7 +403,7 @@ class UdateProfileController extends GetxController {
       var member_type_id = getUserData.value.membershipTypeId.toString();
       var memberapprovalstatusid =
           getUserData.value.membershipApprovalStatusId.toString();
-      var isPaymentStatus = getUserData.value.is_payment_received.toString();
+      var isPaymentStatus = getUserData.value.isPaymentReceived.toString();
       if (member_type_id == "1" || member_type_id == "3") {
         if (int.parse(memberapprovalstatusid) < 5 && isPaymentStatus == "0") {
           isPay.value = true;
@@ -414,6 +413,7 @@ class UdateProfileController extends GetxController {
       } else {
         isPay.value = false;
       }
+
       officePhone.value = getUserData.value.mobile.toString();
 
       if (getUserData.value.qualification != null) {
@@ -1060,6 +1060,27 @@ class UdateProfileController extends GetxController {
     } finally {}
   }
 
+  Future<void> sendVerificationEmail() async {
+    try {
+      final memberId = this.memberId.value;
+      if (memberId.isEmpty) {
+        Get.snackbar('Error', 'Member ID not found');
+        return;
+      }
+
+      final response = await SendVerificationEmailRepository().sendVerificationEmail(memberId);
+      if (response.status == true) {
+        Get.snackbar('Success', 'Verification email sent successfully');
+        // Optionally refresh the profile to check if status changed
+        await getUserProfile();
+      } else {
+        Get.snackbar('Error', response.data?.message ?? 'Failed to send verification email');
+      }
+    } catch (e) {
+      Get.snackbar('Error', e.toString());
+    }
+  }
+
   void userUpdateProfile(BuildContext context, String type) async {
     //print("member"+memberId.value);
     CheckUserData2? userData = await SessionManager.getSession();
@@ -1281,10 +1302,41 @@ class UdateProfileController extends GetxController {
 
   void userAddFamily() async {
     CheckUserData2? userData = await SessionManager.getSession();
+    NewMemberController regiController = Get.put(NewMemberController());
+
+    // First check if member with same first name already exists in this family
+    final newFirstName = regiController.firstNameController.value.text.trim().toLowerCase();
+
+    // Check against family head
+    if (familyHeadData.value?.firstName?.toLowerCase() == newFirstName) {
+      Get.snackbar(
+        "Error",
+        "A family member with this first name already exists",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+      return;
+    }
+
+    // Check against existing family members
+    final exists = familyDataList.any((member) =>
+    member.firstName?.toLowerCase() == newFirstName);
+
+    if (exists) {
+      Get.snackbar(
+        "Error",
+        "A family member with this first name already exists",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+      return;
+    }
+
 
     final url = Uri.parse(Urls.addmemberorfamily_url);
     print("vcgdhfh" + Urls.addmemberorfamily_url);
-    NewMemberController regiController = Get.put(NewMemberController());
 
     familyloading.value = true;
 
