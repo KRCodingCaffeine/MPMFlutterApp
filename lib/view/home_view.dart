@@ -179,34 +179,111 @@ class _HomeViewState extends State<HomeView> {
   }
 
   Widget _buildEmailVerifyBanner() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Container(
-        padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-          color: Colors.orange[100],
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.email_outlined, color: Colors.deepOrange),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                "Your email is not verified. Click the button to send verification email.",
-                style: const TextStyle(color: Colors.black),
-              ),
+    return Obx(() {
+      // Only show if email is not verified
+      if (controller.emailVerifyStatus.value != "0") {
+        return const SizedBox.shrink();
+      }
+
+      return GestureDetector(
+        onTap: () => _showVerificationDialog(context),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Container(
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              color: Colors.orange[100],
+              borderRadius: BorderRadius.circular(8.0),
+              border: Border.all(color: Colors.orange),
             ),
-            TextButton(
-              onPressed: () => controller.sendVerificationEmail(),
-              child: const Text("Verify"),
+            child: Row(
+              children: [
+                const Icon(Icons.email_outlined, color: Colors.deepOrange),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    "Your email is not verified. Please click here to verify it.",
+                    style: TextStyle(
+                      color: Colors.orange[800],
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 
+  void _showVerificationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Email Verification",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+          content: const Text(
+            "We'll send a verification link to your email address. Please check your inbox.",
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                controller.sendVerificationEmail();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Send"),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   Widget _buildNoticeContainer(String message) {
     return Padding(

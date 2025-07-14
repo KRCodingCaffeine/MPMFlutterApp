@@ -42,6 +42,7 @@ class UdateProfileController extends GetxController {
   var showDashboardReviewFlag = false.obs;
   var userMaritalStatus = "".obs;
   var is_jangana = "".obs;
+  var emailVerifyStatus = "".obs;
   var emailVerificationStatus = 0.obs; // 0 means not verified, 1 means verified
   var membership_approval_status_id = "".obs;
   var documentDynamicImage = "".obs;
@@ -302,6 +303,8 @@ class UdateProfileController extends GetxController {
       mothersName.value = getUserData.value.motherName.toString();
       mobileNumber.value = getUserData.value.mobile.toString();
       email.value = getUserData.value.email.toString();
+      emailVerifyStatus.value = getUserData.value.emailVerifyStatus.toString();
+      showEmailVerifyBanner.value = emailVerifyStatus.value == "0";
       dob.value = getUserData.value.dob.toString();
       maritalStatus.value = getUserData.value.maritalStatus.toString();
       marital_status_id.value = getUserData.value.maritalStatusId.toString();
@@ -1064,20 +1067,34 @@ class UdateProfileController extends GetxController {
     try {
       final memberId = this.memberId.value;
       if (memberId.isEmpty) {
-        Get.snackbar('Error', 'Member ID not found');
-        return;
+        throw Exception("Member ID not found");
       }
 
       final response = await SendVerificationEmailRepository().sendVerificationEmail(memberId);
+
       if (response.status == true) {
-        Get.snackbar('Success', 'Verification email sent successfully');
-        // Optionally refresh the profile to check if status changed
+        Get.snackbar(
+          'Success',
+          response.data?.message ?? 'Verification email sent successfully',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          duration: Duration(seconds: 3),
+        );
+
         await getUserProfile();
       } else {
-        Get.snackbar('Error', response.data?.message ?? 'Failed to send verification email');
+        throw Exception(response.data?.message ?? 'Failed to send verification email');
       }
     } catch (e) {
-      Get.snackbar('Error', e.toString());
+      Get.snackbar(
+        'Error',
+        e.toString(),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: Duration(seconds: 3),
+      );
     }
   }
 

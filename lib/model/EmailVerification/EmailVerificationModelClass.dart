@@ -1,7 +1,7 @@
 class EmailVerificationModelClass {
-  bool? status;
-  int? code;
-  VerificationEmailData? data;
+  final bool? status;
+  final int? code;
+  final VerificationEmailData? data;
 
   EmailVerificationModelClass({this.status, this.code, this.data});
 
@@ -9,13 +9,15 @@ class EmailVerificationModelClass {
     return EmailVerificationModelClass(
       status: json['status'],
       code: json['code'],
-      data: json['data'] != null ? VerificationEmailData.fromJson(json['data']) : null,
+      data: json['data'] != null
+          ? VerificationEmailData.fromJson(json['data'])
+          : null,
     );
   }
 }
 
 class VerificationEmailData {
-  String? message;
+  final String? message;
 
   VerificationEmailData({this.message});
 
