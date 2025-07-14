@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "290556225048",
+    "project_id": "maheshvari-309e5",
+    "storage_bucket": "maheshvari-309e5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:290556225048:android:00bb58b73db5d77421056d",
+        "android_client_info": {
+          "package_name": "com.mpm.member"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDHEd9gyHTplxltql967jifbmeGyLkK1i4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

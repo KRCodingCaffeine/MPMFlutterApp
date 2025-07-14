@@ -645,8 +645,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         context: context,
                         isScrollControlled: true,
                         backgroundColor: Colors.black,
-                        builder: (_) => const YouTubeBottomSheet(
-                          youtubeUrl: 'https://www.youtube.com/watch?v=ix9cRaBkVe0',
+                        builder: (_) => YouTubeBottomSheet(
+                          youtubeUrl: url,
                         ),
                       );
                     } else {
