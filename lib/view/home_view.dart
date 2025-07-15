@@ -60,6 +60,12 @@ class _HomeViewState extends State<HomeView> {
         debugPrint("Invalid or missing member ID.");
       }
     });
+    ever(controller.emailVerifyStatus, (value) {
+      if (value == "1") {
+        // Email verified, no need to show banner
+        setState(() {});
+      }
+    });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       screenWidth = MediaQuery.of(context).size.width * 0.7;
@@ -187,32 +193,7 @@ class _HomeViewState extends State<HomeView> {
 
       return GestureDetector(
         onTap: () => _showVerificationDialog(context),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Container(
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: Colors.orange[100],
-              borderRadius: BorderRadius.circular(8.0),
-              border: Border.all(color: Colors.orange),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.email_outlined, color: Colors.deepOrange),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    "Your email is not verified. Please click here to verify it.",
-                    style: TextStyle(
-                      color: Colors.orange[800],
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+        child: _buildNoticeContainer("Your email is not verified. Please click here to verify it."),
       );
     });
   }

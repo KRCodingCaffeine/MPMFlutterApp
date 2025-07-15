@@ -81,8 +81,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor:
-            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Builder(
           builder: (context) {
             double fontSize = MediaQuery.of(context).size.width * 0.045;
@@ -127,42 +126,46 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
           ),
         ],
       ),
-      floatingActionButton: SpeedDial(
-        icon: isSpeedDialOpen ? Icons.close : Icons.add,
-        activeIcon: Icons.close,
-        backgroundColor:
-            ColorHelperClass.getColorFromHex(ColorResources.red_color),
-        foregroundColor: Colors.white,
-        overlayOpacity: 0.5,
-        spacing: 10,
-        spaceBetweenChildren: 10,
-        onOpen: () => setState(() => isSpeedDialOpen = true),
-        onClose: () => setState(() => isSpeedDialOpen = false),
-        children: [
-          SpeedDialChild(
-            child: const Icon(Icons.person_add),
-            backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+      floatingActionButton: Obx(() {
+        // Only show FAB if current user is family head
+        if (controller.familyHeadData.value?.memberId == currentMemberId) {
+          return SpeedDial(
+            icon: isSpeedDialOpen ? Icons.close : Icons.add,
+            activeIcon: Icons.close,
+            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
             foregroundColor: Colors.white,
-            label: 'New Member',
-            labelStyle: TextStyle(fontSize: 16),
-            onTap: () {
-              _showAddModalSheet(context);
-            },
-          ),
-          SpeedDialChild(
-            child: const Icon(Icons.person),
-            backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
-            foregroundColor: Colors.white,
-            label: 'Existing Member',
-            labelStyle: TextStyle(fontSize: 16),
-            onTap: () {
-              _showExistingMemberModal(context);
-            },
-          ),
-        ],
-      ),
+            overlayOpacity: 0.5,
+            spacing: 10,
+            spaceBetweenChildren: 10,
+            onOpen: () => setState(() => isSpeedDialOpen = true),
+            onClose: () => setState(() => isSpeedDialOpen = false),
+            children: [
+              SpeedDialChild(
+                child: const Icon(Icons.person_add),
+                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                label: 'New NM Member',
+                labelStyle: TextStyle(fontSize: 16),
+                onTap: () {
+                  _showAddModalSheet(context);
+                },
+              ),
+              SpeedDialChild(
+                child: const Icon(Icons.person),
+                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                label: 'Existing Member',
+                labelStyle: TextStyle(fontSize: 16),
+                onTap: () {
+                  _showExistingMemberModal(context);
+                },
+              ),
+            ],
+          );
+        } else {
+          return SizedBox.shrink(); // Hide FAB if not family head
+        }
+      }),
     );
   }
 
@@ -369,7 +372,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                   child: InputDecorator(
                                     decoration: InputDecoration(
                                       labelText: selectedValue.isNotEmpty
-                                          ? 'Select Relation *'
+                                          ? 'Select Current Head Relation *'
                                           : null,
                                       border: const OutlineInputBorder(
                                           borderSide:
@@ -1158,140 +1161,46 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                       );
                                     }
 
-                                    final mobile = regiController
-                                        .mobileController.value.text
-                                        .trim();
-                                    final whatsapp = regiController
-                                        .whatappmobileController.value.text
-                                        .trim();
-
-                                    if (mobile.length != 10 ||
-                                        !RegExp(r'^[0-9]+$').hasMatch(mobile)) {
-                                      Get.snackbar(
-                                        "", // Empty because we use titleText below
-                                        "",
-                                        titleText: const Text(
-                                          "Add New Family Member",
-                                          style: TextStyle(
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                        messageText: const Text(
-                                          "Invalid Mobile Number.",
-                                          style: TextStyle(
-                                            color: Colors.red,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                        backgroundColor: Colors.white,
-                                        snackPosition: SnackPosition.BOTTOM,
-                                        duration: Duration(seconds: 2),
-                                        margin: const EdgeInsets.all(12),
-                                        borderRadius: 8,
-                                        boxShadows: [
-                                          BoxShadow(
-                                            color: Colors.black26,
-                                            blurRadius: 6,
-                                            offset: Offset(0, 2),
-                                          )
-                                        ],
-                                      );
-                                      return;
-                                    }
-
-                                    if (whatsapp.length != 10 ||
-                                        !RegExp(r'^[0-9]+$')
-                                            .hasMatch(whatsapp)) {
-                                      Get.snackbar(
-                                        "",
-                                        "",
-                                        titleText: const Text(
-                                          "Add New Family Member",
-                                          style: TextStyle(
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                        messageText: const Text(
-                                          "Invalid WhatsApp Number.",
-                                          style: TextStyle(
-                                            color: Colors.red,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                        backgroundColor: Colors.white,
-                                        snackPosition: SnackPosition.BOTTOM,
-                                        duration: Duration(seconds: 2),
-                                        margin: const EdgeInsets.all(12),
-                                        borderRadius: 8,
-                                        boxShadows: [
-                                          BoxShadow(
-                                            color: Colors.black26,
-                                            blurRadius: 6,
-                                            offset: Offset(0, 2),
-                                          )
-                                        ],
-                                      );
-                                      return;
-                                    }
-
-                                    if (regiController
-                                            .selectMemberSalutation.value ==
-                                        "") {
+                                    // Validate required fields
+                                    if (regiController.selectMemberSalutation.value == "") {
                                       showErrorSnackbar("Select Salutation");
                                       return;
                                     }
-                                    if (controller
-                                            .selectRelationShipType.value ==
-                                        "") {
-                                      showErrorSnackbar(
-                                          "Select Member Relation");
+                                    if (controller.selectRelationShipType.value == "") {
+                                      showErrorSnackbar("Select Member Relation");
                                       return;
                                     }
-                                    if (regiController.selectedGender.value ==
-                                        "") {
+                                    if (regiController.firstNameController.value == "") {
+                                      showErrorSnackbar("Enter First Name");
+                                      return;
+                                    }
+                                    if (regiController.lastNameController.value == "") {
+                                      showErrorSnackbar("Enter Surname");
+                                      return;
+                                    }
+                                    if (regiController.fathersnameController.value == "") {
+                                      showErrorSnackbar("Enter Father's Name");
+                                      return;
+                                    }
+                                    if (regiController.selectedGender.value == "") {
                                       showErrorSnackbar("Select Gender");
                                       return;
                                     }
-                                    if (regiController.selectBloodGroup.value ==
-                                        "") {
-                                      showErrorSnackbar("Select Blood Group");
-                                      return;
-                                    }
-                                    if (regiController.dateController.text ==
-                                        "") {
+                                    if (regiController.dateController.text == "") {
                                       showErrorSnackbar("Enter Date of Birth");
                                       return;
                                     }
-                                    if (regiController.selectMarital.value ==
-                                        "") {
-                                      showErrorSnackbar(
-                                          "Select Marital status");
+                                    if (regiController.selectMarital.value == "") {
+                                      showErrorSnackbar("Select Marital status");
                                       return;
                                     }
-                                    if (regiController.MaritalAnnivery.value ==
-                                        true) {
-                                      if (regiController.marriagedateController
-                                              .value.text ==
-                                          '') {
-                                        showErrorSnackbar(
-                                            "Select Marriage Date");
+                                    if (regiController.MaritalAnnivery.value == true) {
+                                      if (regiController.marriagedateController.value.text == '') {
+                                        showErrorSnackbar("Select Marriage Date");
                                         return;
                                       }
                                     } else {
-                                      regiController.marriagedateController
-                                          .value.text = "";
-                                    }
-
-                                    if (regiController
-                                            .selectMemberShipType.value ==
-                                        "") {
-                                      showErrorSnackbar(
-                                          "Select membership type");
-                                      return;
+                                      regiController.marriagedateController.value.text = "";
                                     }
                                     controller.userAddFamily();
                                   }
@@ -1606,110 +1515,24 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                 const SizedBox(height: 30),
 
                                 // Mobile Number Field
-
-                                // Mobile Number Field with validation
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _buildEditableField(
-                                      "Mobile Number *",
-                                      regiController.mobileController.value,
-                                      "Mobile Number",
-                                      "Mobile number is required",
-                                      text: TextInputType.phone,
-                                      isRequired: true,
-                                      maxLength: 10,
-                                      onChanged: (value) {
-                                        if (value.length == 10) {
-                                          regiController
-                                              .checkMobileExists(value);
-                                        } else {
-                                          regiController
-                                              .mobileExistsMessage.value = '';
-                                          regiController.isMobileValid.value =
-                                              false;
-                                        }
-                                      },
-                                    ),
-                                    Obx(() {
-                                      if (regiController
-                                          .isCheckingMobile.value) {
-                                        return const Padding(
-                                          padding: EdgeInsets.only(
-                                              left: 8.0, top: 4),
-                                          child: SizedBox(
-                                            height: 16,
-                                            width: 16,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: Colors.redAccent,
-                                            ),
-                                          ),
-                                        );
-                                      } else if (regiController
-                                          .mobileExistsMessage
-                                          .value
-                                          .isNotEmpty) {
-                                        return Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 8.0, top: 4),
-                                          child: Text(
-                                            regiController
-                                                .mobileExistsMessage.value,
-                                            style: TextStyle(
-                                              color: regiController
-                                                      .isMobileValid.value
-                                                  ? Colors.green
-                                                  : Colors.red,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        );
-                                      }
-                                      return const SizedBox.shrink();
-                                    })
-                                  ],
+                                _buildEditableField(
+                                  "Mobile Number",
+                                  regiController.mobileController.value,
+                                  "Mobile Number",
+                                  "",  // Empty validation message
+                                  text: TextInputType.phone,
+                                  maxLength: 10,
                                 ),
                                 const SizedBox(height: 30),
 
-                                // WhatsApp Number Field with validation
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _buildEditableField(
-                                      "WhatsApp Number *",
-                                      regiController
-                                          .whatappmobileController.value,
-                                      "WhatsApp Number",
-                                      "WhatsApp number is required",
-                                      text: TextInputType.phone,
-                                      isRequired: true,
-                                      maxLength: 10,
-                                    ),
-                                    Obx(() {
-                                      if (regiController.whatappmobileController
-                                                  .value.text.length ==
-                                              10 &&
-                                          !RegExp(r'^[0-9]+$').hasMatch(
-                                              regiController
-                                                  .whatappmobileController
-                                                  .value
-                                                  .text)) {
-                                        return const Padding(
-                                          padding: EdgeInsets.only(
-                                              left: 8.0, top: 4),
-                                          child: Text(
-                                            "Invalid WhatsApp number",
-                                            style: TextStyle(
-                                              color: Colors.red,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        );
-                                      }
-                                      return const SizedBox.shrink();
-                                    })
-                                  ],
+                                // WhatsApp Number Field
+                                _buildEditableField(
+                                  "WhatsApp Number",
+                                  regiController.whatappmobileController.value,
+                                  "WhatsApp Number",
+                                  "",  // Empty validation message
+                                  text: TextInputType.phone,
+                                  maxLength: 10,
                                 ),
                                 const SizedBox(height: 30),
 
@@ -1736,7 +1559,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
 
                                 // Email Field
                                 _buildEditableField(
-                                  "Email *",
+                                  "Email",
                                   regiController.emailController.value,
                                   "Email",
                                   '',
@@ -1823,10 +1646,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                             regiController.dateController.text =
                                                 formattedDate;
                                           });
-                                          String zoneId =
-                                              controller.zone_id.value.trim();
-                                          regiController.getFamilyMemberShip(
-                                              formattedDate, zoneId);
                                         }
                                       },
                                     ),
@@ -1982,7 +1801,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                               decoration: InputDecoration(
                                                 labelText:
                                                     selectedValue.isNotEmpty
-                                                        ? 'Select Blood Group *'
+                                                        ? 'Select Blood Group'
                                                         : null,
                                                 border:
                                                     const OutlineInputBorder(
@@ -2013,7 +1832,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                                 isExpanded: true,
                                                 underline: Container(),
                                                 hint: const Text(
-                                                  'Select Blood Group *',
+                                                  'Select Blood Group',
                                                   style: TextStyle(
                                                       fontWeight:
                                                           FontWeight.bold),
@@ -2288,147 +2107,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                     ),
                                   );
                                 }),
-
-                                // Membership Type Dropdown
-                                Container(
-                                  width: double.infinity,
-                                  margin:
-                                      const EdgeInsets.only(left: 5, right: 5),
-                                  child: Row(
-                                    children: [
-                                      Obx(() {
-                                        final status = regiController
-                                            .rxStatusMemberShipTYpe.value;
-
-                                        if (status == Status.LOADING) {
-                                          return const Padding(
-                                            padding: EdgeInsets.symmetric(
-                                                vertical: 10, horizontal: 22),
-                                            child: SizedBox(
-                                              height: 24,
-                                              width: 24,
-                                              child: CircularProgressIndicator(
-                                                color: Colors.redAccent,
-                                              ),
-                                            ),
-                                          );
-                                        }
-
-                                        String? message;
-                                        if (status == Status.ERROR) {
-                                          message = 'Select Date of Birth';
-                                        } else if (regiController
-                                            .memberShipList.isEmpty) {
-                                          message = 'No Membership available';
-                                        }
-
-                                        if (message != null) {
-                                          return Expanded(
-                                            child: InputDecorator(
-                                              decoration: const InputDecoration(
-                                                labelText: 'Membership *',
-                                                border: OutlineInputBorder(
-                                                  borderSide: BorderSide(
-                                                      color: Colors.black),
-                                                ),
-                                                enabledBorder:
-                                                    OutlineInputBorder(
-                                                  borderSide: BorderSide(
-                                                      color: Colors.black),
-                                                ),
-                                                focusedBorder:
-                                                    OutlineInputBorder(
-                                                  borderSide: BorderSide(
-                                                      color: Colors.black38,
-                                                      width: 1),
-                                                ),
-                                                contentPadding:
-                                                    EdgeInsets.symmetric(
-                                                        horizontal: 20,
-                                                        vertical: 16),
-                                                labelStyle: TextStyle(
-                                                    color: Colors.black),
-                                              ),
-                                              child: Text(
-                                                message,
-                                                style: const TextStyle(
-                                                  color: Colors.red,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                            ),
-                                          );
-                                        }
-
-                                        // Normal Dropdown UI
-                                        final selectedMember = regiController
-                                            .selectMemberShipType.value;
-                                        return Expanded(
-                                          child: InputDecorator(
-                                            decoration: InputDecoration(
-                                              labelText:
-                                                  selectedMember.isNotEmpty
-                                                      ? 'Membership *'
-                                                      : null,
-                                              border: const OutlineInputBorder(
-                                                borderSide: BorderSide(
-                                                    color: Colors.black),
-                                              ),
-                                              enabledBorder:
-                                                  const OutlineInputBorder(
-                                                borderSide: BorderSide(
-                                                    color: Colors.black),
-                                              ),
-                                              focusedBorder:
-                                                  const OutlineInputBorder(
-                                                borderSide: BorderSide(
-                                                    color: Colors.black38,
-                                                    width: 1),
-                                              ),
-                                              contentPadding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 20),
-                                              labelStyle: const TextStyle(
-                                                  color: Colors.black),
-                                            ),
-                                            child: DropdownButton<String>(
-                                              dropdownColor: Colors.white,
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              isExpanded: true,
-                                              underline: Container(),
-                                              hint: const Text(
-                                                'Membership *',
-                                                style: TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              ),
-                                              value: selectedMember.isNotEmpty
-                                                  ? selectedMember
-                                                  : null,
-                                              items: regiController
-                                                  .memberShipList
-                                                  .map((MemberShipData ms) {
-                                                return DropdownMenuItem<String>(
-                                                  value: ms.id.toString(),
-                                                  child: Text(
-                                                      "${ms.membershipName ?? 'Unknown'} - Rs ${ms.price ?? '0'}"),
-                                                );
-                                              }).toList(),
-                                              onChanged: (String? newValue) {
-                                                if (newValue != null) {
-                                                  regiController
-                                                      .selectMemberShipType(
-                                                          newValue);
-                                                }
-                                              },
-                                            ),
-                                          ),
-                                        );
-                                      }),
-                                    ],
-                                  ),
-                                ),
                                 const SizedBox(height: 30),
                               ],
                             ),
@@ -2498,17 +2176,17 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
   }
 
   Widget _buildEditableField(
-    String label,
-    TextEditingController controller,
-    String hintText,
-    String validationMessage, {
-    bool obscureText = false,
-    required TextInputType text,
-    bool isRequired = false,
-    int? maxLength,
-    ValueChanged<String>? onChanged,
-    bool readOnly = false,
-  }) {
+      String label,
+      TextEditingController controller,
+      String hintText,
+      String validationMessage, {
+        bool obscureText = false,
+        required TextInputType text,
+        bool isRequired = false,
+        int? maxLength,
+        ValueChanged<String>? onChanged,
+        bool readOnly = false,
+      }) {
     return Container(
       margin: const EdgeInsets.only(left: 5, right: 5),
       child: TextFormField(
@@ -2518,8 +2196,8 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
         maxLength: maxLength,
         onChanged: onChanged,
         buildCounter: (BuildContext context,
-                {int? currentLength, int? maxLength, bool? isFocused}) =>
-            null,
+            {int? currentLength, int? maxLength, bool? isFocused}) =>
+        null,
         readOnly: readOnly,
         style: const TextStyle(color: Colors.black),
         decoration: InputDecoration(
@@ -2541,30 +2219,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
             horizontal: 20,
           ),
         ),
-        validator: (value) {
-          if (isRequired && (value == null || value.isEmpty)) {
-            return validationMessage;
-          }
-          if (text == TextInputType.phone &&
-              value != null &&
-              value.length != 10) {
-            return 'Mobile number must be 10 digits';
-          }
-          if (value != null &&
-              value.length == 10 &&
-              text == TextInputType.phone &&
-              !RegExp(r'^[0-9]+$').hasMatch(value)) {
-            return 'Invalid mobile number';
-          }
-          if (value != null &&
-              value.length == 10 &&
-              controller == regiController.mobileController.value &&
-              regiController.mobileExistsMessage.value
-                  .contains('already exists')) {
-            return 'Mobile number already exists';
-          }
-          return null;
-        },
       ),
     );
   }

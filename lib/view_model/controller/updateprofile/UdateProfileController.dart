@@ -949,12 +949,14 @@ class UdateProfileController extends GetxController {
   }
 
   void checkReviewApproval() {
-    if (userMaritalStatus.value == "1" &&
+    if (memberStatusId.value == "1" &&
         membershipApprovalStatusId.value == "6") {
-      if (isJangana.value == "0") {
-        showDashboardReviewFlag.value = true;
-      } else {
-        showDashboardReviewFlag.value = false;
+      if(emailVerifyStatus.value == "1") {
+        if (isJangana.value == "0") {
+          showDashboardReviewFlag.value = true;
+        } else {
+          showDashboardReviewFlag.value = false;
+        }
       }
     }
   }
@@ -1082,7 +1084,7 @@ class UdateProfileController extends GetxController {
           duration: Duration(seconds: 3),
         );
 
-        await getUserProfile();
+        getUserProfile();
       } else {
         throw Exception(response.data?.message ?? 'Failed to send verification email');
       }
@@ -1327,30 +1329,14 @@ class UdateProfileController extends GetxController {
     // Check against family head
     if (familyHeadData.value?.firstName?.toLowerCase() == newFirstName) {
       Get.snackbar(
-        "Error",
-        "A family member with this first name already exists",
+        "Sorry",
+        "A family member with this name already exists",
         backgroundColor: Colors.red,
         colorText: Colors.white,
         snackPosition: SnackPosition.TOP,
       );
       return;
     }
-
-    // Check against existing family members
-    final exists = familyDataList.any((member) =>
-    member.firstName?.toLowerCase() == newFirstName);
-
-    if (exists) {
-      Get.snackbar(
-        "Error",
-        "A family member with this first name already exists",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-      );
-      return;
-    }
-
 
     final url = Uri.parse(Urls.addmemberorfamily_url);
     print("vcgdhfh" + Urls.addmemberorfamily_url);
@@ -1379,14 +1365,16 @@ class UdateProfileController extends GetxController {
       "mother_name": regiController.mothersnameController.value.text,
       "email": regiController.emailController.value.text,
       "whatsapp_number": regiController.whatappmobileController.value.text,
-      "mobile": regiController.mobileController.value.text,
+      "mobile": regiController.mobileController.value.text.isNotEmpty
+          ? regiController.mobileController.value.text
+          : "",
       "gender_id": regiController.selectedGender.value,
       "marital_status_id": marital_status_id,
       "blood_group_id": regiController.selectBloodGroup.value,
       "dob": regiController.dateController.text,
       "family_head_member_id": familyHeadMemberId.value,
       "relation_id": selectRelationShipType.value,
-      "member_type_id": regiController.selectMemberShipType.value,
+      "member_type_id": "2",
       "marriage_anniversary_date":
           regiController.marriagedateController.value.text,
       "salutation_id": regiController.selectMemberSalutation.value,
@@ -1424,7 +1412,7 @@ class UdateProfileController extends GetxController {
         regiController.mothersnameController.value.text = "";
         regiController.emailController.value.text = "";
         regiController.whatappmobileController.value.text = "";
-        // regiController.mobileController.value.text="";
+        regiController.mobileController.value.text="";
         regiController.selectedGender.value = "";
         regiController.selectBloodGroup.value = "";
         regiController.dateController.text = "";
