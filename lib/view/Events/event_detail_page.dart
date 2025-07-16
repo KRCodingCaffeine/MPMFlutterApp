@@ -684,8 +684,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
             const SizedBox(height: 24),
             _buildEventInfo(formattedDate, time),
             const SizedBox(height: 24),
-            _buildEventCostInfo(),
-            const SizedBox(height: 24),
+            if (widget.event.eventCostType?.toLowerCase() != 'free') ...[
+              _buildEventCostInfo(),
+              const SizedBox(height: 24),
+            ],
             if (widget.event.eventOrganiserName != null ||
                 widget.event.eventOrganiserMobile != null) ...[
               const Divider(thickness: 1, color: Colors.grey),
