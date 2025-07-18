@@ -305,12 +305,32 @@ class _EventDetailPageState extends State<EventDetailPage> {
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
-  Widget _buildEventInfo(String date, String time) {
+  Widget _buildEventInfo() {
+    final startDate = DateTime.tryParse(widget.event.dateStartsFrom ?? '');
+    final endDate = DateTime.tryParse(widget.event.dateEndTo ?? '');
+
+    final startTimeRaw = widget.event.timeStartsFrom ?? '';
+    final endTimeRaw = widget.event.timeEndTo ?? '';
+
+    String formatDate(DateTime? date) {
+      if (date == null) return 'Unknown Date';
+      return DateFormat('EEEE, MMM d, y').format(date);
+    }
+
+    String formatTime(String timeStr) {
+      try {
+        final parsedTime = DateFormat("HH:mm:ss").parse(timeStr);
+        return DateFormat("hh:mm a").format(parsedTime); // 12-hour format
+      } catch (e) {
+        return timeStr;
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Event Date & Time:',
+          'Event Schedule:',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -319,10 +339,18 @@ class _EventDetailPageState extends State<EventDetailPage> {
         ),
         const SizedBox(height: 8),
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
             const SizedBox(width: 8),
-            Text(date, style: TextStyle(fontSize: 14, color: Colors.grey[700])),
+            Expanded(
+              child: Text(
+                "${formatDate(startDate)} at ${formatTime(startTimeRaw)}"
+                    "\n"
+                    "${formatDate(endDate)} at ${formatTime(endTimeRaw)}",
+                style: const TextStyle(fontSize: 14, color: Colors.black87),
+              ),
+            ),
           ],
         ),
       ],
@@ -349,14 +377,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
               Icon(Icons.currency_rupee, size: 16, color: Colors.grey[600]),
               const SizedBox(width: 8),
               Text(
-                'Cost: ${widget.event.eventCostType}',
+                'Cost:',
                 style: TextStyle(fontSize: 14, color: Colors.grey[700]),
               ),
               if (widget.event.eventAmount != null &&
                   widget.event.eventAmount!.isNotEmpty) ...[
                 const SizedBox(width: 8),
                 Text(
-                  '(${widget.event.eventAmount})',
+                  '${widget.event.eventAmount}',
                   style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                 ),
               ],
@@ -682,7 +710,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
               ),
             ],
             const SizedBox(height: 24),
-            _buildEventInfo(formattedDate, time),
+            _buildEventInfo(),
             const SizedBox(height: 24),
             if (widget.event.eventCostType?.toLowerCase() != 'free') ...[
               _buildEventCostInfo(),
