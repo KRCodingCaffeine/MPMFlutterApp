@@ -726,7 +726,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             if (widget.event.eventTermsAndConditionDocument != null &&
                 widget.event.eventTermsAndConditionDocument!.isNotEmpty) ...[
               const Text(
-                'Terms and Conditions:',
+                'Events Document:',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,

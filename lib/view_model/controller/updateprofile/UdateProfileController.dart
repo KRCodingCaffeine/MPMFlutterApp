@@ -817,7 +817,8 @@ class UdateProfileController extends GetxController {
 
       if (_value.data != null && _value.data!.isNotEmpty) {
         setQualicationCategory(_value.data!);
-        qulicationCategoryList.value = qulicationCategoryList.value.toSet().toList();
+        qulicationCategoryList.value =
+            qulicationCategoryList.value.toSet().toList();
         qulicationCategoryList.value.add(Qualificationcategorydata(
             id: "0",
             qualificationId: "",
@@ -846,19 +847,20 @@ class UdateProfileController extends GetxController {
     addloading.value = true;
     try {
       final qualificationIdToSend =
-      selectQlification.value == "other" ? null : selectQlification.value;
-      final qualificationMainIdToSend =
-      selectQualicationMain.value == "0" || selectQlification.value == "other"
+          selectQlification.value == "other" ? null : selectQlification.value;
+      final qualificationMainIdToSend = selectQualicationMain.value == "0" ||
+              selectQlification.value == "other"
           ? null
           : selectQualicationMain.value;
-      final qualificationCategoryIdToSend =
-      selectQualicationCat.value == "0" || selectQlification.value == "other"
+      final qualificationCategoryIdToSend = selectQualicationCat.value == "0" ||
+              selectQlification.value == "other"
           ? null
           : selectQualicationCat.value;
 
       Map<String, dynamic> map = {
         "member_id": memberId.value,
-        if (qualificationIdToSend != null) "qualification_id": qualificationIdToSend,
+        if (qualificationIdToSend != null)
+          "qualification_id": qualificationIdToSend,
         if (qualificationMainIdToSend != null)
           "qualification_main_id": qualificationMainIdToSend,
         if (qualificationCategoryIdToSend != null)
@@ -951,7 +953,7 @@ class UdateProfileController extends GetxController {
   void checkReviewApproval() {
     if (memberStatusId.value == "1" &&
         membershipApprovalStatusId.value == "6") {
-      if(emailVerifyStatus.value == "1") {
+      if (emailVerifyStatus.value == "1") {
         if (isJangana.value == "0") {
           showDashboardReviewFlag.value = true;
         } else {
@@ -1072,7 +1074,8 @@ class UdateProfileController extends GetxController {
         throw Exception("Member ID not found");
       }
 
-      final response = await SendVerificationEmailRepository().sendVerificationEmail(memberId);
+      final response = await SendVerificationEmailRepository()
+          .sendVerificationEmail(memberId);
 
       if (response.status == true) {
         Get.snackbar(
@@ -1086,7 +1089,8 @@ class UdateProfileController extends GetxController {
 
         getUserProfile();
       } else {
-        throw Exception(response.data?.message ?? 'Failed to send verification email');
+        throw Exception(
+            response.data?.message ?? 'Failed to send verification email');
       }
     } catch (e) {
       Get.snackbar(
@@ -1276,9 +1280,7 @@ class UdateProfileController extends GetxController {
       if (data.containsKey('document_image')) {
         final file = File(data['document_image']);
         final request = http.MultipartRequest(
-            'POST',
-            Uri.parse(Urls.updateMemberAddress_url)
-        );
+            'POST', Uri.parse(Urls.updateMemberAddress_url));
 
         // Add fields
         data.forEach((key, value) {
@@ -1288,12 +1290,10 @@ class UdateProfileController extends GetxController {
         });
 
         // Add file
-        request.files.add(
-            await http.MultipartFile.fromPath(
-              'document_image',
-              file.path,
-            )
-        );
+        request.files.add(await http.MultipartFile.fromPath(
+          'document_image',
+          file.path,
+        ));
 
         // Add headers
         request.headers['token'] = "2"; // Your token
@@ -1322,12 +1322,24 @@ class UdateProfileController extends GetxController {
   void userAddFamily() async {
     CheckUserData2? userData = await SessionManager.getSession();
     NewMemberController regiController = Get.put(NewMemberController());
+    final newFirstName =
+        regiController.firstNameController.value.text.trim().toLowerCase();
 
-    // First check if member with same first name already exists in this family
-    final newFirstName = regiController.firstNameController.value.text.trim().toLowerCase();
-
-    // Check against family head
     if (familyHeadData.value?.firstName?.toLowerCase() == newFirstName) {
+      Get.snackbar(
+        "Sorry",
+        "A family member with this name already exists (family head)",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+      return;
+    }
+
+    bool nameExistsInFamily = familyDataList
+        .any((member) => member.firstName?.toLowerCase() == newFirstName);
+
+    if (nameExistsInFamily) {
       Get.snackbar(
         "Sorry",
         "A family member with this name already exists",
@@ -1389,7 +1401,6 @@ class UdateProfileController extends GetxController {
     }
     http.StreamedResponse response =
         await request.send().timeout(Duration(seconds: 60));
-    //
     if (response.statusCode == 200) {
       String responseBody = await response.stream.bytesToString();
       familyloading.value = false;
@@ -1412,21 +1423,28 @@ class UdateProfileController extends GetxController {
         regiController.mothersnameController.value.text = "";
         regiController.emailController.value.text = "";
         regiController.whatappmobileController.value.text = "";
-        regiController.mobileController.value.text="";
+        regiController.mobileController.value.text = "";
         regiController.selectedGender.value = "";
         regiController.selectBloodGroup.value = "";
         regiController.dateController.text = "";
-
         selectRelationShipType.value = "";
         regiController.selectMarital.value = "";
         regiController.marriagedateController.value.text = "";
         regiController.selectMemberSalutation.value = "";
         regiController.selectMemberSalutation.value = "";
         getUserProfile();
-        sendOtp(regiController.mobileController.value.text);
-        Navigator.of(context!).pop();
-        showOtpBottomSheet(
-            context!, regiController.mobileController.value.text);
+        String mobile = regiController.mobileController.value.text.trim();
+        String whatsapp =
+            regiController.whatappmobileController.value.text.trim();
+        String email = regiController.emailController.value.text.trim();
+
+        if (mobile.isNotEmpty || whatsapp.isNotEmpty || email.isNotEmpty) {
+          sendOtp(mobile);
+          Navigator.of(context!).pop();
+          showOtpBottomSheet(context!, mobile);
+        } else {
+          Navigator.of(context!).pop();
+        }
         regiController.mobileController.value.text = "";
       } else {
         Get.snackbar(
