@@ -1202,7 +1202,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                     } else {
                                       regiController.marriagedateController.value.text = "";
                                     }
-                                    controller.userAddFamily();
+                                    controller.userAddFamily(context);
                                   }
                                 },
                                 style: ElevatedButton.styleFrom(

@@ -1319,7 +1319,7 @@ class UdateProfileController extends GetxController {
     }
   }
 
-  void userAddFamily() async {
+  void userAddFamily(BuildContext context) async {
     CheckUserData2? userData = await SessionManager.getSession();
     NewMemberController regiController = Get.put(NewMemberController());
     final newFirstName =
@@ -1423,7 +1423,7 @@ class UdateProfileController extends GetxController {
         regiController.mothersnameController.value.text = "";
         regiController.emailController.value.text = "";
         regiController.whatappmobileController.value.text = "";
-        regiController.mobileController.value.text = "";
+        // regiController.mobileController.value.text = "";
         regiController.selectedGender.value = "";
         regiController.selectBloodGroup.value = "";
         regiController.dateController.text = "";
@@ -1434,18 +1434,14 @@ class UdateProfileController extends GetxController {
         regiController.selectMemberSalutation.value = "";
         getUserProfile();
         String mobile = regiController.mobileController.value.text.trim();
-        String whatsapp =
-            regiController.whatappmobileController.value.text.trim();
-        String email = regiController.emailController.value.text.trim();
 
-        if (mobile.isNotEmpty || whatsapp.isNotEmpty || email.isNotEmpty) {
-          sendOtp(mobile);
+        if (mobile.isNotEmpty) {
+          print("Sending OTP to: $mobile");
+          sendOtp(regiController.mobileController.value.text);
           Navigator.of(context!).pop();
-          showOtpBottomSheet(context!, mobile);
-        } else {
-          Navigator.of(context!).pop();
+          showOtpBottomSheet(
+              context!, regiController.mobileController.value.text);
         }
-        regiController.mobileController.value.text = "";
       } else {
         Get.snackbar(
           "Error",
@@ -1505,46 +1501,64 @@ class UdateProfileController extends GetxController {
     } finally {}
   }
 
-  void checkOtp(var otps, BuildContext context) {
+  void checkOtp(String otps, BuildContext context, String otpValidationFor) {
+    if (otpValidationFor != "add_family_member") {
+      print("OTP validation skipped: purpose is not add_family_member");
+      return;
+    }
+
     try {
-      Map map = {"member_id": family_member_id.value, "otp": otps};
+      Map<String, dynamic> map = {
+        "member_id": family_member_id.value,
+        "otp": otps,
+      };
+
       api2.verifyOTP(map).then((_value) async {
         if (_value.status == true) {
           Get.snackbar(
-            'Success', // Title
-            'OTP matched', // Message
+            'Success',
+            'OTP matched',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Colors.green,
             colorText: Colors.white,
-            duration: Duration(seconds: 3),
+            duration: const Duration(seconds: 3),
           );
-          Navigator.of(context!).pop();
-        } else {}
-      }).onError((error, strack) async {
-        print("fvvf" + error.toString());
+          Navigator.of(context).pop();
+        } else {
+          Get.snackbar(
+            'Error',
+            "Invalid OTP",
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 3),
+          );
+        }
+      }).onError((error, stack) {
+        print("Error: ${error.toString()}");
         if (error.toString().contains("Sorry! OTP doesn't match")) {
           Get.snackbar(
-            'Error', // Title
-            "Sorry! OTP doesn't match", // Message
+            'Error',
+            "Sorry! OTP doesn't match",
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Colors.pink,
             colorText: Colors.white,
-            duration: Duration(seconds: 3),
+            duration: const Duration(seconds: 3),
           );
         } else {
           Get.snackbar(
-            'Error', // Title
-            "Some thing went wrong ", // Message
+            'Error',
+            "Something went wrong",
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Colors.pink,
             colorText: Colors.white,
-            duration: Duration(seconds: 3),
+            duration: const Duration(seconds: 3),
           );
         }
       });
     } catch (e) {
-      print('Error: $e');
-    } finally {}
+      print('Exception: $e');
+    }
   }
 
   void userAddBuniessInfo() async {
@@ -1731,8 +1745,13 @@ class UdateProfileController extends GetxController {
                     ),
                     ElevatedButton(
                       onPressed: () {
-                        // Submit OTP logic
-                        checkOtp(otpController.text, context!);
+                        String otpValidationFor = "add_family_member";
+
+                        checkOtp(
+                          otpController.text.trim(),
+                          context,
+                          otpValidationFor,
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: ColorHelperClass.getColorFromHex(
