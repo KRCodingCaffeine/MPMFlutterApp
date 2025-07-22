@@ -89,11 +89,11 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                 color: Colors.white,
                 elevation: 4, // Adds shadow to the card
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10), // Rounded corners
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Padding(
                   padding:
-                      const EdgeInsets.all(16.0), // Inner padding of the card
+                      const EdgeInsets.all(16.0),
                   child: Column(
                     children: [
                       Obx(() {
@@ -163,8 +163,8 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                       }),
                       SizedBox(height: 20),
                       Obx(() {
-                        return _buildInfoBox('Saraswani Name',
-                            subtitle: controller.saraswaniOptionId.value);
+                        return _buildInfoBox('Saraswani Option',
+                            subtitle: controller.saraswaniOption.value);
                       }),
                     ],
                   ),

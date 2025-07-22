@@ -1,4 +1,4 @@
-class CheckUserData2{
+class CheckUserData2 {
   String? memberId;
   String? memberCode;
   String? memberSalutaitonId;
@@ -34,47 +34,47 @@ class CheckUserData2{
   var saraswaniOptionId;
   String? createdBy;
   String? createdAt;
- var updatedBy;
+  var updatedBy;
   String? updatedAt;
 
   CheckUserData2(
       {this.memberId,
-        this.memberCode,
-        this.memberSalutaitonId,
-        this.firstName,
-        this.middleName,
-        this.lastName,
-        this.mobile,
-        this.whatsappNumber,
-        this.email,
-        this.password,
-        this.dob,
-        this.proposerId,
-        this.maritalStatusId,
-        this.marriageAnniversaryDate,
-        this.genderId,
-        this.bloodGroupId,
-        this.fatherName,
-        this.motherName,
-        this.addressProofTypeId,
-        this.addressProof,
-        this.profileImage,
-        this.otp,
-        this.verifyOtpStatus,
-        this.mobileVerifyStatus,
-        this.sangathanApprovalStatus,
-        this.vyavasthapikaApprovalStatus,
-        this.memberStatusId,
-        this.membershipApprovalStatusId,
-        this.membershipTypeId,
-        this.familyHeadMemberId,
-        this.tempId,
-        this.isJangana,
-        this.saraswaniOptionId,
-        this.createdBy,
-        this.createdAt,
-        this.updatedBy,
-        this.updatedAt});
+      this.memberCode,
+      this.memberSalutaitonId,
+      this.firstName,
+      this.middleName,
+      this.lastName,
+      this.mobile,
+      this.whatsappNumber,
+      this.email,
+      this.password,
+      this.dob,
+      this.proposerId,
+      this.maritalStatusId,
+      this.marriageAnniversaryDate,
+      this.genderId,
+      this.bloodGroupId,
+      this.fatherName,
+      this.motherName,
+      this.addressProofTypeId,
+      this.addressProof,
+      this.profileImage,
+      this.otp,
+      this.verifyOtpStatus,
+      this.mobileVerifyStatus,
+      this.sangathanApprovalStatus,
+      this.vyavasthapikaApprovalStatus,
+      this.memberStatusId,
+      this.membershipApprovalStatusId,
+      this.membershipTypeId,
+      this.familyHeadMemberId,
+      this.tempId,
+      this.isJangana,
+      this.saraswaniOptionId,
+      this.createdBy,
+      this.createdAt,
+      this.updatedBy,
+      this.updatedAt});
 
   CheckUserData2.fromJson(Map<String, dynamic> json) {
     memberId = json['member_id'];
@@ -157,13 +157,14 @@ class CheckUserData2{
     data['updated_at'] = this.updatedAt;
     return data;
   }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-          other is CheckUserData2 && runtimeType == other.runtimeType && memberId == other.memberId;
+      other is CheckUserData2 &&
+          runtimeType == other.runtimeType &&
+          memberId == other.memberId;
 
   @override
   int get hashCode => memberId.hashCode;
 }
-
-

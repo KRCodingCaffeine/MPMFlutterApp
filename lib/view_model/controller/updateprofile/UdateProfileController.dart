@@ -136,7 +136,7 @@ class UdateProfileController extends GetxController {
   var isMarried = false.obs;
   var bloodGroup = ''.obs;
   var blood_group_id = ''.obs;
-
+  var saraswaniOption = ''.obs;
   var marriageAnniversaryDate = ''.obs;
   var memberCode = ''.obs;
   var memberSalutaitonId = ''.obs;
@@ -257,7 +257,7 @@ class UdateProfileController extends GetxController {
       TextEditingController().obs;
   final Rx<TextEditingController> bloodGroupController =
       TextEditingController().obs;
-  final saraswaniOptionController = TextEditingController(); // if applicable
+  final saraswaniOptionController = TextEditingController();
   RxList<SaraswaniOptionData> saraswaniOptionList = <SaraswaniOptionData>[].obs;
   Rx<TextEditingController> countryController = TextEditingController().obs;
   Rx<TextEditingController> buildingController = TextEditingController().obs;
@@ -326,7 +326,9 @@ class UdateProfileController extends GetxController {
           documentDynamicImage.value = ''; // or some default value
         }
       }
-      saraswaniOptionId.value = getUserData.value.saraswaniOptionId.toString();
+      saraswaniOption.value = getUserData.value.saraswaniOption?.toString() ?? 'Not selected';
+      saraswaniOptionController.text = saraswaniOption.value;
+      saraswaniOptionId.value = getUserData.value.saraswaniOptionId?.toString() ?? '';
 
       bloodGroup.value = getUserData.value.bloodGroup.toString();
       blood_group_id.value = getUserData.value.bloodGroupId.toString();
@@ -384,6 +386,7 @@ class UdateProfileController extends GetxController {
       marriageAnniversaryController.value.text = marriageAnniversaryDate.value;
       bloodGroupController.value.text = bloodGroup.value;
       saraswaniOptionController.text = saraswaniOptionId.value;
+      saraswaniOptionController.text = saraswaniOption.value;
 
       // Occupation
       if (getUserData.value.occupation != null) {

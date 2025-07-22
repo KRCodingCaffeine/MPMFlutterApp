@@ -45,8 +45,9 @@ class GetProfileData {
   final String? genderName;
   final String? tempId;
   final String? isJangana;
-  final String? saraswaniOptionId;
   final String? isSaraswaniBlocked;
+  final String? saraswaniOptionId;
+  final String? saraswaniOption;
   final String? memberApplicationDocument;
   final String? membershipAllotmentDate;
   final String? deviceToken;
@@ -111,6 +112,7 @@ class GetProfileData {
     this.tempId,
     this.isJangana,
     this.saraswaniOptionId,
+    this.saraswaniOption,
     this.isSaraswaniBlocked,
     this.memberApplicationDocument,
     this.membershipAllotmentDate,
@@ -177,6 +179,7 @@ class GetProfileData {
       tempId: json['temp_id']?.toString(),
       isJangana: json['is_jangana']?.toString(),
       saraswaniOptionId: json['saraswani_option_id']?.toString(),
+      saraswaniOption: json['saraswani_option']?.toString(),
       isSaraswaniBlocked: json['is_saraswani_blocked']?.toString(),
       memberApplicationDocument: json['member_application_document']?.toString(),
       membershipAllotmentDate: json['membership_allotment_date']?.toString(),
@@ -262,6 +265,7 @@ class GetProfileData {
       'temp_id': tempId,
       'is_jangana': isJangana,
       'saraswani_option_id': saraswaniOptionId,
+      'saraswani_option': saraswaniOption,
       'is_saraswani_blocked': isSaraswaniBlocked,
       'member_application_document': memberApplicationDocument,
       'membership_allotment_date': membershipAllotmentDate,

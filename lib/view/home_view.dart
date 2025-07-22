@@ -27,6 +27,8 @@ class _HomeViewState extends State<HomeView> {
   final regiController = Get.put(NewMemberController());
   final controller = Get.put(UdateProfileController());
   final ScrollController _scrollController = ScrollController();
+  final double _cardWidth = 350.0;
+  final double _cardSpacing = 16.0;
   late Timer _timer;
   double screenWidth = 0.0;
 
@@ -68,18 +70,22 @@ class _HomeViewState extends State<HomeView> {
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      screenWidth = MediaQuery.of(context).size.width * 0.7;
       _timer = Timer.periodic(const Duration(seconds: 10), (Timer timer) {
         if (_scrollController.hasClients) {
-          final maxScroll = _scrollController.position.maxScrollExtent;
-          final currentScroll = _scrollController.offset;
+          final double scrollAmount = _cardWidth + _cardSpacing;
+          final double maxScroll = _scrollController.position.maxScrollExtent;
+          final double currentScroll = _scrollController.offset;
 
-          if (currentScroll >= maxScroll) {
-            _scrollController.jumpTo(0);
+          if (currentScroll + scrollAmount >= maxScroll) {
+            _scrollController.animateTo(
+              0,
+              duration: const Duration(milliseconds: 800),
+              curve: Curves.easeInOut,
+            );
           } else {
             _scrollController.animateTo(
-              currentScroll + screenWidth,
-              duration: const Duration(milliseconds: 1500),
+              currentScroll + scrollAmount,
+              duration: const Duration(milliseconds: 800),
               curve: Curves.easeInOut,
             );
           }
