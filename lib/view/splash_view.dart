@@ -40,18 +40,19 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
   }
 
   void _handleStartupLogic() async {
-    // Start lightweight tasks immediately
-    await PushNotificationService().initialise();
-
-    // Ask notification permission non-blockingly
+    // Step 1: Ask notification permission first
     _requestNotificationPermission();
 
-    // Do update check
+    // Step 2: Start Firebase init non-blocking
+    PushNotificationService().initialise(); // Do NOT await
+
+    // Step 3: App update check
     await _checkForUpdate();
 
-    // Delay for smooth splash
+    // Step 4: Splash delay
     await Future.delayed(Duration(seconds: 2));
 
+    // Step 5: Session routing
     final userData = await SessionManager.getSession();
     final mobile = userData?.mobile ?? "";
 
@@ -63,6 +64,7 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
       Navigator.pushReplacementNamed(context, RouteNames.dashboard);
     }
   }
+
 
   void _requestNotificationPermission() async {
     final status = await Permission.notification.status;

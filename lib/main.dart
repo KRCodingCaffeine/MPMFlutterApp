@@ -16,11 +16,11 @@ import 'package:mpm/utils/color_resources.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (Firebase.apps.isEmpty) {
-    await Firebase.initializeApp();
-  }
+  // Initialize Firebase
+  await Firebase.initializeApp();
 
-  FirebaseMessaging.onBackgroundMessage(PushNotificationService.firebaseMessagingBackgroundHandler);
+  // Set up background message handler (must be before runApp)
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -29,6 +29,14 @@ Future<void> main() async {
 
   runApp(const MyApp());
 }
+
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  // Optional: Handle the message (e.g., show a local notification, log, etc.)
+  print('Handling a background message: ${message.messageId}');
+}
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

@@ -128,115 +128,73 @@ class PushNotificationService {
   }
 
   Future<void> initialise() async {
-    // await Firebase.();
-    _configureDidReceiveLocalNotificationSubject();
-    _configureSelectNotificationSubject();
-    String? token=await generateToken();
-    print("token"+token.toString());
+    try {
+      _configureDidReceiveLocalNotificationSubject();
+      _configureSelectNotificationSubject();
 
-    await FirebaseMessaging.instance
-        .setForegroundNotificationPresentationOptions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-  await flutterLocalNotificationsPlugin.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: (notificationResponse) {
-        switch (notificationResponse.notificationResponseType) {
-          case NotificationResponseType.selectedNotification:
+      // Log Firebase token (non-critical)
+      generateToken();
+
+      await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      await flutterLocalNotificationsPlugin.initialize(
+        initializationSettings,
+        onDidReceiveNotificationResponse: (notificationResponse) {
+          if (notificationResponse.notificationResponseType ==
+              NotificationResponseType.selectedNotification ||
+              notificationResponse.actionId == navigationActionId) {
             selectNotificationStream.add(notificationResponse.payload);
-            break;
-          case NotificationResponseType.selectedNotificationAction:
-            if (notificationResponse.actionId == navigationActionId) {
-              selectNotificationStream.add(notificationResponse.payload);
-            }
-            break;
-        }
-      },
-      onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
-    );
-
-    if (Platform.isIOS || Platform.isMacOS) {
-      await flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin>()
-          ?.requestPermissions(
-        alert: true,
-        badge: true,
-        sound: true,
-
-        critical: true,
-      );
-      await flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<
-          MacOSFlutterLocalNotificationsPlugin>()
-          ?.requestPermissions(
-        alert: true,
-        badge: true,
-        sound: true,
-        critical: true,
-      );
-    } else if (Platform.isAndroid) {
-      final androidImplementation =
-      flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
-
-      /*final granted = */
-      await androidImplementation?.requestPermission();
-      // if (granted ?? false) {
-      await generateToken();
-      // }
-    }
-
-    FirebaseMessaging.onMessage.listen((event) {
-      //var notificationType = event.data[kNotificationType];
-      // DebugUtils.showLog(
-      //   'getData > ${event.data} getMessage > ${event.notification?.toMap()}',
-      // );
-      print('Message data: ${event.data}');
-
-      if (event.notification != null) {
-        print('Message also contained a notification: ${event.notification}');
-      }
-      if (Platform.isAndroid)
-        {
-          playCustomNotificationSound();
-          _showNotificationWithActions(event);
-
-        }
-    });
-
-    FirebaseMessaging.onMessageOpenedApp.listen((message) {
-      // DebugUtils.showLog(
-      //   'notificationSelect >> ${message.data}  ${message.data[kNotificationType]}',
-      // );
-      final notificationType = message.data[kNotificationType] as String?;
-      // DebugUtils.showLog(
-      //   'notificationSelect ss>> $notificationType ${notificationType.runtimeType}',
-      // );
-      if (Platform.isAndroid)
-      {
-        playCustomNotificationSound();
-
-
-      }
-      if (!alreadySent) {
-        alreadySent = true;
-      }
-      Future<void>.delayed(
-        const Duration(milliseconds: 1000),
-            () {
-          if (!alreadySent) {
-            unawaited(checkNotification(message));
           }
         },
+        onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
       );
-      _goToScreen(notificationType, 3);
-    });
 
+      // Request permissions on iOS/Mac
+      if (Platform.isIOS || Platform.isMacOS) {
+        await flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
+            ?.requestPermissions(
+          alert: true,
+          badge: true,
+          sound: true,
+          critical: true,
+        );
+      } else if (Platform.isAndroid) {
+        await flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+            ?.requestPermission();
+      }
 
+      // Setup listeners
+      FirebaseMessaging.onMessage.listen((event) {
+        print('Message data: ${event.data}');
+        if (Platform.isAndroid) {
+          playCustomNotificationSound();
+          _showNotificationWithActions(event);
+        }
+      });
+
+      FirebaseMessaging.onMessageOpenedApp.listen((message) {
+        final notificationType = message.data[kNotificationType] as String?;
+        if (Platform.isAndroid) playCustomNotificationSound();
+        if (!alreadySent) {
+          alreadySent = true;
+          Future<void>.delayed(
+            const Duration(milliseconds: 1000),
+                () => checkNotification(message),
+          );
+          _goToScreen(notificationType, 3);
+        }
+      });
+    } catch (e) {
+      print("❌ PushNotificationService.init failed: $e");
+    }
   }
+
 
   static void _goToScreen(String? notificationType, int? orderId) {
 
@@ -251,11 +209,25 @@ class PushNotificationService {
   }
 
   Future<String?> generateToken() async {
-    final deviceToken = await FirebaseMessaging.instance.getToken();
-    // Just for testing will remove in future
-    //DebugUtils.showLog(deviceToken!, prefix: 'Device/FCM Token >> ');
-    return deviceToken;
+    try {
+      String? token;
+      for (int i = 0; i < 3; i++) {
+        token = await FirebaseMessaging.instance.getToken();
+        if (token != null && token.isNotEmpty) break;
+        await Future.delayed(Duration(seconds: 2));
+      }
+      if (token == null || token.isEmpty) {
+        print('❌ Failed to retrieve FCM token.');
+      } else {
+        print('✅ FCM Token: $token');
+      }
+      return token;
+    } catch (e) {
+      print('❌ Token generation failed: $e');
+      return null;
+    }
   }
+
 
   void _configureDidReceiveLocalNotificationSubject() {
     didReceiveLocalNotificationStream.stream.listen((receivedNotification) async {
