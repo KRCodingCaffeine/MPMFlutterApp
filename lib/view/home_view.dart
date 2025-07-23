@@ -27,7 +27,7 @@ class _HomeViewState extends State<HomeView> {
   final regiController = Get.put(NewMemberController());
   final controller = Get.put(UdateProfileController());
   final ScrollController _scrollController = ScrollController();
-  final double _cardWidth = 350.0;
+  final double _cardWidth = 360.0;
   final double _cardSpacing = 16.0;
   late Timer _timer;
   double screenWidth = 0.0;
@@ -420,7 +420,7 @@ class _HomeViewState extends State<HomeView> {
 
 
     return Container(
-      width: 350,
+      width: 360,
       margin: const EdgeInsets.only(right: 16.0),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(

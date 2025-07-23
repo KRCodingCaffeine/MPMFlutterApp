@@ -71,25 +71,7 @@ class DiscountOfferDetailPage extends StatelessWidget {
           children: [
             if (offer.offerImage != null && offer.offerImage!.isNotEmpty) ...[
               Center(
-                child: GestureDetector(
-                  onTap: () => _showFullImage(context),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      constraints: const BoxConstraints(
-                        maxHeight: 300,
-                        maxWidth: 400,
-                      ),
-                      child: Image.network(
-                        offer.offerImage!,
-                        fit: BoxFit.fill,
-                        width: double.infinity,
-                        height: double.infinity,
-                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                      ),
-                    ),
-                  ),
-                ),
+                child: _buildFilePreviewOrButton(context),
               ),
               const SizedBox(height: 24),
             ],
@@ -144,6 +126,62 @@ class DiscountOfferDetailPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildFilePreviewOrButton(BuildContext context) {
+    final String url = offer.offerImage!;
+    final String fileExtension = url.split('.').last.toLowerCase();
+
+    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].contains(fileExtension)) {
+      // Image Preview
+      return GestureDetector(
+        onTap: () => _showFullImage(context),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            constraints: const BoxConstraints(
+              maxHeight: 300,
+              maxWidth: 400,
+            ),
+            child: Image.network(
+              url,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            ),
+          ),
+        ),
+      );
+    } else if (['pdf', 'docx', 'doc'].contains(fileExtension)) {
+      // Styled Button to View Document
+      return Padding(
+        padding: const EdgeInsets.only(top: 16.0),
+        child: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: () async {
+              final fileName = "Offer_Document.$fileExtension";
+              await _downloadFile(url, fileName);
+            },
+            child: Text(
+              "Offer Document",
+              style: const TextStyle(fontSize: 16),
+            ),
+          ),
+        ),
+      );
+    } else {
+      return const Text('');
+    }
   }
 
   Future<void> _handleClaimOffer() async {
