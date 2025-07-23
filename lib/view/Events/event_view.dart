@@ -126,10 +126,11 @@ class _EventsPageState extends State<EventsPage> {
       }
 
       // Split into upcoming/past
-      final today = DateTime.now();
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+
       final upcoming = <EventData>[];
       final past = <EventData>[];
-      final todayOnly = DateTime(today.year, today.month, today.day);
       for (var e in filteredEvents) {
         final startDate = DateTime.tryParse(e.dateStartsFrom ?? '');
         final endDate = DateTime.tryParse(e.dateEndTo ?? '');

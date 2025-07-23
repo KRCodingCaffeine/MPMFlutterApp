@@ -14,7 +14,6 @@ import 'package:mpm/model/GetProfile/GetProfileData.dart';
 import 'package:mpm/model/GetProfile/Occupation.dart';
 import 'package:mpm/model/GetProfile/Qualification.dart';
 import 'package:mpm/model/Occupation/OccupationData.dart';
-import 'package:mpm/model/Occupation/addoccuption/AddOccuptionModel.dart';
 import 'package:mpm/model/OccupationSpec/OccuptionSpecData.dart';
 import 'package:mpm/model/Qualification/QualificationData.dart';
 import 'package:mpm/model/QualificationCategory/QualificationCategoryModel.dart';
@@ -26,15 +25,13 @@ import 'package:mpm/model/relation/RelationData.dart';
 import 'package:mpm/repository/add_existing_family_member_repository/add_existing_family_member_repo.dart';
 import 'package:mpm/repository/change_family_head_repository/change_family_head_repo.dart';
 import 'package:mpm/repository/register_repository/register_repo.dart';
+import 'package:mpm/repository/send_verification_email_repository/send_verification_email_repo.dart';
 import 'package:mpm/repository/update_repository/UpdateProfileRepository.dart';
-import 'package:mpm/utils/NotificationDatabase.dart';
-
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/urls.dart';
 import 'package:http/http.dart' as http;
-
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/notification/NotificationController.dart';
 
@@ -45,6 +42,8 @@ class UdateProfileController extends GetxController {
   var showDashboardReviewFlag = false.obs;
   var userMaritalStatus = "".obs;
   var is_jangana = "".obs;
+  var emailVerifyStatus = "".obs;
+  var emailVerificationStatus = 0.obs; // 0 means not verified, 1 means verified
   var membership_approval_status_id = "".obs;
   var documentDynamicImage = "".obs;
   var isLoadingPayment = false.obs;
@@ -54,6 +53,7 @@ class UdateProfileController extends GetxController {
       ChangeFamilyHeadRepository();
 
   var isPay = false.obs;
+  RxBool showEmailVerifyBanner = false.obs;
 
   void changeTab(int index) async {
     if (index == 3) {
@@ -136,7 +136,7 @@ class UdateProfileController extends GetxController {
   var isMarried = false.obs;
   var bloodGroup = ''.obs;
   var blood_group_id = ''.obs;
-
+  var saraswaniOption = ''.obs;
   var marriageAnniversaryDate = ''.obs;
   var memberCode = ''.obs;
   var memberSalutaitonId = ''.obs;
@@ -257,7 +257,7 @@ class UdateProfileController extends GetxController {
       TextEditingController().obs;
   final Rx<TextEditingController> bloodGroupController =
       TextEditingController().obs;
-  final saraswaniOptionController = TextEditingController(); // if applicable
+  final saraswaniOptionController = TextEditingController();
   RxList<SaraswaniOptionData> saraswaniOptionList = <SaraswaniOptionData>[].obs;
   Rx<TextEditingController> countryController = TextEditingController().obs;
   Rx<TextEditingController> buildingController = TextEditingController().obs;
@@ -303,6 +303,8 @@ class UdateProfileController extends GetxController {
       mothersName.value = getUserData.value.motherName.toString();
       mobileNumber.value = getUserData.value.mobile.toString();
       email.value = getUserData.value.email.toString();
+      emailVerifyStatus.value = getUserData.value.emailVerifyStatus.toString();
+      showEmailVerifyBanner.value = emailVerifyStatus.value == "0";
       dob.value = getUserData.value.dob.toString();
       maritalStatus.value = getUserData.value.maritalStatus.toString();
       marital_status_id.value = getUserData.value.maritalStatusId.toString();
@@ -324,7 +326,9 @@ class UdateProfileController extends GetxController {
           documentDynamicImage.value = ''; // or some default value
         }
       }
-      saraswaniOptionId.value = getUserData.value.saraswaniOptionId.toString();
+      saraswaniOption.value = getUserData.value.saraswaniOption?.toString() ?? 'Not selected';
+      saraswaniOptionController.text = saraswaniOption.value;
+      saraswaniOptionId.value = getUserData.value.saraswaniOptionId?.toString() ?? '';
 
       bloodGroup.value = getUserData.value.bloodGroup.toString();
       blood_group_id.value = getUserData.value.bloodGroupId.toString();
@@ -382,6 +386,7 @@ class UdateProfileController extends GetxController {
       marriageAnniversaryController.value.text = marriageAnniversaryDate.value;
       bloodGroupController.value.text = bloodGroup.value;
       saraswaniOptionController.text = saraswaniOptionId.value;
+      saraswaniOptionController.text = saraswaniOption.value;
 
       // Occupation
       if (getUserData.value.occupation != null) {
@@ -404,7 +409,7 @@ class UdateProfileController extends GetxController {
       var member_type_id = getUserData.value.membershipTypeId.toString();
       var memberapprovalstatusid =
           getUserData.value.membershipApprovalStatusId.toString();
-      var isPaymentStatus = getUserData.value.is_payment_received.toString();
+      var isPaymentStatus = getUserData.value.isPaymentReceived.toString();
       if (member_type_id == "1" || member_type_id == "3") {
         if (int.parse(memberapprovalstatusid) < 5 && isPaymentStatus == "0") {
           isPay.value = true;
@@ -414,6 +419,7 @@ class UdateProfileController extends GetxController {
       } else {
         isPay.value = false;
       }
+
       officePhone.value = getUserData.value.mobile.toString();
 
       if (getUserData.value.qualification != null) {
@@ -814,7 +820,8 @@ class UdateProfileController extends GetxController {
 
       if (_value.data != null && _value.data!.isNotEmpty) {
         setQualicationCategory(_value.data!);
-        qulicationCategoryList.value = qulicationCategoryList.value.toSet().toList();
+        qulicationCategoryList.value =
+            qulicationCategoryList.value.toSet().toList();
         qulicationCategoryList.value.add(Qualificationcategorydata(
             id: "0",
             qualificationId: "",
@@ -843,19 +850,20 @@ class UdateProfileController extends GetxController {
     addloading.value = true;
     try {
       final qualificationIdToSend =
-      selectQlification.value == "other" ? null : selectQlification.value;
-      final qualificationMainIdToSend =
-      selectQualicationMain.value == "0" || selectQlification.value == "other"
+          selectQlification.value == "other" ? null : selectQlification.value;
+      final qualificationMainIdToSend = selectQualicationMain.value == "0" ||
+              selectQlification.value == "other"
           ? null
           : selectQualicationMain.value;
-      final qualificationCategoryIdToSend =
-      selectQualicationCat.value == "0" || selectQlification.value == "other"
+      final qualificationCategoryIdToSend = selectQualicationCat.value == "0" ||
+              selectQlification.value == "other"
           ? null
           : selectQualicationCat.value;
 
       Map<String, dynamic> map = {
         "member_id": memberId.value,
-        if (qualificationIdToSend != null) "qualification_id": qualificationIdToSend,
+        if (qualificationIdToSend != null)
+          "qualification_id": qualificationIdToSend,
         if (qualificationMainIdToSend != null)
           "qualification_main_id": qualificationMainIdToSend,
         if (qualificationCategoryIdToSend != null)
@@ -946,12 +954,14 @@ class UdateProfileController extends GetxController {
   }
 
   void checkReviewApproval() {
-    if (userMaritalStatus.value == "1" &&
+    if (memberStatusId.value == "1" &&
         membershipApprovalStatusId.value == "6") {
-      if (isJangana.value == "0") {
-        showDashboardReviewFlag.value = true;
-      } else {
-        showDashboardReviewFlag.value = false;
+      if (emailVerifyStatus.value == "1") {
+        if (isJangana.value == "0") {
+          showDashboardReviewFlag.value = true;
+        } else {
+          showDashboardReviewFlag.value = false;
+        }
       }
     }
   }
@@ -1058,6 +1068,43 @@ class UdateProfileController extends GetxController {
       addloading.value = false;
       print('Error: $e');
     } finally {}
+  }
+
+  Future<void> sendVerificationEmail() async {
+    try {
+      final memberId = this.memberId.value;
+      if (memberId.isEmpty) {
+        throw Exception("Member ID not found");
+      }
+
+      final response = await SendVerificationEmailRepository()
+          .sendVerificationEmail(memberId);
+
+      if (response.status == true) {
+        Get.snackbar(
+          'Success',
+          response.data?.message ?? 'Verification email sent successfully',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          duration: Duration(seconds: 3),
+        );
+
+        getUserProfile();
+      } else {
+        throw Exception(
+            response.data?.message ?? 'Failed to send verification email');
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        e.toString(),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: Duration(seconds: 3),
+      );
+    }
   }
 
   void userUpdateProfile(BuildContext context, String type) async {
@@ -1236,9 +1283,7 @@ class UdateProfileController extends GetxController {
       if (data.containsKey('document_image')) {
         final file = File(data['document_image']);
         final request = http.MultipartRequest(
-            'POST',
-            Uri.parse(Urls.updateMemberAddress_url)
-        );
+            'POST', Uri.parse(Urls.updateMemberAddress_url));
 
         // Add fields
         data.forEach((key, value) {
@@ -1248,12 +1293,10 @@ class UdateProfileController extends GetxController {
         });
 
         // Add file
-        request.files.add(
-            await http.MultipartFile.fromPath(
-              'document_image',
-              file.path,
-            )
-        );
+        request.files.add(await http.MultipartFile.fromPath(
+          'document_image',
+          file.path,
+        ));
 
         // Add headers
         request.headers['token'] = "2"; // Your token
@@ -1279,12 +1322,39 @@ class UdateProfileController extends GetxController {
     }
   }
 
-  void userAddFamily() async {
+  void userAddFamily(BuildContext context) async {
     CheckUserData2? userData = await SessionManager.getSession();
+    NewMemberController regiController = Get.put(NewMemberController());
+    final newFirstName =
+        regiController.firstNameController.value.text.trim().toLowerCase();
+
+    if (familyHeadData.value?.firstName?.toLowerCase() == newFirstName) {
+      Get.snackbar(
+        "Sorry",
+        "A family member with this name already exists (family head)",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+      return;
+    }
+
+    bool nameExistsInFamily = familyDataList
+        .any((member) => member.firstName?.toLowerCase() == newFirstName);
+
+    if (nameExistsInFamily) {
+      Get.snackbar(
+        "Sorry",
+        "A family member with this name already exists",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+      return;
+    }
 
     final url = Uri.parse(Urls.addmemberorfamily_url);
     print("vcgdhfh" + Urls.addmemberorfamily_url);
-    NewMemberController regiController = Get.put(NewMemberController());
 
     familyloading.value = true;
 
@@ -1310,14 +1380,16 @@ class UdateProfileController extends GetxController {
       "mother_name": regiController.mothersnameController.value.text,
       "email": regiController.emailController.value.text,
       "whatsapp_number": regiController.whatappmobileController.value.text,
-      "mobile": regiController.mobileController.value.text,
+      "mobile": regiController.mobileController.value.text.isNotEmpty
+          ? regiController.mobileController.value.text
+          : "",
       "gender_id": regiController.selectedGender.value,
       "marital_status_id": marital_status_id,
       "blood_group_id": regiController.selectBloodGroup.value,
       "dob": regiController.dateController.text,
       "family_head_member_id": familyHeadMemberId.value,
       "relation_id": selectRelationShipType.value,
-      "member_type_id": regiController.selectMemberShipType.value,
+      "member_type_id": "2",
       "marriage_anniversary_date":
           regiController.marriagedateController.value.text,
       "salutation_id": regiController.selectMemberSalutation.value,
@@ -1332,7 +1404,6 @@ class UdateProfileController extends GetxController {
     }
     http.StreamedResponse response =
         await request.send().timeout(Duration(seconds: 60));
-    //
     if (response.statusCode == 200) {
       String responseBody = await response.stream.bytesToString();
       familyloading.value = false;
@@ -1355,22 +1426,25 @@ class UdateProfileController extends GetxController {
         regiController.mothersnameController.value.text = "";
         regiController.emailController.value.text = "";
         regiController.whatappmobileController.value.text = "";
-        // regiController.mobileController.value.text="";
+        // regiController.mobileController.value.text = "";
         regiController.selectedGender.value = "";
         regiController.selectBloodGroup.value = "";
         regiController.dateController.text = "";
-
         selectRelationShipType.value = "";
         regiController.selectMarital.value = "";
         regiController.marriagedateController.value.text = "";
         regiController.selectMemberSalutation.value = "";
         regiController.selectMemberSalutation.value = "";
         getUserProfile();
-        sendOtp(regiController.mobileController.value.text);
-        Navigator.of(context!).pop();
-        showOtpBottomSheet(
-            context!, regiController.mobileController.value.text);
-        regiController.mobileController.value.text = "";
+        String mobile = regiController.mobileController.value.text.trim();
+
+        if (mobile.isNotEmpty) {
+          print("Sending OTP to: $mobile");
+          sendOtp(regiController.mobileController.value.text);
+          Navigator.of(context!).pop();
+          showOtpBottomSheet(
+              context!, regiController.mobileController.value.text);
+        }
       } else {
         Get.snackbar(
           "Error",
@@ -1430,46 +1504,64 @@ class UdateProfileController extends GetxController {
     } finally {}
   }
 
-  void checkOtp(var otps, BuildContext context) {
+  void checkOtp(String otps, BuildContext context, String otpValidationFor) {
+    if (otpValidationFor != "add_family_member") {
+      print("OTP validation skipped: purpose is not add_family_member");
+      return;
+    }
+
     try {
-      Map map = {"member_id": family_member_id.value, "otp": otps};
+      Map<String, dynamic> map = {
+        "member_id": family_member_id.value,
+        "otp": otps,
+      };
+
       api2.verifyOTP(map).then((_value) async {
         if (_value.status == true) {
           Get.snackbar(
-            'Success', // Title
-            'OTP matched', // Message
+            'Success',
+            'OTP matched',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Colors.green,
             colorText: Colors.white,
-            duration: Duration(seconds: 3),
+            duration: const Duration(seconds: 3),
           );
-          Navigator.of(context!).pop();
-        } else {}
-      }).onError((error, strack) async {
-        print("fvvf" + error.toString());
+          Navigator.of(context).pop();
+        } else {
+          Get.snackbar(
+            'Error',
+            "Invalid OTP",
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 3),
+          );
+        }
+      }).onError((error, stack) {
+        print("Error: ${error.toString()}");
         if (error.toString().contains("Sorry! OTP doesn't match")) {
           Get.snackbar(
-            'Error', // Title
-            "Sorry! OTP doesn't match", // Message
+            'Error',
+            "Sorry! OTP doesn't match",
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Colors.pink,
             colorText: Colors.white,
-            duration: Duration(seconds: 3),
+            duration: const Duration(seconds: 3),
           );
         } else {
           Get.snackbar(
-            'Error', // Title
-            "Some thing went wrong ", // Message
+            'Error',
+            "Something went wrong",
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Colors.pink,
             colorText: Colors.white,
-            duration: Duration(seconds: 3),
+            duration: const Duration(seconds: 3),
           );
         }
       });
     } catch (e) {
-      print('Error: $e');
-    } finally {}
+      print('Exception: $e');
+    }
   }
 
   void userAddBuniessInfo() async {
@@ -1656,8 +1748,13 @@ class UdateProfileController extends GetxController {
                     ),
                     ElevatedButton(
                       onPressed: () {
-                        // Submit OTP logic
-                        checkOtp(otpController.text, context!);
+                        String otpValidationFor = "add_family_member";
+
+                        checkOtp(
+                          otpController.text.trim(),
+                          context,
+                          otpValidationFor,
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: ColorHelperClass.getColorFromHex(

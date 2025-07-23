@@ -9,6 +9,8 @@ class EventData {
   String? eventOrganiserMobile;
   String? dateStartsFrom;
   String? dateEndTo;
+  String? timeStartsFrom;
+  String? timeEndTo;
   String? eventImage;
   String? eventTermsAndConditionDocument;
   String? approvalStatus;
@@ -34,6 +36,8 @@ class EventData {
     this.eventOrganiserMobile,
     this.dateStartsFrom,
     this.dateEndTo,
+    this.timeStartsFrom,
+    this.timeEndTo,
     this.eventImage,
     this.eventTermsAndConditionDocument,
     this.approvalStatus,
@@ -61,6 +65,8 @@ class EventData {
       eventOrganiserMobile: json['event_organiser_mobile'],
       dateStartsFrom: json['date_starts_from'],
       dateEndTo: json['date_end_to'],
+      timeStartsFrom: json['time_starts_from'],
+      timeEndTo: json['time_end_to'],
       eventImage: json['event_image'] != null
           ? Urls.imagePathUrl + json['event_image']
           : null,
@@ -95,6 +101,8 @@ class EventData {
     data['event_organiser_mobile'] = eventOrganiserMobile;
     data['date_starts_from'] = dateStartsFrom;
     data['date_end_to'] = dateEndTo;
+    data['time_starts_from'] = timeStartsFrom;
+    data['time_end_to'] = timeEndTo;
     data['event_image'] = eventImage;
     data['event_terms_and_condition_document'] = eventTermsAndConditionDocument;
     data['approval_status'] = approvalStatus;

@@ -11,11 +11,16 @@ class NotificationDatabase {
     return _database!;
   }
   Future<Database> _initDB(String filePath) async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, filePath);
-
-    return await openDatabase(path, version: 1, onCreate: _createDB);
+    try {
+      final dbPath = await getDatabasesPath();
+      final path = join(dbPath, filePath);
+      return await openDatabase(path, version: 1, onCreate: _createDB);
+    } catch (e) {
+      print('Database init error: $e');
+      rethrow;
+    }
   }
+
   Future _createDB(Database db, int version) async {
     await db.execute('''
       CREATE TABLE notifications (
@@ -34,9 +39,14 @@ class NotificationDatabase {
   }
 
   Future<List<NotificationModel>> getAllNotifications() async {
-    final db = await instance.database;
-    final result = await db.query('notifications', orderBy: 'timestamp DESC');
-    return result.map((json) => NotificationModel.fromMap(json)).toList();
+    try {
+      final db = await instance.database;
+      final result = await db.query('notifications', orderBy: 'timestamp DESC');
+      return result.map((json) => NotificationModel.fromMap(json)).toList();
+    } catch (e) {
+      print('Get notifications error: $e');
+      return [];
+    }
   }
 
   Future<void> deleteAllNotifications() async {

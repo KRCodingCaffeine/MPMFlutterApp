@@ -276,47 +276,33 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
       ),
       body: FutureBuilder<EventAttendeesModelClass>(
         future: _registeredEventsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return RefreshIndicator(
-              onRefresh: _loadUserDataAndFetchEvents,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: SizedBox(
-                  height: MediaQuery.of(context).size.height,
-                  child: Center(
-                    child: Text(
-                      'Error: ${snapshot.error}',
-                      style: const TextStyle(color: Colors.red),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return _buildEmptyState();
+            } else if (_events.isEmpty) {
+              return _buildEmptyState();
+            } else {
+              return RefreshIndicator(
+                color: Colors.redAccent,
+                onRefresh: _loadUserDataAndFetchEvents,
+                child: ListView.builder(
+                  padding: const EdgeInsets.only(top: 8),
+                  itemCount: _events.length,
+                  itemBuilder: (context, index) =>
+                      _buildEventCard(_events[index]),
                 ),
-              ),
-            );
-          } else if (_events.isEmpty) {
-            return _buildEmptyState();
-          } else {
-            return RefreshIndicator(
-              color: Colors.redAccent,
-              onRefresh: _loadUserDataAndFetchEvents,
-              child: ListView.builder(
-                padding: const EdgeInsets.only(top: 8),
-                itemCount: _events.length,
-                itemBuilder: (context, index) =>
-                    _buildEventCard(_events[index]),
-              ),
-            );
+              );
+            }
           }
-        },
       ),
     );
   }
 
   Widget _buildEmptyState() {
     return RefreshIndicator(
+      color: Colors.redAccent,
       onRefresh: _loadUserDataAndFetchEvents,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),

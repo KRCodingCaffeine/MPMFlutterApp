@@ -89,11 +89,11 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                 color: Colors.white,
                 elevation: 4, // Adds shadow to the card
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10), // Rounded corners
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Padding(
                   padding:
-                      const EdgeInsets.all(16.0), // Inner padding of the card
+                      const EdgeInsets.all(16.0),
                   child: Column(
                     children: [
                       Obx(() {
@@ -163,8 +163,21 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                       }),
                       SizedBox(height: 20),
                       Obx(() {
-                        return _buildInfoBox('Saraswani Name',
-                            subtitle: controller.saraswaniOptionId.value);
+                        String saraswaniOptionText = controller.saraswaniOptionId.value;
+
+                        // Map the ID to the corresponding text and additional information
+                        switch (controller.saraswaniOptionId.value) {
+                          case '1':
+                            saraswaniOptionText = 'Physical Copy';
+                            break;
+                          case '2':
+                            saraswaniOptionText = 'Soft Copy';
+                            break;
+                          case '3':
+                            saraswaniOptionText = 'Both (Physical & Soft Copy)';
+                            break;
+                        }
+                        return _buildInfoBox('Saraswani Option', subtitle: saraswaniOptionText);
                       }),
                     ],
                   ),

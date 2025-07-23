@@ -31,9 +31,13 @@ class GetProfileData {
   final String? otp;
   final String? verifyOtpStatus;
   final String? mobileVerifyStatus;
+  final String? emailVerifyStatus;
+  final String? emailVerificationToken;
   final String? sangathanApprovalStatus;
   final String? vyavasthapikaApprovalStatus;
   final String? memberStatusId;
+  final String? deceasedReason;
+  final String? deceasedDate;
   final String? membershipApprovalStatusId;
   final String? membershipTypeId;
   final String? isPaymentReceived;
@@ -41,7 +45,15 @@ class GetProfileData {
   final String? genderName;
   final String? tempId;
   final String? isJangana;
+  final String? isSaraswaniBlocked;
   final String? saraswaniOptionId;
+  final String? saraswaniOption;
+  final String? memberApplicationDocument;
+  final String? membershipAllotmentDate;
+  final String? deviceToken;
+  final String? familyHeadMemberId;
+  final String? isSurnameExists;
+  final String? surnameId;
   final String? createdBy;
   final String? createdAt;
   final String? updatedBy;
@@ -85,9 +97,13 @@ class GetProfileData {
     this.otp,
     this.verifyOtpStatus,
     this.mobileVerifyStatus,
+    this.emailVerifyStatus,
+    this.emailVerificationToken,
     this.sangathanApprovalStatus,
     this.vyavasthapikaApprovalStatus,
     this.memberStatusId,
+    this.deceasedReason,
+    this.deceasedDate,
     this.membershipApprovalStatusId,
     this.membershipTypeId,
     this.isPaymentReceived,
@@ -96,6 +112,14 @@ class GetProfileData {
     this.tempId,
     this.isJangana,
     this.saraswaniOptionId,
+    this.saraswaniOption,
+    this.isSaraswaniBlocked,
+    this.memberApplicationDocument,
+    this.membershipAllotmentDate,
+    this.deviceToken,
+    this.familyHeadMemberId,
+    this.isSurnameExists,
+    this.surnameId,
     this.createdBy,
     this.createdAt,
     this.updatedBy,
@@ -140,9 +164,13 @@ class GetProfileData {
       otp: json['otp']?.toString(),
       verifyOtpStatus: json['verify_otp_status']?.toString(),
       mobileVerifyStatus: json['mobile_verify_status']?.toString(),
+      emailVerifyStatus: json['email_verify_status']?.toString(),
+      emailVerificationToken: json['email_verification_token']?.toString(),
       sangathanApprovalStatus: json['sangathan_approval_status']?.toString(),
       vyavasthapikaApprovalStatus: json['vyavasthapika_approval_status']?.toString(),
       memberStatusId: json['member_status_id']?.toString(),
+      deceasedReason: json['deceased_reason']?.toString(),
+      deceasedDate: json['deceased_date']?.toString(),
       membershipApprovalStatusId: json['membership_approval_status_id']?.toString(),
       membershipTypeId: json['membership_type_id']?.toString(),
       isPaymentReceived: json['is_payment_received']?.toString(),
@@ -151,6 +179,14 @@ class GetProfileData {
       tempId: json['temp_id']?.toString(),
       isJangana: json['is_jangana']?.toString(),
       saraswaniOptionId: json['saraswani_option_id']?.toString(),
+      saraswaniOption: json['saraswani_option']?.toString(),
+      isSaraswaniBlocked: json['is_saraswani_blocked']?.toString(),
+      memberApplicationDocument: json['member_application_document']?.toString(),
+      membershipAllotmentDate: json['membership_allotment_date']?.toString(),
+      deviceToken: json['device_token']?.toString(),
+      familyHeadMemberId: json['family_head_member_id']?.toString(),
+      isSurnameExists: json['is_surname_exists']?.toString(),
+      surnameId: json['surname_id']?.toString(),
       createdBy: json['created_by']?.toString(),
       createdAt: json['created_at']?.toString(),
       updatedBy: json['updated_by']?.toString(),
@@ -165,36 +201,27 @@ class GetProfileData {
           : null,
       familyMembersData: json['family_members_data'] != null
           ? List<FamilyMembersData>.from(
-        (json['family_members_data'] as List).map(
-              (x) => FamilyMembersData.fromJson(x as Map<String, dynamic>),
-        ),
-      )
+          (json['family_members_data'] as List)
+              .map((x) => FamilyMembersData.fromJson(x)))
           : null,
       familyHeadMemberData: json['family_head_member_data'] != null
-          ? FamilyHeadMemberData.fromJson(
-          json['family_head_member_data'] as Map<String, dynamic>)
+          ? FamilyHeadMemberData.fromJson(json['family_head_member_data'])
           : null,
       qualification: json['qualification'] != null
           ? List<Qualification>.from(
-        (json['qualification'] as List).map(
-              (x) => Qualification.fromJson(x as Map<String, dynamic>),
-        ),
-      )
+          (json['qualification'] as List)
+              .map((x) => Qualification.fromJson(x)))
           : null,
       occupation: json['occupation'] != null
-          ? Occupation.fromJson(json['occupation'] as Map<String, dynamic>)
+          ? Occupation.fromJson(json['occupation'])
           : null,
       businessInfo: json['business_info'] != null
           ? List<BusinessInfo>.from(
-        (json['business_info'] as List).map(
-              (x) => BusinessInfo.fromJson(x as Map<String, dynamic>),
-        ),
-      )
+          (json['business_info'] as List)
+              .map((x) => BusinessInfo.fromJson(x)))
           : null,
     );
   }
-
-  get is_payment_received => null;
 
   Map<String, dynamic> toJson() {
     return {
@@ -223,9 +250,13 @@ class GetProfileData {
       'otp': otp,
       'verify_otp_status': verifyOtpStatus,
       'mobile_verify_status': mobileVerifyStatus,
+      'email_verify_status': emailVerifyStatus,
+      'email_verification_token': emailVerificationToken,
       'sangathan_approval_status': sangathanApprovalStatus,
       'vyavasthapika_approval_status': vyavasthapikaApprovalStatus,
       'member_status_id': memberStatusId,
+      'deceased_reason': deceasedReason,
+      'deceased_date': deceasedDate,
       'membership_approval_status_id': membershipApprovalStatusId,
       'membership_type_id': membershipTypeId,
       'is_payment_received': isPaymentReceived,
@@ -234,6 +265,14 @@ class GetProfileData {
       'temp_id': tempId,
       'is_jangana': isJangana,
       'saraswani_option_id': saraswaniOptionId,
+      'saraswani_option': saraswaniOption,
+      'is_saraswani_blocked': isSaraswaniBlocked,
+      'member_application_document': memberApplicationDocument,
+      'membership_allotment_date': membershipAllotmentDate,
+      'device_token': deviceToken,
+      'family_head_member_id': familyHeadMemberId,
+      'is_surname_exists': isSurnameExists,
+      'surname_id': surnameId,
       'created_by': createdBy,
       'created_at': createdAt,
       'updated_by': updatedBy,

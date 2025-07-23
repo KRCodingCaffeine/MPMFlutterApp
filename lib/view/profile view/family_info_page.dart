@@ -81,8 +81,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor:
-            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Builder(
           builder: (context) {
             double fontSize = MediaQuery.of(context).size.width * 0.045;
@@ -127,42 +126,46 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
           ),
         ],
       ),
-      floatingActionButton: SpeedDial(
-        icon: isSpeedDialOpen ? Icons.close : Icons.add,
-        activeIcon: Icons.close,
-        backgroundColor:
-            ColorHelperClass.getColorFromHex(ColorResources.red_color),
-        foregroundColor: Colors.white,
-        overlayOpacity: 0.5,
-        spacing: 10,
-        spaceBetweenChildren: 10,
-        onOpen: () => setState(() => isSpeedDialOpen = true),
-        onClose: () => setState(() => isSpeedDialOpen = false),
-        children: [
-          SpeedDialChild(
-            child: const Icon(Icons.person_add),
-            backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+      floatingActionButton: Obx(() {
+        // Only show FAB if current user is family head
+        if (controller.familyHeadData.value?.memberId == currentMemberId) {
+          return SpeedDial(
+            icon: isSpeedDialOpen ? Icons.close : Icons.add,
+            activeIcon: Icons.close,
+            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
             foregroundColor: Colors.white,
-            label: 'New Member',
-            labelStyle: TextStyle(fontSize: 16),
-            onTap: () {
-              _showAddModalSheet(context);
-            },
-          ),
-          SpeedDialChild(
-            child: const Icon(Icons.person),
-            backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
-            foregroundColor: Colors.white,
-            label: 'Existing Member',
-            labelStyle: TextStyle(fontSize: 16),
-            onTap: () {
-              _showExistingMemberModal(context);
-            },
-          ),
-        ],
-      ),
+            overlayOpacity: 0.5,
+            spacing: 10,
+            spaceBetweenChildren: 10,
+            onOpen: () => setState(() => isSpeedDialOpen = true),
+            onClose: () => setState(() => isSpeedDialOpen = false),
+            children: [
+              SpeedDialChild(
+                child: const Icon(Icons.person_add),
+                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                label: 'New NM Member',
+                labelStyle: TextStyle(fontSize: 16),
+                onTap: () {
+                  _showAddModalSheet(context);
+                },
+              ),
+              SpeedDialChild(
+                child: const Icon(Icons.person),
+                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                label: 'Existing Member',
+                labelStyle: TextStyle(fontSize: 16),
+                onTap: () {
+                  _showExistingMemberModal(context);
+                },
+              ),
+            ],
+          );
+        } else {
+          return SizedBox.shrink(); // Hide FAB if not family head
+        }
+      }),
     );
   }
 
@@ -242,7 +245,8 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
       context: context,
       builder: (context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           backgroundColor: Colors.grey[100],
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -266,7 +270,8 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                     final headData = controller.familyHeadData.value;
                     if (headData != null) {
                       return Text(
-                        "Current Head: ${headData.firstName ?? ''} ${headData.lastName ?? ''}".trim(),
+                        "Current Head: ${headData.firstName ?? ''} ${headData.lastName ?? ''}"
+                            .trim(),
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       );
                     }
@@ -290,10 +295,10 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                             enabledBorder: const OutlineInputBorder(
                                 borderSide: BorderSide(color: Colors.black)),
                             focusedBorder: const OutlineInputBorder(
-                                borderSide:
-                                BorderSide(color: Colors.black38, width: 1)),
+                                borderSide: BorderSide(
+                                    color: Colors.black38, width: 1)),
                             contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 20),
+                                const EdgeInsets.symmetric(horizontal: 20),
                             labelStyle: const TextStyle(color: Colors.black),
                           ),
                           child: DropdownButton<String>(
@@ -308,13 +313,14 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                             value: selectedMember.value,
                             items: controller.familyDataList.value
                                 .where((member) =>
-                            member.memberId !=
-                                controller.familyHeadData.value?.memberId)
+                                    member.memberId !=
+                                    controller.familyHeadData.value?.memberId)
                                 .map((member) {
                               return DropdownMenuItem<String>(
                                 value: member.memberId,
                                 child: Text(
-                                    "${member.firstName ?? ''} ${member.lastName ?? ''}".trim()),
+                                    "${member.firstName ?? ''} ${member.lastName ?? ''}"
+                                        .trim()),
                               );
                             }).toList(),
                             onChanged: (String? newValue) {
@@ -349,11 +355,12 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                     ),
                                   ),
                                 );
-                              } else if (controller.rxStatusRelationType.value ==
+                              } else if (controller
+                                      .rxStatusRelationType.value ==
                                   Status.ERROR) {
                                 return const Expanded(
                                     child:
-                                    Text('Failed to load relation types'));
+                                        Text('Failed to load relation types'));
                               } else if (controller
                                   .relationShipTypeList.isEmpty) {
                                 return const Expanded(
@@ -365,21 +372,22 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                   child: InputDecorator(
                                     decoration: InputDecoration(
                                       labelText: selectedValue.isNotEmpty
-                                          ? 'Select Relation *'
+                                          ? 'Select Current Head Relation *'
                                           : null,
                                       border: const OutlineInputBorder(
                                           borderSide:
-                                          BorderSide(color: Colors.black)),
+                                              BorderSide(color: Colors.black)),
                                       enabledBorder: const OutlineInputBorder(
                                           borderSide:
-                                          BorderSide(color: Colors.black)),
+                                              BorderSide(color: Colors.black)),
                                       focusedBorder: const OutlineInputBorder(
                                           borderSide: BorderSide(
                                               color: Colors.black38, width: 1)),
-                                      contentPadding: const EdgeInsets.symmetric(
-                                          horizontal: 20),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 20),
                                       labelStyle:
-                                      const TextStyle(color: Colors.black),
+                                          const TextStyle(color: Colors.black),
                                     ),
                                     child: DropdownButton<String>(
                                       dropdownColor: Colors.white,
@@ -398,14 +406,14 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                           .map((RelationData relation) {
                                         return DropdownMenuItem<String>(
                                           value: relation.id.toString(),
-                                          child: Text(
-                                              relation.name ?? 'Unknown'),
+                                          child:
+                                              Text(relation.name ?? 'Unknown'),
                                         );
                                       }).toList(),
                                       onChanged: (String? newValue) {
                                         if (newValue != null) {
-                                          controller.setSelectRelationShip(
-                                              newValue);
+                                          controller
+                                              .setSelectRelationShip(newValue);
                                         }
                                       },
                                     ),
@@ -427,8 +435,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                         child: OutlinedButton(
                           onPressed: () => Navigator.pop(context),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor:
-                            ColorHelperClass.getColorFromHex(
+                            foregroundColor: ColorHelperClass.getColorFromHex(
                                 ColorResources.red_color),
                             side: BorderSide(
                                 color: ColorHelperClass.getColorFromHex(
@@ -441,26 +448,26 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                         ),
                       ),
                       const SizedBox(width: 10),
-
                       Expanded(
                         child: ElevatedButton(
                           onPressed: isChangeEnabled
                               ? () async {
-                            if (selectedMember.value != null &&
-                                controller.selectRelationShipType.value.isNotEmpty) {
-                              final success = await controller.changeFamilyHead(
-                                selectedMember.value!,
-                                controller.selectRelationShipType.value,
-                              );
-                              if (success) {
-                                Navigator.pop(context);
-                              }
-                            }
-                          }
+                                  if (selectedMember.value != null &&
+                                      controller.selectRelationShipType.value
+                                          .isNotEmpty) {
+                                    final success =
+                                        await controller.changeFamilyHead(
+                                      selectedMember.value!,
+                                      controller.selectRelationShipType.value,
+                                    );
+                                    if (success) {
+                                      Navigator.pop(context);
+                                    }
+                                  }
+                                }
                               : null,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                            ColorHelperClass.getColorFromHex(
+                            backgroundColor: ColorHelperClass.getColorFromHex(
                                 ColorResources.red_color),
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
@@ -470,13 +477,13 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                           child: Obx(() {
                             return controller.familyloading.value
                                 ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
                                 : const Text("Change Head");
                           }),
                         ),
@@ -952,8 +959,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                   OutlinedButton(
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor:
-                      ColorHelperClass.getColorFromHex(
+                      foregroundColor: ColorHelperClass.getColorFromHex(
                           ColorResources.red_color),
                       side: const BorderSide(color: Colors.red),
                       shape: RoundedRectangleBorder(
@@ -967,8 +973,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                       controller.updateFamilyRelation(context, index);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                      ColorHelperClass.getColorFromHex(
+                      backgroundColor: ColorHelperClass.getColorFromHex(
                           ColorResources.red_color),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
@@ -1156,62 +1161,48 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                       );
                                     }
 
-                                    if (regiController
-                                            .selectMemberSalutation.value ==
-                                        "") {
+                                    // Validate required fields
+                                    if (regiController.selectMemberSalutation.value == "") {
                                       showErrorSnackbar("Select Salutation");
                                       return;
                                     }
-                                    if (controller
-                                            .selectRelationShipType.value ==
-                                        "") {
-                                      showErrorSnackbar(
-                                          "Select Member Relation");
+                                    if (controller.selectRelationShipType.value == "") {
+                                      showErrorSnackbar("Select Member Relation");
                                       return;
                                     }
-                                    if (regiController.selectedGender.value ==
-                                        "") {
+                                    if (regiController.firstNameController.value == "") {
+                                      showErrorSnackbar("Enter First Name");
+                                      return;
+                                    }
+                                    if (regiController.lastNameController.value == "") {
+                                      showErrorSnackbar("Enter Surname");
+                                      return;
+                                    }
+                                    if (regiController.fathersnameController.value == "") {
+                                      showErrorSnackbar("Enter Father's Name");
+                                      return;
+                                    }
+                                    if (regiController.selectedGender.value == "") {
                                       showErrorSnackbar("Select Gender");
                                       return;
                                     }
-                                    if (regiController.selectBloodGroup.value ==
-                                        "") {
-                                      showErrorSnackbar("Select Blood Group");
-                                      return;
-                                    }
-                                    if (regiController.dateController.text ==
-                                        "") {
+                                    if (regiController.dateController.text == "") {
                                       showErrorSnackbar("Enter Date of Birth");
                                       return;
                                     }
-                                    if (regiController.selectMarital.value ==
-                                        "") {
-                                      showErrorSnackbar(
-                                          "Select Marital status");
+                                    if (regiController.selectMarital.value == "") {
+                                      showErrorSnackbar("Select Marital status");
                                       return;
                                     }
-                                    if (regiController.MaritalAnnivery.value ==
-                                        true) {
-                                      if (regiController.marriagedateController
-                                              .value.text ==
-                                          '') {
-                                        showErrorSnackbar(
-                                            "Select Marriage Date");
+                                    if (regiController.MaritalAnnivery.value == true) {
+                                      if (regiController.marriagedateController.value.text == '') {
+                                        showErrorSnackbar("Select Marriage Date");
                                         return;
                                       }
                                     } else {
-                                      regiController.marriagedateController
-                                          .value.text = "";
+                                      regiController.marriagedateController.value.text = "";
                                     }
-
-                                    if (regiController
-                                            .selectMemberShipType.value ==
-                                        "") {
-                                      showErrorSnackbar(
-                                          "Select membership type");
-                                      return;
-                                    }
-                                    controller.userAddFamily();
+                                    controller.userAddFamily(context);
                                   }
                                 },
                                 style: ElevatedButton.styleFrom(
@@ -1525,21 +1516,23 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
 
                                 // Mobile Number Field
                                 _buildEditableField(
-                                  "Mobile Number *",
+                                  "Mobile Number",
                                   regiController.mobileController.value,
                                   "Mobile Number",
-                                  "",
+                                  "",  // Empty validation message
                                   text: TextInputType.phone,
+                                  maxLength: 10,
                                 ),
                                 const SizedBox(height: 30),
 
                                 // WhatsApp Number Field
                                 _buildEditableField(
-                                  "WhatsApp Number *",
+                                  "WhatsApp Number",
                                   regiController.whatappmobileController.value,
                                   "WhatsApp Number",
-                                  "",
+                                  "",  // Empty validation message
                                   text: TextInputType.phone,
+                                  maxLength: 10,
                                 ),
                                 const SizedBox(height: 30),
 
@@ -1566,7 +1559,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
 
                                 // Email Field
                                 _buildEditableField(
-                                  "Email *",
+                                  "Email",
                                   regiController.emailController.value,
                                   "Email",
                                   '',
@@ -1653,10 +1646,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                             regiController.dateController.text =
                                                 formattedDate;
                                           });
-                                          String zoneId =
-                                              controller.zone_id.value.trim();
-                                          regiController.getFamilyMemberShip(
-                                              formattedDate, zoneId);
                                         }
                                       },
                                     ),
@@ -1812,7 +1801,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                               decoration: InputDecoration(
                                                 labelText:
                                                     selectedValue.isNotEmpty
-                                                        ? 'Select Blood Group *'
+                                                        ? 'Select Blood Group'
                                                         : null,
                                                 border:
                                                     const OutlineInputBorder(
@@ -1843,7 +1832,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                                 isExpanded: true,
                                                 underline: Container(),
                                                 hint: const Text(
-                                                  'Select Blood Group *',
+                                                  'Select Blood Group',
                                                   style: TextStyle(
                                                       fontWeight:
                                                           FontWeight.bold),
@@ -2118,147 +2107,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                     ),
                                   );
                                 }),
-
-                                // Membership Type Dropdown
-                                Container(
-                                  width: double.infinity,
-                                  margin:
-                                      const EdgeInsets.only(left: 5, right: 5),
-                                  child: Row(
-                                    children: [
-                                      Obx(() {
-                                        final status = regiController
-                                            .rxStatusMemberShipTYpe.value;
-
-                                        if (status == Status.LOADING) {
-                                          return const Padding(
-                                            padding: EdgeInsets.symmetric(
-                                                vertical: 10, horizontal: 22),
-                                            child: SizedBox(
-                                              height: 24,
-                                              width: 24,
-                                              child: CircularProgressIndicator(
-                                                color: Colors.redAccent,
-                                              ),
-                                            ),
-                                          );
-                                        }
-
-                                        String? message;
-                                        if (status == Status.ERROR) {
-                                          message = 'Select Date of Birth';
-                                        } else if (regiController
-                                            .memberShipList.isEmpty) {
-                                          message = 'No Membership available';
-                                        }
-
-                                        if (message != null) {
-                                          return Expanded(
-                                            child: InputDecorator(
-                                              decoration: const InputDecoration(
-                                                labelText: 'Membership *',
-                                                border: OutlineInputBorder(
-                                                  borderSide: BorderSide(
-                                                      color: Colors.black),
-                                                ),
-                                                enabledBorder:
-                                                    OutlineInputBorder(
-                                                  borderSide: BorderSide(
-                                                      color: Colors.black),
-                                                ),
-                                                focusedBorder:
-                                                    OutlineInputBorder(
-                                                  borderSide: BorderSide(
-                                                      color: Colors.black38,
-                                                      width: 1),
-                                                ),
-                                                contentPadding:
-                                                    EdgeInsets.symmetric(
-                                                        horizontal: 20,
-                                                        vertical: 16),
-                                                labelStyle: TextStyle(
-                                                    color: Colors.black),
-                                              ),
-                                              child: Text(
-                                                message,
-                                                style: const TextStyle(
-                                                  color: Colors.red,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                            ),
-                                          );
-                                        }
-
-                                        // Normal Dropdown UI
-                                        final selectedMember = regiController
-                                            .selectMemberShipType.value;
-                                        return Expanded(
-                                          child: InputDecorator(
-                                            decoration: InputDecoration(
-                                              labelText:
-                                                  selectedMember.isNotEmpty
-                                                      ? 'Membership *'
-                                                      : null,
-                                              border: const OutlineInputBorder(
-                                                borderSide: BorderSide(
-                                                    color: Colors.black),
-                                              ),
-                                              enabledBorder:
-                                                  const OutlineInputBorder(
-                                                borderSide: BorderSide(
-                                                    color: Colors.black),
-                                              ),
-                                              focusedBorder:
-                                                  const OutlineInputBorder(
-                                                borderSide: BorderSide(
-                                                    color: Colors.black38,
-                                                    width: 1),
-                                              ),
-                                              contentPadding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 20),
-                                              labelStyle: const TextStyle(
-                                                  color: Colors.black),
-                                            ),
-                                            child: DropdownButton<String>(
-                                              dropdownColor: Colors.white,
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              isExpanded: true,
-                                              underline: Container(),
-                                              hint: const Text(
-                                                'Membership *',
-                                                style: TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              ),
-                                              value: selectedMember.isNotEmpty
-                                                  ? selectedMember
-                                                  : null,
-                                              items: regiController
-                                                  .memberShipList
-                                                  .map((MemberShipData ms) {
-                                                return DropdownMenuItem<String>(
-                                                  value: ms.id.toString(),
-                                                  child: Text(
-                                                      "${ms.membershipName ?? 'Unknown'} - Rs ${ms.price ?? '0'}"),
-                                                );
-                                              }).toList(),
-                                              onChanged: (String? newValue) {
-                                                if (newValue != null) {
-                                                  regiController
-                                                      .selectMemberShipType(
-                                                          newValue);
-                                                }
-                                              },
-                                            ),
-                                          ),
-                                        );
-                                      }),
-                                    ],
-                                  ),
-                                ),
                                 const SizedBox(height: 30),
                               ],
                             ),
@@ -2328,21 +2176,28 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
   }
 
   Widget _buildEditableField(
-    String label,
-    TextEditingController controller,
-    String hintText,
-    String validationMessage, {
-    bool obscureText = false,
-    required TextInputType text,
-    bool isRequired = false,
-    bool readOnly = false,
-  }) {
+      String label,
+      TextEditingController controller,
+      String hintText,
+      String validationMessage, {
+        bool obscureText = false,
+        required TextInputType text,
+        bool isRequired = false,
+        int? maxLength,
+        ValueChanged<String>? onChanged,
+        bool readOnly = false,
+      }) {
     return Container(
       margin: const EdgeInsets.only(left: 5, right: 5),
       child: TextFormField(
         keyboardType: text,
         controller: controller,
         obscureText: obscureText,
+        maxLength: maxLength,
+        onChanged: onChanged,
+        buildCounter: (BuildContext context,
+            {int? currentLength, int? maxLength, bool? isFocused}) =>
+        null,
         readOnly: readOnly,
         style: const TextStyle(color: Colors.black),
         decoration: InputDecoration(
@@ -2364,12 +2219,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
             horizontal: 20,
           ),
         ),
-        validator: (value) {
-          if (isRequired && (value == null || value.isEmpty)) {
-            return validationMessage;
-          }
-          return null;
-        },
       ),
     );
   }

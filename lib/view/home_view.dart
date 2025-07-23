@@ -27,6 +27,8 @@ class _HomeViewState extends State<HomeView> {
   final regiController = Get.put(NewMemberController());
   final controller = Get.put(UdateProfileController());
   final ScrollController _scrollController = ScrollController();
+  final double _cardWidth = 360.0;
+  final double _cardSpacing = 16.0;
   late Timer _timer;
   double screenWidth = 0.0;
 
@@ -60,20 +62,30 @@ class _HomeViewState extends State<HomeView> {
         debugPrint("Invalid or missing member ID.");
       }
     });
+    ever(controller.emailVerifyStatus, (value) {
+      if (value == "1") {
+        // Email verified, no need to show banner
+        setState(() {});
+      }
+    });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      screenWidth = MediaQuery.of(context).size.width * 0.7;
       _timer = Timer.periodic(const Duration(seconds: 10), (Timer timer) {
         if (_scrollController.hasClients) {
-          final maxScroll = _scrollController.position.maxScrollExtent;
-          final currentScroll = _scrollController.offset;
+          final double scrollAmount = _cardWidth + _cardSpacing;
+          final double maxScroll = _scrollController.position.maxScrollExtent;
+          final double currentScroll = _scrollController.offset;
 
-          if (currentScroll >= maxScroll) {
-            _scrollController.jumpTo(0);
+          if (currentScroll + scrollAmount >= maxScroll) {
+            _scrollController.animateTo(
+              0,
+              duration: const Duration(milliseconds: 800),
+              curve: Curves.easeInOut,
+            );
           } else {
             _scrollController.animateTo(
-              currentScroll + screenWidth,
-              duration: const Duration(milliseconds: 1500),
+              currentScroll + scrollAmount,
+              duration: const Duration(milliseconds: 800),
               curve: Curves.easeInOut,
             );
           }
@@ -120,6 +132,11 @@ class _HomeViewState extends State<HomeView> {
           Obx(() => Visibility(
               visible: controller.showDashboardReviewFlag.value,
               child: _buildJanganaNotice())),
+
+          Obx(() => Visibility(
+            visible: controller.showEmailVerifyBanner.value,
+            child: _buildEmailVerifyBanner(),
+          )),
 
           Center(
             child: Obx(() => Visibility(
@@ -170,6 +187,88 @@ class _HomeViewState extends State<HomeView> {
     return GestureDetector(
       onTap: () => Navigator.pushNamed(context, RouteNames.profile),
       child: _buildNoticeContainer("Your Janaganana is pending. Please click here to complete it."),
+    );
+  }
+
+  Widget _buildEmailVerifyBanner() {
+    return Obx(() {
+      // Only show if email is not verified
+      if (controller.emailVerifyStatus.value != "0") {
+        return const SizedBox.shrink();
+      }
+
+      return GestureDetector(
+        onTap: () => _showVerificationDialog(context),
+        child: _buildNoticeContainer("Your email is not verified. Please click here to verify it."),
+      );
+    });
+  }
+
+  void _showVerificationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Email Verification",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+          content: const Text(
+            "We'll send a verification link to your email address. Please check your inbox.",
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                controller.sendVerificationEmail();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Send"),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -321,7 +420,7 @@ class _HomeViewState extends State<HomeView> {
 
 
     return Container(
-      width: 350,
+      width: 360,
       margin: const EdgeInsets.only(right: 16.0),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
