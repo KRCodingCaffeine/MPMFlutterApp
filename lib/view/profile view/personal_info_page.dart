@@ -163,11 +163,6 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                       }),
                       SizedBox(height: 20),
                       Obx(() {
-                        return _buildInfoBox('Proposer',
-                            subtitle: controller.bloodGroup.value);
-                      }),
-                      SizedBox(height: 20),
-                      Obx(() {
                         String saraswaniOptionText = controller.saraswaniOptionId.value;
 
                         // Map the ID to the corresponding text and additional information
