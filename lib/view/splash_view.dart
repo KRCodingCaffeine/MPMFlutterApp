@@ -16,7 +16,7 @@ class SplashView extends StatefulWidget {
   State<SplashView> createState() => _SplashViewState();
 }
 
-class _SplashViewState extends State<SplashView> with SingleTickerProviderStateMixin{
+class _SplashViewState extends State<SplashView> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
   AppUpdateInfo? _updateInfo;
@@ -24,8 +24,9 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
+
     _controller = AnimationController(
-      duration: Duration(seconds: 2),
+      duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
 
@@ -33,78 +34,41 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
 
-     getData();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      body: Stack(
-        children: [
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset(Images.logoImage, // Replace with your logo
-                  width: 300,
-                  height: 240,
-                ),
-                SizedBox(height: 10),
-
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void getData() async {
-
-    var mobilenumber="";
-
-       await Future.delayed(const Duration(milliseconds: 500), () async {
-
-          await Permission.notification.isDenied.then((value) {
-            if (value) {
-              Permission.notification.request();
-            }
-          });
-
-          await _checkForUpdate();
-
-          final token = await FirebaseMessaging.instance.getToken();
-      await PushNotificationService().initialise();
-      if (token != null) {
-        print('firebase device token >>>>> $token');
-        // sharedPreference.saveDeviceToken(token);
-      }
-
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _handleStartupLogic();
     });
-    Timer(Duration(seconds: 2), () async {
-      if(mounted) {
-        CheckUserData2? userData = await SessionManager.getSession();
-        print('User ID: ${userData?.memberId}');
-          print('User Name: ${userData?.mobile}');
+  }
 
-          setState(() {
-            mobilenumber = userData?.mobile ?? "";
-          });
+  void _handleStartupLogic() async {
+    // Start lightweight tasks immediately
+    await PushNotificationService().initialise();
 
-          if (mobilenumber =="") {
-            Navigator.pushReplacementNamed(context!, RouteNames.login_screen);
-          } else {
-            Navigator.pushReplacementNamed(context!, RouteNames.dashboard);
-          }
+    // Ask notification permission non-blockingly
+    _requestNotificationPermission();
 
-      }
-    });
+    // Do update check
+    await _checkForUpdate();
+
+    // Delay for smooth splash
+    await Future.delayed(Duration(seconds: 2));
+
+    final userData = await SessionManager.getSession();
+    final mobile = userData?.mobile ?? "";
+
+    if (!mounted) return;
+
+    if (mobile.isEmpty) {
+      Navigator.pushReplacementNamed(context, RouteNames.login_screen);
+    } else {
+      Navigator.pushReplacementNamed(context, RouteNames.dashboard);
+    }
+  }
+
+  void _requestNotificationPermission() async {
+    final status = await Permission.notification.status;
+    if (!status.isGranted) {
+      await Permission.notification.request();
+    }
   }
 
   Future<void> _checkForUpdate() async {
@@ -116,7 +80,32 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
         });
       }
     } catch (e) {
-      print("Failed to check or perform update: $e");
+      print("Update check failed: $e");
     }
   }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(Images.logoImage, width: 300, height: 240),
+            const SizedBox(height: 10),
+            const CircularProgressIndicator(),
+          ],
+        ),
+      ),
+    );
+  }
 }
+
+

@@ -13,37 +13,35 @@ import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 
 
-Future<void> main() async   {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   if (Firebase.apps.isEmpty) {
     await Firebase.initializeApp();
-    await PushNotificationService().initialise();
-    FirebaseMessaging.onBackgroundMessage(PushNotificationService.firebaseMessagingBackgroundHandler);
   }
+
+  FirebaseMessaging.onBackgroundMessage(PushNotificationService.firebaseMessagingBackgroundHandler);
+
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  // GetServerKey getServerKey=GetServerKey();
-  // String acc= await getServerKey.getServerKey();
-  // print("aaa"+acc.toString());
 
-  // runApp(
-  //     DevicePreview(
-  //       enabled: !kReleaseMode,
-  //       builder: (context) => MyApp(), // Wrap your app
-  //     ));
-  runApp(MyApp());
+  runApp(const MyApp());
 }
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         fontFamily: 'Ubuntu-Regular.ttf',
-        colorScheme: ColorScheme.fromSeed(seedColor: ColorHelperClass.getColorFromHex(ColorResources.primary_color)),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: ColorHelperClass.getColorFromHex(ColorResources.primary_color),
+        ),
         useMaterial3: true,
       ),
       onGenerateRoute: RoutePages.generateRoute,
@@ -51,5 +49,7 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+
 
 
