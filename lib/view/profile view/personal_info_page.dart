@@ -163,8 +163,26 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                       }),
                       SizedBox(height: 20),
                       Obx(() {
-                        return _buildInfoBox('Saraswani Option',
-                            subtitle: controller.saraswaniOption.value);
+                        return _buildInfoBox('Proposer',
+                            subtitle: controller.bloodGroup.value);
+                      }),
+                      SizedBox(height: 20),
+                      Obx(() {
+                        String saraswaniOptionText = controller.saraswaniOptionId.value;
+
+                        // Map the ID to the corresponding text and additional information
+                        switch (controller.saraswaniOptionId.value) {
+                          case '1':
+                            saraswaniOptionText = 'Physical Copy';
+                            break;
+                          case '2':
+                            saraswaniOptionText = 'Soft Copy';
+                            break;
+                          case '3':
+                            saraswaniOptionText = 'Both (Physical & Soft Copy)';
+                            break;
+                        }
+                        return _buildInfoBox('Saraswani Option', subtitle: saraswaniOptionText);
                       }),
                     ],
                   ),
