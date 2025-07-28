@@ -67,5 +67,6 @@ class Urls {
   static const String get_dashboard_events_url = base_url+"api/get_dashboard_events";
   static const String update_event_by_member_url = base_url+"api/update_event_by_member";
   static const String send_verification_email_url = base_url+"api/send_verification_email";
+  static const String member_surname_url = base_url+"api/member_surname";
 
 }

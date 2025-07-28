@@ -13,6 +13,7 @@ import 'package:mpm/model/CheckPinCode/CheckPinCodeModel.dart';
 import 'package:mpm/model/CheckUser/CheckUserData.dart';
 import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/model/CountryModel/CountryData.dart';
+import 'package:mpm/model/GetMemberSurname/GetMemberSurnameData.dart';
 import 'package:mpm/model/Occupation/OccupationData.dart';
 import 'package:mpm/model/OccupationSpec/OccuptionSpecData.dart';
 import 'package:mpm/model/Qualification/QualificationData.dart';
@@ -32,6 +33,7 @@ import 'package:mpm/model/membersalutation/MemberSalutationData.dart';
 import 'package:mpm/model/membership/MemberShipData.dart';
 import 'package:mpm/model/relation/RelationData.dart';
 import 'package:mpm/repository/check_mobile_exists_repository/check_mobile_exists_repo.dart';
+import 'package:mpm/repository/get_member_surname_repository/get_member_surname_repo.dart';
 import 'package:mpm/repository/register_repository/register_repo.dart';
 import 'package:http/http.dart' as http;
 import 'package:mpm/repository/saraswani_option_repository/saraswani_option_repo.dart';
@@ -61,6 +63,9 @@ class NewMemberController extends GetxController {
   final rxStatusBuilding = Status.IDLE.obs;
   final rxStatusDocument = Status.LOADING.obs;
   final rxStatusMemberShipTYpe = Status.LOADING.obs;
+  final rxStatusSurname = Status.LOADING.obs;
+  final surnameList = <MemberSurnameData>[].obs;
+  final selectedSurname = ''.obs;
 
   var arg_page = "".obs;
   var state_id = "".obs;
@@ -98,7 +103,7 @@ class NewMemberController extends GetxController {
   var userdocumentImage = ''.obs;
   var isBuilding = false.obs;
   var isRelation = false.obs;
-  var isMarried = false.obs; //
+  var isMarried = false.obs;
   var memberId = "".obs;
   var MaritalAnnivery = false.obs;
   var selectMemberSalutation = ''.obs;
@@ -245,6 +250,25 @@ class NewMemberController extends GetxController {
     }).onError((error, strack) {
       setRxRequestMemberSalutation(Status.ERROR);
     });
+  }
+
+  Future<void> getSurnameList() async {
+    try {
+      rxStatusSurname.value = Status.LOADING;
+      final response = await MemberSurnameRepository().fetchMemberSurnameList();
+      if (response.status == true && response.data != null) {
+        surnameList.assignAll(response.data!);
+        rxStatusSurname.value = Status.COMPLETE;
+      } else {
+        rxStatusSurname.value = Status.ERROR;
+      }
+    } catch (e) {
+      rxStatusSurname.value = Status.ERROR;
+    }
+  }
+
+  void setSelectedSurname(String value) {
+    selectedSurname.value = value;
   }
 
   void getGender() {
@@ -398,23 +422,17 @@ class NewMemberController extends GetxController {
         DateFormat inputFormat = DateFormat("dd/MM/yyyy");
         DateTime dob = inputFormat.parse(date);
 
-        // Clear existing list
         memberShipList.clear();
 
         if (withoutcheckotp.value == false) {
-          // Normal case - show all memberships
           setMemberShipType(_value.data!);
 
-          // In this case, show all Saraswani options
           filteredSaraswaniOptionList.value = saraswaniOptionList;
         } else {
-          // Special cases based on age and pincode status
           if (isUnder18(dob)) {
-            // Under 18
             if (zoneController.value.text.isEmpty) {
               _showLoginAlert(context!);
             } else {
-              // Show only Non Member
               _addMembershipIfMatches(_value.data!, "Non Member");
 
               filteredSaraswaniOptionList.value = saraswaniOptionList
@@ -424,7 +442,6 @@ class NewMemberController extends GetxController {
                   .toList();
             }
           } else {
-            // Above 18
             if (countryNotFound.value) {
               if (zoneController.value.text.isEmpty) {
                 _addMembershipIfMatches(_value.data!, "Saraswani Member");
@@ -449,7 +466,6 @@ class NewMemberController extends GetxController {
                 }
               }
             } else {
-              // Pincode doesn't exist - show only Saraswani Member
               _addMembershipIfMatches(_value.data!, "Saraswani Member");
 
               filteredSaraswaniOptionList.value = saraswaniOptionList;
@@ -465,7 +481,6 @@ class NewMemberController extends GetxController {
     });
   }
 
-// Helper method to add membership if it matches the name
   void _addMembershipIfMatches(List<MemberShipData> memberships, String name) {
     for (var membership in memberships) {
       if (membership.membershipName == name) {
@@ -734,7 +749,6 @@ class NewMemberController extends GetxController {
   void onInit() {
     super.onInit();
     fetchSaraswaniOptions();
-    // add other fetch functions if needed
   }
 
   void clearForm() {

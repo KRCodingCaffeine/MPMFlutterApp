@@ -1797,12 +1797,11 @@ class UdateProfileController extends GetxController {
       final response = await addExistingMemberRepo.addExistingMember(data);
 
       if (response['status'] == true) {
-        // Refresh family data
         await getUserProfile();
 
         Get.snackbar(
-          'Success', // Title
-          response['message'] ?? "Member added successfully", // Message
+          'Success',
+          response['message'] ?? "Member added successfully",
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.green,
           colorText: Colors.white,

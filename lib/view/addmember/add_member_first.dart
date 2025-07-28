@@ -9,6 +9,7 @@ import 'package:mpm/OccuptionProfession/OccuptionProfessionData.dart';
 import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/model/CountryModel/CountryData.dart';
+import 'package:mpm/model/GetMemberSurname/GetMemberSurnameData.dart';
 import 'package:mpm/model/Occupation/OccupationData.dart';
 import 'package:mpm/model/OccupationSpec/OccuptionSpecData.dart';
 import 'package:mpm/model/Qualification/QualificationData.dart';
@@ -56,7 +57,7 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
     regiController.getBloodGroup();
     regiController.getMemberShip();
     regiController.getDocumentType();
-
+    regiController.getSurnameList();
     regiController.getMemberSalutation();
     regiController.getCountry();
     regiController.getState();
@@ -96,7 +97,7 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
             padding: const EdgeInsets.only(left: 6.0, right: 6),
             child: Row(
               mainAxisAlignment:
-                  MainAxisAlignment.end, // Aligns button to the right
+                  MainAxisAlignment.end,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 SizedBox(
@@ -182,7 +183,6 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                       }
 
                       if (_formKeyLogin!.currentState!.validate()) {
-                        // Helper function to show a snackbar
                         void showErrorSnackbar(String message) {
                           Get.snackbar(
                             "Error",
@@ -197,7 +197,6 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                           showErrorSnackbar("Select salutation");
                           return;
                         }
-                        // Gender validation
                         if (regiController.selectedGender == '') {
                           showErrorSnackbar("Select Gender");
                           return;
@@ -207,7 +206,6 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                           return;
                         }
 
-                        // Marital status validation
                         if (regiController.selectMarital == '') {
                           showErrorSnackbar("Select Marital Status");
                           return;
@@ -223,7 +221,6 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                           regiController.marriagedateController.value.text = "";
                         }
 
-                        // If all validations pass, proceed with the desired logic
                         print("All validations passed!");
                         print(
                             "Selected Gender: ${regiController.selectedGender}");
@@ -427,13 +424,79 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                           const SizedBox(height: 20),
 
                           //Third Name
-                          _buildEditableField(
-                              "SurName *",
-                              regiController.lastNameController.value,
-                              "SurName",
-                              "",
-                              text: TextInputType.text,
-                              isRequired: true),
+                          Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(left: 5, right: 5),
+                            child: Row(
+                              children: [
+                                Obx(() {
+                                  if (regiController.rxStatusSurname.value == Status.LOADING) {
+                                    return const Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                                      child: SizedBox(
+                                        height: 24,
+                                        width: 24,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.redAccent,
+                                        ),
+                                      ),
+                                    );
+                                  } else if (regiController.rxStatusSurname.value == Status.ERROR) {
+                                    return const Center(child: Text('Failed to load surnames'));
+                                  } else if (regiController.surnameList.isEmpty) {
+                                    return const Center(child: Text('No surnames available'));
+                                  } else {
+                                    final selectedValue = regiController.selectedSurname.value;
+                                    return Expanded(
+                                      child: InputDecorator(
+                                        decoration: InputDecoration(
+                                          labelText: selectedValue.isNotEmpty ? 'SurName *' : null,
+                                          border: const OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black),
+                                          ),
+                                          enabledBorder: const OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black),
+                                          ),
+                                          focusedBorder: const OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black38, width: 1),
+                                          ),
+                                          contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                          labelStyle: const TextStyle(color: Colors.black),
+                                        ),
+                                        child: DropdownButton<String>(
+                                          dropdownColor: Colors.white,
+                                          borderRadius: BorderRadius.circular(10),
+                                          isExpanded: true,
+                                          underline: Container(),
+                                          hint: const Text('Select SurName *'),
+                                          value: selectedValue.isNotEmpty ? selectedValue : null,
+                                          items: regiController.surnameList.map((MemberSurnameData item) {
+                                            return DropdownMenuItem<String>(
+                                              value: item.id.toString(),
+                                              child: Text(item.surnameName ?? 'Unknown'),
+                                            );
+                                          }).toList(),
+                                          onChanged: (String? newValue) {
+                                            if (newValue != null) {
+                                              regiController.setSelectedSurname(newValue);
+                                              // Also update the lastNameController if needed
+                                              final selectedSurname = regiController.surnameList.firstWhere(
+                                                    (element) => element.id.toString() == newValue,
+                                                orElse: () => MemberSurnameData(),
+                                              );
+                                              if (selectedSurname.surnameName != null) {
+                                                regiController.lastNameController.value.text = selectedSurname.surnameName!;
+                                              }
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                }),
+                              ],
+                            ),
+                          ),
                           const SizedBox(height: 20),
 
                           //Mobile Number
