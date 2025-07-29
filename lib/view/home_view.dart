@@ -174,10 +174,10 @@ class _HomeViewState extends State<HomeView> {
   Widget _buildMembershipNotice() {
     final status = controller.membershipApprovalStatusId.value.trim();
     final message = {
-      '2': "Your membership is under Sangathan Samiti review.",
-      '3': "Your membership is under Vyaspathika Samiti review.",
-      '4': "Your payment is pending.",
-      '5': "We received your payment and it's under approval."
+      '2': "Your payment is pending.",
+      '3': "We received your payment and it's under approval.",
+      '4': "Your membership is under Sangathan Samiti review.",
+      '5': "Your membership is under Vyaspathika Samiti review.",
     }[status] ?? "Membership status unknown. Please check your account.";
 
     return _buildNoticeContainer(message);

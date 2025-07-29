@@ -398,19 +398,15 @@ class RegisterController extends GetxController {
         memberShipList.clear();
 
         if (withoutcheckotp.value == false) {
-          // Normal case - show all memberships
           setMemberShipType(_value.data!);
 
-          // In this case, show all Saraswani options
           filteredSaraswaniOptionList.value = saraswaniOptionList;
         } else {
-          // Special cases based on age and pincode status
           if (isUnder18(dob)) {
             // Under 18
             if (zoneController.value.text.isEmpty) {
               _showLoginAlert(context!);
             } else {
-              // Show only Non Member
               _addMembershipIfMatches(_value.data!, "Non Member");
 
               filteredSaraswaniOptionList.value = saraswaniOptionList
@@ -420,7 +416,6 @@ class RegisterController extends GetxController {
                   .toList();
             }
           } else {
-            // Above 18
             if (countryNotFound.value) {
               if (zoneController.value.text.isEmpty) {
                 _addMembershipIfMatches(_value.data!, "Saraswani Member");
@@ -445,7 +440,6 @@ class RegisterController extends GetxController {
                 }
               }
             } else {
-              // Pincode doesn't exist - show only Saraswani Member
               _addMembershipIfMatches(_value.data!, "Saraswani Member");
 
               filteredSaraswaniOptionList.value = saraswaniOptionList;
@@ -477,14 +471,12 @@ class RegisterController extends GetxController {
     }
   }
 
-// Add this to your init method or wherever you initialize your controller
   @override
   void onInit() {
     super.onInit();
     fetchSaraswaniOptions();
   }
 
-// Method to fetch Saraswani options
   void fetchSaraswaniOptions() async {
     rxStatusLoading.value = Status.LOADING;
     try {

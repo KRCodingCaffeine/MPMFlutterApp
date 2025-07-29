@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mpm/model/EventRegesitration/EventRegistrationData.dart';
@@ -26,6 +27,19 @@ class EventDetailPage extends StatefulWidget {
 
   @override
   _EventDetailPageState createState() => _EventDetailPageState();
+}
+
+Future<Size> _getImageSize(String imageUrl) async {
+  final Completer<Size> completer = Completer();
+  final Image image = Image.network(imageUrl);
+  image.image.resolve(const ImageConfiguration()).addListener(
+    ImageStreamListener((ImageInfo info, bool _) {
+      final myImage = info.image;
+      completer
+          .complete(Size(myImage.width.toDouble(), myImage.height.toDouble()));
+    }),
+  );
+  return completer.future;
 }
 
 class _EventDetailPageState extends State<EventDetailPage> {
@@ -109,7 +123,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
               child: const Text("Cancel"),
               style: OutlinedButton.styleFrom(
                 foregroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: const BorderSide(color: Colors.red),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -123,7 +137,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
               ),
               child: const Text(
                 "Yes, Register",
@@ -306,52 +320,52 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Widget _buildEventInfo() {
-    final startDate = DateTime.tryParse(widget.event.dateStartsFrom ?? '');
-    final endDate = DateTime.tryParse(widget.event.dateEndTo ?? '');
-
+    final eventDate = DateTime.tryParse(widget.event.dateStartsFrom ?? '');
     final startTimeRaw = widget.event.timeStartsFrom ?? '';
     final endTimeRaw = widget.event.timeEndTo ?? '';
 
     String formatDate(DateTime? date) {
       if (date == null) return 'Unknown Date';
-      return DateFormat('EEEE, MMM d, y').format(date);
+      return DateFormat('EEEE, MMMM d, y').format(date);
     }
 
     String formatTime(String timeStr) {
       try {
         final parsedTime = DateFormat("HH:mm:ss").parse(timeStr);
-        return DateFormat("hh:mm a").format(parsedTime); // 12-hour format
+        return DateFormat("h:mm a").format(parsedTime);
       } catch (e) {
-        return timeStr;
+        return '';
       }
     }
 
-    return Column(
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Event Schedule:',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Colors.black54,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                "${formatDate(startDate)} at ${formatTime(startTimeRaw)}"
-                    "\n"
-                    "${formatDate(endDate)} at ${formatTime(endTimeRaw)}",
-                style: const TextStyle(fontSize: 14, color: Colors.black87),
+        const Icon(Icons.calendar_today, size: 18, color: Colors.black),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                formatDate(eventDate),
               ),
-            ),
-          ],
+              if (startTimeRaw.isNotEmpty) ...[
+                const SizedBox(width: 6),
+                const Text('from ', style: TextStyle(color: Colors.grey)),
+                Text(
+                  formatTime(startTimeRaw),
+                ),
+              ],
+              if (endTimeRaw.isNotEmpty) ...[
+                const SizedBox(width: 6),
+                const Text('to ', style: TextStyle(color: Colors.grey)),
+                Text(
+                  formatTime(endTimeRaw),
+                ),
+              ],
+            ],
+          ),
         ),
       ],
     );
@@ -629,7 +643,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                           widget.event.eventImage!,
                           fit: BoxFit.contain,
                           errorBuilder: (_, __, ___) => const Center(
-                            child: Icon(Icons.broken_image, color: Colors.white),
+                            child:
+                                Icon(Icons.broken_image, color: Colors.white),
                           ),
                         ),
                       ),
@@ -639,18 +654,42 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
-                    constraints: const BoxConstraints(
-                      maxHeight: 500,
-                      maxWidth: 400,
-                    ),
-                    child: Image.network(
-                      widget.event.eventImage!,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: double.infinity,
-                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                    ),
-                  ),
+                      constraints: const BoxConstraints(
+                        maxHeight: 500,
+                        maxWidth: 400,
+                      ),
+                      child: FutureBuilder<Size>(
+                        future: _getImageSize(widget.event.eventImage!),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const SizedBox(
+                              height: 200,
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          } else if (snapshot.hasError || !snapshot.hasData) {
+                            return const SizedBox.shrink();
+                          } else {
+                            final imageSize = snapshot.data!;
+                            final isLandscape =
+                                imageSize.width > imageSize.height;
+
+                            return ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                widget.event.eventImage!,
+                                fit: isLandscape
+                                    ? BoxFit.fitWidth
+                                    : BoxFit.cover,
+                                width: double.infinity,
+                                height: isLandscape ? 250 : null,
+                                errorBuilder: (_, __, ___) =>
+                                    const Icon(Icons.broken_image, size: 80),
+                              ),
+                            );
+                          }
+                        },
+                      )),
                 ),
               ),
               const SizedBox(height: 24),
@@ -672,7 +711,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
               ),
             ),
             const SizedBox(height: 24),
-            if (_isPastEvent) ...[
+            if (_isPastEvent &&
+                widget.event.youtubeUrl != null &&
+                widget.event.youtubeUrl!.isNotEmpty) ...[
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
@@ -690,21 +731,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   label: const Text("View Events Video"),
                   onPressed: () {
                     final url = widget.event.youtubeUrl;
-                    if (url != null && url.isNotEmpty) {
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.black,
-                        builder: (_) => YouTubeBottomSheet(
-                          youtubeUrl: url,
-                        ),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text("No event video available")),
-                      );
-                    }
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.black,
+                      builder: (_) => YouTubeBottomSheet(
+                        youtubeUrl: url!,
+                      ),
+                    );
                   },
                 ),
               ),
@@ -849,5 +883,4 @@ class _EventDetailPageState extends State<EventDetailPage> {
       );
     }
   }
-
 }

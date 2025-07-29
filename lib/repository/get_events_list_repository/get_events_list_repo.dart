@@ -5,10 +5,10 @@ import 'package:mpm/utils/urls.dart';
 class EventRepository {
   final api = NetWorkApiService();
 
-  // Fetch event list
-  Future<dynamic> fetchEvents() async {
+  Future<dynamic> fetchEvents(String zoneId) async {
     try {
-      final response = await api.getApi(Urls.eventList_url, "");
+      final url = "${Urls.eventList_url}?zone_id=$zoneId";
+      final response = await api.getApi(url, "");
       debugPrint("Events Response: $response");
       return response;
     } catch (e) {
@@ -16,3 +16,4 @@ class EventRepository {
     }
   }
 }
+

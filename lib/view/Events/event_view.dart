@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:mpm/model/GetEventsList/GetEventsListData.dart';
 import 'package:mpm/model/GetEventsList/GetEventsListModelClass.dart';
@@ -9,6 +10,7 @@ import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/Events/event_detail_page.dart';
 import 'package:mpm/view/Events/member_registered_event.dart';
+import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
 class EventsPage extends StatefulWidget {
   const EventsPage({Key? key}) : super(key: key);
@@ -65,8 +67,16 @@ class _EventsPageState extends State<EventsPage> {
     });
 
     try {
-      final json = await _eventRepo.fetchEvents();
-      final eventModel = EventModelClass.fromJson(json);
+      final userData = Get.find<UdateProfileController>().getUserData.value;
+      final zoneIdFromProfile = userData.address?.zoneId;
+      final zoneId = (zoneIdFromProfile == null || zoneIdFromProfile.isEmpty)
+          ? "1"
+          : zoneIdFromProfile;
+
+      debugPrint("Using zone ID: $zoneId");
+
+      final response = await _eventRepo.fetchEvents(zoneId);
+      final eventModel = EventModelClass.fromJson(response);
 
       if (eventModel.status == true && eventModel.data != null) {
         setState(() {
@@ -506,7 +516,7 @@ class _EventsPageState extends State<EventsPage> {
               Expanded(
                 child: ListView(
                   children: _zoneList
-                      .where((zone) => zone.id != '1') // Exclude "All" from list
+                      .where((zone) => zone.id != '1')
                       .map((zone) => CheckboxListTile(
                     title: Text(zone.zoneName ?? ''),
                     value: selectedZones.contains(zone),
@@ -757,7 +767,7 @@ class _EventsPageState extends State<EventsPage> {
                     ? Center(child: Text(_error!))
                     : RefreshIndicator(
                   color: Colors.redAccent,
-                  onRefresh: _fetchEvents,
+                  onRefresh: () => _fetchEvents(),
                   child: ListView.builder(
                     padding: const EdgeInsets.only(top: 4),
                     itemCount: _selectedTabIndex == 0
