@@ -212,28 +212,29 @@ class _OTPScreenState extends State<OTPScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                Obx(() {
-                  return GestureDetector(
-                    onTap: controller.isButtonEnabled.value
-                        ? controller.resendOtp
-                        : null,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          controller.isButtonEnabled.value
-                              ? AppConstants.dontreceive
-                              : "Resend OTP",
-                          style: TextStyleClass.black14style,
-                        ),
-                        Text(
-                          AppConstants.resentotp,
-                          style: TextStyleClass.red12style,
-                        ),
-                      ],
-                    ),
-                  );
-                })
+                // Obx(() {
+                //   return GestureDetector(
+                //     onTap: controller.isButtonEnabled.value
+                //         ? controller.resendOtp
+                //         : null,
+                //     child: Row(
+                //       mainAxisAlignment: MainAxisAlignment.center,
+                //       children: [
+                //         Text(
+                //           controller.isButtonEnabled.value
+                //               ? AppConstants.dontreceive
+                //               : "Resend OTP",
+                //           style: TextStyleClass.black14style,
+                //         ),
+                //         SizedBox(width: 10),
+                //         Text(
+                //           AppConstants.resentotp,
+                //           style: TextStyleClass.red12style,
+                //         ),
+                //       ],
+                //     ),
+                //   );
+                // })
               ],
             ),
           ),

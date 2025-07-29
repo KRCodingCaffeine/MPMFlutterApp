@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mpm/OccuptionProfession/OccuptionProfessionData.dart';
 import 'package:mpm/data/response/status.dart';
+import 'package:mpm/model/GetMemberSurname/GetMemberSurnameData.dart';
 
 import 'package:mpm/model/bloodgroup/BloodData.dart';
 import 'package:mpm/model/gender/DataX.dart';
@@ -34,10 +35,31 @@ class _PersonalViewState extends State<PersonalView> {
   final ImagePicker _picker = ImagePicker();
   int activeStep2 = 1;
   final GlobalKey<FormState> _formKeyLogin = GlobalKey<FormState>();
+  final _sankhController = TextEditingController();
+  final _sankhFocusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _sankhController.dispose();
+    _sankhFocusNode.dispose();
+    super.dispose();
+  }
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    _sankhController.text = "Maheshwari()";
+    regiController.getGender();
+    regiController.getMaritalStatus();
+    regiController.getBloodGroup();
+    regiController.getMemberShip();
+    regiController.getDocumentType();
+    regiController.getSurnameList();
+    regiController.getMemberSalutation();
+    regiController.getCountry();
+    regiController.getState();
+    regiController.getCity();
   }
 
   @override
@@ -246,11 +268,11 @@ class _PersonalViewState extends State<PersonalView> {
                     child: Align(
                       alignment: Alignment.topCenter,
                       child: Image.asset(
-                        'assets/images/logo.png', // Replace with your actual image path
-                        width: 100, // Set the image width to 100
-                        height: 100, // Set the image height to 100
+                        'assets/images/logo.png',
+                        width: 100,
+                        height: 100,
                         fit: BoxFit
-                            .cover, // Ensure the image covers the container area
+                            .cover,
                       ),
                     ),
                   ),
@@ -265,7 +287,7 @@ class _PersonalViewState extends State<PersonalView> {
                       color: Colors.black,
                       fontSize: 18,
                       fontWeight:
-                          FontWeight.bold, // Change this to your desired size
+                          FontWeight.bold,
                     ),
                   )
                 ],
@@ -288,7 +310,7 @@ class _PersonalViewState extends State<PersonalView> {
                             padding: EdgeInsets.only(left: 5, top: 20),
                             child: Align(
                               alignment: Alignment
-                                  .centerLeft, // Align text to the left side
+                                  .centerLeft,
                               child: Text(
                                 'Personal Info',
                                 style: TextStyle(
@@ -427,10 +449,10 @@ class _PersonalViewState extends State<PersonalView> {
 
                           //First Name
                           _buildEditableField(
-                              'First Name *', // Label
+                              'First Name *',
                               regiController
-                                  .firstNameController.value, // Controller
-                              'First Name', // Hint Text
+                                  .firstNameController.value,
+                              'First Name',
                               '',
                               text: TextInputType.text,
                               isRequired: true),
@@ -438,24 +460,153 @@ class _PersonalViewState extends State<PersonalView> {
 
                           //Second Name
                           _buildEditableField(
-                              "Middle Name", // Label
+                              "Middle Name",
                               regiController
-                                  .middleNameController.value, // Controller
-                              "Middle Name", // Hint Text
+                                  .middleNameController.value,
+                              "Middle Name",
                               "",
                               text: TextInputType.text,
                               isRequired: true),
                           const SizedBox(height: 20),
 
                           //Third Name
-                          _buildEditableField(
-                              "SurName *", // Label
-                              regiController
-                                  .lastNameController.value, // Controller
-                              "SurName", // Hint Text
-                              "",
-                              text: TextInputType.text,
-                              isRequired: true),
+// Third Name (Surname)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: double.infinity,
+                                margin: const EdgeInsets.only(left: 5, right: 5),
+                                child: Row(
+                                  children: [
+                                    Obx(() {
+                                      if (regiController.rxStatusSurname.value == Status.LOADING) {
+                                        return const Padding(
+                                          padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                                          child: SizedBox(
+                                            height: 24,
+                                            width: 24,
+                                            child: CircularProgressIndicator(
+                                              color: Colors.redAccent,
+                                            ),
+                                          ),
+                                        );
+                                      } else if (regiController.rxStatusSurname.value == Status.ERROR) {
+                                        return const Center(child: Text('Failed to load surnames'));
+                                      } else if (regiController.surnameList.isEmpty) {
+                                        return const Center(child: Text('No surnames available'));
+                                      } else {
+                                        final selectedValue = regiController.selectedSurname.value;
+                                        return Expanded(
+                                          child: InputDecorator(
+                                            decoration: InputDecoration(
+                                              labelText: selectedValue.isNotEmpty ? 'SurName *' : null,
+                                              border: const OutlineInputBorder(
+                                                borderSide: BorderSide(color: Colors.black),
+                                              ),
+                                              enabledBorder: const OutlineInputBorder(
+                                                borderSide: BorderSide(color: Colors.black),
+                                              ),
+                                              focusedBorder: const OutlineInputBorder(
+                                                borderSide: BorderSide(color: Colors.black38, width: 1),
+                                              ),
+                                              contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                              labelStyle: const TextStyle(color: Colors.black),
+                                            ),
+                                            child: DropdownButton<String>(
+                                              dropdownColor: Colors.white,
+                                              borderRadius: BorderRadius.circular(10),
+                                              isExpanded: true,
+                                              underline: Container(),
+                                              hint: const Text(
+                                                'Select SurName *',
+                                                style: TextStyle(fontWeight: FontWeight.bold),
+                                              ),
+                                              value: selectedValue.isNotEmpty ? selectedValue : null,
+                                              items: regiController.surnameList
+                                                  .map((MemberSurnameData item) {
+                                                return DropdownMenuItem<String>(
+                                                  value: item.id.toString(),
+                                                  child: Text(item.surnameName ?? 'Unknown'),
+                                                );
+                                              }).toList(),
+                                              onChanged: (String? newValue) {
+                                                if (newValue != null) {
+                                                  regiController.setSelectedSurname(newValue);
+                                                  final selectedSurname = regiController.surnameList.firstWhere(
+                                                        (element) => element.id.toString() == newValue,
+                                                    orElse: () => MemberSurnameData(),
+                                                  );
+                                                  if (selectedSurname.surnameName != null) {
+                                                    final isMaheshwari = selectedSurname.surnameName!
+                                                        .toLowerCase()
+                                                        .contains("maheshwari");
+                                                    regiController.isMaheshwariSelected.value = isMaheshwari;
+                                                    regiController.showSankhField.value = isMaheshwari;
+
+                                                    if (isMaheshwari) {
+                                                      regiController.sankhText.value = "Maheshwari()";
+                                                      regiController.lastNameController.value.text = "Maheshwari()";
+                                                      Future.delayed(const Duration(milliseconds: 50), () {
+                                                        FocusScope.of(context).requestFocus(_sankhFocusNode);
+                                                        _sankhController.selection = TextSelection.collapsed(
+                                                          offset: "Maheshwari(".length,
+                                                        );
+                                                      });
+                                                    } else {
+                                                      regiController.sankhText.value = "";
+                                                      regiController.lastNameController.value.text =
+                                                      selectedSurname.surnameName!;
+                                                    }
+                                                  }
+                                                }
+                                              },
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    }),
+                                  ],
+                                ),
+                              ),
+                              Obx(() {
+                                if (regiController.showSankhField.value) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 20),
+                                    child: Container(
+                                      margin: const EdgeInsets.only(left: 5, right: 5),
+                                      child: TextFormField(
+                                        controller: _sankhController,
+                                        focusNode: _sankhFocusNode,
+                                        decoration: InputDecoration(
+                                          labelText: 'Enter Sankh',
+                                          border: const OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black),
+                                          ),
+                                          enabledBorder: const OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black),
+                                          ),
+                                          focusedBorder: const OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black38, width: 1),
+                                          ),
+                                          contentPadding: const EdgeInsets.symmetric(
+                                            vertical: 12,
+                                            horizontal: 20,
+                                          ),
+                                        ),
+                                        onChanged: (value) {
+                                          regiController.sankhText.value = value;
+                                          regiController.lastNameController.value.text = value;
+                                        },
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  return const SizedBox.shrink();
+                                }
+                              }),
+                            ],
+                          ),
                           const SizedBox(height: 20),
 
                           //Mobile Number
@@ -463,9 +614,9 @@ class _PersonalViewState extends State<PersonalView> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _buildEditableField(
-                                "Mobile Number *", // Label
+                                "Mobile Number *",
                                 regiController
-                                    .mobileController.value, // Controller
+                                    .mobileController.value,
                                 "Mobile Number", // Hint Text
                                 "Mobile number is required",
                                 text: TextInputType.phone,

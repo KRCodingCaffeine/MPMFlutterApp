@@ -66,6 +66,9 @@ class NewMemberController extends GetxController {
   final rxStatusSurname = Status.LOADING.obs;
   final surnameList = <MemberSurnameData>[].obs;
   final selectedSurname = ''.obs;
+  final isMaheshwariSelected = false.obs;
+  final sankhText = ''.obs;
+  final showSankhField = false.obs;
 
   var arg_page = "".obs;
   var state_id = "".obs;
@@ -799,9 +802,11 @@ class NewMemberController extends GetxController {
   void userRegister(var LM_code, BuildContext context) async {
     print("member" + memberId.value);
     final url = Uri.parse(Urls.register_url);
+
     var first = firstNameController.value.text;
     var last = lastNameController.value.text.trim();
-    var name = first + "" + last;
+
+    var name = first + " " + last;
     var email = emailController.value.text.trim();
     var mobile = mobileController.value.text.trim();
     var pincode = pincodeController.value.text.trim();
@@ -813,22 +818,25 @@ class NewMemberController extends GetxController {
     var building_id = "";
     var membership_type_id = selectMemberShipType.value;
     var saraswani_option_id = saraswaniOptionId.value;
+
     if (selectBuilding.value == "other") {
       building_id = "";
     } else {
       building_id = selectBuilding.value;
     }
-    var document_type = selectDocumentType.value;
 
+    var document_type = selectDocumentType.value;
     var flat_no = housenoController.value.text.trim();
     var whatsapp_number = whatappmobileController.value.text.trim();
+
     loading.value = true;
     var profile_image = userprofile.value;
     var document_image = userdocumentImage.value;
+
     Map<String, String> payload = {
       "proposer_id": memberId.value,
       "first_name": firstNameController.value.text.trim(),
-      "last_name": lastNameController.value.text.trim(),
+      "last_name": last,
       "middle_name": middleNameController.value.text.trim(),
       "father_name": fathersnameController.value.text.trim(),
       "mother_name": mothersnameController.value.text.trim(),
@@ -853,69 +861,91 @@ class NewMemberController extends GetxController {
       "marriage_anniversary_date": marriagedateController.value.text,
       "salutation_id": selectMemberSalutation.value,
       "address": addressMemberController.value.text,
-      "created_by": memberId.value
+      "created_by": memberId.value,
+      // "sankh_name": sankhText.value,
     };
-    print("ccvv" + payload.toString());
-    var request = http.MultipartRequest('POST', url);
-    request.fields.addAll(payload);
-    request.files.add(
-        await http.MultipartFile.fromPath('document_image', document_image));
-    if (profile_image != "") {
-      request.files.add(
-          await http.MultipartFile.fromPath("image_profile", profile_image));
-    }
 
-    http.StreamedResponse response =
-        await request.send().timeout(Duration(seconds: 60));
+    print("Payload: " + payload.toString());
 
-    if (response.statusCode == 200) {
-      clearForm();
-      String responseBody = await response.stream.bytesToString();
-      loading.value = false;
-      Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
-      print("vfbb" + jsonResponse.toString());
-      RegisterModelClass registerResponse =
-          RegisterModelClass.fromJson(jsonResponse);
-      if (registerResponse.status == true) {
-        Get.snackbar(
-          "Success",
-          "New Member Add Successfully",
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
+    try {
+      var request = http.MultipartRequest('POST', url);
+      request.fields.addAll(payload);
+
+      if (document_image.isNotEmpty) {
+        request.files.add(
+            await http.MultipartFile.fromPath('document_image', document_image)
         );
-        memberId.value = registerResponse.data.toString();
+      }
 
-        Navigator.pushReplacementNamed(context!, RouteNames.otp_screen,
-            arguments: {
-              "memeberId": memberId.value,
-              "page_type_direct": "1",
-              "mobile": mobile
-            });
+      if (profile_image.isNotEmpty) {
+        request.files.add(
+            await http.MultipartFile.fromPath("image_profile", profile_image)
+        );
+      }
+
+      http.StreamedResponse response =
+      await request.send().timeout(const Duration(seconds: 60));
+
+      if (response.statusCode == 200) {
+        String responseBody = await response.stream.bytesToString();
+        loading.value = false;
+        Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
+        print("Response: " + jsonResponse.toString());
+
+        RegisterModelClass registerResponse =
+        RegisterModelClass.fromJson(jsonResponse);
+
+        if (registerResponse.status == true) {
+          clearForm();
+          Get.snackbar(
+            "Success",
+            "New Member Added Successfully",
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            snackPosition: SnackPosition.TOP,
+          );
+
+          memberId.value = registerResponse.data.toString();
+          Navigator.pushReplacementNamed(
+              context!,
+              RouteNames.otp_screen,
+              arguments: {
+                "memeberId": memberId.value,
+                "page_type_direct": "1",
+                "mobile": mobile
+              }
+          );
+        } else {
+          Get.snackbar(
+            "Error",
+            registerResponse.message.toString(),
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+            snackPosition: SnackPosition.TOP,
+          );
+        }
       } else {
+        loading.value = false;
+        String errorResponse = await response.stream.bytesToString();
+        print("Error Response: " + errorResponse);
         Get.snackbar(
           "Error",
-          registerResponse.message.toString(),
+          "Failed to register. Please try again.",
           backgroundColor: Colors.red,
           colorText: Colors.white,
           snackPosition: SnackPosition.TOP,
         );
       }
-    } else {
+    } catch (e) {
       loading.value = false;
-      print("ddddddd" + await response.stream.bytesToString());
-      // String responseBody = await response.stream.bytesToString();
-      // loading.value=false;
-      // Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
-      // RegisterModelClass registerResponse = RegisterModelClass.fromJson(jsonResponse);
-      //
-      // Get.snackbar(
-      //   "Error",
-      //   ""+registerResponse.message.toString(),
-      //   backgroundColor: Colors.red,
-      //   colorText: Colors.white,
-      //   snackPosition: SnackPosition.TOP,
-      // );
+      print("Exception: " + e.toString());
+      Get.snackbar(
+        "Error",
+        "An error occurred. Please try again.",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
     }
   }
 
