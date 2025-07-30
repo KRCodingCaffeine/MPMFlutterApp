@@ -51,10 +51,25 @@ class _EventsPageState extends State<EventsPage> {
 
   Future<void> _fetchZones() async {
     try {
+      final userData = Get.find<UdateProfileController>().getUserData.value;
+      final userZoneId = userData.address?.zoneId;
+
+      if (userZoneId == null) {
+        print("User zone ID not found");
+        return;
+      }
+
       final response = await _zoneRepo.ZoneApi();
+      final List<ZoneData> allZones = response.data ?? [];
+
+      // Find the user's zone object from the list
+      final userZone = allZones.firstWhere(
+            (zone) => zone.id == userZoneId,
+        orElse: () => ZoneData(id: userZoneId, zoneName: "Unknown Zone"),
+      );
+
       setState(() {
-        _zoneList = response.data ?? [];
-        _zoneList.insert(0, ZoneData(id: '1', zoneName: "All"));
+        _zoneList = [ZoneData(id: '1', zoneName: "All"), userZone];
       });
     } catch (e) {
       print("Zone API Error: $e");
@@ -117,7 +132,6 @@ class _EventsPageState extends State<EventsPage> {
         }).toList();
       }
 
-
       DateTime? startDate = _selectedTabIndex == 0 ? _upcomingStartDate : _pastStartDate;
       DateTime? endDate = _selectedTabIndex == 0 ? _upcomingEndDate : _pastEndDate;
 
@@ -135,7 +149,6 @@ class _EventsPageState extends State<EventsPage> {
         }).toList();
       }
 
-      // Split into upcoming/past
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
 
@@ -471,244 +484,213 @@ class _EventsPageState extends State<EventsPage> {
         child: Container(
           color: Colors.white,
           padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text("${isUpcoming ? 'Upcoming' : 'Past'} Events",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => setState(() {
-                      if (isUpcoming) {
-                        _isUpcomingFilterDrawerOpen = false;
-                      } else {
-                        _isPastFilterDrawerOpen = false;
-                      }
-                    }),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              const Text("Zones",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              CheckboxListTile(
-                title: const Text("All Zones"),
-                value: isAllSelected,
-                onChanged: (bool? value) {
-                  setState(() {
-                    if (isUpcoming) {
-                      _isUpcomingAllSelected = value ?? false;
-                      if (_isUpcomingAllSelected) {
-                        _selectedUpcomingZones.clear();
-                      }
-                    } else {
-                      _isPastAllSelected = value ?? false;
-                      if (_isPastAllSelected) {
-                        _selectedPastZones.clear();
-                      }
-                    }
-                  });
-                },
-              ),
-              Expanded(
-                child: ListView(
-                  children: _zoneList
-                      .where((zone) => zone.id != '1')
-                      .map((zone) => CheckboxListTile(
-                    title: Text(zone.zoneName ?? ''),
-                    value: selectedZones.contains(zone),
-                    onChanged: (bool? value) {
-                      setState(() {
-                        if (value == true) {
-                          if (isUpcoming) {
-                            _selectedUpcomingZones.add(zone);
-                            _isUpcomingAllSelected = false;
-                          } else {
-                            _selectedPastZones.add(zone);
-                            _isPastAllSelected = false;
-                          }
+          child: SafeArea(
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Text("${isUpcoming ? 'Upcoming' : 'Past'} Events",
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => setState(() {
+                        if (isUpcoming) {
+                          _isUpcomingFilterDrawerOpen = false;
                         } else {
-                          if (isUpcoming) {
-                            _selectedUpcomingZones.remove(zone);
-                          } else {
-                            _selectedPastZones.remove(zone);
-                          }
+                          _isPastFilterDrawerOpen = false;
                         }
-                      });
-                    },
-                  ))
-                      .toList(),
+                      }),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 16),
-              const Text("Date Range",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              // Start Date Field
-              TextFormField(
-                readOnly: true,
-                controller: TextEditingController(
-                  text: startDate != null ? DateFormat('dd/MM/yyyy').format(startDate!) : '',
-                ),
-                decoration: InputDecoration(
-                  labelText: 'Start Date *',
-                  hintText: 'Select Start Date',
-                  border: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black26),
-                  ),
-                  enabledBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black26),
-                  ),
-                  focusedBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black26, width: 1.5),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                  labelStyle: const TextStyle(color: Colors.black45),
-                ),
-                onTap: () async {
-                  final DateTime? pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: startDate ?? DateTime.now(),
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2100),
-                    builder: (BuildContext context, Widget? child) {
-                      return Theme(
-                        data: Theme.of(context).copyWith(
-                          colorScheme: ColorScheme.light(
-                            primary: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                            onPrimary: Colors.white,
-                            onSurface: Colors.black,
-                          ),
-                          textButtonTheme: TextButtonThemeData(
-                            style: TextButton.styleFrom(
-                              foregroundColor:
-                              ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                            ),
-                          ),
+                const SizedBox(height: 20),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("Zones", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        CheckboxListTile(
+                          title: const Text("All Zones"),
+                          value: isAllSelected,
+                          onChanged: (bool? value) {
+                            setState(() {
+                              if (isUpcoming) {
+                                _isUpcomingAllSelected = value ?? false;
+                                if (_isUpcomingAllSelected) {
+                                  _selectedUpcomingZones.clear();
+                                }
+                              } else {
+                                _isPastAllSelected = value ?? false;
+                                if (_isPastAllSelected) {
+                                  _selectedPastZones.clear();
+                                }
+                              }
+                            });
+                          },
                         ),
-                        child: child!,
-                      );
-                    },
-                  );
-                  if (pickedDate != null) {
-                    setState(() {
-                      if (isUpcoming) {
-                        _upcomingStartDate = pickedDate;
-                        if (_upcomingEndDate != null && _upcomingStartDate!.isAfter(_upcomingEndDate!)) {
-                          _upcomingEndDate = _upcomingStartDate;
-                        }
-                      } else {
-                        _pastStartDate = pickedDate;
-                        if (_pastEndDate != null && _pastStartDate!.isAfter(_pastEndDate!)) {
-                          _pastEndDate = _pastStartDate;
-                        }
-                      }
-                    });
-                  }
-                },
-              ),
-
-              const SizedBox(height: 16),
-
-              // End Date Field
-              TextFormField(
-                readOnly: true,
-                controller: TextEditingController(
-                  text: endDate != null ? DateFormat('dd/MM/yyyy').format(endDate!) : '',
-                ),
-                decoration: InputDecoration(
-                  labelText: 'End Date *',
-                  hintText: 'Select End Date',
-                  border: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black26),
-                  ),
-                  enabledBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black26),
-                  ),
-                  focusedBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black26, width: 1.5),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                  labelStyle: const TextStyle(color: Colors.black45),
-                ),
-                onTap: () async {
-                  final DateTime? pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: endDate ?? DateTime.now(),
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2100),
-                    builder: (BuildContext context, Widget? child) {
-                      return Theme(
-                        data: Theme.of(context).copyWith(
-                          colorScheme: ColorScheme.light(
-                            primary: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                            onPrimary: Colors.white,
-                            onSurface: Colors.black,
-                          ),
-                          textButtonTheme: TextButtonThemeData(
-                            style: TextButton.styleFrom(
-                              foregroundColor:
-                              ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                            ),
-                          ),
-                        ),
-                        child: child!,
-                      );
-                    },
-                  );
-                  if (pickedDate != null) {
-                    setState(() {
-                      if (isUpcoming) {
-                        _upcomingEndDate = pickedDate;
-                        if (_upcomingStartDate != null && _upcomingEndDate!.isBefore(_upcomingStartDate!)) {
-                          _upcomingStartDate = _upcomingEndDate;
-                        }
-                      } else {
-                        _pastEndDate = pickedDate;
-                        if (_pastStartDate != null && _pastEndDate!.isBefore(_pastStartDate!)) {
-                          _pastStartDate = _pastEndDate;
-                        }
-                      }
-                    });
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                        ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          if (isUpcoming) {
-                            _isUpcomingFilterDrawerOpen = false;
-                          } else {
-                            _isPastFilterDrawerOpen = false;
-                          }
-                          _applyFilters();
-                        });
-                      },
-                      child: const Text("Apply Filters"),
+                        ..._zoneList
+                            .where((zone) => zone.id != '1')
+                            .map((zone) => CheckboxListTile(
+                          title: Text(zone.zoneName ?? ''),
+                          value: selectedZones.contains(zone),
+                          onChanged: (bool? value) {
+                            setState(() {
+                              if (value == true) {
+                                if (isUpcoming) {
+                                  _selectedUpcomingZones.add(zone);
+                                  _isUpcomingAllSelected = false;
+                                } else {
+                                  _selectedPastZones.add(zone);
+                                  _isPastAllSelected = false;
+                                }
+                              } else {
+                                if (isUpcoming) {
+                                  _selectedUpcomingZones.remove(zone);
+                                } else {
+                                  _selectedPastZones.remove(zone);
+                                }
+                              }
+                            });
+                          },
+                        ))
+                            .toList(),
+                        const SizedBox(height: 20),
+                        const Text("Date Range",
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        _buildDateField(
+                            label: 'Start Date *',
+                            date: startDate,
+                            onPicked: (pickedDate) {
+                              setState(() {
+                                if (isUpcoming) {
+                                  _upcomingStartDate = pickedDate;
+                                  if (_upcomingEndDate != null &&
+                                      _upcomingStartDate!.isAfter(_upcomingEndDate!)) {
+                                    _upcomingEndDate = _upcomingStartDate;
+                                  }
+                                } else {
+                                  _pastStartDate = pickedDate;
+                                  if (_pastEndDate != null &&
+                                      _pastStartDate!.isAfter(_pastEndDate!)) {
+                                    _pastEndDate = _pastStartDate;
+                                  }
+                                }
+                              });
+                            }),
+                        const SizedBox(height: 16),
+                        _buildDateField(
+                            label: 'End Date *',
+                            date: endDate,
+                            onPicked: (pickedDate) {
+                              setState(() {
+                                if (isUpcoming) {
+                                  _upcomingEndDate = pickedDate;
+                                  if (_upcomingStartDate != null &&
+                                      _upcomingEndDate!.isBefore(_upcomingStartDate!)) {
+                                    _upcomingStartDate = _upcomingEndDate;
+                                  }
+                                } else {
+                                  _pastEndDate = pickedDate;
+                                  if (_pastStartDate != null &&
+                                      _pastEndDate!.isBefore(_pastStartDate!)) {
+                                    _pastStartDate = _pastEndDate;
+                                  }
+                                }
+                              });
+                            }),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                          ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            if (isUpcoming) {
+                              _isUpcomingFilterDrawerOpen = false;
+                            } else {
+                              _isPastFilterDrawerOpen = false;
+                            }
+                            _applyFilters();
+                          });
+                        },
+                        child: const Text("Apply Filters"),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildDateField({
+    required String label,
+    required DateTime? date,
+    required Function(DateTime) onPicked,
+  }) {
+    return TextFormField(
+      readOnly: true,
+      controller: TextEditingController(
+        text: date != null ? DateFormat('dd/MM/yyyy').format(date) : '',
+      ),
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: 'Select $label',
+        border: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
+        enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
+        focusedBorder:
+        const OutlineInputBorder(borderSide: BorderSide(color: Colors.black26, width: 1.5)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+        labelStyle: const TextStyle(color: Colors.black45),
+      ),
+      onTap: () async {
+        final DateTime? pickedDate = await showDatePicker(
+          context: context,
+          initialDate: date ?? DateTime.now(),
+          firstDate: DateTime(2000),
+          lastDate: DateTime(2100),
+          builder: (BuildContext context, Widget? child) {
+            return Theme(
+              data: Theme.of(context).copyWith(
+                colorScheme: ColorScheme.light(
+                  primary: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                  onPrimary: Colors.white,
+                  onSurface: Colors.black,
+                ),
+                textButtonTheme: TextButtonThemeData(
+                  style: TextButton.styleFrom(
+                    foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                  ),
+                ),
+              ),
+              child: child!,
+            );
+          },
+        );
+        if (pickedDate != null) {
+          onPicked(pickedDate);
+        }
+      },
     );
   }
 

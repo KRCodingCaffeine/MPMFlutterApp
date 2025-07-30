@@ -21,15 +21,22 @@ import 'package:get/get.dart';
 import 'package:mpm/view/offer_claimed_view.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-class DiscountOfferDetailPage extends StatelessWidget {
+class DiscountOfferDetailPage extends StatefulWidget {
   final OfferData offer;
-  final Dio _dio = Dio();
-  final MemberClaimOfferRepository _memberClaimOfferRepo = MemberClaimOfferRepository();
 
-  DiscountOfferDetailPage({
-    super.key,
-    required this.offer,
-  });
+  const DiscountOfferDetailPage({super.key, required this.offer});
+
+  @override
+  State<DiscountOfferDetailPage> createState() =>
+      _DiscountOfferDetailPageState();
+}
+
+class _DiscountOfferDetailPageState extends State<DiscountOfferDetailPage> {
+  final Dio _dio = Dio();
+  final MemberClaimOfferRepository _memberClaimOfferRepo =
+      MemberClaimOfferRepository();
+  bool _isDownloading = false;
+  double _downloadProgress = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -50,13 +57,16 @@ class DiscountOfferDetailPage extends StatelessWidget {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Builder(
           builder: (context) {
             double fontSize = MediaQuery.of(context).size.width * 0.045;
             return Text(
-              offer.offerDiscountName ?? 'Offer Details',
-              style: TextStyle(color: Colors.white, fontSize: fontSize, fontWeight: FontWeight.w500),
+              widget.offer.offerDiscountName ?? 'Offer Details',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w500),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             );
@@ -69,7 +79,7 @@ class DiscountOfferDetailPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (offer.offerImage != null && offer.offerImage!.isNotEmpty) ...[
+            if (widget.offer.offerImage != null && widget.offer.offerImage!.isNotEmpty) ...[
               Center(
                 child: _buildFilePreviewOrButton(context),
               ),
@@ -85,7 +95,7 @@ class DiscountOfferDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              offer.offerDescription ?? 'No Offer detail available',
+              widget.offer.offerDescription ?? 'No Offer detail available',
               style: const TextStyle(
                 fontSize: 15,
                 height: 1.5,
@@ -93,7 +103,7 @@ class DiscountOfferDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             _buildValidityInfo(),
-            if (offer.orgMobile != null || offer.orgEmail != null) ...[
+            if (widget.offer.orgMobile != null || widget.offer.orgEmail != null) ...[
               const SizedBox(height: 24),
               const Divider(thickness: 1, color: Colors.grey),
               const SizedBox(height: 16),
@@ -113,7 +123,8 @@ class DiscountOfferDetailPage extends StatelessWidget {
           width: double.infinity,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              backgroundColor:
+                  ColorHelperClass.getColorFromHex(ColorResources.red_color),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
@@ -129,68 +140,55 @@ class DiscountOfferDetailPage extends StatelessWidget {
   }
 
   Widget _buildFilePreviewOrButton(BuildContext context) {
-    final String url = offer.offerImage!;
+    final String url = widget.offer.offerImage!;
     final String fileExtension = url.split('.').last.toLowerCase();
 
-    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].contains(fileExtension)) {
-      // Image Preview
-      return GestureDetector(
-        onTap: () => _showFullImage(context),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Container(
-            constraints: const BoxConstraints(
-              maxHeight: 300,
-              maxWidth: 400,
-            ),
-            child: Image.network(
-              url,
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: double.infinity,
-              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-            ),
-          ),
-        ),
-      );
+    if (['jpg', 'jpeg', 'png'].contains(fileExtension)) {
+      return Image.network(url);
     } else if (['pdf', 'docx', 'doc'].contains(fileExtension)) {
-      // Styled Button to View Document
-      return Padding(
-        padding: const EdgeInsets.only(top: 16.0),
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.grey[200],
+            foregroundColor: Colors.black87,
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            elevation: 0,
+          ),
+          icon: Icon(
+            fileExtension == 'pdf' ? Icons.picture_as_pdf : Icons.description,
+            color: fileExtension == 'pdf' ? Colors.red : Colors.blue,
+          ),
+          label: _isDownloading
+              ? Expanded(
+            child: LinearProgressIndicator(
+              value: _downloadProgress / 100,
+              backgroundColor: Colors.grey[300],
+              valueColor: AlwaysStoppedAnimation<Color>(
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
               ),
             ),
-            onPressed: () async {
-              final fileName = "Offer_Document.$fileExtension";
-              await _downloadFile(url, fileName);
-            },
-            child: Text(
-              "Offer Document",
-              style: const TextStyle(fontSize: 16),
-            ),
-          ),
+          )
+              : Text("Download & View ${fileExtension.toUpperCase()}"),
+          onPressed: _isDownloading
+              ? null
+              : () => _downloadFile(url, "Offer_Document.$fileExtension"),
         ),
       );
     } else {
-      return const Text('');
+      return const SizedBox.shrink();
     }
   }
 
   Future<void> _handleClaimOffer() async {
-    if (offer.orgSubcategoryId?.toString() == '1') {
+    if (widget.offer.orgSubcategoryId?.toString() == '1') {
       Get.to(
-            () => AvailOfferPage(
-          orgDetailsID: offer.orgDetailsID.toString(),
-          organisationOfferDiscountId: offer.organisationOfferDiscountId.toString(),
-          orgSubcategoryId: offer.orgSubcategoryId.toString(),
+        () => AvailOfferPage(
+          orgDetailsID: widget.offer.orgDetailsID.toString(),
+          organisationOfferDiscountId:
+              widget.offer.organisationOfferDiscountId.toString(),
+          orgSubcategoryId: widget.offer.orgSubcategoryId.toString(),
         ),
       )?.then((_) {
         if (Get.arguments != null) {
@@ -204,8 +202,71 @@ class DiscountOfferDetailPage extends StatelessWidget {
         }
       });
     } else {
-      await _claimNonMedicalOffer();
+      // For non-medical offers, show confirmation dialog
+      final confirmed = await _showConfirmationDialog();
+      if (confirmed == true) {
+        await _claimNonMedicalOffer();
+      }
     }
+  }
+
+  Future<bool?> _showConfirmationDialog() async {
+    return await showDialog<bool>(
+      context: Get.context!,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Avail Offer",
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              const Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+          content: const Text(
+            "Are you sure you want to avail this offer?",
+            style: TextStyle(fontSize: 16),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              style: OutlinedButton.styleFrom(
+                foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Yes"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _claimNonMedicalOffer() async {
@@ -215,7 +276,7 @@ class DiscountOfferDetailPage extends StatelessWidget {
       final memberClaimOfferId = userData?.memberId.toString() ?? '0';
 
       String applicantName = '';
-      final subcategoryId = int.parse(offer.orgSubcategoryId.toString());
+      final subcategoryId = int.parse(widget.offer.orgSubcategoryId.toString());
 
       if (subcategoryId == 2) {
         applicantName = "Pathological Tests at Concessional Charges";
@@ -226,8 +287,9 @@ class DiscountOfferDetailPage extends StatelessWidget {
       }
 
       final medicine = Medicine(
-        organisationOfferDiscountId: int.parse(offer.organisationOfferDiscountId.toString()),
-        orgDetailsID: int.parse(offer.orgDetailsID.toString()),
+        organisationOfferDiscountId:
+            int.parse(widget.offer.organisationOfferDiscountId.toString()),
+        orgDetailsID: int.parse(widget.offer.orgDetailsID.toString()),
         medicineName: applicantName,
         medicineContainerId: null,
         medicineContainerName: null,
@@ -236,9 +298,10 @@ class DiscountOfferDetailPage extends StatelessWidget {
 
       final offerData = AddOfferDiscountData(
         memberId: int.parse(userData?.memberId.toString() ?? '0'),
-        orgSubcategoryId: int.parse(offer.orgSubcategoryId.toString()),
-        orgDetailsID: int.parse(offer.orgDetailsID.toString()),
-        organisationOfferDiscountId: int.parse(offer.organisationOfferDiscountId.toString()),
+        orgSubcategoryId: int.parse(widget.offer.orgSubcategoryId.toString()),
+        orgDetailsID: int.parse(widget.offer.orgDetailsID.toString()),
+        organisationOfferDiscountId:
+            int.parse(widget.offer.organisationOfferDiscountId.toString()),
         createdBy: int.parse(userData?.memberId.toString() ?? '0'),
         medicines: [medicine],
       );
@@ -253,11 +316,14 @@ class DiscountOfferDetailPage extends StatelessWidget {
       Get.back();
 
       if (response['status'] == true) {
-        final memberClaimOfferId = response['data']['member_claim_offer_id'].toString();
+        final memberClaimOfferId =
+            response['data']['member_claim_offer_id'].toString();
 
-        final claimedOffer = await _memberClaimOfferRepo.fetchClaimedOfferByOfferId(memberClaimOfferId);
+        final claimedOffer = await _memberClaimOfferRepo
+            .fetchClaimedOfferByOfferId(memberClaimOfferId);
 
-        if (claimedOffer.memberClaimDocument != null && claimedOffer.memberClaimDocument!.isNotEmpty) {
+        if (claimedOffer.memberClaimDocument != null &&
+            claimedOffer.memberClaimDocument!.isNotEmpty) {
           final fileName = 'Claimed_Offer_${memberClaimOfferId}.pdf';
           await _downloadFile(claimedOffer.memberClaimDocument, fileName);
         } else {
@@ -286,68 +352,50 @@ class DiscountOfferDetailPage extends StatelessWidget {
       );
     }
   }
+
   Future<void> _downloadFile(String? url, String? fileName) async {
-    if (url == null || fileName == null) {
-      Get.snackbar(
-        "Error",
-        "Invalid file URL or file name",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      return;
-    }
+    if (url == null || fileName == null) return;
 
     final permissionStatus = await _requestPermission();
     if (!permissionStatus) return;
 
     try {
+      setState(() {
+        _isDownloading = true;
+        _downloadProgress = 0;
+      });
+
       Directory? directory = Platform.isAndroid
-          ? (await getExternalStorageDirectory())!
+          ? await getExternalStorageDirectory()
           : await getApplicationDocumentsDirectory();
+
       String filePath = "${directory!.path}/$fileName";
-      int progress = 0;
-
-      final scaffoldMessenger = ScaffoldMessenger.of(Get.context!);
-      StateSetter? setSnackbarState;
-
-      final snackBarController = scaffoldMessenger.showSnackBar(
-        SnackBar(
-          content: StatefulBuilder(
-            builder: (context, setState) {
-              setSnackbarState = setState;
-              return Text("Downloading $fileName ... $progress%");
-            },
-          ),
-          duration: const Duration(days: 1),
-        ),
-      );
 
       await _dio.download(
         url,
         filePath,
         onReceiveProgress: (received, total) {
           if (total > 0) {
-            int newProgress = ((received / total) * 100).toInt();
-            if (newProgress != progress) {
-              progress = newProgress;
-              if (setSnackbarState != null) {
-                setSnackbarState!(() {});
-              }
-            }
+            setState(() {
+              _downloadProgress = (received / total) * 100;
+            });
           }
         },
       );
 
-      snackBarController.close();
+      setState(() {
+        _isDownloading = false;
+        _downloadProgress = 0;
+      });
 
       await OpenFilex.open(filePath);
     } catch (e) {
-      Get.snackbar(
-        "Error",
-        "Download failed: $e",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      setState(() {
+        _isDownloading = false;
+        _downloadProgress = 0;
+      });
+      Get.snackbar("Error", "Download failed: $e",
+          backgroundColor: Colors.red, colorText: Colors.white);
     }
   }
 
@@ -365,7 +413,9 @@ class DiscountOfferDetailPage extends StatelessWidget {
         if (status.isGranted) return true;
 
         ScaffoldMessenger.of(context as pw.BuildContext).showSnackBar(
-          const SnackBar(content: Text('Storage permission is needed to download the file.')),
+          const SnackBar(
+              content:
+                  Text('Storage permission is needed to download the file.')),
         );
         return false;
       } else {
@@ -374,7 +424,9 @@ class DiscountOfferDetailPage extends StatelessWidget {
         if (status.isGranted) return true;
 
         ScaffoldMessenger.of(context as pw.BuildContext).showSnackBar(
-          const SnackBar(content: Text('Storage permission is needed to download the file.')),
+          const SnackBar(
+              content:
+                  Text('Storage permission is needed to download the file.')),
         );
         return false;
       }
@@ -426,7 +478,8 @@ class DiscountOfferDetailPage extends StatelessWidget {
             OutlinedButton(
               onPressed: () => Navigator.pop(context, false),
               style: OutlinedButton.styleFrom(
-                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: const BorderSide(color: Colors.redAccent),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -440,7 +493,8 @@ class DiscountOfferDetailPage extends StatelessWidget {
                 Get.to(() => ClaimedOfferListPage());
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
               ),
               child: const Text("View Details",
                   style: TextStyle(color: Colors.white)),
@@ -495,7 +549,8 @@ class DiscountOfferDetailPage extends StatelessWidget {
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
               ),
               child: const Text("OK"),
             ),
@@ -515,19 +570,19 @@ class DiscountOfferDetailPage extends StatelessWidget {
           onTap: () => Navigator.pop(context),
           child: InteractiveViewer(
             child: Center(
-              child: offer.offerImage != null && offer.offerImage!.isNotEmpty
+              child: widget.offer.offerImage != null && widget.offer.offerImage!.isNotEmpty
                   ? Image.network(
-                offer.offerImage!,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => Image.asset(
-                  'assets/images/discounts.jpg',
-                  fit: BoxFit.contain,
-                ),
-              )
+                      widget.offer.offerImage!,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => Image.asset(
+                        'assets/images/discounts.jpg',
+                        fit: BoxFit.contain,
+                      ),
+                    )
                   : Image.asset(
-                'assets/images/discounts.jpg',
-                fit: BoxFit.contain,
-              ),
+                      'assets/images/discounts.jpg',
+                      fit: BoxFit.contain,
+                    ),
             ),
           ),
         ),
@@ -546,15 +601,15 @@ class DiscountOfferDetailPage extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             color: Colors.grey[200],
           ),
-          child: offer.orgLogo != null && offer.orgLogo!.isNotEmpty
+          child: widget.offer.orgLogo != null && widget.offer.orgLogo!.isNotEmpty
               ? ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.network(
-              offer.orgLogo!,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _buildDefaultLogo(),
-            ),
-          )
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    widget.offer.orgLogo!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _buildDefaultLogo(),
+                  ),
+                )
               : _buildDefaultLogo(),
         ),
         const SizedBox(width: 16),
@@ -563,20 +618,20 @@ class DiscountOfferDetailPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                offer.orgName ?? 'Unknown Company',
+                widget.offer.orgName ?? 'Unknown Company',
                 style:
-                const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
-              if (offer.orgAddress != null)
+              if (widget.offer.orgAddress != null)
                 Text(
-                  offer.orgAddress!,
+                  widget.offer.orgAddress!,
                   style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                 ),
-              if (offer.orgArea != null || offer.orgCity != null) ...[
+              if (widget.offer.orgArea != null || widget.offer.orgCity != null) ...[
                 const SizedBox(height: 4),
                 Text(
-                  [offer.orgArea, offer.orgCity]
+                  [widget.offer.orgArea, widget.offer.orgCity]
                       .where((e) => e != null)
                       .join(', '),
                   style: TextStyle(fontSize: 13, color: Colors.grey[600]),
@@ -591,13 +646,13 @@ class DiscountOfferDetailPage extends StatelessWidget {
 
   Widget _buildValidityInfo() {
     String validityText;
-    if (offer.validFrom != null && offer.validTo != null) {
+    if (widget.offer.validFrom != null && widget.offer.validTo != null) {
       validityText =
-      '${_formatDate(offer.validFrom!)} - ${_formatDate(offer.validTo!)}';
-    } else if (offer.validTo != null) {
-      validityText = 'Valid until ${_formatDate(offer.validTo!)}';
-    } else if (offer.validFrom != null) {
-      validityText = 'Valid from ${_formatDate(offer.validFrom!)}';
+          '${_formatDate(widget.offer.validFrom!)} - ${_formatDate(widget.offer.validTo!)}';
+    } else if (widget.offer.validTo != null) {
+      validityText = 'Valid until ${_formatDate(widget.offer.validTo!)}';
+    } else if (widget.offer.validFrom != null) {
+      validityText = 'Valid from ${_formatDate(widget.offer.validFrom!)}';
     } else {
       return const SizedBox();
     }
@@ -648,19 +703,16 @@ class DiscountOfferDetailPage extends StatelessWidget {
             2: FlexColumnWidth(),
           },
           children: [
-            _buildTableRow('Person Name', offer.offerContactPersonName ?? '--'),
+            _buildTableRow('Person Name', widget.offer.offerContactPersonName ?? '--'),
             _buildSpacerRow(),
-
-            _buildTableRow('Person Mobile Number', offer.offerContactPersonMobile ?? '--'),
+            _buildTableRow(
+                'Person Mobile Number', widget.offer.offerContactPersonMobile ?? '--'),
             _buildSpacerRow(),
-
-            _buildTableRow('Mobile Number', offer.orgMobile ?? '--'),
+            _buildTableRow('Mobile Number', widget.offer.orgMobile ?? '--'),
             _buildSpacerRow(),
-
-            _buildTableRow('WhatsApp', offer.orgWhatsApp ?? '--'),
+            _buildTableRow('WhatsApp', widget.offer.orgWhatsApp ?? '--'),
             _buildSpacerRow(),
-
-            _buildTableRow('Email', offer.orgEmail ?? '--'),
+            _buildTableRow('Email', widget.offer.orgEmail ?? '--'),
           ],
         ),
       ],

@@ -128,10 +128,26 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          title: const Text('Enter Medicine Name'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Text(
+                "Enter Medicine Name",
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              SizedBox(height: 8),
+              Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -188,20 +204,19 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
             ),
           ),
           actions: [
-            TextButton(
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.grey[300],
-                foregroundColor: Colors.black,
-              ),
-              child: const Text('Cancel'),
+            OutlinedButton(
               onPressed: () => Navigator.of(context).pop(),
-            ),
-            TextButton(
-              style: TextButton.styleFrom(
-                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                foregroundColor: Colors.white,
+              style: OutlinedButton.styleFrom(
+                foregroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
-              child: const Text('OK'),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
               onPressed: () {
                 if (medicineName.trim().isNotEmpty &&
                     selectedContainer != null &&
@@ -210,7 +225,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
                     offerList.add({
                       'medicine_name': medicineName.trim(),
                       'medicine_container_id':
-                          getContainerId(selectedContainer!).toString(),
+                      getContainerId(selectedContainer!).toString(),
                       'medicine_container_name': selectedContainer,
                       'quantity': int.tryParse(offerQuantity.trim()) ?? 0,
                     });
@@ -225,6 +240,15 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
                   );
                 }
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("OK"),
             ),
           ],
         );
@@ -318,6 +342,66 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
       await _showErrorDialog(
         "Error: ${e.toString().replaceAll('Exception:', '').trim()}",
       );
+    }
+  }
+
+  Future<void> _showConfirmDialog() async {
+    final bool? confirmed = await showDialog<bool>(
+      context: Get.context!,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Place Order",
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              const Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+          content: const Text(
+            "Are you sure you want to place this order?",
+            style: TextStyle(fontSize: 16),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Yes"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      await _submitOffer();
     }
   }
 
@@ -644,7 +728,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
           ? Container(
         padding: const EdgeInsets.all(16),
         child: ElevatedButton(
-          onPressed: offerList.isNotEmpty ? _submitOffer : null,
+          onPressed: offerList.isNotEmpty ? _showConfirmDialog : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
             foregroundColor: Colors.white,
