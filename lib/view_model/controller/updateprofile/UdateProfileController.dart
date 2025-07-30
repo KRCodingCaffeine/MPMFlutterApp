@@ -411,7 +411,7 @@ class UdateProfileController extends GetxController {
           getUserData.value.membershipApprovalStatusId.toString();
       var isPaymentStatus = getUserData.value.isPaymentReceived.toString();
       if (member_type_id == "1" || member_type_id == "3") {
-        if (int.parse(memberapprovalstatusid) < 5 && isPaymentStatus == "0") {
+        if (int.parse(memberapprovalstatusid) < 2 && isPaymentStatus == "0") {
           isPay.value = true;
         } else {
           isPay.value = false;

@@ -470,7 +470,6 @@ class _PersonalViewState extends State<PersonalView> {
                           const SizedBox(height: 20),
 
                           //Third Name
-// Third Name (Surname)
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -538,19 +537,23 @@ class _PersonalViewState extends State<PersonalView> {
                                                     orElse: () => MemberSurnameData(),
                                                   );
                                                   if (selectedSurname.surnameName != null) {
-                                                    final isMaheshwari = selectedSurname.surnameName!
-                                                        .toLowerCase()
-                                                        .contains("maheshwari");
+                                                    // Check for Maheshwari, Maheshawari, or Maheshwary
+                                                    final surname = selectedSurname.surnameName!.toLowerCase();
+                                                    final isMaheshwari = surname.contains("maheshwari") ||
+                                                        surname.contains("maheshawari") ||
+                                                        surname.contains("maheshwary");
                                                     regiController.isMaheshwariSelected.value = isMaheshwari;
                                                     regiController.showSankhField.value = isMaheshwari;
 
                                                     if (isMaheshwari) {
-                                                      regiController.sankhText.value = "Maheshwari()";
-                                                      regiController.lastNameController.value.text = "Maheshwari()";
+                                                      // Use the actual selected surname (preserving original case)
+                                                      final prefix = selectedSurname.surnameName!;
+                                                      regiController.sankhText.value = "$prefix()";
+                                                      regiController.lastNameController.value.text = "$prefix()";
                                                       Future.delayed(const Duration(milliseconds: 50), () {
                                                         FocusScope.of(context).requestFocus(_sankhFocusNode);
                                                         _sankhController.selection = TextSelection.collapsed(
-                                                          offset: "Maheshwari(".length,
+                                                          offset: prefix.length + 1, // Position after "("
                                                         );
                                                       });
                                                     } else {
@@ -597,6 +600,14 @@ class _PersonalViewState extends State<PersonalView> {
                                         onChanged: (value) {
                                           regiController.sankhText.value = value;
                                           regiController.lastNameController.value.text = value;
+                                        },
+                                        validator: (value) {
+                                          if (regiController.showSankhField.value &&
+                                              (value == null || value.isEmpty || !value.contains('(') || !value.contains(')'))) {
+                                            final prefix = regiController.sankhText.value.split('(')[0];
+                                            return 'Please enter valid sankh (e.g., $prefix(sankh))';
+                                          }
+                                          return null;
                                         },
                                       ),
                                     ),

@@ -434,6 +434,7 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                           const SizedBox(height: 20),
 
                           //Third Name
+// Third Name (Surname)
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -481,7 +482,10 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                                               borderRadius: BorderRadius.circular(10),
                                               isExpanded: true,
                                               underline: Container(),
-                                              hint: const Text('Select SurName *'),
+                                              hint: const Text(
+                                                'Select SurName *',
+                                                style: TextStyle(fontWeight: FontWeight.bold),
+                                              ),
                                               value: selectedValue.isNotEmpty ? selectedValue : null,
                                               items: regiController.surnameList
                                                   .map((MemberSurnameData item) {
@@ -498,24 +502,26 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                                                     orElse: () => MemberSurnameData(),
                                                   );
                                                   if (selectedSurname.surnameName != null) {
-                                                    final isMaheshwari = selectedSurname.surnameName!
-                                                        .toLowerCase()
-                                                        .contains("maheshwari");
+                                                    final surname = selectedSurname.surnameName!.toLowerCase();
+                                                    final isMaheshwari = surname.contains("maheshwari") ||
+                                                        surname.contains("maheshawari") ||
+                                                        surname.contains("maheshwary");
                                                     regiController.isMaheshwariSelected.value = isMaheshwari;
                                                     regiController.showSankhField.value = isMaheshwari;
 
                                                     if (isMaheshwari) {
-                                                      regiController.sankhText.value = "Maheshwari()";
-                                                      regiController.lastNameController.value.text = "Maheshwari()"; // Initialize with parentheses
+                                                      regiController.sankhText.value = "${selectedSurname.surnameName}()";
+                                                      regiController.lastNameController.value.text = "${selectedSurname.surnameName}()";
                                                       Future.delayed(const Duration(milliseconds: 50), () {
                                                         FocusScope.of(context).requestFocus(_sankhFocusNode);
                                                         _sankhController.selection = TextSelection.collapsed(
-                                                          offset: "Maheshwari(".length,
+                                                          offset: "${selectedSurname.surnameName}".length,
                                                         );
                                                       });
                                                     } else {
                                                       regiController.sankhText.value = "";
-                                                      regiController.lastNameController.value.text = selectedSurname.surnameName!;
+                                                      regiController.lastNameController.value.text =
+                                                      selectedSurname.surnameName!;
                                                     }
                                                   }
                                                 }

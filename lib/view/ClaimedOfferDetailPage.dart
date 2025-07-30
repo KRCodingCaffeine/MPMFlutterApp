@@ -113,7 +113,7 @@ class ClaimedOfferDetailPage extends StatelessWidget {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             ),
             Text(
-              '${offer.orgAddress}, ${offer.orgCity}, ${offer.orgState}',
+              '${offer.orgAddress}, ${offer.orgArea}, ${offer.orgCity}, ${offer.orgState}, ${offer.orgPincode}',
               style: const TextStyle(fontSize: 14),
             ),
             const SizedBox(height: 20),
