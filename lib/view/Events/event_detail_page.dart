@@ -3,8 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mpm/model/EventRegesitration/EventRegistrationData.dart';
+import 'package:mpm/model/GetEventDetailsById/GetEventDetailsByIdData.dart';
+import 'package:mpm/model/GetEventsList/EventDateTimeData.dart';
 import 'package:mpm/model/GetEventsList/GetEventsListData.dart';
 import 'package:mpm/repository/event_register_repository/event_register_repo.dart';
+import 'package:mpm/repository/get_even_details_by_id_repository/get_even_details_by_id_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:dio/dio.dart';
@@ -17,13 +20,12 @@ import 'package:mpm/utils/Session.dart';
 import 'package:url_launcher/url_launcher.dart' show canLaunchUrl, launchUrl;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
-
-import 'YouTubeBottomSheet.dart';
+import 'package:mpm/view/Events/YouTubeBottomSheet.dart';
 
 class EventDetailPage extends StatefulWidget {
-  final EventData event;
+  final String eventId;
 
-  const EventDetailPage({Key? key, required this.event}) : super(key: key);
+  const EventDetailPage({Key? key, required this.eventId}) : super(key: key);
 
   @override
   _EventDetailPageState createState() => _EventDetailPageState();
@@ -35,8 +37,7 @@ Future<Size> _getImageSize(String imageUrl) async {
   image.image.resolve(const ImageConfiguration()).addListener(
     ImageStreamListener((ImageInfo info, bool _) {
       final myImage = info.image;
-      completer
-          .complete(Size(myImage.width.toDouble(), myImage.height.toDouble()));
+      completer.complete(Size(myImage.width.toDouble(), myImage.height.toDouble()));
     }),
   );
   return completer.future;
@@ -44,31 +45,66 @@ Future<Size> _getImageSize(String imageUrl) async {
 
 class _EventDetailPageState extends State<EventDetailPage> {
   final Dio _dio = Dio();
+  final GetEventDetailByIdRepository _eventDetailRepo = GetEventDetailByIdRepository();
+  final EventRegistrationRepository _registrationRepo = EventRegistrationRepository();
+
+  bool _isLoading = true;
   bool _isDownloading = false;
   int _downloadProgress = 0;
   bool _isRegistering = false;
   bool _isRegistered = false;
-  final EventRegistrationRepository _registrationRepo =
-      EventRegistrationRepository();
   bool _isPastEvent = false;
+  GetEventDetailsByIdData? _eventDetails;
 
   @override
   void initState() {
     super.initState();
-    _checkRegistrationStatus();
-    _checkEventDate();
+    _fetchEventDetails();
+  }
+
+  Future<void> _fetchEventDetails() async {
+    try {
+      final response = await _eventDetailRepo.EventsDetailById(widget.eventId);
+      if (response['status'] == true && response['data'] != null) {
+        setState(() {
+          _eventDetails = GetEventDetailsByIdData.fromJson(response['data']);
+          _isLoading = false;
+          _checkEventDate();
+          _checkRegistrationStatus();
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response['message'] ?? 'Failed to load event details')),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading event details: $e')),
+      );
+    }
   }
 
   void _checkEventDate() {
-    final eventDate = DateTime.tryParse(widget.event.dateStartsFrom ?? '');
+    if (_eventDetails?.dateEndTo == null) return;
+
+    final eventDate = DateTime.tryParse(_eventDetails!.dateEndTo!);
     if (eventDate != null) {
+      final today = DateTime.now();
+      final todayMidnight = DateTime(today.year, today.month, today.day);
       setState(() {
-        _isPastEvent = eventDate.isBefore(DateTime.now());
+        _isPastEvent = eventDate.isBefore(todayMidnight);
       });
     }
   }
 
   Future<void> _checkRegistrationStatus() async {
+    // Implement your registration status check logic here
     setState(() {
       _isRegistered = false;
     });
@@ -87,8 +123,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
           titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
           contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
           actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-
-          // Combine title and divider here
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -107,7 +141,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
               ),
             ],
           ),
-
           content: const Text(
             "Are you sure you want to register for this event?",
             textAlign: TextAlign.center,
@@ -116,14 +149,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
               color: Colors.black87,
             ),
           ),
-
           actions: [
             OutlinedButton(
               onPressed: () => Navigator.pop(context),
               child: const Text("Cancel"),
               style: OutlinedButton.styleFrom(
-                foregroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: const BorderSide(color: Colors.red),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -136,8 +167,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 _registerForEvent();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
               ),
               child: const Text(
                 "Yes, Register",
@@ -151,7 +181,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<void> _registerForEvent() async {
-    if (_isRegistering || _isRegistered) return;
+    if (_isRegistering || _isRegistered || _eventDetails == null) return;
 
     setState(() {
       _isRegistering = true;
@@ -166,14 +196,13 @@ class _EventDetailPageState extends State<EventDetailPage> {
       final now = DateTime.now();
       final registrationData = EventRegistrationData(
         memberId: int.tryParse(userData.memberId.toString()),
-        eventId: int.tryParse(widget.event.eventId.toString()),
+        eventId: int.tryParse(_eventDetails!.eventId ?? ''),
         eventRegisteredDate: DateFormat('yyyy-MM-dd').format(now),
         addedBy: int.tryParse(userData.memberId.toString()),
         dateAdded: DateFormat('yyyy-MM-dd HH:mm:ss').format(now),
       );
 
-      final response =
-          await _registrationRepo.registerForEvent(registrationData);
+      final response = await _registrationRepo.registerForEvent(registrationData);
 
       if (response['status'] == true) {
         setState(() {
@@ -181,7 +210,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
         });
         await _showSuccessDialog(
             response['message'] ?? 'Successfully registered for event');
-        _redirectToEventsList();
       } else {
         throw Exception(response['message'] ?? 'Failed to register for event');
       }
@@ -246,7 +274,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           actions: [
             ElevatedButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop();
                 _redirectToEventsList();
               },
               style: ElevatedButton.styleFrom(
@@ -319,54 +347,68 @@ class _EventDetailPageState extends State<EventDetailPage> {
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
-  Widget _buildEventInfo() {
-    final eventDate = DateTime.tryParse(widget.event.dateStartsFrom ?? '');
-    final startTimeRaw = widget.event.timeStartsFrom ?? '';
-    final endTimeRaw = widget.event.timeEndTo ?? '';
+  Widget _buildEventInfoList() {
+    final slots = _eventDetails?.allEventDates ?? [];
 
-    String formatDate(DateTime? date) {
-      if (date == null) return 'Unknown Date';
-      return DateFormat('EEEE, MMMM d, y').format(date);
+    String formatDate(String? dateStr) {
+      if (dateStr == null || dateStr.isEmpty) return 'Unknown Date';
+      try {
+        return DateFormat('EEEE, MMMM d, y').format(DateTime.parse(dateStr));
+      } catch (_) {
+        return 'Invalid Date';
+      }
     }
 
-    String formatTime(String timeStr) {
+    String formatTime(String? timeStr) {
+      if (timeStr == null || timeStr.isEmpty) return '';
       try {
         final parsedTime = DateFormat("HH:mm:ss").parse(timeStr);
         return DateFormat("h:mm a").format(parsedTime);
-      } catch (e) {
+      } catch (_) {
         return '';
       }
     }
 
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(Icons.calendar_today, size: 18, color: Colors.black),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Wrap(
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Text(
-                formatDate(eventDate),
-              ),
-              if (startTimeRaw.isNotEmpty) ...[
-                const SizedBox(width: 6),
-                const Text('from ', style: TextStyle(color: Colors.grey)),
-                Text(
-                  formatTime(startTimeRaw),
-                ),
-              ],
-              if (endTimeRaw.isNotEmpty) ...[
-                const SizedBox(width: 6),
-                const Text('to ', style: TextStyle(color: Colors.grey)),
-                Text(
-                  formatTime(endTimeRaw),
-                ),
-              ],
-            ],
-          ),
+        const Text(
+          'Event Date & Time:',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
+        ...slots.map((slot) {
+          return Container(
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                const Icon(Icons.calendar_today, size: 18, color: Colors.black),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        formatDate(slot.eventDate),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      if (slot.eventStartTime != null && slot.eventStartTime!.isNotEmpty) ...[
+                        const SizedBox(width: 6),
+                        const Text('from ', style: TextStyle(color: Colors.grey)),
+                        Text(formatTime(slot.eventStartTime)),
+                      ],
+                      if (slot.eventEndTime != null && slot.eventEndTime!.isNotEmpty) ...[
+                        const SizedBox(width: 6),
+                        const Text('to ', style: TextStyle(color: Colors.grey)),
+                        Text(formatTime(slot.eventEndTime)),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
       ],
     );
   }
@@ -384,24 +426,16 @@ class _EventDetailPageState extends State<EventDetailPage> {
           ),
         ),
         const SizedBox(height: 8),
-        if (widget.event.eventCostType != null &&
-            widget.event.eventCostType!.isNotEmpty) ...[
+        if (_eventDetails?.eventCostType != null &&
+            _eventDetails!.eventCostType!.isNotEmpty) ...[
           Row(
             children: [
               Icon(Icons.currency_rupee, size: 16, color: Colors.grey[600]),
               const SizedBox(width: 8),
-              Text(
-                'Cost:',
-                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+              const Text(
+                'Contact organisers for more details.',
+                style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
-              if (widget.event.eventAmount != null &&
-                  widget.event.eventAmount!.isNotEmpty) ...[
-                const SizedBox(width: 8),
-                Text(
-                  '${widget.event.eventAmount}',
-                  style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-                ),
-              ],
             ],
           ),
         ],
@@ -428,17 +462,17 @@ class _EventDetailPageState extends State<EventDetailPage> {
           onPressed: _isRegistered ? null : _showRegistrationConfirmationDialog,
           child: _isRegistering
               ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          )
               : Text(
-                  _isRegistered ? "Registered" : "Register Here",
-                  style: const TextStyle(fontSize: 16),
-                ),
+            _isRegistered ? "Registered" : "Register Here",
+            style: const TextStyle(fontSize: 16),
+          ),
         ),
       ),
     );
@@ -567,23 +601,23 @@ class _EventDetailPageState extends State<EventDetailPage> {
           ),
         ),
         const SizedBox(height: 8),
-        if (widget.event.eventOrganiserName != null) ...[
+        if (_eventDetails?.eventOrganiserName != null) ...[
           Row(
             children: [
               Icon(Icons.person, size: 14, color: Colors.grey[600]),
               const SizedBox(width: 8),
-              Text(widget.event.eventOrganiserName!,
+              Text(_eventDetails!.eventOrganiserName!,
                   style: TextStyle(fontSize: 12, color: Colors.grey[700])),
             ],
           ),
           const SizedBox(height: 8),
         ],
-        if (widget.event.eventOrganiserMobile != null) ...[
+        if (_eventDetails?.eventOrganiserMobile != null) ...[
           Row(
             children: [
               Icon(Icons.phone, size: 16, color: Colors.grey[600]),
               const SizedBox(width: 8),
-              Text(widget.event.eventOrganiserMobile!,
+              Text(_eventDetails!.eventOrganiserMobile!,
                   style: TextStyle(fontSize: 14, color: Colors.grey[700])),
             ],
           ),
@@ -594,21 +628,37 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final parsedDate =
-        DateTime.tryParse(widget.event.dateStartsFrom ?? '') ?? DateTime.now();
-    final formattedDate = DateFormat('EEEE, MMMM d, y').format(parsedDate);
-    final time = DateFormat('h:mm a').format(parsedDate);
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: Colors.grey[100],
+        appBar: AppBar(
+          backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+          title: const Text('Event Details'),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_eventDetails == null) {
+      return Scaffold(
+        backgroundColor: Colors.grey[100],
+        appBar: AppBar(
+          backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+          title: const Text('Event Details'),
+        ),
+        body: const Center(child: Text('Failed to load event details')),
+      );
+    }
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor:
-            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Builder(
           builder: (context) {
             double fontSize = MediaQuery.of(context).size.width * 0.045;
             return Text(
-              widget.event.eventName ?? 'Event Details',
+              _eventDetails!.eventName ?? 'Event Details',
               style: TextStyle(
                   color: Colors.white,
                   fontSize: fontSize,
@@ -625,8 +675,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (widget.event.eventImage != null &&
-                widget.event.eventImage!.isNotEmpty) ...[
+            if (_eventDetails!.eventImage != null &&
+                _eventDetails!.eventImage!.isNotEmpty) ...[
               GestureDetector(
                 onTap: () {
                   showDialog(
@@ -640,11 +690,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         minScale: 0.5,
                         maxScale: 4.0,
                         child: Image.network(
-                          widget.event.eventImage!,
+                          _eventDetails!.eventImage!,
                           fit: BoxFit.contain,
                           errorBuilder: (_, __, ___) => const Center(
-                            child:
-                                Icon(Icons.broken_image, color: Colors.white),
+                            child: Icon(Icons.broken_image, color: Colors.white),
                           ),
                         ),
                       ),
@@ -659,10 +708,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         maxWidth: 400,
                       ),
                       child: FutureBuilder<Size>(
-                        future: _getImageSize(widget.event.eventImage!),
+                        future: _getImageSize(_eventDetails!.eventImage!),
                         builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
                             return const SizedBox(
                               height: 200,
                               child: Center(child: CircularProgressIndicator()),
@@ -671,20 +719,17 @@ class _EventDetailPageState extends State<EventDetailPage> {
                             return const SizedBox.shrink();
                           } else {
                             final imageSize = snapshot.data!;
-                            final isLandscape =
-                                imageSize.width > imageSize.height;
+                            final isLandscape = imageSize.width > imageSize.height;
 
                             return ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               child: Image.network(
-                                widget.event.eventImage!,
-                                fit: isLandscape
-                                    ? BoxFit.fitWidth
-                                    : BoxFit.cover,
+                                _eventDetails!.eventImage!,
+                                fit: isLandscape ? BoxFit.fitWidth : BoxFit.cover,
                                 width: double.infinity,
                                 height: isLandscape ? 250 : null,
                                 errorBuilder: (_, __, ___) =>
-                                    const Icon(Icons.broken_image, size: 80),
+                                const Icon(Icons.broken_image, size: 80),
                               ),
                             );
                           }
@@ -704,7 +749,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ),
             const SizedBox(height: 8),
             Text(
-              widget.event.eventDescription ?? 'No event description available',
+              _eventDetails!.eventDescription ?? 'No event description available',
               style: const TextStyle(
                 fontSize: 15,
                 height: 1.5,
@@ -712,15 +757,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ),
             const SizedBox(height: 24),
             if (_isPastEvent &&
-                widget.event.youtubeUrl != null &&
-                widget.event.youtubeUrl!.isNotEmpty) ...[
+                _eventDetails!.youtubeUrl != null &&
+                _eventDetails!.youtubeUrl!.isNotEmpty) ...[
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorHelperClass.getColorFromHex(
-                        ColorResources.red_color),
+                    backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -730,7 +774,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   icon: const Icon(Icons.play_circle_fill),
                   label: const Text("View Events Video"),
                   onPressed: () {
-                    final url = widget.event.youtubeUrl;
+                    final url = _eventDetails!.youtubeUrl;
                     showModalBottomSheet(
                       context: context,
                       isScrollControlled: true,
@@ -744,21 +788,21 @@ class _EventDetailPageState extends State<EventDetailPage> {
               ),
             ],
             const SizedBox(height: 24),
-            _buildEventInfo(),
+            _buildEventInfoList(),
             const SizedBox(height: 24),
-            if (widget.event.eventCostType?.toLowerCase() != 'free') ...[
+            if (_eventDetails!.eventCostType?.toLowerCase() != 'free') ...[
               _buildEventCostInfo(),
               const SizedBox(height: 24),
             ],
-            if (widget.event.eventOrganiserName != null ||
-                widget.event.eventOrganiserMobile != null) ...[
+            if (_eventDetails!.eventOrganiserName != null ||
+                _eventDetails!.eventOrganiserMobile != null) ...[
               const Divider(thickness: 1, color: Colors.grey),
               const SizedBox(height: 16),
               _buildOrganiserInfo(),
               const SizedBox(height: 24),
             ],
-            if (widget.event.eventTermsAndConditionDocument != null &&
-                widget.event.eventTermsAndConditionDocument!.isNotEmpty) ...[
+            if (_eventDetails!.eventTermsAndConditionDocument != null &&
+                _eventDetails!.eventTermsAndConditionDocument!.isNotEmpty) ...[
               const Text(
                 'Events Document:',
                 style: TextStyle(
@@ -770,7 +814,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
               const SizedBox(height: 8),
               Builder(
                 builder: (context) {
-                  final docUrl = widget.event.eventTermsAndConditionDocument!;
+                  final docUrl = _eventDetails!.eventTermsAndConditionDocument!;
                   final fileExtension = docUrl.split('.').last.toLowerCase();
 
                   // Supported image formats
@@ -825,26 +869,23 @@ class _EventDetailPageState extends State<EventDetailPage> {
                           fileExtension == 'pdf'
                               ? Icons.picture_as_pdf
                               : Icons.description,
-                          color:
-                              fileExtension == 'pdf' ? Colors.red : Colors.blue,
+                          color: fileExtension == 'pdf' ? Colors.red : Colors.blue,
                         ),
                         label: _isDownloading
                             ? LinearProgressIndicator(
-                                value: _downloadProgress / 100,
-                                backgroundColor: Colors.grey[300],
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  ColorHelperClass.getColorFromHex(
-                                      ColorResources.red_color),
-                                ),
-                              )
-                            : Text(
-                                "Download & View ${fileExtension.toUpperCase()}"),
+                          value: _downloadProgress / 100,
+                          backgroundColor: Colors.grey[300],
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                          ),
+                        )
+                            : Text("Download & View ${fileExtension.toUpperCase()}"),
                         onPressed: _isDownloading
                             ? null
                             : () => _downloadAndOpenPdf(
-                                  docUrl,
-                                  'Event_Terms_${widget.event.eventId}.$fileExtension',
-                                ),
+                          docUrl,
+                          'Event_Terms_${_eventDetails!.eventId}.$fileExtension',
+                        ),
                       ),
                     );
                   }
@@ -865,7 +906,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         ),
       ),
       bottomNavigationBar:
-          _isPastEvent ? _buildPastEventBottomBar() : _buildRegisterButton(),
+      _isPastEvent ? _buildPastEventBottomBar() : _buildRegisterButton(),
     );
   }
 

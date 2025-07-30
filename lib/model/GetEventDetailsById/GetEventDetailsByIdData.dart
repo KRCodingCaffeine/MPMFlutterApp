@@ -2,7 +2,7 @@ import 'package:mpm/model/GetEventsList/EventDateTimeData.dart';
 import 'package:mpm/model/Zone/ZoneData.dart';
 import 'package:mpm/utils/urls.dart';
 
-class EventData {
+class GetEventDetailsByIdData {
   String? eventId;
   String? eventName;
   String? eventDescription;
@@ -30,7 +30,7 @@ class EventData {
   List<ZoneData>? zones;
   List<EventDateTimeData>? allEventDates;
 
-  EventData({
+  GetEventDetailsByIdData({
     this.eventId,
     this.eventName,
     this.eventDescription,
@@ -59,8 +59,8 @@ class EventData {
     this.allEventDates,
   });
 
-  factory EventData.fromJson(Map<String, dynamic> json) {
-    return EventData(
+  factory GetEventDetailsByIdData.fromJson(Map<String, dynamic> json) {
+    return GetEventDetailsByIdData(
       eventId: json['event_id']?.toString(),
       eventName: json['event_name'],
       eventDescription: json['event_description'],
