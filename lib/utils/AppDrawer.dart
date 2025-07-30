@@ -38,28 +38,32 @@ class AppDrawer extends StatelessWidget {
                           radius: 40,
                           backgroundColor: Colors.grey[300],
                           child: ClipOval(
-                            child: (dashBoardController.profileImage.value.isNotEmpty)
+                            child: (dashBoardController
+                                    .profileImage.value.isNotEmpty)
                                 ? FadeInImage(
-                              placeholder: const AssetImage("assets/images/user3.png"),
-                              image: NetworkImage(Urls.imagePathUrl + dashBoardController.profileImage.value),
-                              imageErrorBuilder: (context, error, stackTrace) {
-                                return Image.asset(
-                                  "assets/images/male.png",
-                                  fit: BoxFit.cover,
-                                  width: 80,
-                                  height: 80,
-                                );
-                              },
-                              fit: BoxFit.cover,
-                              width: 80,
-                              height: 80,
-                            )
+                                    placeholder: const AssetImage(
+                                        "assets/images/user3.png"),
+                                    image: NetworkImage(Urls.imagePathUrl +
+                                        dashBoardController.profileImage.value),
+                                    imageErrorBuilder:
+                                        (context, error, stackTrace) {
+                                      return Image.asset(
+                                        "assets/images/male.png",
+                                        fit: BoxFit.cover,
+                                        width: 80,
+                                        height: 80,
+                                      );
+                                    },
+                                    fit: BoxFit.cover,
+                                    width: 80,
+                                    height: 80,
+                                  )
                                 : Image.asset(
-                              "assets/images/user3.png",
-                              fit: BoxFit.cover,
-                              width: 80,
-                              height: 80,
-                            ),
+                                    "assets/images/user3.png",
+                                    fit: BoxFit.cover,
+                                    width: 80,
+                                    height: 80,
+                                  ),
                           ),
                         );
                       }),
@@ -83,15 +87,12 @@ class AppDrawer extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          "Membership Code : ${(dashBoardController.memberCode.value.trim().isNotEmpty)
-                              ? dashBoardController.memberCode.value
-                              : " -- "}", // Default text if both are empty
+                          "Membership Code : ${(dashBoardController.memberCode.value.trim().isNotEmpty) ? dashBoardController.memberCode.value : " -- "}",
                           style: const TextStyle(
                             fontSize: 12,
                             color: Colors.white,
                           ),
                         ),
-
                         const SizedBox(height: 4),
                         Text(
                           "Mobile: ${dashBoardController.mobileNumber.value.isNotEmpty ? dashBoardController.mobileNumber.value : "N/A"}",
@@ -109,11 +110,11 @@ class AppDrawer extends StatelessWidget {
             leading: Icon(Icons.home),
             title: Text('Home'),
             onTap: () {
-              Navigator.pop(context); // Close AppDrawer
+              Navigator.pop(context);
               Navigator.pushNamedAndRemoveUntil(
                 context,
                 RouteNames.dashboard,
-                (route) => false, // Removes all previous routes
+                (route) => false,
               );
             },
           ),
@@ -215,9 +216,18 @@ class AppDrawer extends StatelessWidget {
 
     const String playStoreLink =
         'https://play.google.com/store/apps/details?id=com.mpm.member';
+    const String appStoreLink =
+        'https://apps.apple.com/in/app/mpm-mumbai/id6748281499';
 
-    String shareText =
-        "🌟 Welcome to MPM App! \n\n📲 🚀 Check out this amazing app! \n\n📲 Download Now: \n👉 Android: $playStoreLink";
+    String shareText = '''
+    🌟 Welcome to MPM App! 
+    
+    📲 🚀 Check out this amazing app! 
+    
+    📲 Download Now: 
+    👉 Android: $playStoreLink
+    👉 iOS: $appStoreLink
+    ''';
 
     await Share.share(
       shareText,
@@ -232,8 +242,7 @@ class AppDrawer extends StatelessWidget {
     const String membershipFormLink =
         'https://members.mumbaimaheshwari.com/staging/member/registration';
 
-    String shareText =
-        "We invite you to join us! 🎉\n\n"
+    String shareText = "We invite you to join us! 🎉\n\n"
         "Register now using the following link: \n\n"
         "📲 $membershipFormLink\n\n"
         "We look forward to having you onboard!";
@@ -243,7 +252,7 @@ class AppDrawer extends StatelessWidget {
       subject: "Join Us - Membership Registration",
       sharePositionOrigin: box != null
           ? box.localToGlobal(Offset.zero) & box.size
-          : Rect.zero, // Provide a fallback value
+          : Rect.zero,
     );
   }
 
@@ -289,7 +298,8 @@ class AppDrawer extends StatelessWidget {
                 Navigator.pop(context);
               },
               style: OutlinedButton.styleFrom(
-                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: const BorderSide(color: Colors.red),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -299,13 +309,11 @@ class AppDrawer extends StatelessWidget {
             ),
             ElevatedButton(
               onPressed: () async {
-                // Clear session data
                 await SessionManager.clearSession();
 
-                // Clear GetX controller variables if needed
-                Get.delete<UdateProfileController>(); // Optional: If you want to reset controller values
+                Get.delete<
+                    UdateProfileController>();
 
-                // Clear cache files (temporary files etc.)
                 try {
                   final tempDir = await getTemporaryDirectory();
                   if (tempDir.existsSync()) {
@@ -315,15 +323,15 @@ class AppDrawer extends StatelessWidget {
                   debugPrint("Error clearing cache: $e");
                 }
 
-                // Navigate to login page and remove all routes
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (context) => LoginPage()),
-                      (route) => false,
+                  (route) => false,
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),

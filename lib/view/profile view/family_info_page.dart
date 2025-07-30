@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/model/GetProfile/FamilyHeadMemberData.dart';
+import 'package:mpm/model/GetProfile/FamilyMembersData.dart';
 import 'package:mpm/model/relation/RelationData.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
@@ -114,13 +115,30 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                 const SizedBox(height: 4),
                 Expanded(
                   child: Obx(() {
+                    // Sort family members by age (oldest first)
+                    final List<FamilyMembersData> sortedList = List.of(controller.familyDataList.value)
+                      ..sort((a, b) {
+                        // Parse dates, handling null and empty cases
+                        final aDate = _parseDate(a.dob);
+                        final bDate = _parseDate(b.dob);
+
+                        // If both dates are invalid, maintain original order
+                        if (aDate == null && bDate == null) return 0;
+                        // Put invalid dates at the end
+                        if (aDate == null) return 1;
+                        if (bDate == null) return -1;
+
+                        // Compare dates (oldest first)
+                        return aDate.compareTo(bDate);
+                      });
+
                     return ListView.builder(
-                      itemCount: controller.familyDataList.value.length,
+                      itemCount: sortedList.length,
                       itemBuilder: (context, index) =>
-                          _buildFamilyMemberCard(context, index),
+                          _buildFamilyMemberCard(context, sortedList[index]),
                     );
                   }),
-                ),
+                )
               ],
             ),
           ),
@@ -167,6 +185,32 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
         }
       }),
     );
+  }
+
+  DateTime? _parseDate(String? dateString) {
+    if (dateString == null || dateString.isEmpty) return null;
+
+    try {
+      // Try common date formats
+      final formats = [
+        'yyyy-MM-dd',
+        'dd-MM-yyyy',
+        'dd/MM/yyyy',
+        'MM/dd/yyyy',
+        'yyyy/MM/dd'
+      ];
+
+      for (var format in formats) {
+        try {
+          return DateFormat(format).parseStrict(dateString);
+        } catch (_) {}
+      }
+
+      // If none of the formats worked, return null
+      return null;
+    } catch (e) {
+      return null;
+    }
   }
 
   Widget _buildFamilyHeadCard(
@@ -499,9 +543,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
     );
   }
 
-  Widget _buildFamilyMemberCard(context, int index) {
-    final member = controller.familyDataList.value[index];
-    print("vbfbbv" + member.toString());
+  Widget _buildFamilyMemberCard(BuildContext context, FamilyMembersData member) {
     return Card(
       color: Colors.grey[50],
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -510,7 +552,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
         leading: CircleAvatar(
           radius: 30,
           backgroundImage: (member.profileImage != null &&
-                  member.profileImage.isNotEmpty)
+              member.profileImage.isNotEmpty)
               ? NetworkImage(Urls.imagePathUrl + member.profileImage)
               : const AssetImage("assets/images/user3.png") as ImageProvider,
           backgroundColor: Colors.grey[300],
@@ -520,23 +562,16 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              "${member.firstName != null ? member.firstName : ""} ${member.lastName != null ? member.lastName : ""}"
-                  .trim(),
+              "${member.firstName ?? ""} ${member.lastName ?? ""}".trim(),
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
             ),
             Text(
-              "Member Code : " +
-                  (member.memberCode != null
-                      ? member.memberCode
-                      : member.memberId != null
-                          ? member.memberId
-                          : ""),
+              "Member Code: " +
+                  (member.memberCode ?? member.memberId ?? "N/A"),
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
             Text(
-              "Relation : " + member.relationshipName != null
-                  ? member.relationshipName
-                  : "",
+              "Relation: ${member.relationshipName ?? "N/A"}",
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
           ],

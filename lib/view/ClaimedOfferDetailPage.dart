@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:mpm/model/GetClaimedOfferByID/GetClaimedOfferData.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
@@ -7,6 +8,20 @@ class ClaimedOfferDetailPage extends StatelessWidget {
   final GetClaimedOfferData offer;
 
   ClaimedOfferDetailPage({required this.offer});
+
+  String getContainerName(dynamic id) {
+    switch (id.toString()) {
+      case '1':
+        return 'Strips';
+      case '2':
+        return 'Box';
+      case '3':
+        return 'Bottle';
+      default:
+        return 'Unknown';
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -79,20 +94,16 @@ class ClaimedOfferDetailPage extends StatelessWidget {
                   ...offer.medicines!.map((medicine) => Padding(
                     padding: const EdgeInsets.only(top: 4.0),
                     child: Text(
-                      '• ${medicine.medicineName} (Container ID: ${medicine.medicineContainerId}, Qty: ${medicine.quantity})',
+                      '• ${medicine.medicineName} (Pack Type: ${getContainerName(medicine.medicineContainerId)}, Qty: ${medicine.quantity})',
                       style: const TextStyle(fontSize: 13),
                     ),
-                  )),
+                  ))
                 ],
               ),
             const SizedBox(height: 20),
 
-            const Text(
-              'Claimed On:',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-            ),
             Text(
-              'Claimed on: ${offer.createdAt}',
+              'Claimed on: ${_formatDate(offer.createdAt)}',
               style: TextStyle(color: Colors.grey[600], fontSize: 13),
             ),
             const SizedBox(height: 20),
@@ -102,7 +113,7 @@ class ClaimedOfferDetailPage extends StatelessWidget {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             ),
             Text(
-              '${offer.orgAddress}, ${offer.orgCity}, ${offer.orgState}',
+              '${offer.orgAddress}, ${offer.orgArea}, ${offer.orgCity}, ${offer.orgState}, ${offer.orgPincode}',
               style: const TextStyle(fontSize: 14),
             ),
             const SizedBox(height: 20),
@@ -124,5 +135,15 @@ class ClaimedOfferDetailPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return '';
+    try {
+      final date = DateTime.parse(dateStr);
+      return DateFormat('EEEE, dd-MM-yy').format(date);
+    } catch (e) {
+      return '';
+    }
   }
 }

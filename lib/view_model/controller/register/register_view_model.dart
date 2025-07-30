@@ -11,6 +11,7 @@ import 'package:mpm/model/CheckPinCode/CheckPinCodeModel.dart';
 
 import 'package:mpm/model/CheckUser/CheckUserData.dart';
 import 'package:mpm/model/CountryModel/CountryData.dart';
+import 'package:mpm/model/GetMemberSurname/GetMemberSurnameData.dart';
 
 import 'package:mpm/model/Occupation/OccupationData.dart';
 import 'package:mpm/model/OccupationSpec/OccuptionSpecData.dart';
@@ -29,6 +30,7 @@ import 'package:mpm/model/membersalutation/MemberSalutationData.dart';
 import 'package:mpm/model/membership/MemberShipData.dart';
 import 'package:mpm/model/search/SearchData.dart';
 import 'package:mpm/repository/check_mobile_exists_repository/check_mobile_exists_repo.dart';
+import 'package:mpm/repository/get_member_surname_repository/get_member_surname_repo.dart';
 import 'package:mpm/repository/register_repository/register_repo.dart';
 import 'package:http/http.dart' as http;
 import 'package:mpm/repository/saraswani_option_repository/saraswani_option_repo.dart';
@@ -58,6 +60,12 @@ class RegisterController extends GetxController {
   final rxStatusDocument = Status.LOADING.obs;
   final rxStatusMemberShipTYpe = Status.LOADING.obs;
   final rxStatusMemberSalutation = Status.LOADING.obs;
+  final rxStatusSurname = Status.LOADING.obs;
+  final surnameList = <MemberSurnameData>[].obs;
+  final selectedSurname = ''.obs;
+  final isMaheshwariSelected = false.obs;
+  final sankhText = ''.obs;
+  final showSankhField = false.obs;
   var countryNotFound = false.obs;
   var genderList = <DataX>[].obs;
   var selectedGender = ''.obs;
@@ -244,6 +252,25 @@ class RegisterController extends GetxController {
     selectedGender(value);
   }
 
+  Future<void> getSurnameList() async {
+    try {
+      rxStatusSurname.value = Status.LOADING;
+      final response = await MemberSurnameRepository().fetchMemberSurnameList();
+      if (response.status == true && response.data != null) {
+        surnameList.assignAll(response.data!);
+        rxStatusSurname.value = Status.COMPLETE;
+      } else {
+        rxStatusSurname.value = Status.ERROR;
+      }
+    } catch (e) {
+      rxStatusSurname.value = Status.ERROR;
+    }
+  }
+
+  void setSelectedSurname(String value) {
+    selectedSurname.value = value;
+  }
+
   void setSaraswaniOption(String value) {
     saraswaniOptionId.value = value;
   }
@@ -371,19 +398,15 @@ class RegisterController extends GetxController {
         memberShipList.clear();
 
         if (withoutcheckotp.value == false) {
-          // Normal case - show all memberships
           setMemberShipType(_value.data!);
 
-          // In this case, show all Saraswani options
           filteredSaraswaniOptionList.value = saraswaniOptionList;
         } else {
-          // Special cases based on age and pincode status
           if (isUnder18(dob)) {
             // Under 18
             if (zoneController.value.text.isEmpty) {
               _showLoginAlert(context!);
             } else {
-              // Show only Non Member
               _addMembershipIfMatches(_value.data!, "Non Member");
 
               filteredSaraswaniOptionList.value = saraswaniOptionList
@@ -393,7 +416,6 @@ class RegisterController extends GetxController {
                   .toList();
             }
           } else {
-            // Above 18
             if (countryNotFound.value) {
               if (zoneController.value.text.isEmpty) {
                 _addMembershipIfMatches(_value.data!, "Saraswani Member");
@@ -418,7 +440,6 @@ class RegisterController extends GetxController {
                 }
               }
             } else {
-              // Pincode doesn't exist - show only Saraswani Member
               _addMembershipIfMatches(_value.data!, "Saraswani Member");
 
               filteredSaraswaniOptionList.value = saraswaniOptionList;
@@ -450,14 +471,12 @@ class RegisterController extends GetxController {
     }
   }
 
-// Add this to your init method or wherever you initialize your controller
   @override
   void onInit() {
     super.onInit();
     fetchSaraswaniOptions();
   }
 
-// Method to fetch Saraswani options
   void fetchSaraswaniOptions() async {
     rxStatusLoading.value = Status.LOADING;
     try {
@@ -567,6 +586,7 @@ class RegisterController extends GetxController {
     final url = Uri.parse(Urls.register_url);
     var first = firstNameController.value.text;
     var last = lastNameController.value.text.trim();
+
     var name = first + "" + last;
     var email = emailController.value.text.trim();
     var mobile = mobileController.value.text.trim();
@@ -593,7 +613,7 @@ class RegisterController extends GetxController {
     Map<String, String> payload = {
       "proposer_id": memberId.value,
       "first_name": firstNameController.value.text.trim(),
-      "last_name": lastNameController.value.text.trim(),
+      "last_name": last,
       "middle_name": middleNameController.value.text.trim(),
       "father_name": fathersnameController.value.text.trim(),
       "mother_name": mothersnameController.value.text.trim(),

@@ -7,9 +7,9 @@ class AppConstants {
   static const String back = 'Back';
   static const String resentotp = 'Resend OTP';
   static const String dontreceive = "Didn’t receive the OTP ? ";
-  static const String enter_otp = 'Enter Verification Code';
+  static const String enter_otp = 'Mobile Verification Code';
   static const String detail_otp =
-      'We are automatically detecting the SMS sent to your number';
+      'Please enter OTP sent on your mobile number';
   static const String termscondition = 'Terms of Use & Privacy Policy';
   static const String detlogin = "Dont't have an account ? ";
   static const String register = "Register";

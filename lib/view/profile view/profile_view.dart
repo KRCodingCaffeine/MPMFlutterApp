@@ -290,35 +290,37 @@ class _ProfileViewState extends State<ProfileView> {
                 );
               }),
               Center(
-                child: Obx((){
+                child: Obx(() {
                   return Visibility(
-                      visible: controller.isPay.value,
+                    visible: controller.isPay.value,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: SizedBox(
-                        height: 48,
+                        width: double.infinity,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                            ColorHelperClass.getColorFromHex(
-                                ColorResources.red_color),
+                            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(5),
+                              borderRadius: BorderRadius.circular(8),
                             ),
                           ),
                           onPressed: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => PaymentScreen(paymentAmount: '1',),
+                                builder: (context) => PaymentScreen(paymentAmount: '1'),
                               ),
                             );
-
                           },
-                          child: Text("Pay Now", style: TextStyleClass.white14style,),
+                          child: const Text("Pay Now", style: TextStyle(fontSize: 16)),
                         ),
-                      ));
+                      ),
+                    ),
+                  );
                 }),
               ),
-
             ],
           ),
         );

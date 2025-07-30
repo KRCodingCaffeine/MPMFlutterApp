@@ -18,6 +18,8 @@ class GetClaimedOfferData {
   String? orgMobile;
   String? orgEmail;
   String? orgLogo;
+  String? orgArea;
+  String? orgPincode;
   int? organisationOfferDiscountId;
   String? offerDiscountName;
   String? offerDescription;
@@ -44,6 +46,8 @@ class GetClaimedOfferData {
     this.orgMobile,
     this.orgEmail,
     this.orgLogo,
+    this.orgArea,
+    this.orgPincode,
     this.organisationOfferDiscountId,
     this.offerDiscountName,
     this.offerDescription,
@@ -79,6 +83,8 @@ class GetClaimedOfferData {
       orgLogo: json['org_logo']?.isNotEmpty == true
           ? Urls.imagePathUrl + json['org_logo']
           : null,
+      orgArea: json['org_area'],
+      orgPincode: json['org_pincode'],
       organisationOfferDiscountId:
           _toInt(json['organisation_offer_discount_id']),
       offerDiscountName: json['offer_discount_name'],
@@ -113,6 +119,8 @@ class GetClaimedOfferData {
         'org_mobile': orgMobile,
         'org_email': orgEmail,
         'org_logo': orgLogo,
+        'org_area': orgArea,
+        'org_pincode': orgPincode,
         'organisation_offer_discount_id': organisationOfferDiscountId,
         'offer_discount_name': offerDiscountName,
         'offer_description': offerDescription,

@@ -5,6 +5,7 @@ class FamilyMembersData {
   var lastName;
   var middleName;
   var profileImage;
+  var dob;
   var relationshipName;
   var relationshipTypeId;
 
@@ -15,6 +16,7 @@ class FamilyMembersData {
         this.lastName,
         this.middleName,
         this.profileImage,
+        this.dob,
         this.relationshipName,
         this.relationshipTypeId});
 
@@ -25,6 +27,7 @@ class FamilyMembersData {
     lastName = json['last_name'];
     middleName = json['middle_name'];
     profileImage = json['profile_image'];
+    dob = json['dob'];
     relationshipName = json['relationship_name'];
     relationshipTypeId = json['relationship_type_id'];
   }
@@ -37,6 +40,7 @@ class FamilyMembersData {
     data['last_name'] = this.lastName;
     data['middle_name'] = this.middleName;
     data['profile_image'] = this.profileImage;
+    data['dob'] = this.dob;
     data['relationship_name'] = this.relationshipName;
     data['relationship_type_id'] = this.relationshipTypeId;
     return data;

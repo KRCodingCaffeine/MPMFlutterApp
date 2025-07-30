@@ -13,6 +13,7 @@ import 'package:mpm/model/CheckPinCode/CheckPinCodeModel.dart';
 import 'package:mpm/model/CheckUser/CheckUserData.dart';
 import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/model/CountryModel/CountryData.dart';
+import 'package:mpm/model/GetMemberSurname/GetMemberSurnameData.dart';
 import 'package:mpm/model/Occupation/OccupationData.dart';
 import 'package:mpm/model/OccupationSpec/OccuptionSpecData.dart';
 import 'package:mpm/model/Qualification/QualificationData.dart';
@@ -32,6 +33,7 @@ import 'package:mpm/model/membersalutation/MemberSalutationData.dart';
 import 'package:mpm/model/membership/MemberShipData.dart';
 import 'package:mpm/model/relation/RelationData.dart';
 import 'package:mpm/repository/check_mobile_exists_repository/check_mobile_exists_repo.dart';
+import 'package:mpm/repository/get_member_surname_repository/get_member_surname_repo.dart';
 import 'package:mpm/repository/register_repository/register_repo.dart';
 import 'package:http/http.dart' as http;
 import 'package:mpm/repository/saraswani_option_repository/saraswani_option_repo.dart';
@@ -61,6 +63,12 @@ class NewMemberController extends GetxController {
   final rxStatusBuilding = Status.IDLE.obs;
   final rxStatusDocument = Status.LOADING.obs;
   final rxStatusMemberShipTYpe = Status.LOADING.obs;
+  final rxStatusSurname = Status.LOADING.obs;
+  final surnameList = <MemberSurnameData>[].obs;
+  final selectedSurname = ''.obs;
+  final isMaheshwariSelected = false.obs;
+  final sankhText = ''.obs;
+  final showSankhField = false.obs;
 
   var arg_page = "".obs;
   var state_id = "".obs;
@@ -98,7 +106,7 @@ class NewMemberController extends GetxController {
   var userdocumentImage = ''.obs;
   var isBuilding = false.obs;
   var isRelation = false.obs;
-  var isMarried = false.obs; //
+  var isMarried = false.obs;
   var memberId = "".obs;
   var MaritalAnnivery = false.obs;
   var selectMemberSalutation = ''.obs;
@@ -245,6 +253,25 @@ class NewMemberController extends GetxController {
     }).onError((error, strack) {
       setRxRequestMemberSalutation(Status.ERROR);
     });
+  }
+
+  Future<void> getSurnameList() async {
+    try {
+      rxStatusSurname.value = Status.LOADING;
+      final response = await MemberSurnameRepository().fetchMemberSurnameList();
+      if (response.status == true && response.data != null) {
+        surnameList.assignAll(response.data!);
+        rxStatusSurname.value = Status.COMPLETE;
+      } else {
+        rxStatusSurname.value = Status.ERROR;
+      }
+    } catch (e) {
+      rxStatusSurname.value = Status.ERROR;
+    }
+  }
+
+  void setSelectedSurname(String value) {
+    selectedSurname.value = value;
   }
 
   void getGender() {
@@ -398,23 +425,17 @@ class NewMemberController extends GetxController {
         DateFormat inputFormat = DateFormat("dd/MM/yyyy");
         DateTime dob = inputFormat.parse(date);
 
-        // Clear existing list
         memberShipList.clear();
 
         if (withoutcheckotp.value == false) {
-          // Normal case - show all memberships
           setMemberShipType(_value.data!);
 
-          // In this case, show all Saraswani options
           filteredSaraswaniOptionList.value = saraswaniOptionList;
         } else {
-          // Special cases based on age and pincode status
           if (isUnder18(dob)) {
-            // Under 18
             if (zoneController.value.text.isEmpty) {
               _showLoginAlert(context!);
             } else {
-              // Show only Non Member
               _addMembershipIfMatches(_value.data!, "Non Member");
 
               filteredSaraswaniOptionList.value = saraswaniOptionList
@@ -424,7 +445,6 @@ class NewMemberController extends GetxController {
                   .toList();
             }
           } else {
-            // Above 18
             if (countryNotFound.value) {
               if (zoneController.value.text.isEmpty) {
                 _addMembershipIfMatches(_value.data!, "Saraswani Member");
@@ -449,7 +469,6 @@ class NewMemberController extends GetxController {
                 }
               }
             } else {
-              // Pincode doesn't exist - show only Saraswani Member
               _addMembershipIfMatches(_value.data!, "Saraswani Member");
 
               filteredSaraswaniOptionList.value = saraswaniOptionList;
@@ -465,7 +484,6 @@ class NewMemberController extends GetxController {
     });
   }
 
-// Helper method to add membership if it matches the name
   void _addMembershipIfMatches(List<MemberShipData> memberships, String name) {
     for (var membership in memberships) {
       if (membership.membershipName == name) {
@@ -734,7 +752,6 @@ class NewMemberController extends GetxController {
   void onInit() {
     super.onInit();
     fetchSaraswaniOptions();
-    // add other fetch functions if needed
   }
 
   void clearForm() {
@@ -785,9 +802,11 @@ class NewMemberController extends GetxController {
   void userRegister(var LM_code, BuildContext context) async {
     print("member" + memberId.value);
     final url = Uri.parse(Urls.register_url);
+
     var first = firstNameController.value.text;
     var last = lastNameController.value.text.trim();
-    var name = first + "" + last;
+
+    var name = first + " " + last;
     var email = emailController.value.text.trim();
     var mobile = mobileController.value.text.trim();
     var pincode = pincodeController.value.text.trim();
@@ -799,22 +818,25 @@ class NewMemberController extends GetxController {
     var building_id = "";
     var membership_type_id = selectMemberShipType.value;
     var saraswani_option_id = saraswaniOptionId.value;
+
     if (selectBuilding.value == "other") {
       building_id = "";
     } else {
       building_id = selectBuilding.value;
     }
-    var document_type = selectDocumentType.value;
 
+    var document_type = selectDocumentType.value;
     var flat_no = housenoController.value.text.trim();
     var whatsapp_number = whatappmobileController.value.text.trim();
+
     loading.value = true;
     var profile_image = userprofile.value;
     var document_image = userdocumentImage.value;
+
     Map<String, String> payload = {
       "proposer_id": memberId.value,
       "first_name": firstNameController.value.text.trim(),
-      "last_name": lastNameController.value.text.trim(),
+      "last_name": last,
       "middle_name": middleNameController.value.text.trim(),
       "father_name": fathersnameController.value.text.trim(),
       "mother_name": mothersnameController.value.text.trim(),
@@ -839,69 +861,91 @@ class NewMemberController extends GetxController {
       "marriage_anniversary_date": marriagedateController.value.text,
       "salutation_id": selectMemberSalutation.value,
       "address": addressMemberController.value.text,
-      "created_by": memberId.value
+      "created_by": memberId.value,
+      // "sankh_name": sankhText.value,
     };
-    print("ccvv" + payload.toString());
-    var request = http.MultipartRequest('POST', url);
-    request.fields.addAll(payload);
-    request.files.add(
-        await http.MultipartFile.fromPath('document_image', document_image));
-    if (profile_image != "") {
-      request.files.add(
-          await http.MultipartFile.fromPath("image_profile", profile_image));
-    }
 
-    http.StreamedResponse response =
-        await request.send().timeout(Duration(seconds: 60));
+    print("Payload: " + payload.toString());
 
-    if (response.statusCode == 200) {
-      clearForm();
-      String responseBody = await response.stream.bytesToString();
-      loading.value = false;
-      Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
-      print("vfbb" + jsonResponse.toString());
-      RegisterModelClass registerResponse =
-          RegisterModelClass.fromJson(jsonResponse);
-      if (registerResponse.status == true) {
-        Get.snackbar(
-          "Success",
-          "New Member Add Successfully",
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
+    try {
+      var request = http.MultipartRequest('POST', url);
+      request.fields.addAll(payload);
+
+      if (document_image.isNotEmpty) {
+        request.files.add(
+            await http.MultipartFile.fromPath('document_image', document_image)
         );
-        memberId.value = registerResponse.data.toString();
+      }
 
-        Navigator.pushReplacementNamed(context!, RouteNames.otp_screen,
-            arguments: {
-              "memeberId": memberId.value,
-              "page_type_direct": "1",
-              "mobile": mobile
-            });
+      if (profile_image.isNotEmpty) {
+        request.files.add(
+            await http.MultipartFile.fromPath("image_profile", profile_image)
+        );
+      }
+
+      http.StreamedResponse response =
+      await request.send().timeout(const Duration(seconds: 60));
+
+      if (response.statusCode == 200) {
+        String responseBody = await response.stream.bytesToString();
+        loading.value = false;
+        Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
+        print("Response: " + jsonResponse.toString());
+
+        RegisterModelClass registerResponse =
+        RegisterModelClass.fromJson(jsonResponse);
+
+        if (registerResponse.status == true) {
+          clearForm();
+          Get.snackbar(
+            "Success",
+            "New Member Added Successfully",
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            snackPosition: SnackPosition.TOP,
+          );
+
+          memberId.value = registerResponse.data.toString();
+          Navigator.pushReplacementNamed(
+              context!,
+              RouteNames.otp_screen,
+              arguments: {
+                "memeberId": memberId.value,
+                "page_type_direct": "1",
+                "mobile": mobile
+              }
+          );
+        } else {
+          Get.snackbar(
+            "Error",
+            registerResponse.message.toString(),
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+            snackPosition: SnackPosition.TOP,
+          );
+        }
       } else {
+        loading.value = false;
+        String errorResponse = await response.stream.bytesToString();
+        print("Error Response: " + errorResponse);
         Get.snackbar(
           "Error",
-          registerResponse.message.toString(),
+          "Failed to register. Please try again.",
           backgroundColor: Colors.red,
           colorText: Colors.white,
           snackPosition: SnackPosition.TOP,
         );
       }
-    } else {
+    } catch (e) {
       loading.value = false;
-      print("ddddddd" + await response.stream.bytesToString());
-      // String responseBody = await response.stream.bytesToString();
-      // loading.value=false;
-      // Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
-      // RegisterModelClass registerResponse = RegisterModelClass.fromJson(jsonResponse);
-      //
-      // Get.snackbar(
-      //   "Error",
-      //   ""+registerResponse.message.toString(),
-      //   backgroundColor: Colors.red,
-      //   colorText: Colors.white,
-      //   snackPosition: SnackPosition.TOP,
-      // );
+      print("Exception: " + e.toString());
+      Get.snackbar(
+        "Error",
+        "An error occurred. Please try again.",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
     }
   }
 

@@ -27,7 +27,6 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
 
   UdateProfileController controller = Get.put(UdateProfileController());
   NewMemberController newMemberController = Get.put(NewMemberController());
-  // Controllers for the text fields to manage user input
 
   @override
   void initState() {
@@ -62,15 +61,15 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           Padding(
-            padding: const EdgeInsets.all(8.0), // Padding for spacing
+            padding: const EdgeInsets.all(8.0),
             child: Container(
               decoration: BoxDecoration(
                 color: ColorHelperClass.getColorFromHex(
-                    ColorResources.logo_color), // Background color
-                shape: BoxShape.circle, // Makes it circular
+                    ColorResources.logo_color),
+                shape: BoxShape.circle,
               ),
               child: IconButton(
-                icon: const Icon(Icons.edit, color: Colors.white), // Edit icon
+                icon: const Icon(Icons.edit, color: Colors.white),
                 onPressed: () {
                   _showEditModalSheet(context);
                 },
@@ -84,10 +83,10 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 5.0),
             child: Padding(
-              padding: const EdgeInsets.all(16.0), // Outer Padding
+              padding: const EdgeInsets.all(16.0),
               child: Card(
                 color: Colors.white,
-                elevation: 4, // Adds shadow to the card
+                elevation: 4,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -190,7 +189,6 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
     );
   }
 
-  // Method to show the Modal Bottom Sheet for editing
   void _showEditModalSheet(BuildContext context) {
     double heightFactor = 0.8;
 
@@ -418,25 +416,25 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                     border: OutlineInputBorder(
                                       borderSide: BorderSide(
                                           color: Colors
-                                              .black26), // Border color set to black
+                                              .black26),
                                     ),
                                     enabledBorder: OutlineInputBorder(
                                       borderSide: BorderSide(
                                           color: Colors
-                                              .black26), // Default border color
+                                              .black26),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderSide: BorderSide(
                                           color: Colors.black26,
-                                          width: 1.5), // Focus border color
+                                          width: 1.5),
                                     ),
                                     contentPadding:
                                         EdgeInsets.symmetric(horizontal: 20),
                                     labelStyle: TextStyle(
                                       color: Colors
-                                          .black45, // Label color remains black45
+                                          .black45,
                                     ),
-                                    hintText: 'Select DOB', // Hint text
+                                    hintText: 'Select DOB',
                                   ),
                                   onTap: () async {
                                     DateTime? pickedDate = await showDatePicker(
@@ -530,24 +528,24 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                             border: OutlineInputBorder(
                                               borderSide: BorderSide(
                                                   color: Colors
-                                                      .black26), // Border color set to black26
+                                                      .black26),
                                             ),
                                             enabledBorder: OutlineInputBorder(
                                               borderSide: BorderSide(
                                                   color: Colors
-                                                      .black26), // Default border
+                                                      .black26),
                                             ),
                                             focusedBorder: OutlineInputBorder(
                                               borderSide: BorderSide(
                                                   color: Colors.black26,
-                                                  width: 1.5), // Focused border
+                                                  width: 1.5),
                                             ),
                                             contentPadding:
                                                 EdgeInsets.symmetric(
                                                     horizontal: 20),
                                             labelStyle: TextStyle(
                                               color: Colors
-                                                  .black45, // Label color remains black45
+                                                  .black45,
                                             ),
                                           ),
                                           child: DropdownButton<String>(
@@ -632,25 +630,25 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                             border: OutlineInputBorder(
                                               borderSide: BorderSide(
                                                   color: Colors
-                                                      .black26), // Default border color
+                                                      .black26),
                                             ),
                                             enabledBorder: OutlineInputBorder(
                                               borderSide: BorderSide(
                                                   color: Colors
-                                                      .black26), // Enabled border color
+                                                      .black26),
                                             ),
                                             focusedBorder: OutlineInputBorder(
                                               borderSide: BorderSide(
                                                   color: Colors.black26,
                                                   width:
-                                                      1.5), // Focused border color with thickness
+                                                      1.5),
                                             ),
                                             contentPadding:
                                                 EdgeInsets.symmetric(
                                                     horizontal: 20),
                                             labelStyle: TextStyle(
                                               color: Colors
-                                                  .black45, // Label color remains black45
+                                                  .black45,
                                             ),
                                           ),
                                           child: DropdownButton<String>(
@@ -916,7 +914,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                             Obx(() {
                               return Visibility(
                                 visible: controller.MaritalAnnivery.value ==
-                                    true, // Show only if marital_status_id is "1"
+                                    true,
                                 child: Column(
                                   children: [
                                     SizedBox(
@@ -933,31 +931,31 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                             border: OutlineInputBorder(
                                               borderSide: BorderSide(
                                                   color: Colors
-                                                      .black26), // Default border color
+                                                      .black26),
                                             ),
                                             enabledBorder: OutlineInputBorder(
                                               borderSide: BorderSide(
                                                   color: Colors
-                                                      .black26), // Enabled border color
+                                                      .black26),
                                             ),
                                             focusedBorder: OutlineInputBorder(
                                               borderSide: BorderSide(
                                                   color: Colors.black26,
                                                   width:
-                                                      1.5), // Thicker border when focused
+                                                      1.5),
                                             ),
                                             contentPadding:
                                                 EdgeInsets.symmetric(
                                                     horizontal: 20),
                                             labelStyle: TextStyle(
                                               color: Colors
-                                                  .grey, // Label color remains grey
+                                                  .grey,
                                             ),
                                             hintText:
-                                                'Select Marriage Anniversary', // Hint text
+                                                'Select Marriage Anniversary',
                                             hintStyle: TextStyle(
                                               color: Colors
-                                                  .black38, // Hint text color for better visibility
+                                                  .black38,
                                             ),
                                           ),
                                           onTap: () async {
@@ -1106,7 +1104,6 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
       if (pickedFile != null) {
         print("New Image Picked: ${pickedFile.path}");
 
-        // Ensure the observable variable is updated
         controller.newProfileImage.value = pickedFile.path;
       } else {
         print("No image selected.");
@@ -1116,7 +1113,6 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
     }
   }
 
-  // Method to show success message
   void _showSuccessMessage() {
     const snackBar = SnackBar(
       content: Text('Personal Info updated successfully!'),
@@ -1126,7 +1122,6 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
-  // Method to build editable text fields inside the modal
   Widget _buildEditableField(String label, TextEditingController controller) {
     final isNumericField =
         label == "Mobile Number" || label == "WhatsApp Number";
@@ -1187,7 +1182,6 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
     );
   }
 
-  // Method to build the information boxes
   Widget _buildInfoBox(String title, {String? subtitle}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10.0),

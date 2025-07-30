@@ -174,10 +174,10 @@ class _HomeViewState extends State<HomeView> {
   Widget _buildMembershipNotice() {
     final status = controller.membershipApprovalStatusId.value.trim();
     final message = {
-      '2': "Your membership is under Sangathan Samiti review.",
-      '3': "Your membership is under Vyaspathika Samiti review.",
-      '4': "Your payment is pending.",
-      '5': "We received your payment and it's under approval."
+      '2': "Your payment is pending.",
+      '3': "We received your payment and it's under approval.",
+      '4': "Your membership is under Sangathan Samiti review.",
+      '5': "Your membership is under Vyaspathika Samiti review.",
     }[status] ?? "Membership status unknown. Please check your account.";
 
     return _buildNoticeContainer(message);
@@ -377,11 +377,11 @@ class _HomeViewState extends State<HomeView> {
           final event = dashboardEvents[index];
           return GestureDetector(
             onTap: () {
-              final eventData = convertToEventData(event);
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (_) => EventDetailPage(event: eventData)),
+                  builder: (_) => EventDetailPage(eventId: event.id?.toString() ?? ''),
+                ),
               );
             },
             child: _buildEventCard(event),
@@ -392,11 +392,11 @@ class _HomeViewState extends State<HomeView> {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: GestureDetector(
           onTap: () {
-            final eventData = convertToEventData(dashboardEvents.first);
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (_) => EventDetailPage(event: eventData)),
+                builder: (_) => EventDetailPage(eventId: dashboardEvents.first.id?.toString() ?? ''),
+              ),
             );
           },
           child: _buildEventCard(dashboardEvents.first),

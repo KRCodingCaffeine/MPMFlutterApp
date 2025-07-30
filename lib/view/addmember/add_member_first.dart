@@ -9,6 +9,7 @@ import 'package:mpm/OccuptionProfession/OccuptionProfessionData.dart';
 import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/model/CountryModel/CountryData.dart';
+import 'package:mpm/model/GetMemberSurname/GetMemberSurnameData.dart';
 import 'package:mpm/model/Occupation/OccupationData.dart';
 import 'package:mpm/model/OccupationSpec/OccuptionSpecData.dart';
 import 'package:mpm/model/Qualification/QualificationData.dart';
@@ -46,17 +47,28 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
   final ImagePicker _picker = ImagePicker();
   int activeStep2 = 1;
   final GlobalKey<FormState> _formKeyLogin = GlobalKey<FormState>();
+  final _sankhController = TextEditingController();
+  final _sankhFocusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _sankhController.dispose();
+    _sankhFocusNode.dispose();
+    super.dispose();
+  }
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    _sankhController.text = "Maheshwari()";
     getUserData();
     regiController.getGender();
     regiController.getMaritalStatus();
     regiController.getBloodGroup();
     regiController.getMemberShip();
     regiController.getDocumentType();
-
+    regiController.getSurnameList();
     regiController.getMemberSalutation();
     regiController.getCountry();
     regiController.getState();
@@ -95,8 +107,7 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
           child: Padding(
             padding: const EdgeInsets.only(left: 6.0, right: 6),
             child: Row(
-              mainAxisAlignment:
-                  MainAxisAlignment.end, // Aligns button to the right
+              mainAxisAlignment: MainAxisAlignment.end,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 SizedBox(
@@ -182,7 +193,6 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                       }
 
                       if (_formKeyLogin!.currentState!.validate()) {
-                        // Helper function to show a snackbar
                         void showErrorSnackbar(String message) {
                           Get.snackbar(
                             "Error",
@@ -197,7 +207,6 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                           showErrorSnackbar("Select salutation");
                           return;
                         }
-                        // Gender validation
                         if (regiController.selectedGender == '') {
                           showErrorSnackbar("Select Gender");
                           return;
@@ -207,7 +216,6 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                           return;
                         }
 
-                        // Marital status validation
                         if (regiController.selectMarital == '') {
                           showErrorSnackbar("Select Marital Status");
                           return;
@@ -223,7 +231,6 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                           regiController.marriagedateController.value.text = "";
                         }
 
-                        // If all validations pass, proceed with the desired logic
                         print("All validations passed!");
                         print(
                             "Selected Gender: ${regiController.selectedGender}");
@@ -427,13 +434,144 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                           const SizedBox(height: 20),
 
                           //Third Name
-                          _buildEditableField(
-                              "SurName *",
-                              regiController.lastNameController.value,
-                              "SurName",
-                              "",
-                              text: TextInputType.text,
-                              isRequired: true),
+// Third Name (Surname)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: double.infinity,
+                                margin: const EdgeInsets.only(left: 5, right: 5),
+                                child: Row(
+                                  children: [
+                                    Obx(() {
+                                      if (regiController.rxStatusSurname.value == Status.LOADING) {
+                                        return const Padding(
+                                          padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                                          child: SizedBox(
+                                            height: 24,
+                                            width: 24,
+                                            child: CircularProgressIndicator(
+                                              color: Colors.redAccent,
+                                            ),
+                                          ),
+                                        );
+                                      } else if (regiController.rxStatusSurname.value == Status.ERROR) {
+                                        return const Center(child: Text('Failed to load surnames'));
+                                      } else if (regiController.surnameList.isEmpty) {
+                                        return const Center(child: Text('No surnames available'));
+                                      } else {
+                                        final selectedValue = regiController.selectedSurname.value;
+                                        return Expanded(
+                                          child: InputDecorator(
+                                            decoration: InputDecoration(
+                                              labelText: selectedValue.isNotEmpty ? 'SurName *' : null,
+                                              border: const OutlineInputBorder(
+                                                borderSide: BorderSide(color: Colors.black),
+                                              ),
+                                              enabledBorder: const OutlineInputBorder(
+                                                borderSide: BorderSide(color: Colors.black),
+                                              ),
+                                              focusedBorder: const OutlineInputBorder(
+                                                borderSide: BorderSide(color: Colors.black38, width: 1),
+                                              ),
+                                              contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                              labelStyle: const TextStyle(color: Colors.black),
+                                            ),
+                                            child: DropdownButton<String>(
+                                              dropdownColor: Colors.white,
+                                              borderRadius: BorderRadius.circular(10),
+                                              isExpanded: true,
+                                              underline: Container(),
+                                              hint: const Text(
+                                                'Select SurName *',
+                                                style: TextStyle(fontWeight: FontWeight.bold),
+                                              ),
+                                              value: selectedValue.isNotEmpty ? selectedValue : null,
+                                              items: regiController.surnameList
+                                                  .map((MemberSurnameData item) {
+                                                return DropdownMenuItem<String>(
+                                                  value: item.id.toString(),
+                                                  child: Text(item.surnameName ?? 'Unknown'),
+                                                );
+                                              }).toList(),
+                                              onChanged: (String? newValue) {
+                                                if (newValue != null) {
+                                                  regiController.setSelectedSurname(newValue);
+                                                  final selectedSurname = regiController.surnameList.firstWhere(
+                                                        (element) => element.id.toString() == newValue,
+                                                    orElse: () => MemberSurnameData(),
+                                                  );
+                                                  if (selectedSurname.surnameName != null) {
+                                                    final surname = selectedSurname.surnameName!.toLowerCase();
+                                                    final isMaheshwari = surname.contains("maheshwari") ||
+                                                        surname.contains("maheshawari") ||
+                                                        surname.contains("maheshwary");
+                                                    regiController.isMaheshwariSelected.value = isMaheshwari;
+                                                    regiController.showSankhField.value = isMaheshwari;
+
+                                                    if (isMaheshwari) {
+                                                      regiController.sankhText.value = "${selectedSurname.surnameName}()";
+                                                      regiController.lastNameController.value.text = "${selectedSurname.surnameName}()";
+                                                      Future.delayed(const Duration(milliseconds: 50), () {
+                                                        FocusScope.of(context).requestFocus(_sankhFocusNode);
+                                                        _sankhController.selection = TextSelection.collapsed(
+                                                          offset: "${selectedSurname.surnameName}".length,
+                                                        );
+                                                      });
+                                                    } else {
+                                                      regiController.sankhText.value = "";
+                                                      regiController.lastNameController.value.text =
+                                                      selectedSurname.surnameName!;
+                                                    }
+                                                  }
+                                                }
+                                              },
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    }),
+                                  ],
+                                ),
+                              ),
+                              Obx(() {
+                                if (regiController.showSankhField.value) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 20),
+                                    child: Container(
+                                      margin: const EdgeInsets.only(left: 5, right: 5),
+                                      child: TextFormField(
+                                        controller: _sankhController,
+                                        focusNode: _sankhFocusNode,
+                                        decoration: InputDecoration(
+                                          labelText: 'Enter Sankh',
+                                          border: const OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black),
+                                          ),
+                                          enabledBorder: const OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black),
+                                          ),
+                                          focusedBorder: const OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black38, width: 1),
+                                          ),
+                                          contentPadding: const EdgeInsets.symmetric(
+                                            vertical: 12,
+                                            horizontal: 20,
+                                          ),
+                                        ),
+                                        onChanged: (value) {
+                                          regiController.sankhText.value = value;
+                                          regiController.lastNameController.value.text = value;
+                                        },
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  return const SizedBox.shrink();
+                                }
+                              }),
+                            ],
+                          ),
                           const SizedBox(height: 20),
 
                           //Mobile Number
@@ -452,7 +590,8 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                                   if (value.length == 10) {
                                     regiController.checkMobileExists(value);
                                   } else {
-                                    regiController.mobileExistsMessage.value = '';
+                                    regiController.mobileExistsMessage.value =
+                                        '';
                                     regiController.isMobileValid.value = false;
                                   }
                                 },
@@ -470,15 +609,18 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                                       ),
                                     ),
                                   );
-                                } else if (regiController.mobileExistsMessage.value.isNotEmpty) {
+                                } else if (regiController
+                                    .mobileExistsMessage.value.isNotEmpty) {
                                   return Padding(
-                                    padding: const EdgeInsets.only(left: 8.0, top: 4),
+                                    padding: const EdgeInsets.only(
+                                        left: 8.0, top: 4),
                                     child: Text(
                                       regiController.mobileExistsMessage.value,
                                       style: TextStyle(
-                                        color: regiController.isMobileValid.value
-                                            ? Colors.green
-                                            : Colors.red,
+                                        color:
+                                            regiController.isMobileValid.value
+                                                ? Colors.green
+                                                : Colors.red,
                                         fontSize: 12,
                                       ),
                                     ),
@@ -1016,16 +1158,16 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
   }
 
   Widget _buildEditableField(
-      String label,
-      TextEditingController controller,
-      String hintText,
-      String validationMessage, {
-        bool obscureText = false,
-        required TextInputType text,
-        bool isRequired = false,
-        int? maxLength,
-        ValueChanged<String>? onChanged,
-      }) {
+    String label,
+    TextEditingController controller,
+    String hintText,
+    String validationMessage, {
+    bool obscureText = false,
+    required TextInputType text,
+    bool isRequired = false,
+    int? maxLength,
+    ValueChanged<String>? onChanged,
+  }) {
     return Container(
       margin: const EdgeInsets.only(left: 5, right: 5),
       child: TextFormField(
@@ -1035,8 +1177,8 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
         maxLength: maxLength,
         onChanged: onChanged,
         buildCounter: (BuildContext context,
-            {int? currentLength, int? maxLength, bool? isFocused}) =>
-        null,
+                {int? currentLength, int? maxLength, bool? isFocused}) =>
+            null,
         style: const TextStyle(color: Colors.black),
         decoration: InputDecoration(
           labelText: label,
@@ -1063,7 +1205,8 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
           }
           if (value != null &&
               value.length == 10 &&
-              regiController.mobileExistsMessage.value.contains('already exists')) {
+              regiController.mobileExistsMessage.value
+                  .contains('already exists')) {
             return 'Mobile number already exists';
           }
           return null;

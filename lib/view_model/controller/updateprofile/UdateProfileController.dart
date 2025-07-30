@@ -411,7 +411,7 @@ class UdateProfileController extends GetxController {
           getUserData.value.membershipApprovalStatusId.toString();
       var isPaymentStatus = getUserData.value.isPaymentReceived.toString();
       if (member_type_id == "1" || member_type_id == "3") {
-        if (int.parse(memberapprovalstatusid) < 5 && isPaymentStatus == "0") {
+        if (int.parse(memberapprovalstatusid) < 2 && isPaymentStatus == "0") {
           isPay.value = true;
         } else {
           isPay.value = false;
@@ -1797,12 +1797,11 @@ class UdateProfileController extends GetxController {
       final response = await addExistingMemberRepo.addExistingMember(data);
 
       if (response['status'] == true) {
-        // Refresh family data
         await getUserProfile();
 
         Get.snackbar(
-          'Success', // Title
-          response['message'] ?? "Member added successfully", // Message
+          'Success',
+          response['message'] ?? "Member added successfully",
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.green,
           colorText: Colors.white,
