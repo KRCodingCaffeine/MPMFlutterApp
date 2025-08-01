@@ -247,7 +247,14 @@ class _EventsPageState extends State<EventsPage> {
                   children: [
                     Text(event.eventName ?? '',
                         style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 15)),
+                            fontWeight: FontWeight.bold, color: Colors.black, fontSize: 18)),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Hosted by ${event.eventOrganiserName ?? 'Unknown'}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: Colors.black, fontSize: 13),
+                    ),
                     const SizedBox(height: 4),
                     SizedBox(
                       width: double.infinity,
@@ -261,12 +268,6 @@ class _EventsPageState extends State<EventsPage> {
                     const SizedBox(height: 4),
                     Text(
                       'Ends on: ${event.dateEndTo != null ? DateFormat('dd MMM yyyy').format(DateTime.parse(event.dateEndTo!)) : 'N/A'}',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                    ),
-                    Text(
-                      'Hosted by ${event.eventOrganiserName ?? 'Unknown'}',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(color: Colors.grey[600], fontSize: 13),
                     ),
                   ],

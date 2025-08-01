@@ -53,6 +53,12 @@ class NotificationDatabase {
     final db = await instance.database;
     await db.delete('notifications');
   }
+
+  Future<void> deleteNotificationById(int id) async {
+    final db = await database;
+    await db.delete('notifications', where: 'id = ?', whereArgs: [id]);
+  }
+
   // Future<void> markNotificationAsRead(Map<String, dynamic> data) async {
   //   final db = await database;
   //   await db.update(

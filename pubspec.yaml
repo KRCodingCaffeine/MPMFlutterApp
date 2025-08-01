@@ -67,6 +67,7 @@ dependencies:
   in_app_update: ^4.1.4
   flutter_launcher_icons: ^0.13.1
   youtube_player_iframe: ^5.2.1
+  timeago: ^3.6.0
 
 dev_dependencies:
   flutter_test:

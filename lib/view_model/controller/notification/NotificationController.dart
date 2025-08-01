@@ -17,7 +17,7 @@ class NotificationController extends GetxController with WidgetsBindingObserver 
   void markAsRead(String id) {
     final notif = notificationList.firstWhere((n) => n.id == id);
     notif.isRead = true;
-    notificationList.refresh(); // Update the UI
+    notificationList.refresh();
   }
 
 
@@ -36,7 +36,7 @@ class NotificationController extends GetxController with WidgetsBindingObserver 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      loadNotifications(); // refresh when resumed
+      loadNotifications();
     }
   }
   void markAllAsRead() async {
@@ -48,4 +48,10 @@ class NotificationController extends GetxController with WidgetsBindingObserver 
     unreadCount.value = notifications.where((n) => !n.isRead).length;
     // update your list too if needed
   }
+  void deleteNotification(int id) async {
+    await NotificationDatabase.instance.deleteNotificationById(id);
+    notificationList.removeWhere((n) => n.id == id);
+    notificationList.refresh();
+  }
+
 }
