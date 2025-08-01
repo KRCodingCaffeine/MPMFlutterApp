@@ -1,5 +1,4 @@
-import
-'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/utils/AppDrawer.dart';
@@ -25,7 +24,7 @@ class DashboardView extends StatefulWidget {
 class _DashboardViewState extends State<DashboardView> {
   final UdateProfileController controller = Get.put(UdateProfileController());
   final NotificationController notificationController =
-  Get.put(NotificationController());
+      Get.put(NotificationController());
   @override
   void initState() {
     super.initState();
@@ -51,10 +50,10 @@ class _DashboardViewState extends State<DashboardView> {
   @override
   Widget build(BuildContext context) {
     return Obx(
-          () => Scaffold(
+      () => Scaffold(
         appBar: AppBar(
           backgroundColor:
-          ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+              ColorHelperClass.getColorFromHex(ColorResources.logo_color),
           title: Text(
             appBarTitles[controller.currentIndex.value],
             style: TextStyle(
@@ -69,13 +68,19 @@ class _DashboardViewState extends State<DashboardView> {
         backgroundColor: Colors.grey[100],
         body: pages[controller.currentIndex.value],
         bottomNavigationBar: Obx(
-              () => BottomNavigationBar(
+          () => BottomNavigationBar(
             backgroundColor: Colors.white,
             selectedItemColor:
-            ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
             unselectedItemColor: Colors.grey,
             currentIndex: controller.currentIndex.value,
-            onTap: controller.changeTab,
+            onTap: (index) {
+              controller.changeTab(index);
+              if (index == 3) {
+                notificationController
+                    .loadNotifications(); 
+              }
+            },
             items: [
               BottomNavigationBarItem(
                 icon: Icon(Icons.home),
@@ -89,13 +94,10 @@ class _DashboardViewState extends State<DashboardView> {
                 icon: Icon(Icons.account_balance),
                 label: "Samiti Member",
               ),
-              // BottomNavigationBarItem(
-              //   icon: Icon(Icons.notifications),
-              //   label: "Notification",
-              // ),
               BottomNavigationBarItem(
                 icon: Obx(() {
-                  final count = Get.find<NotificationController>().unreadCount.value;
+                  final count =
+                      Get.find<NotificationController>().unreadCount.value;
                   if (count > 0) {
                     return Stack(
                       alignment: Alignment.topRight,

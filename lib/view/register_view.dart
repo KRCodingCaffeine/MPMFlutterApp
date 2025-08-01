@@ -55,30 +55,57 @@ class _RegisterViewState extends State<RegisterView> {
         bottomNavigationBar: Container(
           margin: const EdgeInsets.only(bottom: 20, left: 20, right: 20),
           height: 50,
-          child: SizedBox(
-            width: double.infinity,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 5.0, right: 5),
-              child: Obx(() {
-                return ElevatedButton(
-                  onPressed: regiController.isButtonEnabled.value
-                      ? () {
-                    Navigator.pushNamed(
-                        context!, RouteNames.personalinfo);
-                  }
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorHelperClass.getColorFromHex(
-                        ColorResources.red_color),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.only(left: 6.0, right: 6),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Back button
+                SizedBox(
+                  width: 130,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
+                    child: Text('Back to Login',
+                        style: TextStyleClass.white16style),
                   ),
-                  child: Text(AppConstants.continues,
-                      style: TextStyleClass.white16style),
-                );
-              }),
+                ),
+
+                // Continue button with Obx
+                Obx(() {
+                  return SizedBox(
+                    width: 130,
+                    child: ElevatedButton(
+                      onPressed: regiController.isButtonEnabled.value
+                          ? () {
+                        Navigator.pushNamed(
+                            context!, RouteNames.personalinfo);
+                      }
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColorHelperClass.getColorFromHex(
+                            ColorResources.red_color),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(AppConstants.continues,
+                          style: TextStyleClass.white16style),
+                    ),
+                  );
+                }),
+              ],
             ),
           ),
         ),
@@ -130,7 +157,7 @@ class _RegisterViewState extends State<RegisterView> {
                         padding: EdgeInsets.only(left: 5, top: 20),
                         child: Align(
                           alignment: Alignment
-                              .centerLeft, // Align text to the left side
+                              .centerLeft,
                           child: Text(
                             'Proposer',
                             style: TextStyle(
@@ -163,7 +190,7 @@ class _RegisterViewState extends State<RegisterView> {
                                         .none,
                                     contentPadding: EdgeInsets.symmetric(
                                         vertical: 8,
-                                        horizontal: 20), // Adjust padding
+                                        horizontal: 20),
                                   ),
                                 ),
                               ),
@@ -180,8 +207,8 @@ class _RegisterViewState extends State<RegisterView> {
                                           lmCodeCOntroller.text.toString());
                                     } else {
                                       Get.snackbar(
-                                        'Error', // Title
-                                        "Enter lm code Or Name", // Message
+                                        'Error',
+                                        "Enter lm code Or Name",
                                         snackPosition: SnackPosition.BOTTOM,
                                         backgroundColor:
                                         ColorHelperClass.getColorFromHex(
@@ -256,7 +283,7 @@ class _RegisterViewState extends State<RegisterView> {
                                       underline: Container(),
                                       hint: Text('Select Mamber',style: TextStyle(
                                           fontWeight: FontWeight.bold
-                                      ),), // Hint to show when nothing is selected
+                                      ),),
                                       value:  regiController.memberList.contains(regiController.selectMember.value)
                                           ? regiController.selectMember.value
                                           : null,
@@ -326,8 +353,8 @@ class _RegisterViewState extends State<RegisterView> {
                                     else
                                     {
                                       Get.snackbar(
-                                        'Error', // Title
-                                        "Enter OTP Or 4 digit OTP", // Message
+                                        'Error',
+                                        "Enter OTP Or 4 digit OTP",
                                         snackPosition: SnackPosition.BOTTOM,
                                         backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
                                         colorText: Colors.white,
