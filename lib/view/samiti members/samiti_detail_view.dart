@@ -23,6 +23,7 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
     super.initState();
     controller.getSamitiTypeDeatils();
   }
+
   @override
   void dispose() {
     controller.searchDataList.value.clear();
@@ -67,9 +68,9 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
                 var lastname = "";
                 var mobile = "";
                 var memberCode = "";
-                var memberImage ="";
-                var memberId ="";
-                var samitiRolesName ="";
+                var memberImage = "";
+                var memberId = "";
+                var samitiRolesName = "";
                 if (member.firstName.toString() == "null") {
                   firstname = "";
                 } else {
@@ -177,25 +178,25 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
                   children: [
                     // Role Text (Super Admin)
                     Text(
-                      "Role: ${samitiRoles ?? 'Unknown Role'}",
+                      "Name: ${name ?? 'No Name'}",
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 5),
                     // Name and LM Code
                     Text(
-                      name ?? 'No Name',
+                      "Role: ${samitiRoles ?? 'Unknown Role'}",
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 14,
                       ),
                     ),
                     const SizedBox(height: 5),
                     Text(
                       "Membership Code : ${lmCode.isNotEmpty ? lmCode : memberId}",
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
                         color: Color(0xFFDC3545),
                       ),
                     ),

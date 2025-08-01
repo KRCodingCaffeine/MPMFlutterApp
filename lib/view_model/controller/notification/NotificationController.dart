@@ -48,4 +48,10 @@ class NotificationController extends GetxController with WidgetsBindingObserver 
     unreadCount.value = notifications.where((n) => !n.isRead).length;
     // update your list too if needed
   }
+  void deleteNotification(int id) async {
+    await NotificationDatabase.instance.deleteNotificationById(id);
+    notificationList.removeWhere((n) => n.id == id);
+    notificationList.refresh();
+  }
+
 }

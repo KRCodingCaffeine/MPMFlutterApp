@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mpm/route/route_name.dart';
+import 'package:intl/intl.dart';
+import 'package:timeago/timeago.dart' as timeago;
 import 'package:mpm/view/notification_detail.dart';
 
 import 'package:mpm/view_model/controller/notification/NotificationController.dart';
@@ -24,8 +25,9 @@ class _NotificationViewState extends State<NotificationView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Colors.grey[100],
-        body: Obx(() {
+      backgroundColor: Colors.grey[100],
+      body: Obx(
+        () {
           final notifications = controller.notificationList;
 
           if (notifications.isEmpty) {
@@ -55,15 +57,14 @@ class _NotificationViewState extends State<NotificationView> {
                         builder: (context) => NotificationDetailPage(
                           title: notification.title,
                           body: notification.body,
-                          image: notification.image, // pass image here
+                          image: notification.image,
                         ),
                       ),
                     );
                   },
                   leading: CircleAvatar(
-                    backgroundColor: notification.image != ""
-                        ? Colors.transparent
-                        : Colors.red,
+                    backgroundColor:
+                    notification.image != "" ? Colors.transparent : Colors.red,
                     child: notification.image != ""
                         ? Image.network(notification.image, fit: BoxFit.fill)
                         : Icon(Icons.notifications, color: Colors.white),
@@ -71,23 +72,122 @@ class _NotificationViewState extends State<NotificationView> {
                   title: Text(
                     notification.title,
                     style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.black54),
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black54,
+                    ),
                   ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(notification.body),
+                      Text(
+                        notification.body,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       SizedBox(height: 4),
                       Text(
-                        notification.timestamp,
+                        _formatTimeAgo(notification.timestamp),
                         style: TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                     ],
+                  ),
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete, color: Colors.red),
+                    onPressed: () {
+                      _showDeleteConfirmationDialog(context, notification.id!);
+                    },
                   ),
                 ),
               );
             },
           );
-        }));
+        },
+      ),
+    );
+  }
+
+  void _showDeleteConfirmationDialog(BuildContext context, int notificationId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Delete Notification",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+          content: const Text(
+            "Are you sure you want to delete this message?",
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.red,
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("No"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                controller.deleteNotification(notificationId);
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Yes"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
+  String _formatTimeAgo(String timestamp) {
+    try {
+      final time = DateTime.parse(timestamp);
+      final now = DateTime.now();
+      final difference = now.difference(time);
+
+      if (difference.inHours < 24) {
+        return timeago.format(time, locale: 'en_short');
+      } else {
+        return DateFormat('dd MMM').format(time);
+      }
+    } catch (e) {
+      return timestamp;
+    }
   }
 }

@@ -26,6 +26,8 @@ class GetClaimedOfferData {
   String? validFrom;
   String? validTo;
   String? offerImage;
+  String? offerContactPersonName;
+  String? offerContactPersonMobile;
   List<ClaimedMedicine>? medicines;
 
   GetClaimedOfferData({
@@ -54,6 +56,8 @@ class GetClaimedOfferData {
     this.validFrom,
     this.validTo,
     this.offerImage,
+    this.offerContactPersonName,
+    this.offerContactPersonMobile,
     this.medicines,
   });
 
@@ -94,6 +98,8 @@ class GetClaimedOfferData {
       offerImage: json['offer_image']?.isNotEmpty == true
           ? Urls.imagePathUrl + json['offer_image']
           : null,
+      offerContactPersonName: json['org_contact_person_name'],
+      offerContactPersonMobile: json['org_contact_person_mobile'],
       medicines: json['medicines'] != null
           ? List<ClaimedMedicine>.from(
               json['medicines'].map((x) => ClaimedMedicine.fromJson(x)))
@@ -127,6 +133,8 @@ class GetClaimedOfferData {
         'valid_from': validFrom,
         'valid_to': validTo,
         'offer_image': offerImage,
+        'org_contact_person_name': offerContactPersonName,
+        'org_contact_person_mobile': offerContactPersonMobile,
         'medicines': medicines?.map((x) => x.toJson()).toList(),
       };
 
