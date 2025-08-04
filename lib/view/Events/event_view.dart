@@ -249,12 +249,30 @@ class _EventsPageState extends State<EventsPage> {
                         style: const TextStyle(
                             fontWeight: FontWeight.bold, color: Colors.black, fontSize: 18)),
                     const SizedBox(height: 4),
-                    Text(
-                      'Hosted by ${event.eventOrganiserName ?? 'Unknown'}',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: Colors.black, fontSize: 13),
-                    ),
+
+                    // Display Samiti and Subcategory information if available
+                    if (event.samitiOrganisers != null && event.samitiOrganisers!.isNotEmpty)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (var organiser in event.samitiOrganisers!)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  organiser.samitiName ?? 'Unknown Samiti',
+                                  style: TextStyle(color: Colors.black, fontSize: 13),
+                                ),
+                                if (organiser.subCategory != null)
+                                  Text(
+                                    organiser.subCategory!.samitiSubCategoryName ?? 'Unknown Subcategory',
+                                    style: TextStyle(color: Colors.black54, fontSize: 12),
+                                  ),
+                                const SizedBox(height: 4),
+                              ],
+                            ),
+                        ],
+                      ),
                     const SizedBox(height: 4),
                     SizedBox(
                       width: double.infinity,
@@ -264,6 +282,13 @@ class _EventsPageState extends State<EventsPage> {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontSize: 13),
                       ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Hosted by ${event.eventOrganiserName ?? 'Unknown'}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: Colors.grey[700], fontSize: 13),
                     ),
                     const SizedBox(height: 4),
                     Text(

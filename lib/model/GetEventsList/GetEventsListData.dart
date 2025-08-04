@@ -1,4 +1,5 @@
 import 'package:mpm/model/GetEventsList/EventDateTimeData.dart';
+import 'package:mpm/model/GetEventsList/SamitiOrganiserData.dart';
 import 'package:mpm/model/Zone/ZoneData.dart';
 import 'package:mpm/utils/urls.dart';
 
@@ -29,6 +30,7 @@ class EventData {
   String? dateUpdated;
   List<ZoneData>? zones;
   List<EventDateTimeData>? allEventDates;
+  List<SamitiOrganiser>? samitiOrganisers;
 
   EventData({
     this.eventId,
@@ -57,6 +59,7 @@ class EventData {
     this.dateUpdated,
     this.zones,
     this.allEventDates,
+    this.samitiOrganisers,
   });
 
   factory EventData.fromJson(Map<String, dynamic> json) {
@@ -97,6 +100,9 @@ class EventData {
           .map((e) => EventDateTimeData.fromJson(e))
           .toList()
           : null,
+      samitiOrganisers: json['samiti_organisers'] != null
+          ? (json['samiti_organisers'] as List).map((e) => SamitiOrganiser.fromJson(e)).toList()
+          : null,
     );
   }
 
@@ -131,6 +137,9 @@ class EventData {
     }
     if (allEventDates != null) {
       data['all_event_dates'] = allEventDates!.map((e) => e.toJson()).toList();
+    }
+    if (samitiOrganisers != null) {
+      data['samiti_organisers'] = samitiOrganisers!.map((e) => e.toJson()).toList();
     }
     return data;
   }

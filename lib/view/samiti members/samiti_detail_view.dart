@@ -178,7 +178,7 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
                   children: [
                     // Role Text (Super Admin)
                     Text(
-                      "Name: ${name ?? 'No Name'}",
+                      name,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
