@@ -617,7 +617,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
     final FocusNode searchFocusNode = FocusNode();
     var debounceTimer;
 
-    // Clear previous selections when opening dialog
     samitiController.searchDataList.clear();
     samitiController.selectedMember.value = '';
     controller.selectRelationShipType.value = '';
@@ -695,7 +694,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Loading or results
                   if (samitiController.loading2.value)
                     const Padding(
                       padding: EdgeInsets.all(16.0),
