@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:dropdown_search/dropdown_search.dart';
 import 'package:easy_stepper/easy_stepper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -49,6 +50,10 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
   final GlobalKey<FormState> _formKeyLogin = GlobalKey<FormState>();
   final _sankhController = TextEditingController();
   final _sankhFocusNode = FocusNode();
+  List<MemberSurnameData> get surnameListWithOther => [
+    ...regiController.surnameList,
+    MemberSurnameData(surnameName: 'Other'),
+  ];
 
   @override
   void dispose() {
@@ -434,7 +439,6 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                           const SizedBox(height: 20),
 
                           //Third Name
-// Third Name (Surname)
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -450,9 +454,7 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                                           child: SizedBox(
                                             height: 24,
                                             width: 24,
-                                            child: CircularProgressIndicator(
-                                              color: Colors.redAccent,
-                                            ),
+                                            child: CircularProgressIndicator(color: Colors.redAccent),
                                           ),
                                         );
                                       } else if (regiController.rxStatusSurname.value == Status.ERROR) {
@@ -460,73 +462,76 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                                       } else if (regiController.surnameList.isEmpty) {
                                         return const Center(child: Text('No surnames available'));
                                       } else {
-                                        final selectedValue = regiController.selectedSurname.value;
-                                        return Expanded(
-                                          child: InputDecorator(
-                                            decoration: InputDecoration(
-                                              labelText: selectedValue.isNotEmpty ? 'SurName *' : null,
-                                              border: const OutlineInputBorder(
-                                                borderSide: BorderSide(color: Colors.black),
-                                              ),
-                                              enabledBorder: const OutlineInputBorder(
-                                                borderSide: BorderSide(color: Colors.black),
-                                              ),
-                                              focusedBorder: const OutlineInputBorder(
-                                                borderSide: BorderSide(color: Colors.black38, width: 1),
-                                              ),
-                                              contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                                              labelStyle: const TextStyle(color: Colors.black),
-                                            ),
-                                            child: DropdownButton<String>(
-                                              dropdownColor: Colors.white,
-                                              borderRadius: BorderRadius.circular(10),
-                                              isExpanded: true,
-                                              underline: Container(),
-                                              hint: const Text(
-                                                'Select SurName *',
-                                                style: TextStyle(fontWeight: FontWeight.bold),
-                                              ),
-                                              value: selectedValue.isNotEmpty ? selectedValue : null,
-                                              items: regiController.surnameList
-                                                  .map((MemberSurnameData item) {
-                                                return DropdownMenuItem<String>(
-                                                  value: item.id.toString(),
-                                                  child: Text(item.surnameName ?? 'Unknown'),
-                                                );
-                                              }).toList(),
-                                              onChanged: (String? newValue) {
-                                                if (newValue != null) {
-                                                  regiController.setSelectedSurname(newValue);
-                                                  final selectedSurname = regiController.surnameList.firstWhere(
-                                                        (element) => element.id.toString() == newValue,
-                                                    orElse: () => MemberSurnameData(),
-                                                  );
-                                                  if (selectedSurname.surnameName != null) {
-                                                    final surname = selectedSurname.surnameName!.toLowerCase();
-                                                    final isMaheshwari = surname.contains("maheshwari") ||
-                                                        surname.contains("maheshawari") ||
-                                                        surname.contains("maheshwary");
-                                                    regiController.isMaheshwariSelected.value = isMaheshwari;
-                                                    regiController.showSankhField.value = isMaheshwari;
+                                        final List<MemberSurnameData> dropdownItems = [
+                                          ...regiController.surnameList,
+                                          MemberSurnameData(surnameName: 'Other'),
+                                        ];
 
-                                                    if (isMaheshwari) {
-                                                      regiController.sankhText.value = "${selectedSurname.surnameName}()";
-                                                      regiController.lastNameController.value.text = "${selectedSurname.surnameName}()";
-                                                      Future.delayed(const Duration(milliseconds: 50), () {
-                                                        FocusScope.of(context).requestFocus(_sankhFocusNode);
-                                                        _sankhController.selection = TextSelection.collapsed(
-                                                          offset: "${selectedSurname.surnameName}".length,
-                                                        );
-                                                      });
-                                                    } else {
-                                                      regiController.sankhText.value = "";
-                                                      regiController.lastNameController.value.text =
-                                                      selectedSurname.surnameName!;
-                                                    }
+                                        final selectedValue = regiController.selectedSurname.value;
+                                        final selectedItem = dropdownItems.firstWhere(
+                                              (item) => item.surnameName == selectedValue,
+                                          orElse: () => MemberSurnameData(),
+                                        );
+
+                                        return Expanded(
+                                          child: DropdownSearch<MemberSurnameData>(
+                                            items: dropdownItems,
+                                            selectedItem: selectedItem,
+                                            itemAsString: (item) => item?.surnameName ?? 'Surname',
+                                            dropdownDecoratorProps: const DropDownDecoratorProps(
+                                              dropdownSearchDecoration: InputDecoration(
+                                                labelText: 'SurName *',
+                                                border: OutlineInputBorder(),
+                                                enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
+                                                focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black38, width: 1)),
+                                                contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                                                labelStyle: TextStyle(color: Colors.black),
+                                              ),
+                                            ),
+                                            popupProps: PopupProps.menu(
+                                              showSearchBox: true,
+                                              searchFieldProps: const TextFieldProps(
+                                                decoration: InputDecoration(hintText: 'Search surname...'),
+                                              ),
+                                              menuProps: MenuProps(
+                                                backgroundColor: Colors.white,
+                                                borderRadius: BorderRadius.circular(10),
+                                              ),
+                                            ),
+                                              onChanged: (MemberSurnameData? newValue) {
+                                                if (newValue != null) {
+                                                  final surname = newValue.surnameName?.toLowerCase() ?? '';
+
+                                                  final isOther = surname == "other";
+                                                  final isMaheshwariFamily = surname == "maheshwari" ||
+                                                      surname == "maheshawari" ||
+                                                      surname == "maheshwary";
+
+                                                  regiController.selectedSurname.value = newValue.surnameName ?? '';
+                                                  regiController.isMaheshwariSelected.value = isMaheshwariFamily;
+                                                  regiController.showSankhField.value = isMaheshwariFamily;
+                                                  regiController.showCustomSurnameField.value = isOther;
+
+                                                  if (isMaheshwariFamily) {
+                                                    final formatted = "$surname()";
+                                                    regiController.sankhText.value = formatted;
+                                                    regiController.lastNameController.value.text = formatted;
+
+                                                    Future.delayed(const Duration(milliseconds: 50), () {
+                                                      FocusScope.of(context).requestFocus(_sankhFocusNode);
+                                                      _sankhController.selection = TextSelection.collapsed(
+                                                        offset: surname.length + 1,
+                                                      );
+                                                    });
+                                                  } else if (isOther) {
+                                                    regiController.sankhText.value = "";
+                                                    regiController.lastNameController.value.text = "";
+                                                  } else {
+                                                    regiController.sankhText.value = "";
+                                                    regiController.lastNameController.value.text = newValue.surnameName ?? '';
                                                   }
                                                 }
-                                              },
-                                            ),
+                                              }
                                           ),
                                         );
                                       }
@@ -534,6 +539,37 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                                   ],
                                 ),
                               ),
+
+                              Obx(() {
+                                if (regiController.showCustomSurnameField.value) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 20, left: 5, right: 5),
+                                    child: TextFormField(
+                                      decoration: const InputDecoration(
+                                        labelText: 'Enter your surname',
+                                        labelStyle: TextStyle(color: Colors.black),
+                                        border: OutlineInputBorder(),
+                                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
+                                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black38, width: 1)),
+                                        contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                                      ),
+                                      onChanged: (val) {
+                                        regiController.lastNameController.value.text = val.trim();
+                                      },
+                                      validator: (value) {
+                                        if (regiController.showCustomSurnameField.value &&
+                                            (value == null || value.isEmpty)) {
+                                          return 'Please enter your surname';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  );
+                                } else {
+                                  return const SizedBox.shrink();
+                                }
+                              }),
+
                               Obx(() {
                                 if (regiController.showSankhField.value) {
                                   return Padding(
@@ -543,25 +579,23 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                                       child: TextFormField(
                                         controller: _sankhController,
                                         focusNode: _sankhFocusNode,
-                                        decoration: InputDecoration(
+                                        decoration: const InputDecoration(
                                           labelText: 'Enter Sankh',
-                                          border: const OutlineInputBorder(
-                                            borderSide: BorderSide(color: Colors.black),
-                                          ),
-                                          enabledBorder: const OutlineInputBorder(
-                                            borderSide: BorderSide(color: Colors.black),
-                                          ),
-                                          focusedBorder: const OutlineInputBorder(
-                                            borderSide: BorderSide(color: Colors.black38, width: 1),
-                                          ),
-                                          contentPadding: const EdgeInsets.symmetric(
-                                            vertical: 12,
-                                            horizontal: 20,
-                                          ),
+                                          labelStyle: TextStyle(color: Colors.black),
+                                          border: OutlineInputBorder(),
+                                          enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
+                                          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black38, width: 1)),
+                                          contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
                                         ),
                                         onChanged: (value) {
                                           regiController.sankhText.value = value;
                                           regiController.lastNameController.value.text = value;
+                                        },
+                                        validator: (value) {
+                                          if (regiController.showSankhField.value && (value == null || value.isEmpty)) {
+                                            return 'Please enter your sankh';
+                                          }
+                                          return null;
                                         },
                                       ),
                                     ),

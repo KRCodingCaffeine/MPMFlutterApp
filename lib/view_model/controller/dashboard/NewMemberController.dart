@@ -69,6 +69,7 @@ class NewMemberController extends GetxController {
   final isMaheshwariSelected = false.obs;
   final sankhText = ''.obs;
   final showSankhField = false.obs;
+  final showCustomSurnameField = false.obs;
 
   var arg_page = "".obs;
   var state_id = "".obs;
