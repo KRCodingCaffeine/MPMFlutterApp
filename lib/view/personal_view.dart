@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:dropdown_search/dropdown_search.dart';
 import 'package:easy_stepper/easy_stepper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -37,6 +38,11 @@ class _PersonalViewState extends State<PersonalView> {
   final GlobalKey<FormState> _formKeyLogin = GlobalKey<FormState>();
   final _sankhController = TextEditingController();
   final _sankhFocusNode = FocusNode();
+  List<MemberSurnameData> get surnameListWithOther => [
+    ...regiController.surnameList,
+    MemberSurnameData(surnameName: 'Other'),
+  ];
+
 
   @override
   void dispose() {
@@ -271,8 +277,7 @@ class _PersonalViewState extends State<PersonalView> {
                         'assets/images/logo.png',
                         width: 100,
                         height: 100,
-                        fit: BoxFit
-                            .cover,
+                        fit: BoxFit.cover,
                       ),
                     ),
                   ),
@@ -286,8 +291,7 @@ class _PersonalViewState extends State<PersonalView> {
                     style: TextStyle(
                       color: Colors.black,
                       fontSize: 18,
-                      fontWeight:
-                          FontWeight.bold,
+                      fontWeight: FontWeight.bold,
                     ),
                   )
                 ],
@@ -309,8 +313,7 @@ class _PersonalViewState extends State<PersonalView> {
                           const Padding(
                             padding: EdgeInsets.only(left: 5, top: 20),
                             child: Align(
-                              alignment: Alignment
-                                  .centerLeft,
+                              alignment: Alignment.centerLeft,
                               child: Text(
                                 'Personal Info',
                                 style: TextStyle(
@@ -332,13 +335,13 @@ class _PersonalViewState extends State<PersonalView> {
                                 radius: 40,
                                 backgroundColor: Colors.grey[300],
                                 backgroundImage:
-                                _image != null ? FileImage(_image!) : null,
+                                    _image != null ? FileImage(_image!) : null,
                                 child: _image == null
                                     ? Icon(
-                                  Icons.camera_alt,
-                                  color: Colors.grey[700],
-                                  size: 40,
-                                )
+                                        Icons.camera_alt,
+                                        color: Colors.grey[700],
+                                        size: 40,
+                                      )
                                     : null,
                               ),
                             ),
@@ -450,8 +453,7 @@ class _PersonalViewState extends State<PersonalView> {
                           //First Name
                           _buildEditableField(
                               'First Name *',
-                              regiController
-                                  .firstNameController.value,
+                              regiController.firstNameController.value,
                               'First Name',
                               '',
                               text: TextInputType.text,
@@ -461,8 +463,7 @@ class _PersonalViewState extends State<PersonalView> {
                           //Second Name
                           _buildEditableField(
                               "Middle Name",
-                              regiController
-                                  .middleNameController.value,
+                              regiController.middleNameController.value,
                               "Middle Name",
                               "",
                               text: TextInputType.text,
@@ -475,96 +476,176 @@ class _PersonalViewState extends State<PersonalView> {
                             children: [
                               Container(
                                 width: double.infinity,
-                                margin: const EdgeInsets.only(left: 5, right: 5),
+                                margin:
+                                    const EdgeInsets.only(left: 5, right: 5),
                                 child: Row(
                                   children: [
                                     Obx(() {
-                                      if (regiController.rxStatusSurname.value == Status.LOADING) {
+                                      if (regiController
+                                              .rxStatusSurname.value ==
+                                          Status.LOADING) {
                                         return const Padding(
-                                          padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                                          padding: EdgeInsets.symmetric(
+                                              vertical: 10, horizontal: 22),
                                           child: SizedBox(
                                             height: 24,
                                             width: 24,
                                             child: CircularProgressIndicator(
-                                              color: Colors.redAccent,
-                                            ),
+                                                color: Colors.redAccent),
                                           ),
                                         );
-                                      } else if (regiController.rxStatusSurname.value == Status.ERROR) {
-                                        return const Center(child: Text('Failed to load surnames'));
-                                      } else if (regiController.surnameList.isEmpty) {
-                                        return const Center(child: Text('No surnames available'));
+                                      } else if (regiController
+                                              .rxStatusSurname.value ==
+                                          Status.ERROR) {
+                                        return const Center(
+                                            child: Text(
+                                                'Failed to load surnames'));
+                                      } else if (regiController
+                                          .surnameList.isEmpty) {
+                                        return const Center(
+                                            child:
+                                                Text('No surnames available'));
                                       } else {
-                                        final selectedValue = regiController.selectedSurname.value;
-                                        return Expanded(
-                                          child: InputDecorator(
-                                            decoration: InputDecoration(
-                                              labelText: selectedValue.isNotEmpty ? 'SurName *' : null,
-                                              border: const OutlineInputBorder(
-                                                borderSide: BorderSide(color: Colors.black),
-                                              ),
-                                              enabledBorder: const OutlineInputBorder(
-                                                borderSide: BorderSide(color: Colors.black),
-                                              ),
-                                              focusedBorder: const OutlineInputBorder(
-                                                borderSide: BorderSide(color: Colors.black38, width: 1),
-                                              ),
-                                              contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                                              labelStyle: const TextStyle(color: Colors.black),
-                                            ),
-                                            child: DropdownButton<String>(
-                                              dropdownColor: Colors.white,
-                                              borderRadius: BorderRadius.circular(10),
-                                              isExpanded: true,
-                                              underline: Container(),
-                                              hint: const Text(
-                                                'Select SurName *',
-                                                style: TextStyle(fontWeight: FontWeight.bold),
-                                              ),
-                                              value: selectedValue.isNotEmpty ? selectedValue : null,
-                                              items: regiController.surnameList
-                                                  .map((MemberSurnameData item) {
-                                                return DropdownMenuItem<String>(
-                                                  value: item.id.toString(),
-                                                  child: Text(item.surnameName ?? 'Unknown'),
-                                                );
-                                              }).toList(),
-                                              onChanged: (String? newValue) {
-                                                if (newValue != null) {
-                                                  regiController.setSelectedSurname(newValue);
-                                                  final selectedSurname = regiController.surnameList.firstWhere(
-                                                        (element) => element.id.toString() == newValue,
-                                                    orElse: () => MemberSurnameData(),
-                                                  );
-                                                  if (selectedSurname.surnameName != null) {
-                                                    // Check for Maheshwari, Maheshawari, or Maheshwary
-                                                    final surname = selectedSurname.surnameName!.toLowerCase();
-                                                    final isMaheshwari = surname.contains("maheshwari") ||
-                                                        surname.contains("maheshawari") ||
-                                                        surname.contains("maheshwary");
-                                                    regiController.isMaheshwariSelected.value = isMaheshwari;
-                                                    regiController.showSankhField.value = isMaheshwari;
+                                        final List<MemberSurnameData>
+                                            dropdownItems = [
+                                          ...regiController.surnameList,
+                                          MemberSurnameData(
+                                              surnameName: 'Other'),
+                                        ];
 
-                                                    if (isMaheshwari) {
-                                                      // Use the actual selected surname (preserving original case)
-                                                      final prefix = selectedSurname.surnameName!;
-                                                      regiController.sankhText.value = "$prefix()";
-                                                      regiController.lastNameController.value.text = "$prefix()";
-                                                      Future.delayed(const Duration(milliseconds: 50), () {
-                                                        FocusScope.of(context).requestFocus(_sankhFocusNode);
-                                                        _sankhController.selection = TextSelection.collapsed(
-                                                          offset: prefix.length + 1, // Position after "("
-                                                        );
-                                                      });
-                                                    } else {
-                                                      regiController.sankhText.value = "";
-                                                      regiController.lastNameController.value.text =
-                                                      selectedSurname.surnameName!;
-                                                    }
-                                                  }
-                                                }
-                                              },
+                                        final selectedValue = regiController
+                                            .selectedSurname.value;
+                                        final selectedItem =
+                                            dropdownItems.firstWhere(
+                                          (item) =>
+                                              item.surnameName == selectedValue,
+                                          orElse: () => MemberSurnameData(),
+                                        );
+
+                                        return Expanded(
+                                          child:
+                                              DropdownSearch<MemberSurnameData>(
+                                            items: dropdownItems,
+                                            selectedItem: selectedItem,
+                                            itemAsString: (item) =>
+                                                item?.surnameName ?? 'Surname',
+                                            dropdownDecoratorProps:
+                                                const DropDownDecoratorProps(
+                                              dropdownSearchDecoration:
+                                                  InputDecoration(
+                                                labelText: 'SurName *',
+                                                labelStyle: TextStyle(
+                                                    color: Colors.black),
+                                                border: OutlineInputBorder(),
+                                                enabledBorder:
+                                                    OutlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                      color: Colors.black),
+                                                ),
+                                                focusedBorder:
+                                                    OutlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                      color: Colors.black38,
+                                                      width: 1),
+                                                ),
+                                                contentPadding:
+                                                    EdgeInsets.symmetric(
+                                                        horizontal: 20),
+                                              ),
                                             ),
+                                            popupProps: PopupProps.menu(
+                                              showSearchBox: true,
+                                              searchFieldProps:
+                                                  const TextFieldProps(
+                                                decoration: InputDecoration(
+                                                    hintText:
+                                                        'Search surname...'),
+                                              ),
+                                              menuProps: MenuProps(
+                                                backgroundColor: Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                            ),
+                                            onChanged:
+                                                (MemberSurnameData? newValue) {
+                                              if (newValue != null) {
+                                                final surname = newValue
+                                                        .surnameName
+                                                        ?.toLowerCase() ??
+                                                    '';
+
+                                                final isOther =
+                                                    surname == "other";
+                                                final isMaheshwari =
+                                                    surname == "maheshwari";
+                                                final isMaheshawari =
+                                                    surname == "maheshawari";
+                                                final isMaheshwary =
+                                                    surname == "maheshwary";
+
+                                                regiController
+                                                        .selectedSurname.value =
+                                                    newValue.surnameName ?? '';
+                                                regiController
+                                                        .isMaheshwariSelected
+                                                        .value =
+                                                    isMaheshwari ||
+                                                        isMaheshawari ||
+                                                        isMaheshwary;
+                                                regiController
+                                                        .showSankhField.value =
+                                                    regiController
+                                                        .isMaheshwariSelected
+                                                        .value;
+                                                regiController
+                                                    .showCustomSurnameField
+                                                    .value = isOther;
+
+                                                if (regiController
+                                                    .isMaheshwariSelected
+                                                    .value) {
+                                                  final formatted =
+                                                      "${surname}()";
+                                                  regiController.sankhText
+                                                      .value = formatted;
+                                                  regiController
+                                                      .lastNameController
+                                                      .value
+                                                      .text = formatted;
+
+                                                  Future.delayed(
+                                                      const Duration(
+                                                          milliseconds: 50),
+                                                      () {
+                                                    FocusScope.of(context)
+                                                        .requestFocus(
+                                                            _sankhFocusNode);
+                                                    _sankhController.selection =
+                                                        TextSelection.collapsed(
+                                                      offset:
+                                                          surname.length + 1,
+                                                    );
+                                                  });
+                                                } else if (isOther) {
+                                                  regiController
+                                                      .sankhText.value = "";
+                                                  regiController
+                                                      .lastNameController
+                                                      .value
+                                                      .text = "";
+                                                } else {
+                                                  regiController
+                                                      .sankhText.value = "";
+                                                  regiController
+                                                          .lastNameController
+                                                          .value
+                                                          .text =
+                                                      newValue.surnameName ??
+                                                          '';
+                                                }
+                                              }
+                                            },
                                           ),
                                         );
                                       }
@@ -572,40 +653,87 @@ class _PersonalViewState extends State<PersonalView> {
                                   ],
                                 ),
                               ),
+
+                              // Custom Surname Field
+                              Obx(() {
+                                if (regiController
+                                    .showCustomSurnameField.value) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(
+                                        top: 20, left: 5, right: 5),
+                                    child: TextFormField(
+                                      decoration: const InputDecoration(
+                                        labelText: 'Enter your surname',
+                                        labelStyle:
+                                            TextStyle(color: Colors.black),
+                                        border: OutlineInputBorder(),
+                                        enabledBorder: OutlineInputBorder(
+                                            borderSide: BorderSide(
+                                                color: Colors.black)),
+                                        focusedBorder: OutlineInputBorder(
+                                            borderSide: BorderSide(
+                                                color: Colors.black38,
+                                                width: 1)),
+                                        contentPadding: EdgeInsets.symmetric(
+                                            vertical: 12, horizontal: 20),
+                                      ),
+                                      onChanged: (val) {
+                                        regiController.lastNameController.value
+                                            .text = val.trim();
+                                      },
+                                      validator: (value) {
+                                        if (regiController
+                                                .showCustomSurnameField.value &&
+                                            (value == null || value.isEmpty)) {
+                                          return 'Please enter your surname';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  );
+                                } else {
+                                  return const SizedBox.shrink();
+                                }
+                              }),
+
+                              // Sankh Field for Maheshwari variants
                               Obx(() {
                                 if (regiController.showSankhField.value) {
                                   return Padding(
                                     padding: const EdgeInsets.only(top: 20),
                                     child: Container(
-                                      margin: const EdgeInsets.only(left: 5, right: 5),
+                                      margin: const EdgeInsets.only(
+                                          left: 5, right: 5),
                                       child: TextFormField(
                                         controller: _sankhController,
                                         focusNode: _sankhFocusNode,
-                                        decoration: InputDecoration(
+                                        decoration: const InputDecoration(
                                           labelText: 'Enter Sankh',
-                                          border: const OutlineInputBorder(
-                                            borderSide: BorderSide(color: Colors.black),
-                                          ),
-                                          enabledBorder: const OutlineInputBorder(
-                                            borderSide: BorderSide(color: Colors.black),
-                                          ),
-                                          focusedBorder: const OutlineInputBorder(
-                                            borderSide: BorderSide(color: Colors.black38, width: 1),
-                                          ),
-                                          contentPadding: const EdgeInsets.symmetric(
-                                            vertical: 12,
-                                            horizontal: 20,
-                                          ),
+                                          labelStyle:
+                                              TextStyle(color: Colors.black),
+                                          border: OutlineInputBorder(),
+                                          enabledBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.black)),
+                                          focusedBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.black38,
+                                                  width: 1)),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              vertical: 12, horizontal: 20),
                                         ),
                                         onChanged: (value) {
-                                          regiController.sankhText.value = value;
-                                          regiController.lastNameController.value.text = value;
+                                          regiController.sankhText.value =
+                                              value;
+                                          regiController.lastNameController
+                                              .value.text = value;
                                         },
                                         validator: (value) {
-                                          if (regiController.showSankhField.value &&
-                                              (value == null || value.isEmpty || !value.contains('(') || !value.contains(')'))) {
-                                            final prefix = regiController.sankhText.value.split('(')[0];
-                                            return 'Please enter valid sankh (e.g., $prefix(sankh))';
+                                          if (regiController
+                                                  .showSankhField.value &&
+                                              (value == null ||
+                                                  value.isEmpty)) {
+                                            return 'Please enter your sankh';
                                           }
                                           return null;
                                         },
@@ -626,8 +754,7 @@ class _PersonalViewState extends State<PersonalView> {
                             children: [
                               _buildEditableField(
                                 "Mobile Number *",
-                                regiController
-                                    .mobileController.value,
+                                regiController.mobileController.value,
                                 "Mobile Number", // Hint Text
                                 "Mobile number is required",
                                 text: TextInputType.phone,
@@ -1225,16 +1352,16 @@ class _PersonalViewState extends State<PersonalView> {
   }
 
   Widget _buildEditableField(
-      String label,
-      TextEditingController controller,
-      String hintText,
-      String validationMessage, {
-        bool obscureText = false,
-        required TextInputType text,
-        bool isRequired = false,
-        int? maxLength,
-        ValueChanged<String>? onChanged,
-      }) {
+    String label,
+    TextEditingController controller,
+    String hintText,
+    String validationMessage, {
+    bool obscureText = false,
+    required TextInputType text,
+    bool isRequired = false,
+    int? maxLength,
+    ValueChanged<String>? onChanged,
+  }) {
     return Container(
       margin: const EdgeInsets.only(left: 5, right: 5),
       child: TextFormField(
@@ -1244,8 +1371,8 @@ class _PersonalViewState extends State<PersonalView> {
         maxLength: maxLength,
         onChanged: onChanged,
         buildCounter: (BuildContext context,
-            {int? currentLength, int? maxLength, bool? isFocused}) =>
-        null,
+                {int? currentLength, int? maxLength, bool? isFocused}) =>
+            null,
         style: const TextStyle(color: Colors.black),
         decoration: InputDecoration(
           labelText: label,
@@ -1272,7 +1399,8 @@ class _PersonalViewState extends State<PersonalView> {
           }
           if (value != null &&
               value.length == 10 &&
-              regiController.mobileExistsMessage.value.contains('already exists')) {
+              regiController.mobileExistsMessage.value
+                  .contains('already exists')) {
             return 'Mobile number already exists';
           }
           return null;
@@ -1313,12 +1441,12 @@ class _PersonalViewState extends State<PersonalView> {
   }
 
   Future<void> getImage(
-      ImageSource img,
-      ) async {
+    ImageSource img,
+  ) async {
     if (ImagePicker().supportsImageSource(img) == true) {
       try {
         final XFile? pickedFile =
-        await ImagePicker().pickImage(source: img, imageQuality: 80);
+            await ImagePicker().pickImage(source: img, imageQuality: 80);
         setState(() {
           _image = File(pickedFile!.path);
         });

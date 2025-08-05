@@ -172,7 +172,7 @@ class _HomeViewState extends State<HomeView> {
   }
 
   Widget _buildMembershipNotice() {
-    final status = controller.membershipApprovalStatusId.value.trim();
+    final status = controller.membershipTypeId.value.trim();
     final message = {
       '2': "Your payment is pending.",
       '3': "We received your payment and it's under approval.",

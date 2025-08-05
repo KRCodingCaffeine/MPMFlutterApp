@@ -51,7 +51,7 @@ class _PesidentalAdressViewState extends State<PesidentalAdressView> {
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.grey[100],
         bottomNavigationBar: Container(
           margin:
               const EdgeInsets.only(bottom: 20, left: 20, right: 20, top: 10),
