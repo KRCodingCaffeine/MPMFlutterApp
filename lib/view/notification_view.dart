@@ -15,11 +15,28 @@ class NotificationView extends StatefulWidget {
 
 class _NotificationViewState extends State<NotificationView> {
   final NotificationController controller = Get.find<NotificationController>();
+  bool _firstBuildDone = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (!_firstBuildDone) {
+      // Only run once at initial build
+      controller.loadNotifications();
+      _firstBuildDone = true;
+    } else {
+      // Runs every time tab becomes visible
+      Future.delayed(Duration.zero, () {
+        controller.loadNotifications(); // Refresh on re-entry
+      });
+    }
+  }
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    controller.loadNotifications();
+    //controller.loadNotifications();
   }
 
   @override

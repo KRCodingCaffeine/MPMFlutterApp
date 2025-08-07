@@ -99,6 +99,7 @@ final StreamController<ReceivedNotification> didReceiveLocalNotificationStream =
 
 final StreamController<String?> selectNotificationStream = StreamController<String?>.broadcast();
 
+
 class PushNotificationService {
   bool alreadySent = false;
   static AudioPlayer player = AudioPlayer();
@@ -111,20 +112,34 @@ class PushNotificationService {
       const Duration(milliseconds: 1000),
     );*/
 
-    if (message != null) {
-      final notificationType = message.data[kNotificationType] as String?;
-      String title = message.notification!.title ?? "No Title";
-      String body = message.notification!.body ?? "No Body";
-      String image = message.notification!.android!.imageUrl ?? "";
-      String timestamp = DateTime.now().toIso8601String();
+    final notificationType = message.data[kNotificationType] as String?;
+    final notification = message.notification;
 
-      NotificationDatabase.instance.insertNotification(
-        NotificationModel(title: title, body: body, image: image, timestamp: timestamp, isRead: false),
-      );
-      // final controller = Get.find<NotificationController>();
-      // controller.loadNotifications();
-      _goToScreen(notificationType, 0);
+    String title = notification?.title ?? "No Title";
+    String body = notification?.body ?? "No Body";
+
+    // Image handling for Android and iOS separately
+    String? image;
+    if (Platform.isAndroid) {
+      image = notification?.android?.imageUrl;
+    } else if (Platform.isIOS) {
+      image = notification?.apple?.imageUrl;
     }
+
+    String timestamp = DateTime.now().toIso8601String();
+
+    NotificationDatabase.instance.insertNotification(
+      NotificationModel(
+        title: title,
+        body: body,
+        image: image ?? "",
+        timestamp: timestamp,
+        isRead: false,
+      ),
+    );
+
+    _goToScreen(notificationType, 0);
+
   }
 
   Future<void> initialise() async {
@@ -178,18 +193,19 @@ class PushNotificationService {
         }
       });
 
-      FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      FirebaseMessaging.onMessageOpenedApp.listen((message) async {
         final notificationType = message.data[kNotificationType] as String?;
+
         if (Platform.isAndroid) playCustomNotificationSound();
+
         if (!alreadySent) {
           alreadySent = true;
-          Future<void>.delayed(
-            const Duration(milliseconds: 1000),
-                () => checkNotification(message),
-          );
+
+          await checkNotification(message); // WAIT here
           _goToScreen(notificationType, 3);
         }
       });
+
     } catch (e) {
       print("❌ PushNotificationService.init failed: $e");
     }
@@ -250,9 +266,6 @@ class PushNotificationService {
   void playCustomNotificationSound() async {
     await player.play(AssetSource('audio/smileringtone.mp3'));
   }
-
-
-
 
   Future<void> _showNotificationWithActions(RemoteMessage event) async {
     final imageUrl = event.data['image'];
@@ -347,8 +360,6 @@ class PushNotificationService {
     }
   }
 
-
-
   static Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 
@@ -371,6 +382,19 @@ class PushNotificationService {
        }
      }
   }
+
+  Future<void> handleInitialNotification() async {
+    final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+    if (initialMessage != null) {
+      final notificationType = initialMessage.data[kNotificationType] as String?;
+      if (!alreadySent) {
+        alreadySent = true;
+        await PushNotificationService.checkNotification(initialMessage); // ✅ this is your own method
+        PushNotificationService._goToScreen(notificationType, 3);
+      }
+    }
+  }
+
 }
 
 extension on AndroidFlutterLocalNotificationsPlugin? {
