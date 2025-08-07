@@ -78,9 +78,11 @@ class _DashboardViewState extends State<DashboardView> {
               controller.changeTab(index);
               if (index == 3) {
                 notificationController
-                    .loadNotifications(); 
+                    .loadNotifications();
               }
             },
+            showSelectedLabels: true,
+            showUnselectedLabels: true,
             items: [
               BottomNavigationBarItem(
                 icon: Icon(Icons.home),
@@ -92,7 +94,7 @@ class _DashboardViewState extends State<DashboardView> {
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.account_balance),
-                label: "Samiti Member",
+                label: "Samiti",
               ),
               BottomNavigationBarItem(
                 icon: Obx(() {

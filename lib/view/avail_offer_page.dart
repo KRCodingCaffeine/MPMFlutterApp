@@ -111,10 +111,12 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
     switch (name) {
       case 'Strips':
         return '1';
-      case 'Box':
+      case 'Tube':
         return '2';
       case 'Bottle':
         return '3';
+      case 'Box':
+        return '4';
       default:
         return '0';
     }
@@ -124,7 +126,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
     String medicineName = '';
     String? selectedContainer;
     String offerQuantity = '';
-    final List<String> containerOptions = ['Strips', 'Box', 'Bottle'];
+    final List<String> containerOptions = ['Strips', 'Tube', 'Bottle', 'Box'];
 
     showDialog(
       context: context,

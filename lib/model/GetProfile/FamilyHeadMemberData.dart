@@ -5,6 +5,7 @@ class FamilyHeadMemberData {
   var lastName;
   var middleName;
   var profileImage;
+  var pincode;
 
   FamilyHeadMemberData(
       {this.memberId,
@@ -12,7 +13,8 @@ class FamilyHeadMemberData {
         this.firstName,
         this.lastName,
         this.middleName,
-        this.profileImage});
+        this.profileImage,
+      this.pincode});
 
   FamilyHeadMemberData.fromJson(Map<String, dynamic> json) {
     memberId = json['member_id'];
@@ -21,6 +23,7 @@ class FamilyHeadMemberData {
     lastName = json['last_name'];
     middleName = json['middle_name'];
     profileImage = json['profile_image'];
+    pincode = json['pincode'];
   }
 
   Map<String, dynamic> toJson() {
@@ -31,6 +34,7 @@ class FamilyHeadMemberData {
     data['last_name'] = this.lastName;
     data['middle_name'] = this.middleName;
     data['profile_image'] = this.profileImage;
+    data['pincode'] = this.pincode;
     return data;
   }
 }

@@ -187,7 +187,7 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
                     const SizedBox(height: 5),
                     // Name and LM Code
                     Text(
-                      "Role: ${samitiRoles ?? 'Unknown Role'}",
+                      "${samitiRoles ?? 'Unknown Role'}",
                       style: const TextStyle(
                         fontSize: 14,
                       ),
