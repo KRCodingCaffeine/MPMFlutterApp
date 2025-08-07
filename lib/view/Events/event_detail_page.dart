@@ -603,11 +603,29 @@ class _EventDetailPageState extends State<EventDetailPage> {
         const SizedBox(height: 8),
         if (_eventDetails?.eventOrganiserName != null) ...[
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(Icons.person, size: 14, color: Colors.grey[600]),
               const SizedBox(width: 8),
-              Text(_eventDetails!.eventOrganiserName!,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[700])),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      const TextSpan(
+                        text: 'Coordinator: ',
+                        style: TextStyle(color: Colors.black, fontSize: 12),
+                      ),
+                      TextSpan(
+                        text: _eventDetails!.eventOrganiserName!
+                            .split(',')
+                            .map((name) => name.trim())
+                            .join(', '),
+                        style: TextStyle(color: Colors.grey[700], fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -617,8 +635,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
             children: [
               Icon(Icons.phone, size: 16, color: Colors.grey[600]),
               const SizedBox(width: 8),
-              Text(_eventDetails!.eventOrganiserMobile!,
-                  style: TextStyle(fontSize: 14, color: Colors.grey[700])),
+              Text(
+                _eventDetails!.eventOrganiserMobile!,
+                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+              ),
             ],
           ),
         ],

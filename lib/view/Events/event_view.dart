@@ -236,7 +236,7 @@ class _EventsPageState extends State<EventsPage> {
               ),
               const SizedBox(width: 8),
               Container(
-                height: 80,
+                height: 100,
                 width: 1,
                 color: Colors.grey[400],
               ),
@@ -249,11 +249,43 @@ class _EventsPageState extends State<EventsPage> {
                         style: const TextStyle(
                             fontWeight: FontWeight.bold, color: Colors.black, fontSize: 18)),
                     const SizedBox(height: 4),
-                    Text(
-                      'Hosted by ${event.eventOrganiserName ?? 'Unknown'}',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: Colors.black, fontSize: 13),
+                    if (event.samitiOrganisers != null && event.samitiOrganisers!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: RichText(
+                          text: TextSpan(
+                            style: const TextStyle(fontSize: 12),
+                            children: [
+                              const TextSpan(
+                                text: "By: ",
+                                style: TextStyle(color: Colors.black54, fontWeight: FontWeight.normal),
+                              ),
+                              TextSpan(
+                                text: event.samitiOrganisers!
+                                    .map((organiser) => organiser.subCategory?.samitiSubCategoryName ?? 'Unknown')
+                                    .join(', '),
+                                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 4),
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          const TextSpan(
+                            text: 'Coordinator: ',
+                            style: TextStyle(color: Colors.black, fontSize: 14),
+                          ),
+                          TextSpan(
+                            text: event.eventOrganiserName?.split(',').join(', ') ?? 'Unknown',
+                            style: TextStyle(color: Colors.grey[700], fontSize: 14),
+                          ),
+                        ],
+                      ),
+                      // maxLines: 2,
+                      // overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     SizedBox(
@@ -262,7 +294,7 @@ class _EventsPageState extends State<EventsPage> {
                         event.eventDescription ?? '',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 13),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                     const SizedBox(height: 4),

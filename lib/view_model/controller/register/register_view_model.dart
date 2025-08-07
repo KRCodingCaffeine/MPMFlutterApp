@@ -66,6 +66,7 @@ class RegisterController extends GetxController {
   final isMaheshwariSelected = false.obs;
   final sankhText = ''.obs;
   final showSankhField = false.obs;
+  final showCustomSurnameField = false.obs;
   var countryNotFound = false.obs;
   var genderList = <DataX>[].obs;
   var selectedGender = ''.obs;

@@ -617,7 +617,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
     final FocusNode searchFocusNode = FocusNode();
     var debounceTimer;
 
-    // Clear previous selections when opening dialog
     samitiController.searchDataList.clear();
     samitiController.selectedMember.value = '';
     controller.selectRelationShipType.value = '';
@@ -695,7 +694,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Loading or results
                   if (samitiController.loading2.value)
                     const Padding(
                       padding: EdgeInsets.all(16.0),
@@ -716,7 +714,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                           final member = samitiController.searchDataList[index];
                           return Card(
                             color: samitiController.selectedMember.value ==
-                                    member.memberId
+                                member.memberId
                                 ? Colors.grey[200]
                                 : Colors.white,
                             margin: const EdgeInsets.only(bottom: 12),
@@ -729,18 +727,18 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                               child: ListTile(
                                 onTap: () {
                                   samitiController.selectedMember.value =
-                                      member.memberId!;
+                                  member.memberId!;
                                 },
                                 leading: CircleAvatar(
                                   radius: 23,
                                   backgroundImage:
-                                      member.profileImage != null &&
-                                              member.profileImage!.isNotEmpty
-                                          ? NetworkImage(Urls.imagePathUrl +
-                                              member.profileImage!)
-                                          : const AssetImage(
-                                                  "assets/images/user3.png")
-                                              as ImageProvider,
+                                  member.profileImage != null &&
+                                      member.profileImage!.isNotEmpty
+                                      ? NetworkImage(Urls.imagePathUrl +
+                                      member.profileImage!)
+                                      : const AssetImage(
+                                      "assets/images/user3.png")
+                                  as ImageProvider,
                                   backgroundColor: Colors.grey[300],
                                 ),
                                 title: Column(
@@ -827,7 +825,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                     ),
                                   );
                                 } else if (controller
-                                        .rxStatusRelationType.value ==
+                                    .rxStatusRelationType.value ==
                                     Status.ERROR) {
                                   return const Center(
                                       child: Text('Failed to load relation'));
@@ -846,19 +844,19 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                             : null,
                                         border: const OutlineInputBorder(
                                           borderSide:
-                                              BorderSide(color: Colors.black),
+                                          BorderSide(color: Colors.black),
                                         ),
                                         enabledBorder: const OutlineInputBorder(
                                           borderSide:
-                                              BorderSide(color: Colors.black),
+                                          BorderSide(color: Colors.black),
                                         ),
                                         focusedBorder: const OutlineInputBorder(
                                           borderSide: BorderSide(
                                               color: Colors.black38, width: 1),
                                         ),
                                         contentPadding:
-                                            const EdgeInsets.symmetric(
-                                                horizontal: 20),
+                                        const EdgeInsets.symmetric(
+                                            horizontal: 20),
                                         labelStyle: const TextStyle(
                                             color: Colors.black),
                                       ),
@@ -921,16 +919,29 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                       ElevatedButton(
                         onPressed: isAddEnabled
                             ? () async {
-                                final success =
-                                    await controller.addExistingFamilyMember(
-                                  samitiController.selectedMember.value,
-                                  controller.selectRelationShipType.value,
-                                );
+                          final selectedMember = samitiController
+                              .searchDataList
+                              .firstWhere((member) =>
+                          member.memberId ==
+                              samitiController.selectedMember.value);
 
-                                if (success) {
-                                  Navigator.pop(context);
-                                }
-                              }
+                          final familyHeadPincode =
+                              controller.familyHeadData.value?.pincode ?? '';
+
+                          if (selectedMember.pincode != familyHeadPincode) {
+                            _showPincodeMismatchDialog(context);
+                            return;
+                          }
+                          final success =
+                          await controller.addExistingFamilyMember(
+                            samitiController.selectedMember.value,
+                            controller.selectRelationShipType.value,
+                          );
+
+                          if (success) {
+                            Navigator.pop(context);
+                          }
+                        }
                             : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: ColorHelperClass.getColorFromHex(
@@ -942,13 +953,13 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                         child: Obx(() {
                           return controller.familyloading.value
                               ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
                               : const Text("Add");
                         }),
                       ),
@@ -961,11 +972,67 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
         });
       },
     ).then((_) {
-      // Clear selections when dialog is closed
       samitiController.searchDataList.clear();
       samitiController.selectedMember.value = '';
       searchController.clear();
     });
+  }
+
+  void _showPincodeMismatchDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Pincode Mismatched",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+          content: const Text(
+            "The new member is from a different Pincode.\nPlease contact Mandal Office.",
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("OK"),
+            )
+          ],
+        );
+      },
+    );
   }
 
   void _showEditModalSheet(BuildContext context, String index) {
