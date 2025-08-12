@@ -21,6 +21,9 @@ class GetEventDetailsByIdData {
   String? eventAmount;
   String? eventRegistrationLastDate;
   String? eventsTypeId;
+  String? hasGatepassEntry;
+  String? hasSeatAllocate;
+  String? hasFood;
   String? isAllZone;
   String? youtubeUrl;
   String? addedBy;
@@ -49,6 +52,9 @@ class GetEventDetailsByIdData {
     this.eventAmount,
     this.eventRegistrationLastDate,
     this.eventsTypeId,
+    this.hasGatepassEntry,
+    this.hasSeatAllocate,
+    this.hasFood,
     this.isAllZone,
     this.youtubeUrl,
     this.addedBy,
@@ -83,6 +89,9 @@ class GetEventDetailsByIdData {
       eventAmount: json['event_amount']?.toString(),
       eventRegistrationLastDate: json['event_registration_last_date'],
       eventsTypeId: json['events_type_id']?.toString(),
+      hasGatepassEntry: json['has_gatepass_entry']?.toString(),
+      hasSeatAllocate: json['has_seat_allocate']?.toString(),
+      hasFood: json['has_food']?.toString(),
       isAllZone: json['is_all_zone']?.toString(),
       youtubeUrl: json['youtube_url'],
       addedBy: json['added_by']?.toString(),
@@ -120,6 +129,9 @@ class GetEventDetailsByIdData {
     data['event_amount'] = eventAmount;
     data['event_registration_last_date'] = eventRegistrationLastDate;
     data['events_type_id'] = eventsTypeId;
+    data['has_gatepass_entry'] = hasGatepassEntry;
+    data['has_seat_allocate'] = hasSeatAllocate;
+    data['has_food'] = hasFood;
     data['is_all_zone'] = isAllZone;
     data['youtube_url'] = youtubeUrl;
     data['added_by'] = addedBy;

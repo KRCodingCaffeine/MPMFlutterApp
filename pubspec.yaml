@@ -69,6 +69,8 @@ dependencies:
   youtube_player_iframe: ^5.2.1
   timeago: ^3.6.0
   dropdown_search: ^5.0.6
+#  qr_code_scanner_plus: ^2.0.10+1
+  mobile_scanner: ^3.0.1
 
 dev_dependencies:
   flutter_test:

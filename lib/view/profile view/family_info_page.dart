@@ -877,14 +877,14 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                             .map((RelationData relation) {
                                           return DropdownMenuItem<String>(
                                             value: relation.id.toString(),
-                                            child: Text(
-                                                relation.name ?? 'Unknown'),
+                                            child:
+                                            Text(relation.name ?? 'Unknown'),
                                           );
                                         }).toList(),
                                         onChanged: (String? newValue) {
                                           if (newValue != null) {
-                                            controller.setSelectRelationShip(
-                                                newValue);
+                                            controller
+                                                .setSelectRelationShip(newValue);
                                           }
                                         },
                                       ),
@@ -932,14 +932,37 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                             _showPincodeMismatchDialog(context);
                             return;
                           }
-                          final success =
-                          await controller.addExistingFamilyMember(
-                            samitiController.selectedMember.value,
-                            controller.selectRelationShipType.value,
-                          );
 
-                          if (success) {
-                            Navigator.pop(context);
+                          // Show OTP dialog before adding member
+                          if (selectedMember.mobile != null &&
+                              selectedMember.mobile!.isNotEmpty) {
+                            // Send OTP first
+                            controller.sendOtp(selectedMember.mobile!);
+
+                            // Show OTP verification dialog
+                            showOtpBottomSheet(
+                              context,
+                              selectedMember.mobile!,
+                              onVerified: () async {
+                                // Only proceed with adding member after OTP verification
+                                final success =
+                                await controller.addExistingFamilyMember(
+                                  samitiController.selectedMember.value,
+                                  controller.selectRelationShipType.value,
+                                );
+
+                                if (success) {
+                                  Navigator.pop(context);
+                                }
+                              },
+                            );
+                          } else {
+                            Get.snackbar(
+                              "Error",
+                              "Member doesn't have a mobile number",
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                            );
                           }
                         }
                             : null,
@@ -1030,6 +1053,96 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
               child: const Text("OK"),
             )
           ],
+        );
+      },
+    );
+  }
+
+  void showOtpBottomSheet(BuildContext context, String mobile, {VoidCallback? onVerified}) {
+    final TextEditingController otpController = TextEditingController();
+    const String otpValidationFor = "add_family_member";
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 20),
+              const Text(
+                "Enter OTP",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "OTP sent to $mobile",
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: TextFormField(
+                  controller: otpController,
+                  keyboardType: TextInputType.number,
+                  maxLength: 6,
+                  decoration: const InputDecoration(
+                    hintText: "Enter 4-digit OTP",
+                    border: OutlineInputBorder(),
+                    counterText: "",
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        controller.resendOtp(context, mobile);
+                      },
+                      child: Text(
+                        "Resend OTP",
+                        style: TextStyle(
+                          color: ColorHelperClass.getColorFromHex(
+                              ColorResources.red_color),
+                        ),
+                      ),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        controller.checkOtp(
+                          otpController.text.trim(),
+                          context,
+                          otpValidationFor,
+                          onSuccess: onVerified,
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColorHelperClass.getColorFromHex(
+                            ColorResources.red_color),
+                      ),
+                      child: const Text(
+                        "Verify OTP",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
         );
       },
     );
@@ -1187,6 +1300,12 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
   }
 
   void _showAddModalSheet(BuildContext context) {
+
+    if (controller.familyHeadData.value?.lastName != null) {
+      regiController.lastNameController.value.text =
+      controller.familyHeadData.value!.lastName!;
+    }
+
     String newSalutation = "";
     String newFirstName = "";
     String newMiddleName = "";
@@ -1613,6 +1732,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                   "",
                                   text: TextInputType.text,
                                   isRequired: true,
+                                  readOnly: true,
                                 ),
                                 const SizedBox(height: 30),
 

@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -244,12 +246,42 @@ class LoginController {
   }
 
 
-  void checkOtp(var otps, BuildContext context) {
+  Future<void> checkOtp(var otps, BuildContext context) async {
     loadinng.value=true;
     try {
+      DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+
+      String deviceId = '';
+      String deviceModel = '';
+      String deviceBrand = '';
+      String osName = '';
+      String osVersion = '';
+
+      if (Platform.isAndroid) {
+        AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+        deviceId = androidInfo.id ?? '';
+        deviceModel = androidInfo.model ?? '';
+        deviceBrand = androidInfo.brand ?? '';
+        osName = 'android';
+        osVersion = androidInfo.version.release ?? '';
+      } else if (Platform.isIOS) {
+        IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+        deviceId = iosInfo.identifierForVendor ?? '';
+        deviceModel = iosInfo.utsname.machine ?? '';
+        deviceBrand = 'Apple';
+        osName = 'ios';
+        osVersion = iosInfo.systemVersion ?? '';
+      }
+
       Map map={
         "member_id":memberId.value,
-        "otp":otps
+        "otp":otps,
+        "otp_validation_for": "login",
+        "device_id": deviceId,
+        "device_model": deviceModel,
+        "device_brand": deviceBrand,
+        "os_name": osName,
+        "os_version": osVersion
       };
       print("fffh"+map.toString());
       api.verifyOTP(map).then((_value) async {
@@ -297,8 +329,8 @@ class LoginController {
         if(error.toString().contains("Sorry! OTP doesn't match"))
         {
           Get.snackbar(
-            'Error', // Title
-            "Sorry! OTP doesn't match", // Message
+            'Error',
+            "Sorry! OTP doesn't match",
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
             colorText: Colors.white,
@@ -307,8 +339,8 @@ class LoginController {
         }
         else {
           Get.snackbar(
-            'Error', // Title
-            "Some thing went wrong ", // Message
+            'Error',
+            "Some thing went wrong ",
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
             colorText: Colors.white,
@@ -325,6 +357,7 @@ class LoginController {
 
 
   }
+
   void updateToken() async {
     CheckUserData2? userData = await SessionManager.getSession();
     print('User ID: ${userData?.memberId}');

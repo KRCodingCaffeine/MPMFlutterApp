@@ -4,6 +4,7 @@ class EventRegistrationData {
   String? eventRegisteredDate;
   int? addedBy;
   String? dateAdded;
+  int? noOfFoodContainer;
 
   EventRegistrationData({
     this.memberId,
@@ -11,6 +12,7 @@ class EventRegistrationData {
     this.eventRegisteredDate,
     this.addedBy,
     this.dateAdded,
+    this.noOfFoodContainer,
   });
 
   factory EventRegistrationData.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class EventRegistrationData {
       eventRegisteredDate: json['event_registered_data'],
       addedBy: int.tryParse(json['added_by'].toString()),
       dateAdded: json['date_added'],
+      noOfFoodContainer: int.tryParse(json['no_of_food_container'].toString()),
     );
   }
 
@@ -30,6 +33,7 @@ class EventRegistrationData {
       'event_registered_data': eventRegisteredDate,
       'added_by': addedBy,
       'date_added': dateAdded,
+      'no_of_food_container': noOfFoodContainer,
     };
   }
 }
