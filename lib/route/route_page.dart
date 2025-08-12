@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mpm/route/route_name.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/view/EnquiryForm/add_enquiry_form.dart';
-
+import 'package:mpm/view/QRCodeScanner/qr_code.dart';
 import 'package:mpm/view/addmember/add_member_first.dart';
 import 'package:mpm/view/addmember/add_member_second.dart';
 import 'package:mpm/view/condition_about/about_view.dart';
@@ -17,7 +17,6 @@ import 'package:mpm/view/gov_scheme.dart';
 import 'package:mpm/view/home_view.dart';
 import 'package:mpm/view/language_view.dart';
 import 'package:mpm/view/login_view.dart';
-import 'package:mpm/view/notification_detail.dart';
 import 'package:mpm/view/notification_view.dart';
 import 'package:mpm/view/otp_view.dart';
 import 'package:mpm/view/personal_view.dart';
@@ -70,13 +69,15 @@ class RoutePages {
         return _buildRoute(const DiscountofferView(), settings);
       case RouteNames.event_view:
         return _buildRoute(const EventsPage(), settings);
+      case RouteNames.qr_code:
+        return _buildRoute(const QRScannerScreen(), settings);
       case RouteNames.forms:
         return _buildRoute(const FormsDownloadView(), settings);
       case RouteNames.gov_scheme:
         return _buildRoute(GovSchemeView(), settings);
       case RouteNames.add_enquiry_form:
         return _buildRoute(
-          const EnquiryFormLoader(), // Wrapper widget
+          const EnquiryFormLoader(),
           settings,
         );
 

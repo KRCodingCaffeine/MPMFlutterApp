@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:mpm/model/DashBoardEvents/DashBoardEventsData.dart';
 import 'package:mpm/model/GetEventsList/GetEventsListData.dart';
 import 'package:mpm/repository/dashboard_events_repository/dashboard_events_repo.dart';
+import 'package:mpm/repository/qr_code_scanner_repository/qr_code_scanner_repo.dart';
 import 'package:mpm/route/route_name.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
@@ -49,6 +50,7 @@ class _HomeViewState extends State<HomeView> {
     {'icon': Images.makenewmember, 'label': 'Make New Member'},
     {'icon': Images.discount, 'label': 'Discounts & Offers'},
     {'icon': Images.events, 'label': 'Events'},
+    {'icon': Images.qr_code, 'label': 'QR Code Scanner'},
   ];
 
   @override
@@ -345,7 +347,70 @@ class _HomeViewState extends State<HomeView> {
       case "Events":
         Navigator.pushNamed(context, RouteNames.event_view);
         break;
+      // case "QR Code Scaner":
+      //   Navigator.pushNamed(context, RouteNames.qr_code);
+      //   break;
+      case "QR Code Scanner":
+        _showAttendanceMarkedDialog(context);
+        break;
     }
+  }
+
+  void _showAttendanceMarkedDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Attendance Marked",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+          content: const Text(
+            "Member attendance has been successfully marked.",
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color), // Use green for success
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildAdvertisementTitle() {

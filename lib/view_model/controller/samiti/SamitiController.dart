@@ -72,18 +72,18 @@ class SamitiController extends GetxController {
           final mobile = member.mobile?.toLowerCase() ?? '';
 
           final nameCombos = [
-            // "$first $middle $last",
-            // "$first $last $middle",
-            // "$middle $first $last",
-            // "$middle $last $first",
-            // "$last $middle $first",
-            // "$last $first $middle",
-            // "$first $middle",
-            // "$middle $last",
+            "$first $middle $last",
+            "$first $last $middle",
+            "$middle $first $last",
+            "$middle $last $first",
+            "$last $middle $first",
+            "$last $first $middle",
+            "$first $middle",
+            "$middle $last",
             "$first $last",
-            // "$middle $first",
+            "$middle $first",
             "$last $first",
-            // "$last $middle",
+            "$last $middle",
           ];
 
           return nameCombos.any((combo) => combo.contains(searchText)) ||

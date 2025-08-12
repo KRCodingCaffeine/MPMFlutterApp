@@ -1482,17 +1482,25 @@ class UdateProfileController extends GetxController {
         if (_value.status == true) {
           Get.snackbar(
             "Success",
-            "Send Otp Successfully",
+            "OTP sent successfully",
             backgroundColor: Colors.green,
             colorText: Colors.white,
             snackPosition: SnackPosition.TOP,
           );
+          // Store the member ID for verification
           family_member_id.value = _value.data!.memberId.toString();
-        } else {}
+        } else {
+          Get.snackbar(
+            "Error",
+            "Failed to send OTP",
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+        }
       }).onError((error, strack) async {
         Get.snackbar(
-          'Error', // Title
-          error.toString(), // Message
+          'Error',
+          error.toString(),
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.pink,
           colorText: Colors.white,
@@ -1501,12 +1509,11 @@ class UdateProfileController extends GetxController {
       });
     } catch (e) {
       print('Error: $e');
-    } finally {}
+    }
   }
 
-  void checkOtp(String otps, BuildContext context, String otpValidationFor) {
+  void checkOtp(String otps, BuildContext context, String otpValidationFor, {VoidCallback? onSuccess}) {
     if (otpValidationFor != "add_family_member") {
-      print("OTP validation skipped: purpose is not add_family_member");
       return;
     }
 
@@ -1527,6 +1534,9 @@ class UdateProfileController extends GetxController {
             duration: const Duration(seconds: 3),
           );
           Navigator.of(context).pop();
+          if (onSuccess != null) {
+            onSuccess();
+          }
         } else {
           Get.snackbar(
             'Error',

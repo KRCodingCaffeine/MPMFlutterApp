@@ -32,6 +32,7 @@ class EventRegistrationRepository {
       'event_registered_data': dataModel.eventRegisteredDate ?? '',
       'added_by': dataModel.addedBy?.toString() ?? '',
       'date_added': dataModel.dateAdded ?? '',
+      'no_of_food_container': dataModel.noOfFoodContainer?.toString() ?? '0',
     });
   }
 
