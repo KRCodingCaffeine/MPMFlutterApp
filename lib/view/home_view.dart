@@ -44,22 +44,30 @@ class _HomeViewState extends State<HomeView> {
   }
 
   List<DashboardEventData> dashboardEvents = [];
+  int? memberId;
+  List<Map<String, dynamic>> get gridItems {
+    final items = [
+      {'icon': Images.user, 'label': 'My Profile'},
+      {'icon': Images.makenewmember, 'label': 'Make New Member'},
+      {'icon': Images.discount, 'label': 'Discounts & Offers'},
+      {'icon': Images.events, 'label': 'Events'},
+    ];
 
-  final List<Map<String, dynamic>> gridItems = [
-    {'icon': Images.user, 'label': 'My Profile'},
-    {'icon': Images.makenewmember, 'label': 'Make New Member'},
-    {'icon': Images.discount, 'label': 'Discounts & Offers'},
-    {'icon': Images.events, 'label': 'Events'},
-    {'icon': Images.qr_code, 'label': 'QR Code Scanner'},
-  ];
+    // Only show QR Code Scanner for memberId 1 or 2
+    if (memberId == 1 || memberId == 2) {
+      items.add({'icon': Images.qr_code, 'label': 'QR Code Scanner'});
+    }
+
+    return items;
+  }
 
   @override
   void initState() {
     super.initState();
     controller.getUserProfile().then((_) {
-      final memberId = int.tryParse(controller.memberId.value);
-      if (memberId != null && memberId > 0) {
-        fetchDashboardEvents(memberId);
+      memberId = int.tryParse(controller.memberId.value);
+      if (memberId != null && memberId! > 0) {
+        fetchDashboardEvents(memberId!);
       } else {
         debugPrint("Invalid or missing member ID.");
       }
@@ -347,12 +355,12 @@ class _HomeViewState extends State<HomeView> {
       case "Events":
         Navigator.pushNamed(context, RouteNames.event_view);
         break;
-      // case "QR Code Scaner":
-      //   Navigator.pushNamed(context, RouteNames.qr_code);
-      //   break;
       case "QR Code Scanner":
-        _showAttendanceMarkedDialog(context);
-        break;
+         Navigator.pushNamed(context, RouteNames.qr_code);
+         break;
+      // case "QR Code Scanner":
+      //   _showAttendanceMarkedDialog(context);
+      //   break;
     }
   }
 

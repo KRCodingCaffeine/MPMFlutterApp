@@ -87,6 +87,8 @@ class RoutePages {
         return _buildRoute(SearchView(), settings);
       case RouteNames.notification_view:
         return _buildRoute(NotificationView(), settings);
+      case RouteNames.qr_code:
+        return _buildRoute(QRScannerScreen(), settings);
 
       default:
         return MaterialPageRoute(builder: (context) {

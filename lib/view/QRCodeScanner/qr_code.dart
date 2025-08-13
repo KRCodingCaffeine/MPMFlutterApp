@@ -3,6 +3,8 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 
+import '../../repository/qr_code_scanner_repository/qr_code_scanner_repo.dart';
+
 class QRScannerScreen extends StatefulWidget {
   const QRScannerScreen({Key? key}) : super(key: key);
 
@@ -28,7 +30,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
   @override
   Widget build(BuildContext context) {
     final cutOutSize = MediaQuery.of(context).size.width * 0.8;
-
+    final QrCodeScannerRepository _repository = QrCodeScannerRepository();
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
@@ -54,14 +56,56 @@ class _QRScannerScreenState extends State<QRScannerScreen>
           // Camera view
           MobileScanner(
             controller: _scannerController,
-            onDetect: (capture) {
+            onDetect: (capture) async {
               final List<Barcode> barcodes = capture.barcodes;
               if (barcodes.isNotEmpty) {
-                setState(() {
-                  scannedData = barcodes.first.rawValue ?? '';
-                });
-                _scannerController.stop();
-                Navigator.pop(context, scannedData);
+                final String scannedValue = barcodes.first.rawValue ?? '';
+                _scannerController.stop(); // pause scanning
+
+                // First popup: show scanned value and ask to proceed
+                final bool? proceed = await showDialog<bool>(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) {
+                    return AlertDialog(
+                      title: Text(
+                        'Attendee - $scannedValue QR Code Detected',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      content: Text(
+                            'Do you want to verify this attendee’s event check-in?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Cancel'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text('Done'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+
+                if (proceed == true) {
+                  try {
+                    final result = await _repository.scanQrCode(scannedValue);
+
+                    if (result.status == true) {
+                      _showTopBanner(context, result.message ?? "Attendance confirmed", Colors.green);
+                    } else {
+                      _showTopBanner(context, result.message ?? "Invalid attendee code", Colors.red);
+                    }
+                  } catch (e) {
+                    _showTopBanner(context, "Error: $e", Colors.red);
+                  }
+                }
+
+                // Resume scanning after short delay
+                await Future.delayed(const Duration(milliseconds: 500));
+                _scannerController.start();
               }
             },
           ),
@@ -132,6 +176,30 @@ class _QRScannerScreenState extends State<QRScannerScreen>
       ),
     );
   }
+
+  void _showTopBanner(BuildContext context, String message, Color color) {
+    // Remove any existing banner first
+    ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
+
+    ScaffoldMessenger.of(context).showMaterialBanner(
+      MaterialBanner(
+        backgroundColor: color,
+        content: Text(
+          message,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        actions: const [
+          SizedBox.shrink(), // no actions, just an empty widget
+        ],
+      ),
+    );
+
+    // Auto-hide after 2 seconds
+    Future.delayed(const Duration(seconds: 2), () {
+      ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
+    });
+  }
+
 
   @override
   void dispose() {
