@@ -1,7 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
 
 import '../../repository/qr_code_scanner_repository/qr_code_scanner_repo.dart';
 
@@ -16,7 +17,10 @@ class _QRScannerScreenState extends State<QRScannerScreen>
     with SingleTickerProviderStateMixin {
   String? scannedData;
   late AnimationController _animationController;
-  final MobileScannerController _scannerController = MobileScannerController();
+  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
+  QRViewController? controller;
+  final QrCodeScannerRepository _repository = QrCodeScannerRepository();
+  bool isDialogOpen = false; // prevent multiple dialogs
 
   @override
   void initState() {
@@ -28,86 +32,47 @@ class _QRScannerScreenState extends State<QRScannerScreen>
   }
 
   @override
+  void reassemble() {
+    super.reassemble();
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      controller?.pauseCamera();
+    }
+    controller?.resumeCamera();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final cutOutSize = MediaQuery.of(context).size.width * 0.8;
-    final QrCodeScannerRepository _repository = QrCodeScannerRepository();
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        title: Builder(
-          builder: (context) {
-            double fontSize = MediaQuery.of(context).size.width * 0.045;
-            return Text(
-              'QR Code Scanner',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: fontSize,
-                fontWeight: FontWeight.w500,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            );
-          },
+        backgroundColor:
+        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        title: Text(
+          'QR Code Scanner',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: MediaQuery.of(context).size.width * 0.045,
+            fontWeight: FontWeight.w500,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ),
       body: Stack(
         children: [
           // Camera view
-          MobileScanner(
-            controller: _scannerController,
-            onDetect: (capture) async {
-              final List<Barcode> barcodes = capture.barcodes;
-              if (barcodes.isNotEmpty) {
-                final String scannedValue = barcodes.first.rawValue ?? '';
-                _scannerController.stop(); // pause scanning
-
-                // First popup: show scanned value and ask to proceed
-                final bool? proceed = await showDialog<bool>(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (context) {
-                    return AlertDialog(
-                      title: Text(
-                        'Attendee - $scannedValue QR Code Detected',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      content: Text(
-                            'Do you want to verify this attendee’s event check-in?',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Cancel'),
-                        ),
-                        ElevatedButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: const Text('Done'),
-                        ),
-                      ],
-                    );
-                  },
-                );
-
-                if (proceed == true) {
-                  try {
-                    final result = await _repository.scanQrCode(scannedValue);
-
-                    if (result.status == true) {
-                      _showTopBanner(context, result.message ?? "Attendance confirmed", Colors.green);
-                    } else {
-                      _showTopBanner(context, result.message ?? "Invalid attendee code", Colors.red);
-                    }
-                  } catch (e) {
-                    _showTopBanner(context, "Error: $e", Colors.red);
-                  }
-                }
-
-                // Resume scanning after short delay
-                await Future.delayed(const Duration(milliseconds: 500));
-                _scannerController.start();
-              }
-            },
+          QRView(
+            key: qrKey,
+            onQRViewCreated: _onQRViewCreated,
+            overlay: QrScannerOverlayShape(
+              borderColor: Colors.green,
+              borderRadius: 12,
+              borderLength: 30,
+              borderWidth: 10,
+              cutOutSize: cutOutSize,
+            ),
           ),
 
           // Overlay mask
@@ -177,8 +142,73 @@ class _QRScannerScreenState extends State<QRScannerScreen>
     );
   }
 
+  void _onQRViewCreated(QRViewController ctrl) {
+    controller = ctrl;
+    ctrl.scannedDataStream.listen((scanData) async {
+      if (isDialogOpen) return; // avoid duplicate dialogs
+      final String? scannedValue = scanData.code;
+
+      if (scannedValue != null && scannedValue.isNotEmpty) {
+        setState(() {
+          scannedData = scannedValue;
+        });
+
+        //log('QR Scanned: $scannedValue');
+        isDialogOpen = true;
+        controller?.pauseCamera();
+
+        // First popup: show scanned value and ask to proceed
+        final bool? proceed = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) {
+            return AlertDialog(
+              title: Text(
+                'Attendee - $scannedValue QR Code Detected',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              content: const Text(
+                'Do you want to verify this attendee’s event check-in?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Done'),
+                ),
+              ],
+            );
+          },
+        );
+
+        if (proceed == true) {
+          try {
+            final result = await _repository.scanQrCode(scannedValue);
+
+            if (result.status == true) {
+              _showTopBanner(context,
+                  result.message ?? "Attendance confirmed", Colors.green);
+            } else {
+              _showTopBanner(context,
+                  result.message ?? "Invalid attendee code", Colors.red);
+            }
+          } catch (e) {
+            _showTopBanner(context, "Error: $e", Colors.red);
+          }
+        }
+
+        // Resume scanning after short delay
+        await Future.delayed(const Duration(milliseconds: 500));
+        controller?.resumeCamera();
+        isDialogOpen = false;
+      }
+    });
+  }
+
   void _showTopBanner(BuildContext context, String message, Color color) {
-    // Remove any existing banner first
     ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
 
     ScaffoldMessenger.of(context).showMaterialBanner(
@@ -186,24 +216,23 @@ class _QRScannerScreenState extends State<QRScannerScreen>
         backgroundColor: color,
         content: Text(
           message,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+              color: Colors.white, fontWeight: FontWeight.bold),
         ),
         actions: const [
-          SizedBox.shrink(), // no actions, just an empty widget
+          SizedBox.shrink(),
         ],
       ),
     );
 
-    // Auto-hide after 2 seconds
     Future.delayed(const Duration(seconds: 2), () {
       ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
     });
   }
 
-
   @override
   void dispose() {
-    _scannerController.dispose();
+    controller?.dispose();
     _animationController.dispose();
     super.dispose();
   }

@@ -4,7 +4,6 @@ import 'dart:io';
 import 'dart:math' show Random;
 import 'package:audioplayers/audioplayers.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:mpm/model/notification/NotificationModel.dart';
@@ -14,11 +13,55 @@ import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import '../view_model/controller/notification/NotificationController.dart';
 
+// ------------------ Constants ------------------
+const kNotificationType = 'notification_type';
+const String urlLaunchActionId = 'id_1';
+const String navigationActionId = 'id_3';
+const String darwinNotificationCategoryText = 'textCategory';
+const String darwinNotificationCategoryPlain = 'plainCategory';
 
 const AndroidInitializationSettings android =
-
 AndroidInitializationSettings('@drawable/logo');
 
+final DarwinInitializationSettings initializationSettingsDarwin =
+DarwinInitializationSettings(
+  requestAlertPermission: false,
+  requestBadgePermission: false,
+  requestSoundPermission: false,
+  notificationCategories: [
+    DarwinNotificationCategory(
+      darwinNotificationCategoryText,
+      actions: [
+        DarwinNotificationAction.text(
+          'text_1',
+          'Action 1',
+          buttonTitle: 'Send',
+          placeholder: 'Placeholder',
+        ),
+      ],
+    ),
+    const DarwinNotificationCategory(
+      darwinNotificationCategoryPlain,
+      options: {
+        DarwinNotificationCategoryOption.hiddenPreviewShowTitle,
+      },
+    ),
+  ],
+);
+
+final InitializationSettings initializationSettings = InitializationSettings(
+  android: android,
+  iOS: initializationSettingsDarwin,
+);
+
+// ------------------ Streams ------------------
+final StreamController<ReceivedNotification> didReceiveLocalNotificationStream =
+StreamController<ReceivedNotification>.broadcast();
+
+final StreamController<String?> selectNotificationStream =
+StreamController<String?>.broadcast();
+
+// ------------------ Model ------------------
 class ReceivedNotification {
   final int id;
   final String? title;
@@ -33,102 +76,27 @@ class ReceivedNotification {
   });
 }
 
-const kNotificationType = 'notification_type';
-
-final InitializationSettings initializationSettings = InitializationSettings(
-  android: android,
-  iOS: initializationSettingsDarwin,
-);
-final List<DarwinNotificationCategory> darwinNotificationCategories =
-<DarwinNotificationCategory>[
-  DarwinNotificationCategory(
-    darwinNotificationCategoryText,
-    actions: <DarwinNotificationAction>[
-      DarwinNotificationAction.text(
-        'text_1',
-        'Action 1',
-        buttonTitle: 'Send',
-        placeholder: 'Placeholder',
-      ),
-    ],
-  ),
-  const DarwinNotificationCategory(
-    darwinNotificationCategoryPlain,
-    options: <DarwinNotificationCategoryOption>{
-      DarwinNotificationCategoryOption.hiddenPreviewShowTitle,
-    },
-  ),
-];
-
-/// Note: permissions aren't requested here just to demonstrate that can be
-/// done later
-final DarwinInitializationSettings initializationSettingsDarwin =
-DarwinInitializationSettings(
-  requestAlertPermission: false,
-  requestBadgePermission: false,
-  requestSoundPermission: false,
-
-
-  notificationCategories: darwinNotificationCategories,
-);
-
-@pragma('vm:entry-point')
-void notificationTapBackground(NotificationResponse notificationResponse) {
-  // ignore: avoid_print
-  print('notification(${notificationResponse.id}) action tapped: '
-      '${notificationResponse.actionId} with'
-      ' payload: ${notificationResponse.payload}');
-  if (notificationResponse.input?.isNotEmpty ?? false) {
-    // ignore: avoid_print
-    // DebugUtils.showLog(
-    //   'notification action tapped with input: ${notificationResponse.input}',
-    // );
-  }
-}
-
-/// A notification action which triggers a url launch event
-
-const String urlLaunchActionId = 'id_1';
-
-/// A notification action which triggers a App navigation event
-const String navigationActionId = 'id_3';
-const String darwinNotificationCategoryText = 'textCategory';
-const String darwinNotificationCategoryPlain = 'plainCategory';
-
-final StreamController<ReceivedNotification> didReceiveLocalNotificationStream = StreamController<ReceivedNotification>.broadcast();
-
-final StreamController<String?> selectNotificationStream = StreamController<String?>.broadcast();
-
-
+// ------------------ PushNotificationService ------------------
 class PushNotificationService {
   bool alreadySent = false;
   static AudioPlayer player = AudioPlayer();
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
   FlutterLocalNotificationsPlugin();
-  Map<String, dynamic>? msgOnLocal;
 
+  // ✅ Unified method: inserts into DB and refreshes controller
   static Future<void> checkNotification(RemoteMessage message) async {
-    /*  await Future<void>.delayed(
-      const Duration(milliseconds: 1000),
-    );*/
-
     final notificationType = message.data[kNotificationType] as String?;
     final notification = message.notification;
 
     String title = notification?.title ?? "No Title";
     String body = notification?.body ?? "No Body";
-
-    // Image handling for Android and iOS separately
-    String? image;
-    if (Platform.isAndroid) {
-      image = notification?.android?.imageUrl;
-    } else if (Platform.isIOS) {
-      image = notification?.apple?.imageUrl;
-    }
+    String? image = Platform.isAndroid
+        ? notification?.android?.imageUrl
+        : notification?.apple?.imageUrl;
 
     String timestamp = DateTime.now().toIso8601String();
 
-    NotificationDatabase.instance.insertNotification(
+    await NotificationDatabase.instance.insertNotification(
       NotificationModel(
         title: title,
         body: body,
@@ -138,16 +106,18 @@ class PushNotificationService {
       ),
     );
 
-    _goToScreen(notificationType, 0);
+    // 🔹 Immediately refresh UI if controller is active
+    if (Get.isRegistered<NotificationController>()) {
+      Get.find<NotificationController>().loadNotifications();
+    }
 
+    _goToScreen(notificationType, 0);
   }
 
   Future<void> initialise() async {
     try {
       _configureDidReceiveLocalNotificationSubject();
       _configureSelectNotificationSubject();
-
-      // Log Firebase token (non-critical)
       generateToken();
 
       await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
@@ -168,10 +138,11 @@ class PushNotificationService {
         onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
       );
 
-      // Request permissions on iOS/Mac
+      // Request permissions
       if (Platform.isIOS || Platform.isMacOS) {
         await flutterLocalNotificationsPlugin
-            .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
+            .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin>()
             ?.requestPermissions(
           alert: true,
           badge: true,
@@ -180,48 +151,37 @@ class PushNotificationService {
         );
       } else if (Platform.isAndroid) {
         await flutterLocalNotificationsPlugin
-            .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+            .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
             ?.requestPermission();
       }
 
-      // Setup listeners
+      // Foreground notification handling
       FirebaseMessaging.onMessage.listen((event) {
-        print('Message data: ${event.data}');
         if (Platform.isAndroid) {
           playCustomNotificationSound();
           _showNotificationWithActions(event);
         }
       });
 
+      // Background tap handling
       FirebaseMessaging.onMessageOpenedApp.listen((message) async {
-        final notificationType = message.data[kNotificationType] as String?;
-
         if (Platform.isAndroid) playCustomNotificationSound();
-
         if (!alreadySent) {
           alreadySent = true;
-
-          await checkNotification(message); // WAIT here
-          _goToScreen(notificationType, 3);
+          await checkNotification(message); // ✅ Now refresh happens here
         }
       });
-
     } catch (e) {
       print("❌ PushNotificationService.init failed: $e");
     }
   }
 
-
   static void _goToScreen(String? notificationType, int? orderId) {
-
     try {
       final navController = Get.find<UdateProfileController>();
-
-        navController.changeTab(3);
-
-    } on Exception catch (e, s) {
-
-    }
+      navController.changeTab(3);
+    } catch (_) {}
   }
 
   Future<String?> generateToken() async {
@@ -232,10 +192,10 @@ class PushNotificationService {
         if (token != null && token.isNotEmpty) break;
         await Future.delayed(Duration(seconds: 2));
       }
-      if (token == null || token.isEmpty) {
-        print('❌ Failed to retrieve FCM token.');
-      } else {
+      if (token != null && token.isNotEmpty) {
         print('✅ FCM Token: $token');
+      } else {
+        print('❌ Failed to retrieve FCM token.');
       }
       return token;
     } catch (e) {
@@ -244,25 +204,18 @@ class PushNotificationService {
     }
   }
 
-
   void _configureDidReceiveLocalNotificationSubject() {
-    didReceiveLocalNotificationStream.stream.listen((receivedNotification) async {
-
-    });
+    didReceiveLocalNotificationStream.stream.listen((receivedNotification) {});
   }
 
   void _configureSelectNotificationSubject() {
     selectNotificationStream.stream.listen((payload) async {
       final data = json.decode(payload ?? '') as Map<String, dynamic>;
-      print('notificationSelect ssTOP>> $data');
       final notificationType = data[kNotificationType] as String?;
-     // await NotificationDatabase.instance.markNotificationAsRead(data);
-
-      _goToScreen(notificationType ?? '',0);
-
-
+      _goToScreen(notificationType ?? '', 0);
     });
   }
+
   void playCustomNotificationSound() async {
     await player.play(AssetSource('audio/smileringtone.mp3'));
   }
@@ -297,16 +250,9 @@ class PushNotificationService {
         0,
         event.notification?.title,
         event.notification?.body,
-
         notificationDetails,
       );
     } else {
-      final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
-      flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
-
-
-
       const iosNotificationDetails = DarwinNotificationDetails(
         presentAlert: true,
         presentBadge: true,
@@ -320,12 +266,10 @@ class PushNotificationService {
         channelDescription: "MPM",
         importance: Importance.max,
         priority: Priority.high,
-
-        sound: RawResourceAndroidNotificationSound("smileringtone"), // Use the channel sound
+        sound: RawResourceAndroidNotificationSound("smileringtone"),
         icon: '@drawable/logo',
         enableLights: true,
         enableVibration: true,
-
         styleInformation: MediaStyleInformation(
           htmlFormatContent: true,
           htmlFormatTitle: true,
@@ -340,61 +284,43 @@ class PushNotificationService {
 
       final title = event.notification?.title ?? '';
       final body = event.notification?.body ?? '';
-      final image= event.notification!.android!.imageUrl??"";
-      print("dataevent"+image.toString());
+      final image = event.notification?.android?.imageUrl ?? "";
       String timestamp = DateTime.now().toIso8601String();
+
       await flutterLocalNotificationsPlugin.show(
         Random().nextInt(9999),
         title,
         body,
         notificationDetails,
-
         payload: json.encode(event.data),
+      );
 
-      );
-      await NotificationDatabase.instance.insertNotification(
-        NotificationModel(title: title, body: body,image: image, timestamp: timestamp,isRead: false),
-      );
-      final controller = Get.put<NotificationController>(NotificationController());
-      controller.loadNotifications();
+      // ✅ Save + refresh via checkNotification
+      await checkNotification(event);
     }
   }
 
-  static Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-
-
-    String title = message.notification!.title ?? "No Title";
-    String body = message.notification!.body ?? "No Body";
-    String image = message.notification!.android!.imageUrl ??"";
-
-    String timestamp = DateTime.now().toIso8601String();
-
-   if(title!="No Title")
-     {
-       await NotificationDatabase.instance.insertNotification(
-         NotificationModel(title: title, body: body, image:image,timestamp: timestamp,isRead: false),
-       );
-      // await NotificationDatabase.instance.markAllNotificationsAsRead();
-       NotificationController controller;
-       if (Get.isRegistered<NotificationController>()) {
-         controller = Get.find<NotificationController>();
-         controller.loadNotifications();
-       }
-     }
+  static Future<void> firebaseMessagingBackgroundHandler(
+      RemoteMessage message) async {
+    await checkNotification(message); // ✅ Background now also updates UI
   }
 
   Future<void> handleInitialNotification() async {
-    final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+    final initialMessage =
+    await FirebaseMessaging.instance.getInitialMessage();
     if (initialMessage != null) {
-      final notificationType = initialMessage.data[kNotificationType] as String?;
       if (!alreadySent) {
         alreadySent = true;
-        await PushNotificationService.checkNotification(initialMessage); // ✅ this is your own method
-        PushNotificationService._goToScreen(notificationType, 3);
+        await checkNotification(initialMessage); // ✅ Auto refresh
       }
     }
   }
+}
 
+@pragma('vm:entry-point')
+void notificationTapBackground(NotificationResponse notificationResponse) {
+  print('notification(${notificationResponse.id}) tapped: '
+      '${notificationResponse.actionId} payload: ${notificationResponse.payload}');
 }
 
 extension on AndroidFlutterLocalNotificationsPlugin? {
