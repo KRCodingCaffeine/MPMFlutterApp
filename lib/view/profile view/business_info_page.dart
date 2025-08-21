@@ -38,7 +38,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
   UdateProfileController controller = Get.put(UdateProfileController());
   final GlobalKey<FormState> _formKeyLogin = GlobalKey<FormState>();
   final GlobalKey<FormState> _formKeyLogin2 = GlobalKey<FormState>();
-  @override
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -192,7 +192,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
   }
 
   void _showAddModalSheet(BuildContext context) {
-    double heightFactor = 0.8; // Default height for the modal
+    double heightFactor = 0.8;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -211,7 +211,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context)
                     .viewInsets
-                    .bottom, // Adjust for keyboard
+                    .bottom,
               ),
               child: SafeArea(
                 child: FractionallySizedBox(
@@ -311,7 +311,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                       const SizedBox(height: 16),
                       Expanded(
                         child: SingleChildScrollView(
-                          controller: scrollController, // Make it scrollable
+                          controller: scrollController,
                           padding: const EdgeInsets.all(16.0),
                           child: Form(
                             key: _formKeyLogin,
@@ -323,7 +323,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                       'Organisation Name',
                                       controller
                                           .organisationNameController.value,
-                                      'Organisation Name', // Hint Text
+                                      'Organisation Name',
                                       'Enter Organisation Name',
                                       text: TextInputType.text,
                                       isRequired: true);
@@ -428,7 +428,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                               isEmpty: regiController.city_id.value.isEmpty,
                                               child: DropdownButtonHideUnderline(
                                                 child: DropdownButton<String>(
-                                                  dropdownColor: Colors.white, // White background for dropdown list
+                                                  dropdownColor: Colors.white,
                                                   borderRadius: BorderRadius.circular(10),
                                                   isExpanded: true,
                                                   hint: const Text(
@@ -726,9 +726,9 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
               children: [
                 Expanded(
                   child: Text(
-                    bussinessinfo.organisationName ?? '', // Use null-aware operator
+                    bussinessinfo.organisationName ?? '',
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    overflow: TextOverflow.ellipsis, // Prevents overflow
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 ElevatedButton(
@@ -760,7 +760,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
               ],
             ),
 
-            const Divider(color: Color(0xFFE0E0E0)), // Black divider
+            const Divider(color: Color(0xFFE0E0E0)),
             const SizedBox(height: 10),
 
             // Address
@@ -848,7 +848,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
         return Padding(
           padding: EdgeInsets.only(
             bottom:
-                MediaQuery.of(context).viewInsets.bottom, // Adjust for keyboard
+                MediaQuery.of(context).viewInsets.bottom,
           ),
           child: SafeArea(
             child: FractionallySizedBox(
@@ -856,7 +856,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
               child: Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(top: 50.0), // Padding at the top
+                    padding: const EdgeInsets.only(top: 50.0),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20.0),
                       child: Row(
@@ -1188,7 +1188,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                         isEmpty: regiController.country_id.value.isEmpty,
                                         child: DropdownButtonHideUnderline(
                                           child: DropdownButton<String>(
-                                            dropdownColor: Colors.white, // White background for dropdown list
+                                            dropdownColor: Colors.white,
                                             borderRadius: BorderRadius.circular(10),
                                             isExpanded: true,
                                             hint: const Text(
@@ -1263,9 +1263,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10.0),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start, // Align items to the top
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title and Colon
           Container(
             width: 105,
             child: Row(
@@ -1336,7 +1335,6 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(height: 30),
-              // Buttons row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -1373,11 +1371,9 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
               ),
               const SizedBox(height: 30),
 
-          // Occupation Dropdown (always visible)
           _buildOccupationDropdown(context),
           const SizedBox(height: 20),
 
-          // Profession Dropdown (conditionally visible)
           Obx(() {
             if (controller.selectedOccupation.value.isEmpty ||
                 controller.selectedOccupation.value == "Other") {
@@ -1387,7 +1383,6 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
           }),
           const SizedBox(height: 20),
 
-          // Specialization Dropdown (conditionally visible)
           Obx(() {
             if (controller.selectedProfession.value.isEmpty ||
                 controller.selectedProfession.value == "Other") {
@@ -1397,7 +1392,6 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
           }),
           const SizedBox(height: 20),
 
-          // Details Field (conditionally visible)
           Obx(() {
             if (!controller.showDetailsField.value) return const SizedBox();
             return _buildDetailsField(context);
@@ -1425,7 +1419,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
               return Expanded(
                 child: InputDecorator(
                   decoration: _inputDecoration('Occupation *'),
-                  isEmpty: controller.selectedOccupation.isEmpty,
+                  isEmpty: controller.selectedOccupation.value.isEmpty,
                   child: DropdownButton<String>(
                     dropdownColor: Colors.white,
                     borderRadius: BorderRadius.circular(10),
@@ -1474,7 +1468,6 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
             } else if (controller.rxStatusOccupationData.value == Status.ERROR) {
               return const Center(child: Text('Failed to load profession'));
             } else if (controller.occuptionProfessionList.isEmpty) {
-              // If no professions available, show details field
               controller.showDetailsField.value = true;
               return const SizedBox();
             } else {
@@ -1528,26 +1521,32 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
             } else if (controller.rxStatusOccupationSpec.value == Status.ERROR) {
               return const Center(child: Text('Failed to load specialization'));
             } else if (controller.occuptionSpeList.isEmpty) {
-              // If no specializations available, show details field
               controller.showDetailsField.value = true;
               return const SizedBox();
             } else {
+              final dropdownItems = controller.occuptionSpeList
+                  .map((OccuptionSpecData specialization) {
+                return DropdownMenuItem<String>(
+                  value: specialization.id?.toString(),
+                  child: Text(specialization.name ?? 'Unknown'),
+                );
+              }).toList();
+
+              String? currentValue = controller.selectedSpecialization.value.isEmpty
+                  ? "OTHER"
+                  : controller.selectedSpecialization.value;
+
               return Expanded(
                 child: InputDecorator(
                   decoration: _inputDecoration('Occupation Specialization'),
-                  isEmpty: controller.selectedSpecialization.isEmpty,
+                  isEmpty: currentValue == null || currentValue.isEmpty,
                   child: DropdownButton<String>(
                     dropdownColor: Colors.white,
                     borderRadius: BorderRadius.circular(10),
                     isExpanded: true,
                     underline: Container(),
-                    value: controller.selectedSpecialization.isEmpty ? null : controller.selectedSpecialization.value,
-                    items: controller.occuptionSpeList.map((OccuptionSpecData specialization) {
-                      return DropdownMenuItem<String>(
-                        value: specialization.id.toString(),
-                        child: Text(specialization.name ?? 'Unknown'),
-                      );
-                    }).toList(),
+                    value: currentValue,
+                    items: dropdownItems,
                     onChanged: (String? newValue) {
                       if (newValue != null) {
                         controller.selectedSpecialization.value = newValue;
@@ -1568,6 +1567,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
     return Container(
       margin: const EdgeInsets.only(left: 5, right: 5),
       child: TextField(
+        controller: controller.detailsController.value,
         decoration: InputDecoration(
           labelText: 'Details',
           border: OutlineInputBorder(
@@ -1628,7 +1628,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Obx(() {
-            if (controller.hasOccupationData.value)
+            if (controller.hasOccupationData.value) {
               return Card(
                 elevation: 5,
                 shape: RoundedRectangleBorder(
@@ -1649,28 +1649,24 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Obx(() {
-                                  return _buildInfoLine(
-                                      'Occupation',
-                                      controller
-                                          .occupationController.value.text);
+                                  final occ = controller.occupationController.value.text;
+                                  return _buildInfoLine('Occupation', occ.isNotEmpty ? occ : 'Other');
                                 }),
+
                                 Obx(() {
-                                  return _buildInfoLine(
-                                      'Profession',
-                                      controller
-                                          .occupation_profession_nameController
-                                          .value
-                                          .text);
+                                  final prof = controller.occupation_profession_nameController.value.text;
+                                  return _buildInfoLine('Profession', prof.isNotEmpty ? prof : 'Other');
                                 }),
+
                                 Obx(() {
-                                  return _buildInfoLine(
-                                      'Specialization',
-                                      controller.specialization_nameController
-                                          .value.text);
+                                  final spec = controller.specialization_nameController.value.text;
+                                  return _buildInfoLine('Specialization', spec.isNotEmpty ? spec : 'Other');
                                 }),
+
                                 Obx(() {
-                                  return _buildInfoLine('Details',
-                                      controller.detailsController.value.text);
+                                  final details = controller.detailsController.value.text;
+                                  if (details.isEmpty) return const SizedBox();
+                                  return _buildInfoLine('Details', details.isNotEmpty ? details : 'Other');
                                 }),
                               ],
                             ),
@@ -1705,7 +1701,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                   ),
                 ),
               );
-            else
+            } else {
               return Column(
                 children: [
                   const Text(
@@ -1727,12 +1723,12 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                       style: TextStyle(color: Colors.red),
                     ),
                     style: TextButton.styleFrom(
-                      foregroundColor: Colors
-                          .red, // Ensures the text and icon stay red when pressed
+                      foregroundColor: Colors.red,
                     ),
                   ),
                 ],
               );
+            }
           })
         ],
       ),

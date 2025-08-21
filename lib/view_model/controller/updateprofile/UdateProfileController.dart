@@ -217,8 +217,8 @@ class UdateProfileController extends GetxController {
   void setRxRequestOccuptionSpec(Status _value) =>
       rxStatusOccupationSpec.value = _value;
   var relationShipTypeList = <RelationData>[].obs;
-  Rx<TextEditingController> educationdetailController =
-      TextEditingController().obs;
+  Rx<TextEditingController> educationdetailController = TextEditingController().obs;
+
 
   setRelationShipType(List<RelationData> _value) =>
       relationShipTypeList.value = _value;
@@ -568,137 +568,112 @@ class UdateProfileController extends GetxController {
       final userData = await SessionManager.getSession();
       if (userData == null) throw Exception("User not logged in");
 
-      // Validate required fields
       if (selectedOccupation.value.isEmpty) {
         throw Exception("Please select an occupation");
       }
 
-      // Prepare the data
+      String? professionId = selectedProfession.value.isEmpty ? null : selectedProfession.value;
+      String? specializationId = selectedSpecialization.value.isEmpty ? null : selectedSpecialization.value;
+
+      if (professionId == "Other") professionId = null;
+      if (specializationId == "Other") specializationId = null;
+
       final Map<String, dynamic> data = {
         "member_id": userData.memberId.toString(),
         "occupation_id": selectedOccupation.value,
-        "occupation_profession_id":
-            selectedProfession.value.isEmpty ? "" : selectedProfession.value,
-        "occupation_specialization_id": selectedSpecialization.value.isEmpty
-            ? ""
-            : selectedSpecialization.value,
-        "occupation_other_name":
-            showDetailsField.value ? detailsController.value.text : "",
+        "occupation_profession_id": professionId ?? "",
+        "occupation_specialization_id": specializationId ?? "",
+        "occupation_other_name": showDetailsField.value ? detailsController.value.text : "",
         "updated_by": userData.memberId.toString()
       };
 
-      // Call API
       final response = await api.updateOrAddOccuption(data);
 
       if (response.status == true) {
-        // Update local state
         currentOccupation.value = Occupation(
           occupationId: selectedOccupation.value,
           occupation: occuptionList
               .firstWhere(
                 (occ) => occ.id == selectedOccupation.value,
-                orElse: () => OccupationData(
-                    id: '',
-                    occupation: '',
-                    status: '',
-                    createdAt: null,
-                    updatedAt: null),
-              )
+            orElse: () => OccupationData(
+                id: '',
+                occupation: '',
+                status: '',
+                createdAt: null,
+                updatedAt: null),
+          )
               .occupation,
-          occupationProfessionId: selectedProfession.value.isEmpty
-              ? null
-              : selectedProfession.value,
-          occupationProfessionName: selectedProfession.value.isEmpty
-              ? null
-              : occuptionProfessionList
-                  .firstWhere(
-                    (prof) => prof.id == selectedProfession.value,
-                    orElse: () => OccuptionProfessionData(id: '', name: ''),
-                  )
-                  .name,
-          occupationSpecializationId: selectedSpecialization.value.isEmpty
-              ? null
-              : selectedSpecialization.value,
-          specializationName: selectedSpecialization.value.isEmpty
-              ? null
-              : occuptionSpeList
-                  .firstWhere(
-                    (spec) => spec.id == selectedSpecialization.value,
-                    orElse: () => OccuptionSpecData(id: '', name: ''),
-                  )
-                  .name,
-          occupationOtherName:
-              showDetailsField.value ? detailsController.value.text : null,
+          occupationProfessionId: professionId,
+          occupationProfessionName: professionId == null ? null : occuptionProfessionList
+              .firstWhere(
+                (prof) => prof.id == professionId,
+            orElse: () => OccuptionProfessionData(id: '', name: ''),
+          )
+              .name,
+          occupationSpecializationId: specializationId,
+          specializationName: specializationId == null ? null : occuptionSpeList
+              .firstWhere(
+                (spec) => spec.id == specializationId,
+            orElse: () => OccuptionSpecData(id: '', name: ''),
+          )
+              .name,
+          occupationOtherName: showDetailsField.value ? detailsController.value.text : null,
         );
 
         hasOccupationData.value = true;
 
-        // Update display controllers
-        occupationController.value.text =
-            currentOccupation.value?.occupation ?? '';
-        occupation_profession_nameController.value.text =
-            currentOccupation.value?.occupationProfessionName ?? '';
-        specialization_nameController.value.text =
-            currentOccupation.value?.specializationName ?? '';
-        detailsController.value.text =
-            currentOccupation.value?.occupationOtherName ?? '';
+        occupationController.value.text = currentOccupation.value?.occupation ?? '';
+        occupation_profession_nameController.value.text = currentOccupation.value?.occupationProfessionName ?? '';
+        specialization_nameController.value.text = currentOccupation.value?.specializationName ?? '';
+        detailsController.value.text = currentOccupation.value?.occupationOtherName ?? '';
 
         Get.back();
 
         Get.snackbar(
           'Success',
-          response.message ?? 'Occupation saved successfully',
+          'Occupation saved successfully',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.green,
           colorText: Colors.white,
         );
-
-        // Close the bottom sheet after a delay
-        Future.delayed(const Duration(milliseconds: 1000), () {
-          if (Get.isBottomSheetOpen ?? false) {
-            Get.back();
-          }
-        });
       } else {
         throw Exception(response.message ?? 'Failed to save occupation');
       }
     } catch (e) {
       Get.snackbar(
         'Error',
-        e.toString(),
+        'Something went wrong. Please try again.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
+        duration: Duration(seconds: 3),
       );
+
+      print('Occupation save error: $e');
     } finally {
       isOccupationLoading.value = false;
     }
   }
 
   void initOccupationData(Occupation? occupation) {
-    // Reset all fields first
     resetDependentFields();
     detailsController.value.clear();
 
     if (occupation == null) return;
 
-    // Set existing values
     selectedOccupation.value = occupation.occupationId ?? '';
     detailsController.value.text = occupation.occupationOtherName ?? '';
 
-    // If occupation is "Other"
     if (selectedOccupation.value == "0") {
       showDetailsField.value = true;
       return;
     }
 
-    // Load profession data
     getOccupationProData(selectedOccupation.value).then((_) {
       if (occupation.occupationProfessionId != null &&
           occupation.occupationProfessionId!.isNotEmpty) {
         selectedProfession.value = occupation.occupationProfessionId!;
 
-        // If profession is "Other"
         if (selectedProfession.value == "Other") {
           showDetailsField.value = true;
           return;
@@ -771,38 +746,56 @@ class UdateProfileController extends GetxController {
     setRxRequestQualification(Status.LOADING);
     api.userQualification().then((_value) {
       setRxRequestQualification(Status.COMPLETE);
-      setQlication(_value.data!);
-      qulicationList.value.add(QualificationData(
+
+      // ✅ Clear the list first and add fresh data
+      qulicationList.value = _value.data! ?? [];
+
+      // ✅ Check if "other" already exists before adding
+      final hasOther = qulicationList.value.any((item) => item.id == "other");
+      if (!hasOther) {
+        qulicationList.value.add(QualificationData(
           id: "other",
           qualification: 'Other',
           status: '1',
           createdAt: null,
-          updatedAt: null));
+          updatedAt: null,
+        ));
+      }
     }).onError((error, strack) {
       setRxRequestQualification(Status.ERROR);
     });
   }
 
+  // In UdateProfileController class
+
   void getQualicationMain(String qualification_id) async {
     print("cvv" + qualification_id.toString());
-    qulicationMainList.value.clear();
+
+    // ✅ Clear the list completely
     qulicationMainList.value = [];
+
     Map datas = {"qualification_id": qualification_id};
     setRxRequestQualificationMain(Status.LOADING);
+
     await api.userQualificationMain(datas).then((_value) {
       setRxRequestQualificationMain(Status.COMPLETE);
 
       if (_value.data != null && _value.data!.isNotEmpty) {
-        setQualicationMain(_value.data!);
-        qulicationMainList.value = qulicationMainList.value.toSet().toList();
-        qulicationMainList.value.add(QualicationMainData(
-            id: "0",
+        // ✅ Set fresh data
+        qulicationMainList.value = _value.data!;
+
+        // ✅ Use unique ID for "Other" option
+        final hasOther = qulicationMainList.value.any((item) => item.id == "other_main");
+        if (!hasOther) {
+          qulicationMainList.value.add(QualicationMainData(
+            id: "other_main",  // ← Changed to unique value
             qualificationId: qualification_id,
             name: 'Other',
             status: '1',
             createdAt: null,
-            updatedAt: null));
-        qulicationMainList.refresh();
+            updatedAt: null,
+          ));
+        }
       }
     }).onError((error, strack) {
       print("cvv" + error.toString());
@@ -812,25 +805,29 @@ class UdateProfileController extends GetxController {
 
   void getQualicationCategory(String qualification_main_id) {
     qulicationCategoryList.value = [];
+
     print("cvv111" + qualification_main_id.toString());
     Map datas = {"qualification_main_id": qualification_main_id};
     setRxRequestQualificationCat(Status.LOADING);
+
     api.userQualificationCategory(datas).then((_value) {
       setRxRequestQualificationCat(Status.COMPLETE);
 
       if (_value.data != null && _value.data!.isNotEmpty) {
-        setQualicationCategory(_value.data!);
-        qulicationCategoryList.value =
-            qulicationCategoryList.value.toSet().toList();
-        qulicationCategoryList.value.add(Qualificationcategorydata(
-            id: "0",
+        qulicationCategoryList.value = _value.data!;
+
+        final hasOther = qulicationCategoryList.value.any((item) => item.id == "other_category");
+        if (!hasOther) {
+          qulicationCategoryList.value.add(Qualificationcategorydata(
+            id: "other_category",
             qualificationId: "",
             qualificationMainId: qualification_main_id,
             name: 'Other',
             status: '1',
             createdAt: null,
-            updatedAt: null));
-        qulicationCategoryList.refresh();
+            updatedAt: null,
+          ));
+        }
         isQualificationCategoryVisible.value = true;
         isQualificationDetailVisible.value = false;
       } else {
@@ -890,8 +887,8 @@ class UdateProfileController extends GetxController {
         addloading.value = false;
         print("fvvf" + error.toString());
         Get.snackbar(
-          'Error', // Title
-          "Some thing went wrong ", // Message
+          'Error',
+          "Some thing went wrong ",
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.pink,
           colorText: Colors.white,
@@ -911,22 +908,26 @@ class UdateProfileController extends GetxController {
     memberId.value = userData!.memberId.toString();
     addloading.value = true;
     try {
-      Map map = {
-        'member_id': memberId.value,
-        "qualification_id": selectQlification.value,
-        'member_qualification_id': member_qualification_id,
-        'qualification_main_id': selectQualicationMain.value,
-        'qualification_category_id': selectQualicationCat.value,
+      Map<String, String> map = {
+        'member_id': memberId.value.toString(),
+        'qualification_id': selectQlification.value.toString(),
+        'member_qualification_id': member_qualification_id.toString(),
+        'qualification_main_id': selectQualicationMain.value.toString(),
+        'qualification_category_id':
+        (selectQualicationCat.value == "other_category" || selectQualicationCat.value.isEmpty)
+            ? "0"
+            : selectQualicationCat.value.toString(),
         'qualification_other_name': educationdetailController.value.text,
-        'updated_by': memberId.value
+        'updated_by': memberId.value.toString(),
       };
+
       print("fffh" + map.toString());
       api.updateQualification(map).then((_value) async {
         addloading.value = false;
         if (_value['status'] == true) {
           Get.snackbar(
-            'Success', // Title
-            "Update Education Successfully", // Message
+            'Success',
+            "Update Education Successfully",
             snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.green,
             colorText: Colors.white,
@@ -939,8 +940,8 @@ class UdateProfileController extends GetxController {
         addloading.value = false;
         print("fvvf" + error.toString());
         Get.snackbar(
-          'Error', // Title
-          "Some thing went wrong ", // Message
+          'Error',
+          "Some thing went wrong ",
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.pink,
           colorText: Colors.white,
@@ -1002,8 +1003,8 @@ class UdateProfileController extends GetxController {
         if (_value.status == true) {
           getUserProfile();
           Get.snackbar(
-            'Success', // Title
-            "Update Relation SuccessFully", // Message
+            'Success',
+            "Update Relation SuccessFully",
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Colors.green,
             colorText: Colors.white,
@@ -1016,8 +1017,8 @@ class UdateProfileController extends GetxController {
         //addloading.value=false;
         print("fvvf" + error.toString());
         Get.snackbar(
-          'Error', // Title
-          "Some thing went wrong ", // Message
+          'Error',
+          "Some thing went wrong ",
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.pink,
           colorText: Colors.white,
@@ -1042,8 +1043,8 @@ class UdateProfileController extends GetxController {
 
         if (_value['status'] == true) {
           Get.snackbar(
-            'Success', // Title
-            "Update Jangana SuccessFully", // Message
+            'Success',
+            "Update Jangana SuccessFully",
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Colors.green,
             colorText: Colors.white,
@@ -1056,8 +1057,8 @@ class UdateProfileController extends GetxController {
         //addloading.value=false;
         print("fvvf" + error.toString());
         Get.snackbar(
-          'Error', // Title
-          "Some thing went wrong ", // Message
+          'Error',
+          "Some thing went wrong ",
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.pink,
           colorText: Colors.white,
@@ -1087,7 +1088,7 @@ class UdateProfileController extends GetxController {
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.green,
           colorText: Colors.white,
-          duration: Duration(seconds: 3),
+          duration: const Duration(seconds: 3),
         );
 
         getUserProfile();
@@ -1096,13 +1097,18 @@ class UdateProfileController extends GetxController {
             response.data?.message ?? 'Failed to send verification email');
       }
     } catch (e) {
+      // Always show user-friendly message with "Email"
+      final errorMessage = e.toString().contains("email")
+          ? e.toString()
+          : "Email verification failed. Please try again.";
+
       Get.snackbar(
         'Error',
-        e.toString(),
+        errorMessage,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
-        duration: Duration(seconds: 3),
+        duration: const Duration(seconds: 3),
       );
     }
   }
