@@ -95,15 +95,6 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                     const SizedBox(height: 20),
                     Obx(() {
                       return _buildInfoBox(
-                        'Zone:',
-                        subtitle: controller.getUserData.value.address?.zoneName
-                                ?.toString() ??
-                            "N/A",
-                      );
-                    }),
-                    const SizedBox(height: 20),
-                    Obx(() {
-                      return _buildInfoBox(
                         'Address:',
                         subtitle: controller.getUserData.value.address?.address
                                 ?.toString() ??
@@ -154,6 +145,15 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                         'Pincode:',
                         subtitle: controller.getUserData.value.address?.pincode
                                 ?.toString() ??
+                            "N/A",
+                      );
+                    }),
+                    const SizedBox(height: 20),
+                    Obx(() {
+                      return _buildInfoBox(
+                        'Zone:',
+                        subtitle: controller.getUserData.value.address?.zoneName
+                            ?.toString() ??
                             "N/A",
                       );
                     }),
