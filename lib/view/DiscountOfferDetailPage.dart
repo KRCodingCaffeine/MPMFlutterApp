@@ -710,8 +710,6 @@ class _DiscountOfferDetailPageState extends State<DiscountOfferDetailPage> {
             _buildSpacerRow(),
             _buildTableRow('Mobile Number', widget.offer.orgMobile ?? '--'),
             _buildSpacerRow(),
-            _buildTableRow('WhatsApp', widget.offer.orgWhatsApp ?? '--'),
-            _buildSpacerRow(),
             _buildTableRow('Email', widget.offer.orgEmail ?? '--'),
           ],
         ),

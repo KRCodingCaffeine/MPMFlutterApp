@@ -98,13 +98,15 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
               children: [
                 // Title Row with "Business / Employment Details" and Add Button (conditionally visible)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
                         'Business / Employment Details',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold),
                       ),
                       ElevatedButton(
                         onPressed: () {
@@ -118,7 +120,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -144,7 +147,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: Divider(
                     thickness: 1.0,
-                    color: Color(0xFFE0E0E0), // Equivalent to Colors.grey.shade300
+                    color:
+                        Color(0xFFE0E0E0), // Equivalent to Colors.grey.shade300
                   ),
                 ),
 
@@ -209,9 +213,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
           builder: (context, scrollController) {
             return Padding(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context)
-                    .viewInsets
-                    .bottom,
+                bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
               child: SafeArea(
                 child: FractionallySizedBox(
@@ -234,7 +236,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 24, vertical: 8),
                               ),
                               child: const Text(
                                 'Cancel',
@@ -290,19 +293,20 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 24, vertical: 8),
                                 ),
                                 child: controller.addBussinessLoading.value
                                     ? const CircularProgressIndicator(
-                                  color: Colors.red,
-                                )
+                                        color: Colors.red,
+                                      )
                                     : const Text(
-                                  'Save',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
+                                        'Save',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
                               );
                             }),
                           ],
@@ -366,7 +370,6 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                       text: TextInputType.text,
                                       isRequired: true);
                                 }),
-
                                 Container(
                                   width: double.infinity,
                                   child: Row(
@@ -412,41 +415,63 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                               decoration: InputDecoration(
                                                 labelText: 'City *',
                                                 border: OutlineInputBorder(
-                                                  borderSide: BorderSide(color: Colors.black26),
+                                                  borderSide: BorderSide(
+                                                      color: Colors.black26),
                                                 ),
-                                                enabledBorder: OutlineInputBorder(
-                                                  borderSide: BorderSide(color: Colors.black26),
+                                                enabledBorder:
+                                                    OutlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                      color: Colors.black26),
                                                 ),
-                                                focusedBorder: OutlineInputBorder(
-                                                  borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                                                focusedBorder:
+                                                    OutlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                      color: Colors.black26,
+                                                      width: 1.5),
                                                 ),
-                                                contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                                                contentPadding:
+                                                    EdgeInsets.symmetric(
+                                                        horizontal: 20),
                                                 labelStyle: TextStyle(
                                                   color: Colors.black45,
                                                 ),
                                               ),
-                                              isEmpty: regiController.city_id.value.isEmpty,
-                                              child: DropdownButtonHideUnderline(
+                                              isEmpty: regiController
+                                                  .city_id.value.isEmpty,
+                                              child:
+                                                  DropdownButtonHideUnderline(
                                                 child: DropdownButton<String>(
                                                   dropdownColor: Colors.white,
-                                                  borderRadius: BorderRadius.circular(10),
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
                                                   isExpanded: true,
                                                   hint: const Text(
                                                     'Select City *',
-                                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold),
                                                   ),
-                                                  value: regiController.city_id.value.isEmpty
+                                                  value: regiController
+                                                          .city_id.value.isEmpty
                                                       ? null
-                                                      : regiController.city_id.value,
-                                                  items: regiController.cityList.map((CityData city) {
-                                                    return DropdownMenuItem<String>(
+                                                      : regiController
+                                                          .city_id.value,
+                                                  items: regiController.cityList
+                                                      .map((CityData city) {
+                                                    return DropdownMenuItem<
+                                                        String>(
                                                       value: city.id.toString(),
-                                                      child: Text(city.cityName ?? 'Unknown'),
+                                                      child: Text(
+                                                          city.cityName ??
+                                                              'Unknown'),
                                                     );
                                                   }).toList(),
-                                                  onChanged: (String? newValue) {
+                                                  onChanged:
+                                                      (String? newValue) {
                                                     if (newValue != null) {
-                                                      regiController.setSelectedCity(newValue);
+                                                      regiController
+                                                          .setSelectedCity(
+                                                              newValue);
                                                     }
                                                   },
                                                 ),
@@ -459,13 +484,14 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                   ),
                                 ),
                                 const SizedBox(height: 30),
-
                                 Container(
                                   width: double.infinity,
                                   child: Row(
                                     children: [
                                       Obx(() {
-                                        if (regiController.rxStatusStateLoading.value == Status.LOADING) {
+                                        if (regiController
+                                                .rxStatusStateLoading.value ==
+                                            Status.LOADING) {
                                           return Padding(
                                             padding: const EdgeInsets.symmetric(
                                                 vertical: 10, horizontal: 22),
@@ -482,54 +508,83 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                                               .pink_color),
                                                 )),
                                           );
-                                        } else if (regiController.rxStatusStateLoading.value == Status.ERROR) {
+                                        } else if (regiController
+                                                .rxStatusStateLoading.value ==
+                                            Status.ERROR) {
                                           return const Center(
-                                              child: Text('Failed to load state'));
+                                              child:
+                                                  Text('Failed to load state'));
                                         } else if (regiController
                                             .stateList.isEmpty) {
                                           return const Center(
-                                              child: Text('No State available'));
+                                              child:
+                                                  Text('No State available'));
                                         } else {
                                           return Expanded(
                                             child: InputDecorator(
                                               decoration: InputDecoration(
                                                 labelText: 'State *',
                                                 border: OutlineInputBorder(
-                                                  borderSide: BorderSide(color: Colors.black26),
+                                                  borderSide: BorderSide(
+                                                      color: Colors.black26),
                                                 ),
-                                                enabledBorder: OutlineInputBorder(
-                                                  borderSide: BorderSide(color: Colors.black26),
+                                                enabledBorder:
+                                                    OutlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                      color: Colors.black26),
                                                 ),
-                                                focusedBorder: OutlineInputBorder(
-                                                  borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                                                focusedBorder:
+                                                    OutlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                      color: Colors.black26,
+                                                      width: 1.5),
                                                 ),
-                                                contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                                                contentPadding:
+                                                    EdgeInsets.symmetric(
+                                                        horizontal: 20),
                                                 labelStyle: TextStyle(
                                                   color: Colors.black45,
                                                 ),
                                               ),
-                                              isEmpty: regiController.state_id.value.isEmpty,
-                                              child: DropdownButtonHideUnderline(
+                                              isEmpty: regiController
+                                                  .state_id.value.isEmpty,
+                                              child:
+                                                  DropdownButtonHideUnderline(
                                                 child: DropdownButton<String>(
-                                                  dropdownColor: Colors.white, // White background for dropdown list
-                                                  borderRadius: BorderRadius.circular(10),
+                                                  dropdownColor: Colors
+                                                      .white, // White background for dropdown list
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
                                                   isExpanded: true,
                                                   hint: const Text(
                                                     'Select State *',
-                                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold),
                                                   ),
-                                                  value: regiController.state_id.value.isEmpty
+                                                  value: regiController.state_id
+                                                          .value.isEmpty
                                                       ? null
-                                                      : regiController.state_id.value,
-                                                  items: regiController.stateList.map((StateData state) {
-                                                    return DropdownMenuItem<String>(
-                                                      value: state.id.toString(),
-                                                      child: Text(state.stateName ?? 'Unknown'),
+                                                      : regiController
+                                                          .state_id.value,
+                                                  items: regiController
+                                                      .stateList
+                                                      .map((StateData state) {
+                                                    return DropdownMenuItem<
+                                                        String>(
+                                                      value:
+                                                          state.id.toString(),
+                                                      child: Text(
+                                                          state.stateName ??
+                                                              'Unknown'),
                                                     );
                                                   }).toList(),
-                                                  onChanged: (String? newValue) {
+                                                  onChanged:
+                                                      (String? newValue) {
                                                     if (newValue != null) {
-                                                      regiController.setSelectedState(newValue);
+                                                      regiController
+                                                          .setSelectedState(
+                                                              newValue);
                                                     }
                                                   },
                                                 ),
@@ -542,13 +597,14 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                   ),
                                 ),
                                 const SizedBox(height: 30),
-
                                 Container(
                                   width: double.infinity,
                                   child: Row(
                                     children: [
                                       Obx(() {
-                                        if (regiController.rxStatusCountryLoading.value == Status.LOADING) {
+                                        if (regiController
+                                                .rxStatusCountryLoading.value ==
+                                            Status.LOADING) {
                                           return Padding(
                                             padding: const EdgeInsets.symmetric(
                                                 vertical: 10, horizontal: 22),
@@ -565,12 +621,14 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                                               .pink_color),
                                                 )),
                                           );
-                                        } else if (regiController.rxStatusCountryLoading.value ==
+                                        } else if (regiController
+                                                .rxStatusCountryLoading.value ==
                                             Status.ERROR) {
                                           return const Center(
                                               child: Text(
                                                   'Failed to load country'));
-                                        } else if (regiController.countryList.isEmpty) {
+                                        } else if (regiController
+                                            .countryList.isEmpty) {
                                           return const Center(
                                               child:
                                                   Text('No Country available'));
@@ -580,41 +638,69 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                               decoration: InputDecoration(
                                                 labelText: 'Country *',
                                                 border: OutlineInputBorder(
-                                                  borderSide: BorderSide(color: Colors.black26),
+                                                  borderSide: BorderSide(
+                                                      color: Colors.black26),
                                                 ),
-                                                enabledBorder: OutlineInputBorder(
-                                                  borderSide: BorderSide(color: Colors.black26),
+                                                enabledBorder:
+                                                    OutlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                      color: Colors.black26),
                                                 ),
-                                                focusedBorder: OutlineInputBorder(
-                                                  borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                                                focusedBorder:
+                                                    OutlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                      color: Colors.black26,
+                                                      width: 1.5),
                                                 ),
-                                                contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                                                contentPadding:
+                                                    EdgeInsets.symmetric(
+                                                        horizontal: 20),
                                                 labelStyle: TextStyle(
                                                   color: Colors.black45,
                                                 ),
                                               ),
-                                              isEmpty: regiController.country_id.value.isEmpty,
-                                              child: DropdownButtonHideUnderline(
+                                              isEmpty: regiController
+                                                  .country_id.value.isEmpty,
+                                              child:
+                                                  DropdownButtonHideUnderline(
                                                 child: DropdownButton<String>(
-                                                  dropdownColor: Colors.white, // Ensures white dropdown background
-                                                  borderRadius: BorderRadius.circular(10),
+                                                  dropdownColor: Colors
+                                                      .white, // Ensures white dropdown background
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
                                                   isExpanded: true,
                                                   hint: const Text(
                                                     'Select Country *',
-                                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold),
                                                   ),
-                                                  value: regiController.country_id.value.isEmpty
+                                                  value: regiController
+                                                          .country_id
+                                                          .value
+                                                          .isEmpty
                                                       ? null
-                                                      : regiController.country_id.value,
-                                                  items: regiController.countryList.map((CountryData country) {
-                                                    return DropdownMenuItem<String>(
-                                                      value: country.id.toString(),
-                                                      child: Text(country.countryName ?? 'Unknown'),
+                                                      : regiController
+                                                          .country_id.value,
+                                                  items: regiController
+                                                      .countryList
+                                                      .map((CountryData
+                                                          country) {
+                                                    return DropdownMenuItem<
+                                                        String>(
+                                                      value:
+                                                          country.id.toString(),
+                                                      child: Text(
+                                                          country.countryName ??
+                                                              'Unknown'),
                                                     );
                                                   }).toList(),
-                                                  onChanged: (String? newValue) {
+                                                  onChanged:
+                                                      (String? newValue) {
                                                     if (newValue != null) {
-                                                      regiController.setSelectedCountry(newValue);
+                                                      regiController
+                                                          .setSelectedCountry(
+                                                              newValue);
                                                     }
                                                   },
                                                 ),
@@ -627,7 +713,6 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                   ),
                                 ),
                                 const SizedBox(height: 30),
-
                                 Obx(() {
                                   return _buildEditableField(
                                       'Office Pincode',
@@ -727,7 +812,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                 Expanded(
                   child: Text(
                     bussinessinfo.organisationName ?? '',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -743,7 +829,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -752,7 +839,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                       SizedBox(width: 4),
                       Text(
                         'Edit',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                        style: TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.w500),
                       ),
                     ],
                   ),
@@ -793,7 +881,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                 "📞 ${bussinessinfo.officePhone}",
                 style: const TextStyle(fontSize: 14, color: Colors.black87),
               ),
-            if ((bussinessinfo.officePhone ?? '').isNotEmpty) const SizedBox(height: 10),
+            if ((bussinessinfo.officePhone ?? '').isNotEmpty)
+              const SizedBox(height: 10),
 
             // Email
             if ((bussinessinfo.businessEmail ?? '').isNotEmpty)
@@ -801,7 +890,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                 "✉ ${bussinessinfo.businessEmail}",
                 style: const TextStyle(fontSize: 14, color: Colors.black87),
               ),
-            if ((bussinessinfo.businessEmail ?? '').isNotEmpty) const SizedBox(height: 10),
+            if ((bussinessinfo.businessEmail ?? '').isNotEmpty)
+              const SizedBox(height: 10),
 
             // Website
             if ((bussinessinfo.website ?? '').isNotEmpty)
@@ -809,7 +899,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                 "🌐 ${bussinessinfo.website}",
                 style: const TextStyle(fontSize: 14, color: Colors.blue),
               ),
-            if ((bussinessinfo.website ?? '').isNotEmpty) const SizedBox(height: 10),
+            if ((bussinessinfo.website ?? '').isNotEmpty)
+              const SizedBox(height: 10),
           ],
         ),
       ),
@@ -847,8 +938,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
       builder: (BuildContext context) {
         return Padding(
           padding: EdgeInsets.only(
-            bottom:
-                MediaQuery.of(context).viewInsets.bottom,
+            bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
           child: SafeArea(
             child: FractionallySizedBox(
@@ -901,15 +991,15 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                               ),
                               child: controller.addloading.value
                                   ? const CircularProgressIndicator(
-                                color: Colors.red,
-                              )
+                                      color: Colors.red,
+                                    )
                                   : const Text(
-                                'Update',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
+                                      'Update',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
                             );
                           }),
                         ],
@@ -977,7 +1067,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                               children: [
                                 Obx(() {
                                   if (regiController
-                                      .rxStatusCityLoading.value ==
+                                          .rxStatusCityLoading.value ==
                                       Status.LOADING) {
                                     return Padding(
                                       padding: const EdgeInsets.symmetric(
@@ -989,61 +1079,73 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                           child: CircularProgressIndicator(
                                             color: ColorHelperClass
                                                 .getColorFromHex(
-                                                ColorResources.pink_color),
+                                                    ColorResources.pink_color),
                                           )),
                                     );
                                   } else if (regiController
-                                      .rxStatusCityLoading.value ==
+                                          .rxStatusCityLoading.value ==
                                       Status.ERROR) {
                                     return const Center(
                                         child: Padding(
-                                          padding: EdgeInsets.all(8.0),
-                                          child: Text('Failed to load city'),
-                                        ));
+                                      padding: EdgeInsets.all(8.0),
+                                      child: Text('Failed to load city'),
+                                    ));
                                   } else if (regiController.cityList.isEmpty) {
                                     return const Center(
                                         child: Padding(
-                                          padding: EdgeInsets.all(8.0),
-                                          child: Text('No City available'),
-                                        ));
+                                      padding: EdgeInsets.all(8.0),
+                                      child: Text('No City available'),
+                                    ));
                                   } else {
                                     return Expanded(
                                       child: InputDecorator(
                                         decoration: InputDecoration(
                                           labelText: 'City',
                                           border: OutlineInputBorder(
-                                            borderSide: BorderSide(color: Colors.black26),
+                                            borderSide: BorderSide(
+                                                color: Colors.black26),
                                           ),
                                           enabledBorder: OutlineInputBorder(
-                                            borderSide: BorderSide(color: Colors.black26),
+                                            borderSide: BorderSide(
+                                                color: Colors.black26),
                                           ),
                                           focusedBorder: OutlineInputBorder(
-                                            borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                                            borderSide: BorderSide(
+                                                color: Colors.black26,
+                                                width: 1.5),
                                           ),
-                                          contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              horizontal: 20),
                                           labelStyle: TextStyle(
                                             color: Colors.black45,
                                           ),
                                         ),
-                                        isEmpty: regiController.city_id.value.isEmpty,
+                                        isEmpty: regiController
+                                            .city_id.value.isEmpty,
                                         child: DropdownButtonHideUnderline(
                                           child: DropdownButton<String>(
-                                            dropdownColor: Colors.white, // Ensures dropdown list background is white
-                                            borderRadius: BorderRadius.circular(10),
+                                            dropdownColor: Colors
+                                                .white, // Ensures dropdown list background is white
+                                            borderRadius:
+                                                BorderRadius.circular(10),
                                             isExpanded: true,
 
-                                            value: regiController.city_id.value.isEmpty
+                                            value: regiController
+                                                    .city_id.value.isEmpty
                                                 ? null
                                                 : regiController.city_id.value,
-                                            items: regiController.cityList.map((CityData city) {
+                                            items: regiController.cityList
+                                                .map((CityData city) {
                                               return DropdownMenuItem<String>(
                                                 value: city.id.toString(),
-                                                child: Text(city.cityName ?? 'Unknown'),
+                                                child: Text(
+                                                    city.cityName ?? 'Unknown'),
                                               );
                                             }).toList(),
                                             onChanged: (String? newValue) {
                                               if (newValue != null) {
-                                                regiController.setSelectedCity(newValue);
+                                                regiController
+                                                    .setSelectedCity(newValue);
                                               }
                                             },
                                           ),
@@ -1093,37 +1195,50 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                         decoration: InputDecoration(
                                           labelText: 'State *',
                                           border: OutlineInputBorder(
-                                            borderSide: BorderSide(color: Colors.black26),
+                                            borderSide: BorderSide(
+                                                color: Colors.black26),
                                           ),
                                           enabledBorder: OutlineInputBorder(
-                                            borderSide: BorderSide(color: Colors.black26),
+                                            borderSide: BorderSide(
+                                                color: Colors.black26),
                                           ),
                                           focusedBorder: OutlineInputBorder(
-                                            borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                                            borderSide: BorderSide(
+                                                color: Colors.black26,
+                                                width: 1.5),
                                           ),
-                                          contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              horizontal: 20),
                                           labelStyle: TextStyle(
                                             color: Colors.black45,
                                           ),
                                         ),
-                                        isEmpty: regiController.state_id.value.isEmpty,
+                                        isEmpty: regiController
+                                            .state_id.value.isEmpty,
                                         child: DropdownButtonHideUnderline(
                                           child: DropdownButton<String>(
-                                            dropdownColor: Colors.white, // Dropdown list background is white
-                                            borderRadius: BorderRadius.circular(10),
+                                            dropdownColor: Colors
+                                                .white, // Dropdown list background is white
+                                            borderRadius:
+                                                BorderRadius.circular(10),
                                             isExpanded: true,
 
-                                            value: regiController.state_id.value.isEmpty ? null
+                                            value: regiController
+                                                    .state_id.value.isEmpty
+                                                ? null
                                                 : regiController.state_id.value,
-                                            items: regiController.stateList.map((StateData state) {
+                                            items: regiController.stateList
+                                                .map((StateData state) {
                                               return DropdownMenuItem<String>(
                                                 value: state.id.toString(),
-                                                child: Text(state.stateName ?? 'Unknown'),
+                                                child: Text(state.stateName ??
+                                                    'Unknown'),
                                               );
                                             }).toList(),
                                             onChanged: (String? newValue) {
                                               if (newValue != null) {
-                                                regiController.setSelectedState(newValue);
+                                                regiController
+                                                    .setSelectedState(newValue);
                                               }
                                             },
                                           ),
@@ -1143,7 +1258,9 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                             child: Row(
                               children: [
                                 Obx(() {
-                                  if (regiController.rxStatusCountryLoading.value == Status.LOADING) {
+                                  if (regiController
+                                          .rxStatusCountryLoading.value ==
+                                      Status.LOADING) {
                                     return Padding(
                                       padding: const EdgeInsets.symmetric(
                                           vertical: 10, horizontal: 22),
@@ -1154,11 +1271,11 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                           child: CircularProgressIndicator(
                                             color: ColorHelperClass
                                                 .getColorFromHex(
-                                                ColorResources.pink_color),
+                                                    ColorResources.pink_color),
                                           )),
                                     );
                                   } else if (regiController
-                                      .rxStatusCountryLoading.value ==
+                                          .rxStatusCountryLoading.value ==
                                       Status.ERROR) {
                                     return const Center(
                                         child: Text('Failed to load country'));
@@ -1172,41 +1289,56 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                                         decoration: InputDecoration(
                                           labelText: 'Country *',
                                           border: OutlineInputBorder(
-                                            borderSide: BorderSide(color: Colors.black26),
+                                            borderSide: BorderSide(
+                                                color: Colors.black26),
                                           ),
                                           enabledBorder: OutlineInputBorder(
-                                            borderSide: BorderSide(color: Colors.black26),
+                                            borderSide: BorderSide(
+                                                color: Colors.black26),
                                           ),
                                           focusedBorder: OutlineInputBorder(
-                                            borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                                            borderSide: BorderSide(
+                                                color: Colors.black26,
+                                                width: 1.5),
                                           ),
-                                          contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              horizontal: 20),
                                           labelStyle: TextStyle(
                                             color: Colors.black45,
                                           ),
                                         ),
-                                        isEmpty: regiController.country_id.value.isEmpty,
+                                        isEmpty: regiController
+                                            .country_id.value.isEmpty,
                                         child: DropdownButtonHideUnderline(
                                           child: DropdownButton<String>(
                                             dropdownColor: Colors.white,
-                                            borderRadius: BorderRadius.circular(10),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
                                             isExpanded: true,
                                             hint: const Text(
                                               'Select Country *',
-                                              style: TextStyle(fontWeight: FontWeight.bold),
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold),
                                             ),
-                                            value: regiController.country_id.value.isEmpty
+                                            value: regiController
+                                                    .country_id.value.isEmpty
                                                 ? null
-                                                : regiController.country_id.value,
-                                            items: regiController.countryList.map((CountryData country) {
+                                                : regiController
+                                                    .country_id.value,
+                                            items: regiController.countryList
+                                                .map((CountryData country) {
                                               return DropdownMenuItem<String>(
                                                 value: country.id.toString(),
-                                                child: Text(country.countryName ?? 'Unknown'),
+                                                child: Text(
+                                                    country.countryName ??
+                                                        'Unknown'),
                                               );
                                             }).toList(),
                                             onChanged: (String? newValue) {
                                               if (newValue != null) {
-                                                regiController.setSelectedCountry(newValue);
+                                                regiController
+                                                    .setSelectedCountry(
+                                                        newValue);
                                               }
                                             },
                                           ),
@@ -1307,7 +1439,6 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
   }
 
   void _showEditOccBottomSheet(BuildContext context) {
-
     final hasExistingData = controller.currentOccupation.value != null;
 
     if (hasExistingData) {
@@ -1341,8 +1472,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                   OutlinedButton(
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor:
-                      ColorHelperClass.getColorFromHex(
+                      foregroundColor: ColorHelperClass.getColorFromHex(
                           ColorResources.red_color),
                       side: const BorderSide(color: Colors.red),
                       shape: RoundedRectangleBorder(
@@ -1357,8 +1487,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                       Navigator.pop(context);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                      ColorHelperClass.getColorFromHex(
+                      backgroundColor: ColorHelperClass.getColorFromHex(
                           ColorResources.red_color),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
@@ -1370,33 +1499,29 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                 ],
               ),
               const SizedBox(height: 30),
-
-          _buildOccupationDropdown(context),
-          const SizedBox(height: 20),
-
-          Obx(() {
-            if (controller.selectedOccupation.value.isEmpty ||
-                controller.selectedOccupation.value == "Other") {
-              return const SizedBox();
-            }
-            return _buildProfessionDropdown(context);
-          }),
-          const SizedBox(height: 20),
-
-          Obx(() {
-            if (controller.selectedProfession.value.isEmpty ||
-                controller.selectedProfession.value == "Other") {
-              return const SizedBox();
-            }
-            return _buildSpecializationDropdown(context);
-          }),
-          const SizedBox(height: 20),
-
-          Obx(() {
-            if (!controller.showDetailsField.value) return const SizedBox();
-            return _buildDetailsField(context);
-          }),
-          ],
+              _buildOccupationDropdown(context),
+              const SizedBox(height: 20),
+              Obx(() {
+                if (controller.selectedOccupation.value.isEmpty ||
+                    controller.selectedOccupation.value == "Other") {
+                  return const SizedBox();
+                }
+                return _buildProfessionDropdown(context);
+              }),
+              const SizedBox(height: 20),
+              Obx(() {
+                if (controller.selectedProfession.value.isEmpty ||
+                    controller.selectedProfession.value == "Other") {
+                  return const SizedBox();
+                }
+                return _buildSpecializationDropdown(context);
+              }),
+              const SizedBox(height: 20),
+              Obx(() {
+                if (!controller.showDetailsField.value) return const SizedBox();
+                return _buildDetailsField(context);
+              }),
+            ],
           ),
         );
       },
@@ -1428,7 +1553,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                     value: controller.selectedOccupation.value.isEmpty
                         ? null
                         : controller.selectedOccupation.value,
-                    items: controller.occuptionList.map((OccupationData occupation) {
+                    items: controller.occuptionList
+                        .map((OccupationData occupation) {
                       return DropdownMenuItem<String>(
                         value: occupation.id.toString(),
                         child: Text(occupation.occupation ?? 'Unknown'),
@@ -1465,11 +1591,35 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
           Obx(() {
             if (controller.rxStatusOccupationData.value == Status.LOADING) {
               return _buildLoadingIndicator();
-            } else if (controller.rxStatusOccupationData.value == Status.ERROR) {
+            } else if (controller.rxStatusOccupationData.value ==
+                Status.ERROR) {
               return const Center(child: Text('Failed to load profession'));
             } else if (controller.occuptionProfessionList.isEmpty) {
-              controller.showDetailsField.value = true;
-              return const SizedBox();
+              return Expanded(
+                child: InputDecorator(
+                  decoration: _inputDecoration('Occupation Profession *'),
+                  isEmpty: controller.selectedProfession.isEmpty,
+                  child: DropdownButton<String>(
+                    dropdownColor: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    isExpanded: true,
+                    underline: Container(),
+                    value: controller.selectedProfession.isEmpty
+                        ? null
+                        : controller.selectedProfession.value,
+                    items: [
+                      const DropdownMenuItem(
+                        value: "Other",
+                        child: Text("Other"),
+                      ),
+                    ],
+                    onChanged: (String? newValue) {
+                      controller.selectedProfession.value = newValue ?? "Other";
+                      controller.showDetailsField.value = true;
+                    },
+                  ),
+                ),
+              );
             } else {
               return Expanded(
                 child: InputDecorator(
@@ -1480,8 +1630,11 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                     borderRadius: BorderRadius.circular(10),
                     isExpanded: true,
                     underline: Container(),
-                    value: controller.selectedProfession.isEmpty ? null : controller.selectedProfession.value,
-                    items: controller.occuptionProfessionList.map((OccuptionProfessionData profession) {
+                    value: controller.selectedProfession.isEmpty
+                        ? null
+                        : controller.selectedProfession.value,
+                    items: controller.occuptionProfessionList
+                        .map((OccuptionProfessionData profession) {
                       return DropdownMenuItem<String>(
                         value: profession.id.toString(),
                         child: Text(profession.name ?? 'Unknown'),
@@ -1518,39 +1671,66 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
           Obx(() {
             if (controller.rxStatusOccupationSpec.value == Status.LOADING) {
               return _buildLoadingIndicator();
-            } else if (controller.rxStatusOccupationSpec.value == Status.ERROR) {
+            } else if (controller.rxStatusOccupationSpec.value ==
+                Status.ERROR) {
               return const Center(child: Text('Failed to load specialization'));
             } else if (controller.occuptionSpeList.isEmpty) {
-              controller.showDetailsField.value = true;
-              return const SizedBox();
-            } else {
-              final dropdownItems = controller.occuptionSpeList
-                  .map((OccuptionSpecData specialization) {
-                return DropdownMenuItem<String>(
-                  value: specialization.id?.toString(),
-                  child: Text(specialization.name ?? 'Unknown'),
-                );
-              }).toList();
-
-              String? currentValue = controller.selectedSpecialization.value.isEmpty
-                  ? "OTHER"
-                  : controller.selectedSpecialization.value;
-
               return Expanded(
                 child: InputDecorator(
                   decoration: _inputDecoration('Occupation Specialization'),
-                  isEmpty: currentValue == null || currentValue.isEmpty,
+                  isEmpty: controller.selectedSpecialization.value.isEmpty,
                   child: DropdownButton<String>(
                     dropdownColor: Colors.white,
                     borderRadius: BorderRadius.circular(10),
                     isExpanded: true,
                     underline: Container(),
-                    value: currentValue,
-                    items: dropdownItems,
+                    value: controller.selectedSpecialization.value.isEmpty
+                        ? null
+                        : controller.selectedSpecialization.value,
+                    items: [
+                      const DropdownMenuItem(
+                        value: "Other",
+                        child: Text("Other"),
+                      ),
+                    ],
+                    onChanged: (String? newValue) {
+                      controller.selectedSpecialization.value =
+                          newValue ?? "Other";
+                      controller.showDetailsField.value =
+                          true;
+                    },
+                  ),
+                ),
+              );
+            } else {
+              return Expanded(
+                child: InputDecorator(
+                  decoration: _inputDecoration('Occupation Specialization'),
+                  isEmpty: controller.selectedSpecialization.value.isEmpty,
+                  child: DropdownButton<String>(
+                    dropdownColor: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    isExpanded: true,
+                    underline: Container(),
+                    value: controller.selectedSpecialization.value.isEmpty
+                        ? null
+                        : controller.selectedSpecialization.value,
+                    items: controller.occuptionSpeList
+                        .map((OccuptionSpecData specialization) {
+                      return DropdownMenuItem<String>(
+                        value: specialization.id?.toString(),
+                        child: Text(specialization.name ?? 'Unknown'),
+                      );
+                    }).toList(),
                     onChanged: (String? newValue) {
                       if (newValue != null) {
                         controller.selectedSpecialization.value = newValue;
-                        controller.showDetailsField.value = (newValue == "Other");
+                        final selectedItem = controller.occuptionSpeList
+                            .firstWhere(
+                                (item) => item.id?.toString() == newValue,
+                                orElse: () => OccuptionSpecData());
+                        controller.showDetailsField.value =
+                            (selectedItem.name?.toLowerCase() == "other");
                       }
                     },
                   ),
@@ -1649,24 +1829,31 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Obx(() {
-                                  final occ = controller.occupationController.value.text;
-                                  return _buildInfoLine('Occupation', occ.isNotEmpty ? occ : 'Other');
+                                  final occ = controller
+                                      .occupationController.value.text;
+                                  return _buildInfoLine('Occupation',
+                                      occ.isNotEmpty ? occ : 'Other');
                                 }),
-
                                 Obx(() {
-                                  final prof = controller.occupation_profession_nameController.value.text;
-                                  return _buildInfoLine('Profession', prof.isNotEmpty ? prof : 'Other');
+                                  final prof = controller
+                                      .occupation_profession_nameController
+                                      .value
+                                      .text;
+                                  return _buildInfoLine('Profession',
+                                      prof.isNotEmpty ? prof : 'Other');
                                 }),
-
                                 Obx(() {
-                                  final spec = controller.specialization_nameController.value.text;
-                                  return _buildInfoLine('Specialization', spec.isNotEmpty ? spec : 'Other');
+                                  final spec = controller
+                                      .specialization_nameController.value.text;
+                                  return _buildInfoLine('Specialization',
+                                      spec.isNotEmpty ? spec : 'Other');
                                 }),
-
                                 Obx(() {
-                                  final details = controller.detailsController.value.text;
+                                  final details =
+                                      controller.detailsController.value.text;
                                   if (details.isEmpty) return const SizedBox();
-                                  return _buildInfoLine('Details', details.isNotEmpty ? details : 'Other');
+                                  return _buildInfoLine('Details',
+                                      details.isNotEmpty ? details : 'Other');
                                 }),
                               ],
                             ),

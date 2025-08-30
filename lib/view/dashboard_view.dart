@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/utils/AppDrawer.dart';
+import 'package:mpm/utils/device_utils.dart';
 
 import 'package:mpm/view/home_view.dart';
 import 'package:mpm/view/SearchView.dart';
@@ -33,6 +34,8 @@ class _DashboardViewState extends State<DashboardView> {
     getUserSessionData();
     PushNotificationService().handleInitialNotification();
     // notificationController.loadUnreadCount();
+
+    _loadDeviceInfo();
   }
 
   final List<Widget> pages = [
@@ -155,4 +158,20 @@ class _DashboardViewState extends State<DashboardView> {
       controller.memberId.value = userData.memberId ?? "";
     }
   }
+
+  Future<void> _loadDeviceInfo() async {
+    final deviceInfo = await DeviceUtils.getDeviceInfo();
+    print("📱 Device Info on Dashboard: $deviceInfo");
+
+    CheckUserData2? userData = await SessionManager.getSession();
+    if (userData != null) {
+      Map<String, dynamic> map = {
+        "member_id": userData.memberId,
+        ...deviceInfo,
+      };
+
+      print("🚀 Sending Device Info: $map");
+    }
+  }
+
 }

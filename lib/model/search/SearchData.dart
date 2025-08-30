@@ -6,6 +6,7 @@ class SearchData{
   String? middleName;
   String? lastName;
   String? mobile;
+  String? email;
   String? pincode;
 
   SearchData(
@@ -16,6 +17,7 @@ class SearchData{
         this.middleName,
         this.lastName,
         this.mobile,
+        this.email,
       this.pincode});
 
   SearchData.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,7 @@ class SearchData{
     middleName = json['middle_name'];
     lastName = json['last_name'];
     mobile = json['mobile'];
+    email = json['email'];
     pincode = json['pincode'];
   }
 
@@ -38,6 +41,7 @@ class SearchData{
     data['middle_name'] = this.middleName;
     data['last_name'] = this.lastName;
     data['mobile'] = this.mobile;
+    data['email'] = this.email;
     data['pincode'] = this.pincode;
     return data;
   }

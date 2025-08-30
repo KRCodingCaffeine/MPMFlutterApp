@@ -95,6 +95,7 @@ class _SearchViewState extends State<SearchView> {
                         lmcode: lmcode,
                         name: name,
                         mobile: member.mobile,
+                        email: member.email,
                         profileImage: member.profileImage != null
                             ? member.profileImage!.isEmpty
                                 ? defaultProfile
@@ -117,6 +118,7 @@ class _SearchViewState extends State<SearchView> {
     required String lmcode,
     String? name,
     String? mobile,
+    String? email,
     String? profileImage,
   }) {
     return InkWell(
@@ -219,11 +221,20 @@ class _SearchViewState extends State<SearchView> {
                               "Mobile: $mobile",
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.grey,
+                                color: Colors.blueAccent,
                               ),
                             ),
                           )
-                        : SizedBox.shrink(), // This hides the widget completely
+                        : SizedBox.shrink(),
+                    const SizedBox(height: 4),
+
+                    Text(
+                      "Email: ${email ?? "-"}",
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.black,
+                      ),
+                    ),
                   ],
                 ),
               ),

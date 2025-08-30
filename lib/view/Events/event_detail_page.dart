@@ -406,7 +406,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   Future<void> _showSuccessDialog(String message) async {
     await showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Colors.white,
@@ -416,10 +416,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
           titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
           contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
           actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-          title: const Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.green, size: 32),
-              SizedBox(width: 12),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: const [
               Text(
                 "Success",
                 style: TextStyle(
@@ -427,21 +427,17 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
+              SizedBox(height: 8),
+              Divider(thickness: 1, color: Colors.grey),
             ],
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
+          content: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
           ),
           actions: [
             ElevatedButton(
@@ -452,6 +448,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor:
                 ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               child: const Text("OK", style: TextStyle(color: Colors.white)),
             ),
@@ -464,7 +463,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   Future<void> _showErrorDialog(String message) async {
     await showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Colors.white,
@@ -474,10 +473,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
           titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
           contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
           actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-          title: const Row(
-            children: [
-              Icon(Icons.error_outline, color: Colors.red, size: 32),
-              SizedBox(width: 12),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: const [
               Text(
                 "Error",
                 style: TextStyle(
@@ -485,29 +484,29 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
+              SizedBox(height: 8),
+              Divider(thickness: 1, color: Colors.grey),
             ],
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
+          content: const Text(
+            "Something went wrong. Please try again later.",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
           ),
           actions: [
-            ElevatedButton(
+            OutlinedButton(
               onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
-              child: const Text("OK"),
+              child: const Text("Close"),
             ),
           ],
         );

@@ -58,14 +58,22 @@ class EventRegistrationRepository {
   }
 
   dynamic _handleResponse(http.Response response) {
-    if (response.statusCode != 200) {
-      throw HttpException(
-        'Request failed with status ${response.statusCode}',
-        uri: Uri.parse(Urls.event_register_url),
-      );
+    final decoded = jsonDecode(response.body);
+
+    if (response.statusCode == 409) {
+      return {
+        "status": true,
+        "message": decoded["message"] ?? "Member already registered for this event."
+      };
     }
 
-    final decoded = jsonDecode(response.body);
-    return decoded;
+    if (response.statusCode == 200) {
+      return decoded;
+    }
+
+    throw HttpException(
+      'Request failed with status ${response.statusCode}',
+      uri: Uri.parse(Urls.event_register_url),
+    );
   }
 }
