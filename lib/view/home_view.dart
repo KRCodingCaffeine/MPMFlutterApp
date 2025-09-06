@@ -51,9 +51,9 @@ class _HomeViewState extends State<HomeView> {
       {'icon': Images.makenewmember, 'label': 'Make New Member'},
       {'icon': Images.discount, 'label': 'Discounts & Offers'},
       {'icon': Images.events, 'label': 'Events'},
+      {'icon': Images.saraswani, 'label': 'Sarawani'},
     ];
 
-    // Only show QR Code Scanner for memberId 1 or 2
     if (memberId == 1 || memberId == 2) {
       items.add({'icon': Images.qr_code, 'label': 'QR Code Scanner'});
     }
@@ -202,7 +202,6 @@ class _HomeViewState extends State<HomeView> {
 
   Widget _buildEmailVerifyBanner() {
     return Obx(() {
-      // Only show if email is not verified
       if (controller.emailVerifyStatus.value != "0") {
         return const SizedBox.shrink();
       }
@@ -310,10 +309,10 @@ class _HomeViewState extends State<HomeView> {
           itemCount: gridItems.length,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 1.2,
+            crossAxisCount: 3,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            childAspectRatio: 1,
           ),
           itemBuilder: (context, index) {
             final item = gridItems[index];
@@ -326,9 +325,9 @@ class _HomeViewState extends State<HomeView> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SvgPicture.asset(item['icon'], height: 50, width: 50),
+                    SvgPicture.asset(item['icon'], height: 30, width: 30),
                     const SizedBox(height: 8),
-                    Text(item['label'], style: TextStyleClass.pink14style, textAlign: TextAlign.center),
+                    Text(item['label'], style: TextStyleClass.pink14style.copyWith(fontSize: 11), textAlign: TextAlign.center),
                   ],
                 ),
               ),
@@ -341,6 +340,9 @@ class _HomeViewState extends State<HomeView> {
 
   void _handleGridItemClick(String label) {
     switch (label) {
+      case "Sarawani":
+        Navigator.pushNamed(context, RouteNames.saraswani_label);
+        break;
       case "Make New Member":
         regiController.isRelation.value = false;
         Navigator.pushNamed(context, RouteNames.newMember);

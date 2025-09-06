@@ -4,7 +4,6 @@ import 'package:mpm/utils/urls.dart';
 
 class OfferRepository {
   var api = NetWorkApiService();
-  // Fetch offer discount list
   Future<dynamic> fetchOfferDiscounts() async {
     try {
       final response = await api.getApi(Urls.offerdiscount_url, "");

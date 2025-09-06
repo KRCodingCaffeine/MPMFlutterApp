@@ -70,5 +70,8 @@ class Urls {
   static const String member_surname_url = base_url+"api/member_surname";
   static const String events_details_by_id_url = base_url+"api/get_events_details_by_id";
   static const String scan_qrcode_event = base_url+"api/scan_qrcode_event";
+  static const String get_saraswani_publication = base_url+"api/get_saraswani_publication";
+  static const String getLatestSaraswaniPublications = base_url+"api/get_latest_saraswani_publications";
+
 
 }

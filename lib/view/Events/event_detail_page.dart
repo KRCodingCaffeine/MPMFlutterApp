@@ -124,7 +124,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
     Future<bool> _showFoodDialog(BuildContext context) async {
       String? selectedFoodOption;
-      int _foodBoxCount = 0;
       final TextEditingController _foodBoxController = TextEditingController();
 
       final shouldProceed = await showDialog<bool>(
@@ -210,18 +209,18 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         controller: _foodBoxController,
                         keyboardType: TextInputType.number,
                         decoration: const InputDecoration(
-                          labelText: 'Number of Food Boxes (Max 3)',
+                          labelText: 'Number of Food Boxes (Max 2)',
                           border: OutlineInputBorder(),
                         ),
                         onChanged: (value) {
                           if (value.isNotEmpty) {
                             int num = int.tryParse(value) ?? 0;
-                            if (num > 3) {
-                              _foodBoxController.text = '3';
+                            if (num > 2) {
+                              _foodBoxController.text = '2';
                               _foodBoxController.selection = TextSelection.fromPosition(
                                 TextPosition(offset: _foodBoxController.text.length),
                               );
-                              _foodBoxCount = 3;
+                              _foodBoxCount = 2;
                             } else {
                               _foodBoxCount = num;
                             }
@@ -252,9 +251,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         );
                         return;
                       }
-                      if (selectedFoodOption == "Yes" && (_foodBoxCount <= 0 || _foodBoxCount > 3)) {
+                      if (selectedFoodOption == "Yes" && (_foodBoxCount <= 0 || _foodBoxCount > 2)) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Please enter a valid number of boxes (1-3)')),
+                          const SnackBar(content: Text('Please enter a valid number of boxes (1-2)')),
                         );
                         return;
                       }
@@ -613,6 +612,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Widget _buildRegisterButton() {
+    if (_isPastEvent) {
+      return const SizedBox.shrink();
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: SizedBox(
@@ -641,30 +644,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
               : Text(
             _isRegistered ? "Registered" : "Register Here",
             style: const TextStyle(fontSize: 16),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPastEventBottomBar() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.grey,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          onPressed: null,
-          child: const Text(
-            "Register Here",
-            style: TextStyle(fontSize: 16),
           ),
         ),
       ),
@@ -1006,7 +985,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   final docUrl = _eventDetails!.eventTermsAndConditionDocument!;
                   final fileExtension = docUrl.split('.').last.toLowerCase();
 
-                  // Supported image formats
                   if (['jpg', 'jpeg', 'png', 'gif'].contains(fileExtension)) {
                     return GestureDetector(
                       onTap: () {
@@ -1039,7 +1017,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     );
                   }
 
-                  // PDF and DOCX downloads
                   else if (['pdf', 'docx'].contains(fileExtension)) {
                     return SizedBox(
                       width: double.infinity,
@@ -1079,7 +1056,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     );
                   }
 
-                  // Unsupported files
                   else {
                     return const Text(
                       "Unsupported file format",
@@ -1094,23 +1070,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           ],
         ),
       ),
-      bottomNavigationBar:
-      _isPastEvent ? _buildPastEventBottomBar() : _buildRegisterButton(),
+      bottomNavigationBar: _isPastEvent ? const SizedBox.shrink() : _buildRegisterButton(),
     );
-  }
-
-  Future<void> _launchYoutubeUrl(String url) async {
-    final Uri youtubeUri = Uri.parse(url);
-
-    if (await canLaunchUrl(youtubeUri)) {
-      await launchUrl(
-        youtubeUri,
-        mode: LaunchMode.externalApplication,
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open YouTube.')),
-      );
-    }
   }
 }
