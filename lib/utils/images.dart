@@ -30,5 +30,6 @@ class Images {
   static const String makenewmember = 'assets/images/newmember.svg';
   static const String sucess = 'assets/images/check.gif';
   static const String cancel = 'assets/images/cancel.png';
+  static const String saraswani = 'assets/images/saraswani.svg';
 
 }

@@ -31,7 +31,7 @@ class CancelEventRepository {
     request.fields.addAll({
       'member_id': memberId,
       'event_id': eventId,
-      'updated_by': memberId, // Same as memberId
+      'updated_by': memberId,
     });
   }
 

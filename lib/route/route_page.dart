@@ -3,6 +3,7 @@ import 'package:mpm/route/route_name.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/view/EnquiryForm/add_enquiry_form.dart';
 import 'package:mpm/view/QRCodeScanner/qr_code.dart';
+import 'package:mpm/view/Saraswanilabel/saraswani_label.dart';
 import 'package:mpm/view/addmember/add_member_first.dart';
 import 'package:mpm/view/addmember/add_member_second.dart';
 import 'package:mpm/view/condition_about/about_view.dart';
@@ -67,6 +68,8 @@ class RoutePages {
         return _buildRoute(SamitiDetailPage(), settings);
       case RouteNames.discount_offer_view:
         return _buildRoute(const DiscountofferView(), settings);
+      case RouteNames.saraswani_label:
+        return _buildRoute(const SaraswanilabelView(), settings);
       case RouteNames.event_view:
         return _buildRoute(const EventsPage(), settings);
       case RouteNames.qr_code:

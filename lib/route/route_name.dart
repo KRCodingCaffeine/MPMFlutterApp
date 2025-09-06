@@ -21,6 +21,7 @@ class RouteNames {
   static const String samitimemberdetails="SamitiDetailPage";
   static const String searchmember="SearchMember";
   static const String discount_offer_view = "discount_offer_view";
+  static const String saraswani_label="SaraswaniLabel";
   static const String event_view = "event_view";
   static const String qr_code = "qr_code";
   static const String forms = "forms_down";

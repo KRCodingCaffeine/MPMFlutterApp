@@ -249,39 +249,10 @@ class LoginController {
   Future<void> checkOtp(var otps, BuildContext context) async {
     loadinng.value=true;
     try {
-      DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-
-      String deviceId = '';
-      String deviceModel = '';
-      String deviceBrand = '';
-      String osName = '';
-      String osVersion = '';
-
-      if (Platform.isAndroid) {
-        AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-        deviceId = androidInfo.id ?? '';
-        deviceModel = androidInfo.model ?? '';
-        deviceBrand = androidInfo.brand ?? '';
-        osName = 'android';
-        osVersion = androidInfo.version.release ?? '';
-      } else if (Platform.isIOS) {
-        IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
-        deviceId = iosInfo.identifierForVendor ?? '';
-        deviceModel = iosInfo.utsname.machine ?? '';
-        deviceBrand = 'Apple';
-        osName = 'ios';
-        osVersion = iosInfo.systemVersion ?? '';
-      }
-
       Map map={
         "member_id":memberId.value,
         "otp":otps,
         "otp_validation_for": "login",
-        "device_id": deviceId,
-        "device_model": deviceModel,
-        "device_brand": deviceBrand,
-        "os_name": osName,
-        "os_version": osVersion
       };
       print("fffh"+map.toString());
       api.verifyOTP(map).then((_value) async {
@@ -463,7 +434,7 @@ class LoginController {
       {
         Get.snackbar(
           'Error', // Title
-          "Something went wrong", // Message
+          "Something went wrong",
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
           colorText: Colors.white,
@@ -482,7 +453,7 @@ class LoginController {
     if (mobileNumber.length == 10) {
       return 'xxxxxx${mobileNumber.substring(6)}';
     } else {
-      return 'Invalid Number'; // Handle invalid input
+      return 'Invalid Number';
     }
   }
   void _showLoginAlert(BuildContext context) {
