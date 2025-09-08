@@ -298,10 +298,6 @@ class _EventsPageState extends State<EventsPage> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      'Ends on: ${event.dateEndTo != null ? DateFormat('dd MMM yyyy').format(DateTime.parse(event.dateEndTo!)) : 'N/A'}',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                    ),
                   ],
                 ),
               ),

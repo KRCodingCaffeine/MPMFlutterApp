@@ -158,23 +158,88 @@ class _SaraswanilabelViewState extends State<SaraswanilabelView> {
 
       setState(() => _isDownloading = false);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("$fileName - Downloaded successfully."),
-          action: SnackBarAction(
-            label: "View",
-            onPressed: () {
-              OpenFilex.open(filePath);
-            },
-          ),
-        ),
-      );
+      _showDownloadDialog(context, fileName, filePath);
     } catch (e) {
       setState(() => _isDownloading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Download failed: $e")),
+        SnackBar(
+          content: Text("Something went wrong, Please try again later."),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(12),
+        ),
       );
     }
+  }
+
+  void _showDownloadDialog(BuildContext context, String fileName, String filePath) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Download Complete",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+          content: Text(
+            "$fileName has been downloaded successfully.",
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.redAccent,
+                side: const BorderSide(color: Colors.redAccent),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Close"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                OpenFilex.open(filePath);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("View"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildFilterButton() {
@@ -202,22 +267,6 @@ class _SaraswanilabelViewState extends State<SaraswanilabelView> {
                       spacing: 6,
                       runSpacing: 4,
                       children: [
-                        if (selectedMonth != null)
-                          Chip(
-                            label: Text(selectedMonth!),
-                            labelStyle: const TextStyle(
-                                fontSize: 12, color: Colors.white),
-                            backgroundColor: ColorHelperClass.getColorFromHex(
-                                ColorResources.red_color),
-                            deleteIcon: const Icon(Icons.close,
-                                color: Colors.white, size: 18),
-                            onDeleted: () {
-                              setState(() {
-                                selectedMonth = null;
-                                _publicationData = null;
-                              });
-                            },
-                          ),
                         if (selectedYear != null)
                           Chip(
                             label: Text(selectedYear!),
@@ -230,6 +279,22 @@ class _SaraswanilabelViewState extends State<SaraswanilabelView> {
                             onDeleted: () {
                               setState(() {
                                 selectedYear = null;
+                                _publicationData = null;
+                              });
+                            },
+                          ),
+                        if (selectedMonth != null)
+                          Chip(
+                            label: Text(selectedMonth!),
+                            labelStyle: const TextStyle(
+                                fontSize: 12, color: Colors.white),
+                            backgroundColor: ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color),
+                            deleteIcon: const Icon(Icons.close,
+                                color: Colors.white, size: 18),
+                            onDeleted: () {
+                              setState(() {
+                                selectedMonth = null;
                                 _publicationData = null;
                               });
                             },
@@ -386,35 +451,6 @@ class _SaraswanilabelViewState extends State<SaraswanilabelView> {
               const SizedBox(height: 20),
               InputDecorator(
                 decoration: InputDecoration(
-                  labelText: "Select Month",
-                  border: const OutlineInputBorder(),
-                  enabledBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black26),
-                  ),
-                  focusedBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black26, width: 1.5),
-                  ),
-                  contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-                  labelStyle: const TextStyle(color: Colors.black45),
-                ),
-                child: DropdownButton<String>(
-                  dropdownColor: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  isExpanded: true,
-                  underline: Container(),
-                  value: selectedMonth,
-                  hint: const Text("Select Month"),
-                  items: months
-                      .map((month) =>
-                      DropdownMenuItem(value: month, child: Text(month)))
-                      .toList(),
-                  onChanged: (value) => setState(() => selectedMonth = value),
-                ),
-              ),
-              const SizedBox(height: 20),
-              InputDecorator(
-                decoration: InputDecoration(
                   labelText: "Select Year",
                   border: const OutlineInputBorder(),
                   enabledBorder: const OutlineInputBorder(
@@ -439,6 +475,35 @@ class _SaraswanilabelViewState extends State<SaraswanilabelView> {
                       DropdownMenuItem(value: year, child: Text(year)))
                       .toList(),
                   onChanged: (value) => setState(() => selectedYear = value),
+                ),
+              ),
+              const SizedBox(height: 20),
+              InputDecorator(
+                decoration: InputDecoration(
+                  labelText: "Select Month",
+                  border: const OutlineInputBorder(),
+                  enabledBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black26),
+                  ),
+                  focusedBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                  ),
+                  contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                  labelStyle: const TextStyle(color: Colors.black45),
+                ),
+                child: DropdownButton<String>(
+                  dropdownColor: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  isExpanded: true,
+                  underline: Container(),
+                  value: selectedMonth,
+                  hint: const Text("Select Month"),
+                  items: months
+                      .map((month) =>
+                      DropdownMenuItem(value: month, child: Text(month)))
+                      .toList(),
+                  onChanged: (value) => setState(() => selectedMonth = value),
                 ),
               ),
               const Spacer(),

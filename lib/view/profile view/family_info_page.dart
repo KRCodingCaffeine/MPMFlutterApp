@@ -181,7 +181,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
             ],
           );
         } else {
-          return SizedBox.shrink(); // Hide FAB if not family head
+          return SizedBox.shrink();
         }
       }),
     );
@@ -191,7 +191,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
     if (dateString == null || dateString.isEmpty) return null;
 
     try {
-      // Try common date formats
       final formats = [
         'yyyy-MM-dd',
         'dd-MM-yyyy',
@@ -206,7 +205,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
         } catch (_) {}
       }
 
-      // If none of the formats worked, return null
       return null;
     } catch (e) {
       return null;
@@ -276,7 +274,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                   ),
                 ),
               )
-            : const SizedBox.shrink(), // Hide button if not the head
+            : const SizedBox.shrink(),
       ),
     );
   }
