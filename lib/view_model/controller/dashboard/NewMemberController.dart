@@ -962,8 +962,8 @@ class NewMemberController extends GetxController {
       setRxMemberRequest(Status.ERROR);
       print("cvbcvbc" + error.toString());
       Get.snackbar(
-        'Error', // Title
-        error.toString(), // Message
+        'Error',
+        error.toString(),
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Color(0xFFDC3545),
         colorText: Colors.white,
@@ -977,7 +977,7 @@ class NewMemberController extends GetxController {
     final Random random = Random();
     final StringBuffer otpBuffer = StringBuffer();
     for (int i = 0; i < length; i++) {
-      otpBuffer.write(random.nextInt(10)); // Generate a single digit (0-9)
+      otpBuffer.write(random.nextInt(10));
     }
     otp.value = otpBuffer.toString();
     print("fgfggghg" + otp.value);

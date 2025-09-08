@@ -107,7 +107,7 @@ class _OTPScreenState extends State<OTPScreen> {
               children: [
                 const SizedBox(height: 190),
                 Image.asset(Images.logoImage,
-                    height: 240), // Replace with your image
+                    height: 240),
                 const SizedBox(height: 20),
                 Text(
                   AppConstants.enter_otp,
