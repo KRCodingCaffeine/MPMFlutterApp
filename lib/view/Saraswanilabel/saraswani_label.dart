@@ -344,9 +344,19 @@ class _SaraswanilabelViewState extends State<SaraswanilabelView> {
 
           onTap: () {
             if (_publicationData?.documentPath != null) {
-              final fileName =
-                  "Saraswani_${selectedMonth}_${selectedYear}.pdf";
-              _downloadAndOpenFile(_publicationData!.documentPath!, fileName);
+              final fileName = "Saraswani_${selectedMonth}_${selectedYear}.pdf";
+
+              setState(() {
+                _isDownloading = true;
+                _downloadingFileName = fileName;
+              });
+
+              _downloadAndOpenFile(_publicationData!.documentPath!, fileName).then((_) {
+                setState(() {
+                  _isDownloading = false;
+                  _downloadingFileName = null;
+                });
+              });
             }
           },
         ),
