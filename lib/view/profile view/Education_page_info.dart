@@ -73,19 +73,19 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
   }
 
   Future<void> _showEditModalSheet(BuildContext context, String type) async {
+    regiController.selectQlification.value = "";
+    regiController.selectQualicationMain.value = "";
+    regiController.selectQualicationCat.value = "";
+    regiController.educationdetailController.value.text = "";
+    regiController.isQualicationList.value = false;
+    regiController.isQualificationCategoryVisible.value = false;
+    regiController.isQualificationDetailVisible.value = false;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
       isScrollControlled: true,
       builder: (context) {
-        regiController.selectQlification.value = "";
-        regiController.selectQualicationMain.value = "";
-        regiController.selectQualicationCat.value = "";
-        regiController.educationdetailController.value.text = "";
-        regiController.isQualicationList.value = false;
-        regiController.isQualificationCategoryVisible.value = false;
-        regiController.isQualificationDetailVisible.value = false;
-
         return Padding(
           padding: EdgeInsets.only(
             left: 16.0,
@@ -114,10 +114,7 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                   ),
                   ElevatedButton(
                     onPressed: () async {
-                      if (regiController
-                          .educationdetailController.value.text.isNotEmpty) {
-                        regiController.addQualification();
-                      }
+                      regiController.addQualification();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ColorHelperClass.getColorFromHex(
@@ -187,7 +184,6 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                           "";
 
                           if (newValue == "other") {
-                            // FIXED: Directly show detail field for "other"
                             regiController.isQualicationList.value = false;
                             regiController
                                 .isQualificationCategoryVisible.value = false;
@@ -320,12 +316,11 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                             regiController.selectQualicationCat.value =
                                 newValue;
                             if (newValue == "other_category") {
-                              // FIXED: Show detail field for "other_category"
                               regiController
                                   .isQualificationDetailVisible.value = true;
                             } else {
                               regiController
-                                  .isQualificationDetailVisible.value = false;
+                                  .isQualificationDetailVisible.value = true;
                             }
                           }
                         },
@@ -384,67 +379,67 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
 
     print("Loading qualification data: ${qualification.toJson()}");
 
+    regiController.selectQlification.value =
+        qualification.qualificationId?.toString() ?? "other";
+
+    regiController.selectQualicationMain.value =
+    qualification.qualificationMainId == null ||
+        qualification.qualificationMainId.toString().isEmpty
+        ? "other_main"
+        : qualification.qualificationMainId?.toString() ?? "";
+
+    regiController.selectQualicationCat.value =
+    qualification.qualificationCategoryId == null ||
+        qualification.qualificationCategoryId.toString().isEmpty
+        ? "other_category"
+        : qualification.qualificationCategoryId?.toString() ?? "";
+
+    regiController.educationdetailController.value.text =
+        qualification.qualificationOtherName ?? '';
+
+    if (regiController.selectQlification.value == "other") {
+      regiController.isQualicationList.value = false;
+      regiController.isQualificationCategoryVisible.value = false;
+      regiController.isQualificationDetailVisible.value = true;
+    } else {
+      regiController.isQualicationList.value = true;
+
+      if (regiController.selectQualicationMain.value.isNotEmpty &&
+          regiController.selectQualicationMain.value != "other_main") {
+        regiController.isQualificationCategoryVisible.value = true;
+      } else {
+        regiController.isQualificationCategoryVisible.value = false;
+      }
+
+      bool hasDetailText = qualification.qualificationOtherName == null &&
+          qualification.qualificationOtherName!.trim().isNotEmpty;
+
+      regiController.isQualificationDetailVisible.value =
+          regiController.selectQlification.value == "other" ||
+              regiController.selectQualicationMain.value == "other_main" ||
+              regiController.selectQualicationCat.value == "other_category";
+      hasDetailText;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (qualification.qualificationId != null &&
+          qualification.qualificationId != "other") {
+        regiController.getQualicationMain(qualification.qualificationId.toString());
+      }
+
+      if (qualification.qualificationMainId != null &&
+          qualification.qualificationMainId != "0" &&
+          qualification.qualificationMainId != "other_main") {
+        regiController.getQualicationCategory(
+            qualification.qualificationMainId.toString());
+      }
+    });
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
       isScrollControlled: true,
       builder: (context) {
-        regiController.selectQlification.value =
-            qualification.qualificationId?.toString() ?? "other";
-
-        regiController.selectQualicationMain.value =
-        qualification.qualificationMainId == null ||
-            qualification.qualificationMainId.toString().isEmpty
-            ? "other_main"
-            : qualification.qualificationMainId?.toString() ?? "";
-
-        regiController.selectQualicationCat.value =
-        qualification.qualificationCategoryId == null ||
-            qualification.qualificationCategoryId.toString().isEmpty
-            ? "other_category"
-            : qualification.qualificationCategoryId?.toString() ?? "";
-
-        regiController.educationdetailController.value.text =
-            qualification.qualificationOtherName ?? '';
-
-        if (regiController.selectQlification.value == "other") {
-          regiController.isQualicationList.value = false;
-          regiController.isQualificationCategoryVisible.value = false;
-          regiController.isQualificationDetailVisible.value = true;
-        } else {
-          regiController.isQualicationList.value = true;
-
-          if (regiController.selectQualicationMain.value.isNotEmpty &&
-              regiController.selectQualicationMain.value != "other_main") {
-            regiController.isQualificationCategoryVisible.value = true;
-          } else {
-            regiController.isQualificationCategoryVisible.value = false;
-          }
-
-          bool hasDetailText = qualification.qualificationOtherName == null &&
-              qualification.qualificationOtherName!.trim().isNotEmpty;
-
-          regiController.isQualificationDetailVisible.value =
-              regiController.selectQlification.value == "other" ||
-                  regiController.selectQualicationMain.value == "other_main" ||
-                  regiController.selectQualicationCat.value == "other_category";
-          hasDetailText;
-        }
-
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (qualification.qualificationId != null &&
-              qualification.qualificationId != "other") {
-            regiController.getQualicationMain(qualification.qualificationId.toString());
-          }
-
-          if (qualification.qualificationMainId != null &&
-              qualification.qualificationMainId != "0" &&
-              qualification.qualificationMainId != "other_main") {
-            regiController.getQualicationCategory(
-                qualification.qualificationMainId.toString());
-          }
-        });
-
         return StatefulBuilder(
           builder: (context, setModalState) {
             return SingleChildScrollView(
@@ -460,7 +455,6 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                   children: [
                     SizedBox(height: 30),
 
-                    /// **Top Buttons: Cancel & Save**
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -672,7 +666,7 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                                     if (newValue == "other_category") {
                                       regiController.isQualificationDetailVisible.value = true;
                                     } else {
-                                      regiController.isQualificationDetailVisible.value = false;
+                                      regiController.isQualificationDetailVisible.value = true;
                                     }
                                   });
                                 }
@@ -686,7 +680,7 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
 
                     Obx(() {
                       final hasExistingValue = qualification.qualificationOtherName != null &&
-                          qualification.qualificationOtherName!.trim().isNotEmpty;
+                          qualification.qualificationOtherName!.trim().isEmpty;
 
                       return Visibility(
                         visible: regiController.isQualificationDetailVisible.value || hasExistingValue,

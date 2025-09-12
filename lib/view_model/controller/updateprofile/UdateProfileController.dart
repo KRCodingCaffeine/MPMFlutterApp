@@ -775,7 +775,6 @@ class UdateProfileController extends GetxController {
   }
 
   // In UdateProfileController class
-
   void getQualicationMain(String qualification_id) async {
     print("cvv" + qualification_id.toString());
 
