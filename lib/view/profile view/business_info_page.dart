@@ -1517,9 +1517,18 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                 return _buildSpecializationDropdown(context);
               }),
               const SizedBox(height: 20),
+              // Obx(() {
+              //   if (!controller.showDetailsField.value) return const SizedBox();
+              //   return _buildDetailsField(context);
+              // }),
               Obx(() {
-                if (!controller.showDetailsField.value) return const SizedBox();
-                return _buildDetailsField(context);
+                final occSelected = controller.selectedOccupation.value == "0";
+                final specSelected = controller.selectedSpecialization.value.isNotEmpty;
+
+                if (occSelected || specSelected || controller.showDetailsField.value) {
+                  return _buildDetailsField(context);
+                }
+                return const SizedBox();
               }),
             ],
           ),
@@ -1729,8 +1738,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                             .firstWhere(
                                 (item) => item.id?.toString() == newValue,
                                 orElse: () => OccuptionSpecData());
-                        controller.showDetailsField.value =
-                            (selectedItem.name?.toLowerCase() == "other");
+                        controller.showDetailsField.value = true;
                       }
                     },
                   ),
