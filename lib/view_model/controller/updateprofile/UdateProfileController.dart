@@ -438,7 +438,7 @@ class UdateProfileController extends GetxController {
         familyHeadMemberId.value =
             getUserData.value.familyHeadMemberData!.memberId.toString();
         familyHeadData.value =
-            getUserData.value.familyHeadMemberData!; // Add this line
+            getUserData.value.familyHeadMemberData!;
       }
     }).onError((error, strack) {
       loading.value = false;
@@ -583,7 +583,10 @@ class UdateProfileController extends GetxController {
         "occupation_id": selectedOccupation.value,
         "occupation_profession_id": professionId ?? "",
         "occupation_specialization_id": specializationId ?? "",
-        "occupation_other_name": showDetailsField.value ? detailsController.value.text : "",
+        "occupation_other_name":
+        (showDetailsField.value || detailsController.value.text.isNotEmpty)
+            ? detailsController.value.text
+            : "",
         "updated_by": userData.memberId.toString()
       };
 
@@ -661,7 +664,6 @@ class UdateProfileController extends GetxController {
 
     if (occupation == null) return;
 
-    // Set occupation
     selectedOccupation.value = occupation.occupationId ?? '';
     detailsController.value.text = occupation.occupationOtherName ?? '';
 
@@ -670,7 +672,6 @@ class UdateProfileController extends GetxController {
       return;
     }
 
-    // Load profession data
     getOccupationProData(selectedOccupation.value).then((_) {
       if (occupation.occupationProfessionId != null &&
           occupation.occupationProfessionId!.isNotEmpty) {
@@ -682,24 +683,21 @@ class UdateProfileController extends GetxController {
           return;
         }
 
-        // Load specialization data
         getOccupationSpectData(selectedProfession.value).then((_) {
           if (occupation.occupationSpecializationId != null &&
               occupation.occupationSpecializationId!.isNotEmpty) {
-            // Specialization ID exists in the data
             selectedSpecialization.value = occupation.occupationSpecializationId!;
+            showDetailsField.value = true;
 
             if (selectedSpecialization.value == "Other") {
               showDetailsField.value = true;
             }
           } else {
-            // Specialization is null/empty - select "Other" option
             selectedSpecialization.value = "Other";
             showDetailsField.value = true;
           }
         });
       } else {
-        // Profession is null/empty - select "Other" option
         selectedProfession.value = "Other";
         showDetailsField.value = true;
       }
@@ -774,7 +772,6 @@ class UdateProfileController extends GetxController {
     });
   }
 
-  // In UdateProfileController class
   void getQualicationMain(String qualification_id) async {
     print("cvv" + qualification_id.toString());
 
