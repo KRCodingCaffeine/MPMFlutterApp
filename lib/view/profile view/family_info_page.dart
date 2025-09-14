@@ -76,7 +76,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
     });
   }
 
-  // Update your build method:
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -104,7 +103,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
             padding: const EdgeInsets.all(20.0),
             child: Column(
               children: [
-                // Family Head Card
                 Obx(() {
                   if (controller.familyHeadData.value != null) {
                     return _buildFamilyHeadCard(
@@ -115,20 +113,15 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                 const SizedBox(height: 4),
                 Expanded(
                   child: Obx(() {
-                    // Sort family members by age (oldest first)
                     final List<FamilyMembersData> sortedList = List.of(controller.familyDataList.value)
                       ..sort((a, b) {
-                        // Parse dates, handling null and empty cases
                         final aDate = _parseDate(a.dob);
                         final bDate = _parseDate(b.dob);
 
-                        // If both dates are invalid, maintain original order
                         if (aDate == null && bDate == null) return 0;
-                        // Put invalid dates at the end
                         if (aDate == null) return 1;
                         if (bDate == null) return -1;
 
-                        // Compare dates (oldest first)
                         return aDate.compareTo(bDate);
                       });
 
@@ -145,7 +138,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
         ],
       ),
       floatingActionButton: Obx(() {
-        // Only show FAB if current user is family head
         if (controller.familyHeadData.value?.memberId == currentMemberId) {
           return SpeedDial(
             icon: isSpeedDialOpen ? Icons.close : Icons.add,
@@ -897,7 +889,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                       ],
                     ),
 
-                  // Footer buttons
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -931,18 +922,14 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                             return;
                           }
 
-                          // Show OTP dialog before adding member
                           if (selectedMember.mobile != null &&
                               selectedMember.mobile!.isNotEmpty) {
-                            // Send OTP first
                             controller.sendOtp(selectedMember.mobile!);
 
-                            // Show OTP verification dialog
                             showOtpBottomSheet(
                               context,
                               selectedMember.mobile!,
                               onVerified: () async {
-                                // Only proceed with adding member after OTP verification
                                 final success =
                                 await controller.addExistingFamilyMember(
                                   samitiController.selectedMember.value,
@@ -1330,7 +1317,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
       ),
       builder: (context) {
         return FractionallySizedBox(
-          heightFactor: 0.8, // Adjusted height factor
+          heightFactor: 0.8,
           child: SafeArea(
             child: Padding(
               padding: EdgeInsets.only(
@@ -1343,14 +1330,12 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                 builder: (context, setState) {
                   return Column(
                     children: [
-                      // Fixed Buttons (Cancel and Add Member)
                       Container(
                         margin: const EdgeInsets.only(
-                            top: 20), // Added margin top here
+                            top: 20),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            // Cancel Button
                             OutlinedButton(
                               onPressed: () => Navigator.pop(context),
                               style: OutlinedButton.styleFrom(
@@ -1365,7 +1350,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                               child: const Text("Cancel"),
                             ),
 
-                            // Add Member Button
                             Obx(() {
                               return ElevatedButton(
                                 onPressed: () async {
@@ -1380,7 +1364,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                       );
                                     }
 
-                                    // Validate required fields
                                     if (regiController.selectMemberSalutation.value == "") {
                                       showErrorSnackbar("Select Salutation");
                                       return;
@@ -1445,7 +1428,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                       ),
                       const SizedBox(height: 20),
 
-                      // Scrollable Form Fields
                       Expanded(
                         child: SingleChildScrollView(
                           child: Form(

@@ -327,7 +327,14 @@ class _HomeViewState extends State<HomeView> {
                   children: [
                     SvgPicture.asset(item['icon'], height: 30, width: 30),
                     const SizedBox(height: 8),
-                    Text(item['label'], style: TextStyleClass.pink14style.copyWith(fontSize: 11), textAlign: TextAlign.center),
+                    Text(
+                      item['label'],
+                      style: TextStyleClass.pink14style.copyWith(fontSize: 10),
+                      textAlign: TextAlign.center,
+                      softWrap: true,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
                 ),
               ),
@@ -409,7 +416,7 @@ class _HomeViewState extends State<HomeView> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color), // Use green for success
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -492,7 +499,6 @@ class _HomeViewState extends State<HomeView> {
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       );
     }
-
 
     return Container(
       width: 360,
@@ -583,5 +589,4 @@ class _HomeViewState extends State<HomeView> {
       ),
     );
   }
-
 }

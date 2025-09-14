@@ -1467,11 +1467,20 @@ class UdateProfileController extends GetxController {
         String mobile = regiController.mobileController.value.text.trim();
 
         if (mobile.isNotEmpty) {
-          print("Sending OTP to: $mobile");
-          sendOtp(regiController.mobileController.value.text);
-          Navigator.of(context!).pop();
-          showOtpBottomSheet(
-              context!, regiController.mobileController.value.text);
+        //   print("Sending OTP to: $mobile");
+        //   sendOtp(regiController.mobileController.value.text);
+        //   Navigator.of(context!).pop();
+        //   showOtpBottomSheet(
+        //       context!, regiController.mobileController.value.text);
+        // }
+          Navigator.of(context).pop();
+          Get.snackbar(
+            "Success",
+            "Family member added successfully",
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            snackPosition: SnackPosition.TOP,
+          );
         }
       } else {
         Get.snackbar(
