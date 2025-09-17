@@ -157,8 +157,8 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                 height: 24,
                                 child: CircularProgressIndicator(
                                   color:
-                                      Colors.white, // Loading indicator color
-                                  strokeWidth: 2, // Thickness of the spinner
+                                      Colors.white,
+                                  strokeWidth: 2,
                                 ),
                               )
                             : Text(
@@ -193,7 +193,7 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                             padding: EdgeInsets.only(left: 5, top: 20),
                             child: Align(
                               alignment: Alignment
-                                  .centerLeft, // Align text to the left side
+                                  .centerLeft,
                               child: Text(
                                 'Residential Info',
                                 style: TextStyle(
@@ -321,13 +321,11 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                             ? regiController.selectBuilding.value
                                             : null,
                                         items: [
-                                          // Show only "Can't find" option when no buildings exist
                                           if (regiController.checkPinCodeList.isEmpty)
                                             const DropdownMenuItem<String>(
                                               value: 'other',
                                               child: Text('Can\'t find your building'),
                                             )
-                                          // Otherwise show only the actual buildings
                                           else
                                             ...regiController.checkPinCodeList.map((building) {
                                               return DropdownMenuItem<String>(
