@@ -4,9 +4,10 @@ import 'dart:io';
 import 'dart:math' show Random;
 import 'package:audioplayers/audioplayers.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_app_badger/flutter_app_badger.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
-import 'package:mpm/model/notification/NotificationModel.dart';
+import 'package:mpm/model/notification/NotificationDataModel.dart';
 import 'package:mpm/utils/NotificationDatabase.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 import 'package:path_provider/path_provider.dart';
@@ -97,7 +98,7 @@ class PushNotificationService {
     String timestamp = DateTime.now().toIso8601String();
 
     await NotificationDatabase.instance.insertNotification(
-      NotificationModel(
+      NotificationDataModel(
         title: title,
         body: body,
         image: image ?? "",
@@ -128,17 +129,31 @@ class PushNotificationService {
 
       await flutterLocalNotificationsPlugin.initialize(
         initializationSettings,
-        onDidReceiveNotificationResponse: (notificationResponse) {
+        onDidReceiveNotificationResponse: (notificationResponse) async {
+          // 🔹 Tap on notification
           if (notificationResponse.notificationResponseType ==
               NotificationResponseType.selectedNotification ||
               notificationResponse.actionId == navigationActionId) {
             selectNotificationStream.add(notificationResponse.payload);
           }
+
+          // 🔹 Dismiss/swipe notification
+          // if (notificationResponse.notificationResponseType ==
+          //     NotificationResponseType.dismissed) {
+          //   // Mark as read in DB
+          //   await NotificationDatabase.instance.markAllNotificationsAsRead();
+          //   // Refresh controller
+          //   if (Get.isRegistered<NotificationController>()) {
+          //     Get.find<NotificationController>().loadNotifications();
+          //   }
+          //   // Update badge
+          //   //await updateAppBadge();
+          // }
         },
         onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
       );
 
-      // Request permissions
+      // 🔹 Request permissions
       if (Platform.isIOS || Platform.isMacOS) {
         await flutterLocalNotificationsPlugin
             .resolvePlatformSpecificImplementation<
@@ -156,20 +171,18 @@ class PushNotificationService {
             ?.requestPermission();
       }
 
-      // Foreground notification handling
+      // 🔹 Foreground notification
       FirebaseMessaging.onMessage.listen((event) {
-        if (Platform.isAndroid) {
-          playCustomNotificationSound();
-          _showNotificationWithActions(event);
-        }
+        if (Platform.isAndroid) playCustomNotificationSound();
+        _showNotificationWithActions(event);
       });
 
-      // Background tap handling
+      // 🔹 Background tap
       FirebaseMessaging.onMessageOpenedApp.listen((message) async {
         if (Platform.isAndroid) playCustomNotificationSound();
         if (!alreadySent) {
           alreadySent = true;
-          await checkNotification(message); // ✅ Now refresh happens here
+          await checkNotification(message);
         }
       });
     } catch (e) {
@@ -221,84 +234,69 @@ class PushNotificationService {
   }
 
   Future<void> _showNotificationWithActions(RemoteMessage event) async {
-    final imageUrl = event.data['image'];
+    final unreadCount =
+    await NotificationDatabase.instance.getUnreadNotificationCount();
 
-    if (imageUrl != null && imageUrl.isNotEmpty) {
-      final response = await http.get(Uri.parse(imageUrl));
-      final documentDirectory = await getApplicationDocumentsDirectory();
-      final filePath = '${documentDirectory.path}/notif_image.jpg';
-      final imageFile = File(filePath);
-      await imageFile.writeAsBytes(response.bodyBytes);
+    const iosNotificationDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
 
-      final bigPictureStyle = BigPictureStyleInformation(
-        FilePathAndroidBitmap(filePath),
-        contentTitle: event.notification?.title,
-        summaryText: event.notification?.body,
-      );
+    final androidNotificationDetails = AndroidNotificationDetails(
+      "MPM",
+      "MPM",
+      channelDescription: "MPM",
+      importance: Importance.max,
+      priority: Priority.high,
+      sound: RawResourceAndroidNotificationSound("smileringtone"),
+      icon: '@drawable/logo',
+      enableLights: true,
+      enableVibration: true,
+      number: unreadCount, // 🔹 shows unread count
+      styleInformation: MediaStyleInformation(
+        htmlFormatContent: true,
+        htmlFormatTitle: true,
+      ),
+      playSound: true,
+    );
 
-      final androidDetails = AndroidNotificationDetails(
-        'channel_id',
-        'channel_name',
-        styleInformation: bigPictureStyle,
-        importance: Importance.max,
-        priority: Priority.high,
-      );
+    var notificationDetails = NotificationDetails(
+      android: androidNotificationDetails,
+      //iOS: iosNotificationDetails.copyWith(badgeNumber: unreadCount),
+    );
 
-      final notificationDetails = NotificationDetails(android: androidDetails);
+    final title = event.notification?.title ?? '';
+    final body = event.notification?.body ?? '';
+    final image = event.notification?.android?.imageUrl ?? "";
+    String timestamp = DateTime.now().toIso8601String();
 
-      await flutterLocalNotificationsPlugin.show(
-        0,
-        event.notification?.title,
-        event.notification?.body,
-        notificationDetails,
-      );
-    } else {
-      const iosNotificationDetails = DarwinNotificationDetails(
-        presentAlert: true,
-        presentBadge: true,
-        presentSound: true,
-        categoryIdentifier: darwinNotificationCategoryPlain,
-      );
-      AndroidNotificationDetails androidNotificationDetails =
-      AndroidNotificationDetails(
-        "MPM",
-        "MPM",
-        channelDescription: "MPM",
-        importance: Importance.max,
-        priority: Priority.high,
-        sound: RawResourceAndroidNotificationSound("smileringtone"),
-        icon: '@drawable/logo',
-        enableLights: true,
-        enableVibration: true,
-        styleInformation: MediaStyleInformation(
-          htmlFormatContent: true,
-          htmlFormatTitle: true,
-        ),
-        playSound: true,
-      );
+    await flutterLocalNotificationsPlugin.show(
+      Random().nextInt(9999),
+      title,
+      body,
+      notificationDetails,
+      payload: json.encode(event.data),
+    );
 
-      var notificationDetails = NotificationDetails(
-        android: androidNotificationDetails,
-        iOS: iosNotificationDetails,
-      );
+    // Save in DB
+    await NotificationDatabase.instance.insertNotification(
+      NotificationDataModel(
+        title: title,
+        body: body,
+        image: image,
+        timestamp: timestamp,
+        isRead: false,
+      ),
+    );
 
-      final title = event.notification?.title ?? '';
-      final body = event.notification?.body ?? '';
-      final image = event.notification?.android?.imageUrl ?? "";
-      String timestamp = DateTime.now().toIso8601String();
-
-      await flutterLocalNotificationsPlugin.show(
-        Random().nextInt(9999),
-        title,
-        body,
-        notificationDetails,
-        payload: json.encode(event.data),
-      );
-
-      // ✅ Save + refresh via checkNotification
-      await checkNotification(event);
+    // Refresh UI + badge
+    if (Get.isRegistered<NotificationController>()) {
+      Get.find<NotificationController>().loadNotifications();
     }
+    await updateAppBadge();
   }
+
 
   static Future<void> firebaseMessagingBackgroundHandler(
       RemoteMessage message) async {
@@ -313,6 +311,15 @@ class PushNotificationService {
         alreadySent = true;
         await checkNotification(initialMessage); // ✅ Auto refresh
       }
+    }
+  }
+
+  static Future<void> updateAppBadge() async {
+    final count = await NotificationDatabase.instance.getUnreadNotificationCount();
+    if (count > 0) {
+      FlutterAppBadger.updateBadgeCount(count);
+    } else {
+      FlutterAppBadger.removeBadge();
     }
   }
 }

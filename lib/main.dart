@@ -1,3 +1,4 @@
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -11,17 +12,19 @@ import 'package:mpm/utils/FirebaseFCMApi.dart';
 
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/utils/notification_service.dart';
 
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase
   await Firebase.initializeApp();
 
-  // Set up background message handler (must be before runApp)
+  //FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  await NotificationService().init();
 
+  // Lock screen orientation
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -30,12 +33,11 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
-@pragma('vm:entry-point')
-Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
-  // Optional: Handle the message (e.g., show a local notification, log, etc.)
-  print('Handling a background message: ${message.messageId}');
-}
+// @pragma('vm:entry-point')
+// Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+//   await Firebase.initializeApp();
+//   await NotificationService.handleIncomingFCM(message);
+// }
 
 
 class MyApp extends StatelessWidget {
@@ -57,6 +59,7 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
 
 
 

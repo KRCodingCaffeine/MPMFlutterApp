@@ -22,108 +22,104 @@ class _NotificationViewState extends State<NotificationView> {
     super.didChangeDependencies();
 
     if (!_firstBuildDone) {
-      // Only run once at initial build
-      controller.loadNotifications();
+      controller.loadNotifications(); // Load on first build
       _firstBuildDone = true;
     } else {
-      // Runs every time tab becomes visible
+      // Refresh when user comes back to this tab
       Future.delayed(Duration.zero, () {
-        controller.loadNotifications(); // Refresh on re-entry
+        controller.loadNotifications();
       });
     }
-  }
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    //controller.loadNotifications();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      body: Obx(
-        () {
-          final notifications = controller.notificationList;
 
-          if (notifications.isEmpty) {
-            return Center(
-              child: Text(
-                "No notifications available",
-                style: TextStyle(color: Colors.grey, fontSize: 16),
+      // ✅ Body with notification list
+      body: Obx(() {
+        final notifications = controller.notificationList;
+
+        if (notifications.isEmpty) {
+          return const Center(
+            child: Text(
+              "No notifications available",
+              style: TextStyle(color: Colors.grey, fontSize: 16),
+            ),
+          );
+        }
+
+        return ListView.builder(
+          itemCount: notifications.length,
+          itemBuilder: (context, index) {
+            final notification = notifications[index];
+            return Container(
+              margin: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.deepPurple[50],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ListTile(
+                onTap: () {
+                  // Navigate to detail
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => NotificationDetailPage(
+                        title: notification.title,
+                        body: notification.body,
+                        image: notification.image,
+                      ),
+                    ),
+                  );
+                },
+                leading: CircleAvatar(
+                  backgroundColor: notification.image != ""
+                      ? Colors.transparent
+                      : Colors.red,
+                  child: notification.image != ""
+                      ? Image.network(notification.image, fit: BoxFit.fill)
+                      : const Icon(Icons.notifications, color: Colors.white),
+                ),
+                title: Text(
+                  notification.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black54,
+                  ),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      notification.body,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _formatTimeAgo(notification.timestamp),
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                ),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () {
+                    _showDeleteConfirmationDialog(context, notification.id!);
+                  },
+                ),
               ),
             );
-          }
-
-          return ListView.builder(
-            itemCount: notifications.length,
-            itemBuilder: (context, index) {
-              final notification = notifications[index];
-              return Container(
-                margin: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.deepPurple[50],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: ListTile(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => NotificationDetailPage(
-                          title: notification.title,
-                          body: notification.body,
-                          image: notification.image,
-                        ),
-                      ),
-                    );
-                  },
-                  leading: CircleAvatar(
-                    backgroundColor:
-                    notification.image != "" ? Colors.transparent : Colors.red,
-                    child: notification.image != ""
-                        ? Image.network(notification.image, fit: BoxFit.fill)
-                        : Icon(Icons.notifications, color: Colors.white),
-                  ),
-                  title: Text(
-                    notification.title,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black54,
-                    ),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        notification.body,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        _formatTimeAgo(notification.timestamp),
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                  trailing: IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red),
-                    onPressed: () {
-                      _showDeleteConfirmationDialog(context, notification.id!);
-                    },
-                  ),
-                ),
-              );
-            },
-          );
-        },
-      ),
+          },
+        );
+      }),
     );
   }
 
-  void _showDeleteConfirmationDialog(BuildContext context, int notificationId) {
+  void _showDeleteConfirmationDialog(
+      BuildContext context, int notificationId) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -191,7 +187,6 @@ class _NotificationViewState extends State<NotificationView> {
     );
   }
 
-
   String _formatTimeAgo(String timestamp) {
     try {
       final time = DateTime.parse(timestamp);
@@ -208,3 +203,4 @@ class _NotificationViewState extends State<NotificationView> {
     }
   }
 }
+
