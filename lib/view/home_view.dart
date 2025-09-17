@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:mpm/model/DashBoardEvents/DashBoardEventsData.dart';
 import 'package:mpm/model/GetEventsList/GetEventsListData.dart';
+import 'package:mpm/model/Offer/OfferData.dart';
+import 'package:mpm/model/OfferSubcategory/OfferSubcatData.dart';
 import 'package:mpm/repository/dashboard_events_repository/dashboard_events_repo.dart';
 import 'package:mpm/repository/qr_code_scanner_repository/qr_code_scanner_repo.dart';
 import 'package:mpm/route/route_name.dart';
@@ -12,9 +14,11 @@ import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/images.dart';
 import 'package:mpm/utils/textstyleclass.dart';
+import 'package:mpm/view/DiscountOfferDetailPage.dart';
 import 'package:mpm/view/payment/PaymentScreen.dart';
 import 'package:mpm/view/Events/event_detail_page.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
+import 'package:mpm/view_model/controller/offer/OfferController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
 class HomeView extends StatefulWidget {
@@ -24,9 +28,12 @@ class HomeView extends StatefulWidget {
   State<HomeView> createState() => _HomeViewState();
 }
 
-class _HomeViewState extends State<HomeView> {
+class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin {
   final regiController = Get.put(NewMemberController());
   final controller = Get.put(UdateProfileController());
+  final offerController = Get.put(OfferController());
+  late AnimationController _tagController;
+  late Animation<double> _fadeAnimation;
   final ScrollController _scrollController = ScrollController();
   final double _cardWidth = 360.0;
   final double _cardSpacing = 16.0;
@@ -72,6 +79,18 @@ class _HomeViewState extends State<HomeView> {
         debugPrint("Invalid or missing member ID.");
       }
     });
+
+    offerController.fetchOffers();
+
+    _tagController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+
+    _fadeAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
+      CurvedAnimation(parent: _tagController, curve: Curves.easeInOut),
+    );
+
     ever(controller.emailVerifyStatus, (value) {
       if (value == "1") {
         // Email verified, no need to show banner
@@ -123,6 +142,7 @@ class _HomeViewState extends State<HomeView> {
   void dispose() {
     _timer.cancel();
     _scrollController.dispose();
+    _tagController.dispose();
     super.dispose();
   }
 
@@ -173,11 +193,180 @@ class _HomeViewState extends State<HomeView> {
           ),
 
           _buildGridView(),
+
+          Obx(() {
+            if (offerController.isLoading.value) {
+              return const SizedBox(height: 120, child: Center(child: CircularProgressIndicator()));
+            }
+            if (offerController.offerList.isEmpty) {
+              return const SizedBox.shrink();
+            }
+            return _buildBannerCard(offerController.offerList.first);
+          }),
+
           _buildAdvertisementTitle(),
           _buildDashboardEventsList(),
           const SizedBox(height: 20),
         ],
       ),
+    );
+  }
+
+  Widget _buildBannerCard(OfferData offer) {
+    Widget? dateTag;
+    if (offer.validFrom != null || offer.validTo != null) {
+      String dateText = '';
+      if (offer.validFrom != null && offer.validTo != null) {
+        dateText = "Till : ${_formatDate(offer.validFrom!)} - ${_formatDate(offer.validTo!)}";
+      } else if (offer.validTo != null) {
+        dateText = "Till : ${_formatDate(offer.validTo!)}";
+      } else if (offer.validFrom != null) {
+        dateText = "From : ${_formatDate(offer.validFrom!)}";
+      }
+
+      if (dateText.isNotEmpty) {
+        dateTag = _buildTag(
+          dateText,
+          Colors.grey[300]!,
+          textColor: Colors.black45,
+          fontSize: 10,
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        );
+      }
+    }
+
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DiscountOfferDetailPage(offer: offer),
+          ),
+        );
+      },
+      child: Card(
+        color: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        elevation: 2,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: IntrinsicHeight(
+            child: Row(
+              children: [
+                // Left Logo & Org Name
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    (offer.orgLogo != null && offer.orgLogo!.isNotEmpty)
+                        ? ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        offer.orgLogo!,
+                        width: 40,
+                        height: 40,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => _buildDefaultLogo(),
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return SizedBox(
+                            width: 50,
+                            height: 50,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                    : null,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    )
+                        : _buildDefaultLogo(),
+                    const SizedBox(height: 4),
+                    SizedBox(
+                      width: 95,
+                      child: Text(
+                        offer.orgName ?? 'Unknown',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(width: 12),
+                Container(width: 1, color: Colors.grey[400]),
+                const SizedBox(width: 12),
+
+                // Offer details
+                Expanded(
+                  child: Stack(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 30),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              offer.offerDiscountName ?? 'No title',
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              offer.offerDescription ?? 'No description',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                            ),
+                            const SizedBox(height: 8),
+                            if (dateTag != null) dateTag!,
+                          ],
+                        ),
+                      ),
+
+                      // Animated "Special Offer" tag
+                      Positioned(
+                        top: 4,
+                        right: 0,
+                        child: FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: _buildTag(
+                            'Special Offer',
+                            ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                            textColor: Colors.white,
+                            fontSize: 10,
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDefaultLogo() {
+    return Container(
+      width: 50,
+      height: 50,
+      decoration: BoxDecoration(
+        color: Colors.grey[300],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Icon(Icons.image, size: 30, color: Colors.grey),
     );
   }
 
