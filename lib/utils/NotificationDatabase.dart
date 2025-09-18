@@ -78,10 +78,28 @@ class NotificationDatabase {
   }
 
   Future<int> getUnreadNotificationCount() async {
-    final db = await database;
-    final result = await db.rawQuery("SELECT COUNT(*) FROM notifications WHERE isRead = 0");
-    return Sqflite.firstIntValue(result) ?? 0;
+    try {
+      final db = await database;
+      final result = await db.rawQuery(
+        'SELECT COUNT(*) as count FROM notifications WHERE isRead = 0'
+      );
+      return Sqflite.firstIntValue(result) ?? 0;
+    } catch (e) {
+      print('Get unread count error: $e');
+      return 0;
+    }
   }
+
+  Future<void> markNotificationAsRead(int id) async {
+    final db = await database;
+    await db.update(
+      'notifications',
+      {'isRead': 1},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
   Future close() async {
     final db = await instance.database;
     db.close();

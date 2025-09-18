@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/model/notification/NotificationDataModel.dart';
 import 'package:mpm/utils/NotificationDatabase.dart';
+import 'package:mpm/utils/notification_service.dart';
 
-import '../../../utils/FirebaseFCMApi.dart';
 
 import 'package:awesome_notifications/awesome_notifications.dart';
 
@@ -17,8 +17,8 @@ class NotificationController extends GetxController with WidgetsBindingObserver 
     unreadCount.value =
     await NotificationDatabase.instance.getUnreadNotificationCount();
 
-    // Sync badge with DB
-    AwesomeNotifications().setGlobalBadgeCounter(unreadCount.value);
+    // Sync badge with DB using notification service
+    await NotificationService.syncBadgeWithDatabase();
   }
 
   void deleteNotification(int id) async {
@@ -28,7 +28,7 @@ class NotificationController extends GetxController with WidgetsBindingObserver 
 
     unreadCount.value =
     await NotificationDatabase.instance.getUnreadNotificationCount();
-    AwesomeNotifications().setGlobalBadgeCounter(unreadCount.value);
+    await NotificationService.syncBadgeWithDatabase();
   }
 
   void markAllAsRead() async {
