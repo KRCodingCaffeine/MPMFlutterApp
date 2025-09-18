@@ -15,7 +15,6 @@ import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view_model/controller/notification/NotificationController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
-import '../utils/FirebaseFCMApi.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
@@ -27,12 +26,11 @@ class DashboardView extends StatefulWidget {
 class _DashboardViewState extends State<DashboardView> {
   final UdateProfileController controller = Get.put(UdateProfileController());
   final NotificationController notificationController =
-      Get.put(NotificationController());
+      Get.find<NotificationController>();
   @override
   void initState() {
     super.initState();
     getUserSessionData();
-    PushNotificationService().handleInitialNotification();
     // notificationController.loadUnreadCount();
 
     _loadDeviceInfo();

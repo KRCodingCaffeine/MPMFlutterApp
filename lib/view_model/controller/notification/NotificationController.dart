@@ -1,25 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mpm/model/notification/NotificationModel.dart';
+import 'package:mpm/model/notification/NotificationDataModel.dart';
 import 'package:mpm/utils/NotificationDatabase.dart';
+import 'package:mpm/utils/notification_service.dart';
+
+
+import 'package:awesome_notifications/awesome_notifications.dart';
 
 class NotificationController extends GetxController with WidgetsBindingObserver {
-  RxList<NotificationModel> notificationList = <NotificationModel>[].obs;
-
-
-
+  RxList<NotificationDataModel> notificationList = <NotificationDataModel>[].obs;
   var unreadCount = 0.obs;
 
   void loadNotifications() async {
-    notificationList.value = await NotificationDatabase.instance.getAllNotifications();
-    unreadCount.value = await NotificationDatabase.instance.getUnreadNotificationCount();
-  }
-  void markAsRead(String id) {
-    final notif = notificationList.firstWhere((n) => n.id == id);
-    notif.isRead = true;
-    notificationList.refresh();
+    notificationList.value =
+    await NotificationDatabase.instance.getAllNotifications();
+    unreadCount.value =
+    await NotificationDatabase.instance.getUnreadNotificationCount();
+
+    // Sync badge with DB using notification service
+    await NotificationService.syncBadgeWithDatabase();
   }
 
+  void deleteNotification(int id) async {
+    await NotificationDatabase.instance.deleteNotificationById(id);
+    notificationList.removeWhere((n) => n.id == id);
+    notificationList.refresh();
+
+    unreadCount.value =
+    await NotificationDatabase.instance.getUnreadNotificationCount();
+    await NotificationService.syncBadgeWithDatabase();
+  }
+
+  void markAllAsRead() async {
+    await NotificationDatabase.instance.markAllNotificationsAsRead();
+    loadNotifications();
+  }
 
   @override
   void onInit() {
@@ -27,6 +42,7 @@ class NotificationController extends GetxController with WidgetsBindingObserver 
     WidgetsBinding.instance.addObserver(this);
     loadNotifications();
   }
+
   @override
   void onClose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -39,18 +55,5 @@ class NotificationController extends GetxController with WidgetsBindingObserver 
       loadNotifications();
     }
   }
-  void markAllAsRead() async {
-    await NotificationDatabase.instance.markAllNotificationsAsRead();
-    loadNotifications2();
-  }
-  void loadNotifications2() async {
-    final notifications = await NotificationDatabase.instance.getAllNotifications();
-    unreadCount.value = notifications.where((n) => !n.isRead).length;
-  }
-  void deleteNotification(int id) async {
-    await NotificationDatabase.instance.deleteNotificationById(id);
-    notificationList.removeWhere((n) => n.id == id);
-    notificationList.refresh();
-  }
-
 }
+

@@ -1,4 +1,4 @@
-class NotificationModel {
+class NotificationDataModel {
   final int? id;
   final String title;
   final String body;
@@ -6,7 +6,7 @@ class NotificationModel {
   final String timestamp;
    bool isRead;
 
-  NotificationModel({
+  NotificationDataModel({
     this.id,
     required this.title,
     required this.body,
@@ -26,8 +26,8 @@ class NotificationModel {
     };
   }
 
-  factory NotificationModel.fromMap(Map<String, dynamic> map) {
-    return NotificationModel(
+  factory NotificationDataModel.fromMap(Map<String, dynamic> map) {
+    return NotificationDataModel(
       id: map['id'],
       title: map['title'],
       body: map['body'],

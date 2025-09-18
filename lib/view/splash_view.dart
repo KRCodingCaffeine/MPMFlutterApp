@@ -5,7 +5,6 @@ import 'package:in_app_update/in_app_update.dart';
 
 import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/route/route_name.dart';
-import 'package:mpm/utils/FirebaseFCMApi.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/images.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -43,8 +42,7 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
     // Step 1: Ask notification permission first
     _requestNotificationPermission();
 
-    // Step 2: Start Firebase init non-blocking
-    PushNotificationService().initialise(); // Do NOT await
+    // Step 2: Firebase is already initialized in main.dart
 
     // Step 3: App update check
     await _checkForUpdate();

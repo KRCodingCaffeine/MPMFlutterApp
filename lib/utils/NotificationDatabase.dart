@@ -1,4 +1,4 @@
-import 'package:mpm/model/notification/NotificationModel.dart';
+import 'package:mpm/model/notification/NotificationDataModel.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 class NotificationDatabase {
@@ -33,16 +33,16 @@ class NotificationDatabase {
       )
     ''');
   }
-  Future<void> insertNotification(NotificationModel notification) async {
+  Future<void> insertNotification(NotificationDataModel notification) async {
     final db = await instance.database;
     await db.insert('notifications', notification.toMap());
   }
 
-  Future<List<NotificationModel>> getAllNotifications() async {
+  Future<List<NotificationDataModel>> getAllNotifications() async {
     try {
       final db = await instance.database;
       final result = await db.query('notifications', orderBy: 'timestamp DESC');
-      return result.map((json) => NotificationModel.fromMap(json)).toList();
+      return result.map((json) => NotificationDataModel.fromMap(json)).toList();
     } catch (e) {
       print('Get notifications error: $e');
       return [];
@@ -78,10 +78,28 @@ class NotificationDatabase {
   }
 
   Future<int> getUnreadNotificationCount() async {
-    final db = await database;
-    final result = await db.rawQuery("SELECT COUNT(*) FROM notifications WHERE isRead = 0");
-    return Sqflite.firstIntValue(result) ?? 0;
+    try {
+      final db = await database;
+      final result = await db.rawQuery(
+        'SELECT COUNT(*) as count FROM notifications WHERE isRead = 0'
+      );
+      return Sqflite.firstIntValue(result) ?? 0;
+    } catch (e) {
+      print('Get unread count error: $e');
+      return 0;
+    }
   }
+
+  Future<void> markNotificationAsRead(int id) async {
+    final db = await database;
+    await db.update(
+      'notifications',
+      {'isRead': 1},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
   Future close() async {
     final db = await instance.database;
     db.close();

@@ -264,7 +264,7 @@ class LoginController {
             await SessionManager.saveSessionUserData(_value.data!);
             await SessionManager.saveSessionToken(
                 _value.token.toString());
-            updateToken();
+            //updateToken();
             api.userVerify(_value.token.toString()).then((_value) async {
               print("Session saved successfully!");
               Navigator.pushNamedAndRemoveUntil(
@@ -339,7 +339,7 @@ class LoginController {
 
       var memberid=userData!.memberId.toString();
       final token = await FirebaseMessaging.instance.getToken();
-
+      debugPrint("FCM Token: $token");
 
       Map map = {
         "member_id": memberid,
