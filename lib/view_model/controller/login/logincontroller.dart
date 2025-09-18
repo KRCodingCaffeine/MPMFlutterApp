@@ -25,6 +25,7 @@ class LoginController {
   RxBool isLoading = false.obs;
   var isMobileValid = false.obs;
   var mobilecon = ''.obs;
+  var emailcon = ''.obs;
   var LMCODEDYANMIC="".obs;
   var validotp = "".obs;
   var isButtonEnabled = false.obs;

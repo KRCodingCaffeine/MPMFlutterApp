@@ -72,6 +72,7 @@ class Urls {
   static const String scan_qrcode_event = base_url+"api/scan_qrcode_event";
   static const String get_saraswani_publication = base_url+"api/get_saraswani_publication";
   static const String getLatestSaraswaniPublications = base_url+"api/get_latest_saraswani_publications";
+  static const String reg_otp_url = base_url+"api/check_reg_otp";
 
 
 }

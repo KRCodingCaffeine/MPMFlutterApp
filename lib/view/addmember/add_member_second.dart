@@ -272,7 +272,6 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Building Name Dropdown
                               Container(
                                 width: double.infinity,
                                 margin: const EdgeInsets.only(left: 5, right: 5),
@@ -324,7 +323,7 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                           if (regiController.checkPinCodeList.isEmpty)
                                             const DropdownMenuItem<String>(
                                               value: 'other',
-                                              child: Text('Can\'t find your building'),
+                                              child: Text('Other'),
                                             )
                                           else
                                             ...regiController.checkPinCodeList.map((building) {
@@ -337,9 +336,11 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                         onChanged: (String? newValue) {
                                           if (newValue != null) {
                                             regiController.selectBuilding(newValue);
-                                            // Show input field only when pincode doesn't exist
-                                            regiController.isBuilding.value =
-                                                regiController.checkPinCodeList.isEmpty;
+                                            regiController.isBuilding.value = (newValue == "other");
+
+                                            if (newValue != "other") {
+                                              regiController.buildingController.value.clear();
+                                            }
                                           }
                                         },
                                       ),

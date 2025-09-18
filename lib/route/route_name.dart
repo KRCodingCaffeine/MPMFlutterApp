@@ -7,6 +7,7 @@ class RouteNames {
   static const String forget_screen="forget_screen";
   static const String language_screen="language_screen";
   static const String otp_screen="otp_screen";
+  static const String regOtp_screen="reg_otp_screen";
   static const String dontotp="Don't receive the OTP ?";
   static const String personalinfo="personalinfo";
   static const String residentailinfo="residentailinfo";

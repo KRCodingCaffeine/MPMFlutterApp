@@ -10,6 +10,8 @@ class AppConstants {
   static const String enter_otp = 'Mobile Verification Code';
   static const String detail_otp =
       'Please enter OTP sent on your mobile number';
+  static const String detail_email_otp =
+      'Please enter Email OTP sent on your Email';
   static const String termscondition = 'Terms of Use & Privacy Policy';
   static const String detlogin = "Dont't have an account ? ";
   static const String register = "Register";
