@@ -258,10 +258,6 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   child: _buildBannerCard(
                     offerController.offerList.first,
-                    CurvedAnimation(
-                      parent: _tagController,
-                      curve: Curves.easeOutBack,
-                    ),
                   ),
                 ),
               );
@@ -276,174 +272,160 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
     );
   }
 
-  Widget _buildBannerCard(OfferData offer, Animation<double> animation) {
-    return ScaleTransition(
-      scale: animation,
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => DiscountOfferDetailPage(offer: offer),
+  Widget _buildBannerCard(OfferData offer) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DiscountOfferDetailPage(offer: offer),
+          ),
+        );
+      },
+      child: Card(
+        elevation: 5,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Container(
+          height: 150,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            gradient: const LinearGradient(
+              colors: [Color(0xFFE3F2FD), Color(0xFF90CAF9)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-          );
-        },
-        child: Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          elevation: 6,
-          shadowColor: Colors.black.withOpacity(0.15),
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                colors: [Colors.white, Colors.grey.shade50],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            padding: const EdgeInsets.all(16),
-            child: IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      (offer.orgLogo != null && offer.orgLogo!.isNotEmpty)
-                          ? ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: FadeInImage.assetNetwork(
-                          placeholder: 'assets/images/placeholder.png',
-                          image: offer.orgLogo!,
-                          width: 55,
-                          height: 55,
-                          fit: BoxFit.cover,
-                          imageErrorBuilder: (context, error, stackTrace) =>
-                              _buildDefaultLogo(),
-                        ),
-                      )
-                          : _buildDefaultLogo(),
-                      const SizedBox(height: 6),
-                      SizedBox(
-                        width: 100,
-                        child: Text(
-                          offer.orgName ?? 'Unknown',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                            color: Colors.black87,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ],
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                top: -20,
+                left: -30,
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.3),
+                    shape: BoxShape.circle,
                   ),
+                ),
+              ),
+              Positioned(
+                bottom: -25,
+                right: -25,
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.20),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
 
-                  const SizedBox(width: 14),
-                  Container(width: 1, color: Colors.grey[300]),
-                  const SizedBox(width: 14),
-
-                  // Right Section
-                  Expanded(
-                    child: Stack(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 28, right: 8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                offer.offerDiscountName ?? 'No title',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                'Free Home Delivery',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.green.shade700,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 14, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: Colors.redAccent,
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.redAccent.withOpacity(0.3),
-                                      blurRadius: 6,
-                                      offset: const Offset(0, 3),
-                                    )
-                                  ],
-                                ),
-                                child: const Text(
-                                  'Click here to order',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // Tag
-                        Positioned(
-                          top: 0,
-                          right: 0,
-                          child: FadeTransition(
-                            opacity: _fadeAnimation,
-                            child: _buildTag(
-                              'Special Offer',
-                              ColorHelperClass.getColorFromHex(
-                                  ColorResources.red_color),
-                              textColor: Colors.white,
-                              fontSize: 11,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
-                            ),
-                          ),
-                        ),
-                      ],
+              Positioned(
+                top: 40,
+                right: -60,
+                child: Transform.rotate(
+                  angle: -0.5,
+                  child: Container(
+                    width: 140,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
+
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            offer.offerDiscountName ?? "BEST OFFER",
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+
+                          const Text(
+                            "Free Home Delivery",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.redAccent,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              "ORDER NOW",
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    Container(
+                      margin: const EdgeInsets.only(top: 25),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.red.withOpacity(0.4),
+                            blurRadius: 6,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: const Text(
+                        "%",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildDefaultLogo() {
-    return Container(
-      width: 50,
-      height: 50,
-      decoration: BoxDecoration(
-        color: Colors.grey[300],
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: const Icon(Icons.image, size: 30, color: Colors.grey),
-    );
-  }
-
   Widget _buildMembershipNotice() {
-    final status = controller.membershipTypeId.value.trim();
+    final status = controller.membershipApprovalStatusId.value.trim();
     final message = {
       '2': "Your payment is pending.",
       '3': "We received your payment and it's under approval.",

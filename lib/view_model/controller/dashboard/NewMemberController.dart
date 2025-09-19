@@ -826,11 +826,8 @@ class NewMemberController extends GetxController {
     var saraswani_option_id = saraswaniOptionId.value;
 
     if (selectBuilding.value == "other") {
-      // Use the custom building name entered by user
-      building_id = "0"; // or whatever value your API expects for custom buildings
-      // Make sure building_name is not empty
+      building_id = "0";
       if (building_name.isEmpty) {
-        // Show error and return
         Get.snackbar(
           "Error",
           "Please enter building name",
@@ -842,9 +839,8 @@ class NewMemberController extends GetxController {
         return;
       }
     } else {
-      // Use the selected building ID
       building_id = selectBuilding.value;
-      building_name = ""; // Clear the custom building name
+      building_name = "";
     }
 
     var document_type = selectDocumentType.value;

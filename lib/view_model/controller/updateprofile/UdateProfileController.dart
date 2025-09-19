@@ -323,7 +323,7 @@ class UdateProfileController extends GetxController {
           documentDynamicImage.value =
               Urls.imagePathUrl + getUserData.value.addressProof!;
         } else {
-          documentDynamicImage.value = ''; // or some default value
+          documentDynamicImage.value = '';
         }
       }
       saraswaniOption.value = getUserData.value.saraswaniOption?.toString() ?? 'Not selected';
@@ -1229,7 +1229,6 @@ class UdateProfileController extends GetxController {
     }
   }
 
-// Add this method to your UdateProfileController class
   Future<void> userResidentalProfile(BuildContext context) async {
     CheckUserData2? userData = await SessionManager.getSession();
     if (userData == null) return;

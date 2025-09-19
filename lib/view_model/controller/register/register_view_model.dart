@@ -114,7 +114,8 @@ class RegisterController extends GetxController {
     isMobileValid.value = false;
 
     try {
-      final response = await CheckMobileRepository().checkMobileNumberExists(mobile);
+      final response =
+          await CheckMobileRepository().checkMobileNumberExists(mobile);
       isCheckingMobile.value = false;
 
       if (response.status == true) {
@@ -276,7 +277,6 @@ class RegisterController extends GetxController {
     saraswaniOptionId.value = value;
   }
 
-
   void setSelectedBuilding(String value) {
     selectBuilding(value);
   }
@@ -382,68 +382,86 @@ class RegisterController extends GetxController {
 
   void getMemberShip() {
     setRxRequestMemberShip(Status.LOADING);
+
     api.userMemberShip().then((_value) {
       setRxRequestMemberShip(Status.COMPLETE);
 
       try {
         var date = dateController.value.text;
+        var zoneId = zoneController.value.text;
+
         if (date.isEmpty) {
           setRxRequestMemberShip(Status.ERROR);
           return;
         }
 
         DateFormat inputFormat = DateFormat("dd/MM/yyyy");
-        DateTime dob = inputFormat.parse(date);
+        DateFormat outputFormat = DateFormat("yyyy-MM-dd");
 
-        // Clear existing list
-        memberShipList.clear();
+        DateTime dobDate = inputFormat.parse(date);
+        String formattedDate = outputFormat.format(dobDate);
+
+        print("Formatted DOB: $formattedDate, Zone ID: $zoneId");
+
+        memberShipList.value.clear();
 
         if (withoutcheckotp.value == false) {
-          setMemberShipType(_value.data!);
-
+          for (var membership in _value.data!) {
+            memberShipList.value.add(MemberShipData(
+              id: membership.id,
+              membershipName: membership.membershipName,
+              price: membership.price.toString(),
+              status: membership.status.toString(),
+              updatedAt: null,
+              createdAt: null,
+            ));
+          }
           filteredSaraswaniOptionList.value = saraswaniOptionList;
         } else {
-          if (isUnder18(dob)) {
-            // Under 18
-            if (zoneController.value.text.isEmpty) {
+          if (isUnder18(dobDate)) {
+            if (zoneId.isEmpty) {
               _showLoginAlert(context!);
             } else {
-              _addMembershipIfMatches(_value.data!, "Non Member");
-
-              filteredSaraswaniOptionList.value = saraswaniOptionList
-                  .where((option) =>
-                  (option.saraswaniOption?.toLowerCase() ?? '')
-                      .contains('soft'))
-                  .toList();
-            }
-          } else {
-            if (countryNotFound.value) {
-              if (zoneController.value.text.isEmpty) {
-                _addMembershipIfMatches(_value.data!, "Saraswani Member");
-                _addMembershipIfMatches(_value.data!, "Guest Member");
-
-                filteredSaraswaniOptionList.value = saraswaniOptionList;
-              } else {
-                _addMembershipIfMatches(_value.data!, "Non Member");
-                _addMembershipIfMatches(_value.data!, "Life Member");
-
-                final hasNonMember = memberShipList.any((ms) =>
-                (ms.membershipName?.toLowerCase() ?? '') == 'non member');
-
-                if (hasNonMember) {
-                  filteredSaraswaniOptionList.value = saraswaniOptionList
-                      .where((option) =>
-                      (option.saraswaniOption?.toLowerCase() ?? '')
-                          .contains('soft'))
-                      .toList();
-                } else {
-                  filteredSaraswaniOptionList.value = saraswaniOptionList;
+              for (var membership in _value.data!) {
+                if (membership.membershipName == "Non Member") {
+                  memberShipList.value.add(MemberShipData(
+                    id: membership.id,
+                    membershipName: membership.membershipName,
+                    price: membership.price.toString(),
+                    status: membership.status.toString(),
+                    updatedAt: null,
+                    createdAt: null,
+                  ));
                 }
               }
-            } else {
-              _addMembershipIfMatches(_value.data!, "Saraswani Member");
-
-              filteredSaraswaniOptionList.value = saraswaniOptionList;
+            }
+          } else {
+            for (var membership in _value.data!) {
+              if (zoneId.isEmpty) {
+                if (membership.membershipName == "Saraswani Member" ||
+                    membership.membershipName == "Guest Member") {
+                  memberShipList.value.add(MemberShipData(
+                    id: membership.id,
+                    membershipName: membership.membershipName,
+                    price: membership.price.toString(),
+                    status: membership.status.toString(),
+                    updatedAt: null,
+                    createdAt: null,
+                  ));
+                }
+              } else {
+                if (membership.membershipName == "Non Member" ||
+                    membership.membershipName == "Life Member") {
+                  memberShipList.value.add(MemberShipData(
+                    id: membership.id,
+                    membershipName: membership.membershipName,
+                    price: membership.price.toString(),
+                    status: membership.status.toString(),
+                    updatedAt: null,
+                    createdAt: null,
+                  ));
+                }
+              }
             }
           }
         }
@@ -451,8 +469,9 @@ class RegisterController extends GetxController {
         print("Error parsing date: $e");
         setRxRequestMemberShip(Status.ERROR);
       }
-    }).onError((error, strack) {
+    }).onError((error, stack) {
       setRxRequestMemberShip(Status.ERROR);
+      print("Error fetching membership: $error");
     });
   }
 
@@ -542,13 +561,18 @@ class RegisterController extends GetxController {
       print('Status: ${pincodeResponse.status}');
       print('Message: ${pincodeResponse.message}');
       setcheckPinCode(pincodeResponse.data!.building!);
-      checkPinCodeList.add(Building(
-          id: "other",
-          userId: null,
-          pincodeId: null,
-          buildingName: "Can't find  your building",
-          createdAt: null,
-          updatedAt: null));
+      if (!checkPinCodeList.any((b) => b.id == "other")) {
+        checkPinCodeList.add(
+          Building(
+            id: "other",
+            userId: null,
+            pincodeId: null,
+            buildingName: "Other",
+            createdAt: null,
+            updatedAt: null,
+          ),
+        );
+      }
       // housenoController.value.text= _value.data.country;
       state_id.value = pincodeResponse.data!.state!.id.toString();
       city_id.value = pincodeResponse.data!.city!.id.toString();
@@ -601,9 +625,21 @@ class RegisterController extends GetxController {
     var membership_type_id = selectMemberShipType.value;
     var saraswani_option_id = saraswaniOptionId.value;
     if (selectBuilding.value == "other") {
-      building_id = "";
+      building_id = "0";
+      if (building_name.isEmpty) {
+        Get.snackbar(
+          "Error",
+          "Please enter building name",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+        loading.value = false;
+        return;
+      }
     } else {
       building_id = selectBuilding.value;
+      building_name = "";
     }
     var document_type = selectDocumentType.value;
     var flat_no = housenoController.value.text;
@@ -628,6 +664,7 @@ class RegisterController extends GetxController {
       "dob": dob,
       "document_type": document_type,
       "building_id": building_id,
+      "building_name": building_name,
       "member_type_id": membership_type_id,
       "saraswani_option_id": saraswaniOptionId.value,
       "flat_no": flat_no,
@@ -683,11 +720,12 @@ class RegisterController extends GetxController {
         state_id.value = "";
         zone_id.value = "";
         city_id.value = "";
-        Navigator.pushReplacementNamed(context!, RouteNames.otp_screen,
+        Navigator.pushReplacementNamed(context!, RouteNames.regOtp_screen,
             arguments: {
               "memeberId": memberId.value,
-              "page_type_direct": "2",
-              "mobile": mobile
+                "page_type_direct": "2",
+              "mobile": mobile,
+              "email": email
             });
       } else {
         Get.snackbar(

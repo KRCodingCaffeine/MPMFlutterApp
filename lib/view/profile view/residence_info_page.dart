@@ -63,7 +63,7 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
           padding: const EdgeInsets.symmetric(vertical: 16.0),
           child: Padding(
             padding: const EdgeInsets.symmetric(
-                horizontal: 16.0), // Outer padding for the Card
+                horizontal: 16.0),
             child: Card(
               color: Colors.white,
               elevation: 4,
@@ -182,7 +182,7 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                                   ? () {
                                 _showImagePreviewDialog(context);
                               }
-                                  : null, // Disables button if image is not available
+                                  : null,
                               icon: const Icon(Icons.visibility),
                               label: const Text("View Image"),
                               style: ElevatedButton.styleFrom(
@@ -190,7 +190,7 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                                   ColorResources.red_color,
                                 ),
                                 foregroundColor: Colors.white,
-                                disabledBackgroundColor: Colors.grey.shade400, // Disabled color
+                                disabledBackgroundColor: Colors.grey.shade400,
                                 disabledForegroundColor: Colors.white70,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
@@ -226,7 +226,7 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
               borderRadius: BorderRadius.circular(10),
               child: controller.documentDynamicImage.value != null
                   ? Image.network(controller.documentDynamicImage.value,
-                      fit: BoxFit.contain) // Display the image
+                      fit: BoxFit.contain)
                   : const Padding(
                       padding: EdgeInsets.all(20),
                       child: Text("No image uploaded",
@@ -243,7 +243,7 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
-      isScrollControlled: true, // Allow the bottom sheet to adjust for keyboard
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -303,7 +303,6 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
           child: SafeArea(
             child: Column(
               children: [
-                // Fixed Buttons Row
                 Padding(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 16.0, vertical: 16.0),
@@ -330,7 +329,6 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                       ElevatedButton(
                         onPressed: () async {
                           if (formKeyLogin!.currentState!.validate()) {
-                            // Validate required fields
                             void showErrorSnackbar(String message) {
                               Get.snackbar(
                                 "Error",
@@ -362,7 +360,6 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                               return;
                             }
 
-                            // Call the update method
                             await controller.userResidentalProfile(context);
                           }
                         },
@@ -400,7 +397,6 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const SizedBox(height: 16),
-                          // Pincode Field with Search Button
                           SizedBox(
                             width: double.infinity,
                             child: Container(
@@ -418,10 +414,10 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                                       decoration: const InputDecoration(
                                         hintText: 'Pin Code *',
                                         border: InputBorder
-                                            .none, // Remove the internal border
+                                            .none,
                                         contentPadding: EdgeInsets.symmetric(
                                             vertical: 8,
-                                            horizontal: 22), // Adjust padding
+                                            horizontal: 22),
                                       ),
                                     ),
                                   ),
@@ -545,7 +541,7 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                                             const DropdownMenuItem<String>(
                                               value: 'other',
                                               child: Text(
-                                                  'Can\'t find your building'),
+                                                  'Other'),
                                             )
                                           else
                                             ...regiController.checkPinCodeList
@@ -560,12 +556,13 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                                         ],
                                         onChanged: (String? newValue) {
                                           if (newValue != null) {
-                                            regiController
-                                                .selectBuilding(newValue);
-                                            regiController.isBuilding.value =
-                                                regiController.checkPinCodeList
-                                                        .isEmpty ||
-                                                    newValue == 'other';
+                                            regiController.selectBuilding.value = newValue;
+                                            regiController.isBuilding.value = newValue == 'other';
+
+                                            // Clear custom building field when selecting from list
+                                            if (newValue != 'other') {
+                                              regiController.buildingController.value.clear();
+                                            }
                                           }
                                         },
                                       ),

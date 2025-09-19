@@ -333,10 +333,10 @@ class _RegisterViewState extends State<RegisterView> {
                                   decoration: const InputDecoration(
                                     hintText: AppConstants.enterotppro,
                                     border: InputBorder
-                                        .none, // Remove the internal border
+                                        .none,
                                     contentPadding: EdgeInsets.symmetric(
                                         vertical: 8,
-                                        horizontal: 20), // Adjust padding
+                                        horizontal: 20),
                                   ),
                                 ),
                               ),

@@ -466,8 +466,7 @@ class _PersonalViewState extends State<PersonalView> {
                               regiController.middleNameController.value,
                               "Middle Name",
                               "",
-                              text: TextInputType.text,
-                              isRequired: true),
+                              text: TextInputType.text),
                           const SizedBox(height: 20),
 
                           //Third Name
@@ -755,7 +754,7 @@ class _PersonalViewState extends State<PersonalView> {
                               _buildEditableField(
                                 "Mobile Number *",
                                 regiController.mobileController.value,
-                                "Mobile Number", // Hint Text
+                                "Mobile Number",
                                 "Mobile number is required",
                                 text: TextInputType.phone,
                                 isRequired: true,
@@ -808,10 +807,10 @@ class _PersonalViewState extends State<PersonalView> {
 
                           //WhatsApp Number
                           _buildEditableField(
-                            "WhatsApp Number *", // Label
+                            "WhatsApp Number *",
                             regiController
-                                .whatappmobileController.value, // Controller
-                            "WhatsApp Number", // Hint Text
+                                .whatappmobileController.value,
+                            "WhatsApp Number",
                             "WhatsApp number is required",
                             text: TextInputType.phone,
                             isRequired: true,
@@ -821,10 +820,10 @@ class _PersonalViewState extends State<PersonalView> {
 
                           //Father's Name
                           _buildEditableField(
-                              "Father's Name *", // Label
+                              "Father's Name *",
                               regiController
-                                  .fathersnameController.value, // Controller
-                              "Father's Name", // Hint Text
+                                  .fathersnameController.value,
+                              "Father's Name",
                               "",
                               text: TextInputType.text,
                               isRequired: true),
@@ -832,18 +831,17 @@ class _PersonalViewState extends State<PersonalView> {
 
                           //Mother's Name
                           _buildEditableField(
-                              "Mother's Name", // Label
+                              "Mother's Name",
                               regiController
-                                  .mothersnameController.value, // Controller
-                              "Mother's Name", // Hint Text
+                                  .mothersnameController.value,
+                              "Mother's Name",
                               "",
-                              text: TextInputType.text,
-                              isRequired: true),
+                              text: TextInputType.text,),
                           const SizedBox(height: 20),
 
                           //Email
                           _buildEditableField(
-                            "Email *", // Label
+                            "Email *",
                             regiController.emailController.value,
                             "Email",
                             '',
