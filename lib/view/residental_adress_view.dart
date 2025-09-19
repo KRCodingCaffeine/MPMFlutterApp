@@ -134,8 +134,8 @@ class _PesidentalAdressViewState extends State<PesidentalAdressView> {
                                 height: 24,
                                 child: CircularProgressIndicator(
                                   color:
-                                      Colors.white, // Loading indicator color
-                                  strokeWidth: 2, // Thickness of the spinner
+                                      Colors.white,
+                                  strokeWidth: 2,
                                 ),
                               )
                             : Text(
@@ -333,7 +333,7 @@ class _PesidentalAdressViewState extends State<PesidentalAdressView> {
                                           if (regiController.checkPinCodeList.isEmpty)
                                             const DropdownMenuItem<String>(
                                               value: 'other',
-                                              child: Text('Can\'t find your building'),
+                                              child: Text('Other'),
                                             )
                                           else
                                             ...regiController.checkPinCodeList.map((building) {
@@ -345,9 +345,12 @@ class _PesidentalAdressViewState extends State<PesidentalAdressView> {
                                         ],
                                         onChanged: (String? newValue) {
                                           if (newValue != null) {
-                                            regiController.selectBuilding(newValue);
+                                            regiController
+                                                .selectBuilding(newValue);
                                             regiController.isBuilding.value =
-                                                regiController.checkPinCodeList.isEmpty;
+                                                regiController.checkPinCodeList
+                                                    .isEmpty ||
+                                                    newValue == 'other';
                                           }
                                         },
                                       ),

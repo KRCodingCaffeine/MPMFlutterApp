@@ -323,7 +323,7 @@ class UdateProfileController extends GetxController {
           documentDynamicImage.value =
               Urls.imagePathUrl + getUserData.value.addressProof!;
         } else {
-          documentDynamicImage.value = ''; // or some default value
+          documentDynamicImage.value = '';
         }
       }
       saraswaniOption.value = getUserData.value.saraswaniOption?.toString() ?? 'Not selected';
@@ -438,7 +438,7 @@ class UdateProfileController extends GetxController {
         familyHeadMemberId.value =
             getUserData.value.familyHeadMemberData!.memberId.toString();
         familyHeadData.value =
-            getUserData.value.familyHeadMemberData!; // Add this line
+            getUserData.value.familyHeadMemberData!;
       }
     }).onError((error, strack) {
       loading.value = false;
@@ -583,7 +583,10 @@ class UdateProfileController extends GetxController {
         "occupation_id": selectedOccupation.value,
         "occupation_profession_id": professionId ?? "",
         "occupation_specialization_id": specializationId ?? "",
-        "occupation_other_name": showDetailsField.value ? detailsController.value.text : "",
+        "occupation_other_name":
+        (showDetailsField.value || detailsController.value.text.isNotEmpty)
+            ? detailsController.value.text
+            : "",
         "updated_by": userData.memberId.toString()
       };
 
@@ -661,7 +664,6 @@ class UdateProfileController extends GetxController {
 
     if (occupation == null) return;
 
-    // Set occupation
     selectedOccupation.value = occupation.occupationId ?? '';
     detailsController.value.text = occupation.occupationOtherName ?? '';
 
@@ -670,7 +672,6 @@ class UdateProfileController extends GetxController {
       return;
     }
 
-    // Load profession data
     getOccupationProData(selectedOccupation.value).then((_) {
       if (occupation.occupationProfessionId != null &&
           occupation.occupationProfessionId!.isNotEmpty) {
@@ -682,24 +683,21 @@ class UdateProfileController extends GetxController {
           return;
         }
 
-        // Load specialization data
         getOccupationSpectData(selectedProfession.value).then((_) {
           if (occupation.occupationSpecializationId != null &&
               occupation.occupationSpecializationId!.isNotEmpty) {
-            // Specialization ID exists in the data
             selectedSpecialization.value = occupation.occupationSpecializationId!;
+            showDetailsField.value = true;
 
             if (selectedSpecialization.value == "Other") {
               showDetailsField.value = true;
             }
           } else {
-            // Specialization is null/empty - select "Other" option
             selectedSpecialization.value = "Other";
             showDetailsField.value = true;
           }
         });
       } else {
-        // Profession is null/empty - select "Other" option
         selectedProfession.value = "Other";
         showDetailsField.value = true;
       }
@@ -773,8 +771,6 @@ class UdateProfileController extends GetxController {
       setRxRequestQualification(Status.ERROR);
     });
   }
-
-  // In UdateProfileController class
 
   void getQualicationMain(String qualification_id) async {
     print("cvv" + qualification_id.toString());
@@ -1233,7 +1229,6 @@ class UdateProfileController extends GetxController {
     }
   }
 
-// Add this method to your UdateProfileController class
   Future<void> userResidentalProfile(BuildContext context) async {
     CheckUserData2? userData = await SessionManager.getSession();
     if (userData == null) return;
@@ -1471,11 +1466,20 @@ class UdateProfileController extends GetxController {
         String mobile = regiController.mobileController.value.text.trim();
 
         if (mobile.isNotEmpty) {
-          print("Sending OTP to: $mobile");
-          sendOtp(regiController.mobileController.value.text);
-          Navigator.of(context!).pop();
-          showOtpBottomSheet(
-              context!, regiController.mobileController.value.text);
+        //   print("Sending OTP to: $mobile");
+        //   sendOtp(regiController.mobileController.value.text);
+        //   Navigator.of(context!).pop();
+        //   showOtpBottomSheet(
+        //       context!, regiController.mobileController.value.text);
+        // }
+          Navigator.of(context).pop();
+          Get.snackbar(
+            "Success",
+            "Family member added successfully",
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            snackPosition: SnackPosition.TOP,
+          );
         }
       } else {
         Get.snackbar(

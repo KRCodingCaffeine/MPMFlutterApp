@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:mpm/model/DashBoardEvents/DashBoardEventsData.dart';
 import 'package:mpm/model/GetEventsList/GetEventsListData.dart';
+import 'package:mpm/model/Offer/OfferData.dart';
+import 'package:mpm/model/OfferSubcategory/OfferSubcatData.dart';
 import 'package:mpm/repository/dashboard_events_repository/dashboard_events_repo.dart';
 import 'package:mpm/repository/qr_code_scanner_repository/qr_code_scanner_repo.dart';
 import 'package:mpm/route/route_name.dart';
@@ -12,9 +14,11 @@ import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/images.dart';
 import 'package:mpm/utils/textstyleclass.dart';
+import 'package:mpm/view/DiscountOfferDetailPage.dart';
 import 'package:mpm/view/payment/PaymentScreen.dart';
 import 'package:mpm/view/Events/event_detail_page.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
+import 'package:mpm/view_model/controller/offer/OfferController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
 class HomeView extends StatefulWidget {
@@ -24,9 +28,12 @@ class HomeView extends StatefulWidget {
   State<HomeView> createState() => _HomeViewState();
 }
 
-class _HomeViewState extends State<HomeView> {
+class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin {
   final regiController = Get.put(NewMemberController());
   final controller = Get.put(UdateProfileController());
+  final offerController = Get.put(OfferController());
+  late AnimationController _tagController;
+  late Animation<double> _fadeAnimation;
   final ScrollController _scrollController = ScrollController();
   final double _cardWidth = 360.0;
   final double _cardSpacing = 16.0;
@@ -72,6 +79,18 @@ class _HomeViewState extends State<HomeView> {
         debugPrint("Invalid or missing member ID.");
       }
     });
+
+    offerController.fetchOffers();
+
+    _tagController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+
+    _fadeAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
+      CurvedAnimation(parent: _tagController, curve: Curves.easeInOut),
+    );
+
     ever(controller.emailVerifyStatus, (value) {
       if (value == "1") {
         // Email verified, no need to show banner
@@ -123,6 +142,7 @@ class _HomeViewState extends State<HomeView> {
   void dispose() {
     _timer.cancel();
     _scrollController.dispose();
+    _tagController.dispose();
     super.dispose();
   }
 
@@ -131,58 +151,281 @@ class _HomeViewState extends State<HomeView> {
     screenWidth = MediaQuery.of(context).size.width * 0.8;
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Obx(() => int.tryParse(controller.membershipApprovalStatusId.value) != null &&
-              int.parse(controller.membershipApprovalStatusId.value) < 6
-              ? _buildMembershipNotice()
-              : const SizedBox.shrink()),
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Membership notice
+            Obx(() => int.tryParse(controller.membershipApprovalStatusId.value) != null &&
+                int.parse(controller.membershipApprovalStatusId.value) < 6
+                ? _buildMembershipNotice()
+                : const SizedBox.shrink()),
 
-          Obx(() => Visibility(
-              visible: controller.showDashboardReviewFlag.value,
-              child: _buildJanganaNotice())),
+            // Jangana Notice
+            Obx(() => Visibility(
+                visible: controller.showDashboardReviewFlag.value,
+                child: _buildJanganaNotice())),
 
-          Obx(() => Visibility(
-            visible: controller.showEmailVerifyBanner.value,
-            child: _buildEmailVerifyBanner(),
-          )),
+            // Email verification banner
+            Obx(() => Visibility(
+              visible: controller.showEmailVerifyBanner.value,
+              child: _buildEmailVerifyBanner(),
+            )),
 
-          Center(
-            child: Obx(() => Visibility(
-              visible: controller.isPay.value,
-              child: SizedBox(
-                height: 48,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(5),
+            // Pay Now button
+            Center(
+              child: Obx(() => Visibility(
+                visible: controller.isPay.value,
+                child: SizedBox(
+                  height: 48,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(5),
+                      ),
                     ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => PaymentScreen(paymentAmount: '1')),
+                      );
+                    },
+                    child: Text("Pay Now", style: TextStyleClass.white14style),
                   ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => PaymentScreen(paymentAmount: '1')),
-                    );
-                  },
-                  child: Text("Pay Now", style: TextStyleClass.white14style),
+                ),
+              )),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: GridView.builder(
+                itemCount: gridItems.length,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  childAspectRatio: 1,
+                ),
+                itemBuilder: (context, index) {
+                  final item = gridItems[index];
+                  return GestureDetector(
+                    onTap: () => _handleGridItemClick(item['label']),
+                    child: Card(
+                      color: Colors.white,
+                      elevation: 4.0,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.0)),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SvgPicture.asset(item['icon'], height: 30, width: 30),
+                          const SizedBox(height: 8),
+                          Text(
+                            item['label'],
+                            style: TextStyleClass.pink14style.copyWith(fontSize: 10),
+                            textAlign: TextAlign.center,
+                            softWrap: true,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            // Banner card
+            Obx(() {
+              if (offerController.isLoading.value) {
+                return const SizedBox(
+                  height: 120,
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              if (offerController.offerList.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: _buildBannerCard(
+                    offerController.offerList.first,
+                  ),
+                ),
+              );
+            }),
+
+            _buildAdvertisementTitle(),
+            _buildDashboardEventsList(),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBannerCard(OfferData offer) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DiscountOfferDetailPage(offer: offer),
+          ),
+        );
+      },
+      child: Card(
+        elevation: 5,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Container(
+          height: 150,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            gradient: const LinearGradient(
+              colors: [Color(0xFFE3F2FD), Color(0xFF90CAF9)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                top: -20,
+                left: -30,
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.3),
+                    shape: BoxShape.circle,
+                  ),
                 ),
               ),
-            )),
-          ),
+              Positioned(
+                bottom: -25,
+                right: -25,
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.20),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
 
-          _buildGridView(),
-          _buildAdvertisementTitle(),
-          _buildDashboardEventsList(),
-          const SizedBox(height: 20),
-        ],
+              Positioned(
+                top: 40,
+                right: -60,
+                child: Transform.rotate(
+                  angle: -0.5,
+                  child: Container(
+                    width: 140,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            offer.offerDiscountName ?? "BEST OFFER",
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+
+                          const Text(
+                            "Free Home Delivery",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.redAccent,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              "ORDER NOW",
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    Container(
+                      margin: const EdgeInsets.only(top: 25),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.red.withOpacity(0.4),
+                            blurRadius: 6,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: const Text(
+                        "%",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildMembershipNotice() {
-    final status = controller.membershipTypeId.value.trim();
+    final status = controller.membershipApprovalStatusId.value.trim();
     final message = {
       '2': "Your payment is pending.",
       '3': "We received your payment and it's under approval.",
@@ -327,7 +570,14 @@ class _HomeViewState extends State<HomeView> {
                   children: [
                     SvgPicture.asset(item['icon'], height: 30, width: 30),
                     const SizedBox(height: 8),
-                    Text(item['label'], style: TextStyleClass.pink14style.copyWith(fontSize: 11), textAlign: TextAlign.center),
+                    Text(
+                      item['label'],
+                      style: TextStyleClass.pink14style.copyWith(fontSize: 10),
+                      textAlign: TextAlign.center,
+                      softWrap: true,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
                 ),
               ),
@@ -409,7 +659,7 @@ class _HomeViewState extends State<HomeView> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color), // Use green for success
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -492,7 +742,6 @@ class _HomeViewState extends State<HomeView> {
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       );
     }
-
 
     return Container(
       width: 360,
@@ -583,5 +832,4 @@ class _HomeViewState extends State<HomeView> {
       ),
     );
   }
-
 }

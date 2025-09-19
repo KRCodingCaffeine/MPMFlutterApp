@@ -714,13 +714,18 @@ class NewMemberController extends GetxController {
       print('Status: ${pincodeResponse.status}');
       print('Message: ${pincodeResponse.message}');
       setcheckPinCode(pincodeResponse.data!.building!);
-      checkPinCodeList.add(Building(
-          id: "other",
-          userId: null,
-          pincodeId: null,
-          buildingName: "Can't find  your building",
-          createdAt: null,
-          updatedAt: null));
+      if (!checkPinCodeList.any((b) => b.id == "other")) {
+        checkPinCodeList.add(
+          Building(
+            id: "other",
+            userId: null,
+            pincodeId: null,
+            buildingName: "Other",
+            createdAt: null,
+            updatedAt: null,
+          ),
+        );
+      }
       // housenoController.value.text= _value.data.country;
 
       state_id.value = pincodeResponse.data!.state!.id.toString();
@@ -821,9 +826,21 @@ class NewMemberController extends GetxController {
     var saraswani_option_id = saraswaniOptionId.value;
 
     if (selectBuilding.value == "other") {
-      building_id = "";
+      building_id = "0";
+      if (building_name.isEmpty) {
+        Get.snackbar(
+          "Error",
+          "Please enter building name",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+        loading.value = false;
+        return;
+      }
     } else {
       building_id = selectBuilding.value;
+      building_name = "";
     }
 
     var document_type = selectDocumentType.value;
@@ -851,6 +868,7 @@ class NewMemberController extends GetxController {
       "dob": dob,
       "document_type": document_type,
       "building_id": building_id,
+      "building_name": building_name,
       "member_type_id": membership_type_id,
       "saraswani_option_id": saraswaniOptionId.value,
       "flat_no": flat_no,
@@ -909,11 +927,12 @@ class NewMemberController extends GetxController {
           memberId.value = registerResponse.data.toString();
           Navigator.pushReplacementNamed(
               context!,
-              RouteNames.otp_screen,
+              RouteNames.regOtp_screen,
               arguments: {
                 "memeberId": memberId.value,
                 "page_type_direct": "1",
-                "mobile": mobile
+                "mobile": mobile,
+                "email": email
               }
           );
         } else {

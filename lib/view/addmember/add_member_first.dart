@@ -695,7 +695,7 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                               "Mother's Name",
                               "",
                               text: TextInputType.text,
-                              isRequired: true),
+                              ),
                           const SizedBox(height: 20),
 
                           //Email

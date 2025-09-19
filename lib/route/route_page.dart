@@ -21,6 +21,7 @@ import 'package:mpm/view/login_view.dart';
 import 'package:mpm/view/notification_view.dart';
 import 'package:mpm/view/otp_view.dart';
 import 'package:mpm/view/personal_view.dart';
+import 'package:mpm/view/reg_otp_view.dart';
 import 'package:mpm/view/residental_adress_view.dart';
 import 'package:mpm/view/profile%20view/profile_view.dart';
 import 'package:mpm/view/register_view.dart';
@@ -40,6 +41,8 @@ class RoutePages {
         return _buildRoute(LanguageSelectionPage(), settings);
       case RouteNames.otp_screen:
         return _buildRoute(OTPScreen(), settings);
+      case RouteNames.regOtp_screen:
+        return _buildRoute(RegOTPScreen(), settings);
       case RouteNames.registration_screen:
         return _buildRoute(RegisterView(), settings);
       case RouteNames.personalinfo:

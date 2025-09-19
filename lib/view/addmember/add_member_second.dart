@@ -157,8 +157,8 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                 height: 24,
                                 child: CircularProgressIndicator(
                                   color:
-                                      Colors.white, // Loading indicator color
-                                  strokeWidth: 2, // Thickness of the spinner
+                                      Colors.white,
+                                  strokeWidth: 2,
                                 ),
                               )
                             : Text(
@@ -193,7 +193,7 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                             padding: EdgeInsets.only(left: 5, top: 20),
                             child: Align(
                               alignment: Alignment
-                                  .centerLeft, // Align text to the left side
+                                  .centerLeft,
                               child: Text(
                                 'Residential Info',
                                 style: TextStyle(
@@ -272,7 +272,6 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Building Name Dropdown
                               Container(
                                 width: double.infinity,
                                 margin: const EdgeInsets.only(left: 5, right: 5),
@@ -321,13 +320,11 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                             ? regiController.selectBuilding.value
                                             : null,
                                         items: [
-                                          // Show only "Can't find" option when no buildings exist
                                           if (regiController.checkPinCodeList.isEmpty)
                                             const DropdownMenuItem<String>(
                                               value: 'other',
-                                              child: Text('Can\'t find your building'),
+                                              child: Text('Other'),
                                             )
-                                          // Otherwise show only the actual buildings
                                           else
                                             ...regiController.checkPinCodeList.map((building) {
                                               return DropdownMenuItem<String>(
@@ -339,9 +336,11 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                         onChanged: (String? newValue) {
                                           if (newValue != null) {
                                             regiController.selectBuilding(newValue);
-                                            // Show input field only when pincode doesn't exist
-                                            regiController.isBuilding.value =
-                                                regiController.checkPinCodeList.isEmpty;
+                                            regiController.isBuilding.value = (newValue == "other");
+
+                                            if (newValue != "other") {
+                                              regiController.buildingController.value.clear();
+                                            }
                                           }
                                         },
                                       ),

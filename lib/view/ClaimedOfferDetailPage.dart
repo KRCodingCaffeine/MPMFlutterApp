@@ -11,12 +11,16 @@ class ClaimedOfferDetailPage extends StatelessWidget {
 
   String getContainerName(dynamic id) {
     switch (id.toString()) {
-      case '1':
-        return 'Strips';
-      case '2':
-        return 'Box';
-      case '3':
-        return 'Bottle';
+      case 'Strips':
+        return '1';
+      case 'Tube':
+        return '2';
+      case 'Bottle':
+        return '3';
+      case 'Box':
+        return '4';
+      case 'Pouch':
+        return '5';
       default:
         return 'Unknown';
     }
@@ -121,8 +125,8 @@ class ClaimedOfferDetailPage extends StatelessWidget {
               padding: const EdgeInsets.only(left: 12.0),
               child: Text(
                 '${offer.orgAddress}, \n'
-                    '${offer.orgArea}, ${offer.orgCity}, \n'
-                    '${offer.orgState}, ${offer.orgPincode}',
+                '${offer.orgArea}, ${offer.orgCity}, \n'
+                '${offer.orgState}, ${offer.orgPincode}',
                 style: const TextStyle(fontSize: 14),
               ),
             ),
