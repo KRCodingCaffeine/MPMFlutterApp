@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:mpm/model/EventRegesitration/EventRegistrationData.dart';
 import 'package:mpm/model/GetEventDetailsById/GetEventDetailsByIdData.dart';
@@ -86,7 +88,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           _isLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(response['message'] ?? 'Failed to load event details')),
+          SnackBar(content: Text('Failed to load event details')),
         );
       }
     } catch (e) {
@@ -120,7 +122,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<void> _showRegistrationConfirmationDialog() async {
-    bool showFoodDialog = _eventDetails?.eventsTypeId == '2' && _eventDetails?.hasFood == '1';
+    bool showFoodDialog = _eventDetails?.eventsTypeId != '1' && _eventDetails?.hasFood == '1';
 
     Future<bool> _showFoodDialog(BuildContext context) async {
       String? selectedFoodOption;
@@ -357,6 +359,236 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
   }
 
+  Future<void> _showStudentPrizeConfirmationDialog(int eventTypeId) async {
+    if (eventTypeId != 3) {
+      _registerForEvent();
+      return;
+    }
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Text(
+                "Confirmation",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+          content: const Text(
+            "You want to register for the Student Prize Distribution?",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("No"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _registerForEvent();
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Successfully registered for Student Prize Distribution"),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              ),
+              child: const Text(
+                "Yes",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showEducationDetailsSheet(BuildContext context) {
+    final TextEditingController nameController = TextEditingController();
+    final TextEditingController schoolController = TextEditingController();
+    final TextEditingController standardController = TextEditingController();
+    final TextEditingController marksController = TextEditingController();
+
+    Rxn<XFile> selectedImage = Rxn<XFile>();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.grey[100],
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16.0,
+            right: 16.0,
+            top: 16.0,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 16.0,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 30),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      side: const BorderSide(color: Colors.red),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text("Cancel"),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      // TODO: Save details with controller
+                      // Example:
+                      // controller.saveEducationDetails(
+                      //   nameController.text,
+                      //   schoolController.text,
+                      //   standardController.text,
+                      //   marksController.text,
+                      //   selectedImage.value,
+                      // );
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text("Save"),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Name
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: "Name",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 15),
+
+              // School Name
+              TextField(
+                controller: schoolController,
+                decoration: const InputDecoration(
+                  labelText: "School Name",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 15),
+
+              // Standard Passed
+              TextField(
+                controller: standardController,
+                decoration: const InputDecoration(
+                  labelText: "Standard Passed",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 15),
+
+              // Marks / Grade
+              TextField(
+                controller: marksController,
+                decoration: const InputDecoration(
+                  labelText: "% of Marks or Grade",
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.text,
+              ),
+              const SizedBox(height: 15),
+
+              // Upload Mark Sheet
+              Obx(() {
+                return GestureDetector(
+                  onTap: () async {
+                    final ImagePicker picker = ImagePicker();
+                    final XFile? image =
+                    await picker.pickImage(source: ImageSource.gallery);
+
+                    if (image != null) {
+                      selectedImage.value = image;
+                    }
+                  },
+                  child: Container(
+                    height: 120,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black26),
+                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.white,
+                    ),
+                    alignment: Alignment.center,
+                    child: selectedImage.value == null
+                        ? const Text("Upload Copy of Mark Sheet",
+                        style: TextStyle(color: Colors.black54))
+                        : Image.file(
+                      File(selectedImage.value!.path),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                );
+              }),
+
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _registerForEvent() async {
     if (_isRegistering || _isRegistered || _eventDetails == null) return;
 
@@ -377,7 +609,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
         eventRegisteredDate: DateFormat('yyyy-MM-dd').format(now),
         addedBy: int.tryParse(userData.memberId.toString()),
         dateAdded: DateFormat('yyyy-MM-dd HH:mm:ss').format(now),
-        noOfFoodContainer: (_eventDetails?.eventsTypeId == '2' && _eventDetails?.hasFood == '1')
+        noOfFoodContainer:
+        (_eventDetails?.eventsTypeId != '1' && _eventDetails?.hasFood == '1')
             ? _foodBoxCount
             : 0,
       );
@@ -388,10 +621,15 @@ class _EventDetailPageState extends State<EventDetailPage> {
         setState(() {
           _isRegistered = true;
         });
-        await _showSuccessDialog(
-            response['message'] ?? 'Successfully registered for event');
+
+        // ✅ Special case: Student Prize Distribution (eventTypeId == 3)
+        if (_eventDetails?.eventsTypeId == '3') {
+          await _showStudentPrizeConfirmationDialog(3);
+        } else {
+          await _showSuccessDialog('Successfully registered for event');
+        }
       } else {
-        throw Exception(response['message'] ?? 'Failed to register for event');
+        throw Exception('Failed to register for event');
       }
     } catch (e) {
       await _showErrorDialog('Registration failed: ${e.toString()}');
