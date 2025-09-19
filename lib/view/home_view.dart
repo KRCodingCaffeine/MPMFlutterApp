@@ -201,19 +201,26 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
             ),
 
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: EdgeInsets.symmetric(
+                horizontal: MediaQuery.of(context).size.width * 0.04, 
+                vertical: 10
+              ),
               child: GridView.builder(
                 itemCount: gridItems.length,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
+                  crossAxisSpacing: MediaQuery.of(context).size.width * 0.02,
+                  mainAxisSpacing: MediaQuery.of(context).size.width * 0.02,
                   childAspectRatio: 1,
                 ),
                 itemBuilder: (context, index) {
                   final item = gridItems[index];
+                  final screenWidth = MediaQuery.of(context).size.width;
+                  final iconSize = screenWidth * 0.08; // 8% of screen width
+                  final fontSize = screenWidth * 0.025; // 2.5% of screen width
+                  
                   return GestureDetector(
                     onTap: () => _handleGridItemClick(item['label']),
                     child: Card(
@@ -224,11 +231,11 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          SvgPicture.asset(item['icon'], height: 30, width: 30),
-                          const SizedBox(height: 8),
+                          SvgPicture.asset(item['icon'], height: iconSize, width: iconSize),
+                          SizedBox(height: screenWidth * 0.02),
                           Text(
                             item['label'],
-                            style: TextStyleClass.pink14style.copyWith(fontSize: 10),
+                            style: TextStyleClass.pink14style.copyWith(fontSize: fontSize),
                             textAlign: TextAlign.center,
                             softWrap: true,
                             maxLines: 2,
@@ -273,6 +280,26 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
   }
 
   Widget _buildBannerCard(OfferData offer) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    
+    // Responsive dimensions - made more compact for iOS
+    final cardHeight = screenHeight * 0.14; // 14% of screen height (further reduced)
+    final horizontalMargin = screenWidth * 0.04; // 4% of screen width
+    final cardPadding = screenWidth * 0.03; // 3% of screen width (reduced)
+    
+    // Responsive font sizes - made smaller for compact layout
+    final titleFontSize = screenWidth * 0.045; // 4.5% of screen width (reduced)
+    final subtitleFontSize = screenWidth * 0.035; // 3.5% of screen width (reduced)
+    final buttonFontSize = screenWidth * 0.025; // 2.5% of screen width (reduced)
+    final percentFontSize = screenWidth * 0.05; // 5% of screen width (reduced)
+    
+    // Responsive decorative element sizes - much smaller to prevent overflow
+    final topCircleSize = screenWidth * 0.08; // Much smaller
+    final bottomCircleSize = screenWidth * 0.1; // Much smaller
+    final rightElementWidth = screenWidth * 0.15; // Much smaller
+    final rightElementHeight = screenHeight * 0.025; // Much smaller
+    
     return InkWell(
       onTap: () {
         Navigator.push(
@@ -284,10 +311,10 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
       },
       child: Card(
         elevation: 5,
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        margin: EdgeInsets.symmetric(horizontal: horizontalMargin, vertical: 12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Container(
-          height: 150,
+          height: cardHeight,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             gradient: const LinearGradient(
@@ -299,11 +326,11 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
           child: Stack(
             children: [
               Positioned(
-                top: -20,
-                left: -30,
+                top: cardHeight * 0.15,
+                left: cardHeight * 0.15,
                 child: Container(
-                  width: 80,
-                  height: 80,
+                  width: topCircleSize,
+                  height: topCircleSize,
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.3),
                     shape: BoxShape.circle,
@@ -311,11 +338,11 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                 ),
               ),
               Positioned(
-                bottom: -25,
-                right: -25,
+                bottom: cardHeight * 0.15,
+                right: cardHeight * 0.15,
                 child: Container(
-                  width: 100,
-                  height: 100,
+                  width: bottomCircleSize,
+                  height: bottomCircleSize,
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.20),
                     shape: BoxShape.circle,
@@ -324,13 +351,13 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
               ),
 
               Positioned(
-                top: 40,
-                right: -60,
+                top: cardHeight * 0.3,
+                right: cardHeight * 0.2,
                 child: Transform.rotate(
                   angle: -0.5,
                   child: Container(
-                    width: 140,
-                    height: 40,
+                    width: rightElementWidth,
+                    height: rightElementHeight,
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
@@ -340,7 +367,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
               ),
 
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(cardPadding),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -351,35 +378,40 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                         children: [
                           Text(
                             offer.offerDiscountName ?? "BEST OFFER",
-                            style: const TextStyle(
-                              fontSize: 22,
+                            style: TextStyle(
+                              fontSize: titleFontSize,
                               fontWeight: FontWeight.bold,
                               color: Colors.red,
                             ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 6),
+                          SizedBox(height: cardHeight * 0.02),
 
-                          const Text(
+                          Text(
                             "Free Home Delivery",
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: subtitleFontSize,
                               fontWeight: FontWeight.w600,
                               color: Colors.black87,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 14),
+                          SizedBox(height: cardHeight * 0.04),
 
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 8),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: cardPadding * 0.5, 
+                                vertical: cardHeight * 0.02),
                             decoration: BoxDecoration(
                               color: Colors.redAccent,
                               borderRadius: BorderRadius.circular(6),
                             ),
-                            child: const Text(
+                            child: Text(
                               "ORDER NOW",
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: buttonFontSize,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                               ),
@@ -390,8 +422,8 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                     ),
 
                     Container(
-                      margin: const EdgeInsets.only(top: 25),
-                      padding: const EdgeInsets.all(14),
+                      margin: EdgeInsets.only(top: cardHeight * 0.1),
+                      padding: EdgeInsets.all(cardPadding * 0.6),
                       decoration: BoxDecoration(
                         color: Colors.red,
                         shape: BoxShape.circle,
@@ -403,11 +435,11 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                           ),
                         ],
                       ),
-                      child: const Text(
+                      child: Text(
                         "%",
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: percentFontSize,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                           height: 1,
@@ -674,29 +706,38 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
   }
 
   Widget _buildAdvertisementTitle() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
-      child: Text("Advertisement", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+    final screenWidth = MediaQuery.of(context).size.width;
+    final fontSize = screenWidth * 0.045; // 4.5% of screen width
+    final horizontalPadding = screenWidth * 0.04; // 4% of screen width
+    
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
+      child: Text("Advertisement", style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.bold)),
     );
   }
 
   Widget _buildDashboardEventsList() {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final listHeight = screenHeight * 0.18; // 18% of screen height
+    final horizontalPadding = screenWidth * 0.04; // 4% of screen width
+    
     if (dashboardEvents.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(20.0),
-          child: CircularProgressIndicator(),
+          padding: EdgeInsets.all(screenWidth * 0.05),
+          child: const CircularProgressIndicator(),
         ),
       );
     }
 
     return SizedBox(
-      height: 150,
+      height: listHeight,
       child: dashboardEvents.length > 1
           ? ListView.builder(
         controller: _scrollController,
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
         itemCount: dashboardEvents.length,
         itemBuilder: (context, index) {
           final event = dashboardEvents[index];
@@ -714,7 +755,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
         },
       )
           : Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
         child: GestureDetector(
           onTap: () {
             Navigator.push(
@@ -731,6 +772,12 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
   }
 
   Widget _buildEventCard(DashboardEventData event) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final cardWidth = screenWidth * 0.85; // 85% of screen width
+    final imageSize = screenWidth * 0.2; // 20% of screen width
+    final fontSize = screenWidth * 0.035; // 3.5% of screen width
+    final smallFontSize = screenWidth * 0.03; // 3% of screen width
+    
     Widget? dateTag;
     if (event.date != null && event.date!.isNotEmpty) {
       final dateText = "Till : ${_formatDate(event.date!)}";
@@ -738,15 +785,15 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
         dateText,
         Colors.grey[300]!,
         textColor: Colors.black45,
-        fontSize: 10,
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        fontSize: smallFontSize,
+        padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.015, vertical: screenWidth * 0.005),
       );
     }
 
     return Container(
-      width: 360,
-      margin: const EdgeInsets.only(right: 16.0),
-      padding: const EdgeInsets.all(12),
+      width: cardWidth,
+      margin: EdgeInsets.only(right: screenWidth * 0.04),
+      padding: EdgeInsets.all(screenWidth * 0.03),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -765,20 +812,20 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
             borderRadius: BorderRadius.circular(6),
             child: Image.network(
               event.thumbnailImg ?? '',
-              height: 80,
-              width: 80,
+              height: imageSize,
+              width: imageSize,
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
-                height: 80,
-                width: 80,
+                height: imageSize,
+                width: imageSize,
                 color: Colors.grey[300],
-                child: const Icon(Icons.image_not_supported, size: 30),
+                child: Icon(Icons.image_not_supported, size: imageSize * 0.4),
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: screenWidth * 0.03),
           Container(width: 1, color: Colors.grey[400]),
-          const SizedBox(width: 12),
+          SizedBox(width: screenWidth * 0.03),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -786,18 +833,18 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
               children: [
                 Text(
                   event.title ?? '',
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.bold),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: screenWidth * 0.01),
                 Text(
                   'Hosted by ${event.organizedBy ?? ''}',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  style: TextStyle(color: Colors.grey[600], fontSize: smallFontSize),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: screenWidth * 0.01),
                 if (dateTag != null) dateTag!,
               ],
             ),

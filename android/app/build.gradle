@@ -66,6 +66,17 @@ dependencies {
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'
 }
 
+configurations.all {
+    resolutionStrategy {
+        // Force use of newer versions to avoid conflicts
+        force 'com.google.android.play:core-common:2.0.3'
+        force 'com.google.android.play:app-update:2.1.0'
+        
+        // Exclude old core library to prevent duplicates
+        exclude group: 'com.google.android.play', module: 'core'
+    }
+}
+
 flutter {
     source = "../.."
 }
