@@ -412,7 +412,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ],
           ),
           content: const Text(
-            "You want to register for the Student Prize Distribution?",
+            "Do you want to register your children for award function?",
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
@@ -445,10 +445,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => StudentPrizeFormPage(
-                      eventId: int.parse(_eventDetails!.eventId!),
-                      attendeeId: attendeeId!,
-                      memberId: userData.memberId!,
-                      addedBy: userData.memberId!,
+                      // eventId: int.parse(_eventDetails!.eventId!),
+                      // attendeeId: attendeeId!,
+                      // memberId: memberId!,
+                      // addedBy: memberId!,
                     ),
                   ),
                 );
@@ -502,7 +502,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
           _isRegistered = true;
         });
 
-        // ✅ Special case: Student Prize Distribution (eventTypeId == 3)
+        final attendeeId = int.tryParse(response['data']['attendee_id'] ?? '');
+
         if (_eventDetails?.eventsTypeId == '3') {
           await _showStudentPrizeConfirmationDialog(3);
         } else {
