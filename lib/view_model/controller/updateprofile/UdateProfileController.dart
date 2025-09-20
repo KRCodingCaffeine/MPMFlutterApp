@@ -230,6 +230,8 @@ class UdateProfileController extends GetxController {
   final rxStatusRelationType = Status.LOADING.obs;
   var familyDataList = <FamilyMembersData>[].obs;
   var familyHeadData = Rxn<FamilyHeadMemberData>();
+  RxString selectedMemberId = "".obs;
+
   var areaDataList = <FamilyMembersData>[].obs;
   var selectRelationShipType = ''.obs;
   var occuptionFlag = false.obs;

@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:mpm/model/EventRegesitration/EventRegistrationData.dart';
 import 'package:mpm/model/GetEventDetailsById/GetEventDetailsByIdData.dart';
@@ -11,6 +13,7 @@ import 'package:mpm/repository/get_even_details_by_id_repository/get_even_detail
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:dio/dio.dart';
+import 'package:mpm/view/Events/event_prize_page.dart';
 import 'package:mpm/view/Events/event_view.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
@@ -37,7 +40,8 @@ Future<Size> _getImageSize(String imageUrl) async {
   image.image.resolve(const ImageConfiguration()).addListener(
     ImageStreamListener((ImageInfo info, bool _) {
       final myImage = info.image;
-      completer.complete(Size(myImage.width.toDouble(), myImage.height.toDouble()));
+      completer
+          .complete(Size(myImage.width.toDouble(), myImage.height.toDouble()));
     }),
   );
   return completer.future;
@@ -45,8 +49,10 @@ Future<Size> _getImageSize(String imageUrl) async {
 
 class _EventDetailPageState extends State<EventDetailPage> {
   final Dio _dio = Dio();
-  final GetEventDetailByIdRepository _eventDetailRepo = GetEventDetailByIdRepository();
-  final EventRegistrationRepository _registrationRepo = EventRegistrationRepository();
+  final GetEventDetailByIdRepository _eventDetailRepo =
+      GetEventDetailByIdRepository();
+  final EventRegistrationRepository _registrationRepo =
+      EventRegistrationRepository();
 
   bool _isLoading = true;
   bool _isDownloading = false;
@@ -86,7 +92,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           _isLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(response['message'] ?? 'Failed to load event details')),
+          SnackBar(content: Text('Failed to load event details')),
         );
       }
     } catch (e) {
@@ -120,7 +126,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<void> _showRegistrationConfirmationDialog() async {
-    bool showFoodDialog = _eventDetails?.eventsTypeId == '2' && _eventDetails?.hasFood == '1';
+    bool showFoodDialog =
+        _eventDetails?.eventsTypeId != '1' && _eventDetails?.hasFood == '1';
 
     Future<bool> _showFoodDialog(BuildContext context) async {
       String? selectedFoodOption;
@@ -182,7 +189,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                           borderSide: BorderSide(color: Colors.black),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.black38, width: 1),
+                          borderSide:
+                              BorderSide(color: Colors.black38, width: 1),
                         ),
                         contentPadding: EdgeInsets.symmetric(horizontal: 20),
                         labelStyle: TextStyle(color: Colors.black),
@@ -217,8 +225,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
                             int num = int.tryParse(value) ?? 0;
                             if (num > 2) {
                               _foodBoxController.text = '2';
-                              _foodBoxController.selection = TextSelection.fromPosition(
-                                TextPosition(offset: _foodBoxController.text.length),
+                              _foodBoxController.selection =
+                                  TextSelection.fromPosition(
+                                TextPosition(
+                                    offset: _foodBoxController.text.length),
                               );
                               _foodBoxCount = 2;
                             } else {
@@ -236,7 +246,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     onPressed: () => Navigator.pop(context, false),
                     child: const Text("Cancel"),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                      foregroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
                       side: const BorderSide(color: Colors.red),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -247,20 +258,25 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     onPressed: () {
                       if (selectedFoodOption == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Please select Yes or No')),
+                          const SnackBar(
+                              content: Text('Please select Yes or No')),
                         );
                         return;
                       }
-                      if (selectedFoodOption == "Yes" && (_foodBoxCount <= 0 || _foodBoxCount > 2)) {
+                      if (selectedFoodOption == "Yes" &&
+                          (_foodBoxCount <= 0 || _foodBoxCount > 2)) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Please enter a valid number of boxes (1-2)')),
+                          const SnackBar(
+                              content: Text(
+                                  'Please enter a valid number of boxes (1-2)')),
                         );
                         return;
                       }
                       Navigator.pop(context, true);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                      backgroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
                     ),
                     child: const Text(
                       "Continue",
@@ -321,7 +337,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 onPressed: () => Navigator.pop(context),
                 child: const Text("Cancel"),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                  foregroundColor: ColorHelperClass.getColorFromHex(
+                      ColorResources.red_color),
                   side: const BorderSide(color: Colors.red),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -334,7 +351,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   _registerForEvent();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                  backgroundColor: ColorHelperClass.getColorFromHex(
+                      ColorResources.red_color),
                 ),
                 child: const Text(
                   "Yes, Register",
@@ -357,6 +375,99 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
   }
 
+  Future<void> _showStudentPrizeConfirmationDialog(int eventTypeId) async {
+    if (eventTypeId != 3) {
+      _registerForEvent();
+      return;
+    }
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Text(
+                "Confirmation",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+          content: const Text(
+            "Do you want to register your children for award function?",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _showSuccessDialog('Successfully registered for this event');
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("No"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context);
+
+                await _registerForEvent();
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => StudentPrizeFormPage(
+                      // eventId: int.parse(_eventDetails!.eventId!),
+                      // attendeeId: attendeeId!,
+                      // memberId: memberId!,
+                      // addedBy: memberId!,
+                    ),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              ),
+              child: const Text(
+                "Yes",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _registerForEvent() async {
     if (_isRegistering || _isRegistered || _eventDetails == null) return;
 
@@ -377,21 +488,29 @@ class _EventDetailPageState extends State<EventDetailPage> {
         eventRegisteredDate: DateFormat('yyyy-MM-dd').format(now),
         addedBy: int.tryParse(userData.memberId.toString()),
         dateAdded: DateFormat('yyyy-MM-dd HH:mm:ss').format(now),
-        noOfFoodContainer: (_eventDetails?.eventsTypeId == '2' && _eventDetails?.hasFood == '1')
+        noOfFoodContainer: (_eventDetails?.eventsTypeId != '1' &&
+                _eventDetails?.hasFood == '1')
             ? _foodBoxCount
             : 0,
       );
       debugPrint('Sending food count: ${registrationData.noOfFoodContainer}');
-      final response = await _registrationRepo.registerForEvent(registrationData);
+      final response =
+          await _registrationRepo.registerForEvent(registrationData);
 
       if (response['status'] == true) {
         setState(() {
           _isRegistered = true;
         });
-        await _showSuccessDialog(
-            response['message'] ?? 'Successfully registered for event');
+
+        final attendeeId = int.tryParse(response['data']['attendee_id'] ?? '');
+
+        if (_eventDetails?.eventsTypeId == '3') {
+          await _showStudentPrizeConfirmationDialog(3);
+        } else {
+          await _showSuccessDialog('Successfully registered for event');
+        }
       } else {
-        throw Exception(response['message'] ?? 'Failed to register for event');
+        throw Exception('Failed to register for event');
       }
     } catch (e) {
       await _showErrorDialog('Registration failed: ${e.toString()}');
@@ -446,7 +565,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -499,7 +618,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
             OutlinedButton(
               onPressed: () => Navigator.pop(context),
               style: OutlinedButton.styleFrom(
-                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: const BorderSide(color: Colors.red),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -562,12 +682,15 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         formatDate(slot.eventDate),
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
-                      if (slot.eventStartTime != null && slot.eventStartTime!.isNotEmpty) ...[
+                      if (slot.eventStartTime != null &&
+                          slot.eventStartTime!.isNotEmpty) ...[
                         const SizedBox(width: 6),
-                        const Text('from ', style: TextStyle(color: Colors.grey)),
+                        const Text('from ',
+                            style: TextStyle(color: Colors.grey)),
                         Text(formatTime(slot.eventStartTime)),
                       ],
-                      if (slot.eventEndTime != null && slot.eventEndTime!.isNotEmpty) ...[
+                      if (slot.eventEndTime != null &&
+                          slot.eventEndTime!.isNotEmpty) ...[
                         const SizedBox(width: 6),
                         const Text('to ', style: TextStyle(color: Colors.grey)),
                         Text(formatTime(slot.eventEndTime)),
@@ -634,17 +757,17 @@ class _EventDetailPageState extends State<EventDetailPage> {
           onPressed: _isRegistered ? null : _showRegistrationConfirmationDialog,
           child: _isRegistering
               ? const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-            ),
-          )
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
               : Text(
-            _isRegistered ? "Registered" : "Register Here",
-            style: const TextStyle(fontSize: 16),
-          ),
+                  _isRegistered ? "Registered" : "Register Here",
+                  style: const TextStyle(fontSize: 16),
+                ),
         ),
       ),
     );
@@ -664,7 +787,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
-              Text('Storage permission is needed to download the file.')),
+                  Text('Storage permission is needed to download the file.')),
         );
         return false;
       } else {
@@ -674,7 +797,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
-              Text('Storage permission is needed to download the file.')),
+                  Text('Storage permission is needed to download the file.')),
         );
         return false;
       }
@@ -800,7 +923,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
       return Scaffold(
         backgroundColor: Colors.grey[100],
         appBar: AppBar(
-          backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+          backgroundColor:
+              ColorHelperClass.getColorFromHex(ColorResources.logo_color),
           title: const Text('Event Details'),
         ),
         body: const Center(child: CircularProgressIndicator()),
@@ -811,7 +935,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
       return Scaffold(
         backgroundColor: Colors.grey[100],
         appBar: AppBar(
-          backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+          backgroundColor:
+              ColorHelperClass.getColorFromHex(ColorResources.logo_color),
           title: const Text('Event Details'),
         ),
         body: const Center(child: Text('Failed to load event details')),
@@ -821,7 +946,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        backgroundColor:
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Builder(
           builder: (context) {
             double fontSize = MediaQuery.of(context).size.width * 0.045;
@@ -861,7 +987,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                           _eventDetails!.eventImage!,
                           fit: BoxFit.contain,
                           errorBuilder: (_, __, ___) => const Center(
-                            child: Icon(Icons.broken_image, color: Colors.white),
+                            child:
+                                Icon(Icons.broken_image, color: Colors.white),
                           ),
                         ),
                       ),
@@ -878,7 +1005,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       child: FutureBuilder<Size>(
                         future: _getImageSize(_eventDetails!.eventImage!),
                         builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
                             return const SizedBox(
                               height: 200,
                               child: Center(child: CircularProgressIndicator()),
@@ -887,17 +1015,20 @@ class _EventDetailPageState extends State<EventDetailPage> {
                             return const SizedBox.shrink();
                           } else {
                             final imageSize = snapshot.data!;
-                            final isLandscape = imageSize.width > imageSize.height;
+                            final isLandscape =
+                                imageSize.width > imageSize.height;
 
                             return ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               child: Image.network(
                                 _eventDetails!.eventImage!,
-                                fit: isLandscape ? BoxFit.fitWidth : BoxFit.cover,
+                                fit: isLandscape
+                                    ? BoxFit.fitWidth
+                                    : BoxFit.cover,
                                 width: double.infinity,
                                 height: isLandscape ? 250 : null,
                                 errorBuilder: (_, __, ___) =>
-                                const Icon(Icons.broken_image, size: 80),
+                                    const Icon(Icons.broken_image, size: 80),
                               ),
                             );
                           }
@@ -917,7 +1048,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ),
             const SizedBox(height: 8),
             Text(
-              _eventDetails!.eventDescription ?? 'No event description available',
+              _eventDetails!.eventDescription ??
+                  'No event description available',
               style: const TextStyle(
                 fontSize: 15,
                 height: 1.5,
@@ -932,7 +1064,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    backgroundColor: ColorHelperClass.getColorFromHex(
+                        ColorResources.red_color),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -1015,9 +1148,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         ),
                       ),
                     );
-                  }
-
-                  else if (['pdf', 'docx'].contains(fileExtension)) {
+                  } else if (['pdf', 'docx'].contains(fileExtension)) {
                     return SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -1035,28 +1166,29 @@ class _EventDetailPageState extends State<EventDetailPage> {
                           fileExtension == 'pdf'
                               ? Icons.picture_as_pdf
                               : Icons.description,
-                          color: fileExtension == 'pdf' ? Colors.red : Colors.blue,
+                          color:
+                              fileExtension == 'pdf' ? Colors.red : Colors.blue,
                         ),
                         label: _isDownloading
                             ? LinearProgressIndicator(
-                          value: _downloadProgress / 100,
-                          backgroundColor: Colors.grey[300],
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                          ),
-                        )
-                            : Text("Download & View ${fileExtension.toUpperCase()}"),
+                                value: _downloadProgress / 100,
+                                backgroundColor: Colors.grey[300],
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  ColorHelperClass.getColorFromHex(
+                                      ColorResources.red_color),
+                                ),
+                              )
+                            : Text(
+                                "Download & View ${fileExtension.toUpperCase()}"),
                         onPressed: _isDownloading
                             ? null
                             : () => _downloadAndOpenPdf(
-                          docUrl,
-                          'Event_Terms_${_eventDetails!.eventId}.$fileExtension',
-                        ),
+                                  docUrl,
+                                  'Event_Terms_${_eventDetails!.eventId}.$fileExtension',
+                                ),
                       ),
                     );
-                  }
-
-                  else {
+                  } else {
                     return const Text(
                       "Unsupported file format",
                       style: TextStyle(color: Colors.red),
@@ -1070,7 +1202,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
           ],
         ),
       ),
-      bottomNavigationBar: _isPastEvent ? const SizedBox.shrink() : _buildRegisterButton(),
+      bottomNavigationBar:
+          _isPastEvent ? const SizedBox.shrink() : _buildRegisterButton(),
     );
   }
 }
