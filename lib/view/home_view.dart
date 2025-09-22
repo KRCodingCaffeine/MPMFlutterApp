@@ -218,8 +218,8 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                 itemBuilder: (context, index) {
                   final item = gridItems[index];
                   final screenWidth = MediaQuery.of(context).size.width;
-                  final iconSize = screenWidth * 0.08; // 8% of screen width
-                  final fontSize = screenWidth * 0.025; // 2.5% of screen width
+                  final iconSize = screenWidth * 0.08;
+                  final fontSize = screenWidth * 0.025;
                   
                   return GestureDetector(
                     onTap: () => _handleGridItemClick(item['label']),
@@ -282,24 +282,21 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
   Widget _buildBannerCard(OfferData offer) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    
-    // Responsive dimensions - made more compact for iOS
-    final cardHeight = screenHeight * 0.14; // 14% of screen height (further reduced)
-    final horizontalMargin = screenWidth * 0.04; // 4% of screen width
-    final cardPadding = screenWidth * 0.03; // 3% of screen width (reduced)
-    
-    // Responsive font sizes - made smaller for compact layout
-    final titleFontSize = screenWidth * 0.045; // 4.5% of screen width (reduced)
-    final subtitleFontSize = screenWidth * 0.035; // 3.5% of screen width (reduced)
-    final buttonFontSize = screenWidth * 0.025; // 2.5% of screen width (reduced)
-    final percentFontSize = screenWidth * 0.05; // 5% of screen width (reduced)
-    
-    // Responsive decorative element sizes - much smaller to prevent overflow
-    final topCircleSize = screenWidth * 0.08; // Much smaller
-    final bottomCircleSize = screenWidth * 0.1; // Much smaller
-    final rightElementWidth = screenWidth * 0.15; // Much smaller
-    final rightElementHeight = screenHeight * 0.025; // Much smaller
-    
+
+    final cardHeight = screenHeight * 0.14;
+    final horizontalMargin = screenWidth * 0.04;
+    final cardPadding = screenWidth * 0.03;
+
+    final titleFontSize = screenWidth * 0.045;
+    final subtitleFontSize = screenWidth * 0.035;
+    final buttonFontSize = screenWidth * 0.025;
+    final percentFontSize = screenWidth * 0.05;
+
+    final topCircleSize = screenWidth * 0.08;
+    final bottomCircleSize = screenWidth * 0.1;
+    final rightElementWidth = screenWidth * 0.15;
+    final rightElementHeight = screenHeight * 0.025;
+
     return InkWell(
       onTap: () {
         Navigator.push(
@@ -310,15 +307,15 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
         );
       },
       child: Card(
-        elevation: 5,
+        elevation: 10,
         margin: EdgeInsets.symmetric(horizontal: horizontalMargin, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Container(
           height: cardHeight,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
             gradient: const LinearGradient(
-              colors: [Color(0xFFE3F2FD), Color(0xFF90CAF9)],
+              colors: [Color(0xFF0D1B3D), Color(0xFF2A4C8C)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -326,46 +323,96 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
           child: Stack(
             children: [
               Positioned(
-                top: cardHeight * 0.15,
-                left: cardHeight * 0.15,
+                top: -cardHeight * 0.2,
+                left: -cardHeight * 0.1,
                 child: Container(
-                  width: topCircleSize,
-                  height: topCircleSize,
+                  width: cardHeight * 0.8,
+                  height: cardHeight * 0.8,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.3),
                     shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.08),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.white.withOpacity(0.1),
+                        blurRadius: 20,
+                        spreadRadius: 5,
+                      ),
+                    ],
                   ),
                 ),
               ),
               Positioned(
-                bottom: cardHeight * 0.15,
-                right: cardHeight * 0.15,
-                child: Container(
-                  width: bottomCircleSize,
-                  height: bottomCircleSize,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.20),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-
-              Positioned(
-                top: cardHeight * 0.3,
-                right: cardHeight * 0.2,
+                bottom: -cardHeight * 0.15,
+                right: -cardHeight * 0.15,
                 child: Transform.rotate(
-                  angle: -0.5,
+                  angle: 0.5,
                   child: Container(
-                    width: rightElementWidth,
-                    height: rightElementHeight,
+                    width: cardHeight * 0.9,
+                    height: cardHeight * 0.6,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(30),
                     ),
                   ),
                 ),
               ),
-
+              Positioned(
+                top: cardHeight * 0.1,
+                right: cardHeight * 0.2,
+                child: Container(
+                  width: cardHeight * 0.4,
+                  height: cardHeight * 0.4,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.07),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: cardHeight * 0.1,
+                left: cardHeight * 0.1,
+                child: Container(
+                  width: topCircleSize * 1.5,
+                  height: topCircleSize * 1.5,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [Colors.white.withOpacity(0.15), Colors.transparent],
+                      radius: 0.8,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: cardHeight * 0.05,
+                right: cardHeight * 0.05,
+                child: Container(
+                  width: bottomCircleSize * 1.8,
+                  height: bottomCircleSize * 1.8,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [Colors.white.withOpacity(0.1), Colors.transparent],
+                      radius: 0.9,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: cardHeight * 0.2,
+                right: cardHeight * 0.05,
+                child: Transform.rotate(
+                  angle: -0.5,
+                  child: Container(
+                    width: rightElementWidth * 1.2,
+                    height: rightElementHeight,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ),
               Padding(
                 padding: EdgeInsets.all(cardPadding),
                 child: Row(
@@ -381,32 +428,52 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                             style: TextStyle(
                               fontSize: titleFontSize,
                               fontWeight: FontWeight.bold,
-                              color: Colors.red,
+                              color: Colors.yellowAccent,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black.withOpacity(0.4),
+                                  offset: const Offset(1, 1),
+                                  blurRadius: 4,
+                                ),
+                              ],
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                           SizedBox(height: cardHeight * 0.02),
-
                           Text(
                             "Free Home Delivery",
                             style: TextStyle(
                               fontSize: subtitleFontSize,
                               fontWeight: FontWeight.w600,
-                              color: Colors.black87,
+                              color: Colors.white,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black.withOpacity(0.3),
+                                  offset: const Offset(1, 1),
+                                  blurRadius: 3,
+                                ),
+                              ],
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           SizedBox(height: cardHeight * 0.04),
-
                           Container(
                             padding: EdgeInsets.symmetric(
-                                horizontal: cardPadding * 0.5, 
-                                vertical: cardHeight * 0.02),
+                              horizontal: cardPadding * 0.6,
+                              vertical: cardHeight * 0.03,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.redAccent,
-                              borderRadius: BorderRadius.circular(6),
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.redAccent.withOpacity(0.4),
+                                  blurRadius: 5,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
                             ),
                             child: Text(
                               "ORDER NOW",
@@ -420,7 +487,6 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                         ],
                       ),
                     ),
-
                     Container(
                       margin: EdgeInsets.only(top: cardHeight * 0.1),
                       padding: EdgeInsets.all(cardPadding * 0.6),
@@ -429,9 +495,9 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.red.withOpacity(0.4),
-                            blurRadius: 6,
-                            offset: const Offset(0, 5),
+                            color: Colors.red.withOpacity(0.6),
+                            blurRadius: 8,
+                            offset: const Offset(0, 6),
                           ),
                         ],
                       ),

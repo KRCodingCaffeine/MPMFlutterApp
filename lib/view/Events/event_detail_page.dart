@@ -64,7 +64,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
   GetEventDetailsByIdData? _eventDetails;
 
   int _foodBoxCount = 0;
+  int _seatCount = 0;
   final _foodBoxController = TextEditingController();
+  final _seatController = TextEditingController();
 
   int? _attendeeId;
 
@@ -77,6 +79,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   @override
   void dispose() {
     _foodBoxController.dispose();
+    _seatController.dispose();
     super.dispose();
   }
 
@@ -131,254 +134,390 @@ class _EventDetailPageState extends State<EventDetailPage> {
   Future<void> _showRegistrationConfirmationDialog() async {
     bool showFoodDialog =
         _eventDetails?.eventsTypeId != '1' && _eventDetails?.hasFood == '1';
+    bool showSeatDialog = _eventDetails?.eventsTypeId != '1' &&
+        _eventDetails?.hasSeatAllocate == '1';
 
-    Future<bool> _showFoodDialog(BuildContext context) async {
-      String? selectedFoodOption;
-      final TextEditingController _foodBoxController = TextEditingController();
+    bool shouldProceed = await _showFinalConfirmationDialog();
+    if (!shouldProceed) return;
 
-      final shouldProceed = await showDialog<bool>(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return StatefulBuilder(
-            builder: (context, setState) {
-              return AlertDialog(
-                backgroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20.0),
-                ),
-                titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-                actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-                title: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Text(
-                      "Registration Details",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    Divider(
-                      thickness: 1,
-                      color: Colors.grey,
-                    ),
-                  ],
-                ),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Do you want to request food coupons for this event?",
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.black87,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      value: selectedFoodOption,
-                      decoration: const InputDecoration(
-                        labelText: "Food Coupons",
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.black),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.black),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide:
-                              BorderSide(color: Colors.black38, width: 1),
-                        ),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 20),
-                        labelStyle: TextStyle(color: Colors.black),
-                      ),
-                      items: ["Yes", "No"].map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          selectedFoodOption = value;
-                          if (selectedFoodOption == "No") {
-                            _foodBoxCount = 0;
-                            _foodBoxController.clear();
-                          }
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    if (selectedFoodOption == "Yes")
-                      TextFormField(
-                        controller: _foodBoxController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Number of Food Boxes (Max 2)',
-                          border: OutlineInputBorder(),
-                        ),
-                        onChanged: (value) {
-                          if (value.isNotEmpty) {
-                            int num = int.tryParse(value) ?? 0;
-                            if (num > 2) {
-                              _foodBoxController.text = '2';
-                              _foodBoxController.selection =
-                                  TextSelection.fromPosition(
-                                TextPosition(
-                                    offset: _foodBoxController.text.length),
-                              );
-                              _foodBoxCount = 2;
-                            } else {
-                              _foodBoxCount = num;
-                            }
-                          } else {
-                            _foodBoxCount = 0;
-                          }
-                        },
-                      ),
-                  ],
-                ),
-                actions: [
-                  OutlinedButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    child: const Text("Cancel"),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: ColorHelperClass.getColorFromHex(
-                          ColorResources.red_color),
-                      side: const BorderSide(color: Colors.red),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (selectedFoodOption == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Please select Yes or No')),
-                        );
-                        return;
-                      }
-                      if (selectedFoodOption == "Yes" &&
-                          (_foodBoxCount <= 0 || _foodBoxCount > 2)) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text(
-                                  'Please enter a valid number of boxes (1-2)')),
-                        );
-                        return;
-                      }
-                      Navigator.pop(context, true);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorHelperClass.getColorFromHex(
-                          ColorResources.red_color),
-                    ),
-                    child: const Text(
-                      "Continue",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ],
-              );
-            },
-          );
-        },
-      );
-
-      return shouldProceed ?? false;
-    }
-
-    Future<void> _showFinalConfirmationDialog() async {
-      await showDialog(
-        context: context,
-        barrierDismissible: true,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20.0),
-            ),
-            titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-            contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-            actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Text(
-                  "Confirm Registration",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Divider(
-                  thickness: 1,
-                  color: Colors.grey,
-                ),
-              ],
-            ),
-            content: const Text(
-              "Are you sure you want to register for this event?",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.black87,
-              ),
-            ),
-            actions: [
-              OutlinedButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Cancel"),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: ColorHelperClass.getColorFromHex(
-                      ColorResources.red_color),
-                  side: const BorderSide(color: Colors.red),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _registerForEvent();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: ColorHelperClass.getColorFromHex(
-                      ColorResources.red_color),
-                ),
-                child: const Text(
-                  "Yes, Register",
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            ],
-          );
-        },
-      );
+    if (showSeatDialog) {
+      final seatCount = await _showSeatDialog(context);
+      if (seatCount == null) return;
+      debugPrint("✅ User requested $seatCount seats");
     }
 
     if (showFoodDialog) {
-      bool proceed = await _showFoodDialog(context);
-      if (proceed) {
-        await _showFinalConfirmationDialog();
-      }
-    } else {
-      await _showFinalConfirmationDialog();
+      bool foodConfirmed = await _showFoodDialog(context);
+      if (!foodConfirmed) return;
+      debugPrint("✅ User requested $_foodBoxCount food boxes");
     }
+
+    _registerForEvent();
   }
 
-  Future<void> _showStudentPrizeConfirmationDialog(int eventTypeId, int attendeeId, int memberId) async {
+  Future<bool> _showFinalConfirmationDialog() async {
+    final shouldProceed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Text(
+                "Confirm Registration",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+          content: const Text(
+            "Are you sure you want to register for this event?",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("Cancel"),
+              style: OutlinedButton.styleFrom(
+                foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              ),
+              child: const Text(
+                "Yes, Register",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    return shouldProceed ?? false;
+  }
+
+  Future<int?> _showSeatDialog(BuildContext context) async {
+    final TextEditingController _seatController = TextEditingController();
+    int localSeatCount = 0;
+
+    final seatCount = await showDialog<int>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20.0),
+              ),
+              titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+              contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+              actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Text(
+                    "Seat Allocation",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Divider(thickness: 1, color: Colors.grey),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Enter the number of seats you want to request (max 2):",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _seatController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Number of Seats (Max 2)',
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (value) {
+                      int num = int.tryParse(value) ?? 0;
+                      if (num > 2) {
+                        num = 2;
+                        _seatController.text = '2';
+                        _seatController.selection = TextSelection.fromPosition(
+                          TextPosition(offset: _seatController.text.length),
+                        );
+                      }
+                      setState(() {
+                        localSeatCount = num;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                OutlinedButton(
+                  onPressed: () => Navigator.pop(context, null),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: ColorHelperClass.getColorFromHex(
+                        ColorResources.red_color),
+                    side: const BorderSide(color: Colors.red),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (localSeatCount <= 0 || localSeatCount > 2) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                              'Please enter a valid number of seats (1-2)'),
+                        ),
+                      );
+                      return;
+                    }
+                    Navigator.pop(context, localSeatCount);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ColorHelperClass.getColorFromHex(
+                        ColorResources.red_color),
+                  ),
+                  child: const Text(
+                    "Continue",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (seatCount != null) {
+      setState(() {
+        _seatCount = seatCount;
+      });
+    }
+
+    return seatCount;
+  }
+
+  Future<bool> _showFoodDialog(BuildContext context) async {
+    String? selectedFoodOption;
+    final TextEditingController _foodBoxController = TextEditingController();
+    int localFoodBoxCount = 0;
+
+    final shouldProceed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20.0),
+              ),
+              titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+              contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+              actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Text(
+                    "Registration Details",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Divider(
+                    thickness: 1,
+                    color: Colors.grey,
+                  ),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Do you want to request food coupons for this event?",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: selectedFoodOption,
+                    decoration: const InputDecoration(
+                      labelText: "Food Coupons",
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black38, width: 1),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                      labelStyle: TextStyle(color: Colors.black),
+                    ),
+                    items: ["Yes", "No"].map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedFoodOption = value;
+                        if (selectedFoodOption == "No") {
+                          localFoodBoxCount = 0;
+                          _foodBoxController.clear();
+                        }
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  if (selectedFoodOption == "Yes")
+                    TextFormField(
+                      controller: _foodBoxController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Number of Food Boxes (Max 2)',
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (value) {
+                        if (value.isNotEmpty) {
+                          int num = int.tryParse(value) ?? 0;
+                          if (num > 2) {
+                            _foodBoxController.text = '2';
+                            _foodBoxController.selection =
+                                TextSelection.fromPosition(
+                              TextPosition(
+                                  offset: _foodBoxController.text.length),
+                            );
+                            localFoodBoxCount = 2;
+                          } else {
+                            localFoodBoxCount = num;
+                          }
+                        } else {
+                          localFoodBoxCount = 0;
+                        }
+                      },
+                    ),
+                ],
+              ),
+              actions: [
+                OutlinedButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text("Cancel"),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: ColorHelperClass.getColorFromHex(
+                        ColorResources.red_color),
+                    side: const BorderSide(color: Colors.red),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (selectedFoodOption == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Please select Yes or No')),
+                      );
+                      return;
+                    }
+                    if (selectedFoodOption == "Yes" &&
+                        (localFoodBoxCount <= 0 || localFoodBoxCount > 2)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text(
+                                'Please enter a valid number of boxes (1-2)')),
+                      );
+                      return;
+                    }
+
+                    setState(() {
+                      _foodBoxCount =
+                          selectedFoodOption == "Yes" ? localFoodBoxCount : 0;
+                    });
+
+                    Navigator.pop(context, true);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ColorHelperClass.getColorFromHex(
+                        ColorResources.red_color),
+                  ),
+                  child: const Text(
+                    "Continue",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    return shouldProceed ?? false;
+  }
+
+  Future<void> _showStudentPrizeConfirmationDialog(
+      int eventTypeId, int attendeeId, int memberId) async {
     if (eventTypeId != 3) {
       _registerForEvent();
       return;
@@ -496,8 +635,13 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 _eventDetails?.hasFood == '1')
             ? _foodBoxCount
             : 0,
+        noOfSeatAllocated: (_eventDetails?.eventsTypeId != '1' &&
+                _eventDetails?.hasSeatAllocate == '1')
+            ? _seatCount
+            : 0,
       );
       debugPrint('Sending food count: ${registrationData.noOfFoodContainer}');
+      debugPrint('Sending seat count: ${registrationData.noOfSeatAllocated}');
       final response =
           await _registrationRepo.registerForEvent(registrationData);
 
@@ -510,7 +654,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
         final memberId = int.tryParse(userData.memberId.toString()) ?? 0;
 
         if (_eventDetails?.eventsTypeId == '3') {
-          await _showStudentPrizeConfirmationDialog(3, attendeeId ?? 0, memberId);
+          await _showStudentPrizeConfirmationDialog(
+              3, attendeeId ?? 0, memberId);
         } else {
           await _showSuccessDialog('Successfully registered for event');
         }
@@ -844,7 +989,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
       });
 
       _showDownloadDialog(context, fileName, filePath);
-
     } catch (e) {
       setState(() {
         _isDownloading = false;
@@ -855,7 +999,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
   }
 
-  void _showDownloadDialog(BuildContext context, String fileName, String filePath) {
+  void _showDownloadDialog(
+      BuildContext context, String fileName, String filePath) {
     showDialog(
       context: context,
       builder: (BuildContext context) {

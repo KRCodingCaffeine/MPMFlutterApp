@@ -9,6 +9,7 @@ import 'package:mpm/repository/update_event_by_member_repository/update_event_by
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:dio/dio.dart';
+import 'package:mpm/view/Events/event_view.dart';
 import 'package:mpm/view/Events/member_registered_event.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
@@ -46,7 +47,6 @@ class _RegisteredEventsDetailPageState
   final EventAttendeesRepository _repository = EventAttendeesRepository();
   final CancelEventRepository _cancelRepo = CancelEventRepository();
 
-
   bool _isLoading = false;
   bool _isDownloading = false;
   int _downloadProgress = 0;
@@ -73,7 +73,8 @@ class _RegisteredEventsDetailPageState
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
           contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
           actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
@@ -99,7 +100,7 @@ class _RegisteredEventsDetailPageState
               child: const Text("No"),
               style: OutlinedButton.styleFrom(
                 foregroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: const BorderSide(color: Colors.red),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
@@ -112,7 +113,7 @@ class _RegisteredEventsDetailPageState
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
               ),
               child: const Text("Yes", style: TextStyle(color: Colors.white)),
             ),
@@ -156,7 +157,7 @@ class _RegisteredEventsDetailPageState
     Future.delayed(const Duration(seconds: 1), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => RegisteredEventsListPage()),
+        MaterialPageRoute(builder: (_) => EventsPage()),
       );
     });
   }
@@ -269,7 +270,8 @@ class _RegisteredEventsDetailPageState
     }
   }
 
-  void _showDownloadDialog(BuildContext context, String fileName, String filePath) {
+  void _showDownloadDialog(
+      BuildContext context, String fileName, String filePath) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -400,9 +402,9 @@ class _RegisteredEventsDetailPageState
                   children: [
                     Text(
                       widget.eventAttendee.registrationDate != null &&
-                      widget.eventAttendee.registrationDate!.isNotEmpty
-                          ? DateFormat('EEEE, MMMM d, y')
-                          .format(DateTime.parse(widget.eventAttendee.registrationDate!))
+                              widget.eventAttendee.registrationDate!.isNotEmpty
+                          ? DateFormat('EEEE, MMMM d, y').format(DateTime.parse(
+                              widget.eventAttendee.registrationDate!))
                           : 'Not Available',
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
@@ -702,6 +704,57 @@ class _RegisteredEventsDetailPageState
                   ],
                   _buildEventInfo(),
                   const SizedBox(height: 24),
+                  if (widget.eventAttendee.eventQrCode != null &&
+                      widget.eventAttendee.eventQrCode!.isNotEmpty) ...[
+                    const Text(
+                      'Event QR Code:',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    GestureDetector(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => Dialog(
+                            backgroundColor: Colors.black,
+                            insetPadding: const EdgeInsets.all(10),
+                            child: InteractiveViewer(
+                              panEnabled: true,
+                              boundaryMargin: const EdgeInsets.all(20),
+                              minScale: 0.5,
+                              maxScale: 4.0,
+                              child: Image.network(
+                                widget.eventAttendee.eventQrCode!,
+                                fit: BoxFit.contain,
+                                errorBuilder: (_, __, ___) => const Center(
+                                  child: Icon(Icons.broken_image,
+                                      color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          widget.eventAttendee.eventQrCode!,
+                          height: 300,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Icon(
+                              Icons.qr_code,
+                              size: 80,
+                              color: Colors.grey),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
                   if (widget.eventAttendee.eventOrganiserName != null ||
                       widget.eventAttendee.eventOrganiserMobile != null) ...[
                     const Divider(thickness: 1, color: Colors.grey),
@@ -717,7 +770,8 @@ class _RegisteredEventsDetailPageState
         padding: const EdgeInsets.all(16),
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red, // Cancel button color
+            backgroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
@@ -725,7 +779,6 @@ class _RegisteredEventsDetailPageState
             ),
           ),
           onPressed: () {
-            // TODO: Add cancel registration logic here
             _showCancelConfirmationDialog();
           },
           child: const Text(

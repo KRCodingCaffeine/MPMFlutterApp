@@ -8,6 +8,7 @@ import 'package:mpm/repository/student_prize_registration_repository/student_pri
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/view/Events/event_view.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 import 'package:open_filex/open_filex.dart';
 
@@ -36,6 +37,7 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
 
   final Rx<File?> _image = Rx<File?>(null);
   final RxString selectedMemberId = "".obs;
+  final RxString selectedYear = ''.obs;
 
   final StudentPrizeRegistrationRepository repo =
       StudentPrizeRegistrationRepository();
@@ -54,15 +56,27 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
       appBar: AppBar(
         backgroundColor:
             ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Future.delayed(const Duration(seconds: 1), () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => EventsPage()),
+              );
+            });
+          },
+        ),
         title: Builder(
           builder: (context) {
             double fontSize = MediaQuery.of(context).size.width * 0.045;
             return Text(
               'Student Prize Distribution',
               style: TextStyle(
-                  color: Colors.white,
-                  fontSize: fontSize,
-                  fontWeight: FontWeight.w500),
+                color: Colors.white,
+                fontSize: fontSize,
+                fontWeight: FontWeight.w500,
+              ),
             );
           },
         ),
@@ -124,7 +138,7 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
         studentName: studentNameController.text.trim(),
         schoolName: schoolNameController.text.trim(),
         standardPassed: standardController.text.trim(),
-        yearOfPassed: getLastFinancialYear(),
+        yearOfPassed: selectedYear.value,
         grade: gradeController.text.trim(),
         addBy: int.tryParse(userData.memberId.toString()),
         markSheetAttachment: _image.value?.path,
@@ -146,7 +160,7 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
             studentName: studentNameController.text.trim(),
             schoolName: schoolNameController.text.trim(),
             standardPassed: standardController.text.trim(),
-            yearOfPassed: getLastFinancialYear(),
+            yearOfPassed: selectedYear.value,
             grade: gradeController.text.trim(),
             addBy: int.tryParse(userData.memberId.toString()),
             markSheetAttachment: _image.value?.path,
@@ -166,8 +180,7 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
         throw Exception(response['message'] ?? 'Failed to register');
       }
     } catch (e) {
-      await _showErrorDialog(
-          'Something went wrong please try again');
+      await _showErrorDialog('Something went wrong please try again');
     }
   }
 
@@ -214,7 +227,7 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -268,7 +281,7 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
               onPressed: () => Navigator.pop(context),
               style: OutlinedButton.styleFrom(
                 foregroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: const BorderSide(color: Colors.red),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -282,16 +295,17 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
     );
   }
 
-  String getLastFinancialYear() {
+  List<String> getLastTwoFinancialYears() {
     final now = DateTime.now();
     int year = now.year;
     int month = now.month;
 
-    if (month >= 4) {
-      return "${year - 1} - $year";
-    } else {
-      return "${year - 2} - ${year - 1}";
-    }
+    int startYear = month >= 4 ? year : year - 1;
+
+    String previousFY1 = "${startYear - 2} - ${startYear - 1}";
+    String previousFY2 = "${startYear - 1} - $startYear";
+
+    return [previousFY1, previousFY2];
   }
 
   Widget _buildEducationCard(StudentPrizeRegistrationData edu) {
@@ -310,32 +324,41 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
             _buildRow("Standard", edu.standardPassed ?? ""),
             _buildRow("Grade", edu.grade ?? ""),
             _buildRow("Year", edu.yearOfPassed ?? ""),
-            _buildRow("Mark Sheet Document", ""),
-
-            const SizedBox(height: 8),
-
-            if (edu.markSheetAttachment != null &&
-                edu.markSheetAttachment!.isNotEmpty)
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => _openDocument(edu.markSheetAttachment!),
-                  icon: const Icon(Icons.visibility),
-                  label: const Text("View Document"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Text(
+                  "Mark Sheet Document: ",
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              )
-            else
-              const Text(
-                "No document uploaded",
-                style: TextStyle(color: Colors.grey),
-              ),
+                if (edu.markSheetAttachment != null &&
+                    edu.markSheetAttachment!.isNotEmpty)
+                  ElevatedButton.icon(
+                    onPressed: () => _openDocument(edu.markSheetAttachment!),
+                    icon: const Icon(Icons.visibility, size: 18),
+                    label: const Text("View Document"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 4),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  )
+                else
+                  const Text(
+                    "No document uploaded",
+                    style: TextStyle(color: Colors.grey),
+                  ),
+              ],
+            )
           ],
         ),
       ),
@@ -343,7 +366,6 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
   }
 
   void _showEducationDetailsSheet(BuildContext context) {
-
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.grey[100],
@@ -446,15 +468,19 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
                                   if (newValue != null) {
                                     selectedMemberId.value = newValue;
 
-                                    final selectedMember = controller.familyDataList
-                                        .firstWhereOrNull((m) => m.memberId.toString() == newValue);
+                                    final selectedMember = controller
+                                        .familyDataList
+                                        .firstWhereOrNull((m) =>
+                                            m.memberId.toString() == newValue);
 
                                     if (selectedMember != null) {
                                       final fullName = [
                                         selectedMember.firstName,
                                         selectedMember.middleName ?? "",
                                         selectedMember.lastName ?? ""
-                                      ].where((name) => name.isNotEmpty).join(" ");
+                                      ]
+                                          .where((name) => name.isNotEmpty)
+                                          .join(" ");
 
                                       studentNameController.text = fullName;
                                     }
@@ -484,23 +510,73 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
                     controller: gradeController,
                     type: TextInputType.text,
                     empty: "Enter marks/grade"),
-                _buildTextField(
-                  label: "Year",
-                  controller:
-                      TextEditingController(text: getLastFinancialYear()),
-                  type: TextInputType.text,
-                  empty: "Enter year",
-                  readOnly: true,
+                Container(
+                  width: double.infinity,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Obx(() {
+                          final years = getLastTwoFinancialYears();
+                          final selectedValue = selectedYear.value;
+
+                          return InputDecorator(
+                            decoration: InputDecoration(
+                              labelText: selectedValue.isNotEmpty
+                                  ? 'Year of Passing *'
+                                  : null,
+                              border: const OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.black),
+                              ),
+                              enabledBorder: const OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.black),
+                              ),
+                              focusedBorder: const OutlineInputBorder(
+                                borderSide:
+                                    BorderSide(color: Colors.black38, width: 1),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 4),
+                              labelStyle: const TextStyle(color: Colors.black),
+                            ),
+                            child: DropdownButton<String>(
+                              dropdownColor: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              isExpanded: true,
+                              underline: Container(),
+                              hint: const Text(
+                                'Year of Passing *',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              value: selectedValue.isNotEmpty
+                                  ? selectedValue
+                                  : null,
+                              items: years.map((year) {
+                                return DropdownMenuItem<String>(
+                                  value: year,
+                                  child: Text(year),
+                                );
+                              }).toList(),
+                              onChanged: (String? newValue) {
+                                if (newValue != null) {
+                                  selectedYear.value = newValue;
+                                }
+                              },
+                            ),
+                          );
+                        }),
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(height: 25),
                 Obx(() {
                   return Column(
                     children: [
                       if (_image.value != null)
                         Container(
-                          height: 200, // Preview height
-                          width: double.infinity, // Full width
-                          margin: const EdgeInsets.only(
-                              bottom: 10), // Space between preview & button
+                          height: 200,
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: 10),
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.grey),
                             borderRadius: BorderRadius.circular(8),
@@ -514,7 +590,7 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
                           ),
                         ),
                       SizedBox(
-                        width: double.infinity, // Button full width
+                        width: double.infinity,
                         child: ElevatedButton.icon(
                           onPressed: () => _showImagePicker(context),
                           icon: const Icon(Icons.image),
@@ -524,11 +600,9 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
                                 ColorResources.red_color),
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                  8), // Match container corners
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 12), // Consistent height
+                            padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
                         ),
                       ),
@@ -666,5 +740,4 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
       Get.snackbar("Error", "Unable to open document");
     }
   }
-
 }
