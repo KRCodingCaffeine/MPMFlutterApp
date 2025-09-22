@@ -9,9 +9,21 @@ import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
+import 'package:open_filex/open_filex.dart';
 
 class StudentPrizeFormPage extends StatefulWidget {
-  const StudentPrizeFormPage({super.key});
+  final int eventId;
+  final int attendeeId;
+  final int memberId;
+  final int addedBy;
+
+  const StudentPrizeFormPage({
+    super.key,
+    required this.eventId,
+    required this.attendeeId,
+    required this.memberId,
+    required this.addedBy,
+  });
 
   @override
   _StudentPrizeFormPageState createState() => _StudentPrizeFormPageState();
@@ -104,6 +116,10 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
       }
 
       final registrationData = StudentPrizeRegistrationData(
+        eventId: widget.eventId,
+        memberId: widget.memberId,
+        addedBy: widget.addedBy,
+        eventAttendeesId: widget.attendeeId,
         priceMemberId: int.tryParse(selectedMemberId.value),
         studentName: studentNameController.text.trim(),
         schoolName: schoolNameController.text.trim(),
@@ -120,6 +136,30 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
       final response = await repo.registerForStudentPrize(registrationData);
 
       if (response['status'] == true) {
+        educationList.add(
+          StudentPrizeRegistrationData(
+            eventId: widget.eventId,
+            memberId: widget.memberId,
+            addedBy: widget.addedBy,
+            eventAttendeesId: widget.attendeeId,
+            priceMemberId: int.tryParse(selectedMemberId.value),
+            studentName: studentNameController.text.trim(),
+            schoolName: schoolNameController.text.trim(),
+            standardPassed: standardController.text.trim(),
+            yearOfPassed: getLastFinancialYear(),
+            grade: gradeController.text.trim(),
+            addBy: int.tryParse(userData.memberId.toString()),
+            markSheetAttachment: _image.value?.path,
+          ),
+        );
+
+        studentNameController.clear();
+        schoolNameController.clear();
+        standardController.clear();
+        gradeController.clear();
+        _image.value = null;
+        selectedMemberId.value = "";
+
         await _showSuccessDialog(
             'Successfully registered for Student Prize Distribution');
       } else {
@@ -127,7 +167,7 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
       }
     } catch (e) {
       await _showErrorDialog(
-          'Student prize registration failed: ${e.toString()}');
+          'Something went wrong please try again');
     }
   }
 
@@ -141,20 +181,43 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20.0),
           ),
-          title: const Text("Success",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-          content: Text(message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16, color: Colors.black87)),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Text(
+                "Success",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(thickness: 1, color: Colors.grey),
+            ],
+          ),
+          content: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
           actions: [
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                _redirectToEventsList();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               child: const Text("OK", style: TextStyle(color: Colors.white)),
             ),
@@ -164,27 +227,52 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
     );
   }
 
-  void _redirectToEventsList() {
-    Navigator.of(context).popUntil((route) => route.isFirst);
-  }
-
   Future<void> _showErrorDialog(String message) async {
     await showDialog(
       context: context,
       barrierDismissible: true,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Error",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-          content: Text(message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16, color: Colors.black87)),
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Error",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Divider(thickness: 1, color: Colors.grey),
+            ],
+          ),
+          content: Text(
+            message, // Use the passed message
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
           actions: [
             OutlinedButton(
               onPressed: () => Navigator.pop(context),
               style: OutlinedButton.styleFrom(
                 foregroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               child: const Text("Close"),
             ),
@@ -212,29 +300,42 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 4,
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      child: ListTile(
-        leading: CircleAvatar(
-          radius: 30,
-          backgroundColor: Colors.grey[300],
-          backgroundImage: (edu.markSheetAttachment != null &&
-                  edu.markSheetAttachment!.isNotEmpty)
-              ? FileImage(File(edu.markSheetAttachment!))
-              : const AssetImage("assets/images/document.png") as ImageProvider,
-        ),
-        title: Column(
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Member ID: ${edu.memberId}",
-                style:
-                    const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-            Text("School: ${edu.schoolName}",
-                style: TextStyle(fontSize: 14, color: Colors.grey[600])),
-            Text("Standard: ${edu.standardPassed}",
-                style: TextStyle(fontSize: 14, color: Colors.grey[600])),
-            Text("Grade: ${edu.grade}",
-                style: TextStyle(fontSize: 14, color: Colors.grey[600])),
-            Text("Year: ${edu.yearOfPassed}",
-                style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+            _buildRow("Student Name", edu.studentName ?? ""),
+            _buildRow("School", edu.schoolName ?? ""),
+            _buildRow("Standard", edu.standardPassed ?? ""),
+            _buildRow("Grade", edu.grade ?? ""),
+            _buildRow("Year", edu.yearOfPassed ?? ""),
+            _buildRow("Mark Sheet Document", ""),
+
+            const SizedBox(height: 8),
+
+            if (edu.markSheetAttachment != null &&
+                edu.markSheetAttachment!.isNotEmpty)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _openDocument(edu.markSheetAttachment!),
+                  icon: const Icon(Icons.visibility),
+                  label: const Text("View Document"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              )
+            else
+              const Text(
+                "No document uploaded",
+                style: TextStyle(color: Colors.grey),
+              ),
           ],
         ),
       ),
@@ -242,9 +343,6 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
   }
 
   void _showEducationDetailsSheet(BuildContext context) {
-    final TextEditingController schoolController = TextEditingController();
-    final TextEditingController standardController = TextEditingController();
-    final TextEditingController marksController = TextEditingController();
 
     showModalBottomSheet(
       context: context,
@@ -347,6 +445,19 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
                                 onChanged: (String? newValue) {
                                   if (newValue != null) {
                                     selectedMemberId.value = newValue;
+
+                                    final selectedMember = controller.familyDataList
+                                        .firstWhereOrNull((m) => m.memberId.toString() == newValue);
+
+                                    if (selectedMember != null) {
+                                      final fullName = [
+                                        selectedMember.firstName,
+                                        selectedMember.middleName ?? "",
+                                        selectedMember.lastName ?? ""
+                                      ].where((name) => name.isNotEmpty).join(" ");
+
+                                      studentNameController.text = fullName;
+                                    }
                                   }
                                 },
                               ),
@@ -360,7 +471,7 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
                 const SizedBox(height: 25),
                 _buildTextField(
                     label: "School Name",
-                    controller: schoolController,
+                    controller: schoolNameController,
                     type: TextInputType.text,
                     empty: "Enter school name"),
                 _buildTextField(
@@ -370,7 +481,7 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
                     empty: "Enter standard"),
                 _buildTextField(
                     label: "Percentage of Marks or Grade",
-                    controller: marksController,
+                    controller: gradeController,
                     type: TextInputType.text,
                     empty: "Enter marks/grade"),
                 _buildTextField(
@@ -388,7 +499,8 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
                         Container(
                           height: 200, // Preview height
                           width: double.infinity, // Full width
-                          margin: const EdgeInsets.only(bottom: 10), // Space between preview & button
+                          margin: const EdgeInsets.only(
+                              bottom: 10), // Space between preview & button
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.grey),
                             borderRadius: BorderRadius.circular(8),
@@ -408,13 +520,15 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
                           icon: const Icon(Icons.image),
                           label: const Text("Upload Mark Sheet"),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                            ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                            backgroundColor: ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color),
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8), // Match container corners
+                              borderRadius: BorderRadius.circular(
+                                  8), // Match container corners
                             ),
-                            padding: const EdgeInsets.symmetric(vertical: 12), // Consistent height
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 12), // Consistent height
                           ),
                         ),
                       ),
@@ -506,4 +620,51 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
       ),
     );
   }
+
+  Widget _buildRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 4,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const Text(
+            " : ",
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          Expanded(
+            flex: 6,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[700],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openDocument(String filePath) async {
+    try {
+      await OpenFilex.open(filePath);
+    } catch (e) {
+      Get.snackbar("Error", "Unable to open document");
+    }
+  }
+
 }

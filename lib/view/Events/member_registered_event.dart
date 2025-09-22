@@ -8,6 +8,7 @@ import 'package:mpm/repository/update_event_by_member_repository/update_event_by
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/view/Events/member_registered_event_detail.dart' hide EventAttendeesRepository;
 
 class RegisteredEventsListPage extends StatefulWidget {
   @override
@@ -42,13 +43,14 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
           memberName = name;
           _registeredEventsFuture = _repository
               .fetchEventAttendeesByMemberId(
-              int.tryParse(userData.memberId.toString()) ?? 0)
+                  int.tryParse(userData.memberId.toString()) ?? 0)
               .then((response) {
             setState(() {
               _events = (response.data ?? []).where((event) {
                 final endDate = DateTime.tryParse(event.dateEndTo ?? '');
                 if (endDate == null) return false;
-                return endDate.isAfter(DateTime.now()) || endDate.isAtSameMomentAs(DateTime.now());
+                return endDate.isAfter(DateTime.now()) ||
+                    endDate.isAtSameMomentAs(DateTime.now());
               }).toList();
             });
             return response;
@@ -72,7 +74,8 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
     final day = DateFormat('d').format(parsedDate);
     final month = DateFormat('MMM').format(parsedDate);
 
-    final bool isCancelled = event.cancelledDate != null && event.cancelledDate!.isNotEmpty;
+    final bool isCancelled =
+        event.cancelledDate != null && event.cancelledDate!.isNotEmpty;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -91,7 +94,17 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
         ),
         padding: const EdgeInsets.all(12),
         child: InkWell(
-          onTap: isCancelled ? null : () => _showCancelConfirmationDialog(event),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      RegisteredEventsDetailPage(
+                        eventAttendee: event,
+                      ),
+                ),
+              );
+            },
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -126,7 +139,8 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
                             fontWeight: FontWeight.bold, fontSize: 15)),
                     const SizedBox(height: 6),
                     Text('Member: $memberName',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                        style:
+                            TextStyle(color: Colors.grey[600], fontSize: 13)),
                     const SizedBox(height: 4),
                     Text(
                       isCancelled
@@ -143,101 +157,6 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
           ),
         ),
       ),
-    );
-  }
-
-  Future<void> _showCancelConfirmationDialog(EventAttendeeData event) async {
-    await showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-          title: const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Cancel Registration",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-              SizedBox(height: 8),
-              Divider(thickness: 1, color: Colors.grey),
-            ],
-          ),
-          content: const Text(
-            "Are you sure you want to cancel your registration for this event?",
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 16, color: Colors.black87),
-          ),
-          actions: [
-            OutlinedButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("No"),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: ColorHelperClass.getColorFromHex(
-                    ColorResources.red_color),
-                side: const BorderSide(color: Colors.red),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _cancelEventRegistration(event);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: ColorHelperClass.getColorFromHex(
-                    ColorResources.red_color),
-              ),
-              child: const Text("Yes", style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _cancelEventRegistration(EventAttendeeData event) async {
-    try {
-      final userData = await SessionManager.getSession();
-      if (userData == null) throw Exception("User not logged in");
-
-      final response = await _cancelRepo.cancelEventRegistration(
-        memberId: userData.memberId.toString(),
-        eventId: event.eventId.toString(),
-      );
-
-      final parsed = UpdateEventBYMemberModelClass.fromJson(response);
-
-      if (parsed.status == true) {
-        setState(() {
-          _cancelledEventIds.add(event.eventId!);
-          event.cancelledDate = DateTime.now().toIso8601String();
-        });
-        _showSuccessSnackbar("Cancelled this event registration successfully");
-      } else {
-        throw Exception("Failed to cancel this event registration");
-      }
-    } catch (e) {
-      _showErrorSnackbar("Error: ${e.toString()}");
-    }
-  }
-
-  void _showSuccessSnackbar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.green),
-    );
-  }
-
-  void _showErrorSnackbar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
@@ -264,7 +183,7 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
         backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Text(
           'Registered Events List',
           style: TextStyle(
@@ -275,7 +194,7 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: FutureBuilder<EventAttendeesModelClass>(
-        future: _registeredEventsFuture,
+          future: _registeredEventsFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -295,8 +214,7 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
                 ),
               );
             }
-          }
-      ),
+          }),
     );
   }
 

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/model/EventRegesitration/EventRegistrationData.dart';
 import 'package:mpm/model/GetEventDetailsById/GetEventDetailsByIdData.dart';
 import 'package:mpm/model/GetEventsList/EventDateTimeData.dart';
@@ -64,6 +65,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
   int _foodBoxCount = 0;
   final _foodBoxController = TextEditingController();
+
+  int? _attendeeId;
 
   @override
   void initState() {
@@ -375,7 +378,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
   }
 
-  Future<void> _showStudentPrizeConfirmationDialog(int eventTypeId) async {
+  Future<void> _showStudentPrizeConfirmationDialog(int eventTypeId, int attendeeId, int memberId) async {
     if (eventTypeId != 3) {
       _registerForEvent();
       return;
@@ -438,6 +441,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ElevatedButton(
               onPressed: () async {
                 Navigator.pop(context);
+                final userData = await SessionManager.getSession();
 
                 await _registerForEvent();
 
@@ -445,10 +449,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => StudentPrizeFormPage(
-                      // eventId: int.parse(_eventDetails!.eventId!),
-                      // attendeeId: attendeeId!,
-                      // memberId: memberId!,
-                      // addedBy: memberId!,
+                      eventId: int.parse(_eventDetails!.eventId!),
+                      attendeeId: attendeeId!,
+                      memberId: int.tryParse(userData!.memberId.toString())!,
+                      addedBy: int.tryParse(userData!.memberId.toString())!,
                     ),
                   ),
                 );
@@ -501,11 +505,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
         setState(() {
           _isRegistered = true;
         });
-
-        final attendeeId = int.tryParse(response['data']['attendee_id'] ?? '');
+        // return int.tryParse(response['data']?['attendee_id'] ?? '');
+        final attendeeId = int.tryParse(response['data']['attendee_id'] ?? 0);
+        final memberId = int.tryParse(userData.memberId.toString()) ?? 0;
 
         if (_eventDetails?.eventsTypeId == '3') {
-          await _showStudentPrizeConfirmationDialog(3);
+          await _showStudentPrizeConfirmationDialog(3, attendeeId ?? 0, memberId);
         } else {
           await _showSuccessDialog('Successfully registered for event');
         }
@@ -838,17 +843,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
         _isDownloading = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("$fileName - Downloaded successfully."),
-          action: SnackBarAction(
-            label: "View",
-            onPressed: () {
-              OpenFilex.open(filePath);
-            },
-          ),
-        ),
-      );
+      _showDownloadDialog(context, fileName, filePath);
+
     } catch (e) {
       setState(() {
         _isDownloading = false;
@@ -857,6 +853,76 @@ class _EventDetailPageState extends State<EventDetailPage> {
         SnackBar(content: Text("Download failed: $e")),
       );
     }
+  }
+
+  void _showDownloadDialog(BuildContext context, String fileName, String filePath) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Download Complete",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+          content: Text(
+            "$fileName has been downloaded successfully.",
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.redAccent,
+                side: const BorderSide(color: Colors.redAccent),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Close"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                OpenFilex.open(filePath);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("View"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildOrganiserInfo() {
