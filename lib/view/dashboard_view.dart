@@ -62,7 +62,7 @@ class _DashboardViewState extends State<DashboardView> {
             appBarTitles[controller.currentIndex.value],
             style: TextStyle(
               color: Colors.white,
-              fontSize: MediaQuery.of(context).size.width * 0.045,
+              fontSize: MediaQuery.of(context).size.width * 0.055,
               fontWeight: FontWeight.w500,
             ),
           ),

@@ -219,7 +219,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                   final item = gridItems[index];
                   final screenWidth = MediaQuery.of(context).size.width;
                   final iconSize = screenWidth * 0.08;
-                  final fontSize = screenWidth * 0.025;
+                  final fontSize = screenWidth * 0.040;
                   
                   return GestureDetector(
                     onTap: () => _handleGridItemClick(item['label']),

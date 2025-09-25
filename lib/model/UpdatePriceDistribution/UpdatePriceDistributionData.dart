@@ -8,7 +8,9 @@ class UpdatePriceDistributionData {
     return UpdatePriceDistributionData(
       eventAttendeesPriceMemberId:
       json['event_attendees_price_member_id'] != null
-          ? int.tryParse(json['event_attendees_price_member_id'].toString())
+          ? (json['event_attendees_price_member_id'] is int
+          ? json['event_attendees_price_member_id']
+          : int.tryParse(json['event_attendees_price_member_id'].toString()))
           : null,
       updatedRecord: json['updated_record'] != null
           ? UpdatedRecord.fromJson(json['updated_record'])
@@ -55,19 +57,19 @@ class UpdatedRecord {
 
   factory UpdatedRecord.fromJson(Map<String, dynamic> json) {
     return UpdatedRecord(
-      eventAttendeesPriceMemberId: int.tryParse(json['event_attendees_price_member_id'].toString()),
-      eventAttendeesId: int.tryParse(json['event_attendees_id'].toString()),
-      eventId: int.tryParse(json['event_id'].toString()),
-      memberId: int.tryParse(json['member_id'].toString()),
-      priceMemberId: int.tryParse(json['price_member_id'].toString()),
-      studentName: json['student_name'] as String?,
-      schoolName: json['school_name'] as String?,
-      standardPassed: json['standard_passed'] as String?,
-      yearOfPassed: json['year_of_passed'] as String?,
-      grade: json['grade'] as String?,
-      markSheetAttachment: json['mark_sheet_attachment'] as String?,
-      createdBy: int.tryParse(json['created_by'].toString()),
-      createdAt: json['created_at'] as String?,
+      eventAttendeesPriceMemberId: _parseInt(json['event_attendees_price_member_id']),
+      eventAttendeesId: _parseInt(json['event_attendees_id']),
+      eventId: _parseInt(json['event_id']),
+      memberId: _parseInt(json['member_id']),
+      priceMemberId: _parseInt(json['price_member_id']),
+      studentName: _parseString(json['student_name']),
+      schoolName: _parseString(json['school_name']),
+      standardPassed: _parseString(json['standard_passed']),
+      yearOfPassed: _parseString(json['year_of_passed']),
+      grade: _parseString(json['grade']),
+      markSheetAttachment: _parseString(json['mark_sheet_attachment']),
+      createdBy: _parseInt(json['created_by']),
+      createdAt: _parseString(json['created_at']),
     );
   }
 
@@ -86,4 +88,17 @@ class UpdatedRecord {
     'created_by': createdBy,
     'created_at': createdAt,
   };
+
+  static int? _parseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value);
+    return int.tryParse(value.toString());
+  }
+
+  static String? _parseString(dynamic value) {
+    if (value == null) return null;
+    if (value is String) return value;
+    return value.toString();
+  }
 }

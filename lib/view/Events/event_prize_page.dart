@@ -4,6 +4,7 @@ import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mpm/model/StudentPrizeRegistration/StudentPrizeRegistrationData.dart';
+import 'package:mpm/model/UpdatePriceDistribution/UpdatePriceDistributionData.dart';
 import 'package:mpm/repository/student_prize_registration_repository/student_prize_registration_repo.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
@@ -44,31 +45,12 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
   final RxString selectedYear = ''.obs;
 
   final StudentPrizeRegistrationRepository repo = StudentPrizeRegistrationRepository();
-  final UpdatePriceDistributionRepository updateRepo = UpdatePriceDistributionRepository(); // Add this
   final RxList<StudentPrizeRegistrationData> educationList = <StudentPrizeRegistrationData>[].obs;
 
   final TextEditingController studentNameController = TextEditingController();
   final TextEditingController schoolNameController = TextEditingController();
   final TextEditingController standardController = TextEditingController();
   final TextEditingController gradeController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-
-    if (widget.existingData != null) {
-      studentNameController.text = widget.existingData!.studentName ?? "";
-      schoolNameController.text = widget.existingData!.schoolName ?? "";
-      standardController.text = widget.existingData!.standardPassed ?? "";
-      gradeController.text = widget.existingData!.grade ?? "";
-      selectedYear.value = widget.existingData!.yearOfPassed ?? "";
-      selectedMemberId.value = widget.existingData!.priceMemberId?.toString() ?? "";
-
-      if (widget.existingData!.markSheetAttachment != null && widget.existingData!.markSheetAttachment!.isNotEmpty) {
-        _image.value = File(widget.existingData!.markSheetAttachment!);
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -138,70 +120,6 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
         ],
       ),
     );
-  }
-
-  Future<void> _saveStudentPrize() async {
-    if (widget.existingData == null) {
-      await _registerForStudentPrize();
-    } else {
-      await _updateStudentPrize();
-    }
-  }
-
-  Future<void> _updateStudentPrize() async {
-    try {
-      final userData = await SessionManager.getSession();
-      if (userData == null || userData.memberId == null) {
-        throw Exception('User not logged in');
-      }
-
-      final updateData = {
-        'event_attendees_price_member_id': widget.existingData!.eventAttendeesPriceMemberId,
-        'event_attendees_id': widget.attendeeId,
-        'event_id': widget.eventId,
-        'member_id': widget.memberId,
-        'price_member_id': int.tryParse(selectedMemberId.value),
-        'student_name': studentNameController.text.trim(),
-        'school_name': schoolNameController.text.trim(),
-        'standard_passed': standardController.text.trim(),
-        'year_of_passed': selectedYear.value,
-        'grade': gradeController.text.trim(),
-        'mark_sheet_attachment': _image.value?.path,
-        'created_by': int.tryParse(userData.memberId.toString()),
-      };
-
-      debugPrint("Updating Student Prize: $updateData");
-
-      final response = await updateRepo.updatePriceDistribution(updateData);
-
-      if (response.status == true) {
-        final updatedIndex = educationList.indexWhere(
-                (item) => item.eventAttendeesPriceMemberId == widget.existingData!.eventAttendeesPriceMemberId
-        );
-
-        if (updatedIndex != -1) {
-          educationList[updatedIndex] = StudentPrizeRegistrationData(
-            eventAttendeesPriceMemberId: widget.existingData!.eventAttendeesPriceMemberId,
-            eventId: widget.eventId,
-            memberId: widget.memberId,
-            eventAttendeesId: widget.attendeeId,
-            priceMemberId: int.tryParse(selectedMemberId.value),
-            studentName: studentNameController.text.trim(),
-            schoolName: schoolNameController.text.trim(),
-            standardPassed: standardController.text.trim(),
-            yearOfPassed: selectedYear.value,
-            grade: gradeController.text.trim(),
-            markSheetAttachment: _image.value?.path,
-          );
-        }
-
-        await _showSuccessDialog('Successfully updated Student Prize Distribution');
-      } else {
-        throw Exception(response.message ?? 'Failed to update');
-      }
-    } catch (e) {
-      await _showErrorDialog('Something went wrong please try again');
-    }
   }
 
   Future<void> _registerForStudentPrize() async {
@@ -443,12 +361,14 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
                     ElevatedButton(
                       onPressed: () async {
                         Navigator.pop(context);
-                        await _saveStudentPrize();
+                        _registerForStudentPrize();
                       },
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                      child: Text(
-                        widget.existingData == null ? "Save" : "Update",
-                        style: const TextStyle(color: Colors.white),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                      ),
+                      child: const Text(
+                        "Save",
+                        style: TextStyle(color: Colors.white),
                       ),
                     ),
                   ],
@@ -469,7 +389,7 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
                           return Expanded(
                             child: InputDecorator(
                               decoration: InputDecoration(
-                                labelText: selectedValue.isNotEmpty ? 'Select Member *' : null,
+                                labelText: selectedValue.isNotEmpty ? 'Select Children *' : null,
                                 border: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
                                 enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
                                 focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black38, width: 1)),
@@ -481,7 +401,7 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
                                 borderRadius: BorderRadius.circular(10),
                                 isExpanded: true,
                                 underline: Container(),
-                                hint: const Text('Select Member *', style: TextStyle(fontWeight: FontWeight.bold)),
+                                hint: const Text('Select Children *', style: TextStyle(fontWeight: FontWeight.bold)),
                                 value: selectedValue.isNotEmpty ? selectedValue : null,
                                 items: familyList.map((member) {
                                   return DropdownMenuItem<String>(
