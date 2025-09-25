@@ -2,7 +2,9 @@ import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:mpm/model/GetEventAttendeesDetailById/GetEventAttendeesDetailByIdData.dart';
 import 'package:mpm/model/GetMemberRegisteredEvents/GetMemberRegisteredEventsData.dart';
+import 'package:mpm/model/GetMemberRegisteredEvents/GetMemberRegisteredEventsModelClass.dart';
 import 'package:mpm/model/UpdateEventByMember/UpdateEventByMemberModelClass.dart';
 import 'package:mpm/repository/get_member_registered_events_repository/get_member_registered_events_repo.dart';
 import 'package:mpm/repository/update_event_by_member_repository/update_event_by_member_repo.dart';
@@ -31,7 +33,7 @@ Future<Size> _getImageSize(String imageUrl) async {
 }
 
 class RegisteredEventsDetailPage extends StatefulWidget {
-  final EventAttendeeData eventAttendee;
+  final GetEventAttendeesDetailByIdData eventAttendee;
 
   const RegisteredEventsDetailPage({Key? key, required this.eventAttendee})
       : super(key: key);
@@ -44,6 +46,7 @@ class RegisteredEventsDetailPage extends StatefulWidget {
 class _RegisteredEventsDetailPageState
     extends State<RegisteredEventsDetailPage> {
   final Dio _dio = Dio();
+  late Future<EventAttendeesModelClass> _registeredEventsFuture;
   final EventAttendeesRepository _repository = EventAttendeesRepository();
   final CancelEventRepository _cancelRepo = CancelEventRepository();
 
@@ -54,16 +57,79 @@ class _RegisteredEventsDetailPageState
   int? _memberId;
   bool _isCancelled = false;
 
+  String get _eventName =>
+      widget.eventAttendee.event?.eventName ?? 'Registered Event Details';
+  String? get _eventOrganiserName =>
+      widget.eventAttendee.event?.eventOrganiserName;
+  String? get _eventOrganiserMobile =>
+      widget.eventAttendee.event?.eventOrganiserMobile;
+  String? get _dateStartsFrom => widget.eventAttendee.event?.dateStartsFrom;
+  String? get _dateEndTo => widget.eventAttendee.event?.dateEndTo;
+  String? get _studentName => widget.eventAttendee.priceMember?.studentName;
+  String? get _seatNo => widget.eventAttendee.seatAllotment?.seatNo;
+  String? get _eventId => widget.eventAttendee.event?.eventId;
+
+  String memberName = 'Loading...';
+
   @override
   void initState() {
     super.initState();
     _fetchMemberId();
     _checkEventDate();
+    _checkIfCancelled();
+    _loadUserDataAndFetchEvents();
+  }
+
+  Future<void> _loadUserDataAndFetchEvents() async {
+    try {
+      final userData = await SessionManager.getSession();
+      if (userData != null) {
+        final name = _getUserName(
+            userData.firstName, userData.middleName, userData.lastName);
+
+        setState(() {
+          memberName = name;
+          _registeredEventsFuture = _repository
+              .fetchEventAttendeesByMemberId(
+                  int.tryParse(userData.memberId.toString()) ?? 0)
+              .then((response) {
+            return response;
+          });
+        });
+        return;
+      }
+      setState(() {
+        _registeredEventsFuture = Future.error('User data not available');
+      });
+    } catch (e) {
+      setState(() {
+        _registeredEventsFuture = Future.error(e.toString());
+      });
+    }
+  }
+
+  String _getUserName(String? firstName, String? middleName, String? lastName) {
+    final fName = firstName ?? '';
+    final mName = middleName?.isNotEmpty == true ? ' $middleName ' : ' ';
+    final lName = lastName ?? '';
+    return '$fName$mName$lName'.trim();
+  }
+
+  void _checkIfCancelled() {
+    setState(() {
+      _isCancelled = widget.eventAttendee.cancelledDate != null &&
+          widget.eventAttendee.cancelledDate!.isNotEmpty;
+    });
   }
 
   Future<void> _showCancelConfirmationDialog() async {
     if (_isCancelled) {
       _showErrorSnackbar("Registration is already cancelled");
+      return;
+    }
+
+    if (_isPastEvent) {
+      _showErrorSnackbar("Cannot cancel registration for past events");
       return;
     }
 
@@ -127,10 +193,11 @@ class _RegisteredEventsDetailPageState
     try {
       final userData = await SessionManager.getSession();
       if (userData == null) throw Exception("User not logged in");
+      if (_eventId == null) throw Exception("Event ID not available");
 
       final response = await _cancelRepo.cancelEventRegistration(
         memberId: userData.memberId.toString(),
-        eventId: widget.eventAttendee.eventId.toString(),
+        eventId: _eventId!,
       );
 
       final parsed = UpdateEventBYMemberModelClass.fromJson(response);
@@ -182,9 +249,9 @@ class _RegisteredEventsDetailPageState
   }
 
   void _checkEventDate() {
-    if (widget.eventAttendee.dateEndTo == null) return;
+    if (_dateEndTo == null) return;
 
-    final eventDate = DateTime.tryParse(widget.eventAttendee.dateEndTo!);
+    final eventDate = DateTime.tryParse(_dateEndTo!);
     if (eventDate != null) {
       final today = DateTime.now();
       final todayMidnight = DateTime(today.year, today.month, today.day);
@@ -194,158 +261,23 @@ class _RegisteredEventsDetailPageState
     }
   }
 
-  Future<bool> _requestPermission() async {
-    if (Platform.isAndroid) {
-      final androidInfo = await DeviceInfoPlugin().androidInfo;
-      final sdkInt = androidInfo.version.sdkInt;
+  bool get _hasStudentPrizeMember {
+    final student = widget.eventAttendee.priceMember;
+    if (student == null) return false;
 
-      if (sdkInt >= 33) {
-        return true;
-      } else if (sdkInt >= 30) {
-        var status = await Permission.storage.request();
-        if (status.isGranted) return true;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content:
-                  Text('Storage permission is needed to download the file.')),
-        );
-        return false;
-      } else {
-        var status = await Permission.storage.request();
-        if (status.isGranted) return true;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content:
-                  Text('Storage permission is needed to download the file.')),
-        );
-        return false;
-      }
-    }
-    return true;
-  }
-
-  Future<void> _downloadAndOpenPdf(String url, String fileName) async {
-    final permissionStatus = await _requestPermission();
-    if (!permissionStatus) return;
-
-    setState(() {
-      _isDownloading = true;
-      _downloadProgress = 0;
-    });
-
-    try {
-      Directory? directory = Platform.isAndroid
-          ? (await getExternalStorageDirectory())!
-          : await getApplicationDocumentsDirectory();
-
-      String filePath = "${directory!.path}/$fileName";
-
-      await _dio.download(
-        url,
-        filePath,
-        onReceiveProgress: (received, total) {
-          if (total > 0) {
-            int newProgress = ((received / total) * 100).toInt();
-            setState(() {
-              _downloadProgress = newProgress;
-            });
-          }
-        },
-      );
-
-      setState(() {
-        _isDownloading = false;
-      });
-
-      _showDownloadDialog(context, fileName, filePath);
-    } catch (e) {
-      setState(() {
-        _isDownloading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Download failed: $e")),
-      );
-    }
-  }
-
-  void _showDownloadDialog(
-      BuildContext context, String fileName, String filePath) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15.0),
-          ),
-          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "Download Complete",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Divider(
-                thickness: 1,
-                color: Colors.grey,
-              ),
-            ],
-          ),
-          content: Text(
-            "$fileName has been downloaded successfully.",
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.black87,
-            ),
-          ),
-          actions: [
-            OutlinedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.redAccent,
-                side: const BorderSide(color: Colors.redAccent),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Text("Close"),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                OpenFilex.open(filePath);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Text("View"),
-            ),
-          ],
-        );
-      },
-    );
+    // Check if any of the student fields have actual data (not null or empty)
+    return student.studentName?.isNotEmpty == true ||
+        student.schoolName?.isNotEmpty == true ||
+        student.standardPassed?.isNotEmpty == true ||
+        student.grade?.isNotEmpty == true ||
+        student.yearOfPassed?.isNotEmpty == true;
   }
 
   Widget _buildEventInfo() {
     String formatDate(String? dateStr) {
-      if (dateStr == null || dateStr.isEmpty) return 'Unknown Date';
+      if (dateStr == null || dateStr.isEmpty) return 'Not Available';
       try {
-        return DateFormat('EEEE, MMMM d, y').format(DateTime.parse(dateStr));
+        return DateFormat('dd MMM yyyy').format(DateTime.parse(dateStr));
       } catch (_) {
         return 'Invalid Date';
       }
@@ -355,66 +287,55 @@ class _RegisteredEventsDetailPageState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Event Date:',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              const Icon(Icons.calendar_today, size: 18, color: Colors.black),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Text(
-                      formatDate(widget.eventAttendee.dateStartsFrom),
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    if (widget.eventAttendee.dateEndTo != null &&
-                        widget.eventAttendee.dateEndTo!.isNotEmpty)
-                      ...[],
-                  ],
-                ),
-              ),
-            ],
+          'Registration Details:',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
           ),
         ),
-        const SizedBox(height: 16),
-        const Text(
-          'Registration Date:',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        const SizedBox(height: 8),
         Container(
-          margin: const EdgeInsets.symmetric(vertical: 4),
           padding: const EdgeInsets.all(12),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.calendar_today, size: 18, color: Colors.black),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Text(
-                      widget.eventAttendee.registrationDate != null &&
-                              widget.eventAttendee.registrationDate!.isNotEmpty
-                          ? DateFormat('EEEE, MMMM d, y').format(DateTime.parse(
-                              widget.eventAttendee.registrationDate!))
-                          : 'Not Available',
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                ),
+              _buildRow(
+                "Registration Date",
+                formatDate(widget.eventAttendee.registrationDate),
               ),
+              if (_isCancelled && widget.eventAttendee.cancelledDate != null)
+                _buildRow(
+                  "Cancelled on",
+                  formatDate(widget.eventAttendee.cancelledDate),
+                ),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildStudentPrizeCard() {
+    final student = widget.eventAttendee.priceMember;
+
+    return Card(
+      color: Colors.grey[50],
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 4,
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildRow("Student Name", student?.studentName ?? "Not Available"),
+            _buildRow("School", student?.schoolName ?? "Not Available"),
+            _buildRow("Standard", student?.standardPassed ?? "Not Available"),
+            _buildRow("Grade", student?.grade ?? "Not Available"),
+            _buildRow("Year", student?.yearOfPassed ?? "Not Available"),
+          ],
+        ),
+      ),
     );
   }
 
@@ -431,7 +352,7 @@ class _RegisteredEventsDetailPageState
           ),
         ),
         const SizedBox(height: 8),
-        if (widget.eventAttendee.eventOrganiserName != null) ...[
+        if (_eventOrganiserName != null) ...[
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -446,7 +367,7 @@ class _RegisteredEventsDetailPageState
                         style: TextStyle(color: Colors.black, fontSize: 12),
                       ),
                       TextSpan(
-                        text: widget.eventAttendee.eventOrganiserName!
+                        text: _eventOrganiserName!
                             .split(',')
                             .map((name) => name.trim())
                             .join(', '),
@@ -460,13 +381,13 @@ class _RegisteredEventsDetailPageState
           ),
           const SizedBox(height: 8),
         ],
-        if (widget.eventAttendee.eventOrganiserMobile != null) ...[
+        if (_eventOrganiserMobile != null) ...[
           Row(
             children: [
               Icon(Icons.phone, size: 16, color: Colors.grey[600]),
               const SizedBox(width: 8),
               Text(
-                widget.eventAttendee.eventOrganiserMobile!,
+                _eventOrganiserMobile!,
                 style: TextStyle(fontSize: 14, color: Colors.grey[700]),
               ),
             ],
@@ -487,7 +408,7 @@ class _RegisteredEventsDetailPageState
           builder: (context) {
             double fontSize = MediaQuery.of(context).size.width * 0.045;
             return Text(
-              widget.eventAttendee.eventName ?? 'Registered Event Details',
+              _eventName,
               style: TextStyle(
                   color: Colors.white,
                   fontSize: fontSize,
@@ -506,204 +427,6 @@ class _RegisteredEventsDetailPageState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (widget.eventAttendee.eventImage != null &&
-                      widget.eventAttendee.eventImage!.isNotEmpty) ...[
-                    GestureDetector(
-                      onTap: () {
-                        showDialog(
-                          context: context,
-                          builder: (_) => Dialog(
-                            backgroundColor: Colors.black,
-                            insetPadding: const EdgeInsets.all(10),
-                            child: InteractiveViewer(
-                              panEnabled: true,
-                              boundaryMargin: const EdgeInsets.all(20),
-                              minScale: 0.5,
-                              maxScale: 4.0,
-                              child: Image.network(
-                                widget.eventAttendee.eventImage!,
-                                fit: BoxFit.contain,
-                                errorBuilder: (_, __, ___) => const Center(
-                                  child: Icon(Icons.broken_image,
-                                      color: Colors.white),
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Container(
-                            constraints: const BoxConstraints(
-                              maxHeight: 500,
-                              maxWidth: 400,
-                            ),
-                            child: FutureBuilder<Size>(
-                              future: _getImageSize(
-                                  widget.eventAttendee.eventImage!),
-                              builder: (context, snapshot) {
-                                if (snapshot.connectionState ==
-                                    ConnectionState.waiting) {
-                                  return const SizedBox(
-                                    height: 200,
-                                    child: Center(
-                                        child: CircularProgressIndicator()),
-                                  );
-                                } else if (snapshot.hasError ||
-                                    !snapshot.hasData) {
-                                  return const SizedBox.shrink();
-                                } else {
-                                  final imageSize = snapshot.data!;
-                                  final isLandscape =
-                                      imageSize.width > imageSize.height;
-
-                                  return ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Image.network(
-                                      widget.eventAttendee.eventImage!,
-                                      fit: isLandscape
-                                          ? BoxFit.fitWidth
-                                          : BoxFit.cover,
-                                      width: double.infinity,
-                                      height: isLandscape ? 250 : null,
-                                      errorBuilder: (_, __, ___) => const Icon(
-                                          Icons.broken_image,
-                                          size: 80),
-                                    ),
-                                  );
-                                }
-                              },
-                            )),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                  const Text(
-                    'Event Description:',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    widget.eventAttendee.eventDescription ??
-                        'No event description available',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  if (widget.eventAttendee.eventTermsAndConditionDocument !=
-                          null &&
-                      widget.eventAttendee.eventTermsAndConditionDocument!
-                          .isNotEmpty) ...[
-                    const Text(
-                      'Events Document:',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Builder(
-                      builder: (context) {
-                        final docUrl = widget
-                            .eventAttendee.eventTermsAndConditionDocument!;
-                        final fileExtension =
-                            docUrl.split('.').last.toLowerCase();
-
-                        if (['jpg', 'jpeg', 'png', 'gif']
-                            .contains(fileExtension)) {
-                          return GestureDetector(
-                            onTap: () {
-                              showDialog(
-                                context: context,
-                                builder: (_) => Dialog(
-                                  child: Container(
-                                    padding: const EdgeInsets.all(10),
-                                    child: InteractiveViewer(
-                                      child: Image.network(
-                                        docUrl,
-                                        fit: BoxFit.contain,
-                                        errorBuilder: (_, __, ___) =>
-                                            const Center(
-                                                child: Text(
-                                                    'Failed to load image')),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.network(
-                                docUrl,
-                                height: 200,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
-                                    const SizedBox.shrink(),
-                              ),
-                            ),
-                          );
-                        } else if (['pdf', 'docx'].contains(fileExtension)) {
-                          return SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey[200],
-                                foregroundColor: Colors.black87,
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 12, horizontal: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                elevation: 0,
-                              ),
-                              icon: Icon(
-                                fileExtension == 'pdf'
-                                    ? Icons.picture_as_pdf
-                                    : Icons.description,
-                                color: fileExtension == 'pdf'
-                                    ? Colors.red
-                                    : Colors.red,
-                              ),
-                              label: _isDownloading
-                                  ? LinearProgressIndicator(
-                                      value: _downloadProgress / 100,
-                                      backgroundColor: Colors.grey[300],
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        ColorHelperClass.getColorFromHex(
-                                            ColorResources.red_color),
-                                      ),
-                                    )
-                                  : Text(
-                                      "Download & View ${fileExtension.toUpperCase()}"),
-                              onPressed: _isDownloading
-                                  ? null
-                                  : () => _downloadAndOpenPdf(
-                                        docUrl,
-                                        'Event_Terms_${widget.eventAttendee.eventId}.$fileExtension',
-                                      ),
-                            ),
-                          );
-                        } else {
-                          return const Text(
-                            "Unsupported file format",
-                            style: TextStyle(color: Colors.red),
-                          );
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                  _buildEventInfo(),
-                  const SizedBox(height: 24),
                   if (widget.eventAttendee.eventQrCode != null &&
                       widget.eventAttendee.eventQrCode!.isNotEmpty) ...[
                     const Text(
@@ -755,8 +478,102 @@ class _RegisteredEventsDetailPageState
                     ),
                     const SizedBox(height: 24),
                   ],
-                  if (widget.eventAttendee.eventOrganiserName != null ||
-                      widget.eventAttendee.eventOrganiserMobile != null) ...[
+                  const Text(
+                    'Attendee Details:',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildRow("Name", memberName),
+                        _buildRow(
+                          "Reference Code",
+                          widget.eventAttendee.eventAttendeesCode ??
+                              "Not Available",
+                        ),
+                        _buildRow(
+                          "Seat No",
+                          _seatNo ?? "Not Allotted",
+                        ),
+                        _buildRow(
+                          "Event Date",
+                          _dateStartsFrom != null
+                              ? DateFormat('dd MMM yyyy').format(
+                                  DateTime.parse(_dateStartsFrom!),
+                                )
+                              : "Unknown Date",
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _buildEventInfo(),
+                  if (_hasStudentPrizeMember) ...[
+                    const Divider(thickness: 1, color: Colors.grey),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Student Prize Member:',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => StudentPrizeFormPage(
+                                  eventId: widget.eventId,
+                                  attendeeId: widget.attendeeId,
+                                  memberId: widget.memberId,
+                                  addedBy: widget.addedBy,
+                                  existingData: edu,
+                                ),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: const Color(0xFFDC3545),
+                            elevation: 4,
+                            shadowColor: Colors.black,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(Icons.edit, size: 12),
+                              SizedBox(width: 4),
+                              Text(
+                                'Edit',
+                                style: TextStyle(
+                                    fontSize: 12, fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    _buildStudentPrizeCard(),
+                  ],
+                  const SizedBox(height: 10),
+                  if (_eventOrganiserName != null ||
+                      _eventOrganiserMobile != null) ...[
                     const Divider(thickness: 1, color: Colors.grey),
                     const SizedBox(height: 16),
                     _buildOrganiserInfo(),
@@ -766,26 +583,67 @@ class _RegisteredEventsDetailPageState
                 ],
               ),
             ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+      bottomNavigationBar: _isCancelled || _isPastEvent
+          ? null
+          : Padding(
+              padding: const EdgeInsets.all(16),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColorHelperClass.getColorFromHex(
+                      ColorResources.red_color),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                onPressed: () {
+                  _showCancelConfirmationDialog();
+                },
+                child: const Text(
+                  'Cancel Registration',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+              ),
+            ),
+    );
+  }
+
+  Widget _buildRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 4,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
             ),
           ),
-          onPressed: () {
-            _showCancelConfirmationDialog();
-          },
-          child: const Text(
-            'Cancel Registration',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          const Text(
+            " : ",
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
           ),
-        ),
+          Expanded(
+            flex: 6,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.black,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

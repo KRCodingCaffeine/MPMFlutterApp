@@ -74,6 +74,8 @@ class Urls {
   static const String getLatestSaraswaniPublications = base_url+"api/get_latest_saraswani_publications";
   static const String reg_otp_url = base_url+"api/check_reg_otp";
   static const String student_prize_register_url = base_url+"api/member_register_price_distribution";
+  static const String get_event_attendees_detail_by_id = base_url+"api/get_event_attendees_detail_by_id";
+  static const String update_price_distribution_url = base_url+"api/update_price_distribution";
 
 
 }

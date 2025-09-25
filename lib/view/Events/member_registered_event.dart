@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:mpm/model/GetEventAttendeesDetailById/GetEventAttendeesDetailByIdData.dart';
 import 'package:mpm/model/GetMemberRegisteredEvents/GetMemberRegisteredEventsData.dart';
 import 'package:mpm/model/GetMemberRegisteredEvents/GetMemberRegisteredEventsModelClass.dart';
 import 'package:mpm/model/UpdateEventByMember/UpdateEventByMemberModelClass.dart';
+import 'package:mpm/repository/get_event_attendees_detail_by_id_repository/get_event_attendees_detail_by_id_repo.dart';
 import 'package:mpm/repository/get_member_registered_events_repository/get_member_registered_events_repo.dart';
 import 'package:mpm/repository/update_event_by_member_repository/update_event_by_member_repo.dart';
 import 'package:mpm/utils/Session.dart';
@@ -94,17 +96,19 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
         ),
         padding: const EdgeInsets.all(12),
         child: InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      RegisteredEventsDetailPage(
-                        eventAttendee: event,
-                      ),
+          onTap: () async {
+            final repo = GetEventAttendeesDetailByIdRepository();
+            final detail = await repo.fetchEventAttendeeDetailById(event.eventAttendeesId!.toString());
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => RegisteredEventsDetailPage(
+                  eventAttendee: detail.data!,
                 ),
-              );
-            },
+              ),
+            );
+          },
+
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
