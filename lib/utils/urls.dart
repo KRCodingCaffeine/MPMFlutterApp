@@ -76,6 +76,6 @@ class Urls {
   static const String student_prize_register_url = base_url+"api/member_register_price_distribution";
   static const String get_event_attendees_detail_by_id = base_url+"api/get_event_attendees_detail_by_id";
   static const String update_price_distribution_url = base_url+"api/update_price_distribution";
-
+  static const String delete_price_distribution_url = base_url+"api/delete_price_distribution";
 
 }

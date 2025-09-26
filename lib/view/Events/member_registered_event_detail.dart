@@ -9,6 +9,7 @@ import 'package:mpm/model/GetMemberRegisteredEvents/GetMemberRegisteredEventsDat
 import 'package:mpm/model/GetMemberRegisteredEvents/GetMemberRegisteredEventsModelClass.dart';
 import 'package:mpm/model/UpdateEventByMember/UpdateEventByMemberModelClass.dart';
 import 'package:mpm/model/UpdatePriceDistribution/UpdatePriceDistributionData.dart';
+import 'package:mpm/repository/delete_price_distribution_repository/delete_price_distribution_repo.dart';
 import 'package:mpm/repository/get_member_registered_events_repository/get_member_registered_events_repo.dart';
 import 'package:mpm/repository/update_event_by_member_repository/update_event_by_member_repo.dart';
 import 'package:mpm/repository/update_price_distribution_repository/update_price_distribution_repo.dart';
@@ -529,6 +530,9 @@ class _RegisteredEventsDetailPageState
                 ),
                 PopupMenuButton<String>(
                   color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   onSelected: (value) {
                     if (value == 'edit') {
                       studentNameController.text =
@@ -543,7 +547,7 @@ class _RegisteredEventsDetailPageState
                           widget.eventAttendee.priceMember?.yearOfPassed ?? '';
                       _showEducationDetailsSheet(context);
                     } else if (value == 'delete') {
-                      // Handle delete action
+                      _showDeleteConfirmation(context, widget.eventAttendee.priceMember);
                     }
                   },
                   itemBuilder: (context) => const [
@@ -577,7 +581,7 @@ class _RegisteredEventsDetailPageState
                     ),
                     child: const Text(
                       'Edit',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.red),
                     ),
                   ),
                 )
@@ -602,6 +606,124 @@ class _RegisteredEventsDetailPageState
         ),
       ),
     );
+  }
+
+  Future<void> _showDeleteConfirmation(BuildContext context, PriceMember? student) async {
+    if (student == null) return;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Delete Confirmation",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+          content: const Text(
+            "Are you sure you want to delete this student’s details?",
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFFDC3545),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _deleteStudent(student);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFDC3545),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Delete"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _deleteStudent(PriceMember student) async {
+    if (student.eventAttendeesPriceMemberId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid student record, cannot delete.')),
+      );
+      return;
+    }
+
+    final repository = DeletePriceDistributionRepository();
+
+    try {
+      final response = await repository.deletePriceDistribution(
+       student.eventAttendeesPriceMemberId,
+      );
+
+      if (response.status == true) {
+        debugPrint(
+            'Deleted student: ${student.studentName}, Deleted ID: ${response
+                .data?.deletedId}');
+
+        Get.snackbar(
+          'Success',
+          'Student deleted successfully',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+
+        setState(() {
+          widget.eventAttendee.priceMember = null;
+        });
+      } else {
+        throw Exception(response.message ?? 'Failed to delete student');
+      }
+    } catch (e) {
+      debugPrint('Error deleting student: $e');
+
+      Get.snackbar(
+        'Error',
+        'Something went wrong. Please try again.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 3),
+      );
+    }
   }
 
   Widget _buildOrganiserInfo() {

@@ -397,6 +397,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
+                    dropdownColor: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
                     value: selectedFoodOption,
                     decoration: const InputDecoration(
                       labelText: "Food Coupons",
@@ -653,14 +655,16 @@ class _EventDetailPageState extends State<EventDetailPage> {
         final attendeeId = int.tryParse(response['data']['attendee_id'] ?? 0);
         final memberId = int.tryParse(userData.memberId.toString()) ?? 0;
 
+        final message = response['message'] ?? 'Successfully registered for event';
+
         if (_eventDetails?.eventsTypeId == '3') {
           await _showStudentPrizeConfirmationDialog(
               3, attendeeId ?? 0, memberId);
         } else {
-          await _showSuccessDialog('Successfully registered for event');
+          await _showSuccessDialog(message);
         }
       } else {
-        throw Exception('Failed to register for event');
+        throw Exception(response['message'] ?? 'Failed to register for event');
       }
     } catch (e) {
       await _showErrorDialog('Registration failed: ${e.toString()}');

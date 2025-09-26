@@ -84,6 +84,7 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
+
       body: Obx(() {
         if (educationList.isEmpty) {
           return const Center(child: Text("Students Detail not added yet..."));
@@ -96,6 +97,7 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
           },
         );
       }),
+
       floatingActionButton: SpeedDial(
         icon: isSpeedDialOpen ? Icons.close : Icons.add,
         activeIcon: Icons.close,
@@ -119,6 +121,39 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
           ),
         ],
       ),
+
+      bottomNavigationBar: Obx(() {
+        if (educationList.isEmpty) return const SizedBox.shrink();
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => EventsPage()),
+                  );
+                },
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                label: const Text(
+                  "Back to Event",
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                  ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      }),
     );
   }
 

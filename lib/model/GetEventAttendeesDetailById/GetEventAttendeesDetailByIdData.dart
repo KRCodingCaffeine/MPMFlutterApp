@@ -10,7 +10,7 @@ class GetEventAttendeesDetailByIdData {
   final String? eventQrCode;
   final String? noOfFoodContainer;
   final EventData? event;
-  final PriceMember? priceMember;
+  PriceMember? priceMember;
   final SeatAllotment? seatAllotment;
 
   GetEventAttendeesDetailByIdData({
