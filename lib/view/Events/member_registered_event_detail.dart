@@ -271,24 +271,25 @@ class _RegisteredEventsDetailPageState
         throw Exception('User not logged in');
       }
 
-      // Check if we have an existing price member record to update
+      // Ensure record exists
       if (widget.eventAttendee.priceMember?.eventAttendeesPriceMemberId == null) {
         throw Exception('No existing student prize record found to update');
       }
 
       final updateData = {
-        'event_attendees_price_member_id': widget.eventAttendee.priceMember!.eventAttendeesPriceMemberId,
+        'event_attendees_price_member_id':
+        widget.eventAttendee.priceMember!.eventAttendeesPriceMemberId,
         'event_attendees_id': widget.eventAttendee.eventAttendeesId,
         'event_id': widget.eventAttendee.event?.eventId,
         'member_id': widget.eventAttendee.memberId,
-        'price_member_id': int.tryParse(selectedMemberId.value),
+        'price_member_id': selectedMemberId.value,
         'student_name': studentNameController.text.trim(),
         'school_name': schoolNameController.text.trim(),
         'standard_passed': standardController.text.trim(),
         'year_of_passed': selectedYear.value,
         'grade': gradeController.text.trim(),
-        'created_by': int.tryParse(userData.memberId.toString()),
-        'mark_sheet_attachment': _image.value?.path,
+        'updated_by': userData.memberId.toString(),
+        'mark_sheet_attachment': _image.value?.path ?? '',
       };
 
       debugPrint("Sending Student Prize Update: $updateData");
@@ -297,30 +298,20 @@ class _RegisteredEventsDetailPageState
       final response = await repository.updatePriceDistribution(updateData);
 
       if (response.status == true) {
-        setState(() {
-          // educationList.update(
-          //   UpdatedRecord(
-          //     eventAttendeesId: widget.attendeeId,
-          //     priceMemberId: int.tryParse(selectedMemberId.value),
-          //     studentName: studentNameController.text.trim(),
-          //     schoolName: schoolNameController.text.trim(),
-          //     standardPassed: standardController.text.trim(),
-          //     yearOfPassed: selectedYear.value,
-          //     grade: gradeController.text.trim(),
-          //     markSheetAttachment: _image.value?.path,
-          //   ),
-          // );
-          //
-          // studentNameController.clear();
-          // schoolNameController.clear();
-          // standardController.clear();
-          // gradeController.clear();
-          // _image.value = null;
-          // selectedMemberId.value = "";
+        // ✅ Clear fields
+        studentNameController.clear();
+        schoolNameController.clear();
+        standardController.clear();
+        gradeController.clear();
+        _image.value = null;
+        selectedMemberId.value = "";
 
-        });
+        await _showSuccessDialog(
+          'Successfully updated Student Prize Distribution details',
+        );
 
-        await _showSuccessDialog('Successfully updated Student Prize Distribution details');
+        // ✅ Close this page and tell previous screen to refresh
+        Navigator.pop(context, true);
       } else {
         throw Exception(response.message ?? 'Failed to update');
       }
@@ -516,20 +507,97 @@ class _RegisteredEventsDetailPageState
     final student = widget.eventAttendee.priceMember;
 
     return Card(
-      color: Colors.grey[50],
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 4,
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      elevation: 5,
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      color: Colors.white,
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildRow("Student Name", student?.studentName ?? "Not Available"),
-            _buildRow("School", student?.schoolName ?? "Not Available"),
-            _buildRow("Standard", student?.standardPassed ?? "Not Available"),
-            _buildRow("Grade", student?.grade ?? "Not Available"),
-            _buildRow("Year", student?.yearOfPassed ?? "Not Available"),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    student?.studentName ?? "Not Available",
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                PopupMenuButton<String>(
+                  color: Colors.white,
+                  onSelected: (value) {
+                    if (value == 'edit') {
+                      studentNameController.text =
+                          widget.eventAttendee.priceMember?.studentName ?? '';
+                      schoolNameController.text =
+                          widget.eventAttendee.priceMember?.schoolName ?? '';
+                      standardController.text =
+                          widget.eventAttendee.priceMember?.standardPassed ?? '';
+                      gradeController.text =
+                          widget.eventAttendee.priceMember?.grade ?? '';
+                      selectedYear.value =
+                          widget.eventAttendee.priceMember?.yearOfPassed ?? '';
+                      _showEducationDetailsSheet(context);
+                    } else if (value == 'delete') {
+                      // Handle delete action
+                    }
+                  },
+                  itemBuilder: (context) => const [
+                    PopupMenuItem(
+                      value: 'edit',
+                      child: Text(
+                        'Edit',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Text(
+                        'Delete',
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w500, color: Colors.red),
+                      ),
+                    ),
+                  ],
+                  child: ElevatedButton(
+                    onPressed: null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFFDC3545),
+                      elevation: 4,
+                      shadowColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    ),
+                    child: const Text(
+                      'Edit',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                )
+              ],
+            ),
+
+            const Divider(color: Color(0xFFE0E0E0)),
+            const SizedBox(height: 10),
+
+            if ((student?.schoolName ?? '').isNotEmpty)
+              _buildRow("School", student!.schoolName ?? "Not Available"),
+
+            if ((student?.standardPassed ?? '').isNotEmpty)
+              _buildRow("Standard", student!.standardPassed ?? "Not Available"),
+
+            if ((student?.grade ?? '').isNotEmpty)
+              _buildRow("Grade", student!.grade ?? "Not Available"),
+
+            if ((student?.yearOfPassed ?? '').isNotEmpty)
+              _buildRow("Year", student!.yearOfPassed ?? "Not Available"),
           ],
         ),
       ),
@@ -705,6 +773,10 @@ class _RegisteredEventsDetailPageState
                           _seatNo ?? "Not Allotted",
                         ),
                         _buildRow(
+                          "No of Food Coupon",
+                          widget.eventAttendee.noOfFoodContainer ?? "Not Allotted",
+                        ),
+                        _buildRow(
                           "Event Date",
                           _dateStartsFrom != null
                               ? DateFormat('dd MMM yyyy').format(
@@ -733,14 +805,12 @@ class _RegisteredEventsDetailPageState
                         ),
                         ElevatedButton(
                           onPressed: () {
-                            studentNameController.text = widget.eventAttendee.priceMember?.studentName ?? '';
-                            schoolNameController.text = widget.eventAttendee.priceMember?.schoolName ?? '';
-                            standardController.text = widget.eventAttendee.priceMember?.standardPassed ?? '';
-                            gradeController.text = widget.eventAttendee.priceMember?.grade ?? '';
-                            selectedYear.value = widget.eventAttendee.priceMember?.yearOfPassed ?? '';
-
-                            // Show bottom sheet
-                            _showEducationDetailsSheet(context);
+                            // studentNameController.text = widget.eventAttendee.priceMember?.studentName ?? '';
+                            // schoolNameController.text = widget.eventAttendee.priceMember?.schoolName ?? '';
+                            // standardController.text = widget.eventAttendee.priceMember?.standardPassed ?? '';
+                            // gradeController.text = widget.eventAttendee.priceMember?.grade ?? '';
+                            // selectedYear.value = widget.eventAttendee.priceMember?.yearOfPassed ?? '';
+                            // _showEducationDetailsSheet(context);
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
@@ -756,10 +826,10 @@ class _RegisteredEventsDetailPageState
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: const [
-                              Icon(Icons.edit, size: 12),
+                              Icon(Icons.add, size: 12),
                               SizedBox(width: 4),
                               Text(
-                                'Edit',
+                                'Add',
                                 style: TextStyle(
                                     fontSize: 12, fontWeight: FontWeight.w500),
                               ),
@@ -941,6 +1011,7 @@ class _RegisteredEventsDetailPageState
                                         selectedMember.middleName ?? "",
                                         selectedMember.lastName ?? ""
                                       ].where((name) => name.isNotEmpty).join(" ");
+                                      studentNameController.text = fullName;
                                     }
                                   }
                                 },

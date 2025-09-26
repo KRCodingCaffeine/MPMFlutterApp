@@ -8,6 +8,7 @@ class GetEventAttendeesDetailByIdData {
   final String? registrationDate;
   String? cancelledDate;
   final String? eventQrCode;
+  final String? noOfFoodContainer;
   final EventData? event;
   final PriceMember? priceMember;
   final SeatAllotment? seatAllotment;
@@ -20,6 +21,7 @@ class GetEventAttendeesDetailByIdData {
     this.registrationDate,
     this.cancelledDate,
     this.eventQrCode,
+    this.noOfFoodContainer,
     this.event,
     this.priceMember,
     this.seatAllotment,
@@ -34,6 +36,7 @@ class GetEventAttendeesDetailByIdData {
       registrationDate: json['registration_date'] as String?,
       cancelledDate: json['cancelled_date'] as String?,
       eventQrCode: json['event_qr_code'] as String?,
+      noOfFoodContainer: json['no_of_food_container'] as String?,
       event: json['event'] != null ? EventData.fromJson(json['event']) : null,
       priceMember: json['price_member'] != null
           ? PriceMember.fromJson(json['price_member'])
@@ -52,6 +55,7 @@ class GetEventAttendeesDetailByIdData {
     'registration_date': registrationDate,
     'cancelled_date': cancelledDate,
     'event_qr_code': eventQrCode,
+    'no_of_food_container': noOfFoodContainer,
     'event': event?.toJson(),
     'price_member': priceMember?.toJson(),
     'seat_allotment': seatAllotment?.toJson(),
@@ -73,6 +77,8 @@ class EventData {
   final String? eventRegistrationLastDate;
   final String? approvalStatus;
   final String? eventsTypeId;
+  final String? hasFood;
+  final String? hasSeatAllocate;
 
   EventData({
     this.eventId,
@@ -89,6 +95,8 @@ class EventData {
     this.eventRegistrationLastDate,
     this.approvalStatus,
     this.eventsTypeId,
+    this.hasFood,
+    this.hasSeatAllocate,
   });
 
   factory EventData.fromJson(Map<String, dynamic> json) {
@@ -108,6 +116,8 @@ class EventData {
       eventRegistrationLastDate: json['event_registration_last_date'] as String?,
       approvalStatus: json['approval_status'] as String?,
       eventsTypeId: json['events_type_id'] as String?,
+      hasFood: json['has_food'] as String?,
+      hasSeatAllocate: json['has_seat_allocate'] as String?
     );
   }
 
@@ -126,6 +136,8 @@ class EventData {
     'event_registration_last_date': eventRegistrationLastDate,
     'approval_status': approvalStatus,
     'events_type_id': eventsTypeId,
+    'has_food': hasFood,
+    'has_seat_allocate': hasSeatAllocate,
   };
 }
 
