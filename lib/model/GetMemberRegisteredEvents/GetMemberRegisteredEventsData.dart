@@ -6,6 +6,7 @@ class EventAttendeeData {
   String? eventRegisteredData;
   String? registrationDate;
   String? cancelledDate;
+  String? eventQrCode;
   int? eventId;
   String? eventName;
   String? eventDescription;
@@ -27,6 +28,7 @@ class EventAttendeeData {
     this.eventRegisteredData,
     this.registrationDate,
     this.cancelledDate,
+    this.eventQrCode,
     this.eventId,
     this.eventName,
     this.eventDescription,
@@ -50,6 +52,7 @@ class EventAttendeeData {
       eventRegisteredData: json['event_registered_data'],
       registrationDate: json['registration_date'],
       cancelledDate: json['cancelled_date'],
+      eventQrCode: json['event_qr_code'],
       eventId: _toInt(json['event_id']),
       eventName: json['event_name'],
       eventDescription: json['event_description'],
@@ -78,6 +81,7 @@ class EventAttendeeData {
     'event_registered_data': eventRegisteredData,
     'registration_date': registrationDate,
     'cancelled_date': cancelledDate,
+    'event_qr_code': eventQrCode,
     'event_id': eventId,
     'event_name': eventName,
     'event_description': eventDescription,
