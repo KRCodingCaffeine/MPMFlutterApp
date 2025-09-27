@@ -462,17 +462,22 @@ class _RegisteredEventsDetailPageState
   }
 
   bool get _hasStudentPrizeMember {
-    final student = widget.eventAttendee.priceMembersList?.isNotEmpty == true
-        ? widget.eventAttendee.priceMembersList!.first
-        : null;
-    if (student == null) return false;
+    if (widget.eventAttendee.event?.eventsTypeId != "3") return false;
 
+    final students = widget.eventAttendee.priceMembersList;
+
+    if (students == null || students.isEmpty) {
+      return true;
+    }
+
+    final student = students.first;
     return student.studentName?.isNotEmpty == true ||
         student.schoolName?.isNotEmpty == true ||
         student.standardPassed?.isNotEmpty == true ||
         student.grade?.isNotEmpty == true ||
         student.yearOfPassed?.isNotEmpty == true;
   }
+
 
   Widget _buildEventInfo() {
     String formatDate(String? dateStr) {
@@ -520,11 +525,11 @@ class _RegisteredEventsDetailPageState
   Widget _buildStudentPrizeCards() {
     final students = widget.eventAttendee.priceMembersList ?? [];
 
-    if (students.isEmpty) {
+    if (students == null || students.isEmpty) {
       return const Padding(
         padding: EdgeInsets.all(16.0),
         child: Text(
-          'No Student Prize Members available',
+          'No Student detail added yet...',
           style: TextStyle(color: Colors.black54),
         ),
       );
@@ -726,9 +731,7 @@ class _RegisteredEventsDetailPageState
           colorText: Colors.white,
         );
 
-        setState(() {
-          widget.eventAttendee.priceMembersList?.clear();
-        });
+        Navigator.pop(context, true);
       } else {
         throw Exception(response.message ?? 'Failed to delete student');
       }
@@ -975,14 +978,14 @@ class _RegisteredEventsDetailPageState
                   ),
                   const SizedBox(height: 10),
                   _buildEventInfo(),
-                  // if (_hasStudentPrizeMember) ...[
+                  if (_hasStudentPrizeMember) ...[
                     const Divider(thickness: 1, color: Colors.grey),
                     const SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        'Student Prize Members:',
+                        'Student Prize Registration:',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -992,21 +995,21 @@ class _RegisteredEventsDetailPageState
                       ElevatedButton(
                         onPressed: () async {
                           Navigator.pop(context);
-                          // Navigate to add new student prize member
-                          // final userData = await SessionManager.getSession();
-                          // if (userData != null && userData.memberId != null) {
-                          //   Navigator.push(
-                          //     context,
-                          //     MaterialPageRoute(
-                          //       builder: (context) => StudentPrizeFormPage(
-                          //         eventId: int.parse(_eventDetails!.eventId!),
-                          //         attendeeId: widget.eventAttendee.eventAttendeesId,
-                          //         memberId: int.tryParse(userData.memberId.toString())!,
-                          //         addedBy: int.tryParse(userData.memberId.toString())!,
-                          //       ),
-                          //     ),
-                          //   );
-                          // }
+                          final userData = await SessionManager.getSession();
+                          // int? eventAttendeesId = int.tryParse(widget.eventAttendee.eventAttendeesId ?? '');
+                          if (userData != null && userData.memberId != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => StudentPrizeFormPage(
+                                  eventId: int.parse(_eventDetails!.eventId!),
+                                  attendeeId:  int.parse(widget.eventAttendee.eventAttendeesId),
+                                  memberId: int.tryParse(userData.memberId.toString())!,
+                                  addedBy: int.tryParse(userData.memberId.toString())!,
+                                ),
+                              ),
+                            );
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
@@ -1033,7 +1036,7 @@ class _RegisteredEventsDetailPageState
                     ],
                   ),
                   _buildStudentPrizeCards(),
-                  // ],
+                  ],
                   const SizedBox(height: 10),
                   if (_eventOrganiserName != null ||
                       _eventOrganiserMobile != null) ...[
