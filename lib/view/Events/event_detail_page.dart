@@ -655,16 +655,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
         final attendeeId = int.tryParse(response['data']['attendee_id'] ?? 0);
         final memberId = int.tryParse(userData.memberId.toString()) ?? 0;
 
-        final message = response['message'] ?? 'Successfully registered for event';
-
         if (_eventDetails?.eventsTypeId == '3') {
           await _showStudentPrizeConfirmationDialog(
               3, attendeeId ?? 0, memberId);
         } else {
-          await _showSuccessDialog(message);
+          await _showSuccessDialog('Successfully registered for event');
         }
       } else {
-        throw Exception(response['message'] ?? 'Failed to register for event');
+        throw Exception('Failed to register for event');
       }
     } catch (e) {
       await _showErrorDialog('Registration failed: ${e.toString()}');

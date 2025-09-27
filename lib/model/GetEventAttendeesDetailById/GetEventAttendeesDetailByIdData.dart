@@ -10,7 +10,7 @@ class GetEventAttendeesDetailByIdData {
   final String? eventQrCode;
   final String? noOfFoodContainer;
   final EventData? event;
-  PriceMember? priceMember;
+  final List<PriceMember>? priceMembersList;
   final SeatAllotment? seatAllotment;
 
   GetEventAttendeesDetailByIdData({
@@ -23,7 +23,7 @@ class GetEventAttendeesDetailByIdData {
     this.eventQrCode,
     this.noOfFoodContainer,
     this.event,
-    this.priceMember,
+    this.priceMembersList,
     this.seatAllotment,
   });
 
@@ -38,9 +38,9 @@ class GetEventAttendeesDetailByIdData {
       eventQrCode: json['event_qr_code'] as String?,
       noOfFoodContainer: json['no_of_food_container'] as String?,
       event: json['event'] != null ? EventData.fromJson(json['event']) : null,
-      priceMember: json['price_member'] != null
-          ? PriceMember.fromJson(json['price_member'])
-          : null,
+      priceMembersList: (json['price_members'] as List<dynamic>?)
+          ?.map((e) => PriceMember.fromJson(e as Map<String, dynamic>))
+          .toList(),
       seatAllotment: json['seat_allotment'] != null
           ? SeatAllotment.fromJson(json['seat_allotment'])
           : null,
@@ -57,7 +57,7 @@ class GetEventAttendeesDetailByIdData {
     'event_qr_code': eventQrCode,
     'no_of_food_container': noOfFoodContainer,
     'event': event?.toJson(),
-    'price_member': priceMember?.toJson(),
+    'price_members': priceMembersList?.map((e) => e.toJson()).toList(),
     'seat_allotment': seatAllotment?.toJson(),
   };
 }
