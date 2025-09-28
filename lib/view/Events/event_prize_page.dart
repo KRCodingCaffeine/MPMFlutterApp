@@ -58,17 +58,17 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Future.delayed(const Duration(seconds: 1), () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => EventsPage()),
-              );
-            });
-          },
-        ),
+        // leading: IconButton(
+        //   icon: const Icon(Icons.arrow_back),
+        //   onPressed: () {
+        //     Future.delayed(const Duration(seconds: 1), () {
+        //       Navigator.pushReplacement(
+        //         context,
+        //         MaterialPageRoute(builder: (_) => EventsPage()),
+        //       );
+        //     });
+        //   },
+        // ),
         title: Builder(
           builder: (context) {
             double fontSize = MediaQuery.of(context).size.width * 0.045;
@@ -183,38 +183,92 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
 
       final response = await repo.registerForStudentPrize(registrationData);
 
+      // Check if response indicates success (either 200 or 400/409 with already registered)
       if (response['status'] == true) {
-        educationList.add(
-          StudentPrizeRegistrationData(
-            eventId: widget.eventId,
-            memberId: widget.memberId,
-            addedBy: widget.addedBy,
-            eventAttendeesId: widget.attendeeId,
-            priceMemberId: int.tryParse(selectedMemberId.value),
-            studentName: studentNameController.text.trim(),
-            schoolName: schoolNameController.text.trim(),
-            standardPassed: standardController.text.trim(),
-            yearOfPassed: selectedYear.value,
-            grade: gradeController.text.trim(),
-            addBy: int.tryParse(userData.memberId.toString()),
-            markSheetAttachment: _image.value?.path,
-          ),
-        );
+        // Check if this is an "already registered" case
+        if (response['already_registered'] == true) {
+          await _showAlreadyRegisteredDialog(response['message']);
+        } else {
+          // This is a new successful registration
+          educationList.add(
+            StudentPrizeRegistrationData(
+              eventId: widget.eventId,
+              memberId: widget.memberId,
+              addedBy: widget.addedBy,
+              eventAttendeesId: widget.attendeeId,
+              priceMemberId: int.tryParse(selectedMemberId.value),
+              studentName: studentNameController.text.trim(),
+              schoolName: schoolNameController.text.trim(),
+              standardPassed: standardController.text.trim(),
+              yearOfPassed: selectedYear.value,
+              grade: gradeController.text.trim(),
+              addBy: int.tryParse(userData.memberId.toString()),
+              markSheetAttachment: _image.value?.path,
+            ),
+          );
 
-        studentNameController.clear();
-        schoolNameController.clear();
-        standardController.clear();
-        gradeController.clear();
-        _image.value = null;
-        selectedMemberId.value = "";
+          studentNameController.clear();
+          schoolNameController.clear();
+          standardController.clear();
+          gradeController.clear();
+          _image.value = null;
+          selectedMemberId.value = "";
+          selectedYear.value = "";
 
-        await _showSuccessDialog('Successfully registered for Student Prize Distribution');
+          await _showSuccessDialog('Successfully registered for Student Prize Distribution');
+        }
       } else {
         throw Exception(response['message'] ?? 'Failed to register');
       }
     } catch (e) {
       await _showErrorDialog('Something went wrong please try again');
     }
+  }
+
+// Add this method to handle the "already registered" case
+  Future<void> _showAlreadyRegisteredDialog(String message) async {
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Text(
+                "Already Registered",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              SizedBox(height: 8),
+              Divider(thickness: 1, color: Colors.grey),
+            ],
+          ),
+          content: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 16, color: Colors.black87),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: const Text("OK", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _showSuccessDialog(String message) async {

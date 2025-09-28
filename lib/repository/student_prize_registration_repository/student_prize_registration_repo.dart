@@ -76,10 +76,12 @@ class StudentPrizeRegistrationRepository {
   dynamic _handleResponse(http.Response response) {
     final decoded = jsonDecode(response.body);
 
-    if (response.statusCode == 409) {
+    if (response.statusCode == 400) {
       return {
         "status": true,
-        "message": decoded["message"] ?? "Student already registered for this prize."
+        // "message": decoded["message"] ?? "Student already registered for this prize.",
+        "message": "Student already registered for this prize distribution.",
+        "already_registered": true
       };
     }
 

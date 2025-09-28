@@ -64,7 +64,8 @@ class EventRegistrationRepository {
     if (response.statusCode == 409) {
       return {
         "status": true,
-        "message": decoded["message"] ?? "Member already registered for this event."
+        "message": decoded["message"] ?? "Member already registered for this event.",
+        "already_registered": true
       };
     }
 

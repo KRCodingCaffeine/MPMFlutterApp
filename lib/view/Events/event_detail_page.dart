@@ -634,32 +634,44 @@ class _EventDetailPageState extends State<EventDetailPage> {
         addedBy: int.tryParse(userData.memberId.toString()),
         dateAdded: DateFormat('yyyy-MM-dd HH:mm:ss').format(now),
         noOfFoodContainer: (_eventDetails?.eventsTypeId != '1' &&
-                _eventDetails?.hasFood == '1')
+            _eventDetails?.hasFood == '1')
             ? _foodBoxCount
             : 0,
         noOfSeatAllocated: (_eventDetails?.eventsTypeId != '1' &&
-                _eventDetails?.hasSeatAllocate == '1')
+            _eventDetails?.hasSeatAllocate == '1')
             ? _seatCount
             : 0,
       );
+
       debugPrint('Sending food count: ${registrationData.noOfFoodContainer}');
       debugPrint('Sending seat count: ${registrationData.noOfSeatAllocated}');
-      final response =
-          await _registrationRepo.registerForEvent(registrationData);
+
+      final response = await _registrationRepo.registerForEvent(registrationData);
+
+      if (response['status'] == false && response['already_registered'] == true) {
+        setState(() {
+          _isRegistered = true;
+        });
+        await _showAlreadyRegisteredDialog(response['message']);
+        return;
+      }
 
       if (response['status'] == true) {
         setState(() {
           _isRegistered = true;
         });
-        // return int.tryParse(response['data']?['attendee_id'] ?? '');
-        final attendeeId = int.tryParse(response['data']['attendee_id'] ?? 0);
-        final memberId = int.tryParse(userData.memberId.toString()) ?? 0;
 
-        if (_eventDetails?.eventsTypeId == '3') {
-          await _showStudentPrizeConfirmationDialog(
-              3, attendeeId ?? 0, memberId);
+        if (response['already_registered'] == true) {
+          await _showAlreadyRegisteredDialog(response['message']);
         } else {
-          await _showSuccessDialog('Successfully registered for event');
+          final attendeeId = int.tryParse(response['data']['attendee_id'] ?? '0');
+          final memberId = int.tryParse(userData.memberId.toString()) ?? 0;
+
+          if (_eventDetails?.eventsTypeId == '3') {
+            await _showStudentPrizeConfirmationDialog(3, attendeeId ?? 0, memberId);
+          } else {
+            await _showSuccessDialog('Successfully registered for event');
+          }
         }
       } else {
         throw Exception('Failed to register for event');
@@ -671,6 +683,65 @@ class _EventDetailPageState extends State<EventDetailPage> {
         _isRegistering = false;
       });
     }
+  }
+
+  Future<void> _showAlreadyRegisteredDialog(String message) async {
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Text(
+                "Already Registered",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(thickness: 1, color: Colors.grey),
+            ],
+          ),
+          content: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                setState(() {
+                  _isRegistered = true;
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("OK", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _showSuccessDialog(String message) async {
