@@ -6,27 +6,21 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:mpm/model/GetEventAttendeesDetailById/GetEventAttendeesDetailByIdData.dart';
 import 'package:mpm/model/GetEventDetailsById/GetEventDetailsByIdData.dart';
-import 'package:mpm/model/GetMemberRegisteredEvents/GetMemberRegisteredEventsData.dart';
 import 'package:mpm/model/GetMemberRegisteredEvents/GetMemberRegisteredEventsModelClass.dart';
+import 'package:mpm/model/StudentPrizeRegistration/StudentPrizeRegistrationData.dart';
 import 'package:mpm/model/UpdateEventByMember/UpdateEventByMemberModelClass.dart';
 import 'package:mpm/model/UpdatePriceDistribution/UpdatePriceDistributionData.dart';
 import 'package:mpm/repository/delete_price_distribution_repository/delete_price_distribution_repo.dart';
 import 'package:mpm/repository/get_even_details_by_id_repository/get_even_details_by_id_repo.dart';
 import 'package:mpm/repository/get_member_registered_events_repository/get_member_registered_events_repo.dart';
+import 'package:mpm/repository/student_prize_registration_repository/student_prize_registration_repo.dart';
 import 'package:mpm/repository/update_event_by_member_repository/update_event_by_member_repo.dart';
 import 'package:mpm/repository/update_food_container_reposiory/update_food_container_repo.dart';
 import 'package:mpm/repository/update_price_distribution_repository/update_price_distribution_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
-import 'package:dio/dio.dart';
-import 'package:mpm/view/Events/event_prize_page.dart';
 import 'package:mpm/view/Events/event_view.dart';
-import 'package:mpm/view/Events/member_registered_event.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:open_filex/open_filex.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:mpm/utils/Session.dart';
 
 Future<Size> _getImageSize(String imageUrl) async {
@@ -63,6 +57,7 @@ class _RegisteredEventsDetailPageState
       GetEventDetailByIdRepository();
   final RxList<UpdatePriceDistributionData> educationList =
       <UpdatePriceDistributionData>[].obs;
+  final StudentPrizeRegistrationRepository repo = StudentPrizeRegistrationRepository();
 
   final Rx<File?> _image = Rx<File?>(null);
   final RxString selectedMemberId = "".obs;
@@ -353,7 +348,6 @@ class _RegisteredEventsDetailPageState
       final response = await repository.updatePriceDistribution(updateData);
 
       if (response.status == true) {
-        // ✅ Clear fields
         studentNameController.clear();
         schoolNameController.clear();
         standardController.clear();
@@ -803,6 +797,189 @@ class _RegisteredEventsDetailPageState
     }
   }
 
+  Future<void> _registerForStudentPrize() async {
+    try {
+      final userData = await SessionManager.getSession();
+      if (userData == null || userData.memberId == null) {
+        throw Exception('User not logged in');
+      }
+
+      final registrationData = StudentPrizeRegistrationData(
+        eventId: int.tryParse(widget.eventAttendee.event?.eventId ?? "0"),
+        memberId: int.tryParse(userData.memberId.toString()),
+        addedBy: int.tryParse(userData.memberId.toString()),
+        eventAttendeesId: int.tryParse(widget.eventAttendee.eventAttendeesId ?? "0"),
+        priceMemberId: int.tryParse(selectedMemberId.value),
+        studentName: studentNameController.text.trim(),
+        schoolName: schoolNameController.text.trim(),
+        standardPassed: standardController.text.trim(),
+        yearOfPassed: selectedYear.value,
+        grade: gradeController.text.trim(),
+        addBy: int.tryParse(userData.memberId.toString()),
+        markSheetAttachment: _image.value?.path,
+      );
+
+      debugPrint("Sending Student Prize Registration: ${registrationData.toJson()}");
+
+      final response = await repo.registerForStudentPrize(registrationData);
+
+      if (response['status'] == true) {
+        if (response['already_registered'] == true) {
+          await _showAlreadyRegisteredDialog(response['message']);
+        } else {
+          studentNameController.clear();
+          schoolNameController.clear();
+          standardController.clear();
+          gradeController.clear();
+          _image.value = null;
+          selectedMemberId.value = "";
+          selectedYear.value = "";
+
+          await _showSuccesDialog('Successfully registered for Student Prize Distribution');
+        }
+      } else {
+        throw Exception(response['message'] ?? 'Failed to register');
+      }
+    } catch (e) {
+      await _showErorDialog('Something went wrong please try again');
+    }
+  }
+
+// Add this method to handle the "already registered" case
+  Future<void> _showAlreadyRegisteredDialog(String message) async {
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Text(
+                "Already Registered",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              SizedBox(height: 8),
+              Divider(thickness: 1, color: Colors.grey),
+            ],
+          ),
+          content: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 16, color: Colors.black87),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: const Text("OK", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showSuccesDialog(String message) async {
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Text(
+                "Success",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              SizedBox(height: 8),
+              Divider(thickness: 1, color: Colors.grey),
+            ],
+          ),
+          content: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 16, color: Colors.black87),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: const Text("OK", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showErorDialog(String message) async {
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Error",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              const Divider(thickness: 1, color: Colors.grey),
+            ],
+          ),
+          content: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 16, color: Colors.black87),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: const Text("Close"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildOrganiserInfo() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1088,22 +1265,7 @@ class _RegisteredEventsDetailPageState
                               if (eventIdStr != null && eventIdStr.isNotEmpty) {
                                 final eventId = int.tryParse(eventIdStr);
                                 if (eventId != null) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          StudentPrizeFormPage(
-                                        eventId: eventId,
-                                        attendeeId: attendeeId,
-                                        memberId: int.tryParse(
-                                                userData.memberId.toString()) ??
-                                            0,
-                                        addedBy: int.tryParse(
-                                                userData.memberId.toString()) ??
-                                            0,
-                                      ),
-                                    ),
-                                  );
+                                  _showAddEducationDetailsSheet(context);
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
@@ -1181,6 +1343,283 @@ class _RegisteredEventsDetailPageState
                 ),
               ),
             ),
+    );
+  }
+
+  void _showAddEducationDetailsSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.grey[100],
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 30),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                      child: const Text("Cancel"),
+                    ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        _registerForStudentPrize();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                      ),
+                      child: const Text(
+                        "Save",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 25),
+                Container(
+                  width: double.infinity,
+                  child: Row(
+                    children: [
+                      Obx(() {
+                        final familyList = controller.familyDataList;
+
+                        if (familyList.isEmpty) {
+                          return const Center(child: Text('No Members available'));
+                        } else {
+                          final selectedValue = selectedMemberId.value;
+
+                          return Expanded(
+                            child: InputDecorator(
+                              decoration: InputDecoration(
+                                labelText: selectedValue.isNotEmpty ? 'Select Children *' : null,
+                                border: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
+                                enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
+                                focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black38, width: 1)),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                                labelStyle: const TextStyle(color: Colors.black),
+                              ),
+                              child: DropdownButton<String>(
+                                dropdownColor: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                isExpanded: true,
+                                underline: Container(),
+                                hint: const Text('Select Children *', style: TextStyle(fontWeight: FontWeight.bold)),
+                                value: selectedValue.isNotEmpty ? selectedValue : null,
+                                items: familyList.map((member) {
+                                  return DropdownMenuItem<String>(
+                                    value: member.memberId.toString(),
+                                    child: Text("${member.firstName} ${member.middleName ?? ''} ${member.lastName}"),
+                                  );
+                                }).toList(),
+                                onChanged: (String? newValue) {
+                                  if (newValue != null) {
+                                    selectedMemberId.value = newValue;
+
+                                    final selectedMember = controller.familyDataList.firstWhereOrNull(
+                                            (m) => m.memberId.toString() == newValue
+                                    );
+
+                                    if (selectedMember != null) {
+                                      final fullName = [
+                                        selectedMember.firstName,
+                                        selectedMember.middleName ?? "",
+                                        selectedMember.lastName ?? ""
+                                      ].where((name) => name.isNotEmpty).join(" ");
+
+                                      studentNameController.text = fullName;
+                                    }
+                                  }
+                                },
+                              ),
+                            ),
+                          );
+                        }
+                      }),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 25),
+                _buildTextField(
+                    label: "School Name",
+                    controller: schoolNameController,
+                    type: TextInputType.text,
+                    empty: "Enter school name"
+                ),
+                _buildTextField(
+                    label: "Standard Passed",
+                    controller: standardController,
+                    type: TextInputType.text,
+                    empty: "Enter standard"
+                ),
+                _buildTextField(
+                    label: "Percentage of Marks or Grade",
+                    controller: gradeController,
+                    type: TextInputType.text,
+                    empty: "Enter marks/grade"
+                ),
+                Container(
+                  width: double.infinity,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Obx(() {
+                          final years = getLastTwoFinancialYears();
+                          final selectedValue = selectedYear.value;
+
+                          return InputDecorator(
+                            decoration: InputDecoration(
+                              labelText: selectedValue.isNotEmpty ? 'Year of Passing *' : null,
+                              border: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
+                              enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
+                              focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black38, width: 1)),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                              labelStyle: const TextStyle(color: Colors.black),
+                            ),
+                            child: DropdownButton<String>(
+                              dropdownColor: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              isExpanded: true,
+                              underline: Container(),
+                              hint: const Text('Year of Passing *', style: TextStyle(fontWeight: FontWeight.bold)),
+                              value: selectedValue.isNotEmpty ? selectedValue : null,
+                              items: years.map((year) {
+                                return DropdownMenuItem<String>(
+                                  value: year,
+                                  child: Text(year),
+                                );
+                              }).toList(),
+                              onChanged: (String? newValue) {
+                                if (newValue != null) {
+                                  selectedYear.value = newValue;
+                                }
+                              },
+                            ),
+                          );
+                        }),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 25),
+                Obx(() {
+                  return Column(
+                    children: [
+                      if (_image.value != null)
+                        Container(
+                          height: 200,
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: 10),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.file(_image.value!, fit: BoxFit.cover),
+                          ),
+                        ),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () => _showImagePicker(context),
+                          icon: const Icon(Icons.image),
+                          label: const Text("Upload Mark Sheet"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }),
+                const SizedBox(height: 25),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showImagePicker(BuildContext context) async {
+    showModalBottomSheet(
+      backgroundColor: Colors.white,
+      context: context,
+      builder: (BuildContext context) {
+        return Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
+              title: const Text("Take a Picture"),
+              onTap: () async {
+                Navigator.pop(context);
+                final pickedFile = await ImagePicker().pickImage(source: ImageSource.camera);
+                if (pickedFile != null) {
+                  _image.value = File(pickedFile.path);
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.image, color: Colors.redAccent),
+              title: const Text("Choose from Gallery"),
+              onTap: () async {
+                Navigator.pop(context);
+                final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+                if (pickedFile != null) {
+                  _image.value = File(pickedFile.path);
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildTextField({
+    required String label,
+    required TextEditingController controller,
+    required TextInputType type,
+    required String empty,
+    bool readOnly = false,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 25),
+      child: TextFormField(
+        controller: controller,
+        readOnly: readOnly,
+        keyboardType: type,
+        style: const TextStyle(color: Colors.black),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(color: Colors.black),
+          hintStyle: const TextStyle(color: Colors.black54),
+          border: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
+          enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
+          focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black38, width: 1)),
+          contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+        ),
+        validator: (value) {
+          if (value == null || value.isEmpty) return empty;
+          return null;
+        },
+      ),
     );
   }
 
@@ -1697,78 +2136,6 @@ class _RegisteredEventsDetailPageState
           ),
         );
       },
-    );
-  }
-
-  void _showImagePicker(BuildContext context) async {
-    showModalBottomSheet(
-      backgroundColor: Colors.white,
-      context: context,
-      builder: (BuildContext context) {
-        return Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
-              title: const Text("Take a Picture"),
-              onTap: () async {
-                Navigator.pop(context);
-                final pickedFile =
-                    await ImagePicker().pickImage(source: ImageSource.camera);
-                if (pickedFile != null) {
-                  _image.value = File(pickedFile.path);
-                }
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.image, color: Colors.redAccent),
-              title: const Text("Choose from Gallery"),
-              onTap: () async {
-                Navigator.pop(context);
-                final pickedFile =
-                    await ImagePicker().pickImage(source: ImageSource.gallery);
-                if (pickedFile != null) {
-                  _image.value = File(pickedFile.path);
-                }
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildTextField({
-    required String label,
-    required TextEditingController controller,
-    required TextInputType type,
-    required String empty,
-    bool readOnly = false,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 25),
-      child: TextFormField(
-        controller: controller,
-        readOnly: readOnly,
-        keyboardType: type,
-        style: const TextStyle(color: Colors.black),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(color: Colors.black),
-          hintStyle: const TextStyle(color: Colors.black54),
-          border: const OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.black)),
-          enabledBorder: const OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.black)),
-          focusedBorder: const OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.black38, width: 1)),
-          contentPadding:
-              const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-        ),
-        validator: (value) {
-          if (value == null || value.isEmpty) return empty;
-          return null;
-        },
-      ),
     );
   }
 }
