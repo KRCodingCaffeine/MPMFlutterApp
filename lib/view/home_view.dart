@@ -100,8 +100,11 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _timer = Timer.periodic(const Duration(seconds: 10), (Timer timer) {
-        if (_scrollController.hasClients) {
-          final double scrollAmount = _cardWidth + _cardSpacing;
+        if (_scrollController.hasClients && dashboardEvents.length > 1) {
+          final double cardWidth = MediaQuery.of(context).size.width * 0.9;
+          final double spacing = MediaQuery.of(context).size.width * 0.04;
+          final double scrollAmount = cardWidth + spacing;
+
           final double maxScroll = _scrollController.position.maxScrollExtent;
           final double currentScroll = _scrollController.offset;
 
@@ -202,7 +205,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
 
             Padding(
               padding: EdgeInsets.symmetric(
-                horizontal: MediaQuery.of(context).size.width * 0.04, 
+                horizontal: MediaQuery.of(context).size.width * 0.03,
                 vertical: 10
               ),
               child: GridView.builder(
@@ -210,7 +213,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
+                  crossAxisCount: (MediaQuery.of(context).size.width ~/ 120).clamp(2, 4),
                   crossAxisSpacing: MediaQuery.of(context).size.width * 0.02,
                   mainAxisSpacing: MediaQuery.of(context).size.width * 0.02,
                   childAspectRatio: 1,
@@ -283,7 +286,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
-    final cardHeight = screenHeight * 0.14;
+    final cardHeight = screenHeight * 0.18;
     final horizontalMargin = screenWidth * 0.04;
     final cardPadding = screenWidth * 0.03;
 
@@ -839,9 +842,9 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
 
   Widget _buildEventCard(DashboardEventData event) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final cardWidth = screenWidth * 0.85; // 85% of screen width
-    final imageSize = screenWidth * 0.2; // 20% of screen width
-    final fontSize = screenWidth * 0.035; // 3.5% of screen width
+    final cardWidth = screenWidth * 0.9; // 85% of screen width
+    final imageSize = screenWidth * 0.27; // 20% of screen width
+    final fontSize = screenWidth * 0.047; // 3.5% of screen width
     final smallFontSize = screenWidth * 0.03; // 3% of screen width
     
     Widget? dateTag;

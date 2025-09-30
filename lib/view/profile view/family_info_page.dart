@@ -1420,7 +1420,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                     ? const CircularProgressIndicator(
                                         color: Colors.white,
                                       )
-                                    : const Text("Add Member"),
+                                    : const Text("Save"),
                               );
                             }),
                           ],
