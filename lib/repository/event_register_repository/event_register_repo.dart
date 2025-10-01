@@ -33,6 +33,7 @@ class EventRegistrationRepository {
       'added_by': dataModel.addedBy?.toString() ?? '',
       'date_added': dataModel.dateAdded ?? '',
       'no_of_food_container': dataModel.noOfFoodContainer?.toString() ?? '0',
+      "no_of_seats_allocated": dataModel.noOfSeatAllocated?.toString() ?? '0',
     });
   }
 
@@ -63,7 +64,8 @@ class EventRegistrationRepository {
     if (response.statusCode == 409) {
       return {
         "status": true,
-        "message": decoded["message"] ?? "Member already registered for this event."
+        "message": decoded["message"] ?? "Member already registered for this event.",
+        "already_registered": true
       };
     }
 
