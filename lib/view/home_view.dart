@@ -845,7 +845,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
     final cardWidth = screenWidth * 0.9; // 85% of screen width
     final imageSize = screenWidth * 0.27; // 20% of screen width
     final fontSize = screenWidth * 0.047; // 3.5% of screen width
-    final smallFontSize = screenWidth * 0.03; // 3% of screen width
+    final smallFontSize = screenWidth * 0.03; // 3% of screen width+
     
     Widget? dateTag;
     if (event.date != null && event.date!.isNotEmpty) {

@@ -315,38 +315,40 @@ class _RegisteredEventsDetailPageState
     );
   }
 
-  Future<void> _updateStudentPrize() async {
+  Future<void> _updateStudentPrize(
+      PriceMember student,
+      String studentName,
+      String schoolName,
+      String standardPassed,
+      String grade,
+      String yearOfPassed,
+      File? markSheetFile,
+      String? existingMarksheetUrl,
+      ) async {
     try {
       final userData = await SessionManager.getSession();
       if (userData == null || userData.memberId == null) {
         throw Exception('User not logged in');
       }
 
-      // Ensure record exists
-      if (widget.eventAttendee.priceMembersList?.isNotEmpty == true &&
-          widget.eventAttendee.priceMembersList!.first
-              .eventAttendeesPriceMemberId ==
-              null) {
+      if (student.eventAttendeesPriceMemberId == null) {
         throw Exception('No existing student prize record found to update');
       }
 
       final updateData = {
-        'event_attendees_price_member_id':
-        widget.eventAttendee.priceMembersList?.isNotEmpty == true
-            ? widget.eventAttendee.priceMembersList!.first
-            .eventAttendeesPriceMemberId
-            : null,
+        'event_attendees_price_member_id': student.eventAttendeesPriceMemberId,
         'event_attendees_id': widget.eventAttendee.eventAttendeesId,
         'event_id': widget.eventAttendee.event?.eventId,
         'member_id': widget.eventAttendee.memberId,
         'price_member_id': selectedMemberId.value,
-        'student_name': studentNameController.text.trim(),
-        'school_name': schoolNameController.text.trim(),
-        'standard_passed': standardController.text.trim(),
-        'year_of_passed': selectedYear.value,
-        'grade': gradeController.text.trim(),
+        'student_name': studentName.trim(),
+        'school_name': schoolName.trim(),
+        'standard_passed': standardPassed.trim(),
+        'year_of_passed': yearOfPassed,
+        'grade': grade.trim(),
         'updated_by': userData.memberId.toString(),
-        'mark_sheet_attachment': _image.value?.path ?? '',
+        'mark_sheet_attachment':
+        markSheetFile?.path ?? existingMarksheetUrl ?? '',
       };
 
       debugPrint("Sending Student Prize Update: $updateData");
@@ -355,17 +357,8 @@ class _RegisteredEventsDetailPageState
       final response = await repository.updatePriceDistribution(updateData);
 
       if (response.status == true) {
-        studentNameController.clear();
-        schoolNameController.clear();
-        standardController.clear();
-        gradeController.clear();
-        _image.value = null;
-        selectedMemberId.value = "";
-
         await _showSuccessDialog(
-          'Successfully updated Student Prize Distribution details',
-        );
-
+            'Successfully updated Student Prize Distribution details');
         Navigator.pop(context, true);
       } else {
         throw Exception(response.message ?? 'Failed to update');
@@ -1544,7 +1537,7 @@ class _RegisteredEventsDetailPageState
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
-                          onPressed: () => _showImagePicker(context),
+                          onPressed: () => _showImagePicker(context, _image),
                           icon: const Icon(Icons.image),
                           label: const Text("Upload Mark Sheet"),
                           style: ElevatedButton.styleFrom(
@@ -1567,7 +1560,7 @@ class _RegisteredEventsDetailPageState
     );
   }
 
-  void _showImagePicker(BuildContext context) async {
+  void _showImagePicker(BuildContext context, Rx<File?> targetImage) async {
     showModalBottomSheet(
       backgroundColor: Colors.white,
       context: context,
@@ -1581,7 +1574,7 @@ class _RegisteredEventsDetailPageState
                 Navigator.pop(context);
                 final pickedFile = await ImagePicker().pickImage(source: ImageSource.camera);
                 if (pickedFile != null) {
-                  _image.value = File(pickedFile.path);
+                  targetImage.value = File(pickedFile.path);
                 }
               },
             ),
@@ -1592,7 +1585,7 @@ class _RegisteredEventsDetailPageState
                 Navigator.pop(context);
                 final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
                 if (pickedFile != null) {
-                  _image.value = File(pickedFile.path);
+                  targetImage.value = File(pickedFile.path);
                 }
               },
             ),
@@ -1889,14 +1882,21 @@ class _RegisteredEventsDetailPageState
   }
 
   void _showEducationDetailsSheet(BuildContext context, PriceMember student) {
-    if (student.priceMemberId != null) {
-      selectedMemberId.value = student.priceMemberId.toString();
-    }
+    if (student.priceMemberId != null) { selectedMemberId.value = student.priceMemberId.toString(); }
 
-    studentNameController.text = student.studentName ?? '';
-    schoolNameController.text = student.schoolName ?? '';
-    standardController.text = student.standardPassed ?? '';
-    gradeController.text = student.grade ?? '';
+    final TextEditingController localStudentNameController =
+    TextEditingController(text: student.studentName ?? '');
+    final TextEditingController localSchoolNameController =
+    TextEditingController(text: student.schoolName ?? '');
+    final TextEditingController localStandardController =
+    TextEditingController(text: student.standardPassed ?? '');
+    final TextEditingController localGradeController =
+    TextEditingController(text: student.grade ?? '');
+
+    // Local year + marksheet
+    final RxString localSelectedYear = (student.yearOfPassed ?? '').obs;
+    final Rx<File?> localImage = Rx<File?>(null);
+    String? localExistingMarksheetUrl = student.markSheetAttachment;
 
     showModalBottomSheet(
       context: context,
@@ -1923,14 +1923,23 @@ class _RegisteredEventsDetailPageState
                   children: [
                     OutlinedButton(
                       onPressed: () => Navigator.pop(context),
-                      style:
-                      OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                      style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
                       child: const Text("Cancel"),
                     ),
                     ElevatedButton(
                       onPressed: () async {
                         Navigator.pop(context);
-                        await _updateStudentPrize();
+
+                        await _updateStudentPrize(
+                          student,
+                          localStudentNameController.text,
+                          localSchoolNameController.text,
+                          localStandardController.text,
+                          localGradeController.text,
+                          localSelectedYear.value,
+                          localImage.value,
+                          localExistingMarksheetUrl,
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red,
@@ -1944,6 +1953,7 @@ class _RegisteredEventsDetailPageState
                 ),
                 const SizedBox(height: 25),
 
+                // Children dropdown field
                 Container(
                   width: double.infinity,
                   child: Row(
@@ -1952,40 +1962,35 @@ class _RegisteredEventsDetailPageState
                         final familyList = controller.familyDataList;
                         if (familyList.isEmpty) {
                           return const Center(
-                              child: Text('No Members available'));
+                            child: Text('No Members available'),
+                          );
                         } else {
                           final selectedValue = selectedMemberId.value;
                           return Expanded(
                             child: InputDecorator(
                               decoration: InputDecoration(
-                                labelText: selectedValue.isNotEmpty
-                                    ? 'Select Children *'
-                                    : null,
+                                labelText:
+                                selectedValue.isNotEmpty ? 'Select Children *' : null,
                                 border: const OutlineInputBorder(
-                                    borderSide:
-                                    BorderSide(color: Colors.black)),
+                                    borderSide: BorderSide(color: Colors.black)),
                                 enabledBorder: const OutlineInputBorder(
-                                    borderSide:
-                                    BorderSide(color: Colors.black)),
+                                    borderSide: BorderSide(color: Colors.black)),
                                 focusedBorder: const OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: Colors.black38, width: 1)),
+                                    borderSide: BorderSide(color: Colors.black38, width: 1)),
                                 contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 20, vertical: 4),
-                                labelStyle:
-                                const TextStyle(color: Colors.black),
+                                labelStyle: const TextStyle(color: Colors.black),
                               ),
                               child: DropdownButton<String>(
                                 dropdownColor: Colors.white,
                                 borderRadius: BorderRadius.circular(10),
                                 isExpanded: true,
                                 underline: Container(),
-                                hint: const Text('Select Children *',
-                                    style:
-                                    TextStyle(fontWeight: FontWeight.bold)),
-                                value: selectedValue.isNotEmpty
-                                    ? selectedValue
-                                    : null,
+                                hint: const Text(
+                                  'Select Children *',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                value: selectedValue.isNotEmpty ? selectedValue : null,
                                 items: familyList.map((member) {
                                   return DropdownMenuItem<String>(
                                     value: member.memberId.toString(),
@@ -1997,8 +2002,7 @@ class _RegisteredEventsDetailPageState
                                 onChanged: (String? newValue) {
                                   if (newValue != null) {
                                     selectedMemberId.value = newValue;
-                                    final selectedMember =
-                                    familyList.firstWhereOrNull(
+                                    final selectedMember = familyList.firstWhereOrNull(
                                           (m) => m.memberId.toString() == newValue,
                                     );
                                     if (selectedMember != null) {
@@ -2006,9 +2010,7 @@ class _RegisteredEventsDetailPageState
                                         selectedMember.firstName,
                                         selectedMember.middleName ?? "",
                                         selectedMember.lastName ?? ""
-                                      ]
-                                          .where((name) => name.isNotEmpty)
-                                          .join(" ");
+                                      ].where((name) => name.isNotEmpty).join(" ");
                                       studentNameController.text = fullName;
                                     }
                                   }
@@ -2021,83 +2023,29 @@ class _RegisteredEventsDetailPageState
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 25),
+
                 _buildTextField(
                     label: "School Name",
-                    controller: schoolNameController,
+                    controller: localSchoolNameController,
                     type: TextInputType.text,
                     empty: "Enter school name"),
                 _buildTextField(
                     label: "Standard Passed",
-                    controller: standardController,
+                    controller: localStandardController,
                     type: TextInputType.text,
                     empty: "Enter standard"),
                 _buildTextField(
                     label: "Percentage of Marks or Grade",
-                    controller: gradeController,
+                    controller: localGradeController,
                     type: TextInputType.text,
                     empty: "Enter marks/grade"),
-
-                Container(
-                  width: double.infinity,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Obx(() {
-                          final years = getLastTwoFinancialYears();
-                          final selectedValue = selectedYear.value;
-                          return InputDecorator(
-                            decoration: InputDecoration(
-                              labelText: selectedValue.isNotEmpty
-                                  ? 'Year of Passing *'
-                                  : null,
-                              border: const OutlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.black)),
-                              enabledBorder: const OutlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.black)),
-                              focusedBorder: const OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      color: Colors.black38, width: 1)),
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 4),
-                              labelStyle: const TextStyle(color: Colors.black),
-                            ),
-                            child: DropdownButton<String>(
-                              dropdownColor: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              isExpanded: true,
-                              underline: Container(),
-                              hint: const Text('Year of Passing *',
-                                  style:
-                                  TextStyle(fontWeight: FontWeight.bold)),
-                              value: selectedValue.isNotEmpty
-                                  ? selectedValue
-                                  : null,
-                              items: years.map((year) {
-                                return DropdownMenuItem<String>(
-                                  value: year,
-                                  child: Text(year),
-                                );
-                              }).toList(),
-                              onChanged: (String? newValue) {
-                                if (newValue != null) {
-                                  selectedYear.value = newValue;
-                                }
-                              },
-                            ),
-                          );
-                        }),
-                      ),
-                    ],
-                  ),
-                ),
 
                 const SizedBox(height: 25),
                 Obx(() {
                   return Column(
                     children: [
-                      if (_image.value != null || existingMarksheetUrl != null)
+                      if (localImage.value != null || localExistingMarksheetUrl != null)
                         Container(
                           height: 200,
                           width: double.infinity,
@@ -2108,25 +2056,24 @@ class _RegisteredEventsDetailPageState
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: _image.value != null
-                                ? Image.file(_image.value!, fit: BoxFit.cover)
-                                : Image.network(existingMarksheetUrl!,
-                                fit: BoxFit.cover),
+                            child: localImage.value != null
+                                ? Image.file(localImage.value!, fit: BoxFit.cover)
+                                : Image.network(localExistingMarksheetUrl!, fit: BoxFit.cover),
                           ),
                         ),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
-                          onPressed: () => _showImagePicker(context),
+                          onPressed: () => _showImagePicker(context, localImage),
                           icon: const Icon(Icons.image),
                           label: Text(
-                            existingMarksheetUrl != null && _image.value == null
+                            localExistingMarksheetUrl != null && localImage.value == null
                                 ? "Change Mark Sheet"
                                 : "Upload Mark Sheet",
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: ColorHelperClass.getColorFromHex(
-                                ColorResources.red_color),
+                            backgroundColor:
+                            ColorHelperClass.getColorFromHex(ColorResources.red_color),
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8)),
