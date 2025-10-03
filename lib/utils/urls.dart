@@ -79,5 +79,7 @@ class Urls {
   static const String delete_price_distribution_url = base_url+"api/delete_price_distribution";
   static const String update_food_container_url = base_url+"api/update_food_container";
   static const String tripList_url = base_url+"api/get_all_trips";
+  static const String events_trip_details_by_id_url = base_url+"api/get_trip_details_by_id";
+  static const String trip_member_register_url = base_url+"api/member_register_trip";
 
 }

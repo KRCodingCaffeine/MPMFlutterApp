@@ -7,6 +7,7 @@ import 'package:mpm/repository/EventTripRepository/get_event_trip_repository/get
 import 'package:mpm/repository/zone_repository/zone_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/view/EventTrip/event_trip_detail.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
 class EventTripPage extends StatefulWidget {
@@ -190,7 +191,25 @@ class _EventTripPageState extends State<EventTripPage> {
     final day = DateFormat('d').format(parsedDate);
     final month = DateFormat('MMM').format(parsedDate);
 
-    return Padding(
+    String formattedLastDate = "Unknown";
+    if (trip.tripRegistrationLastDate != null &&
+        trip.tripRegistrationLastDate!.isNotEmpty) {
+      final regDate = DateTime.tryParse(trip.tripRegistrationLastDate!);
+      if (regDate != null) {
+        formattedLastDate = DateFormat('dd-MM-yyyy').format(regDate);
+      }
+    }
+
+    return GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TripDetailPage(tripId: trip.tripId ?? ''),
+            ),
+          );
+        },
+    child:  Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
         decoration: BoxDecoration(
@@ -242,8 +261,7 @@ class _EventTripPageState extends State<EventTripPage> {
                           fontSize: 18)),
                   const SizedBox(height: 4),
                   Text("Coordinator: ${trip.tripOrganiserName ?? 'Unknown'}",
-                      style:
-                      const TextStyle(color: Colors.black54, fontSize: 14)),
+                      style: const TextStyle(color: Colors.black54, fontSize: 14)),
                   const SizedBox(height: 4),
                   Text(
                     trip.tripDescription ?? '',
@@ -251,12 +269,16 @@ class _EventTripPageState extends State<EventTripPage> {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontSize: 12),
                   ),
+                  const SizedBox(height: 4),
+                  Text("Registration Last Date: $formattedLastDate",
+                      style: const TextStyle(color: Colors.black54, fontSize: 14)),
                 ],
               ),
             ),
           ],
         ),
       ),
+    ),
     );
   }
 
