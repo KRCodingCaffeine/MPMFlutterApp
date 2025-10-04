@@ -8,6 +8,8 @@ import 'package:mpm/repository/zone_repository/zone_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/EventTrip/event_trip_detail.dart';
+import 'package:mpm/view/EventTrip/member_registered_trip.dart';
+import 'package:mpm/view/EventTrip/member_registered_trip_detail.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
 class EventTripPage extends StatefulWidget {
@@ -719,10 +721,10 @@ class _EventTripPageState extends State<EventTripPage> {
             padding: const EdgeInsets.only(right: 8.0),
             child: OutlinedButton(
               onPressed: () {
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(builder: (context) => RegisteredTripListPage()),
-                // );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => RegisteredTripsListPage()),
+                );
               },
               child: const Text(
                 'Registered',
