@@ -714,6 +714,30 @@ class _EventTripPageState extends State<EventTripPage> {
           },
         ),
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: OutlinedButton(
+              onPressed: () {
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(builder: (context) => RegisteredTripListPage()),
+                // );
+              },
+              child: const Text(
+                'Registered',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.white,
+                side: const BorderSide(color: Colors.white),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       body: Stack(
         children: [

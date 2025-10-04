@@ -299,15 +299,13 @@ class _TripDetailPageState extends State<TripDetailPage> {
     });
 
     try {
-      // Get logged-in member info
-      final userData = await SessionManager.getSession(); // Should return CheckUserData2
+      final userData = await SessionManager.getSession();
       final memberId = userData?.memberId;
 
       if (memberId == null) {
         throw Exception("Member info not found");
       }
 
-      // Combine first, middle, and last name
       final memberName = [
         userData?.firstName,
         userData?.middleName,
@@ -315,19 +313,16 @@ class _TripDetailPageState extends State<TripDetailPage> {
       ].where((element) => element != null && element.isNotEmpty)
           .join(" ");
 
-      // Create registration data model
       final registrationData = TripMemberRegistrationData(
         memberId: memberId.toString(),
         tripId: _tripDetails!.tripId.toString(),
         addedBy: memberId.toString(),
-        travellerNames: [memberName], // Logged-in user full name
+        travellerNames: [memberName],
       );
 
-      // Register via repository
       final repo = TripMemberRegistrationRepository();
       final response = await repo.registerForTrip(registrationData);
 
-      // Handle response
       if (response['status'] == true) {
         setState(() {
           _isRegistered = true;
