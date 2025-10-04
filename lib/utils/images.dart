@@ -22,6 +22,7 @@ class Images {
   static const String chikitsha = 'assets/images/chikitsha.svg';
   static const String discount = 'assets/images/discount.svg';
   static const String events = 'assets/images/event.svg';
+  static const String event_trip = 'assets/images/event_trip.svg';
   static const String qr_code = 'assets/images/qr_code.svg';
   static const String networking = 'assets/images/networking.svg';
   static const String publication = 'assets/images/publication.svg';

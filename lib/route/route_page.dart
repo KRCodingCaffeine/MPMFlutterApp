@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mpm/route/route_name.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/view/EnquiryForm/add_enquiry_form.dart';
+import 'package:mpm/view/EventTrip/event_trip.dart';
 import 'package:mpm/view/QRCodeScanner/qr_code.dart';
 import 'package:mpm/view/Saraswanilabel/saraswani_label.dart';
 import 'package:mpm/view/addmember/add_member_first.dart';
@@ -75,6 +76,8 @@ class RoutePages {
         return _buildRoute(const SaraswanilabelView(), settings);
       case RouteNames.event_view:
         return _buildRoute(const EventsPage(), settings);
+      case RouteNames.event_trip:
+        return _buildRoute(const EventTripPage(), settings);
       case RouteNames.qr_code:
         return _buildRoute(const QRScannerScreen(), settings);
       case RouteNames.forms:

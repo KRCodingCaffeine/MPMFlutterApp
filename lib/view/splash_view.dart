@@ -1,13 +1,16 @@
 import 'dart:async';
-import 'package:firebase_messaging/firebase_messaging.dart';
+import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:in_app_update/in_app_update.dart';
-
-import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/route/route_name.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/images.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 class SplashView extends StatefulWidget {
   const SplashView({super.key});
 
@@ -39,16 +42,16 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
   }
 
   void _handleStartupLogic() async {
-    // Step 1: Ask notification permission first
+    // Step 1: Ask notification permission
     _requestNotificationPermission();
 
-    // Step 2: Firebase is already initialized in main.dart
+    // Step 2: Firebase already initialized in main.dart
 
-    // Step 3: App update check
+    // Step 3: App update check (different for Android & iOS)
     await _checkForUpdate();
 
     // Step 4: Splash delay
-    await Future.delayed(Duration(seconds: 2));
+    await Future.delayed(const Duration(seconds: 2));
 
     // Step 5: Session routing
     final userData = await SessionManager.getSession();
@@ -63,7 +66,6 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
     }
   }
 
-
   void _requestNotificationPermission() async {
     final status = await Permission.notification.status;
     if (!status.isGranted) {
@@ -72,16 +74,82 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
   }
 
   Future<void> _checkForUpdate() async {
+    if (Platform.isAndroid) {
+      try {
+        _updateInfo = await InAppUpdate.checkForUpdate();
+        if (_updateInfo?.updateAvailability == UpdateAvailability.updateAvailable) {
+          await InAppUpdate.performImmediateUpdate().catchError((e) {
+            debugPrint("Update error (Android): $e");
+          });
+        }
+      } catch (e) {
+        debugPrint("Update check failed (Android): $e");
+      }
+    } else if (Platform.isIOS) {
+      await _checkIOSUpdate();
+    }
+  }
+
+  Future<void> _checkIOSUpdate() async {
     try {
-      _updateInfo = await InAppUpdate.checkForUpdate();
-      if (_updateInfo?.updateAvailability == UpdateAvailability.updateAvailable) {
-        await InAppUpdate.performImmediateUpdate().catchError((e) {
-          print("Update error: $e");
-        });
+      final packageInfo = await PackageInfo.fromPlatform();
+      final currentVersion = packageInfo.version;
+      final bundleId = packageInfo.packageName;
+
+      final url = "https://itunes.apple.com/lookup?bundleId=$bundleId";
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        if (jsonData['resultCount'] > 0) {
+          final storeVersion = jsonData['results'][0]['version'];
+          final appStoreUrl = jsonData['results'][0]['trackViewUrl'];
+
+          if (_isVersionNewer(storeVersion, currentVersion)) {
+            _showUpdateDialog(appStoreUrl);
+          }
+        }
       }
     } catch (e) {
-      print("Update check failed: $e");
+      debugPrint("Update check failed (iOS): $e");
     }
+  }
+
+  bool _isVersionNewer(String storeVersion, String currentVersion) {
+    List<int> storeParts = storeVersion.split('.').map(int.parse).toList();
+    List<int> currentParts = currentVersion.split('.').map(int.parse).toList();
+
+    for (int i = 0; i < storeParts.length; i++) {
+      if (i >= currentParts.length || storeParts[i] > currentParts[i]) {
+        return true;
+      } else if (storeParts[i] < currentParts[i]) {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  void _showUpdateDialog(String appStoreUrl) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text("Update Available"),
+          content: const Text("A new version of the app is available. Please update to continue."),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                if (await canLaunchUrl(Uri.parse(appStoreUrl))) {
+                  await launchUrl(Uri.parse(appStoreUrl), mode: LaunchMode.externalApplication);
+                }
+              },
+              child: const Text("Update"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -107,5 +175,3 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
     );
   }
 }
-
-
