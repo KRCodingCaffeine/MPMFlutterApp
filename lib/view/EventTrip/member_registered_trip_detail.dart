@@ -6,13 +6,21 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:mpm/model/EventTripModel/AddTraveller/AddTravellerData.dart';
 import 'package:mpm/model/EventTripModel/AddTraveller/AddTravellerModelClass.dart';
+import 'package:mpm/model/EventTripModel/DeleteTraveller/DeleteTravellerData.dart';
+import 'package:mpm/model/EventTripModel/DeleteTraveller/DeleteTravellerModelClass.dart';
+import 'package:mpm/model/EventTripModel/UpdateTraveller/UpdateTravellerData.dart';
+import 'package:mpm/model/EventTripModel/UpdateTraveller/UpdateTravellerModelClass.dart';
 import 'package:mpm/model/EventTripModel/TripMemberRegisteredDetailById/TripMemberRegisteredDetailByIdData.dart';
 import 'package:mpm/model/EventTripModel/TripMemberRegisteredDetailById/TripMemberRegisteredDetailByIdModelClass.dart';
 import 'package:mpm/repository/EventTripRepository/add_traveller_repository/add_traveller_repo.dart';
+import 'package:mpm/repository/EventTripRepository/cancel_trip_regsitration_repository/cancel_trip_regsitration_repo.dart';
+import 'package:mpm/repository/EventTripRepository/delete_traveller_repository/delete_traveller_repo.dart';
+import 'package:mpm/repository/EventTripRepository/update_traveller_repository/update_traveller_repo.dart';
 import 'package:mpm/repository/EventTripRepository/trip_member_registered_detail_by_id_repository/trip_member_registered_detail_by_id_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/Session.dart';
+import 'package:mpm/view/EventTrip/event_trip.dart';
 import 'package:mpm/view/EventTrip/member_registered_trip.dart';
 
 Future<Size> _getImageSize(String imageUrl) async {
@@ -46,6 +54,9 @@ class _RegisteredTripsDetailPageState
   TripMemberRegisteredDetailByIdRepository();
   final TextEditingController travellerNameController = TextEditingController();
   final AddTravellerRepository _addTravellerRepository = AddTravellerRepository();
+  final DeleteTravellerRepository _deleteTravellerRepository = DeleteTravellerRepository();
+  final UpdateTravellerRepository _updateTravellerRepository = UpdateTravellerRepository();
+  final CancelTripRegistrationRepository _cancelTripRepo = CancelTripRegistrationRepository();
 
   final Rx<File?> _image = Rx<File?>(null);
   final RxString selectedMemberId = "".obs;
@@ -193,21 +204,20 @@ class _RegisteredTripsDetailPageState
 
   Future<void> _cancelTripRegistration() async {
     try {
-      // TODO: Implement trip cancellation API call
-      // This would require creating a new repository method for trip cancellation
+      setState(() {
+        _isLoading = true;
+      });
 
-      // For now, we'll just show a message
-      _showSuccessSnackbar("Trip cancellation feature coming soon");
+      // Get trip registered member ID
+      final tripRegisteredMemberId = widget.tripReferenceCode.tripRegisteredMemberId;
+      if (tripRegisteredMemberId == null) {
+        throw Exception("Trip registration ID not available");
+      }
 
-      // Example implementation (you'll need to create the actual API call):
-      /*
-      final userData = await SessionManager.getSession();
-      if (userData == null) throw Exception("User not logged in");
-      if (_tripId == null) throw Exception("Trip ID not available");
+      debugPrint("Cancelling trip registration - ID: $tripRegisteredMemberId");
 
-      final response = await _cancelRepo.cancelTripRegistration(
-        memberId: userData.memberId.toString(),
-        tripId: _tripId!,
+      final response = await _cancelTripRepo.cancelTripRegistration(
+        tripRegisteredMemberId: tripRegisteredMemberId,
       );
 
       if (response.status == true) {
@@ -215,25 +225,47 @@ class _RegisteredTripsDetailPageState
           _isCancelled = true;
           widget.tripReferenceCode.cancelledDate = DateTime.now().toIso8601String();
         });
-        _showSuccessSnackbar("Cancelled this trip registration successfully");
+        _showSuccessSnackbar(response.message ?? "Cancelled this trip registration successfully");
       } else {
-        throw Exception("Failed to cancel this trip registration");
+        throw Exception(response.message ?? "Failed to cancel this trip registration");
       }
-      */
     } catch (e) {
+      debugPrint("Cancel trip registration error: $e");
       _showErrorSnackbar("Error: ${e.toString()}");
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
   void _showSuccessSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.green),
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 3),
+      ),
     );
+
+    // Navigate back after successful cancellation
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => EventTripPage()),
+        );
+      }
+    });
   }
 
   void _showErrorSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+      ),
     );
   }
 
@@ -295,6 +327,288 @@ class _RegisteredTripsDetailPageState
         _isLoading = false;
       });
     }
+  }
+
+  Future<void> _updateTraveller(Traveller traveller) async {
+    try {
+      if (traveller.tripTravellerId == null) {
+        throw Exception('Traveller ID not available');
+      }
+
+      final userData = await SessionManager.getSession();
+      if (userData == null || userData.memberId == null) {
+        throw Exception('User not logged in');
+      }
+
+      final updateData = {
+        'trip_traveller_id': traveller.tripTravellerId,
+        'traveller_name': travellerNameController.text.trim(),
+        'updated_by': userData.memberId.toString(),
+      };
+
+      debugPrint("Updating Traveller: $updateData");
+
+      final response = await _updateTravellerRepository.updateTraveller(updateData);
+
+      if (response.status == true) {
+        await _showUpdateSuccessDialog('Traveller updated successfully');
+      } else {
+        throw Exception(response.message ?? 'Failed to update traveller');
+      }
+    } catch (e) {
+      debugPrint("Error updating traveller: $e");
+      _showErrorSnackbar("Failed to update traveller: ${e.toString()}");
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _deleteTraveller(Traveller traveller) async {
+    try {
+      if (traveller.tripTravellerId == null) {
+        throw Exception('Traveller ID not available');
+      }
+
+      final response = await _deleteTravellerRepository.deleteTraveller(traveller.tripTravellerId!);
+
+      if (response.status == true) {
+        await _showDeleteSuccessDialog('Traveller deleted successfully');
+      } else {
+        throw Exception(response.message ?? 'Failed to delete traveller');
+      }
+    } catch (e) {
+      debugPrint("Error deleting traveller: $e");
+      _showErrorSnackbar("Failed to delete traveller: ${e.toString()}");
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _showUpdateTravellerSheet(BuildContext context, Traveller traveller) async {
+    travellerNameController.text = traveller.travellerName ?? '';
+
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.grey[100],
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 30),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                      child: const Text("Cancel"),
+                    ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        if (_validateTravellerForm()) {
+                          Navigator.pop(context);
+                          await _updateTraveller(traveller);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                      ),
+                      child: const Text(
+                        "Update",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 25),
+                _buildTextField(
+                  label: "Traveller Name *",
+                  controller: travellerNameController,
+                  type: TextInputType.text,
+                  empty: "Enter traveller name",
+                ),
+                const SizedBox(height: 25),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showDeleteTravellerConfirmation(BuildContext context, Traveller traveller) async {
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Text(
+                "Delete Traveller",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              SizedBox(height: 8),
+              Divider(thickness: 1, color: Colors.grey),
+            ],
+          ),
+          content: Text(
+            "Are you sure you want to delete ${traveller.travellerName ?? 'this traveller'}?",
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 16, color: Colors.black87),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _deleteTraveller(traveller);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              ),
+              child: const Text(
+                "Delete",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showUpdateSuccessDialog(String message) async {
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Text(
+                "Success",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              SizedBox(height: 8),
+              Divider(thickness: 1, color: Colors.grey),
+            ],
+          ),
+          content: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 16, color: Colors.black87),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context, true);
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => RegisteredTripsListPage(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: const Text("OK", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showDeleteSuccessDialog(String message) async {
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Text(
+                "Success",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              SizedBox(height: 8),
+              Divider(thickness: 1, color: Colors.grey),
+            ],
+          ),
+          content: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 16, color: Colors.black87),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context, true);
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => RegisteredTripsListPage(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: const Text("OK", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _showTravellerSuccessDialog(String message) async {
@@ -509,13 +823,11 @@ class _RegisteredTripsDetailPageState
                         borderRadius: BorderRadius.circular(8),
                       ),
                       onSelected: (value) {
-                        // if (value == 'edit') {
-                        //   travellerNameController.text =
-                        //       traveller.travellerName ?? '';
-                        //   _showAddTravellerSheet(context, traveller);
-                        // } else if (value == 'delete') {
-                        //   _showDeleteTravellerConfirmation(context, traveller);
-                        // }
+                        if (value == 'edit') {
+                          _showUpdateTravellerSheet(context, traveller);
+                        } else if (value == 'delete') {
+                          _showDeleteTravellerConfirmation(context, traveller);
+                        }
                       },
                       itemBuilder: (context) => const [
                         PopupMenuItem(

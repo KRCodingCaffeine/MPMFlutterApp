@@ -83,5 +83,8 @@ class Urls {
   static const String trip_member_register_url = base_url+"api/member_register_trip";
   static const String trip_member_registered_details_by_id_url = base_url+"api/get_member_registered_trip";
   static const String add_traveller_url = base_url+"api/add_traveller";
+  static const String delete_traveller_url = base_url+"api/delete_traveller";
+  static const String update_traveller_url = base_url+"api/update_traveller";
+  static const String cancel_trip_registration_url = base_url+"api/cancel_trip_registration";
 
 }
