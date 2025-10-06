@@ -648,11 +648,20 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
       final response = await _registrationRepo.registerForEvent(registrationData);
 
-      if (response['status'] == false && response['already_registered'] == true) {
+      // ✅ FIXED: Add debug to see actual response structure
+      debugPrint('=== API RESPONSE ===');
+      debugPrint('Full response: $response');
+      debugPrint('Status: ${response['status']}');
+      debugPrint('Message: ${response['message']}');
+      debugPrint('Already registered: ${response['already_registered']}');
+      debugPrint('===================');
+
+      // ✅ FIXED: Handle already registered case first
+      if (response['already_registered'] == true) {
         setState(() {
           _isRegistered = true;
         });
-        await _showAlreadyRegisteredDialog(response['message']);
+        await _showAlreadyRegisteredDialog(response['message'] ?? 'Already registered');
         return;
       }
 
@@ -661,20 +670,16 @@ class _EventDetailPageState extends State<EventDetailPage> {
           _isRegistered = true;
         });
 
-        if (response['already_registered'] == true) {
-          await _showAlreadyRegisteredDialog(response['message']);
-        } else {
-          final attendeeId = int.tryParse(response['data']['attendee_id'] ?? '0');
-          final memberId = int.tryParse(userData.memberId.toString()) ?? 0;
+        final attendeeId = int.tryParse(response['data']['attendee_id']?.toString() ?? '0');
+        final memberId = int.tryParse(userData.memberId.toString()) ?? 0;
 
-          if (_eventDetails?.eventsTypeId == '3') {
-            await _showStudentPrizeConfirmationDialog(3, attendeeId ?? 0, memberId);
-          } else {
-            await _showSuccessDialog('Successfully registered for event');
-          }
+        if (_eventDetails?.eventsTypeId == '3') {
+          await _showStudentPrizeConfirmationDialog(3, attendeeId ?? 0, memberId);
+        } else {
+          await _showSuccessDialog(response['message'] ?? 'Successfully registered for event');
         }
       } else {
-        throw Exception('Failed to register for event');
+        throw Exception(response['message'] ?? 'Failed to register for event');
       }
     } catch (e) {
       await _showErrorDialog('Registration failed: ${e.toString()}');
