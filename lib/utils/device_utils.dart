@@ -16,14 +16,14 @@ class DeviceUtils {
       deviceId = androidInfo.id ?? '';
       deviceModel = androidInfo.model ?? '';
       deviceBrand = androidInfo.brand ?? '';
-      osName = 'android';
+      osName = 'Android';
       osVersion = androidInfo.version.release ?? '';
     } else if (Platform.isIOS) {
       IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
       deviceId = iosInfo.identifierForVendor ?? '';
       deviceModel = iosInfo.utsname.machine ?? '';
       deviceBrand = 'Apple';
-      osName = 'ios';
+      osName = 'iOS';
       osVersion = iosInfo.systemVersion ?? '';
     }
 

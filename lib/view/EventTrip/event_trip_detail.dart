@@ -1,38 +1,28 @@
 import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:mpm/model/CheckUser/CheckUserData2.dart';
-import 'package:mpm/model/EventRegesitration/EventRegistrationData.dart';
-import 'package:mpm/model/GetEventDetailsById/GetEventDetailsByIdData.dart';
-import 'package:mpm/model/GetEventsList/EventDateTimeData.dart';
-import 'package:mpm/model/GetEventsList/GetEventsListData.dart';
-import 'package:mpm/repository/event_register_repository/event_register_repo.dart';
-import 'package:mpm/repository/get_even_details_by_id_repository/get_even_details_by_id_repo.dart';
+import 'package:mpm/model/EventTripModel/GetEventTripDetailsById/GetEventTripDetailsByIdData.dart';
+import 'package:mpm/model/EventTripModel/TripMemberRegistration/TripMemberRegistrationData.dart';
+import 'package:mpm/repository/EventTripRepository/get_event_trip_details_by_id_repository/get_event_trip_details_by_id_repo.dart';
+import 'package:mpm/repository/EventTripRepository/member_register_trip_repository/member_register_trip_repo.dart';
+import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:dio/dio.dart';
-import 'package:mpm/view/Events/event_prize_page.dart';
-import 'package:mpm/view/Events/event_view.dart';
+import 'package:mpm/view/EventTrip/add_trip_member_page.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:mpm/utils/Session.dart';
-import 'package:url_launcher/url_launcher.dart' show canLaunchUrl, launchUrl;
-import 'package:url_launcher/url_launcher.dart';
-import 'package:url_launcher/url_launcher_string.dart';
-import 'package:mpm/view/Events/YouTubeBottomSheet.dart';
 
-class EventDetailPage extends StatefulWidget {
-  final String eventId;
+class TripDetailPage extends StatefulWidget {
+  final String tripId;
 
-  const EventDetailPage({Key? key, required this.eventId}) : super(key: key);
+  const TripDetailPage({Key? key, required this.tripId}) : super(key: key);
 
   @override
-  _EventDetailPageState createState() => _EventDetailPageState();
+  _TripDetailPageState createState() => _TripDetailPageState();
 }
 
 Future<Size> _getImageSize(String imageUrl) async {
@@ -48,49 +38,38 @@ Future<Size> _getImageSize(String imageUrl) async {
   return completer.future;
 }
 
-class _EventDetailPageState extends State<EventDetailPage> {
+class _TripDetailPageState extends State<TripDetailPage> {
   final Dio _dio = Dio();
-  final GetEventDetailByIdRepository _eventDetailRepo =
-      GetEventDetailByIdRepository();
-  final EventRegistrationRepository _registrationRepo =
-      EventRegistrationRepository();
+  final GetEventTripDetailByIdRepository _tripDetailRepo =
+  GetEventTripDetailByIdRepository();
 
   bool _isLoading = true;
   bool _isDownloading = false;
   int _downloadProgress = 0;
   bool _isRegistering = false;
   bool _isRegistered = false;
-  bool _isPastEvent = false;
-  GetEventDetailsByIdData? _eventDetails;
-
-  int _foodBoxCount = 0;
-  int _seatCount = 0;
-  final _foodBoxController = TextEditingController();
-  final _seatController = TextEditingController();
-
-  int? _attendeeId;
+  bool _isPastTrip = false;
+  GetEventTripDetailsByIdData? _tripDetails;
 
   @override
   void initState() {
     super.initState();
-    _fetchEventDetails();
+    _fetchTripDetails();
   }
 
   @override
   void dispose() {
-    _foodBoxController.dispose();
-    _seatController.dispose();
     super.dispose();
   }
 
-  Future<void> _fetchEventDetails() async {
+  Future<void> _fetchTripDetails() async {
     try {
-      final response = await _eventDetailRepo.EventsDetailById(widget.eventId);
+      final response = await _tripDetailRepo.EventTripDetailById(widget.tripId);
       if (response['status'] == true && response['data'] != null) {
         setState(() {
-          _eventDetails = GetEventDetailsByIdData.fromJson(response['data']);
+          _tripDetails = GetEventTripDetailsByIdData.fromJson(response['data']);
           _isLoading = false;
-          _checkEventDate();
+          _checkTripDate();
           _checkRegistrationStatus();
         });
       } else {
@@ -98,7 +77,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           _isLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load event details')),
+          SnackBar(content: Text('Failed to load trip details')),
         );
       }
     } catch (e) {
@@ -106,53 +85,44 @@ class _EventDetailPageState extends State<EventDetailPage> {
         _isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading event details: $e')),
+        SnackBar(content: Text('Error loading trip details: $e')),
       );
     }
   }
 
-  void _checkEventDate() {
-    if (_eventDetails?.dateEndTo == null) return;
+  void _checkTripDate() {
+    if (_tripDetails?.tripEndDate == null) return;
 
-    final eventDate = DateTime.tryParse(_eventDetails!.dateEndTo!);
-    if (eventDate != null) {
+    final tripDate = DateTime.tryParse(_tripDetails!.tripEndDate!);
+    if (tripDate != null) {
       final today = DateTime.now();
       final todayMidnight = DateTime(today.year, today.month, today.day);
       setState(() {
-        _isPastEvent = eventDate.isBefore(todayMidnight);
+        _isPastTrip = tripDate.isBefore(todayMidnight);
       });
     }
   }
 
   Future<void> _checkRegistrationStatus() async {
-    // Implement your registration status check logic here
     setState(() {
       _isRegistered = false;
     });
   }
 
   Future<void> _showRegistrationConfirmationDialog() async {
-    bool showFoodDialog =
-        _eventDetails?.eventsTypeId != '1' && _eventDetails?.hasFood == '1';
-    bool showSeatDialog = _eventDetails?.eventsTypeId != '1' &&
-        _eventDetails?.hasSeatAllocate == '1';
-
     bool shouldProceed = await _showFinalConfirmationDialog();
     if (!shouldProceed) return;
 
-    if (showSeatDialog) {
-      final seatCount = await _showSeatDialog(context);
-      if (seatCount == null) return;
-      debugPrint("✅ User requested $seatCount seats");
-    }
+    // Show second confirmation dialog
+    bool addMembers = await _showAddMembersConfirmationDialog();
 
-    if (showFoodDialog) {
-      bool foodConfirmed = await _showFoodDialog(context);
-      if (!foodConfirmed) return;
-      debugPrint("✅ User requested $_foodBoxCount food boxes");
+    if (addMembers) {
+      // User wants to add members, redirect to member addition page
+      await _redirectToAddMembersPage();
+    } else {
+      // User doesn't want to add members, just register for trip
+      _registerForTrip();
     }
-
-    _registerForEvent();
   }
 
   Future<bool> _showFinalConfirmationDialog() async {
@@ -187,7 +157,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ],
           ),
           content: const Text(
-            "Are you sure you want to register for this event?",
+            "Are you sure you want to register for this trip?",
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
@@ -200,7 +170,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
               child: const Text("Cancel"),
               style: OutlinedButton.styleFrom(
                 foregroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: const BorderSide(color: Colors.red),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -211,7 +181,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
               ),
               child: const Text(
                 "Yes, Register",
@@ -226,306 +196,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
     return shouldProceed ?? false;
   }
 
-  Future<int?> _showSeatDialog(BuildContext context) async {
-    final TextEditingController _seatController = TextEditingController();
-    int localSeatCount = 0;
-
-    final seatCount = await showDialog<int>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20.0),
-              ),
-              titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-              contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-              actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Text(
-                    "Seat Allocation",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Divider(thickness: 1, color: Colors.grey),
-                ],
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Enter the number of seats you want to request (max 2):",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _seatController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Number of Seats (Max 2)',
-                      border: OutlineInputBorder(),
-                    ),
-                    onChanged: (value) {
-                      int num = int.tryParse(value) ?? 0;
-                      if (num > 2) {
-                        num = 2;
-                        _seatController.text = '2';
-                        _seatController.selection = TextSelection.fromPosition(
-                          TextPosition(offset: _seatController.text.length),
-                        );
-                      }
-                      setState(() {
-                        localSeatCount = num;
-                      });
-                    },
-                  ),
-                ],
-              ),
-              actions: [
-                OutlinedButton(
-                  onPressed: () => Navigator.pop(context, null),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: ColorHelperClass.getColorFromHex(
-                        ColorResources.red_color),
-                    side: const BorderSide(color: Colors.red),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: const Text("Cancel"),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    if (localSeatCount <= 0 || localSeatCount > 2) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                              'Please enter a valid number of seats (1-2)'),
-                        ),
-                      );
-                      return;
-                    }
-                    Navigator.pop(context, localSeatCount);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorHelperClass.getColorFromHex(
-                        ColorResources.red_color),
-                  ),
-                  child: const Text(
-                    "Continue",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-
-    if (seatCount != null) {
-      setState(() {
-        _seatCount = seatCount;
-      });
-    }
-
-    return seatCount;
-  }
-
-  Future<bool> _showFoodDialog(BuildContext context) async {
-    String? selectedFoodOption;
-    final TextEditingController _foodBoxController = TextEditingController();
-    int localFoodBoxCount = 0;
-
-    final shouldProceed = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20.0),
-              ),
-              titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-              contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-              actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Text(
-                    "Registration Details",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Divider(
-                    thickness: 1,
-                    color: Colors.grey,
-                  ),
-                ],
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Do you want to request food coupons for this event?",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    dropdownColor: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    value: selectedFoodOption,
-                    decoration: const InputDecoration(
-                      labelText: "Food Coupons",
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black38, width: 1),
-                      ),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 20),
-                      labelStyle: TextStyle(color: Colors.black),
-                    ),
-                    items: ["Yes", "No"].map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedFoodOption = value;
-                        if (selectedFoodOption == "No") {
-                          localFoodBoxCount = 0;
-                          _foodBoxController.clear();
-                        }
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  if (selectedFoodOption == "Yes")
-                    TextFormField(
-                      controller: _foodBoxController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Number of Food Boxes (Max 2)',
-                        border: OutlineInputBorder(),
-                      ),
-                      onChanged: (value) {
-                        if (value.isNotEmpty) {
-                          int num = int.tryParse(value) ?? 0;
-                          if (num > 2) {
-                            _foodBoxController.text = '2';
-                            _foodBoxController.selection =
-                                TextSelection.fromPosition(
-                              TextPosition(
-                                  offset: _foodBoxController.text.length),
-                            );
-                            localFoodBoxCount = 2;
-                          } else {
-                            localFoodBoxCount = num;
-                          }
-                        } else {
-                          localFoodBoxCount = 0;
-                        }
-                      },
-                    ),
-                ],
-              ),
-              actions: [
-                OutlinedButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text("Cancel"),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: ColorHelperClass.getColorFromHex(
-                        ColorResources.red_color),
-                    side: const BorderSide(color: Colors.red),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    if (selectedFoodOption == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Please select Yes or No')),
-                      );
-                      return;
-                    }
-                    if (selectedFoodOption == "Yes" &&
-                        (localFoodBoxCount <= 0 || localFoodBoxCount > 2)) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text(
-                                'Please enter a valid number of boxes (1-2)')),
-                      );
-                      return;
-                    }
-
-                    setState(() {
-                      _foodBoxCount =
-                          selectedFoodOption == "Yes" ? localFoodBoxCount : 0;
-                    });
-
-                    Navigator.pop(context, true);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorHelperClass.getColorFromHex(
-                        ColorResources.red_color),
-                  ),
-                  child: const Text(
-                    "Continue",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-
-    return shouldProceed ?? false;
-  }
-
-  Future<void> _showStudentPrizeConfirmationDialog(
-      int eventTypeId, int attendeeId, int memberId) async {
-    if (eventTypeId != 3) {
-      _registerForEvent();
-      return;
-    }
-
-    await showDialog(
+  Future<bool> _showAddMembersConfirmationDialog() async {
+    final addMembers = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
@@ -542,7 +214,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             mainAxisSize: MainAxisSize.min,
             children: const [
               Text(
-                "Confirmation",
+                "Add Members",
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -556,7 +228,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ],
           ),
           content: const Text(
-            "Do you want to register your children for award function?",
+            "Are you sure you want to add members to the journey with you?",
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
@@ -566,12 +238,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
           actions: [
             OutlinedButton(
               onPressed: () {
-                Navigator.pop(context);
-                _showSuccessDialog('Successfully registered for this event');
+                Navigator.pop(context, false);
               },
               style: OutlinedButton.styleFrom(
                 foregroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: const BorderSide(color: Colors.red),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -581,26 +252,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ),
             ElevatedButton(
               onPressed: () async {
-                Navigator.pop(context);
-                final userData = await SessionManager.getSession();
-
-                await _registerForEvent();
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => StudentPrizeFormPage(
-                      eventId: int.parse(_eventDetails!.eventId!),
-                      attendeeId: attendeeId!,
-                      memberId: int.tryParse(userData!.memberId.toString())!,
-                      addedBy: int.tryParse(userData!.memberId.toString())!,
-                    ),
-                  ),
-                );
+                Navigator.pop(context, true);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
               ),
               child: const Text(
                 "Yes",
@@ -611,10 +267,32 @@ class _EventDetailPageState extends State<EventDetailPage> {
         );
       },
     );
+
+    return addMembers ?? false;
   }
 
-  Future<void> _registerForEvent() async {
-    if (_isRegistering || _isRegistered || _eventDetails == null) return;
+  Future<void> _redirectToAddMembersPage() async {
+    try {
+      final userData = await SessionManager.getSession();
+
+      if (userData != null && _tripDetails != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TripMembersFormPage(
+              tripId: int.parse(_tripDetails!.tripId!),
+              memberId: int.tryParse(userData.memberId.toString())!,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      await _showErrorDialog('Failed to redirect: ${e.toString()}');
+    }
+  }
+
+  Future<void> _registerForTrip() async {
+    if (_isRegistering || _isRegistered || _tripDetails == null) return;
 
     setState(() {
       _isRegistering = true;
@@ -622,64 +300,43 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
     try {
       final userData = await SessionManager.getSession();
-      if (userData == null || userData.memberId == null) {
-        throw Exception('User not logged in');
+      final memberId = userData?.memberId;
+
+      if (memberId == null) {
+        throw Exception("Member info not found");
       }
 
-      final now = DateTime.now();
-      final registrationData = EventRegistrationData(
-        memberId: int.tryParse(userData.memberId.toString()),
-        eventId: int.tryParse(_eventDetails!.eventId ?? ''),
-        eventRegisteredDate: DateFormat('yyyy-MM-dd').format(now),
-        addedBy: int.tryParse(userData.memberId.toString()),
-        dateAdded: DateFormat('yyyy-MM-dd HH:mm:ss').format(now),
-        noOfFoodContainer: (_eventDetails?.eventsTypeId != '1' &&
-            _eventDetails?.hasFood == '1')
-            ? _foodBoxCount
-            : 0,
-        noOfSeatAllocated: (_eventDetails?.eventsTypeId != '1' &&
-            _eventDetails?.hasSeatAllocate == '1')
-            ? _seatCount
-            : 0,
+      final memberName = [
+        userData?.firstName,
+        userData?.middleName,
+        userData?.lastName
+      ].where((element) => element != null && element.isNotEmpty)
+          .join(" ");
+
+      final registrationData = TripMemberRegistrationData(
+        memberId: memberId.toString(),
+        tripId: _tripDetails!.tripId.toString(),
+        addedBy: memberId.toString(),
+        travellerNames: [memberName],
       );
 
-      debugPrint('Sending food count: ${registrationData.noOfFoodContainer}');
-      debugPrint('Sending seat count: ${registrationData.noOfSeatAllocated}');
-
-      final response = await _registrationRepo.registerForEvent(registrationData);
-
-      // ✅ FIXED: Add debug to see actual response structure
-      debugPrint('=== API RESPONSE ===');
-      debugPrint('Full response: $response');
-      debugPrint('Status: ${response['status']}');
-      debugPrint('Message: ${response['message']}');
-      debugPrint('Already registered: ${response['already_registered']}');
-      debugPrint('===================');
-
-      // ✅ FIXED: Handle already registered case first
-      if (response['already_registered'] == true) {
-        setState(() {
-          _isRegistered = true;
-        });
-        await _showAlreadyRegisteredDialog(response['message'] ?? 'Already registered');
-        return;
-      }
+      final repo = TripMemberRegistrationRepository();
+      final response = await repo.registerForTrip(registrationData);
 
       if (response['status'] == true) {
         setState(() {
           _isRegistered = true;
         });
 
-        final attendeeId = int.tryParse(response['data']['attendee_id']?.toString() ?? '0');
-        final memberId = int.tryParse(userData.memberId.toString()) ?? 0;
-
-        if (_eventDetails?.eventsTypeId == '3') {
-          await _showStudentPrizeConfirmationDialog(3, attendeeId ?? 0, memberId);
-        } else {
-          await _showSuccessDialog(response['message'] ?? 'Successfully registered for event');
-        }
+        await _showSuccessDialog(
+          response['message'] ?? 'Successfully registered for this trip',
+        );
+      } else if (response['already_registered'] == true) {
+        await _showAlreadyRegisteredDialog(
+          response['message'] ?? 'You are already registered',
+        );
       } else {
-        throw Exception(response['message'] ?? 'Failed to register for event');
+        throw Exception(response['message'] ?? 'Registration failed');
       }
     } catch (e) {
       await _showErrorDialog('Registration failed: ${e.toString()}');
@@ -789,11 +446,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                _redirectToEventsList();
+                _redirectToTripsList();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -847,7 +504,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
               onPressed: () => Navigator.pop(context),
               style: OutlinedButton.styleFrom(
                 foregroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: const BorderSide(color: Colors.red),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -861,85 +518,85 @@ class _EventDetailPageState extends State<EventDetailPage> {
     );
   }
 
-  void _redirectToEventsList() {
+  void _redirectToTripsList() {
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
-  Widget _buildEventInfoList() {
-    final slots = _eventDetails?.allEventDates ?? [];
+  // Widget _buildTripInfoList() {
+  //   final slots = _tripDetails?.allEventDates ?? [];
+  //
+  //   String formatDate(String? dateStr) {
+  //     if (dateStr == null || dateStr.isEmpty) return 'Unknown Date';
+  //     try {
+  //       return DateFormat('EEEE, MMMM d, y').format(DateTime.parse(dateStr));
+  //     } catch (_) {
+  //       return 'Invalid Date';
+  //     }
+  //   }
+  //
+  //   String formatTime(String? timeStr) {
+  //     if (timeStr == null || timeStr.isEmpty) return '';
+  //     try {
+  //       final parsedTime = DateFormat("HH:mm:ss").parse(timeStr);
+  //       return DateFormat("h:mm a").format(parsedTime);
+  //     } catch (_) {
+  //       return '';
+  //     }
+  //   }
+  //
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       const Text(
+  //         'Trip Date & Time:',
+  //         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+  //       ),
+  //       ...slots.map((slot) {
+  //         return Container(
+  //           margin: const EdgeInsets.symmetric(vertical: 4),
+  //           padding: const EdgeInsets.all(12),
+  //           child: Row(
+  //             children: [
+  //               const Icon(Icons.calendar_today, size: 18, color: Colors.black),
+  //               const SizedBox(width: 10),
+  //               Expanded(
+  //                 child: Wrap(
+  //                   crossAxisAlignment: WrapCrossAlignment.center,
+  //                   children: [
+  //                     Text(
+  //                       formatDate(slot.eventDate),
+  //                       style: const TextStyle(fontWeight: FontWeight.w600),
+  //                     ),
+  //                     if (slot.eventStartTime != null &&
+  //                         slot.eventStartTime!.isNotEmpty) ...[
+  //                       const SizedBox(width: 6),
+  //                       const Text('from ',
+  //                           style: TextStyle(color: Colors.grey)),
+  //                       Text(formatTime(slot.eventStartTime)),
+  //                     ],
+  //                     if (slot.eventEndTime != null &&
+  //                         slot.eventEndTime!.isNotEmpty) ...[
+  //                       const SizedBox(width: 6),
+  //                       const Text('to ', style: TextStyle(color: Colors.grey)),
+  //                       Text(formatTime(slot.eventEndTime)),
+  //                     ],
+  //                   ],
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         );
+  //       }).toList(),
+  //     ],
+  //   );
+  // }
 
-    String formatDate(String? dateStr) {
-      if (dateStr == null || dateStr.isEmpty) return 'Unknown Date';
-      try {
-        return DateFormat('EEEE, MMMM d, y').format(DateTime.parse(dateStr));
-      } catch (_) {
-        return 'Invalid Date';
-      }
-    }
-
-    String formatTime(String? timeStr) {
-      if (timeStr == null || timeStr.isEmpty) return '';
-      try {
-        final parsedTime = DateFormat("HH:mm:ss").parse(timeStr);
-        return DateFormat("h:mm a").format(parsedTime);
-      } catch (_) {
-        return '';
-      }
-    }
-
+  Widget _buildTripCostInfo() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Event Date & Time:',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        ...slots.map((slot) {
-          return Container(
-            margin: const EdgeInsets.symmetric(vertical: 4),
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                const Icon(Icons.calendar_today, size: 18, color: Colors.black),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Wrap(
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Text(
-                        formatDate(slot.eventDate),
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      if (slot.eventStartTime != null &&
-                          slot.eventStartTime!.isNotEmpty) ...[
-                        const SizedBox(width: 6),
-                        const Text('from ',
-                            style: TextStyle(color: Colors.grey)),
-                        Text(formatTime(slot.eventStartTime)),
-                      ],
-                      if (slot.eventEndTime != null &&
-                          slot.eventEndTime!.isNotEmpty) ...[
-                        const SizedBox(width: 6),
-                        const Text('to ', style: TextStyle(color: Colors.grey)),
-                        Text(formatTime(slot.eventEndTime)),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
-      ],
-    );
-  }
-
-  Widget _buildEventCostInfo() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Event Cost:',
+          'Trip Cost:',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -947,8 +604,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
           ),
         ),
         const SizedBox(height: 8),
-        if (_eventDetails?.eventCostType != null &&
-            _eventDetails!.eventCostType!.isNotEmpty) ...[
+        if (_tripDetails?.tripCostType != null &&
+            _tripDetails!.tripCostType!.isNotEmpty) ...[
           Row(
             children: [
               const Text(
@@ -958,12 +615,28 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ],
           ),
         ],
+        if (_tripDetails?.tripAmount != null &&
+            _tripDetails!.tripAmount!.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Text(
+                'Amount: ₹${_tripDetails!.tripAmount!}',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
 
   Widget _buildRegisterButton() {
-    if (_isPastEvent) {
+    if (_isPastTrip) {
       return const SizedBox.shrink();
     }
 
@@ -985,17 +658,17 @@ class _EventDetailPageState extends State<EventDetailPage> {
           onPressed: _isRegistered ? null : _showRegistrationConfirmationDialog,
           child: _isRegistering
               ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          )
               : Text(
-                  _isRegistered ? "Registered" : "Register Here",
-                  style: const TextStyle(fontSize: 16),
-                ),
+            _isRegistered ? "Registered" : "Register Here",
+            style: const TextStyle(fontSize: 16),
+          ),
         ),
       ),
     );
@@ -1015,7 +688,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
-                  Text('Storage permission is needed to download the file.')),
+              Text('Storage permission is needed to download the file.')),
         );
         return false;
       } else {
@@ -1025,7 +698,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
-                  Text('Storage permission is needed to download the file.')),
+              Text('Storage permission is needed to download the file.')),
         );
         return false;
       }
@@ -1161,7 +834,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           ),
         ),
         const SizedBox(height: 8),
-        if (_eventDetails?.eventOrganiserName != null) ...[
+        if (_tripDetails?.tripOrganiserName != null) ...[
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1176,7 +849,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         style: TextStyle(color: Colors.black, fontSize: 12),
                       ),
                       TextSpan(
-                        text: _eventDetails!.eventOrganiserName!
+                        text: _tripDetails!.tripOrganiserName!
                             .split(',')
                             .map((name) => name.trim())
                             .join(', '),
@@ -1190,18 +863,63 @@ class _EventDetailPageState extends State<EventDetailPage> {
           ),
           const SizedBox(height: 8),
         ],
-        if (_eventDetails?.eventOrganiserMobile != null) ...[
+        if (_tripDetails?.tripOrganiserMobile != null) ...[
           Row(
             children: [
               Icon(Icons.phone, size: 16, color: Colors.grey[600]),
               const SizedBox(width: 8),
               Text(
-                _eventDetails!.eventOrganiserMobile!,
+                _tripDetails!.tripOrganiserMobile!,
                 style: TextStyle(fontSize: 14, color: Colors.grey[700]),
               ),
             ],
           ),
         ],
+      ],
+    );
+  }
+
+  Widget _buildSamitiOrganisers() {
+    if (_tripDetails?.samitiOrganisers == null ||
+        _tripDetails!.samitiOrganisers!.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        const Text(
+          'Organised By:',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black54,
+          ),
+        ),
+        const SizedBox(height: 8),
+        ..._tripDetails!.samitiOrganisers!.map((organiser) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.groups, size: 14, color: Colors.grey[600]),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    organiser.subCategory?.samitiSubCategoryName ?? 'Unknown Samiti',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
       ],
     );
   }
@@ -1213,22 +931,22 @@ class _EventDetailPageState extends State<EventDetailPage> {
         backgroundColor: Colors.grey[100],
         appBar: AppBar(
           backgroundColor:
-              ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-          title: const Text('Event Details'),
+          ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+          title: const Text('Trip Details'),
         ),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
-    if (_eventDetails == null) {
+    if (_tripDetails == null) {
       return Scaffold(
         backgroundColor: Colors.grey[100],
         appBar: AppBar(
           backgroundColor:
-              ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-          title: const Text('Event Details'),
+          ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+          title: const Text('Trip Details'),
         ),
-        body: const Center(child: Text('Failed to load event details')),
+        body: const Center(child: Text('Failed to load trip details')),
       );
     }
 
@@ -1236,12 +954,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor:
-            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Builder(
           builder: (context) {
             double fontSize = MediaQuery.of(context).size.width * 0.045;
             return Text(
-              _eventDetails!.eventName ?? 'Event Details',
+              _tripDetails!.tripName ?? 'Trip Details',
               style: TextStyle(
                   color: Colors.white,
                   fontSize: fontSize,
@@ -1258,8 +976,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (_eventDetails!.eventImage != null &&
-                _eventDetails!.eventImage!.isNotEmpty) ...[
+            if (_tripDetails!.tripImage != null &&
+                _tripDetails!.tripImage!.isNotEmpty) ...[
               GestureDetector(
                 onTap: () {
                   showDialog(
@@ -1273,11 +991,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         minScale: 0.5,
                         maxScale: 4.0,
                         child: Image.network(
-                          _eventDetails!.eventImage!,
+                          _tripDetails!.tripImage!,
                           fit: BoxFit.contain,
                           errorBuilder: (_, __, ___) => const Center(
                             child:
-                                Icon(Icons.broken_image, color: Colors.white),
+                            Icon(Icons.broken_image, color: Colors.white),
                           ),
                         ),
                       ),
@@ -1292,7 +1010,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         maxWidth: 400,
                       ),
                       child: FutureBuilder<Size>(
-                        future: _getImageSize(_eventDetails!.eventImage!),
+                        future: _getImageSize(_tripDetails!.tripImage!),
                         builder: (context, snapshot) {
                           if (snapshot.connectionState ==
                               ConnectionState.waiting) {
@@ -1310,14 +1028,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
                             return ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               child: Image.network(
-                                _eventDetails!.eventImage!,
+                                _tripDetails!.tripImage!,
                                 fit: isLandscape
                                     ? BoxFit.fitWidth
                                     : BoxFit.cover,
                                 width: double.infinity,
                                 height: isLandscape ? 250 : null,
                                 errorBuilder: (_, __, ___) =>
-                                    const Icon(Icons.broken_image, size: 80),
+                                const Icon(Icons.broken_image, size: 80),
                               ),
                             );
                           }
@@ -1328,7 +1046,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
               const SizedBox(height: 24),
             ],
             const Text(
-              'Event Description:',
+              'Trip Description:',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -1337,64 +1055,33 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ),
             const SizedBox(height: 8),
             Text(
-              _eventDetails!.eventDescription ??
-                  'No event description available',
+              _tripDetails!.tripDescription ??
+                  'No trip description available',
               style: const TextStyle(
                 fontSize: 15,
                 height: 1.5,
               ),
             ),
+            // const SizedBox(height: 24),
+            // _buildTripInfoList(),
             const SizedBox(height: 24),
-            if (_isPastEvent &&
-                _eventDetails!.youtubeUrl != null &&
-                _eventDetails!.youtubeUrl!.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorHelperClass.getColorFromHex(
-                        ColorResources.red_color),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  icon: const Icon(Icons.play_circle_fill),
-                  label: const Text("View Events Video"),
-                  onPressed: () {
-                    final url = _eventDetails!.youtubeUrl;
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.black,
-                      builder: (_) => YouTubeBottomSheet(
-                        youtubeUrl: url!,
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-            const SizedBox(height: 24),
-            _buildEventInfoList(),
-            const SizedBox(height: 24),
-            if (_eventDetails!.eventCostType?.toLowerCase() != 'free') ...[
-              _buildEventCostInfo(),
+            if (_tripDetails!.tripCostType?.toLowerCase() != 'free') ...[
+              _buildTripCostInfo(),
               const SizedBox(height: 24),
             ],
-            if (_eventDetails!.eventOrganiserName != null ||
-                _eventDetails!.eventOrganiserMobile != null) ...[
+            if (_tripDetails!.tripOrganiserName != null ||
+                _tripDetails!.tripOrganiserMobile != null) ...[
               const Divider(thickness: 1, color: Colors.grey),
               const SizedBox(height: 16),
               _buildOrganiserInfo(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
             ],
-            if (_eventDetails!.eventTermsAndConditionDocument != null &&
-                _eventDetails!.eventTermsAndConditionDocument!.isNotEmpty) ...[
+            _buildSamitiOrganisers(),
+            if (_tripDetails!.tripTermsAndConditions != null &&
+                _tripDetails!.tripTermsAndConditions!.isNotEmpty) ...[
+              const SizedBox(height: 24),
               const Text(
-                'Events Document:',
+                'Trip Document:',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -1404,7 +1091,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
               const SizedBox(height: 8),
               Builder(
                 builder: (context) {
-                  final docUrl = _eventDetails!.eventTermsAndConditionDocument!;
+                  final docUrl = _tripDetails!.tripTermsAndConditions!;
                   final fileExtension = docUrl.split('.').last.toLowerCase();
 
                   if (['jpg', 'jpeg', 'png', 'gif'].contains(fileExtension)) {
@@ -1456,25 +1143,25 @@ class _EventDetailPageState extends State<EventDetailPage> {
                               ? Icons.picture_as_pdf
                               : Icons.description,
                           color:
-                              fileExtension == 'pdf' ? Colors.red : Colors.blue,
+                          fileExtension == 'pdf' ? Colors.red : Colors.blue,
                         ),
                         label: _isDownloading
                             ? LinearProgressIndicator(
-                                value: _downloadProgress / 100,
-                                backgroundColor: Colors.grey[300],
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  ColorHelperClass.getColorFromHex(
-                                      ColorResources.red_color),
-                                ),
-                              )
+                          value: _downloadProgress / 100,
+                          backgroundColor: Colors.grey[300],
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color),
+                          ),
+                        )
                             : Text(
-                                "Download & View ${fileExtension.toUpperCase()}"),
+                            "Download & View ${fileExtension.toUpperCase()}"),
                         onPressed: _isDownloading
                             ? null
                             : () => _downloadAndOpenPdf(
-                                  docUrl,
-                                  'Event_Terms_${_eventDetails!.eventId}.$fileExtension',
-                                ),
+                          docUrl,
+                          'Trip_Terms_${_tripDetails!.tripId}.$fileExtension',
+                        ),
                       ),
                     );
                   } else {
@@ -1492,7 +1179,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         ),
       ),
       bottomNavigationBar:
-          _isPastEvent ? const SizedBox.shrink() : _buildRegisterButton(),
+      _isPastTrip ? const SizedBox.shrink() : _buildRegisterButton(),
     );
   }
 }
