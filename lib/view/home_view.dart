@@ -58,8 +58,8 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
       {'icon': Images.makenewmember, 'label': 'Make New Member'},
       {'icon': Images.discount, 'label': 'Discounts & Offers'},
       {'icon': Images.events, 'label': 'Events'},
-      {'icon': Images.saraswani, 'label': 'Sarawani'},
-      {'icon': Images.event_trip, 'label': 'Trips'}
+      {'icon': Images.saraswani, 'label': 'Saraswani'},
+      // {'icon': Images.event_trip, 'label': 'Trips'}
     ];
 
     if (memberId == 1 || memberId == 2) {
@@ -692,7 +692,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
 
   void _handleGridItemClick(String label) {
     switch (label) {
-      case "Sarawani":
+      case "Saraswani":
         Navigator.pushNamed(context, RouteNames.saraswani_label);
         break;
       case "Make New Member":

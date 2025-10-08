@@ -86,5 +86,6 @@ class Urls {
   static const String delete_traveller_url = base_url+"api/delete_traveller";
   static const String update_traveller_url = base_url+"api/update_traveller";
   static const String cancel_trip_registration_url = base_url+"api/cancel_trip_registration";
+  static const String device_mapping_url = base_url+"api/device_mapping";
 
 }
