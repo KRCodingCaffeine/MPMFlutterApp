@@ -248,7 +248,6 @@ class _RegisteredTripsDetailPageState
       ),
     );
 
-    // Navigate back after successful cancellation
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         Navigator.pushReplacement(
@@ -783,7 +782,7 @@ class _RegisteredTripsDetailPageState
       return const Padding(
         padding: EdgeInsets.all(16.0),
         child: Text(
-          'No traveller detail added yet...',
+          'You are not added any traveller along with you',
           style: TextStyle(color: Colors.black54),
         ),
       );
@@ -791,7 +790,7 @@ class _RegisteredTripsDetailPageState
 
     return Column(
       children: travellers.asMap().entries.map((entry) {
-        final index = entry.key; // index (0-based)
+        final index = entry.key; 
         final traveller = entry.value;
 
         return Card(
@@ -1006,7 +1005,8 @@ class _RegisteredTripsDetailPageState
             const SizedBox(height: 10),
             _buildTripInfo(),
 
-            if (_travellers != null && _travellers!.isNotEmpty) ...[
+            // Replace this section in your build method:
+            if (_travellers != null) ...[
               const Divider(thickness: 1, color: Colors.grey),
               const SizedBox(height: 10),
               Row(

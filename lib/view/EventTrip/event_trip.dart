@@ -203,84 +203,84 @@ class _EventTripPageState extends State<EventTripPage> {
     }
 
     return GestureDetector(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => TripDetailPage(tripId: trip.tripId ?? ''),
-            ),
-          );
-        },
-    child:  Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              spreadRadius: 1,
-              blurRadius: 3,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 60,
-              padding: const EdgeInsets.only(top: 4),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(day,
-                      style: const TextStyle(
-                          fontSize: 24, fontWeight: FontWeight.bold)),
-                  Text(month,
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w500)),
-                ],
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TripDetailPage(tripId: trip.tripId ?? ''),
+          ),
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.2),
+                spreadRadius: 1,
+                blurRadius: 3,
+                offset: const Offset(0, 1),
               ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              height: 100,
-              width: 1,
-              color: Colors.grey[400],
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(trip.tripName ?? '',
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                          fontSize: 18)),
-                  const SizedBox(height: 4),
-                  Text("Coordinator: ${trip.tripOrganiserName ?? 'Unknown'}",
-                      style: const TextStyle(color: Colors.black54, fontSize: 14)),
-                  const SizedBox(height: 4),
-                  Text(
-                    trip.tripDescription ?? '',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  const SizedBox(height: 4),
-                  Text("Registration Last Date: $formattedLastDate",
-                      style: const TextStyle(color: Colors.black54, fontSize: 14)),
-                ],
+            ],
+          ),
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 60,
+                padding: const EdgeInsets.only(top: 4),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(day,
+                        style: const TextStyle(
+                            fontSize: 24, fontWeight: FontWeight.bold)),
+                    Text(month,
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w500)),
+                  ],
+                ),
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              Container(
+                height: 100,
+                width: 1,
+                color: Colors.grey[400],
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(trip.tripName ?? '',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                            fontSize: 18)),
+                    const SizedBox(height: 4),
+                    Text("Coordinator: ${trip.tripOrganiserName ?? 'Unknown'}",
+                        style: const TextStyle(color: Colors.black54, fontSize: 14)),
+                    const SizedBox(height: 4),
+                    Text(
+                      trip.tripDescription ?? '',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                    const SizedBox(height: 4),
+                    Text("Registration Last Date: $formattedLastDate",
+                        style: const TextStyle(color: Colors.black54, fontSize: 14)),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 
@@ -699,6 +699,55 @@ class _EventTripPageState extends State<EventTripPage> {
     );
   }
 
+  Widget _buildNoTripsMessage() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.event_busy,
+            size: 64,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No trips available',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _selectedTabIndex == 0
+                ? 'There are no upcoming trips at the moment'
+                : 'No past trips found',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[500],
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTripList() {
+    final currentTrips = _selectedTabIndex == 0 ? _upcomingTrips : _pastTrips;
+
+    if (currentTrips.isEmpty) {
+      return _buildNoTripsMessage();
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.only(top: 4),
+      itemCount: currentTrips.length,
+      itemBuilder: (context, index) => _buildTripCard(currentTrips[index]),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -750,28 +799,63 @@ class _EventTripPageState extends State<EventTripPage> {
               Expanded(
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator())
-                    : _error != null
-                    ? Center(child: Text(_error!))
-                    : RefreshIndicator(
-                  color: Colors.redAccent,
-                  onRefresh: _fetchTrips,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.only(top: 4),
-                    itemCount: _selectedTabIndex == 0
-                        ? _upcomingTrips.length
-                        : _pastTrips.length,
-                    itemBuilder: (context, index) => _buildTripCard(
-                        _selectedTabIndex == 0
-                            ? _upcomingTrips[index]
-                            : _pastTrips[index]),
-                  ),
-                ),
+                    : _buildTripListWithRefresh(),
               ),
             ],
           ),
           if (_isUpcomingFilterDrawerOpen) _buildFilterDrawer(true),
           if (_isPastFilterDrawerOpen) _buildFilterDrawer(false),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTripListWithRefresh() {
+    final currentTrips = _selectedTabIndex == 0 ? _upcomingTrips : _pastTrips;
+
+    if (currentTrips.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    return RefreshIndicator(
+      color: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+      onRefresh: _fetchTrips,
+      child: ListView.builder(
+        padding: const EdgeInsets.only(top: 4),
+        itemCount: currentTrips.length,
+        itemBuilder: (context, index) => _buildTripCard(currentTrips[index]),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return RefreshIndicator(
+      color: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+      onRefresh: _fetchTrips,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.6,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+          alignment: Alignment.center,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.card_travel, size: 60, color: Colors.grey[400]),
+              const SizedBox(height: 20),
+              Text(
+                'Not yet any trip added!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
       ),
     );
   }
