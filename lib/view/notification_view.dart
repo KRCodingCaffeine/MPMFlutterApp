@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:mpm/view/notification_detail.dart';
 
-import 'package:mpm/view_model/controller/notification/NotificationController.dart';
+import 'package:mpm/view_model/controller/notification/NotificationApiController.dart';
 
 class NotificationView extends StatefulWidget {
   const NotificationView({super.key});
@@ -14,7 +14,7 @@ class NotificationView extends StatefulWidget {
 }
 
 class _NotificationViewState extends State<NotificationView> {
-  final NotificationController controller = Get.find<NotificationController>();
+  final NotificationApiController controller = Get.find<NotificationApiController>();
   bool _firstBuildDone = false;
 
   @override

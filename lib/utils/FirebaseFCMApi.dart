@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:math' show Random;
 import 'package:audioplayers/audioplayers.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_app_badger/flutter_app_badger.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
@@ -12,7 +13,7 @@ import 'package:mpm/utils/NotificationDatabase.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
-import '../view_model/controller/notification/NotificationController.dart';
+import '../view_model/controller/notification/NotificationApiController.dart';
 
 // ------------------ Constants ------------------
 const kNotificationType = 'notification_type';
@@ -84,6 +85,45 @@ class PushNotificationService {
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
   FlutterLocalNotificationsPlugin();
 
+  // Initialize audio player with proper settings
+  static Future<void> _initializeAudioPlayer() async {
+    try {
+      await player.setAudioContext(AudioContext(
+        iOS: AudioContextIOS(
+          category: AVAudioSessionCategory.ambient,
+          options: {
+            AVAudioSessionOptions.allowBluetooth,
+          },
+        ),
+        android: AudioContextAndroid(
+          isSpeakerphoneOn: false,
+          stayAwake: false,
+          contentType: AndroidContentType.sonification,
+          usageType: AndroidUsageType.notification,
+          audioFocus: AndroidAudioFocus.gainTransientMayDuck,
+        ),
+      ));
+      
+      // Set volume to a reasonable level for notifications
+      await player.setVolume(0.7);
+      
+      // Set release mode to prevent audio from continuing after app goes to background
+      await player.setReleaseMode(ReleaseMode.stop);
+    } catch (e) {
+      debugPrint('Error initializing audio player: $e');
+    }
+  }
+
+  // Dispose audio player properly
+  static Future<void> disposeAudioPlayer() async {
+    try {
+      await player.stop();
+      await player.dispose();
+    } catch (e) {
+      debugPrint('Error disposing audio player: $e');
+    }
+  }
+
   // ✅ Unified method: inserts into DB and refreshes controller
   static Future<void> checkNotification(RemoteMessage message) async {
     final notificationType = message.data[kNotificationType] as String?;
@@ -108,8 +148,11 @@ class PushNotificationService {
     );
 
     // 🔹 Immediately refresh UI if controller is active
-    if (Get.isRegistered<NotificationController>()) {
-      Get.find<NotificationController>().loadNotifications();
+    try {
+      final controller = Get.find<NotificationApiController>();
+      controller.loadNotifications();
+    } catch (e) {
+      // Controller not found, ignore
     }
 
     _goToScreen(notificationType, 0);
@@ -230,18 +273,47 @@ class PushNotificationService {
   }
 
   void playCustomNotificationSound() async {
-    await player.play(AssetSource('audio/smileringtone.mp3'));
+    try {
+      // Check if audio is enabled (you can add a setting for this)
+      // For now, we'll always try to play, but with better error handling
+      
+      // Initialize audio player if not already done
+      await _initializeAudioPlayer();
+      
+      // Stop any currently playing audio first
+      await player.stop();
+      
+      // Play the notification sound
+      await player.play(AssetSource('audio/smileringtone.mp3'));
+    } catch (e) {
+      debugPrint('Error playing notification sound: $e');
+      // Silently fail - don't let audio errors break the app
+      // This prevents the queuebuffer warnings from crashing the app
+    }
   }
+
+  // Method to disable audio completely if needed
+  static bool _audioEnabled = true;
+  
+  static void setAudioEnabled(bool enabled) {
+    _audioEnabled = enabled;
+    if (!enabled) {
+      disposeAudioPlayer();
+    }
+  }
+  
+  static bool get isAudioEnabled => _audioEnabled;
 
   Future<void> _showNotificationWithActions(RemoteMessage event) async {
     final unreadCount =
     await NotificationDatabase.instance.getUnreadNotificationCount();
 
-    const iosNotificationDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
+    // iOS notification details (currently unused but kept for future use)
+    // const iosNotificationDetails = DarwinNotificationDetails(
+    //   presentAlert: true,
+    //   presentBadge: true,
+    //   presentSound: true,
+    // );
 
     final androidNotificationDetails = AndroidNotificationDetails(
       "MPM",
@@ -291,8 +363,8 @@ class PushNotificationService {
     );
 
     // Refresh UI + badge
-    if (Get.isRegistered<NotificationController>()) {
-      Get.find<NotificationController>().loadNotifications();
+    if (Get.isRegistered<NotificationApiController>()) {
+      Get.find<NotificationApiController>().loadLocalNotifications();
     }
     await updateAppBadge();
   }

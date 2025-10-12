@@ -33,7 +33,7 @@ import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/urls.dart';
 import 'package:http/http.dart' as http;
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
-import 'package:mpm/view_model/controller/notification/NotificationController.dart';
+import 'package:mpm/view_model/controller/notification/NotificationApiController.dart';
 
 class UdateProfileController extends GetxController {
   final api = UpdateProfileRepository();
@@ -57,7 +57,10 @@ class UdateProfileController extends GetxController {
 
   void changeTab(int index) async {
     if (index == 3) {
-      Get.find<NotificationController>().markAllAsRead();
+      // Just load notifications when tab is clicked, don't mark as read
+      if (Get.isRegistered<NotificationApiController>()) {
+        Get.find<NotificationApiController>().loadLocalNotifications();
+      }
     }
     currentIndex.value = index;
   }

@@ -10,7 +10,7 @@ import 'package:mpm/utils/NotificationDatabase.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 import 'package:mpm/route/route_name.dart';
-import 'package:mpm/view_model/controller/notification/NotificationController.dart';
+import 'package:mpm/view_model/controller/notification/NotificationApiController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
 class NotificationService {
@@ -452,6 +452,17 @@ class NotificationService {
     }
   }
 
+  // Method to update badge with specific count (public)
+  static Future<void> updateBadgeCount(int count) async {
+    try {
+      await _saveBadgeCount(count);
+      await _updateBadgeCountStatic(count);
+      debugPrint("✅ Badge updated to: $count");
+    } catch (e) {
+      debugPrint("❌ Error updating badge count: $e");
+    }
+  }
+
   // Check iOS notification settings
   Future<void> _checkIOSNotificationSettings() async {
     try {
@@ -591,8 +602,8 @@ class NotificationService {
       await syncBadgeWithDatabase();
       
       // Refresh notification controller if it exists
-      if (Get.isRegistered<NotificationController>()) {
-        final controller = Get.find<NotificationController>();
+      if (Get.isRegistered<NotificationApiController>()) {
+        final controller = Get.find<NotificationApiController>();
         controller.loadNotifications();
         debugPrint("✅ Notification controller refreshed");
       }
@@ -606,8 +617,8 @@ class NotificationService {
   // Method to update notification controller unread count
   static Future<void> updateNotificationController() async {
     try {
-      if (Get.isRegistered<NotificationController>()) {
-        final controller = Get.find<NotificationController>();
+      if (Get.isRegistered<NotificationApiController>()) {
+        final controller = Get.find<NotificationApiController>();
         // Update the unread count directly
         controller.unreadCount.value = await NotificationDatabase.instance.getUnreadNotificationCount();
         debugPrint("✅ Notification controller unread count updated to: ${controller.unreadCount.value}");
@@ -710,8 +721,8 @@ class NotificationService {
       debugPrint("💾 Database unread count: $dbCount");
       
       // Check notification controller count
-      if (Get.isRegistered<NotificationController>()) {
-        final controller = Get.find<NotificationController>();
+      if (Get.isRegistered<NotificationApiController>()) {
+        final controller = Get.find<NotificationApiController>();
         debugPrint("🎯 Notification controller unread count: ${controller.unreadCount.value}");
       }
       
@@ -727,12 +738,12 @@ class NotificationService {
     try {
       debugPrint("🎯 Testing notification controller update...");
       
-      if (!Get.isRegistered<NotificationController>()) {
-        debugPrint("❌ NotificationController not registered");
+      if (!Get.isRegistered<NotificationApiController>()) {
+        debugPrint("❌ NotificationApiController not registered");
         return;
       }
       
-      final controller = Get.find<NotificationController>();
+      final controller = Get.find<NotificationApiController>();
       final beforeCount = controller.unreadCount.value;
       debugPrint("📊 Before update - Controller count: $beforeCount");
       
@@ -898,8 +909,8 @@ class NotificationService {
       debugPrint("🔢 Saved badge count: $savedBadge");
       
       // Check notification controller count
-      if (Get.isRegistered<NotificationController>()) {
-        final controller = Get.find<NotificationController>();
+      if (Get.isRegistered<NotificationApiController>()) {
+        final controller = Get.find<NotificationApiController>();
         debugPrint("🎯 Controller unread count: ${controller.unreadCount.value}");
       }
       

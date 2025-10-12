@@ -18,6 +18,7 @@ import 'package:mpm/utils/images.dart';
 import 'dart:async';
 
 import 'package:mpm/utils/urls.dart';
+import 'package:mpm/utils/device_token_service.dart';
 class LoginController {
 
   final api = LoginRepo();
@@ -337,42 +338,19 @@ class LoginController {
     memberId.value = userData!.memberId.toString();
 
     try {
+      // Use the new device token service
+      await DeviceTokenService().forceUpdateToken();
+      
+      Get.snackbar(
+        "Success",
+        "Login Successfully",
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
 
-      var memberid=userData!.memberId.toString();
-      final token = await FirebaseMessaging.instance.getToken();
-      debugPrint("FCM Token: $token");
-
-      Map map = {
-        "member_id": memberid,
-        "device_token": token,
-      };
-      print("ffggghhg"+map.toString());
-
-      await api.userToken(map).then((_value) async {
-        Get.snackbar(
-          "Success",
-          "Login Successfully",
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
-        );
-
-      }).onError((error, strack) async {
-        print("ddfgfgfgfghgh"+error.toString());
-        Get.snackbar(
-          "Cancel",
-          "Error Successfully",
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
-        );
-
-      });
     } catch (e) {
-
-      print('Error: $e');
-    } finally {
-
+      debugPrint('Error updating token: $e');
     }
   }
 

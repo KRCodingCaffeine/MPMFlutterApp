@@ -1,8 +1,8 @@
 
 class Urls {
  //static const  String base_url = "https://krcodingcaffeine.com/pragati-mandal-api/";
-  static const  String base_url = "https://members.mumbaimaheshwari.com/api/";
-  // static const  String base_url = "https://members.mumbaimaheshwari.com/staging/api/";
+  //static const  String base_url = "https://members.mumbaimaheshwari.com/api/";
+  static const  String base_url = "https://members.mumbaimaheshwari.com/staging/api/";
   static const  String register_url = base_url+"api/make_new_member";
   static const  String login_url = base_url+"api/login";
   static const  String check_url = base_url+"api/check_lm_code_or_mobile";
@@ -87,5 +87,13 @@ class Urls {
   static const String update_traveller_url = base_url+"api/update_traveller";
   static const String cancel_trip_registration_url = base_url+"api/cancel_trip_registration";
   static const String device_mapping_url = base_url+"api/device_mapping";
+  
+  // Notification API URLs
+  static const String get_all_notifications_url = base_url+"api/notifications/get_all";
+  static const String mark_notification_read_url = base_url+"api/notifications/mark_read";
+  static const String mark_all_notifications_read_url = base_url+"api/notifications/mark_all_read";
+  static const String delete_notification_url = base_url+"api/notifications/delete";
+  static const String delete_all_notifications_url = base_url+"api/notifications/delete_all";
+  static const String unread_notification_count_url = base_url+"api/notifications/unread_count";
 
 }
