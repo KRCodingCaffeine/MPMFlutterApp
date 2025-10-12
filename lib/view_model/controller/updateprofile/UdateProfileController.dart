@@ -56,12 +56,6 @@ class UdateProfileController extends GetxController {
   RxBool showEmailVerifyBanner = false.obs;
 
   void changeTab(int index) async {
-    if (index == 3) {
-      // Just load notifications when tab is clicked, don't mark as read
-      if (Get.isRegistered<NotificationApiController>()) {
-        Get.find<NotificationApiController>().loadLocalNotifications();
-      }
-    }
     currentIndex.value = index;
   }
 

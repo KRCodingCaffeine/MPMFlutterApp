@@ -604,7 +604,7 @@ class NotificationService {
       // Refresh notification controller if it exists
       if (Get.isRegistered<NotificationApiController>()) {
         final controller = Get.find<NotificationApiController>();
-        controller.loadNotifications();
+        controller.loadLocalNotifications();
         debugPrint("✅ Notification controller refreshed");
       }
       

@@ -54,6 +54,13 @@ class NetWorkApiService extends BaseApiService{
     dynamic resonseJson;
     var header;
     var body;
+    
+    print("🌐 Network API Call:");
+    print("  URL: $url");
+    print("  Type: $type");
+    print("  Data: $data");
+    print("  Token: $token");
+    
     if(type=="1")
       {
         header=<String,String> {
@@ -62,6 +69,7 @@ class NetWorkApiService extends BaseApiService{
 
         };
         body=jsonEncode(data);
+        print("  📤 Using JSON format");
       }
     else
       {
@@ -69,19 +77,33 @@ class NetWorkApiService extends BaseApiService{
           'Accept': 'application/json',
         };
         body=data;
+        print("  📤 Using form data format");
       }
+    
+    print("  📤 Headers: $header");
+    print("  📤 Body: $body");
+    
     try{
       final response = await http.post(Uri.parse(url),
         headers: header,
         body: body
       ).timeout(Duration(seconds: 60),
       );
+      
+      print("  📡 Response Status: ${response.statusCode}");
+      print("  📡 Response Body: ${response.body}");
+      
       resonseJson= returnResponse(response);
-      print("gfgfg"+response.statusCode.toString());
+      print("  ✅ Parsed Response: $resonseJson");
     } on SocketException{
+      print("  ❌ Socket Exception");
       throw InternetExpection("");
     } on RequestTimeOutExpection{
+      print("  ❌ Request Timeout");
       throw RequestTimeOutExpection("");
+    } catch (e) {
+      print("  ❌ Network Error: $e");
+      rethrow;
     }
     return resonseJson;
   }

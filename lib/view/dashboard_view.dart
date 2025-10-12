@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/utils/AppDrawer.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
@@ -114,11 +113,71 @@ class _DashboardViewState extends State<DashboardView> {
           ),
           iconTheme: const IconThemeData(color: Colors.white),
           actions: controller.currentIndex.value == 3 ? [
+            // Test controller button
+            IconButton(
+              icon: const Icon(Icons.bug_report, color: Colors.white),
+              onPressed: () => notificationController.testController(),
+              tooltip: 'Test controller',
+            ),
+            // Test local only button
+            IconButton(
+              icon: const Icon(Icons.storage, color: Colors.white),
+              onPressed: () => notificationController.testLocalOnly(),
+              tooltip: 'Test local database only',
+            ),
+            // Test server API button
+            IconButton(
+              icon: const Icon(Icons.api, color: Colors.white),
+              onPressed: () => notificationController.testServerApi(),
+              tooltip: 'Test server API',
+            ),
+            // Test server API formats button
+            IconButton(
+              icon: const Icon(Icons.compare_arrows, color: Colors.white),
+              onPressed: () => notificationController.testServerApiFormats(),
+              tooltip: 'Test API formats',
+            ),
+            // Check server API status button
+            IconButton(
+              icon: const Icon(Icons.analytics, color: Colors.white),
+              onPressed: () => notificationController.checkServerApiStatus(),
+              tooltip: 'Check server API status',
+            ),
+            // Reset to server status button
+            IconButton(
+              icon: const Icon(Icons.restore, color: Colors.white),
+              onPressed: () => notificationController.resetLocalReadStatusToMatchServer(),
+              tooltip: 'Reset to server status',
+            ),
+            // Sync read status button
+            IconButton(
+              icon: const Icon(Icons.sync, color: Colors.white),
+              onPressed: () => notificationController.syncReadStatusWithServer(),
+              tooltip: 'Sync read status with server',
+            ),
+            // Force re-initialize button
+            IconButton(
+              icon: const Icon(Icons.restart_alt, color: Colors.white),
+              onPressed: () => notificationController.forceReinitialize(),
+              tooltip: 'Force re-initialize',
+            ),
             // Force clear button
             IconButton(
               icon: const Icon(Icons.refresh, color: Colors.white),
-              onPressed: () => notificationController.forceClearAndSync(),
-              tooltip: 'Refresh notifications',
+              onPressed: () => notificationController.forceSyncWithServer(),
+              tooltip: 'Force sync with server',
+            ),
+            // Force sync read status button
+            IconButton(
+              icon: const Icon(Icons.sync_problem, color: Colors.white),
+              onPressed: () => notificationController.forceSyncReadStatus(),
+              tooltip: 'Force sync read status',
+            ),
+            // Complete reset and sync button
+            IconButton(
+              icon: const Icon(Icons.refresh_outlined, color: Colors.white),
+              onPressed: () => notificationController.completeResetAndSync(),
+              tooltip: 'Complete reset and sync',
             ),
             // Mark all as read button
             Obx(() {
@@ -156,10 +215,14 @@ class _DashboardViewState extends State<DashboardView> {
             unselectedItemColor: Colors.grey,
             currentIndex: controller.currentIndex.value,
           onTap: (index) {
-            controller.changeTab(index);
-            if (index == 3) {
-              // Force sync with server to get latest notifications
-              notificationController.forceSyncWithServer();
+            try {
+              controller.changeTab(index);
+              if (index == 3) {
+                // Simple approach: just load local notifications
+                notificationController.loadLocalNotifications();
+              }
+            } catch (e) {
+              debugPrint('❌ Error in tab click: $e');
             }
           },
             items: [

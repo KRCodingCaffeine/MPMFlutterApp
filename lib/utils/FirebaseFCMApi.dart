@@ -150,7 +150,7 @@ class PushNotificationService {
     // 🔹 Immediately refresh UI if controller is active
     try {
       final controller = Get.find<NotificationApiController>();
-      controller.loadNotifications();
+        controller.loadLocalNotifications();
     } catch (e) {
       // Controller not found, ignore
     }

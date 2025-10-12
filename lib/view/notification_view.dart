@@ -22,12 +22,12 @@ class _NotificationViewState extends State<NotificationView> {
     super.didChangeDependencies();
 
     if (!_firstBuildDone) {
-      controller.loadNotifications(); // Load on first build
+      controller.loadLocalNotifications(); // Load on first build
       _firstBuildDone = true;
     } else {
       // Refresh when user comes back to this tab
       Future.delayed(Duration.zero, () {
-        controller.loadNotifications();
+        controller.loadLocalNotifications();
       });
     }
   }

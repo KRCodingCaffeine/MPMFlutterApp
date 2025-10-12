@@ -20,7 +20,8 @@ import 'package:mpm/view/home_view.dart';
 import 'package:mpm/view/language_view.dart';
 import 'package:mpm/view/login_view.dart';
 import 'package:mpm/view/notification_list_view.dart';
-import 'package:mpm/view/notification_detail_view.dart';
+import 'package:mpm/view/notification_detail.dart';
+import 'package:mpm/model/notification/NotificationDataModel.dart';
 import 'package:mpm/view/otp_view.dart';
 import 'package:mpm/view/personal_view.dart';
 import 'package:mpm/view/reg_otp_view.dart';
@@ -90,7 +91,6 @@ class RoutePages {
           const EnquiryFormLoader(),
           settings,
         );
-
       case RouteNames.profile:
         return _buildRoute(const ProfileView(), settings);
       case RouteNames.searchmember:
@@ -98,9 +98,12 @@ class RoutePages {
       case RouteNames.notification_view:
         return _buildRoute(const NotificationListView(), settings);
       case RouteNames.notification_detail:
-        return _buildRoute(const NotificationDetailView(), settings);
-      case RouteNames.qr_code:
-        return _buildRoute(QRScannerScreen(), settings);
+        final notification = settings.arguments as NotificationDataModel;
+        return _buildRoute(NotificationDetailPage(
+          title: notification.title,
+          body: notification.body,
+          image: notification.image,
+        ), settings);
 
       default:
         return MaterialPageRoute(builder: (context) {

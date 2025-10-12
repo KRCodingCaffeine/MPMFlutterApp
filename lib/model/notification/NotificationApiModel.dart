@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'NotificationDataModel.dart';
 
 class NotificationApiModel {
@@ -10,6 +11,7 @@ class NotificationApiModel {
   final String? type;
   final Map<String, dynamic>? data;
   final String? actionUrl;
+  final String? notificationQueueId; // Store the server's notification_queue_id
 
   NotificationApiModel({
     this.id,
@@ -21,6 +23,7 @@ class NotificationApiModel {
     this.type,
     this.data,
     this.actionUrl,
+    this.notificationQueueId,
   });
 
   // Helper method to safely parse integer values
@@ -42,6 +45,12 @@ class NotificationApiModel {
       isRead = json['read_status'] == 'read' || json['read_status'] == '1' || json['read_status'] == true;
     }
     
+    // Debug logging for read status parsing
+    debugPrint('🔍 Parsing notification read status:');
+    debugPrint('  - is_read: ${json['is_read']}');
+    debugPrint('  - read_status: ${json['read_status']}');
+    debugPrint('  - Final isRead: $isRead');
+    
     return NotificationApiModel(
       id: _parseInt(json['notification_id'] ?? json['id']),
       title: json['title'] ?? '',
@@ -52,6 +61,7 @@ class NotificationApiModel {
       type: json['type'],
       data: json['data'] != null ? Map<String, dynamic>.from(json['data']) : null,
       actionUrl: json['action_url'],
+      notificationQueueId: json['notification_queue_id']?.toString(), // Capture the server's notification_queue_id
     );
   }
 
@@ -78,6 +88,7 @@ class NotificationApiModel {
       image: image ?? '',
       timestamp: timestamp,
       isRead: isRead,
+      serverId: notificationQueueId, // Store the server's notification_queue_id
     );
   }
 }
