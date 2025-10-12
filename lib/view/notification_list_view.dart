@@ -290,14 +290,12 @@ class _NotificationListViewState extends State<NotificationListView> {
         }
         break;
       case 'delete':
-        if (notification.id != null) {
-          _showDeleteConfirmationDialog(notification.id!);
-        }
+        _showDeleteConfirmationDialog(notification);
         break;
     }
   }
 
-  void _showDeleteConfirmationDialog(int notificationId) {
+  void _showDeleteConfirmationDialog(NotificationDataModel notification) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -334,7 +332,7 @@ class _NotificationListViewState extends State<NotificationListView> {
             ),
             ElevatedButton(
               onPressed: () {
-                controller.deleteNotification(notificationId);
+                controller.deleteNotification(notification);
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(

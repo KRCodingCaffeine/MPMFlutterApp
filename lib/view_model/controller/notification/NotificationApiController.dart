@@ -74,6 +74,19 @@ class NotificationApiController extends GetxController with WidgetsBindingObserv
       debugPrint('📱 Loading local notifications...');
       
       final notifications = await NotificationDatabase.instance.getAllNotifications();
+      
+      // Ensure notifications are sorted by timestamp (latest first)
+      notifications.sort((a, b) {
+        try {
+          final aTime = DateTime.parse(a.timestamp);
+          final bTime = DateTime.parse(b.timestamp);
+          return bTime.compareTo(aTime); // Latest first (DESC)
+        } catch (e) {
+          debugPrint('❌ Error parsing timestamp: $e');
+          return 0;
+        }
+      });
+      
       notificationList.value = notifications;
       
       final unreadCountValue = await NotificationDatabase.instance.getUnreadNotificationCount();
@@ -84,10 +97,10 @@ class NotificationApiController extends GetxController with WidgetsBindingObserv
       
       debugPrint('📊 Local notifications loaded: ${notificationList.length}, unread: $unreadCount');
       
-      // Debug: Print each notification's read status
+      // Debug: Print each notification's read status and timestamp
       for (int i = 0; i < notificationList.length; i++) {
         final notification = notificationList[i];
-        debugPrint('📋 Notification $i: ${notification.title} (ID: ${notification.id}, Read: ${notification.isRead})');
+        debugPrint('📋 Notification $i: ${notification.title} (ID: ${notification.id}, Read: ${notification.isRead}, Time: ${notification.timestamp})');
       }
     } catch (e) {
       debugPrint('❌ Error loading local notifications: $e');
@@ -117,10 +130,23 @@ class NotificationApiController extends GetxController with WidgetsBindingObserv
         debugPrint('🗑️ Clearing local database...');
         await NotificationDatabase.instance.deleteAllNotifications();
 
-        // Insert server notifications exactly as they are
-        for (final serverNotification in response.notifications) {
+        // Sort server notifications by timestamp (latest first) before inserting
+        final sortedNotifications = response.notifications.toList();
+        sortedNotifications.sort((a, b) {
+          try {
+            final aTime = DateTime.parse(a.timestamp);
+            final bTime = DateTime.parse(b.timestamp);
+            return bTime.compareTo(aTime); // Latest first (DESC)
+          } catch (e) {
+            debugPrint('❌ Error parsing server notification timestamp: $e');
+            return 0;
+          }
+        });
+
+        // Insert server notifications in sorted order
+        for (final serverNotification in sortedNotifications) {
           final localNotification = serverNotification.toLocalModel();
-          debugPrint('📝 Inserting notification: ${localNotification.title} (ID: ${localNotification.id}, Read: ${localNotification.isRead})');
+          debugPrint('📝 Inserting notification: ${localNotification.title} (ID: ${localNotification.id}, Read: ${localNotification.isRead}, Time: ${localNotification.timestamp})');
           await NotificationDatabase.instance.insertNotification(localNotification);
         }
 
@@ -205,19 +231,31 @@ class NotificationApiController extends GetxController with WidgetsBindingObserv
   }
 
   /// Delete notification - Update both local and server
-  Future<void> deleteNotification(int notificationId) async {
+  Future<void> deleteNotification(NotificationDataModel notification) async {
     try {
-      debugPrint('🗑️ Deleting notification $notificationId...');
+      debugPrint('🗑️ Deleting notification: ${notification.title} (Local ID: ${notification.id}, Server ID: ${notification.serverId})');
       
-      // Update local database
-      await NotificationDatabase.instance.deleteNotificationById(notificationId);
+      // Update local database using local ID
+      if (notification.id != null) {
+        await NotificationDatabase.instance.deleteNotificationById(notification.id!);
+        debugPrint('✅ Local database updated for notification ${notification.id}');
+      }
       
-      // Update server
-      try {
-        await _repository.deleteNotification(notificationId);
-        debugPrint('✅ Server updated for notification $notificationId');
-      } catch (e) {
-        debugPrint('❌ Error updating server for notification $notificationId: $e');
+      // Update server using server ID (notification_queue_id)
+      if (notification.serverId != null) {
+        try {
+          final serverId = int.tryParse(notification.serverId!);
+          if (serverId != null) {
+            await _repository.deleteNotification(serverId);
+            debugPrint('✅ Server updated for notification with server ID $serverId');
+          } else {
+            debugPrint('❌ Invalid server ID: ${notification.serverId}');
+          }
+        } catch (e) {
+          debugPrint('❌ Error updating server for notification ${notification.serverId}: $e');
+        }
+      } else {
+        debugPrint('⚠️ No server ID available for notification ${notification.id}');
       }
       
       // Reload local notifications to update UI

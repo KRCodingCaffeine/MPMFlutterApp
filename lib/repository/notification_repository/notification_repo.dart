@@ -154,24 +154,28 @@ class NotificationRepository {
   /// Delete a single notification
   Future<NotificationActionResponse> deleteNotification(int notificationId) async {
     try {
-      final userData = await SessionManager.getSession();
-      
-      if (userData?.memberId == null) {
-        throw Exception('User not logged in');
-      }
+      debugPrint("🔍 Starting deleteNotification for ID: $notificationId");
+      debugPrint("🌐 API URL: ${Urls.delete_notification_url}");
 
-      final requestBody = {
+      final uri = Uri.parse(Urls.delete_notification_url);
+      var request = http.MultipartRequest('POST', uri);
+
+      // Add form data fields - only notification_queue_id is needed
+      request.fields.addAll({
         'notification_queue_id': notificationId.toString(),
-        'member_id': userData!.memberId,
-      };
+      });
 
-      // TODO: Update to use MultipartRequest pattern
-      final response = {"status": false, "message": "Method not yet updated to new pattern"};
+      _logRequestDetails(request, 'Delete Notification');
 
-      debugPrint("Delete Notification Response: $response");
-      return NotificationActionResponse.fromJson(response);
+      // Send request
+      final response = await _sendRequest(request);
+      
+      final parsedResponse = _handleNotificationActionResponse(response);
+      debugPrint("✅ Parsed response: status=${parsedResponse.status}, message=${parsedResponse.message}");
+      
+      return parsedResponse;
     } catch (e) {
-      debugPrint("Error deleting notification: $e");
+      debugPrint("❌ Error deleting notification: $e");
       rethrow;
     }
   }
@@ -185,17 +189,28 @@ class NotificationRepository {
         throw Exception('User not logged in');
       }
 
-      final requestBody = {
-        'member_id': userData!.memberId,
-      };
+      debugPrint("🔍 Starting deleteAllNotifications for member: ${userData!.memberId}");
+      debugPrint("🌐 API URL: ${Urls.delete_all_notifications_url}");
 
-      // TODO: Update to use MultipartRequest pattern
-      final response = {"status": false, "message": "Method not yet updated to new pattern"};
+      final uri = Uri.parse(Urls.delete_all_notifications_url);
+      var request = http.MultipartRequest('POST', uri);
 
-      debugPrint("Delete All Notifications Response: $response");
-      return NotificationActionResponse.fromJson(response);
+      // Add form data fields - only member_id is needed
+      request.fields.addAll({
+        'member_id': userData.memberId ?? '',
+      });
+
+      _logRequestDetails(request, 'Delete All Notifications');
+
+      // Send request
+      final response = await _sendRequest(request);
+      
+      final parsedResponse = _handleNotificationActionResponse(response);
+      debugPrint("✅ Parsed response: status=${parsedResponse.status}, message=${parsedResponse.message}");
+      
+      return parsedResponse;
     } catch (e) {
-      debugPrint("Error deleting all notifications: $e");
+      debugPrint("❌ Error deleting all notifications: $e");
       rethrow;
     }
   }

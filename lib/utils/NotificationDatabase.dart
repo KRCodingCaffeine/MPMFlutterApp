@@ -58,7 +58,11 @@ class NotificationDatabase {
   Future<List<NotificationDataModel>> getAllNotifications() async {
     try {
       final db = await instance.database;
-      final result = await db.query('notifications', orderBy: 'timestamp DESC');
+      // Sort by timestamp DESC to show latest notifications first
+      final result = await db.query(
+        'notifications', 
+        orderBy: 'timestamp DESC, id DESC' // Secondary sort by ID for consistency
+      );
       return result.map((json) => NotificationDataModel.fromMap(json)).toList();
     } catch (e) {
       print('Get notifications error: $e');

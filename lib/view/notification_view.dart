@@ -107,7 +107,7 @@ class _NotificationViewState extends State<NotificationView> {
                 trailing: IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
                   onPressed: () {
-                    _showDeleteConfirmationDialog(context, notification.id!);
+                    _showDeleteConfirmationDialog(context, notification);
                   },
                 ),
               ),
@@ -119,7 +119,7 @@ class _NotificationViewState extends State<NotificationView> {
   }
 
   void _showDeleteConfirmationDialog(
-      BuildContext context, int notificationId) {
+      BuildContext context, NotificationDataModel notification) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -169,7 +169,7 @@ class _NotificationViewState extends State<NotificationView> {
             ),
             ElevatedButton(
               onPressed: () {
-                controller.deleteNotification(notificationId);
+                controller.deleteNotification(notification);
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
