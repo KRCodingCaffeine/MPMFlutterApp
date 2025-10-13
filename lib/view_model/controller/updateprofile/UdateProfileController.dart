@@ -1242,36 +1242,49 @@ class UdateProfileController extends GetxController {
       // Validate required fields
       if (regiController.selectDocumentType.value.isEmpty) {
         Get.snackbar("Error", "Please select address proof type");
+        loading.value = false;
         return;
+      }
+
+      // Determine building name and ID
+      String buildingId;
+      String buildingName;
+
+      if (regiController.selectBuilding.value == "other") {
+        // Custom building name
+        buildingId = "0"; // or "" depending on your backend requirements
+        buildingName = regiController.buildingController.value.text.trim();
+
+        // Validate custom building name
+        if (buildingName.isEmpty) {
+          Get.snackbar("Error", "Please enter building name");
+          loading.value = false;
+          return;
+        }
+      } else {
+        // Selected from dropdown
+        buildingId = regiController.selectBuilding.value;
+        buildingName = ""; // Empty when selecting from list
       }
 
       // Prepare the data with correct field names
       final Map<String, dynamic> data = {
         "member_id": userData.memberId.toString(),
-        "flat_no": flatNoController.value.text,
+        "flat_no": flatNoController.value.text.trim(),
         "area": regiController.areaController.value.text.isNotEmpty
-            ? regiController.areaController.value.text
-            : regiController.area_name.value,
-        "building_id": regiController.selectBuilding.value == "other"
-            ? ""
-            : regiController.selectBuilding.value,
-        "building_name": regiController.selectBuilding.value == "other"
-            ? regiController.buildingController.value.text
-            : "",
+            ? regiController.areaController.value.text.trim()
+            : regiController.area_name.value.trim(),
+        "building_id": buildingId,
+        "building_name": buildingName, // This is the key field
         "zone_id": regiController.zone_id.value,
-        "address": updateresidentalAddressController.value.text,
+        "address": updateresidentalAddressController.value.text.trim(),
         "city_id": regiController.city_id.value,
         "state_id": regiController.state_id.value,
         "country_id": regiController.country_id.value,
         "document_type": regiController.selectDocumentType.value,
-        "pincode": pincodeController.value.text,
+        "pincode": pincodeController.value.text.trim(),
         "updated_by": userData.memberId.toString(),
       };
-
-      // Handle image upload
-      if (userdocumentImage.value.isNotEmpty) {
-        data['document_image'] = userdocumentImage.value;
-      }
 
       print("Sending residential update: ${jsonEncode(data)}");
 
@@ -1286,6 +1299,7 @@ class UdateProfileController extends GetxController {
           "Success",
           "Residential info updated successfully",
           backgroundColor: Colors.green,
+          colorText: Colors.white,
         );
 
         if (Navigator.canPop(context)) {
@@ -1300,6 +1314,7 @@ class UdateProfileController extends GetxController {
         "Error",
         e.toString(),
         backgroundColor: Colors.red,
+        colorText: Colors.white,
       );
     } finally {
       loading.value = false;
@@ -1309,12 +1324,12 @@ class UdateProfileController extends GetxController {
   Future<dynamic> updateAddress(Map<String, dynamic> data) async {
     try {
       // Convert to multipart request if image is included
-      if (data.containsKey('document_image')) {
+      if (data.containsKey('document_image') && data['document_image'] != null && data['document_image'].isNotEmpty) {
         final file = File(data['document_image']);
         final request = http.MultipartRequest(
             'POST', Uri.parse(Urls.updateMemberAddress_url));
 
-        // Add fields
+        // Add all fields including building_name
         data.forEach((key, value) {
           if (key != 'document_image') {
             request.fields[key] = value.toString();
@@ -1335,9 +1350,13 @@ class UdateProfileController extends GetxController {
         return jsonDecode(responseData);
       } else {
         // Regular POST request if no image
+        // Remove document_image from data if it exists
+        final postData = Map<String, dynamic>.from(data);
+        postData.remove('document_image');
+
         final response = await http.post(
           Uri.parse(Urls.updateMemberAddress_url),
-          body: data,
+          body: postData,
           headers: {
             'token': '2', // Your token
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -1347,7 +1366,7 @@ class UdateProfileController extends GetxController {
       }
     } catch (e) {
       print('Error updating address: $e');
-      return {'status': false, 'message': 'Failed to update address'};
+      return {'status': false, 'message': 'Failed to update address: $e'};
     }
   }
 
