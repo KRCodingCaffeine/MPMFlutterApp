@@ -228,7 +228,7 @@ class _TripDetailPageState extends State<TripDetailPage> {
             ],
           ),
           content: const Text(
-            "Are you sure you want to add members to the journey with you?",
+            "Do you want to register more members?",
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,

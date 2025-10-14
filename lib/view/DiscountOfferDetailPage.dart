@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
@@ -144,8 +145,69 @@ class _DiscountOfferDetailPageState extends State<DiscountOfferDetailPage> {
     final String fileExtension = url.split('.').last.toLowerCase();
 
     if (['jpg', 'jpeg', 'png'].contains(fileExtension)) {
-      return Image.network(url);
-    } else if (['pdf', 'docx', 'doc'].contains(fileExtension)) {
+      return GestureDetector(
+        onTap: () {
+          showDialog(
+            context: context,
+            builder: (_) => Dialog(
+              backgroundColor: Colors.black,
+              insetPadding: const EdgeInsets.all(10),
+              child: InteractiveViewer(
+                panEnabled: true,
+                boundaryMargin: const EdgeInsets.all(20),
+                minScale: 0.5,
+                maxScale: 4.0,
+                child: Image.network(
+                  url,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) =>
+                  const Center(child: Icon(Icons.broken_image, color: Colors.white)),
+                ),
+              ),
+            ),
+          );
+        },
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            constraints: const BoxConstraints(
+              maxHeight: 500,
+              maxWidth: 400,
+            ),
+            child: FutureBuilder<Size>(
+              future: _getImageSize(url),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox(
+                    height: 200,
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                } else if (snapshot.hasError || !snapshot.hasData) {
+                  return const SizedBox.shrink();
+                } else {
+                  final imageSize = snapshot.data!;
+                  final isLandscape = imageSize.width > imageSize.height;
+
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      url,
+                      fit: isLandscape ? BoxFit.fitWidth : BoxFit.cover,
+                      width: double.infinity,
+                      height: isLandscape ? 250 : null,
+                      errorBuilder: (_, __, ___) =>
+                      const Icon(Icons.broken_image, size: 80),
+                    ),
+                  );
+                }
+              },
+            ),
+          ),
+        ),
+      );
+    }
+
+    else if (['pdf', 'docx', 'doc'].contains(fileExtension)) {
       return SizedBox(
         width: double.infinity,
         child: ElevatedButton.icon(
@@ -176,9 +238,25 @@ class _DiscountOfferDetailPageState extends State<DiscountOfferDetailPage> {
               : () => _downloadFile(url, "Offer_Document.$fileExtension"),
         ),
       );
-    } else {
+    }
+
+    else {
       return const SizedBox.shrink();
     }
+  }
+
+  Future<Size> _getImageSize(String imageUrl) async {
+    final Completer<Size> completer = Completer();
+    final Image image = Image.network(imageUrl);
+    image.image.resolve(const ImageConfiguration()).addListener(
+      ImageStreamListener((ImageInfo info, bool _) {
+        completer.complete(Size(
+          info.image.width.toDouble(),
+          info.image.height.toDouble(),
+        ));
+      }),
+    );
+    return completer.future;
   }
 
   Future<void> _handleClaimOffer() async {
