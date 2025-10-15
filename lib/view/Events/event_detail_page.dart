@@ -963,49 +963,37 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Widget _buildEventFoodCostInfo() {
+    // Only show food cost info if food is provided AND it's paid
     if (_eventDetails?.hasFood != '1' || _eventDetails?.hasFoodPaid != 'paid') {
       return const SizedBox.shrink();
     }
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.orange[50],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.orange[100]!),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.restaurant, size: 20, color: Colors.orange[700]),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Food Cost Information',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'This event includes paid food options. Please contact the organizers for pricing details.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.black54,
-                  ),
-                ),
-              ],
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Event Food Cost:',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black54,
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                'Contact organisers for more details about food pricing.',
+                style: TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
-
 
   Widget _buildRegisterButton() {
     if (_isPastEvent) {
