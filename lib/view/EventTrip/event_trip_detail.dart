@@ -113,14 +113,11 @@ class _TripDetailPageState extends State<TripDetailPage> {
     bool shouldProceed = await _showFinalConfirmationDialog();
     if (!shouldProceed) return;
 
-    // Show second confirmation dialog
     bool addMembers = await _showAddMembersConfirmationDialog();
 
     if (addMembers) {
-      // User wants to add members, redirect to member addition page
       await _redirectToAddMembersPage();
     } else {
-      // User doesn't want to add members, just register for trip
       _registerForTrip();
     }
   }
@@ -228,7 +225,7 @@ class _TripDetailPageState extends State<TripDetailPage> {
             ],
           ),
           content: const Text(
-            "Are you sure you want to add members to the journey with you?",
+            "Do you want to register more members?",
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
@@ -522,74 +519,68 @@ class _TripDetailPageState extends State<TripDetailPage> {
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
-  // Widget _buildTripInfoList() {
-  //   final slots = _tripDetails?.allEventDates ?? [];
-  //
-  //   String formatDate(String? dateStr) {
-  //     if (dateStr == null || dateStr.isEmpty) return 'Unknown Date';
-  //     try {
-  //       return DateFormat('EEEE, MMMM d, y').format(DateTime.parse(dateStr));
-  //     } catch (_) {
-  //       return 'Invalid Date';
-  //     }
-  //   }
-  //
-  //   String formatTime(String? timeStr) {
-  //     if (timeStr == null || timeStr.isEmpty) return '';
-  //     try {
-  //       final parsedTime = DateFormat("HH:mm:ss").parse(timeStr);
-  //       return DateFormat("h:mm a").format(parsedTime);
-  //     } catch (_) {
-  //       return '';
-  //     }
-  //   }
-  //
-  //   return Column(
-  //     crossAxisAlignment: CrossAxisAlignment.start,
-  //     children: [
-  //       const Text(
-  //         'Trip Date & Time:',
-  //         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-  //       ),
-  //       ...slots.map((slot) {
-  //         return Container(
-  //           margin: const EdgeInsets.symmetric(vertical: 4),
-  //           padding: const EdgeInsets.all(12),
-  //           child: Row(
-  //             children: [
-  //               const Icon(Icons.calendar_today, size: 18, color: Colors.black),
-  //               const SizedBox(width: 10),
-  //               Expanded(
-  //                 child: Wrap(
-  //                   crossAxisAlignment: WrapCrossAlignment.center,
-  //                   children: [
-  //                     Text(
-  //                       formatDate(slot.eventDate),
-  //                       style: const TextStyle(fontWeight: FontWeight.w600),
-  //                     ),
-  //                     if (slot.eventStartTime != null &&
-  //                         slot.eventStartTime!.isNotEmpty) ...[
-  //                       const SizedBox(width: 6),
-  //                       const Text('from ',
-  //                           style: TextStyle(color: Colors.grey)),
-  //                       Text(formatTime(slot.eventStartTime)),
-  //                     ],
-  //                     if (slot.eventEndTime != null &&
-  //                         slot.eventEndTime!.isNotEmpty) ...[
-  //                       const SizedBox(width: 6),
-  //                       const Text('to ', style: TextStyle(color: Colors.grey)),
-  //                       Text(formatTime(slot.eventEndTime)),
-  //                     ],
-  //                   ],
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //         );
-  //       }).toList(),
-  //     ],
-  //   );
-  // }
+  Widget _buildTripInfoList() {
+    final slots = _tripDetails?.allTripDates ?? [];
+
+    String formatDate(String? dateStr) {
+      if (dateStr == null || dateStr.isEmpty) return 'Unknown Date';
+      try {
+        return DateFormat('EEEE, MMMM d, y').format(DateTime.parse(dateStr));
+      } catch (_) {
+        return 'Invalid Date';
+      }
+    }
+
+    String formatTime(String? timeStr) {
+      if (timeStr == null || timeStr.isEmpty) return '';
+      try {
+        final parsedTime = DateFormat("HH:mm:ss").parse(timeStr);
+        return DateFormat("h:mm a").format(parsedTime);
+      } catch (_) {
+        return '';
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Trip Date & Time:',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        ...slots.map((slot) {
+          return Container(
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                const Icon(Icons.calendar_today, size: 18, color: Colors.black),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        formatDate(slot.tripDate),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      if (slot.tripStartTime != null &&
+                          slot.tripStartTime!.isNotEmpty) ...[
+                        const SizedBox(width: 4),
+                        const Text('pickup time at ',
+                            style: TextStyle(color: Colors.grey)),
+                        Text(formatTime(slot.tripStartTime)),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ],
+    );
+  }
 
   Widget _buildTripCostInfo() {
     return Column(
@@ -1062,8 +1053,8 @@ class _TripDetailPageState extends State<TripDetailPage> {
                 height: 1.5,
               ),
             ),
-            // const SizedBox(height: 24),
-            // _buildTripInfoList(),
+            const SizedBox(height: 24),
+            _buildTripInfoList(),
             const SizedBox(height: 24),
             if (_tripDetails!.tripCostType?.toLowerCase() != 'free') ...[
               _buildTripCostInfo(),

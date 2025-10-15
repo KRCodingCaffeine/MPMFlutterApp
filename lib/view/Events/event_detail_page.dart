@@ -962,6 +962,39 @@ class _EventDetailPageState extends State<EventDetailPage> {
     );
   }
 
+  Widget _buildEventFoodCostInfo() {
+    // Only show food cost info if food is provided AND it's paid
+    if (_eventDetails?.hasFood != '1' || _eventDetails?.hasFoodPaid != 'paid') {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Event Food Cost:',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black54,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                'Contact organisers for more details about food pricing.',
+                style: TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildRegisterButton() {
     if (_isPastEvent) {
       return const SizedBox.shrink();
@@ -1382,6 +1415,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
             const SizedBox(height: 24),
             if (_eventDetails!.eventCostType?.toLowerCase() != 'free') ...[
               _buildEventCostInfo(),
+              const SizedBox(height: 24),
+            ],
+            if (_eventDetails?.hasFood == '1' && _eventDetails?.hasFoodPaid == 'paid') ...[
+              _buildEventFoodCostInfo(),
               const SizedBox(height: 24),
             ],
             if (_eventDetails!.eventOrganiserName != null ||

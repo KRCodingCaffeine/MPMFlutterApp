@@ -1,3 +1,4 @@
+import 'package:mpm/model/EventTripModel/GetEventTrip/EventTripDateTimeData.dart';
 import 'package:mpm/model/GetEventsList/EventDateTimeData.dart';
 import 'package:mpm/model/Zone/ZoneData.dart';
 import 'package:mpm/utils/urls.dart';
@@ -27,7 +28,7 @@ class GetEventTripDetailsByIdData {
   String? updatedBy;
   String? dateUpdated;
   List<ZoneData>? zones;
-  List<EventDateTimeData>? allEventDates;
+  List<EventTripDateTimeData>? allTripDates;
   List<SamitiOrganiser>? samitiOrganisers;
 
   GetEventTripDetailsByIdData({
@@ -53,7 +54,7 @@ class GetEventTripDetailsByIdData {
     this.updatedBy,
     this.dateUpdated,
     this.zones,
-    this.allEventDates,
+    this.allTripDates,
     this.samitiOrganisers,
   });
 
@@ -87,9 +88,9 @@ class GetEventTripDetailsByIdData {
       zones: json['zones'] != null
           ? (json['zones'] as List).map((zone) => ZoneData.fromJson(zone)).toList()
           : null,
-      allEventDates: json['all_event_dates'] != null
-          ? (json['all_event_dates'] as List)
-          .map((e) => EventDateTimeData.fromJson(e))
+      allTripDates: json['all_trip_dates'] != null
+          ? (json['all_trip_dates'] as List)
+          .map((e) => EventTripDateTimeData.fromJson(e))
           .toList()
           : null,
       samitiOrganisers: json['samiti_organisers'] != null
@@ -124,8 +125,8 @@ class GetEventTripDetailsByIdData {
     if (zones != null) {
       data['zones'] = zones!.map((zone) => zone.toJson()).toList();
     }
-    if (allEventDates != null) {
-      data['all_event_dates'] = allEventDates!.map((e) => e.toJson()).toList();
+    if (allTripDates != null) {
+      data['all_trip_dates'] = allTripDates!.map((e) => e.toJson()).toList();
     }
     if (samitiOrganisers != null) {
       data['samiti_organisers'] = samitiOrganisers!.map((e) => e.toJson()).toList();

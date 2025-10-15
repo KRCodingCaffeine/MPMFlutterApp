@@ -230,21 +230,31 @@ class _EventTripPageState extends State<EventTripPage> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              // 📅 Date Section
               Container(
                 width: 60,
                 padding: const EdgeInsets.only(top: 4),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(day,
-                        style: const TextStyle(
-                            fontSize: 24, fontWeight: FontWeight.bold)),
-                    Text(month,
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w500)),
+                    Text(
+                      day,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      month,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ],
                 ),
               ),
+
               const SizedBox(width: 8),
               Container(
                 height: 100,
@@ -252,28 +262,103 @@ class _EventTripPageState extends State<EventTripPage> {
                 color: Colors.grey[400],
               ),
               const SizedBox(width: 12),
+
+              // 📋 Trip Details
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(trip.tripName ?? '',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                            fontSize: 18)),
-                    const SizedBox(height: 4),
-                    Text("Coordinator: ${trip.tripOrganiserName ?? 'Unknown'}",
-                        style: const TextStyle(color: Colors.black54, fontSize: 14)),
-                    const SizedBox(height: 4),
+                    // Trip Name
                     Text(
-                      trip.tripDescription ?? '',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12),
+                      trip.tripName ?? '',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                        fontSize: 18,
+                      ),
                     ),
                     const SizedBox(height: 4),
-                    Text("Registration Last Date: $formattedLastDate",
-                        style: const TextStyle(color: Colors.black54, fontSize: 14)),
+
+                    // Samiti Organisers
+                    if (trip.samitiOrganisers != null &&
+                        trip.samitiOrganisers!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: RichText(
+                          text: TextSpan(
+                            style: const TextStyle(fontSize: 12),
+                            children: [
+                              const TextSpan(
+                                text: "By: ",
+                                style: TextStyle(
+                                  color: Colors.black54,
+                                  fontWeight: FontWeight.normal,
+                                ),
+                              ),
+                              TextSpan(
+                                text: trip.samitiOrganisers!
+                                    .map((organiser) => organiser
+                                    .subCategory
+                                    ?.samitiSubCategoryName ??
+                                    'Unknown')
+                                    .join(', '),
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                    // Coordinator
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          const TextSpan(
+                            text: 'Coordinator: ',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 14,
+                            ),
+                          ),
+                          TextSpan(
+                            text: trip.tripOrganiserName
+                                ?.split(',')
+                                .join(', ') ??
+                                'Unknown',
+                            style: TextStyle(
+                              color: Colors.grey[700],
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Description
+                    SizedBox(
+                      width: double.infinity,
+                      child: Text(
+                        trip.tripDescription ?? '',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Registration Last Date
+                    Text(
+                      "Registration Last Date: $formattedLastDate",
+                      style: const TextStyle(
+                        color: Colors.black54,
+                        fontSize: 14,
+                      ),
+                    ),
                   ],
                 ),
               ),
