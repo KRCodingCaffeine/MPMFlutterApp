@@ -262,6 +262,28 @@ class _EventTripPageState extends State<EventTripPage> {
                           color: Colors.black,
                           fontSize: 18)),
                   const SizedBox(height: 4),
+                  if (trip.samitiOrganisers != null && trip.samitiOrganisers!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: RichText(
+                        text: TextSpan(
+                          style: const TextStyle(fontSize: 12),
+                          children: [
+                            const TextSpan(
+                              text: "By: ",
+                              style: TextStyle(color: Colors.black54, fontWeight: FontWeight.normal),
+                            ),
+                            TextSpan(
+                              text: trip.samitiOrganisers!
+                                  .map((organiser) => organiser.subCategory?.samitiSubCategoryName ?? 'Unknown')
+                                  .join(', '),
+                              style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 4),
                   Text("Coordinator: ${trip.tripOrganiserName ?? 'Unknown'}",
                       style: const TextStyle(color: Colors.black54, fontSize: 14)),
                   const SizedBox(height: 4),
