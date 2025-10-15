@@ -31,5 +31,6 @@ class RouteNames {
   static const String add_enquiry_form = "add_enquiry_form";
   static const String profile = "profile_view";
   static const String notification_view = "notification_view";
+  static const String notification_detail = "notification_detail";
 
 }

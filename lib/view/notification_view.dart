@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:mpm/view/notification_detail.dart';
 
-import 'package:mpm/view_model/controller/notification/NotificationController.dart';
+import 'package:mpm/view_model/controller/notification/NotificationApiController.dart';
 
 class NotificationView extends StatefulWidget {
   const NotificationView({super.key});
@@ -14,7 +14,7 @@ class NotificationView extends StatefulWidget {
 }
 
 class _NotificationViewState extends State<NotificationView> {
-  final NotificationController controller = Get.find<NotificationController>();
+  final NotificationApiController controller = Get.find<NotificationApiController>();
   bool _firstBuildDone = false;
 
   @override
@@ -22,12 +22,12 @@ class _NotificationViewState extends State<NotificationView> {
     super.didChangeDependencies();
 
     if (!_firstBuildDone) {
-      controller.loadNotifications(); // Load on first build
+      controller.loadLocalNotifications(); // Load on first build
       _firstBuildDone = true;
     } else {
       // Refresh when user comes back to this tab
       Future.delayed(Duration.zero, () {
-        controller.loadNotifications();
+        controller.loadLocalNotifications();
       });
     }
   }
@@ -107,7 +107,7 @@ class _NotificationViewState extends State<NotificationView> {
                 trailing: IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
                   onPressed: () {
-                    _showDeleteConfirmationDialog(context, notification.id!);
+                    _showDeleteConfirmationDialog(context, notification);
                   },
                 ),
               ),
@@ -119,7 +119,7 @@ class _NotificationViewState extends State<NotificationView> {
   }
 
   void _showDeleteConfirmationDialog(
-      BuildContext context, int notificationId) {
+      BuildContext context, NotificationDataModel notification) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -169,7 +169,7 @@ class _NotificationViewState extends State<NotificationView> {
             ),
             ElevatedButton(
               onPressed: () {
-                controller.deleteNotification(notificationId);
+                controller.deleteNotification(notification);
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(

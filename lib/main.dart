@@ -8,11 +8,12 @@ import 'package:get/get.dart';
 import 'package:mpm/route/route_name.dart';
 import 'package:mpm/route/route_page.dart';
 import 'package:mpm/utils/DefaultFirebaseOptions.dart';
-import 'package:mpm/view_model/controller/notification/NotificationController.dart';
+import 'package:mpm/view_model/controller/notification/NotificationApiController.dart';
 
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/notification_service.dart';
+import 'package:mpm/utils/device_token_service.dart';
 
 
 Future<void> main() async {
@@ -23,9 +24,10 @@ Future<void> main() async {
   
   await Firebase.initializeApp();
   await NotificationService().init();
+  await DeviceTokenService().initialize();
 
-  // Register NotificationController globally
-  Get.put(NotificationController(), permanent: true);
+  // Register NotificationApiController globally
+  Get.put(NotificationApiController(), permanent: true);
 
   // Lock screen orientation
   await SystemChrome.setPreferredOrientations([

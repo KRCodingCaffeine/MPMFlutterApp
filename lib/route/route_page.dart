@@ -19,7 +19,9 @@ import 'package:mpm/view/gov_scheme.dart';
 import 'package:mpm/view/home_view.dart';
 import 'package:mpm/view/language_view.dart';
 import 'package:mpm/view/login_view.dart';
-import 'package:mpm/view/notification_view.dart';
+import 'package:mpm/view/notification_list_view.dart';
+import 'package:mpm/view/notification_detail.dart';
+import 'package:mpm/model/notification/NotificationDataModel.dart';
 import 'package:mpm/view/otp_view.dart';
 import 'package:mpm/view/personal_view.dart';
 import 'package:mpm/view/reg_otp_view.dart';
@@ -89,15 +91,19 @@ class RoutePages {
           const EnquiryFormLoader(),
           settings,
         );
-
       case RouteNames.profile:
         return _buildRoute(const ProfileView(), settings);
       case RouteNames.searchmember:
         return _buildRoute(SearchView(), settings);
       case RouteNames.notification_view:
-        return _buildRoute(NotificationView(), settings);
-      case RouteNames.qr_code:
-        return _buildRoute(QRScannerScreen(), settings);
+        return _buildRoute(const NotificationListView(), settings);
+      case RouteNames.notification_detail:
+        final notification = settings.arguments as NotificationDataModel;
+        return _buildRoute(NotificationDetailPage(
+          title: notification.title,
+          body: notification.body,
+          image: notification.image,
+        ), settings);
 
       default:
         return MaterialPageRoute(builder: (context) {

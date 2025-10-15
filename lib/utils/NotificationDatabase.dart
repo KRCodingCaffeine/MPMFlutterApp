@@ -14,7 +14,12 @@ class NotificationDatabase {
     try {
       final dbPath = await getDatabasesPath();
       final path = join(dbPath, filePath);
-      return await openDatabase(path, version: 1, onCreate: _createDB);
+      return await openDatabase(
+        path, 
+        version: 2, // Increment version to trigger migration
+        onCreate: _createDB,
+        onUpgrade: _onUpgrade,
+      );
     } catch (e) {
       print('Database init error: $e');
       rethrow;
@@ -29,9 +34,21 @@ class NotificationDatabase {
         body TEXT,
         image TEXT,
         timestamp TEXT,
-        isRead INTEGER
+        isRead INTEGER,
+        type TEXT,
+        actionUrl TEXT,
+        serverId TEXT
       )
     ''');
+  }
+
+  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Add new columns for version 2
+      await db.execute('ALTER TABLE notifications ADD COLUMN type TEXT');
+      await db.execute('ALTER TABLE notifications ADD COLUMN actionUrl TEXT');
+      await db.execute('ALTER TABLE notifications ADD COLUMN serverId TEXT');
+    }
   }
   Future<void> insertNotification(NotificationDataModel notification) async {
     final db = await instance.database;
@@ -41,7 +58,11 @@ class NotificationDatabase {
   Future<List<NotificationDataModel>> getAllNotifications() async {
     try {
       final db = await instance.database;
-      final result = await db.query('notifications', orderBy: 'timestamp DESC');
+      // Sort by timestamp DESC to show latest notifications first
+      final result = await db.query(
+        'notifications', 
+        orderBy: 'timestamp DESC, id DESC' // Secondary sort by ID for consistency
+      );
       return result.map((json) => NotificationDataModel.fromMap(json)).toList();
     } catch (e) {
       print('Get notifications error: $e');
@@ -51,7 +72,8 @@ class NotificationDatabase {
 
   Future<void> deleteAllNotifications() async {
     final db = await instance.database;
-    await db.delete('notifications');
+    final result = await db.delete('notifications');
+    print('🗑️ Deleted $result notifications from database');
   }
 
   Future<void> deleteNotificationById(int id) async {
@@ -103,5 +125,23 @@ class NotificationDatabase {
   Future close() async {
     final db = await instance.database;
     db.close();
+  }
+
+  // Method to reset database (useful for testing or if migration fails)
+  Future<void> resetDatabase() async {
+    try {
+      final db = await instance.database;
+      await db.close();
+      _database = null;
+      // Delete the database file
+      final dbPath = await getDatabasesPath();
+      final path = join(dbPath, 'notifications.db');
+      await deleteDatabase(path);
+      // Recreate database
+      await database;
+      print('Database reset successfully');
+    } catch (e) {
+      print('Error resetting database: $e');
+    }
   }
 }
