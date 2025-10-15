@@ -275,8 +275,8 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
           regiController.zoneController.value.text =
               controller.getUserData.value.address!.zoneName.toString();
           // countryController.value.text = getUserData.value.address!.countryName.toString();
-          regiController.buildingController.value.text =
-              controller.getUserData.value.address!.buildingNameId.toString();
+          // regiController.buildingController.value.text =
+          //     controller.getUserData.value.address!.buildingNameId.toString();
           // if(getUserData.value.address!.pincode.toString()!="" && getUserData.value.address!.pincode.toString()!="null") {
           //   pincodeController.value.text =
           //       getUserData.value.address!.pincode.toString();

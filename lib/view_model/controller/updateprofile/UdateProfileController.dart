@@ -1246,27 +1246,6 @@ class UdateProfileController extends GetxController {
         return;
       }
 
-      // Determine building name and ID
-      String buildingId;
-      String buildingName;
-
-      if (regiController.selectBuilding.value == "other") {
-        // Custom building name
-        buildingId = "0"; // or "" depending on your backend requirements
-        buildingName = regiController.buildingController.value.text.trim();
-
-        // Validate custom building name
-        if (buildingName.isEmpty) {
-          Get.snackbar("Error", "Please enter building name");
-          loading.value = false;
-          return;
-        }
-      } else {
-        // Selected from dropdown
-        buildingId = regiController.selectBuilding.value;
-        buildingName = ""; // Empty when selecting from list
-      }
-
       // Prepare the data with correct field names
       final Map<String, dynamic> data = {
         "member_id": userData.memberId.toString(),
@@ -1274,8 +1253,12 @@ class UdateProfileController extends GetxController {
         "area": regiController.areaController.value.text.isNotEmpty
             ? regiController.areaController.value.text.trim()
             : regiController.area_name.value.trim(),
-        "building_id": buildingId,
-        "building_name": buildingName, // This is the key field
+        "building_id": regiController.selectBuilding.value == "other"
+            ? ""
+            : regiController.selectBuilding.value,
+        "building_name": regiController.selectBuilding.value == "other"
+            ? regiController.buildingController.value.text
+            : "",
         "zone_id": regiController.zone_id.value,
         "address": updateresidentalAddressController.value.text.trim(),
         "city_id": regiController.city_id.value,
