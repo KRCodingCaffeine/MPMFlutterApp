@@ -24,10 +24,6 @@ class _LoginPageState extends State<LoginPage> {
   OverlayEntry? _tooltipEntry;
   final LayerLink _layerLink = LayerLink();
 
-  OverlayEntry? _outsideTooltipEntry;
-  final LayerLink _outsideLayerLink = LayerLink();
-  bool _outsideTooltipShown = false;
-
   void _showTooltip() {
     _hideTooltip(); // Remove any existing tooltip
 
@@ -172,70 +168,6 @@ class _LoginPageState extends State<LoginPage> {
   void _hideLmTooltip() {
     _lmTooltipEntry?.remove();
     _lmTooltipEntry = null;
-  }
-
-  void _showOutsideTooltip() {
-    _hideOutsideTooltip(); // remove if already visible
-    _outsideTooltipShown = true;
-
-    _outsideTooltipEntry = OverlayEntry(
-      builder: (context) => Positioned(
-        bottom: 40,
-        left: 20,
-        right: 20,
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.black38),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    shape: BoxShape.circle,
-                  ),
-                  padding: const EdgeInsets.all(6),
-                  child: const Icon(Icons.info_outline,
-                      color: Colors.redAccent, size: 18),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    'If you are from outside Mumbai, click here to login.',
-                    style: TextStyle(
-                      color: Colors.black87,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      height: 1.3,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-
-    Overlay.of(context).insert(_outsideTooltipEntry!);
-  }
-
-  void _hideOutsideTooltip() {
-    _outsideTooltipEntry?.remove();
-    _outsideTooltipEntry = null;
-    _outsideTooltipShown = false;
   }
 
   GlobalKey<FormState>? _formKeyLogin;
@@ -526,18 +458,8 @@ class _LoginPageState extends State<LoginPage> {
                           padding: const EdgeInsets.symmetric(horizontal: 6),
                           child: ElevatedButton(
                             onPressed: () {
-                              if (_outsideTooltipShown) {
-                                _hideOutsideTooltip();
-                                Navigator.pushNamed(
-                                    context, RouteNames.outside_mumbai_login);
-                              } else {
-                                _showOutsideTooltip();
-
-                                // Auto hide after a few seconds if user doesn’t click again
-                                Future.delayed(const Duration(seconds: 4), () {
-                                  _hideOutsideTooltip();
-                                });
-                              }
+                              Navigator.pushNamed(
+                                  context, RouteNames.outside_mumbai_login);
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,

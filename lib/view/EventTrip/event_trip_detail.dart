@@ -551,7 +551,7 @@ class _TripDetailPageState extends State<TripDetailPage> {
         ...slots.map((slot) {
           return Container(
             margin: const EdgeInsets.symmetric(vertical: 4),
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(8),
             child: Row(
               children: [
                 const Icon(Icons.calendar_today, size: 18, color: Colors.black),
@@ -606,22 +606,6 @@ class _TripDetailPageState extends State<TripDetailPage> {
             ],
           ),
         ],
-        if (_tripDetails?.tripAmount != null &&
-            _tripDetails!.tripAmount!.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Text(
-                'Amount: ₹${_tripDetails!.tripAmount!}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-            ],
-          ),
-        ],
       ],
     );
   }
@@ -657,7 +641,7 @@ class _TripDetailPageState extends State<TripDetailPage> {
             ),
           )
               : Text(
-            _isRegistered ? "Registered" : "Register Here",
+            _isRegistered ? "Registered" : "Register Here", 
             style: const TextStyle(fontSize: 16),
           ),
         ),
