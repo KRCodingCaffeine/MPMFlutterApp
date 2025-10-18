@@ -38,14 +38,8 @@ class _SaraswanilabelViewState extends State<SaraswanilabelView> {
   final SaraswaniPublicationRepository _repository =
   SaraswaniPublicationRepository();
 
-  final List<String> months = List.generate(12, (index) {
-    final date = DateTime(0, index + 1);
-    return DateFormat.MMMM().format(date);
-  });
-
-  final List<String> years = List.generate(11, (index) {
-    return (2025 + index).toString();
-  });
+  late final List<String> years;
+  late List<String> months;
 
   List<GetLatestSaraswaniPublicationData> _allPublications = [];
   bool _isLoadingAllPublications = false;
@@ -484,7 +478,30 @@ class _SaraswanilabelViewState extends State<SaraswanilabelView> {
                       .map((year) =>
                       DropdownMenuItem(value: year, child: Text(year)))
                       .toList(),
-                  onChanged: (value) => setState(() => selectedYear = value),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedYear = value;
+
+                      final now = DateTime.now();
+                      final selectedYr = int.tryParse(value ?? "") ?? now.year;
+
+                      // 🔁 If current year → months only up to current month
+                      // else → all 12 months
+                      months = List.generate(
+                        selectedYr == now.year ? now.month : 12,
+                            (index) {
+                          final date = DateTime(0, index + 1);
+                          return DateFormat.MMMM().format(date);
+                        },
+                      );
+
+                      // reset previously selected month if it exceeds new range
+                      if (selectedMonth != null &&
+                          !months.contains(selectedMonth)) {
+                        selectedMonth = null;
+                      }
+                    });
+                  },
                 ),
               ),
               const SizedBox(height: 20),
@@ -546,6 +563,22 @@ class _SaraswanilabelViewState extends State<SaraswanilabelView> {
   @override
   void initState() {
     super.initState();
+
+    final now = DateTime.now();
+
+    months = List.generate(
+      now.month,
+          (index) {
+        final date = DateTime(0, index + 1);
+        return DateFormat.MMMM().format(date);
+      },
+    );
+
+    years = List.generate(
+      5,
+          (index) => (now.year - index).toString(),
+    );
+
     _fetchAllSaraswaniPublications();
   }
 

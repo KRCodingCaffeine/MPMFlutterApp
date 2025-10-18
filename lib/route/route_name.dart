@@ -32,4 +32,7 @@ class RouteNames {
   static const String profile = "profile_view";
   static const String notification_view = "notification_view";
 
+  // OutSide Mumbai Login
+  static const String outside_mumbai_login = "outside_mumbai_login";
+
 }
