@@ -1070,9 +1070,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
     final permissionStatus = await _requestPermission();
     if (!permissionStatus) return;
 
-    setState(() {
-      _isDownloading = true;
-      _downloadProgress = 0;
+    // Use a more controlled state update approach
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        _isDownloading = true;
+        _downloadProgress = 0;
+      });
     });
 
     try {
@@ -1088,21 +1091,30 @@ class _EventDetailPageState extends State<EventDetailPage> {
         onReceiveProgress: (received, total) {
           if (total > 0) {
             int newProgress = ((received / total) * 100).toInt();
-            setState(() {
-              _downloadProgress = newProgress;
-            });
+            // Batch state updates to reduce rebuilds
+            if (newProgress != _downloadProgress) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                setState(() {
+                  _downloadProgress = newProgress;
+                });
+              });
+            }
           }
         },
       );
 
-      setState(() {
-        _isDownloading = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        setState(() {
+          _isDownloading = false;
+        });
       });
 
       _showDownloadDialog(context, fileName, filePath);
     } catch (e) {
-      setState(() {
-        _isDownloading = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        setState(() {
+          _isDownloading = false;
+        });
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Download failed: $e")),
@@ -1439,90 +1451,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 ),
               ),
               const SizedBox(height: 8),
-              Builder(
-                builder: (context) {
-                  final docUrl = _eventDetails!.eventTermsAndConditionDocument!;
-                  final fileExtension = docUrl.split('.').last.toLowerCase();
-
-                  if (['jpg', 'jpeg', 'png', 'gif'].contains(fileExtension)) {
-                    return GestureDetector(
-                      onTap: () {
-                        showDialog(
-                          context: context,
-                          builder: (_) => Dialog(
-                            child: Container(
-                              padding: const EdgeInsets.all(10),
-                              child: InteractiveViewer(
-                                child: Image.network(
-                                  docUrl,
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (_, __, ___) => const Center(
-                                      child: Text('Failed to load image')),
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          docUrl,
-                          height: 200,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                        ),
-                      ),
-                    );
-                  } else if (['pdf', 'docx'].contains(fileExtension)) {
-                    return SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[200],
-                          foregroundColor: Colors.black87,
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 12, horizontal: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          elevation: 0,
-                        ),
-                        icon: Icon(
-                          fileExtension == 'pdf'
-                              ? Icons.picture_as_pdf
-                              : Icons.description,
-                          color:
-                              fileExtension == 'pdf' ? Colors.red : Colors.blue,
-                        ),
-                        label: _isDownloading
-                            ? LinearProgressIndicator(
-                                value: _downloadProgress / 100,
-                                backgroundColor: Colors.grey[300],
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  ColorHelperClass.getColorFromHex(
-                                      ColorResources.red_color),
-                                ),
-                              )
-                            : Text(
-                                "Download & View ${fileExtension.toUpperCase()}"),
-                        onPressed: _isDownloading
-                            ? null
-                            : () => _downloadAndOpenPdf(
-                                  docUrl,
-                                  'Event_Terms_${_eventDetails!.eventId}.$fileExtension',
-                                ),
-                      ),
-                    );
-                  } else {
-                    return const Text(
-                      "Unsupported file format",
-                      style: TextStyle(color: Colors.red),
-                    );
-                  }
-                },
-              ),
-              const SizedBox(height: 24),
+              _buildDocumentWidget(),
             ],
             const SizedBox(height: 50),
           ],
@@ -1531,5 +1460,153 @@ class _EventDetailPageState extends State<EventDetailPage> {
       bottomNavigationBar:
           _isPastEvent ? const SizedBox.shrink() : _buildRegisterButton(),
     );
+  }
+
+  Widget _buildDocumentWidget() {
+    final docUrl = _eventDetails!.eventTermsAndConditionDocument!;
+    final fileExtension = docUrl.split('.').last.toLowerCase();
+
+    // Handle image files
+    if (['jpg', 'jpeg', 'png', 'gif'].contains(fileExtension)) {
+      return GestureDetector(
+        onTap: () {
+          showDialog(
+            context: context,
+            builder: (_) => Dialog(
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                child: InteractiveViewer(
+                  child: Image.network(
+                    docUrl,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const Center(
+                      child: Text('Failed to load image'),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.network(
+            docUrl,
+            height: 200,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+          ),
+        ),
+      );
+    }
+
+    // Handle PDF and DOCX files
+    else if (['pdf', 'docx'].contains(fileExtension)) {
+      return StatefulBuilder(
+        builder: (context, setLocalState) {
+          bool isDownloading = false;
+          int downloadProgress = 0;
+
+          void startDownload() async {
+            setLocalState(() {
+              isDownloading = true;
+              downloadProgress = 0;
+            });
+
+            final permissionStatus = await _requestPermission();
+            if (!permissionStatus) {
+              setLocalState(() => isDownloading = false);
+              return;
+            }
+
+            try {
+              Directory? directory = Platform.isAndroid
+                  ? (await getExternalStorageDirectory())!
+                  : await getApplicationDocumentsDirectory();
+
+              String filePath = "${directory!.path}/Event_Terms_${_eventDetails!.eventId}.$fileExtension";
+
+              await _dio.download(
+                docUrl,
+                filePath,
+                onReceiveProgress: (received, total) {
+                  if (total > 0) {
+                    int newProgress = ((received / total) * 100).toInt();
+                    setLocalState(() {
+                      downloadProgress = newProgress;
+                    });
+                  }
+                },
+              );
+
+              setLocalState(() => isDownloading = false);
+              _showDownloadDialog(context, "Event_Terms_${_eventDetails!.eventId}.$fileExtension", filePath);
+            } catch (e) {
+              setLocalState(() => isDownloading = false);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("Download failed: $e")),
+              );
+            }
+          }
+
+          return Container(
+            height: 48,
+            child: isDownloading
+                ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  LinearProgressIndicator(
+                    value: downloadProgress / 100,
+                    backgroundColor: Colors.grey[300],
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Downloading... $downloadProgress%',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ],
+              ),
+            )
+                : SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey[200],
+                  foregroundColor: Colors.black87,
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 12, horizontal: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  elevation: 0,
+                ),
+                icon: Icon(
+                  fileExtension == 'pdf'
+                      ? Icons.picture_as_pdf
+                      : Icons.description,
+                  color: fileExtension == 'pdf' ? Colors.red : Colors.blue,
+                ),
+                label: Text(
+                  "Download & View ${fileExtension.toUpperCase()}",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                onPressed: startDownload,
+              ),
+            ),
+          );
+        },
+      );
+    } else {
+      return const Text(
+        "Unsupported file format",
+        style: TextStyle(color: Colors.red),
+      );
+    }
   }
 }
