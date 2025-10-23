@@ -4,7 +4,10 @@ class NotificationDataModel {
   final String body;
   final String image;
   final String timestamp;
-   bool isRead;
+  bool isRead;
+  final String? type;
+  final String? actionUrl;
+  final String? serverId; // To track server notification ID
 
   NotificationDataModel({
     this.id,
@@ -13,6 +16,9 @@ class NotificationDataModel {
     required this.image,
     required this.timestamp,
     this.isRead = false,
+    this.type,
+    this.actionUrl,
+    this.serverId,
   });
 
   Map<String, dynamic> toMap() {
@@ -23,6 +29,9 @@ class NotificationDataModel {
       'image': image,
       'timestamp': timestamp,
       'isRead': isRead ? 1 : 0,
+      'type': type,
+      'actionUrl': actionUrl,
+      'serverId': serverId,
     };
   }
 
@@ -34,6 +43,9 @@ class NotificationDataModel {
       image: map['image'],
       timestamp: map['timestamp'],
       isRead: map['isRead'] == 1,
+      type: map['type'],
+      actionUrl: map['actionUrl'],
+      serverId: map['serverId'],
     );
   }
 }

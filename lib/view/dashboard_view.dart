@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/utils/AppDrawer.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/home_view.dart';
 import 'package:mpm/view/SearchView.dart';
-import 'package:mpm/view/notification_view.dart';
+import 'package:mpm/view/notification_list_view.dart';
 import 'package:mpm/view/samiti%20members/samiti_members_view.dart';
 import 'package:mpm/view_model/controller/DeviceMapping/DeviceMappingController.dart';
-import 'package:mpm/view_model/controller/notification/NotificationController.dart';
+import 'package:mpm/view_model/controller/notification/NotificationApiController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
 class DashboardView extends StatefulWidget {
@@ -22,10 +21,41 @@ class DashboardView extends StatefulWidget {
 
 class _DashboardViewState extends State<DashboardView> {
   final UdateProfileController controller = Get.put(UdateProfileController());
-  final NotificationController notificationController =
-  Get.find<NotificationController>();
+  final NotificationApiController notificationController =
+  Get.find<NotificationApiController>();
   final DeviceMappingController deviceMappingController =
   DeviceMappingController();
+
+  /// Show confirmation dialog for deleting all notifications
+  void _showDeleteAllConfirmation(BuildContext context, NotificationApiController notificationController) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete All Notifications'),
+          content: const Text('Are you sure you want to delete all notifications? This action cannot be undone.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+                notificationController.deleteAllNotifications(); // Delete all notifications
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red,
+              ),
+              child: const Text('Delete All'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   void initState() {
@@ -56,7 +86,7 @@ class _DashboardViewState extends State<DashboardView> {
     const HomeView(),
     const SearchView(),
     const SamitiMembersViewPage(),
-    const NotificationView(),
+    const NotificationListView(),
   ];
 
   final List<String> appBarTitles = [
@@ -82,6 +112,25 @@ class _DashboardViewState extends State<DashboardView> {
             ),
           ),
           iconTheme: const IconThemeData(color: Colors.white),
+          actions: controller.currentIndex.value == 3 ? [
+            // Refresh button
+            IconButton(
+              icon: const Icon(Icons.refresh, color: Colors.white),
+              onPressed: () => notificationController.forceSyncWithServer(),
+              tooltip: 'Refresh notifications',
+            ),
+            // Clear all button
+            Obx(() {
+              if (notificationController.notificationList.isNotEmpty) {
+                return IconButton(
+                  icon: const Icon(Icons.clear_all, color: Colors.white),
+                  onPressed: () => _showDeleteAllConfirmation(context, notificationController),
+                  tooltip: 'Clear all notifications',
+                );
+              }
+              return const SizedBox.shrink();
+            }),
+          ] : null,
         ),
         drawer: AppDrawer(),
         backgroundColor: Colors.grey[100],
@@ -93,10 +142,17 @@ class _DashboardViewState extends State<DashboardView> {
             ColorHelperClass.getColorFromHex(ColorResources.red_color),
             unselectedItemColor: Colors.grey,
             currentIndex: controller.currentIndex.value,
-            onTap: (index) {
+          onTap: (index) {
+            try {
               controller.changeTab(index);
-              if (index == 3) notificationController.loadNotifications();
-            },
+              if (index == 3) {
+                // Simple approach: just load local notifications
+                notificationController.loadLocalNotifications();
+              }
+            } catch (e) {
+              debugPrint('❌ Error in tab click: $e');
+            }
+          },
             items: [
               const BottomNavigationBarItem(
                   icon: Icon(Icons.home), label: "Home"),
@@ -107,7 +163,7 @@ class _DashboardViewState extends State<DashboardView> {
               BottomNavigationBarItem(
                 icon: Obx(() {
                   final count =
-                      Get.find<NotificationController>().unreadCount.value;
+                      Get.find<NotificationApiController>().unreadCount.value;
                   return Stack(
                     alignment: Alignment.topRight,
                     children: [
