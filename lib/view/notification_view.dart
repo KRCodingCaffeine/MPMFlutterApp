@@ -6,6 +6,8 @@ import 'package:mpm/view/notification_detail.dart';
 
 import 'package:mpm/view_model/controller/notification/NotificationApiController.dart';
 
+import '../model/notification/NotificationDataModel.dart';
+
 class NotificationView extends StatefulWidget {
   const NotificationView({super.key});
 
