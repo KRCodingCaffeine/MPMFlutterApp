@@ -56,12 +56,13 @@ class _RegisteredEventsDetailPageState
   final EventAttendeesRepository _repository = EventAttendeesRepository();
   final CancelEventRepository _cancelRepo = CancelEventRepository();
   final GetEventDetailByIdRepository _eventDetailRepo =
-  GetEventDetailByIdRepository();
+      GetEventDetailByIdRepository();
   final GetEventAttendeesDetailByIdRepository _attendeeDetailRepo =
-  GetEventAttendeesDetailByIdRepository();
+      GetEventAttendeesDetailByIdRepository();
   final RxList<UpdatePriceDistributionData> educationList =
       <UpdatePriceDistributionData>[].obs;
-  final StudentPrizeRegistrationRepository repo = StudentPrizeRegistrationRepository();
+  final StudentPrizeRegistrationRepository repo =
+      StudentPrizeRegistrationRepository();
 
   final Rx<File?> _image = Rx<File?>(null);
   final RxString selectedMemberId = "".obs;
@@ -171,7 +172,7 @@ class _RegisteredEventsDetailPageState
           memberName = name;
           _registeredEventsFuture = _repository
               .fetchEventAttendeesByMemberId(
-              int.tryParse(userData.memberId.toString()) ?? 0)
+                  int.tryParse(userData.memberId.toString()) ?? 0)
               .then((response) {
             return response;
           });
@@ -220,7 +221,7 @@ class _RegisteredEventsDetailPageState
         return AlertDialog(
           backgroundColor: Colors.white,
           shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
           contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
           actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
@@ -246,7 +247,7 @@ class _RegisteredEventsDetailPageState
               child: const Text("No"),
               style: OutlinedButton.styleFrom(
                 foregroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: const BorderSide(color: Colors.red),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
@@ -259,7 +260,7 @@ class _RegisteredEventsDetailPageState
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
               ),
               child: const Text("Yes", style: TextStyle(color: Colors.white)),
             ),
@@ -316,15 +317,15 @@ class _RegisteredEventsDetailPageState
   }
 
   Future<void> _updateStudentPrize(
-      PriceMember student,
-      String studentName,
-      String schoolName,
-      String standardPassed,
-      String grade,
-      String yearOfPassed,
-      File? markSheetFile,
-      String? existingMarksheetUrl,
-      ) async {
+    PriceMember student,
+    String studentName,
+    String schoolName,
+    String standardPassed,
+    String grade,
+    String yearOfPassed,
+    File? markSheetFile,
+    String? existingMarksheetUrl,
+  ) async {
     try {
       final userData = await SessionManager.getSession();
       if (userData == null || userData.memberId == null) {
@@ -348,7 +349,7 @@ class _RegisteredEventsDetailPageState
         'grade': grade.trim(),
         'updated_by': userData.memberId.toString(),
         'mark_sheet_attachment':
-        markSheetFile?.path ?? existingMarksheetUrl ?? '',
+            markSheetFile?.path ?? existingMarksheetUrl ?? '',
       };
 
       debugPrint("Sending Student Prize Update: $updateData");
@@ -377,7 +378,7 @@ class _RegisteredEventsDetailPageState
         return AlertDialog(
           backgroundColor: Colors.white,
           shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
           titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
           contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
           actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
@@ -405,7 +406,7 @@ class _RegisteredEventsDetailPageState
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
               ),
@@ -425,7 +426,7 @@ class _RegisteredEventsDetailPageState
         return AlertDialog(
           backgroundColor: Colors.white,
           shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
           titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
           contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
           actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
@@ -451,7 +452,7 @@ class _RegisteredEventsDetailPageState
               onPressed: () => Navigator.pop(context),
               style: OutlinedButton.styleFrom(
                 foregroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: const BorderSide(color: Colors.red),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
@@ -582,7 +583,7 @@ class _RegisteredEventsDetailPageState
           elevation: 5,
           margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           color: Colors.white,
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -806,7 +807,8 @@ class _RegisteredEventsDetailPageState
         eventId: int.tryParse(widget.eventAttendee.event?.eventId ?? "0"),
         memberId: int.tryParse(userData.memberId.toString()),
         addedBy: int.tryParse(userData.memberId.toString()),
-        eventAttendeesId: int.tryParse(widget.eventAttendee.eventAttendeesId ?? "0"),
+        eventAttendeesId:
+            int.tryParse(widget.eventAttendee.eventAttendeesId ?? "0"),
         priceMemberId: int.tryParse(selectedMemberId.value),
         studentName: studentNameController.text.trim(),
         schoolName: schoolNameController.text.trim(),
@@ -817,7 +819,8 @@ class _RegisteredEventsDetailPageState
         markSheetAttachment: _image.value?.path,
       );
 
-      debugPrint("Sending Student Prize Registration: ${registrationData.toJson()}");
+      debugPrint(
+          "Sending Student Prize Registration: ${registrationData.toJson()}");
 
       final response = await repo.registerForStudentPrize(registrationData);
 
@@ -833,7 +836,8 @@ class _RegisteredEventsDetailPageState
           selectedMemberId.value = "";
           selectedYear.value = "";
 
-          await _showSuccesDialog('Successfully registered for Student Prize Distribution');
+          await _showSuccesDialog(
+              'Successfully registered for Student Prize Distribution');
         }
       } else {
         throw Exception(response['message'] ?? 'Failed to register');
@@ -851,7 +855,8 @@ class _RegisteredEventsDetailPageState
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
           titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
           contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
           actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
@@ -884,8 +889,10 @@ class _RegisteredEventsDetailPageState
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
               ),
               child: const Text("OK", style: TextStyle(color: Colors.white)),
             ),
@@ -902,7 +909,8 @@ class _RegisteredEventsDetailPageState
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
           titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
           contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
           actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
@@ -935,8 +943,10 @@ class _RegisteredEventsDetailPageState
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
               ),
               child: const Text("OK", style: TextStyle(color: Colors.white)),
             ),
@@ -953,7 +963,8 @@ class _RegisteredEventsDetailPageState
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
           titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
           contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
           actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
@@ -978,9 +989,11 @@ class _RegisteredEventsDetailPageState
             OutlinedButton(
               onPressed: () => Navigator.pop(context),
               style: OutlinedButton.styleFrom(
-                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: const BorderSide(color: Colors.red),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
               ),
               child: const Text("Close"),
             ),
@@ -1054,7 +1067,7 @@ class _RegisteredEventsDetailPageState
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Builder(
           builder: (context) {
             double fontSize = MediaQuery.of(context).size.width * 0.045;
@@ -1074,134 +1087,218 @@ class _RegisteredEventsDetailPageState
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (widget.eventAttendee.eventQrCode != null &&
-                widget.eventAttendee.eventQrCode!.isNotEmpty) ...[
-              Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        showDialog(
-                          context: context,
-                          builder: (_) => Dialog(
-                            backgroundColor: Colors.black,
-                            insetPadding: const EdgeInsets.all(10),
-                            child: InteractiveViewer(
-                              panEnabled: true,
-                              boundaryMargin: const EdgeInsets.all(20),
-                              minScale: 0.5,
-                              maxScale: 4.0,
-                              child: Image.network(
-                                widget.eventAttendee.eventQrCode!,
-                                fit: BoxFit.contain,
-                                errorBuilder: (_, __, ___) =>
-                                const Center(
-                                  child: Icon(Icons.broken_image,
-                                      color: Colors.white),
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          widget.eventAttendee.eventQrCode!,
-                          height: 300,
-                          width: 400,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(
-                              Icons.qr_code,
-                              size: 80,
-                              color: Colors.grey),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      "Scan this QR Code for Gate Pass Entry",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
-            ],
-            const Text(
-              'Attendee Details:',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildRow("Name", memberName),
-                  _buildRow(
-                    "Reference Code",
-                    widget.eventAttendee.eventAttendeesCode ??
-                        "Not Available",
+                  if (widget.eventAttendee.eventQrCode != null &&
+                      widget.eventAttendee.eventQrCode!.isNotEmpty) ...[
+                    Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (_) => Dialog(
+                                  backgroundColor: Colors.black,
+                                  insetPadding: const EdgeInsets.all(10),
+                                  child: InteractiveViewer(
+                                    panEnabled: true,
+                                    boundaryMargin: const EdgeInsets.all(20),
+                                    minScale: 0.5,
+                                    maxScale: 4.0,
+                                    child: Image.network(
+                                      widget.eventAttendee.eventQrCode!,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (_, __, ___) =>
+                                          const Center(
+                                        child: Icon(Icons.broken_image,
+                                            color: Colors.white),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                widget.eventAttendee.eventQrCode!,
+                                height: 300,
+                                width: 400,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.qr_code,
+                                    size: 80,
+                                    color: Colors.grey),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            "Scan this QR Code for Gate Pass Entry",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+                      ),
+                    ),
+                  ],
+                  const Text(
+                    'Attendee Details:',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
                   ),
-                  _buildRow(
-                    "Seat No",
-                    _seatNo ?? "Not Allotted",
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildRow("Name", memberName),
+                        _buildRow(
+                          "Reference Code",
+                          widget.eventAttendee.eventAttendeesCode ??
+                              "Not Available",
+                        ),
+                        if (_eventDetails?.hasSeatAllocate == "1") ...[
+                          _buildRow(
+                            "Seat No",
+                            _seatNo ?? "Not Allotted",
+                          ),
+                        ],
+                        if (_eventDetails?.hasFood == "1") ...[
+                          _buildRows(
+                            "No of Food Coupon",
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  widget.eventAttendee.noOfFoodContainer ??
+                                      "Not Allotted",
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    int? eventAttendeesId = int.tryParse(
+                                        widget.eventAttendee.eventAttendeesId ??
+                                            '');
+
+                                    if (eventAttendeesId != null) {
+                                      _showFoodBottomSheet(
+                                        context,
+                                        eventAttendeesId,
+                                        currentFoodOption: (widget.eventAttendee
+                                                        .noOfFoodContainer !=
+                                                    null &&
+                                                widget.eventAttendee
+                                                        .noOfFoodContainer !=
+                                                    "0")
+                                            ? "Yes"
+                                            : "No",
+                                        currentFoodBoxCount: int.tryParse(widget
+                                                    .eventAttendee
+                                                    .noOfFoodContainer ??
+                                                '0') ??
+                                            0,
+                                      );
+                                    } else {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content: Text(
+                                                'Invalid event attendees ID')),
+                                      );
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: const Color(0xFFDC3545),
+                                    elevation: 4,
+                                    shadowColor: Colors.black,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 4),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      Icon(Icons.edit, size: 12),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'Edit',
+                                        style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        _buildRow(
+                          "Event Date",
+                          _dateStartsFrom != null
+                              ? DateFormat('dd MMM yyyy').format(
+                                  DateTime.parse(_dateStartsFrom!),
+                                )
+                              : "Unknown Date",
+                        ),
+                      ],
+                    ),
                   ),
-                  _buildRows(
-                    "No of Food Coupon",
-                    child: Row(
+                  const SizedBox(height: 10),
+                  _buildEventInfo(),
+                  if (_hasStudentPrizeMember) ...[
+                    const Divider(thickness: 1, color: Colors.grey),
+                    const SizedBox(height: 10),
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          widget.eventAttendee.noOfFoodContainer ??
-                              "Not Allotted",
-                          style: const TextStyle(fontSize: 14),
+                        const Text(
+                          'Student Prize Registration:',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
                         ),
                         ElevatedButton(
                           onPressed: () async {
-                            int? eventAttendeesId = int.tryParse(
-                                widget.eventAttendee.eventAttendeesId ??
-                                    '');
-
-                            if (eventAttendeesId != null) {
-                              _showFoodBottomSheet(
-                                context,
-                                eventAttendeesId,
-                                currentFoodOption: (widget.eventAttendee
-                                    .noOfFoodContainer !=
-                                    null &&
-                                    widget.eventAttendee
-                                        .noOfFoodContainer !=
-                                        "0")
-                                    ? "Yes"
-                                    : "No",
-                                currentFoodBoxCount: int.tryParse(widget
-                                    .eventAttendee
-                                    .noOfFoodContainer ??
-                                    '0') ??
-                                    0,
-                              );
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text(
-                                        'Invalid event attendees ID')),
-                              );
+                            final userData = await SessionManager.getSession();
+                            if (userData != null && userData.memberId != null) {
+                              final eventIdStr =
+                                  widget.eventAttendee.event?.eventId;
+                              if (eventIdStr != null && eventIdStr.isNotEmpty) {
+                                final eventId = int.tryParse(eventIdStr);
+                                if (eventId != null) {
+                                  _showAddEducationDetailsSheet(context);
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text('Invalid Event ID')),
+                                  );
+                                }
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text('Event ID not available')),
+                                );
+                              }
                             }
                           },
                           style: ElevatedButton.styleFrom(
@@ -1218,134 +1315,55 @@ class _RegisteredEventsDetailPageState
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: const [
-                              Icon(Icons.edit, size: 12),
+                              Icon(Icons.add, size: 12),
                               SizedBox(width: 4),
                               Text(
-                                'Edit',
+                                'Add',
                                 style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500),
+                                    fontSize: 12, fontWeight: FontWeight.w500),
                               ),
                             ],
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  _buildRow(
-                    "Event Date",
-                    _dateStartsFrom != null
-                        ? DateFormat('dd MMM yyyy').format(
-                      DateTime.parse(_dateStartsFrom!),
-                    )
-                        : "Unknown Date",
-                  ),
+                    _buildStudentPrizeCards(),
+                  ],
+                  const SizedBox(height: 10),
+                  if (_eventOrganiserName != null ||
+                      _eventOrganiserMobile != null) ...[
+                    const Divider(thickness: 1, color: Colors.grey),
+                    const SizedBox(height: 16),
+                    _buildOrganiserInfo(),
+                    const SizedBox(height: 24),
+                  ],
+                  const SizedBox(height: 30),
                 ],
               ),
             ),
-            const SizedBox(height: 10),
-            _buildEventInfo(),
-            if (_hasStudentPrizeMember) ...[
-              const Divider(thickness: 1, color: Colors.grey),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Student Prize Registration:',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () async {
-                      final userData = await SessionManager.getSession();
-                      if (userData != null && userData.memberId != null) {
-                        final eventIdStr =
-                            widget.eventAttendee.event?.eventId;
-                        if (eventIdStr != null && eventIdStr.isNotEmpty) {
-                          final eventId = int.tryParse(eventIdStr);
-                          if (eventId != null) {
-                            _showAddEducationDetailsSheet(context);
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text('Invalid Event ID')),
-                            );
-                          }
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Event ID not available')),
-                          );
-                        }
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFFDC3545),
-                      elevation: 4,
-                      shadowColor: Colors.black,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(Icons.add, size: 12),
-                        SizedBox(width: 4),
-                        Text(
-                          'Add',
-                          style: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.w500),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              _buildStudentPrizeCards(),
-            ],
-            const SizedBox(height: 10),
-            if (_eventOrganiserName != null ||
-                _eventOrganiserMobile != null) ...[
-              const Divider(thickness: 1, color: Colors.grey),
-              const SizedBox(height: 16),
-              _buildOrganiserInfo(),
-              const SizedBox(height: 24),
-            ],
-            const SizedBox(height: 30),
-          ],
-        ),
-      ),
       bottomNavigationBar: _isCancelled || _isPastEvent
           ? null
           : Padding(
-        padding: const EdgeInsets.all(16),
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: ColorHelperClass.getColorFromHex(
-                ColorResources.red_color),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+              padding: const EdgeInsets.all(16),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColorHelperClass.getColorFromHex(
+                      ColorResources.red_color),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                onPressed: () {
+                  _showCancelConfirmationDialog();
+                },
+                child: const Text(
+                  'Cancel Registration',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+              ),
             ),
-          ),
-          onPressed: () {
-            _showCancelConfirmationDialog();
-          },
-          child: const Text(
-            'Cancel Registration',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-          ),
-        ),
-      ),
     );
   }
 
@@ -1354,7 +1372,8 @@ class _RegisteredEventsDetailPageState
       context: context,
       backgroundColor: Colors.grey[100],
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) {
         return Padding(
           padding: EdgeInsets.only(
@@ -1373,7 +1392,8 @@ class _RegisteredEventsDetailPageState
                   children: [
                     OutlinedButton(
                       onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                      style:
+                          OutlinedButton.styleFrom(foregroundColor: Colors.red),
                       child: const Text("Cancel"),
                     ),
                     ElevatedButton(
@@ -1400,47 +1420,66 @@ class _RegisteredEventsDetailPageState
                         final familyList = controller.familyDataList;
 
                         if (familyList.isEmpty) {
-                          return const Center(child: Text('No Members available'));
+                          return const Center(
+                              child: Text('No Members available'));
                         } else {
                           final selectedValue = selectedMemberId.value;
 
                           return Expanded(
                             child: InputDecorator(
                               decoration: InputDecoration(
-                                labelText: selectedValue.isNotEmpty ? 'Select Children *' : null,
-                                border: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
-                                enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
-                                focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black38, width: 1)),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-                                labelStyle: const TextStyle(color: Colors.black),
+                                labelText: selectedValue.isNotEmpty
+                                    ? 'Select Children *'
+                                    : null,
+                                border: const OutlineInputBorder(
+                                    borderSide:
+                                        BorderSide(color: Colors.black)),
+                                enabledBorder: const OutlineInputBorder(
+                                    borderSide:
+                                        BorderSide(color: Colors.black)),
+                                focusedBorder: const OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: Colors.black38, width: 1)),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 4),
+                                labelStyle:
+                                    const TextStyle(color: Colors.black),
                               ),
                               child: DropdownButton<String>(
                                 dropdownColor: Colors.white,
                                 borderRadius: BorderRadius.circular(10),
                                 isExpanded: true,
                                 underline: Container(),
-                                hint: const Text('Select Children *', style: TextStyle(fontWeight: FontWeight.bold)),
-                                value: selectedValue.isNotEmpty ? selectedValue : null,
+                                hint: const Text('Select Children *',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold)),
+                                value: selectedValue.isNotEmpty
+                                    ? selectedValue
+                                    : null,
                                 items: familyList.map((member) {
                                   return DropdownMenuItem<String>(
                                     value: member.memberId.toString(),
-                                    child: Text("${member.firstName} ${member.middleName ?? ''} ${member.lastName}"),
+                                    child: Text(
+                                        "${member.firstName} ${member.middleName ?? ''} ${member.lastName}"),
                                   );
                                 }).toList(),
                                 onChanged: (String? newValue) {
                                   if (newValue != null) {
                                     selectedMemberId.value = newValue;
 
-                                    final selectedMember = controller.familyDataList.firstWhereOrNull(
-                                            (m) => m.memberId.toString() == newValue
-                                    );
+                                    final selectedMember = controller
+                                        .familyDataList
+                                        .firstWhereOrNull((m) =>
+                                            m.memberId.toString() == newValue);
 
                                     if (selectedMember != null) {
                                       final fullName = [
                                         selectedMember.firstName,
                                         selectedMember.middleName ?? "",
                                         selectedMember.lastName ?? ""
-                                      ].where((name) => name.isNotEmpty).join(" ");
+                                      ]
+                                          .where((name) => name.isNotEmpty)
+                                          .join(" ");
 
                                       studentNameController.text = fullName;
                                     }
@@ -1459,20 +1498,17 @@ class _RegisteredEventsDetailPageState
                     label: "School Name",
                     controller: schoolNameController,
                     type: TextInputType.text,
-                    empty: "Enter school name"
-                ),
+                    empty: "Enter school name"),
                 _buildTextField(
                     label: "Standard Passed",
                     controller: standardController,
                     type: TextInputType.text,
-                    empty: "Enter standard"
-                ),
+                    empty: "Enter standard"),
                 _buildTextField(
                     label: "Percentage of Marks or Grade",
                     controller: gradeController,
                     type: TextInputType.text,
-                    empty: "Enter marks/grade"
-                ),
+                    empty: "Enter marks/grade"),
                 Container(
                   width: double.infinity,
                   child: Row(
@@ -1484,11 +1520,18 @@ class _RegisteredEventsDetailPageState
 
                           return InputDecorator(
                             decoration: InputDecoration(
-                              labelText: selectedValue.isNotEmpty ? 'Year of Passing *' : null,
-                              border: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
-                              enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
-                              focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black38, width: 1)),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                              labelText: selectedValue.isNotEmpty
+                                  ? 'Year of Passing *'
+                                  : null,
+                              border: const OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.black)),
+                              enabledBorder: const OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.black)),
+                              focusedBorder: const OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      color: Colors.black38, width: 1)),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 4),
                               labelStyle: const TextStyle(color: Colors.black),
                             ),
                             child: DropdownButton<String>(
@@ -1496,8 +1539,12 @@ class _RegisteredEventsDetailPageState
                               borderRadius: BorderRadius.circular(10),
                               isExpanded: true,
                               underline: Container(),
-                              hint: const Text('Year of Passing *', style: TextStyle(fontWeight: FontWeight.bold)),
-                              value: selectedValue.isNotEmpty ? selectedValue : null,
+                              hint: const Text('Year of Passing *',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
+                              value: selectedValue.isNotEmpty
+                                  ? selectedValue
+                                  : null,
                               items: years.map((year) {
                                 return DropdownMenuItem<String>(
                                   value: year,
@@ -1541,9 +1588,11 @@ class _RegisteredEventsDetailPageState
                           icon: const Icon(Icons.image),
                           label: const Text("Upload Mark Sheet"),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                            backgroundColor: ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color),
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
                         ),
@@ -1572,7 +1621,8 @@ class _RegisteredEventsDetailPageState
               title: const Text("Take a Picture"),
               onTap: () async {
                 Navigator.pop(context);
-                final pickedFile = await ImagePicker().pickImage(source: ImageSource.camera);
+                final pickedFile =
+                    await ImagePicker().pickImage(source: ImageSource.camera);
                 if (pickedFile != null) {
                   targetImage.value = File(pickedFile.path);
                 }
@@ -1583,7 +1633,8 @@ class _RegisteredEventsDetailPageState
               title: const Text("Choose from Gallery"),
               onTap: () async {
                 Navigator.pop(context);
-                final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+                final pickedFile =
+                    await ImagePicker().pickImage(source: ImageSource.gallery);
                 if (pickedFile != null) {
                   targetImage.value = File(pickedFile.path);
                 }
@@ -1613,10 +1664,14 @@ class _RegisteredEventsDetailPageState
           labelText: label,
           labelStyle: const TextStyle(color: Colors.black),
           hintStyle: const TextStyle(color: Colors.black54),
-          border: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
-          enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
-          focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black38, width: 1)),
-          contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+          border: const OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black)),
+          enabledBorder: const OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black)),
+          focusedBorder: const OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black38, width: 1)),
+          contentPadding:
+              const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
         ),
         validator: (value) {
           if (value == null || value.isEmpty) return empty;
@@ -1627,11 +1682,11 @@ class _RegisteredEventsDetailPageState
   }
 
   void _showFoodBottomSheet(
-      BuildContext context,
-      int eventAttendeesId, {
-        String? currentFoodOption,
-        int currentFoodBoxCount = 0,
-      }) {
+    BuildContext context,
+    int eventAttendeesId, {
+    String? currentFoodOption,
+    int currentFoodBoxCount = 0,
+  }) {
     final TextEditingController _foodBoxController = TextEditingController(
         text: currentFoodBoxCount > 0 ? currentFoodBoxCount.toString() : '');
     String? selectedFoodOption = currentFoodOption;
@@ -1663,7 +1718,7 @@ class _RegisteredEventsDetailPageState
                     OutlinedButton(
                       onPressed: () => Navigator.pop(context),
                       style:
-                      OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                          OutlinedButton.styleFrom(foregroundColor: Colors.red),
                       child: const Text("Cancel"),
                     ),
                     ElevatedButton(
@@ -1729,9 +1784,9 @@ class _RegisteredEventsDetailPageState
                           _foodBoxController.text = '2';
                           _foodBoxController.selection =
                               TextSelection.fromPosition(
-                                TextPosition(
-                                    offset: _foodBoxController.text.length),
-                              );
+                            TextPosition(
+                                offset: _foodBoxController.text.length),
+                          );
                           localFoodBoxCount = 2;
                         } else {
                           localFoodBoxCount = num;
@@ -1766,7 +1821,7 @@ class _RegisteredEventsDetailPageState
       final requestBody = {
         'event_attendees_id': eventAttendeesId.toString(),
         'no_of_food_container':
-        (selectedOption == "Yes" ? boxCount : 0).toString(),
+            (selectedOption == "Yes" ? boxCount : 0).toString(),
         'updated_by': userData.memberId.toString(),
       };
 
@@ -1840,7 +1895,7 @@ class _RegisteredEventsDetailPageState
 
   Widget _buildRows(String label, {String? value, Widget? child}) {
     assert(value != null || child != null,
-    'Either value or child must be provided');
+        'Either value or child must be provided');
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
@@ -1882,16 +1937,18 @@ class _RegisteredEventsDetailPageState
   }
 
   void _showEducationDetailsSheet(BuildContext context, PriceMember student) {
-    if (student.priceMemberId != null) { selectedMemberId.value = student.priceMemberId.toString(); }
+    if (student.priceMemberId != null) {
+      selectedMemberId.value = student.priceMemberId.toString();
+    }
 
     final TextEditingController localStudentNameController =
-    TextEditingController(text: student.studentName ?? '');
+        TextEditingController(text: student.studentName ?? '');
     final TextEditingController localSchoolNameController =
-    TextEditingController(text: student.schoolName ?? '');
+        TextEditingController(text: student.schoolName ?? '');
     final TextEditingController localStandardController =
-    TextEditingController(text: student.standardPassed ?? '');
+        TextEditingController(text: student.standardPassed ?? '');
     final TextEditingController localGradeController =
-    TextEditingController(text: student.grade ?? '');
+        TextEditingController(text: student.grade ?? '');
 
     // Local year + marksheet
     final RxString localSelectedYear = (student.yearOfPassed ?? '').obs;
@@ -1923,7 +1980,8 @@ class _RegisteredEventsDetailPageState
                   children: [
                     OutlinedButton(
                       onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                      style:
+                          OutlinedButton.styleFrom(foregroundColor: Colors.red),
                       child: const Text("Cancel"),
                     ),
                     ElevatedButton(
@@ -1969,17 +2027,22 @@ class _RegisteredEventsDetailPageState
                           return Expanded(
                             child: InputDecorator(
                               decoration: InputDecoration(
-                                labelText:
-                                selectedValue.isNotEmpty ? 'Select Children *' : null,
+                                labelText: selectedValue.isNotEmpty
+                                    ? 'Select Children *'
+                                    : null,
                                 border: const OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.black)),
+                                    borderSide:
+                                        BorderSide(color: Colors.black)),
                                 enabledBorder: const OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.black)),
+                                    borderSide:
+                                        BorderSide(color: Colors.black)),
                                 focusedBorder: const OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.black38, width: 1)),
+                                    borderSide: BorderSide(
+                                        color: Colors.black38, width: 1)),
                                 contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 20, vertical: 4),
-                                labelStyle: const TextStyle(color: Colors.black),
+                                labelStyle:
+                                    const TextStyle(color: Colors.black),
                               ),
                               child: DropdownButton<String>(
                                 dropdownColor: Colors.white,
@@ -1990,7 +2053,9 @@ class _RegisteredEventsDetailPageState
                                   'Select Children *',
                                   style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
-                                value: selectedValue.isNotEmpty ? selectedValue : null,
+                                value: selectedValue.isNotEmpty
+                                    ? selectedValue
+                                    : null,
                                 items: familyList.map((member) {
                                   return DropdownMenuItem<String>(
                                     value: member.memberId.toString(),
@@ -2002,15 +2067,18 @@ class _RegisteredEventsDetailPageState
                                 onChanged: (String? newValue) {
                                   if (newValue != null) {
                                     selectedMemberId.value = newValue;
-                                    final selectedMember = familyList.firstWhereOrNull(
-                                          (m) => m.memberId.toString() == newValue,
+                                    final selectedMember =
+                                        familyList.firstWhereOrNull(
+                                      (m) => m.memberId.toString() == newValue,
                                     );
                                     if (selectedMember != null) {
                                       final fullName = [
                                         selectedMember.firstName,
                                         selectedMember.middleName ?? "",
                                         selectedMember.lastName ?? ""
-                                      ].where((name) => name.isNotEmpty).join(" ");
+                                      ]
+                                          .where((name) => name.isNotEmpty)
+                                          .join(" ");
                                       studentNameController.text = fullName;
                                     }
                                   }
@@ -2045,7 +2113,8 @@ class _RegisteredEventsDetailPageState
                 Obx(() {
                   return Column(
                     children: [
-                      if (localImage.value != null || localExistingMarksheetUrl != null)
+                      if (localImage.value != null ||
+                          localExistingMarksheetUrl != null)
                         Container(
                           height: 200,
                           width: double.infinity,
@@ -2057,23 +2126,27 @@ class _RegisteredEventsDetailPageState
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
                             child: localImage.value != null
-                                ? Image.file(localImage.value!, fit: BoxFit.cover)
-                                : Image.network(localExistingMarksheetUrl!, fit: BoxFit.cover),
+                                ? Image.file(localImage.value!,
+                                    fit: BoxFit.cover)
+                                : Image.network(localExistingMarksheetUrl!,
+                                    fit: BoxFit.cover),
                           ),
                         ),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
-                          onPressed: () => _showImagePicker(context, localImage),
+                          onPressed: () =>
+                              _showImagePicker(context, localImage),
                           icon: const Icon(Icons.image),
                           label: Text(
-                            localExistingMarksheetUrl != null && localImage.value == null
+                            localExistingMarksheetUrl != null &&
+                                    localImage.value == null
                                 ? "Change Mark Sheet"
                                 : "Upload Mark Sheet",
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                            ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                            backgroundColor: ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color),
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8)),

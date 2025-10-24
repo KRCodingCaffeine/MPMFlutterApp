@@ -64,7 +64,8 @@ class _LoginPageState extends State<LoginPage> {
                           shape: BoxShape.circle,
                         ),
                         padding: const EdgeInsets.all(6),
-                        child: const Icon(Icons.info_outline, color: Colors.redAccent, size: 18),
+                        child: const Icon(Icons.info_outline,
+                            color: Colors.redAccent, size: 18),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -131,7 +132,8 @@ class _LoginPageState extends State<LoginPage> {
                           shape: BoxShape.circle,
                         ),
                         padding: const EdgeInsets.all(6),
-                        child: const Icon(Icons.info_outline, color: Colors.redAccent, size: 18),
+                        child: const Icon(Icons.info_outline,
+                            color: Colors.redAccent, size: 18),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -269,16 +271,20 @@ class _LoginPageState extends State<LoginPage> {
                                 controller: mobileController,
                                 keyboardType: TextInputType.text,
                                 decoration: const InputDecoration(
-                                  hintText: 'Enter Your Mobile / Membership Code',
+                                  hintText:
+                                      'Enter Your Mobile / Membership Code',
                                   border: InputBorder.none,
-                                  contentPadding: EdgeInsets.symmetric(vertical: 8),
+                                  contentPadding:
+                                      EdgeInsets.symmetric(vertical: 8),
                                 ),
                                 validator: (value) {
                                   if (value!.isEmpty) {
                                     return 'Enter Membership code / Mobile number';
-                                  } else if (RegExp(r'^[0-9]+$').hasMatch(value)) {
+                                  } else if (RegExp(r'^[0-9]+$')
+                                      .hasMatch(value)) {
                                     controller.isNumber.value = true;
-                                  } else if (RegExp(r'^[a-zA-Z]+$').hasMatch(value)) {
+                                  } else if (RegExp(r'^[a-zA-Z]+$')
+                                      .hasMatch(value)) {
                                     controller.isNumber.value = false;
                                   } else {
                                     return null;
@@ -298,9 +304,11 @@ class _LoginPageState extends State<LoginPage> {
                               SizedBox(
                                 width: double.infinity,
                                 child: Padding(
-                                  padding: const EdgeInsets.only(left: 6.0, right: 6),
+                                  padding: const EdgeInsets.only(
+                                      left: 6.0, right: 6),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
                                       color: Colors.grey[100],
                                       borderRadius: BorderRadius.circular(12),
@@ -315,7 +323,8 @@ class _LoginPageState extends State<LoginPage> {
                                         decoration: const InputDecoration(
                                           hintText: 'Enter Membership Code',
                                           border: InputBorder.none,
-                                          contentPadding: EdgeInsets.symmetric(vertical: 8),
+                                          contentPadding:
+                                              EdgeInsets.symmetric(vertical: 8),
                                         ),
                                         validator: (value) {
                                           if (value!.isEmpty) {
@@ -363,8 +372,8 @@ class _LoginPageState extends State<LoginPage> {
                                               hintText: 'Mobile Number',
                                               border: InputBorder.none,
                                               contentPadding:
-                                              EdgeInsets.symmetric(
-                                                  vertical: 8),
+                                                  EdgeInsets.symmetric(
+                                                      vertical: 8),
                                             ),
                                             validator: (value) {
                                               if (value!.isEmpty) {
@@ -394,7 +403,7 @@ class _LoginPageState extends State<LoginPage> {
                         child: Padding(
                           padding: const EdgeInsets.only(left: 6.0, right: 6),
                           child: Obx(
-                                () => ElevatedButton(
+                            () => ElevatedButton(
                               onPressed: () async {
                                 if (_formKeyLogin!.currentState!.validate()) {
                                   if (controller.lmCodeVisible.value == false) {
@@ -420,27 +429,62 @@ class _LoginPageState extends State<LoginPage> {
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
-                                ColorHelperClass.getColorFromHex(
-                                    ColorResources.red_color),
+                                    ColorHelperClass.getColorFromHex(
+                                        ColorResources.red_color),
                                 padding:
-                                const EdgeInsets.symmetric(vertical: 14),
+                                    const EdgeInsets.symmetric(vertical: 14),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                               child: controller.loadinng.value
                                   ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
+                                      color: Colors.white,
+                                    )
                                   : Text(
-                                AppConstants.continues,
-                                style: TextStyleClass.white16style,
-                              ),
+                                      AppConstants.continues,
+                                      style: TextStyleClass.white16style,
+                                    ),
                             ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 20),
+
+                      // OutSide Mumbai Login
+                      // SizedBox(
+                      //   width: double.infinity,
+                      //   child: Padding(
+                      //     padding: const EdgeInsets.symmetric(horizontal: 6),
+                      //     child: ElevatedButton(
+                      //       onPressed: () {
+                      //         Navigator.pushNamed(
+                      //             context, RouteNames.outside_mumbai_login);
+                      //       },
+                      //       style: ElevatedButton.styleFrom(
+                      //         backgroundColor: Colors.white,
+                      //         side: BorderSide(
+                      //           color: ColorHelperClass.getColorFromHex(
+                      //               ColorResources.red_color),
+                      //         ),
+                      //         padding: const EdgeInsets.symmetric(vertical: 14),
+                      //         shape: RoundedRectangleBorder(
+                      //           borderRadius: BorderRadius.circular(12),
+                      //         ),
+                      //       ),
+                      //       child: Text(
+                      //         "Out Side Mumbai Login",
+                      //         style: TextStyle(
+                      //           color: ColorHelperClass.getColorFromHex(
+                      //               ColorResources.red_color),
+                      //           fontSize: 14,
+                      //           fontWeight: FontWeight.w600,
+                      //         ),
+                      //       ),
+                      //     ),
+                      //   ),
+                      // ),
+                      // const SizedBox(height: 30),
                     ],
                   ),
                 ),
@@ -459,7 +503,7 @@ class _LoginPageState extends State<LoginPage> {
                   backgroundColor: ColorHelperClass.getColorFromHex(
                       ColorResources.red_color),
                   padding:
-                  const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -476,7 +520,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  void getToken() async{
+  void getToken() async {
     // final token = await FirebaseMessaging.instance.getToken();
     // await PushNotificationService().initialise();
     // if (token != null) {
