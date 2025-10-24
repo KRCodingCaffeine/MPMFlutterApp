@@ -452,39 +452,39 @@ class _LoginPageState extends State<LoginPage> {
                       const SizedBox(height: 20),
 
                       // OutSide Mumbai Login
-                      SizedBox(
-                        width: double.infinity,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 6),
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.pushNamed(
-                                  context, RouteNames.outside_mumbai_login);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              side: BorderSide(
-                                color: ColorHelperClass.getColorFromHex(
-                                    ColorResources.red_color),
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: Text(
-                              "Out Side Mumbai Login",
-                              style: TextStyle(
-                                color: ColorHelperClass.getColorFromHex(
-                                    ColorResources.red_color),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 30),
+                      // SizedBox(
+                      //   width: double.infinity,
+                      //   child: Padding(
+                      //     padding: const EdgeInsets.symmetric(horizontal: 6),
+                      //     child: ElevatedButton(
+                      //       onPressed: () {
+                      //         Navigator.pushNamed(
+                      //             context, RouteNames.outside_mumbai_login);
+                      //       },
+                      //       style: ElevatedButton.styleFrom(
+                      //         backgroundColor: Colors.white,
+                      //         side: BorderSide(
+                      //           color: ColorHelperClass.getColorFromHex(
+                      //               ColorResources.red_color),
+                      //         ),
+                      //         padding: const EdgeInsets.symmetric(vertical: 14),
+                      //         shape: RoundedRectangleBorder(
+                      //           borderRadius: BorderRadius.circular(12),
+                      //         ),
+                      //       ),
+                      //       child: Text(
+                      //         "Out Side Mumbai Login",
+                      //         style: TextStyle(
+                      //           color: ColorHelperClass.getColorFromHex(
+                      //               ColorResources.red_color),
+                      //           fontSize: 14,
+                      //           fontWeight: FontWeight.w600,
+                      //         ),
+                      //       ),
+                      //     ),
+                      //   ),
+                      // ),
+                      // const SizedBox(height: 30),
                     ],
                   ),
                 ),
