@@ -276,7 +276,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
 
             _buildAdvertisementTitle(),
             _buildDashboardEventsList(),
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
           ],
         ),
       ),
@@ -792,7 +792,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
   Widget _buildDashboardEventsList() {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
-    final listHeight = screenHeight * 0.18; // 18% of screen height
+    final listHeight = screenHeight * 0.20; // 18% of screen height
     final horizontalPadding = screenWidth * 0.04; // 4% of screen width
     
     if (dashboardEvents.isEmpty) {
