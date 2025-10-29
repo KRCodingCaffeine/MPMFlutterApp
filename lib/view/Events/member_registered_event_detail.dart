@@ -1179,7 +1179,7 @@ class _RegisteredEventsDetailPageState
                         ],
                         if (_eventDetails?.hasFood == "1") ...[
                           _buildRows(
-                            "No of Food Coupon",
+                            "No of Meals",
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [

@@ -388,7 +388,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    "Do you want to request food coupons for this event?",
+                    "Do you want meal for this event?",
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.black87,
@@ -401,7 +401,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     borderRadius: BorderRadius.circular(8),
                     value: selectedFoodOption,
                     decoration: const InputDecoration(
-                      labelText: "Food Coupons",
+                      labelText: "Meals",
                       border: OutlineInputBorder(
                         borderSide: BorderSide(color: Colors.black),
                       ),
@@ -436,7 +436,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       controller: _foodBoxController,
                       keyboardType: TextInputType.number,
                       decoration: const InputDecoration(
-                        labelText: 'Number of Food Boxes (Max 2)',
+                        labelText: 'Number of Meals (Max 2)',
                         border: OutlineInputBorder(),
                       ),
                       onChanged: (value) {
@@ -487,7 +487,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                             content: Text(
-                                'Please enter a valid number of boxes (1-2)')),
+                                'Please enter a valid number of Meals (1-2)')),
                       );
                       return;
                     }
