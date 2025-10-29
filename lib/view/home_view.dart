@@ -59,7 +59,8 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
       {'icon': Images.discount, 'label': 'Discounts & Offers'},
       {'icon': Images.events, 'label': 'Events'},
       {'icon': Images.saraswani, 'label': 'Saraswani'},
-      {'icon': Images.event_trip, 'label': 'Trips'}
+      {'icon': Images.event_trip, 'label': 'Trips'},
+      {'icon': Images.network, 'label': 'Networking'}
     ];
 
     if (memberId == 1 || memberId == 2) {
@@ -711,6 +712,9 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
         break;
       case "Trips":
         Navigator.pushNamed(context, RouteNames.event_trip);
+        break;
+      case "Networking":
+        Navigator.pushNamed(context, RouteNames.networking);
         break;
       case "QR Code Scanner":
          Navigator.pushNamed(context, RouteNames.qr_code);

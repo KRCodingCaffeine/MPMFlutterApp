@@ -33,6 +33,9 @@ class RouteNames {
   static const String notification_view = "notification_view";
   static const String notification_detail = "notification_detail";
 
+  // Networking
+  static const String networking = "networking";
+
   // OutSide Mumbai Login
   static const String outside_mumbai_login = "outside_mumbai_login";
 

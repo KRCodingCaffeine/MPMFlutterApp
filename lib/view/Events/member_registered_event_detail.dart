@@ -73,7 +73,7 @@ class _RegisteredEventsDetailPageState
   int? _memberId;
   bool _isCancelled = false;
   Map<String, dynamic>? _userData;
-
+  int foodCount = 0;
   String get _eventName =>
       widget.eventAttendee.event?.eventName ?? 'Registered Event Details';
   String? get _eventOrganiserName =>
@@ -1687,10 +1687,12 @@ class _RegisteredEventsDetailPageState
     String? currentFoodOption,
     int currentFoodBoxCount = 0,
   }) {
+    // Initialize foodCount with current value
+    foodCount = currentFoodBoxCount;
+
     final TextEditingController _foodBoxController = TextEditingController(
         text: currentFoodBoxCount > 0 ? currentFoodBoxCount.toString() : '');
     String? selectedFoodOption = currentFoodOption;
-    int localFoodBoxCount = currentFoodBoxCount;
 
     showModalBottomSheet(
       context: context,
@@ -1712,20 +1714,25 @@ class _RegisteredEventsDetailPageState
               mainAxisSize: MainAxisSize.min,
               children: [
                 const SizedBox(height: 30),
+
+                // Buttons Row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     OutlinedButton(
                       onPressed: () => Navigator.pop(context),
-                      style:
-                          OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                      ),
                       child: const Text("Cancel"),
                     ),
                     ElevatedButton(
                       onPressed: () async {
                         Navigator.pop(context);
-                        await _updateFoodContainer(eventAttendeesId,
-                            selectedFoodOption, localFoodBoxCount);
+                        await _updateFoodContainer(
+                          eventAttendeesId,
+                          foodCount, // directly pass selected count
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red,
@@ -1737,65 +1744,40 @@ class _RegisteredEventsDetailPageState
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 25),
                 const Text(
-                  "Do you want to update your food coupons for this event?",
+                  "Please select how many meals you want for this event:",
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                 ),
+
                 const SizedBox(height: 25),
-                DropdownButtonFormField<String>(
-                  value: selectedFoodOption,
+
+                // Meals Dropdown (0, 1, 2)
+                DropdownButtonFormField<int>(
+                  value: foodCount,
                   dropdownColor: Colors.white,
                   borderRadius: BorderRadius.circular(10),
                   isExpanded: true,
                   decoration: const InputDecoration(
-                    labelText: 'Food Coupons',
+                    labelText: 'Meals',
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(horizontal: 20),
                   ),
-                  items: ["Yes", "No"].map((value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
+                  items: [0, 1, 2].map((count) {
+                    return DropdownMenuItem<int>(
+                      value: count,
+                      child: Text(
+                          count == 0 ? '0 (Don\'t want)' : count.toString()),
                     );
                   }).toList(),
                   onChanged: (value) {
-                    (context as Element).markNeedsBuild();
-                    selectedFoodOption = value;
-                    if (selectedFoodOption == "No") {
-                      localFoodBoxCount = 0;
-                      _foodBoxController.clear();
-                    }
+                    setState(() {
+                      foodCount = value ?? 0;
+                    });
                   },
                 ),
-                const SizedBox(height: 20),
-                if (selectedFoodOption == "Yes")
-                  TextFormField(
-                    controller: _foodBoxController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Number of Food Boxes (Max 2)',
-                      border: OutlineInputBorder(),
-                    ),
-                    onChanged: (value) {
-                      if (value.isNotEmpty) {
-                        int num = int.tryParse(value) ?? 0;
-                        if (num > 2) {
-                          _foodBoxController.text = '2';
-                          _foodBoxController.selection =
-                              TextSelection.fromPosition(
-                            TextPosition(
-                                offset: _foodBoxController.text.length),
-                          );
-                          localFoodBoxCount = 2;
-                        } else {
-                          localFoodBoxCount = num;
-                        }
-                      } else {
-                        localFoodBoxCount = 0;
-                      }
-                    },
-                  ),
+
                 const SizedBox(height: 25),
               ],
             ),
@@ -1805,23 +1787,17 @@ class _RegisteredEventsDetailPageState
     );
   }
 
-  Future<void> _updateFoodContainer(
-      int eventAttendeesId, String? selectedOption, int boxCount) async {
+  Future<void> _updateFoodContainer(int eventAttendeesId, int foodCount) async {
     try {
       final userData = await SessionManager.getSession();
       if (userData == null || userData.memberId == null) {
         throw Exception('User not logged in');
       }
 
-      if (selectedOption == null) {
-        throw Exception('Please select a food option');
-      }
-
       final repository = UpdateFoodContainerRepository();
       final requestBody = {
         'event_attendees_id': eventAttendeesId.toString(),
-        'no_of_food_container':
-            (selectedOption == "Yes" ? boxCount : 0).toString(),
+        'no_of_food_container': foodCount.toString(),
         'updated_by': userData.memberId.toString(),
       };
 
@@ -1832,7 +1808,7 @@ class _RegisteredEventsDetailPageState
       if (response.status == true) {
         Get.snackbar(
           'Success',
-          response.message ?? 'Food container updated successfully',
+          response.message ?? 'Meals updated successfully',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.green,
           colorText: Colors.white,
@@ -1840,10 +1816,10 @@ class _RegisteredEventsDetailPageState
         Navigator.pop(context);
         setState(() {});
       } else {
-        throw Exception(response.message ?? 'Failed to update food container');
+        throw Exception(response.message ?? 'Failed to update meals');
       }
     } catch (e) {
-      debugPrint("Error updating food container: $e");
+      debugPrint("Error updating meals: $e");
       Get.snackbar(
         'Error',
         'Something went wrong. Please try again',
