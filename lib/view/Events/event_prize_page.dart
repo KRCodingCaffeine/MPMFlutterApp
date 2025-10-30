@@ -437,7 +437,7 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
                       style: const TextStyle(color: Colors.grey),
                       overflow: TextOverflow.visible,
                       softWrap: true,
-                      maxLines: 2, 
+                      maxLines: 2,
                     ),
                   ),
               ],
