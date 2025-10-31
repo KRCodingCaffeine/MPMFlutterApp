@@ -17,159 +17,6 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final LoginController controller = Get.put(LoginController());
 
-  final FocusNode _mobileFocusNode = FocusNode();
-  final FocusNode _lmFocusNode = FocusNode();
-  final LayerLink _lmLayerLink = LayerLink();
-  OverlayEntry? _lmTooltipEntry;
-  OverlayEntry? _tooltipEntry;
-  final LayerLink _layerLink = LayerLink();
-
-  void _showTooltip() {
-    _hideTooltip(); // Remove any existing tooltip
-
-    _tooltipEntry = OverlayEntry(
-      builder: (context) => Positioned(
-        width: MediaQuery.of(context).size.width - 40,
-        child: CompositedTransformFollower(
-          link: _layerLink,
-          showWhenUnlinked: false,
-          offset: const Offset(0, -80), // Position tooltip above the widget
-          child: Material(
-            color: Colors.transparent,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // Tooltip box
-                Container(
-                  margin: const EdgeInsets.only(left: 20, right: 20),
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.black38),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 12,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          shape: BoxShape.circle,
-                        ),
-                        padding: const EdgeInsets.all(6),
-                        child: const Icon(Icons.info_outline,
-                            color: Colors.redAccent, size: 18),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Enter your Membership Code Must begin with LM, NM, SW etc..., Followed by numbers (e.g., LM000, SW1023).',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            height: 1.3,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-
-    Overlay.of(context).insert(_tooltipEntry!);
-  }
-
-  void _showLmTooltip() {
-    _hideLmTooltip(); // Remove any existing tooltip
-
-    _lmTooltipEntry = OverlayEntry(
-      builder: (context) => Positioned(
-        width: MediaQuery.of(context).size.width - 40,
-        child: CompositedTransformFollower(
-          link: _lmLayerLink,
-          showWhenUnlinked: false,
-          offset: const Offset(0, -80), // Position tooltip above the widget
-          child: Material(
-            color: Colors.transparent,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // Tooltip box
-                Container(
-                  margin: const EdgeInsets.only(left: 20, right: 20),
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.black38),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 12,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          shape: BoxShape.circle,
-                        ),
-                        padding: const EdgeInsets.all(6),
-                        child: const Icon(Icons.info_outline,
-                            color: Colors.redAccent, size: 18),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Enter your Membership Code Must begin with LM, NM, SW etc..., Followed by numbers (e.g., LM000, SW1023).',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            height: 1.3,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-
-    Overlay.of(context).insert(_lmTooltipEntry!);
-  }
-
-  void _hideTooltip() {
-    _tooltipEntry?.remove();
-    _tooltipEntry = null;
-  }
-
-  void _hideLmTooltip() {
-    _lmTooltipEntry?.remove();
-    _lmTooltipEntry = null;
-  }
-
   GlobalKey<FormState>? _formKeyLogin;
   TextEditingController? mobileController;
   TextEditingController? mobile6666Controller;
@@ -185,28 +32,10 @@ class _LoginPageState extends State<LoginPage> {
     mobile6666Controller = TextEditingController();
     otherMobileontroller = TextEditingController();
     getToken();
-
-    _mobileFocusNode.addListener(() {
-      if (_mobileFocusNode.hasFocus) {
-        _showTooltip();
-      } else {
-        _hideTooltip();
-      }
-    });
-
-    _lmFocusNode.addListener(() {
-      if (_lmFocusNode.hasFocus) {
-        _showLmTooltip();
-      } else {
-        _hideLmTooltip();
-      }
-    });
   }
 
   @override
   void dispose() {
-    _hideTooltip();
-    _lmFocusNode.dispose();
     mobileController!.dispose();
     lmController!.dispose();
     mobile6666Controller!.dispose();
@@ -217,10 +46,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        _hideTooltip();
-        FocusManager.instance.primaryFocus?.unfocus();
-      },
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
         backgroundColor: Colors.grey[100],
         body: Stack(
@@ -249,6 +75,58 @@ class _LoginPageState extends State<LoginPage> {
                         AppConstants.logincon,
                         style: TextStyleClass.black14style,
                       ),
+                      const SizedBox(height: 10),
+                      Text(
+                        AppConstants.login_message,
+                        style: TextStyleClass.black14style,
+                      ),
+
+                      // Static Info Message Box
+                      // Container(
+                      //   margin: const EdgeInsets.symmetric(horizontal: 20),
+                      //   padding: const EdgeInsets.all(12),
+                      //   decoration: BoxDecoration(
+                      //     color: Colors.white,
+                      //     borderRadius: BorderRadius.circular(12),
+                      //     border: Border.all(color: Colors.black26),
+                      //     boxShadow: [
+                      //       BoxShadow(
+                      //         color: Colors.black.withOpacity(0.05),
+                      //         blurRadius: 6,
+                      //         offset: const Offset(0, 3),
+                      //       ),
+                      //     ],
+                      //   ),
+                      //   child: Row(
+                      //     crossAxisAlignment: CrossAxisAlignment.center,
+                      //     children: [
+                      //       Container(
+                      //         decoration: BoxDecoration(
+                      //           color: Colors.grey.shade100,
+                      //           shape: BoxShape.circle,
+                      //         ),
+                      //         padding: const EdgeInsets.all(6),
+                      //         child: const Icon(
+                      //           Icons.info_outline,
+                      //           color: Colors.redAccent,
+                      //           size: 18,
+                      //         ),
+                      //       ),
+                      //       const SizedBox(width: 12),
+                      //       const Expanded(
+                      //         child: Text(
+                      //           'Enter your Membership Code — must begin with LM, NM, SW etc., followed by numbers (e.g., LM000, SW1023).',
+                      //           style: TextStyle(
+                      //             color: Colors.black,
+                      //             fontSize: 12,
+                      //             fontWeight: FontWeight.w500,
+                      //             height: 1.3,
+                      //           ),
+                      //         ),
+                      //       ),
+                      //     ],
+                      //   ),
+                      // ),
                       const SizedBox(height: 20),
 
                       // Mobile Number Field
@@ -264,38 +142,34 @@ class _LoginPageState extends State<LoginPage> {
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: Colors.grey),
                             ),
-                            child: CompositedTransformTarget(
-                              link: _layerLink,
-                              child: TextFormField(
-                                focusNode: _mobileFocusNode,
-                                controller: mobileController,
-                                keyboardType: TextInputType.text,
-                                decoration: const InputDecoration(
-                                  hintText:
-                                      'Enter Your Mobile / Membership Code',
-                                  border: InputBorder.none,
-                                  contentPadding:
-                                      EdgeInsets.symmetric(vertical: 8),
-                                ),
-                                validator: (value) {
-                                  if (value!.isEmpty) {
-                                    return 'Enter Membership code / Mobile number';
-                                  } else if (RegExp(r'^[0-9]+$')
-                                      .hasMatch(value)) {
-                                    controller.isNumber.value = true;
-                                  } else if (RegExp(r'^[a-zA-Z]+$')
-                                      .hasMatch(value)) {
-                                    controller.isNumber.value = false;
-                                  } else {
-                                    return null;
-                                  }
-                                },
+                            child: TextFormField(
+                              controller: mobileController,
+                              keyboardType: TextInputType.text,
+                              decoration: const InputDecoration(
+                                hintText:
+                                'Enter Your Mobile / Membership Code',
+                                border: InputBorder.none,
+                                contentPadding:
+                                EdgeInsets.symmetric(vertical: 8),
                               ),
+                              validator: (value) {
+                                if (value!.isEmpty) {
+                                  return 'Enter Membership code / Mobile number';
+                                } else if (RegExp(r'^[0-9]+$').hasMatch(value)) {
+                                  controller.isNumber.value = true;
+                                } else if (RegExp(r'^[a-zA-Z]+$')
+                                    .hasMatch(value)) {
+                                  controller.isNumber.value = false;
+                                }
+                                return null;
+                              },
                             ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 24),
+
+                      // LM Code Field (Visible conditionally)
                       Obx(() {
                         return Visibility(
                           visible: controller.lmCodeVisible.value,
@@ -314,26 +188,22 @@ class _LoginPageState extends State<LoginPage> {
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(color: Colors.grey),
                                     ),
-                                    child: CompositedTransformTarget(
-                                      link: _lmLayerLink,
-                                      child: TextFormField(
-                                        focusNode: _lmFocusNode,
-                                        controller: lmController,
-                                        keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
-                                          hintText: 'Enter Membership Code',
-                                          border: InputBorder.none,
-                                          contentPadding:
-                                              EdgeInsets.symmetric(vertical: 8),
-                                        ),
-                                        validator: (value) {
-                                          if (value!.isEmpty) {
-                                            return 'Enter Membership code';
-                                          } else {
-                                            return null;
-                                          }
-                                        },
+                                    child: TextFormField(
+                                      controller: lmController,
+                                      keyboardType: TextInputType.text,
+                                      decoration: const InputDecoration(
+                                        hintText: 'Enter Membership Code',
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.symmetric(
+                                            vertical: 8),
                                       ),
+                                      validator: (value) {
+                                        if (value!.isEmpty) {
+                                          return 'Enter Membership code';
+                                        } else {
+                                          return null;
+                                        }
+                                      },
                                     ),
                                   ),
                                 ),
@@ -343,6 +213,8 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         );
                       }),
+
+                      // Other Mobile Number Field (Visible conditionally)
                       Obx(() {
                         return Visibility(
                           visible: controller.otherMobVisible.value,
@@ -361,32 +233,24 @@ class _LoginPageState extends State<LoginPage> {
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(color: Colors.grey),
                                     ),
-                                    child: Row(
-                                      children: [
-                                        const SizedBox(width: 18),
-                                        Expanded(
-                                          child: TextFormField(
-                                            controller: otherMobileontroller,
-                                            keyboardType: TextInputType.number,
-                                            decoration: const InputDecoration(
-                                              hintText: 'Mobile Number',
-                                              border: InputBorder.none,
-                                              contentPadding:
-                                                  EdgeInsets.symmetric(
-                                                      vertical: 8),
-                                            ),
-                                            validator: (value) {
-                                              if (value!.isEmpty) {
-                                                return 'Enter mobile number';
-                                              } else if (value.length > 10) {
-                                                return "Enter 10 digit mobile number ";
-                                              } else {
-                                                return null;
-                                              }
-                                            },
-                                          ),
-                                        ),
-                                      ],
+                                    child: TextFormField(
+                                      controller: otherMobileontroller,
+                                      keyboardType: TextInputType.number,
+                                      decoration: const InputDecoration(
+                                        hintText: 'Mobile Number',
+                                        border: InputBorder.none,
+                                        contentPadding:
+                                        EdgeInsets.symmetric(vertical: 8),
+                                      ),
+                                      validator: (value) {
+                                        if (value!.isEmpty) {
+                                          return 'Enter mobile number';
+                                        } else if (value.length != 10) {
+                                          return "Enter 10 digit mobile number";
+                                        } else {
+                                          return null;
+                                        }
+                                      },
                                     ),
                                   ),
                                 ),
@@ -403,7 +267,7 @@ class _LoginPageState extends State<LoginPage> {
                         child: Padding(
                           padding: const EdgeInsets.only(left: 6.0, right: 6),
                           child: Obx(
-                            () => ElevatedButton(
+                                () => ElevatedButton(
                               onPressed: () async {
                                 if (_formKeyLogin!.currentState!.validate()) {
                                   if (controller.lmCodeVisible.value == false) {
@@ -429,28 +293,27 @@ class _LoginPageState extends State<LoginPage> {
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
-                                    ColorHelperClass.getColorFromHex(
-                                        ColorResources.red_color),
+                                ColorHelperClass.getColorFromHex(
+                                    ColorResources.red_color),
                                 padding:
-                                    const EdgeInsets.symmetric(vertical: 14),
+                                const EdgeInsets.symmetric(vertical: 14),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                               child: controller.loadinng.value
                                   ? const CircularProgressIndicator(
-                                      color: Colors.white,
-                                    )
+                                color: Colors.white,
+                              )
                                   : Text(
-                                      AppConstants.continues,
-                                      style: TextStyleClass.white16style,
-                                    ),
+                                AppConstants.continues,
+                                style: TextStyleClass.white16style,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 20),
-
+                      const SizedBox(height: 30),
                       // OutSide Mumbai Login
                       // SizedBox(
                       //   width: double.infinity,
@@ -491,7 +354,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
 
-            // Top Right Button
+            // Top Right "Register Here!" Button
             Positioned(
               top: 70,
               right: 20,
@@ -503,7 +366,7 @@ class _LoginPageState extends State<LoginPage> {
                   backgroundColor: ColorHelperClass.getColorFromHex(
                       ColorResources.red_color),
                   padding:
-                      const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                  const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),

@@ -39,10 +39,43 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
 
   GlobalKey<FormState> _formKeyLogin = GlobalKey<FormState>();
 
+  late FocusNode _pincodeFocusNode;
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    _pincodeFocusNode = FocusNode();
+
+    regiController.pincodeController.value.addListener(() {
+      final text = regiController.pincodeController.value.text;
+      if (text.length == 6) {
+        _performPincodeSearch(text, regiController);
+        _pincodeFocusNode.unfocus();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _pincodeFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _performPincodeSearch(String pincode, NewMemberController controller) {
+    if (pincode.isNotEmpty && pincode.length == 6) {
+      print("Auto-searching pincode: $pincode");
+      controller.zoneController.value.text = "";
+      controller.getCheckPinCode(pincode);
+    } else {
+      Get.snackbar(
+        "Error",
+        "Please enter a valid 6-digit pincode",
+        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+    }
   }
 
   @override
@@ -206,64 +239,51 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                           const SizedBox(height: 30),
 
                           //Pincode
-                          SizedBox(
+                          Container(
                             width: double.infinity,
-                            child: Container(
-                              margin: const EdgeInsets.only(left: 5, right: 5),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.black),
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: TextFormField(
-                                      keyboardType: TextInputType.phone,
-                                      controller: regiController.pincodeController.value,
-                                      decoration: const InputDecoration(
-                                        hintText: 'Pin Code *',
-                                        border: InputBorder.none,
-                                        contentPadding: EdgeInsets.symmetric(
-                                          vertical: 8,
-                                          horizontal: 20,
+                            margin: const EdgeInsets.only(left: 5, right: 5),
+                            child: TextFormField(
+                              focusNode: _pincodeFocusNode,
+                              keyboardType: TextInputType.number,
+                              controller: regiController.pincodeController.value,
+                              maxLength: 6,
+                              decoration: InputDecoration(
+                                labelText: 'Pin Code *',
+                                counterText: '',
+                                border: const OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.black),
+                                ),
+                                enabledBorder: const OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.black),
+                                ),
+                                focusedBorder: const OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.black38, width: 1),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 12, horizontal: 20),
+                                labelStyle: const TextStyle(color: Colors.black),
+                                hintText: 'Enter 6-digit pincode',
+                                suffixIcon: Obx(() {
+                                  if (regiController.rxStatusBuilding.value == Status.LOADING) {
+                                    return const Padding(
+                                      padding: EdgeInsets.all(12.0),
+                                      child: SizedBox(
+                                        height: 16,
+                                        width: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.redAccent,
                                         ),
                                       ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 18),
-                                  SizedBox(
-                                    height: 48,
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                        if (regiController.pincodeController.value.text != '') {
-                                          var pincode = regiController.pincodeController.value.text;
-                                          regiController.zoneController.value.text = "";
-                                          regiController.getCheckPinCode(pincode);
-                                        } else {
-                                          Get.snackbar(
-                                            "Error",
-                                            "Select Pin Code",
-                                            backgroundColor: Colors.red,
-                                            colorText: Colors.white,
-                                            snackPosition: SnackPosition.TOP,
-                                          );
-                                        }
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: ColorHelperClass.getColorFromHex(
-                                            ColorResources.red_color),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(5),
-                                        ),
-                                      ),
-                                      child: const Icon(
-                                        Icons.search,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                                    );
+                                  }
+                                  return const SizedBox.shrink();
+                                }),
                               ),
+                              onChanged: (value) {
+                                if (value.length == 6) {
+                                }
+                              },
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -292,6 +312,14 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                       child: Text('Failed to load Building Name'),
                                     );
                                   } else {
+                                    // Create safe dropdown items
+                                    final dropdownItems = _createSafeBuildingDropdownItems(regiController.checkPinCodeList);
+
+                                    // Ensure the selected value exists in the current items
+                                    final selectedValue = regiController.selectBuilding.value;
+                                    final isValidSelection = selectedValue.isNotEmpty &&
+                                        dropdownItems.any((item) => item.value == selectedValue);
+
                                     return InputDecorator(
                                       decoration: InputDecoration(
                                         labelText: 'Building Name *',
@@ -316,23 +344,8 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                                           'Select Building *',
                                           style: TextStyle(fontWeight: FontWeight.bold),
                                         ),
-                                        value: regiController.selectBuilding.value.isNotEmpty
-                                            ? regiController.selectBuilding.value
-                                            : null,
-                                        items: [
-                                          if (regiController.checkPinCodeList.isEmpty)
-                                            const DropdownMenuItem<String>(
-                                              value: 'other',
-                                              child: Text('Other'),
-                                            )
-                                          else
-                                            ...regiController.checkPinCodeList.map((building) {
-                                              return DropdownMenuItem<String>(
-                                                value: building.id.toString(),
-                                                child: Text(building.buildingName ?? 'Unknown'),
-                                              );
-                                            }).toList(),
-                                        ],
+                                        value: isValidSelection ? selectedValue : null,
+                                        items: dropdownItems,
                                         onChanged: (String? newValue) {
                                           if (newValue != null) {
                                             regiController.selectBuilding(newValue);
@@ -385,7 +398,6 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
                             ],
                           ),
                           const SizedBox(height: 20),
-
                           _buildEditableField(
                               "Mandal Zone *",
                               regiController.zoneController.value,
@@ -1296,6 +1308,37 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
         },
       ),
     );
+  }
+
+  List<DropdownMenuItem<String>> _createSafeBuildingDropdownItems(List<Building> buildings) {
+    final items = <DropdownMenuItem<String>>[];
+    final usedValues = <String>{};
+
+    // First, add buildings from API response
+    for (final building in buildings) {
+      final value = building.id?.toString() ?? 'unknown_${building.hashCode}';
+
+      if (!usedValues.contains(value)) {
+        items.add(
+          DropdownMenuItem<String>(
+            value: value,
+            child: Text(building.buildingName ?? 'Unknown Building'),
+          ),
+        );
+        usedValues.add(value);
+      }
+    }
+
+    if (!usedValues.contains('other')) {
+      items.add(
+        const DropdownMenuItem<String>(
+          value: 'other',
+          child: Text('Other'),
+        ),
+      );
+    }
+
+    return items;
   }
 
   Future<void> _pickImage(ImageSource source) async {

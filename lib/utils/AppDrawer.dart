@@ -206,6 +206,7 @@ class AppDrawer extends StatelessWidget {
               _showLogoutDialog(context);
             },
           ),
+          const SizedBox(height: 30),
         ],
       ),
     );

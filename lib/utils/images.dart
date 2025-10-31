@@ -25,6 +25,7 @@ class Images {
   static const String event_trip = 'assets/images/event_trip.svg';
   static const String qr_code = 'assets/images/qr_code.svg';
   static const String networking = 'assets/images/networking.svg';
+  static const String network = 'assets/images/network.svg';
   static const String publication = 'assets/images/publication.svg';
   static const String shiksha = 'assets/images/shiksha.svg';
   static const String vivah = 'assets/images/vivah.svg';

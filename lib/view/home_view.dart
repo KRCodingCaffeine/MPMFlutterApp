@@ -59,7 +59,8 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
       {'icon': Images.discount, 'label': 'Discounts & Offers'},
       {'icon': Images.events, 'label': 'Events'},
       {'icon': Images.saraswani, 'label': 'Saraswani'},
-      {'icon': Images.event_trip, 'label': 'Trips'}
+      {'icon': Images.event_trip, 'label': 'Trips'},
+      {'icon': Images.network, 'label': 'Networking'}
     ];
 
     if (memberId == 1 || memberId == 2) {
@@ -276,7 +277,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
 
             _buildAdvertisementTitle(),
             _buildDashboardEventsList(),
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
           ],
         ),
       ),
@@ -712,6 +713,9 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
       case "Trips":
         Navigator.pushNamed(context, RouteNames.event_trip);
         break;
+      case "Networking":
+        Navigator.pushNamed(context, RouteNames.networking);
+        break;
       case "QR Code Scanner":
          Navigator.pushNamed(context, RouteNames.qr_code);
          break;
@@ -792,7 +796,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
   Widget _buildDashboardEventsList() {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
-    final listHeight = screenHeight * 0.18; // 18% of screen height
+    final listHeight = screenHeight * 0.20; // 18% of screen height
     final horizontalPadding = screenWidth * 0.04; // 4% of screen width
     
     if (dashboardEvents.isEmpty) {

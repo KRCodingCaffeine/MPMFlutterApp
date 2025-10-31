@@ -3,6 +3,7 @@ import 'package:mpm/route/route_name.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/view/EnquiryForm/add_enquiry_form.dart';
 import 'package:mpm/view/EventTrip/event_trip.dart';
+import 'package:mpm/view/Networking/network_view.dart';
 import 'package:mpm/view/OutsideMumbaiLogin/outside_mumbai_login.dart';
 import 'package:mpm/view/QRCodeScanner/qr_code.dart';
 import 'package:mpm/view/Saraswanilabel/saraswani_label.dart';
@@ -105,6 +106,10 @@ class RoutePages {
           body: notification.body,
           image: notification.image,
         ), settings);
+
+      // Networking
+      case RouteNames.networking:
+        return _buildRoute(NetworkView(), settings);
 
       // OutSide Mumbai Login
       case RouteNames.outside_mumbai_login:
