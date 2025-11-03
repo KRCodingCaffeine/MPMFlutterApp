@@ -87,7 +87,8 @@ class Urls {
   static const String update_traveller_url = base_url+"api/update_traveller";
   static const String cancel_trip_registration_url = base_url+"api/cancel_trip_registration";
   static const String device_mapping_url = base_url+"api/device_mapping";
-  
+  static const String forgot_member_login_url = base_url+"api/forgot_member_login";
+
   // Notification API URLs - Following same pattern as device_mapping
   static const String get_all_notifications_url = base_url+"api/notifications/get_all";
   static const String mark_notification_read_url = base_url+"api/notifications/mark_read";

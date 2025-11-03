@@ -1,6 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mpm/repository/forgot_member_login_repository/forgot_member_login_repo.dart';
 import 'package:mpm/route/route_name.dart';
 import 'package:mpm/utils/app_constants.dart';
 import 'package:mpm/utils/color_helper.dart';
@@ -313,6 +314,24 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 8),
+
+                      // "Forgot Mobile or Membership?" Button
+                      TextButton(
+                        onPressed: () {
+                          _showForgotBottomSheet(context);
+                        },
+                        child: const Text(
+                          "Forgot Mobile or Membership?",
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+
                       const SizedBox(height: 30),
                       // OutSide Mumbai Login
                       // SizedBox(
@@ -391,4 +410,226 @@ class _LoginPageState extends State<LoginPage> {
     //   // sharedPreference.saveDeviceToken(token);
     // }
   }
+
+  void _showForgotBottomSheet(BuildContext context) {
+    final _formKey = GlobalKey<FormState>();
+    final TextEditingController firstNameController = TextEditingController();
+    final TextEditingController middleNameController = TextEditingController();
+    final TextEditingController surnameController = TextEditingController();
+    final TextEditingController mobileController = TextEditingController();
+    final TextEditingController emailController = TextEditingController();
+    final TextEditingController messageController = TextEditingController();
+
+    final forgotRepo = ForgotMemberLoginRepository();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      backgroundColor: Colors.white,
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 16,
+            right: 16,
+            top: 20,
+          ),
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 60,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.redAccent),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 10),
+                        ),
+                        child: const Text(
+                          "Cancel",
+                          style: TextStyle(
+                            color: Colors.redAccent,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () async {
+                          if (_formKey.currentState!.validate()) {
+                            final fullName =
+                            "${firstNameController.text.trim()} ${middleNameController.text.trim()} ${surnameController.text.trim()}"
+                                .trim();
+
+                            try {
+                              // Get.snackbar(
+                              //   "Processing",
+                              //   "Sending your request...",
+                              //   backgroundColor: Colors.orange.shade600,
+                              //   colorText: Colors.white,
+                              //   duration: const Duration(seconds: 2),
+                              // );
+
+                              final response =
+                              await forgotRepo.sendForgotMemberLoginRequest(
+                                fullName: fullName,
+                                mobile: mobileController.text.trim(),
+                                email: emailController.text.trim(),
+                                message: messageController.text.trim(),
+                              );
+
+                              Navigator.pop(context);
+
+                              if (response.status == true) {
+                                Get.snackbar(
+                                  "Success",
+                                  response.data?.message ??
+                                      "Your request has been submitted successfully.",
+                                  backgroundColor: Colors.green.shade600,
+                                  colorText: Colors.white,
+                                );
+                              } else {
+                                Get.snackbar(
+                                  "Failed",
+                                  "Unable to submit your request.",
+                                  backgroundColor: Colors.red.shade600,
+                                  colorText: Colors.white,
+                                );
+                              }
+                            } catch (e) {
+                              Navigator.pop(context);
+                              Get.snackbar(
+                                "Error",
+                                "Something went wrong. Please try again.",
+                                backgroundColor: Colors.red.shade700,
+                                colorText: Colors.white,
+                              );
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorHelperClass.getColorFromHex(
+                              ColorResources.red_color),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 10),
+                        ),
+                        child: const Text(
+                          "Submit",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  _buildTextField("First Name", firstNameController,
+                      validatorMsg: "Enter first name"),
+                  const SizedBox(height: 12),
+                  _buildTextField("Middle Name", middleNameController),
+                  const SizedBox(height: 12),
+                  _buildTextField("Surname", surnameController,
+                      validatorMsg: "Enter surname"),
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    "Mobile",
+                    mobileController,
+                    keyboardType: TextInputType.phone,
+                    validatorMsg: "Enter mobile number",
+                  ),
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    "Email",
+                    emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    validatorMsg: "Enter valid email",
+                  ),
+                  const SizedBox(height: 12),
+                  _buildTextField("Message", messageController, maxLines: 3),
+
+                  const SizedBox(height: 30),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTextField(
+      String label,
+      TextEditingController controller, {
+        TextInputType keyboardType = TextInputType.text,
+        int maxLines = 1,
+        String? validatorMsg,
+        bool readOnly = false,
+      }) {
+    return Container(
+      margin: const EdgeInsets.only(left: 5, right: 5, bottom: 10),
+      child: TextFormField(
+        controller: controller,
+        readOnly: readOnly,
+        keyboardType: keyboardType,
+        maxLines: maxLines,
+        style: const TextStyle(color: Colors.black),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(color: Colors.black),
+          hintText: label,
+          hintStyle: const TextStyle(color: Colors.black54),
+          filled: true,
+          fillColor: Colors.grey[100],
+          border: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black),
+          ),
+          enabledBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black),
+          ),
+          focusedBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black38, width: 1),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 12,
+            horizontal: 20,
+          ),
+        ),
+        validator: (value) {
+          if (validatorMsg != null && (value == null || value.isEmpty)) {
+            return validatorMsg;
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
 }
