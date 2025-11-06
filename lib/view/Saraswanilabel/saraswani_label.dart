@@ -553,6 +553,7 @@ class _SaraswanilabelViewState extends State<SaraswanilabelView> {
                   const Text("Apply Filter", style: TextStyle(fontSize: 16)),
                 ),
               ),
+              const SizedBox(height: 30),
             ],
           ),
         ),
@@ -621,7 +622,8 @@ class _SaraswanilabelViewState extends State<SaraswanilabelView> {
                       ),
                     ),
                   ),
-                )
+                ),
+                const SizedBox(height: 30),
               ],
             ),
             if (isFilterDrawerOpen) _buildFilterDrawer(),

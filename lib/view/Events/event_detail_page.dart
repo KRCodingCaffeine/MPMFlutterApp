@@ -347,9 +347,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<bool> _showFoodDialog(BuildContext context) async {
-    String? selectedFoodOption;
-    final TextEditingController _foodBoxController = TextEditingController();
-    int localFoodBoxCount = 0;
+    int? selectedFoodCount;
 
     final shouldProceed = await showDialog<bool>(
       context: context,
@@ -377,10 +375,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     ),
                   ),
                   SizedBox(height: 8),
-                  Divider(
-                    thickness: 1,
-                    color: Colors.grey,
-                  ),
+                  Divider(thickness: 1, color: Colors.grey),
                 ],
               ),
               content: Column(
@@ -388,7 +383,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    "Do you want to request food coupons for this event?",
+                    "Number of meals for this event (Max 2):",
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.black87,
@@ -396,12 +391,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
+                  DropdownButtonFormField<int>(
                     dropdownColor: Colors.white,
                     borderRadius: BorderRadius.circular(8),
-                    value: selectedFoodOption,
+                    value: selectedFoodCount,
                     decoration: const InputDecoration(
-                      labelText: "Food Coupons",
+                      labelText: "Meals",
                       border: OutlineInputBorder(
                         borderSide: BorderSide(color: Colors.black),
                       ),
@@ -414,56 +409,31 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       contentPadding: EdgeInsets.symmetric(horizontal: 20),
                       labelStyle: TextStyle(color: Colors.black),
                     ),
-                    items: ["Yes", "No"].map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
+                    items: const [
+                      DropdownMenuItem<int>(
+                        value: 0,
+                        child: Text("0 (Don't want)"),
+                      ),
+                      DropdownMenuItem<int>(
+                        value: 1,
+                        child: Text("1"),
+                      ),
+                      DropdownMenuItem<int>(
+                        value: 2,
+                        child: Text("2"),
+                      ),
+                    ],
                     onChanged: (value) {
                       setState(() {
-                        selectedFoodOption = value;
-                        if (selectedFoodOption == "No") {
-                          localFoodBoxCount = 0;
-                          _foodBoxController.clear();
-                        }
+                        selectedFoodCount = value;
                       });
                     },
                   ),
-                  const SizedBox(height: 16),
-                  if (selectedFoodOption == "Yes")
-                    TextFormField(
-                      controller: _foodBoxController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Number of Food Boxes (Max 2)',
-                        border: OutlineInputBorder(),
-                      ),
-                      onChanged: (value) {
-                        if (value.isNotEmpty) {
-                          int num = int.tryParse(value) ?? 0;
-                          if (num > 2) {
-                            _foodBoxController.text = '2';
-                            _foodBoxController.selection =
-                                TextSelection.fromPosition(
-                              TextPosition(
-                                  offset: _foodBoxController.text.length),
-                            );
-                            localFoodBoxCount = 2;
-                          } else {
-                            localFoodBoxCount = num;
-                          }
-                        } else {
-                          localFoodBoxCount = 0;
-                        }
-                      },
-                    ),
                 ],
               ),
               actions: [
                 OutlinedButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: const Text("Cancel"),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: ColorHelperClass.getColorFromHex(
                         ColorResources.red_color),
@@ -472,29 +442,21 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
+                  child: const Text("Cancel"),
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    if (selectedFoodOption == null) {
+                    if (selectedFoodCount == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                            content: Text('Please select Yes or No')),
-                      );
-                      return;
-                    }
-                    if (selectedFoodOption == "Yes" &&
-                        (localFoodBoxCount <= 0 || localFoodBoxCount > 2)) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text(
-                                'Please enter a valid number of boxes (1-2)')),
+                            content:
+                            Text('Please select the number of meals (0–2)')),
                       );
                       return;
                     }
 
                     setState(() {
-                      _foodBoxCount =
-                          selectedFoodOption == "Yes" ? localFoodBoxCount : 0;
+                      _foodBoxCount = selectedFoodCount!;
                     });
 
                     Navigator.pop(context, true);
@@ -1370,7 +1332,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       )),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
             ],
             const Text(
               'Event Description:',
@@ -1453,12 +1415,16 @@ class _EventDetailPageState extends State<EventDetailPage> {
               const SizedBox(height: 8),
               _buildDocumentWidget(),
             ],
-            const SizedBox(height: 50),
+            const SizedBox(height: 40),
           ],
         ),
       ),
-      bottomNavigationBar:
-          _isPastEvent ? const SizedBox.shrink() : _buildRegisterButton(),
+      bottomNavigationBar: _isPastEvent
+          ? const SizedBox.shrink()
+          : Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: _buildRegisterButton(),
+      ),
     );
   }
 

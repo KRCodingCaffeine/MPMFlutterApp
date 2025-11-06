@@ -11,20 +11,21 @@ class ClaimedOfferDetailPage extends StatelessWidget {
 
   String getContainerName(dynamic id) {
     switch (id.toString()) {
-      case 'Strips':
-        return '1';
-      case 'Tube':
-        return '2';
-      case 'Bottle':
-        return '3';
-      case 'Box':
-        return '4';
-      case 'Pouch':
-        return '5';
+      case '1':
+        return 'Strips';
+      case '2':
+        return 'Tube';
+      case '3':
+        return 'Bottle';
+      case '4':
+        return 'Box';
+      case '5':
+        return 'Pouch';
       default:
         return 'Unknown';
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

@@ -240,6 +240,8 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
   }
 
   Future<void> _showEditModalSheet(BuildContext context) async {
+    final FocusNode pincodeFocusNode = FocusNode();
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -299,6 +301,17 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
           //   memberController.city_id.value = getUserData.value.address!.city_id.toString();
           // }
         }
+
+        // Add listener to pincode controller for auto-search
+        controller.pincodeController.value.addListener(() {
+          final text = controller.pincodeController.value.text;
+          if (text.length == 6) {
+            // Auto-search when 6 digits are entered
+            _performPincodeSearch(text, regiController);
+            // Remove focus to hide keyboard
+            pincodeFocusNode.unfocus();
+          }
+        });
 
         return FractionallySizedBox(
           heightFactor: 0.8,
@@ -399,76 +412,54 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const SizedBox(height: 16),
-                          SizedBox(
+                          Container(
                             width: double.infinity,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey),
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: TextFormField(
-                                      keyboardType: TextInputType.phone,
-                                      controller:
-                                          controller.pincodeController.value,
-                                      decoration: const InputDecoration(
-                                        hintText: 'Pin Code *',
-                                        border: InputBorder
-                                            .none,
-                                        contentPadding: EdgeInsets.symmetric(
-                                            vertical: 8,
-                                            horizontal: 22),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 18),
-                                  SizedBox(
-                                    height: 48,
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                        print("fghjjhjjh" +
-                                            controller
-                                                .pincodeController.value.text);
-                                        if (controller
-                                                .pincodeController.value.text !=
-                                            '') {
-                                          var pincode = controller
-                                              .pincodeController.value.text;
-                                          controller.zoneController.value.text =
-                                              "";
-                                          regiController
-                                              .getCheckPinCode(pincode);
-                                        } else {
-                                          Get.snackbar(
-                                            "Error",
-                                            "Select Pin Code",
-                                            backgroundColor: ColorHelperClass
-                                                .getColorFromHex(
-                                                    ColorResources.red_color),
-                                            colorText: Colors.white,
-                                            snackPosition: SnackPosition.TOP,
-                                          );
-                                        }
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            ColorHelperClass.getColorFromHex(
-                                                ColorResources.red_color),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(5),
+                            margin: const EdgeInsets.only(left: 5, right: 5),
+                            child: TextFormField(
+                              focusNode: pincodeFocusNode,
+                              keyboardType: TextInputType.number,
+                              controller: controller.pincodeController.value,
+                              maxLength: 6,
+                              decoration: InputDecoration(
+                                labelText: 'Pin Code *',
+                                counterText: '', // Remove character counter
+                                border: const OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.black),
+                                ),
+                                enabledBorder: const OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.black),
+                                ),
+                                focusedBorder: const OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.black38, width: 1),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 12, horizontal: 20),
+                                labelStyle: const TextStyle(color: Colors.black),
+                                hintText: 'Enter 6-digit pincode',
+                                suffixIcon: Obx(() {
+                                  // Show loading indicator when searching
+                                  if (regiController.rxStatusBuilding.value == Status.LOADING) {
+                                    return const Padding(
+                                      padding: EdgeInsets.all(12.0),
+                                      child: SizedBox(
+                                        height: 16,
+                                        width: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.redAccent,
                                         ),
                                       ),
-                                      child: const Icon(
-                                        Icons.search,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                                    );
+                                  }
+                                  return const SizedBox.shrink();
+                                }),
                               ),
+                              onChanged: (value) {
+                                // Show loading state when user is typing (optional)
+                                if (value.length == 6) {
+                                  // This will trigger the listener we added above
+                                }
+                              },
                             ),
                           ),
                           const SizedBox(height: 30),
@@ -479,83 +470,50 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                             children: [
                               Container(
                                 width: double.infinity,
-                                margin:
-                                    const EdgeInsets.only(left: 5, right: 5),
+                                margin: const EdgeInsets.only(left: 5, right: 5),
                                 child: Obx(() {
-                                  if (regiController.rxStatusBuilding.value ==
-                                      Status.LOADING) {
+                                  if (regiController.rxStatusBuilding.value == Status.LOADING) {
                                     return const Padding(
-                                      padding: EdgeInsets.symmetric(
-                                          vertical: 10, horizontal: 22),
+                                      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
                                       child: SizedBox(
                                         height: 24,
                                         width: 24,
-                                        child: CircularProgressIndicator(
-                                            color: Colors.redAccent),
+                                        child: CircularProgressIndicator(color: Colors.redAccent),
                                       ),
                                     );
-                                  } else if (regiController
-                                          .rxStatusBuilding.value ==
-                                      Status.ERROR) {
+                                  } else if (regiController.rxStatusBuilding.value == Status.ERROR) {
                                     return const Center(
                                       child: Padding(
                                         padding: EdgeInsets.all(8.0),
-                                        child: Text(
-                                            'Failed to load Building Name'),
+                                        child: Text('Failed to load Building Name'),
                                       ),
                                     );
                                   } else {
+                                    // Create safe dropdown items
+                                    final dropdownItems = _createSafeBuildingDropdownItems(regiController.checkPinCodeList);
+
+                                    // Ensure the selected value exists in the current items
+                                    final selectedValue = regiController.selectBuilding.value;
+                                    final isValidSelection = selectedValue.isNotEmpty &&
+                                        dropdownItems.any((item) => item.value == selectedValue);
+
                                     return InputDecorator(
                                       decoration: InputDecoration(
                                         labelText: 'Building Name *',
-                                        border: const OutlineInputBorder(
-                                            borderSide: BorderSide(
-                                                color: Colors.black)),
-                                        enabledBorder: const OutlineInputBorder(
-                                            borderSide: BorderSide(
-                                                color: Colors.black)),
-                                        focusedBorder: const OutlineInputBorder(
-                                            borderSide: BorderSide(
-                                                color: Colors.black38,
-                                                width: 1)),
-                                        contentPadding:
-                                            const EdgeInsets.symmetric(
-                                                horizontal: 20),
-                                        labelStyle: const TextStyle(
-                                            color: Colors.black),
+                                        border: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
+                                        enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
+                                        focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black38, width: 1)),
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                        labelStyle: const TextStyle(color: Colors.black),
                                       ),
                                       child: DropdownButton<String>(
                                         isExpanded: true,
                                         underline: Container(),
                                         dropdownColor: Colors.white,
                                         borderRadius: BorderRadius.circular(10),
-                                        hint: const Text('Select Building *',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold)),
-                                        value: regiController
-                                                .selectBuilding.value.isNotEmpty
-                                            ? regiController
-                                                .selectBuilding.value
-                                            : null,
-                                        items: [
-                                          if (regiController
-                                              .checkPinCodeList.isEmpty)
-                                            const DropdownMenuItem<String>(
-                                              value: 'other',
-                                              child: Text(
-                                                  'Other'),
-                                            )
-                                          else
-                                            ...regiController.checkPinCodeList
-                                                .map((building) {
-                                              return DropdownMenuItem<String>(
-                                                value: building.id.toString(),
-                                                child: Text(
-                                                    building.buildingName ??
-                                                        'Unknown'),
-                                              );
-                                            }).toList()
-                                        ],
+                                        hint: const Text('Select Building *', style: TextStyle(fontWeight: FontWeight.bold)),
+                                        value: isValidSelection ? selectedValue : null,
+                                        items: dropdownItems,
                                         onChanged: (String? newValue) {
                                           if (newValue != null) {
                                             regiController.selectBuilding.value = newValue;
@@ -579,23 +537,18 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                                   visible: regiController.isBuilding.value,
                                   child: Container(
                                     width: double.infinity,
-                                    margin: const EdgeInsets.only(
-                                        left: 5, right: 5, top: 20),
+                                    margin: const EdgeInsets.only(left: 5, right: 5, top: 20),
                                     decoration: BoxDecoration(
                                       border: Border.all(color: Colors.black),
                                       borderRadius: BorderRadius.circular(5),
                                     ),
                                     child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 20),
+                                      padding: const EdgeInsets.symmetric(horizontal: 20),
                                       child: TextFormField(
-                                        controller: regiController
-                                            .buildingController.value,
+                                        controller: regiController.buildingController.value,
                                         keyboardType: TextInputType.text,
                                         validator: (value) {
-                                          if (regiController.isBuilding.value &&
-                                              (value == null ||
-                                                  value.isEmpty)) {
+                                          if (regiController.isBuilding.value && (value == null || value.isEmpty)) {
                                             return 'Please enter building name';
                                           }
                                           return null;
@@ -603,8 +556,7 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                                         decoration: const InputDecoration(
                                           hintText: 'Enter Building Name *',
                                           border: InputBorder.none,
-                                          contentPadding: EdgeInsets.symmetric(
-                                              vertical: 12),
+                                          contentPadding: EdgeInsets.symmetric(vertical: 12),
                                         ),
                                       ),
                                     ),
@@ -1074,6 +1026,66 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
         );
       },
     );
+  }
+
+  void _performPincodeSearch(String pincode, NewMemberController regiController) {
+    if (pincode.isNotEmpty && pincode.length == 6) {
+      print("Auto-searching pincode: $pincode");
+      regiController.zoneController.value.text = "";
+      regiController.getCheckPinCode(pincode);
+    } else {
+      Get.snackbar(
+        "Error",
+        "Please enter a valid 6-digit pincode",
+        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+    }
+  }
+
+  List<Building> _getUniqueBuildings(List<Building> buildings) {
+    final uniqueMap = <String, Building>{};
+
+    for (final building in buildings) {
+      final key = building.id.toString();
+      if (!uniqueMap.containsKey(key)) {
+        uniqueMap[key] = building;
+      }
+    }
+
+    return uniqueMap.values.toList();
+  }
+
+  List<DropdownMenuItem<String>> _createSafeBuildingDropdownItems(List<Building> buildings) {
+    final items = <DropdownMenuItem<String>>[];
+    final usedValues = <String>{};
+
+    // First, add buildings from API response
+    for (final building in buildings) {
+      final value = building.id?.toString() ?? 'unknown_${building.hashCode}';
+
+      if (!usedValues.contains(value)) {
+        items.add(
+          DropdownMenuItem<String>(
+            value: value,
+            child: Text(building.buildingName ?? 'Unknown Building'),
+          ),
+        );
+        usedValues.add(value);
+      }
+    }
+
+    if (!usedValues.contains('other')) {
+      items.add(
+        const DropdownMenuItem<String>(
+          value: 'other',
+          child: Text('Other'),
+        ),
+      );
+    }
+
+    return items;
   }
 
   void _showImagePicker(BuildContext context) {

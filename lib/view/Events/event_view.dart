@@ -780,7 +780,7 @@ class _EventsPageState extends State<EventsPage> {
                   color: Colors.redAccent,
                   onRefresh: () => _fetchEvents(),
                   child: ListView.builder(
-                    padding: const EdgeInsets.only(top: 4),
+                    padding: const EdgeInsets.only(top: 10),
                     itemCount: _selectedTabIndex == 0
                         ? _upcomingEvents.length
                         : _pastEvents.length,
@@ -791,6 +791,7 @@ class _EventsPageState extends State<EventsPage> {
                   ),
                 ),
               ),
+              const SizedBox(height: 30),
             ],
           ),
           if (_isUpcomingFilterDrawerOpen) _buildFilterDrawer(true),

@@ -1,6 +1,7 @@
 class AppConstants {
   static const String appName = 'MPM';
   static const String logincon = 'Login with Membership Code or Mobile Number';
+  static const String login_message = 'Enter your Membership Code — must begin with LM, NM, SW etc., followed by numbers (e.g., LM000, SW1023).';
   static const String welcome_mpm = 'Welcome to MPM';
   static const String enter_mobile = 'Existing Member';
   static const String continues = 'Continue';
