@@ -6,6 +6,7 @@ import 'package:mpm/OccuptionProfession/OccuptionProfessionData.dart';
 import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/AddExistingFamilyMember/addExistingFamilyMemberData.dart';
 import 'package:mpm/model/ChangeFamilyHead/changeFamilyHeadData.dart';
+import 'package:mpm/model/CheckPinCode/Building.dart';
 import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/model/GetProfile/BusinessInfo.dart';
 import 'package:mpm/model/GetProfile/FamilyHeadMemberData.dart';
@@ -1243,6 +1244,29 @@ class UdateProfileController extends GetxController {
         return;
       }
 
+      // Get building name from selected building
+      String buildingName = "";
+      String buildingId = "";
+      
+      if (regiController.selectBuilding.value == "other") {
+        // For "other", use custom building name
+        buildingId = "";
+        buildingName = regiController.buildingController.value.text.trim();
+      } else if (regiController.selectBuilding.value.isNotEmpty) {
+        // Find the building name from the building list
+        buildingId = regiController.selectBuilding.value;
+        try {
+          final selectedBuilding = regiController.checkPinCodeList.firstWhere(
+            (building) => building.id?.toString() == buildingId,
+            orElse: () => Building(id: null, buildingName: null),
+          );
+          buildingName = selectedBuilding.buildingName?.toString() ?? "";
+        } catch (e) {
+          print("Error finding building name: $e");
+          buildingName = "";
+        }
+      }
+
       // Prepare the data with correct field names
       final Map<String, dynamic> data = {
         "member_id": userData.memberId.toString(),
@@ -1250,12 +1274,8 @@ class UdateProfileController extends GetxController {
         "area": regiController.areaController.value.text.isNotEmpty
             ? regiController.areaController.value.text.trim()
             : regiController.area_name.value.trim(),
-        "building_id": regiController.selectBuilding.value == "other"
-            ? ""
-            : regiController.selectBuilding.value,
-        "building_name": regiController.selectBuilding.value == "other"
-            ? regiController.buildingController.value.text
-            : "",
+        "building_id": buildingId,
+        "building_name": buildingName,
         "zone_id": regiController.zone_id.value,
         "address": updateresidentalAddressController.value.text.trim(),
         "city_id": regiController.city_id.value,

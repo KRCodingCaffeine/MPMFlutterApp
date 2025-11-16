@@ -10,6 +10,12 @@ class NetworkView extends StatefulWidget {
 }
 
 class _NetworkViewState extends State<NetworkView> {
+  // ============================================================================
+  // EXISTING CODE PRESERVED BELOW - DO NOT DELETE
+  // This code will be restored when the networking feature is ready
+  // ============================================================================
+  
+  /*
   String selectedCategory = 'All';
   final List<String> categories = ['All', 'Professionals', 'Business', 'Entrepreneurs'];
   final List<Map<String, String>> members = [
@@ -193,6 +199,91 @@ class _NetworkViewState extends State<NetworkView> {
             ),
           ),
         ],
+      ),
+    );
+  }
+  */
+  
+  // ============================================================================
+  // COMING SOON SCREEN - TEMPORARY IMPLEMENTATION
+  // ============================================================================
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(
+        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        title: Builder(
+          builder: (context) {
+            double fontSize = MediaQuery.of(context).size.width * 0.045;
+            return Text(
+              'Networking',
+              style: TextStyle(
+                  color: Colors.white, fontSize: fontSize, fontWeight: FontWeight.w500),
+            );
+          },
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.people_outline,
+                size: 120,
+                color: ColorHelperClass.getColorFromHex(ColorResources.logo_color).withOpacity(0.6),
+              ),
+              const SizedBox(height: 32),
+              Text(
+                'Coming Soon',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[800],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Networking feature is under development',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Stay tuned for exciting updates!',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[500],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 48),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                decoration: BoxDecoration(
+                  color: ColorHelperClass.getColorFromHex(ColorResources.logo_color).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'Connect with members • Find professionals • Build your network',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

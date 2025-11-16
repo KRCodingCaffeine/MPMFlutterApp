@@ -9,11 +9,13 @@ import 'package:mpm/model/CountryModel/CountryData.dart';
 import 'package:mpm/model/State/StateData.dart';
 import 'package:mpm/model/city/CityData.dart';
 import 'package:mpm/model/documenttype/DocumentTypeModel.dart';
+import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/urls.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
+import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 
 class ResidenceInformationPage extends StatefulWidget {
   const ResidenceInformationPage({Key? key}) : super(key: key);
@@ -28,6 +30,21 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
   UdateProfileController controller = Get.put(UdateProfileController());
   NewMemberController regiController = Get.put(NewMemberController());
   GlobalKey<FormState>? formKeyLogin = GlobalKey<FormState>();
+  String? currentMemberId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSessionData();
+  }
+
+  void _loadSessionData() async {
+    CheckUserData2? userData = await SessionManager.getSession();
+    setState(() {
+      currentMemberId = userData?.memberId?.toString();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,12 +67,19 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
         ),
         iconTheme: IconThemeData(color: Colors.white),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () {
-              _showEditModalSheet(context);
-            },
-          ),
+          Obx(() {
+            // Show edit icon only if current logged-in member is the family head
+            if (controller.familyHeadData.value?.memberId == currentMemberId) {
+              return IconButton(
+                icon: const Icon(Icons.edit),
+                onPressed: () {
+                  _showEditModalSheet(context);
+                },
+              );
+            } else {
+              return const SizedBox.shrink();
+            }
+          }),
         ],
       ),
       body: SingleChildScrollView(
@@ -78,8 +102,9 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                       return _buildInfoBox(
                         'Building Name:',
                         subtitle: controller
-                                .getUserData.value.address?.buildingNameId
+                                .getUserData.value.address?.buildingName
                                 ?.toString() ??
+                            controller.getUserData.value.address?.buildingNameId?.toString() ??
                             "N/A",
                       );
                     }),
@@ -276,6 +301,73 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
               controller.getUserData.value.addressProofTypeId.toString();
           regiController.zoneController.value.text =
               controller.getUserData.value.address!.zoneName.toString();
+          
+          // Initialize building selection with existing building ID
+          final buildingNameId = controller.getUserData.value.address!.buildingNameId?.toString();
+          final pincode = controller.pincodeController.value.text;
+          
+          // Load buildings if pincode is available and building list is empty or doesn't contain current building
+          if (pincode.length == 6 && (regiController.checkPinCodeList.isEmpty || 
+              (buildingNameId != null && buildingNameId.isNotEmpty && buildingNameId != "null" &&
+               !regiController.checkPinCodeList.any((b) => b.id?.toString() == buildingNameId)))) {
+            // Load buildings for this pincode
+            regiController.getCheckPinCode(pincode);
+          }
+          
+          if (buildingNameId != null && buildingNameId.isNotEmpty && buildingNameId != "null") {
+            // Try to find matching building in current list by ID first
+            try {
+              final matchingBuilding = regiController.checkPinCodeList.firstWhere(
+                (building) => building.id?.toString() == buildingNameId,
+                orElse: () => Building(id: null, buildingName: null),
+              );
+              if (matchingBuilding.id != null) {
+                regiController.selectBuilding.value = matchingBuilding.id.toString();
+                regiController.isBuilding.value = false;
+              } else {
+                // If not found in current list, set it anyway - it will be restored after pincode search completes
+                regiController.selectBuilding.value = buildingNameId;
+                // Wait for buildings to load and then restore selection
+                if (pincode.length == 6) {
+                  Future.delayed(Duration(milliseconds: 800), () {
+                    try {
+                      final restoredBuilding = regiController.checkPinCodeList.firstWhere(
+                        (building) => building.id?.toString() == buildingNameId,
+                        orElse: () => Building(id: null, buildingName: null),
+                      );
+                      if (restoredBuilding.id != null) {
+                        regiController.selectBuilding.value = restoredBuilding.id.toString();
+                        regiController.isBuilding.value = false;
+                      }
+                    } catch (e) {
+                      // Building not found, keep the ID stored
+                    }
+                  });
+                }
+              }
+            } catch (e) {
+              // If list is empty or error, just store the ID for later restoration
+              regiController.selectBuilding.value = buildingNameId;
+              // Wait for buildings to load and then restore selection
+              if (pincode.length == 6) {
+                Future.delayed(Duration(milliseconds: 800), () {
+                  try {
+                    final restoredBuilding = regiController.checkPinCodeList.firstWhere(
+                      (building) => building.id?.toString() == buildingNameId,
+                      orElse: () => Building(id: null, buildingName: null),
+                    );
+                    if (restoredBuilding.id != null) {
+                      regiController.selectBuilding.value = restoredBuilding.id.toString();
+                      regiController.isBuilding.value = false;
+                    }
+                  } catch (e) {
+                    // Building not found, keep the ID stored
+                  }
+                });
+              }
+            }
+          }
+          
           // countryController.value.text = getUserData.value.address!.countryName.toString();
           // regiController.buildingController.value.text =
           //     controller.getUserData.value.address!.buildingNameId.toString();
@@ -302,16 +394,8 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
           // }
         }
 
-        // Add listener to pincode controller for auto-search
-        controller.pincodeController.value.addListener(() {
-          final text = controller.pincodeController.value.text;
-          if (text.length == 6) {
-            // Auto-search when 6 digits are entered
-            _performPincodeSearch(text, regiController);
-            // Remove focus to hide keyboard
-            pincodeFocusNode.unfocus();
-          }
-        });
+        // Pincode field is disabled, so no need for auto-search listener
+        // Removed listener since pincode cannot be edited
 
         return FractionallySizedBox(
           heightFactor: 0.8,
@@ -374,6 +458,15 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                               showErrorSnackbar("Please select an address proof type");
                               return;
                             }
+                            if (regiController.selectBuilding.value.isEmpty) {
+                              showErrorSnackbar("Please select a building");
+                              return;
+                            }
+                            if (regiController.selectBuilding.value == "other" && 
+                                regiController.buildingController.value.text.trim().isEmpty) {
+                              showErrorSnackbar("Please enter building name");
+                              return;
+                            }
 
                             await controller.userResidentalProfile(context);
                           }
@@ -420,6 +513,8 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                               keyboardType: TextInputType.number,
                               controller: controller.pincodeController.value,
                               maxLength: 6,
+                              readOnly: true, // Disable pincode editing
+                              style: const TextStyle(color: Colors.grey), // Grey text to indicate disabled
                               decoration: InputDecoration(
                                 labelText: 'Pin Code *',
                                 counterText: '', // Remove character counter
@@ -427,10 +522,13 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                                   borderSide: BorderSide(color: Colors.black),
                                 ),
                                 enabledBorder: const OutlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.black),
+                                  borderSide: BorderSide(color: Colors.grey),
                                 ),
                                 focusedBorder: const OutlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.black38, width: 1),
+                                  borderSide: BorderSide(color: Colors.grey, width: 1),
+                                ),
+                                disabledBorder: const OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey),
                                 ),
                                 contentPadding: const EdgeInsets.symmetric(
                                     vertical: 12, horizontal: 20),
@@ -454,12 +552,6 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
                                   return const SizedBox.shrink();
                                 }),
                               ),
-                              onChanged: (value) {
-                                // Show loading state when user is typing (optional)
-                                if (value.length == 6) {
-                                  // This will trigger the listener we added above
-                                }
-                              },
                             ),
                           ),
                           const SizedBox(height: 30),
@@ -1028,11 +1120,44 @@ class _ResidenceInformationPageState extends State<ResidenceInformationPage> {
     );
   }
 
-  void _performPincodeSearch(String pincode, NewMemberController regiController) {
+  void _performPincodeSearch(String pincode, NewMemberController regiController, {String? existingBuildingId}) {
     if (pincode.isNotEmpty && pincode.length == 6) {
       print("Auto-searching pincode: $pincode");
       regiController.zoneController.value.text = "";
+      
+      // Store the existing building selection before clearing
+      final savedBuildingId = existingBuildingId ?? regiController.selectBuilding.value;
+      
+      // Call the pincode search
       regiController.getCheckPinCode(pincode);
+      
+      // After pincode search completes, try to restore the building selection
+      // Use a worker to watch for building list updates
+      if (savedBuildingId.isNotEmpty && savedBuildingId != "other") {
+        // Wait for the async operation to complete and list to update
+        Future.delayed(Duration(milliseconds: 500), () {
+          try {
+            final matchingBuilding = regiController.checkPinCodeList.firstWhere(
+              (building) => building.id?.toString() == savedBuildingId,
+              orElse: () => Building(id: null, buildingName: null),
+            );
+            if (matchingBuilding.id != null) {
+              regiController.selectBuilding.value = matchingBuilding.id.toString();
+              regiController.isBuilding.value = false;
+              print("Restored building selection: ${matchingBuilding.buildingName}");
+            } else {
+              // Building not found in new list, clear selection
+              regiController.selectBuilding.value = '';
+              regiController.isBuilding.value = false;
+              print("Building ID $savedBuildingId not found in new pincode results");
+            }
+          } catch (e) {
+            print("Error restoring building: $e");
+            regiController.selectBuilding.value = '';
+            regiController.isBuilding.value = false;
+          }
+        });
+      }
     } else {
       Get.snackbar(
         "Error",
