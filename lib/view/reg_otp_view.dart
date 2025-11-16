@@ -9,6 +9,7 @@ import 'package:mpm/utils/images.dart';
 import 'package:mpm/utils/textstyleclass.dart';
 import 'package:mpm/view_model/controller/login/logincontroller.dart';
 import 'package:mpm/model/RegOtp/RegOtpModelClass.dart';
+import 'package:mpm/route/route_name.dart';
 
 class RegOTPScreen extends StatefulWidget {
   const RegOTPScreen({Key? key}) : super(key: key);
@@ -50,13 +51,8 @@ class _RegOTPScreenState extends State<RegOTPScreen> {
         });
 
         if (response.status == true) {
-          Get.snackbar(
-            "Success",
-            response.data?.message ?? "OTP verified successfully",
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-          );
-          Navigator.popUntil(context, (route) => route.isFirst);
+          // Show success dialog with message
+          _showSuccessDialog(context);
         } else {
           Get.snackbar(
             "Error",
@@ -84,6 +80,70 @@ class _RegOTPScreenState extends State<RegOTPScreen> {
         ),
       );
     }
+  }
+
+  void _showSuccessDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.check_circle,
+                color: Colors.green,
+                size: 28,
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                "Success",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            "OTP verified successfully. Your membership is still pending approval from samiti.",
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[700],
+              height: 1.5,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+                // Navigate to login screen
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  RouteNames.login_screen,
+                  (route) => false, // Remove all previous routes
+                );
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: const Text(
+                "OK",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   /// Dummy Resend OTP
