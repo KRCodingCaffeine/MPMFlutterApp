@@ -12,6 +12,7 @@ class Urls {
   static const  String occuption_url = base_url+"api/occupation";
   static const  String occuption_profession_url = base_url+"api/occupation_profession";
   static const  String occuption_specialization_url = base_url+"api/occupation_specialization";
+  static const  String occuption_specialization_subcategory_url = base_url+"api/occupation_specialization_subcategory";
   static const  String qualification_url = base_url+"api/qualification";
   static const  String qualificationmain_url = base_url+"api/qualification_main";
   static const  String qualificationcategory_url = base_url+"api/qualification_category_by_main";
@@ -88,6 +89,8 @@ class Urls {
   static const String cancel_trip_registration_url = base_url+"api/cancel_trip_registration";
   static const String device_mapping_url = base_url+"api/device_mapping";
   static const String forgot_member_login_url = base_url+"api/forgot_member_login";
+  static const String business_occupation_profile_url = base_url+"api/member_occupation_profile";
+  static const String business_address_url = base_url+"api/member_occupation_address";
 
   // Notification API URLs - Following same pattern as device_mapping
   static const String get_all_notifications_url = base_url+"api/notifications/get_all";

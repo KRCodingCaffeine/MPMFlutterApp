@@ -16,6 +16,7 @@ import 'package:mpm/model/GetProfile/Occupation.dart';
 import 'package:mpm/model/GetProfile/Qualification.dart';
 import 'package:mpm/model/Occupation/OccupationData.dart';
 import 'package:mpm/model/OccupationSpec/OccuptionSpecData.dart';
+import 'package:mpm/model/OccuptionSpecSubCategory/OccuptionSpecSubCategoryData.dart';
 import 'package:mpm/model/Qualification/QualificationData.dart';
 import 'package:mpm/model/QualificationCategory/QualificationCategoryModel.dart';
 import 'package:mpm/model/QualificationMain/QualicationMainData.dart';
@@ -106,6 +107,9 @@ class UdateProfileController extends GetxController {
       TextEditingController().obs;
   Rx<TextEditingController> specialization_nameController =
       TextEditingController().obs;
+  RxList<OccuptionSpecSubCategoryData> occuptionSubCategoryList =
+      <OccuptionSpecSubCategoryData>[].obs;
+  RxString selectedSubCategory = "".obs;
 
   var newProfileImage = "".obs;
   var userdocumentImage = "".obs;
@@ -562,6 +566,46 @@ class UdateProfileController extends GetxController {
     }
   }
 
+  Future<void> getOccupationSpecializationSubCategoryData(String specId) async {
+    if (specId.isEmpty) return;
+
+    try {
+      rxStatusOccupationSpec.value = Status.LOADING;
+
+      final response = await api.userOccutionSpectionSubCategoryApi(specId);
+      occuptionSubCategoryList.value = response.data ?? [];
+
+      if (occuptionSubCategoryList.isEmpty) {
+        showDetailsField.value = true;
+      } else {
+        // Add "Other" option only if it doesn't exist
+        if (!occuptionSubCategoryList.any((sub) => sub.id == "Other")) {
+          occuptionSubCategoryList.add(
+            OccuptionSpecSubCategoryData(
+              id: "Other",
+              specializationId: specId,
+              specializationSubCategoryName: "Other",
+              status: "1",
+              createdAt: null,
+              updatedAt: null,
+            ),
+          );
+        }
+      }
+
+      rxStatusOccupationSpec.value = Status.COMPLETE;
+    } catch (e) {
+      rxStatusOccupationSpec.value = Status.ERROR;
+      Get.snackbar(
+        'Error',
+        'Failed to load specialization sub-category',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
   Future<void> addAndupdateOccuption() async {
     try {
       isOccupationLoading.value = true;
@@ -574,15 +618,19 @@ class UdateProfileController extends GetxController {
 
       String? professionId = selectedProfession.value.isEmpty ? null : selectedProfession.value;
       String? specializationId = selectedSpecialization.value.isEmpty ? null : selectedSpecialization.value;
+      String? subCategoryId = selectedSubCategory.value.isEmpty ? null : selectedSubCategory.value;
 
+      // Handle "Other" values
       if (professionId == "Other") professionId = null;
       if (specializationId == "Other") specializationId = null;
+      if (subCategoryId == "Other") subCategoryId = null;
 
       final Map<String, dynamic> data = {
         "member_id": userData.memberId.toString(),
         "occupation_id": selectedOccupation.value,
         "occupation_profession_id": professionId ?? "",
         "occupation_specialization_id": specializationId ?? "",
+        "occupation_specialization_sub_category_id": subCategoryId ?? "",
         "occupation_other_name":
         (showDetailsField.value || detailsController.value.text.isNotEmpty)
             ? detailsController.value.text
@@ -590,45 +638,71 @@ class UdateProfileController extends GetxController {
         "updated_by": userData.memberId.toString()
       };
 
+      print("Sending occupation data: $data");
+
       final response = await api.updateOrAddOccuption(data);
 
       if (response.status == true) {
+        // Get the display names for each selected option
+        final occupationName = occuptionList
+            .firstWhere(
+              (occ) => occ.id == selectedOccupation.value,
+          orElse: () => OccupationData(
+              id: '',
+              occupation: '',
+              status: '',
+              createdAt: null,
+              updatedAt: null),
+        )
+            .occupation;
+
+        final professionName = professionId == null ? null : occuptionProfessionList
+            .firstWhere(
+              (prof) => prof.id == professionId,
+          orElse: () => OccuptionProfessionData(id: '', name: ''),
+        )
+            .name;
+
+        final specializationName = specializationId == null ? null : occuptionSpeList
+            .firstWhere(
+              (spec) => spec.id == specializationId,
+          orElse: () => OccuptionSpecData(id: '', name: ''),
+        )
+            .name;
+
+        final subCategoryName = subCategoryId == null ? null : occuptionSubCategoryList
+            .firstWhere(
+              (sub) => sub.id == subCategoryId,
+          orElse: () => OccuptionSpecSubCategoryData(
+            id: '',
+            specializationId: '',
+            specializationSubCategoryName: '',
+            status: '',
+            createdAt: null,
+            updatedAt: null,
+          ),
+        )
+            .specializationSubCategoryName;
+
         currentOccupation.value = Occupation(
           occupationId: selectedOccupation.value,
-          occupation: occuptionList
-              .firstWhere(
-                (occ) => occ.id == selectedOccupation.value,
-            orElse: () => OccupationData(
-                id: '',
-                occupation: '',
-                status: '',
-                createdAt: null,
-                updatedAt: null),
-          )
-              .occupation,
+          occupation: occupationName,
           occupationProfessionId: professionId,
-          occupationProfessionName: professionId == null ? null : occuptionProfessionList
-              .firstWhere(
-                (prof) => prof.id == professionId,
-            orElse: () => OccuptionProfessionData(id: '', name: ''),
-          )
-              .name,
+          occupationProfessionName: professionName,
           occupationSpecializationId: specializationId,
-          specializationName: specializationId == null ? null : occuptionSpeList
-              .firstWhere(
-                (spec) => spec.id == specializationId,
-            orElse: () => OccuptionSpecData(id: '', name: ''),
-          )
-              .name,
+          specializationName: specializationName,
+          occupationSpecializationSubCategoryId: subCategoryId,
+          specializationSubCategoryName: subCategoryName,
           occupationOtherName: showDetailsField.value ? detailsController.value.text : null,
         );
 
         hasOccupationData.value = true;
 
+        // Update controllers for display
         occupationController.value.text = currentOccupation.value?.occupation ?? '';
         occupation_profession_nameController.value.text = currentOccupation.value?.occupationProfessionName ?? '';
         specialization_nameController.value.text = currentOccupation.value?.specializationName ?? '';
-        detailsController.value.text = currentOccupation.value?.occupationOtherName ?? '';
+        // Note: For sub-category, we don't have a separate controller, it's handled in the UI
 
         Get.back();
 
@@ -661,6 +735,7 @@ class UdateProfileController extends GetxController {
   void initOccupationData(Occupation? occupation) {
     resetDependentFields();
     detailsController.value.clear();
+    selectedSubCategory.value = "";
 
     if (occupation == null) return;
 
@@ -675,7 +750,6 @@ class UdateProfileController extends GetxController {
     getOccupationProData(selectedOccupation.value).then((_) {
       if (occupation.occupationProfessionId != null &&
           occupation.occupationProfessionId!.isNotEmpty) {
-        // Profession ID exists in the data
         selectedProfession.value = occupation.occupationProfessionId!;
 
         if (selectedProfession.value == "Other") {
@@ -687,11 +761,23 @@ class UdateProfileController extends GetxController {
           if (occupation.occupationSpecializationId != null &&
               occupation.occupationSpecializationId!.isNotEmpty) {
             selectedSpecialization.value = occupation.occupationSpecializationId!;
-            showDetailsField.value = true;
 
-            if (selectedSpecialization.value == "Other") {
-              showDetailsField.value = true;
-            }
+            // Load sub-categories if specialization exists
+            getOccupationSpecializationSubCategoryData(selectedSpecialization.value).then((_) {
+              if (occupation.occupationSpecializationSubCategoryId != null &&
+                  occupation.occupationSpecializationSubCategoryId!.isNotEmpty) {
+                selectedSubCategory.value = occupation.occupationSpecializationSubCategoryId!;
+
+                if (selectedSubCategory.value == "Other") {
+                  showDetailsField.value = true;
+                } else {
+                  showDetailsField.value = false;
+                }
+              } else {
+                selectedSubCategory.value = "Other";
+                showDetailsField.value = true;
+              }
+            });
           } else {
             selectedSpecialization.value = "Other";
             showDetailsField.value = true;

@@ -8,6 +8,7 @@ import 'package:mpm/model/GetProfile/GetProfileModel.dart';
 import 'package:mpm/model/Occupation/OccupationModel.dart';
 import 'package:mpm/model/Occupation/addoccuption/AddOccuptionModel.dart';
 import 'package:mpm/model/OccupationSpec/OccuptionSpecialization.dart';
+import 'package:mpm/model/OccuptionSpecSubCategory/OccuptionSpecSubCategoryModel.dart';
 import 'package:mpm/model/Qualification/QualificationModel.dart';
 import 'package:mpm/model/QualificationCategory/QualificationCategoryModel.dart';
 import 'package:mpm/model/QualificationMain/QualicationMainModel.dart';
@@ -115,6 +116,24 @@ class UpdateProfileRepository {
         await api.postApi(data, Urls.occuption_specialization_url, "", "2");
     //print("vdgvgdv"+response.toString());
     return OccuptionSpectionModel.fromJson(response);
+  }
+
+  Future<OccuptionSpecSubCategoryModel> userOccutionSpectionSubCategoryApi(
+      String specId) async {
+
+    // Use form-data with POST request instead of query parameters
+    Map<String, dynamic> data = {
+      "occupation_specialization_id": specId,
+    };
+
+    dynamic response = await api.postApi(
+      data,
+      Urls.occuption_specialization_subcategory_url,
+      "",
+      "2",
+    );
+
+    return OccuptionSpecSubCategoryModel.fromJson(response);
   }
 
   Future<AddOccuptionModel> updateOrAddOccuption(data) async {
