@@ -8,6 +8,7 @@ import 'package:mpm/model/OccupationSpec/OccuptionSpecData.dart';
 import 'package:mpm/model/OccuptionSpecSubCategory/OccuptionSpecSubCategoryData.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/view/profile%20view/occupation_detail_view.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
@@ -115,7 +116,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                       _showEditModalSheet(context);
                     }
                     else if (value == 'view more') {
-                      // controller.deleteOccupation();
+                      _goToProductPage();
                     }
                   },
                   itemBuilder: (context) => const [
@@ -223,6 +224,21 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
         ),
       ),
     );
+  }
+
+  void _goToProductPage() {
+    final memberId = controller.currentOccupation.value?.memberId;
+    final memberOccupationId = controller.currentOccupation.value?.memberOccupationId;
+
+    if (memberId == null || memberOccupationId == null) {
+      Get.snackbar("Error", "Invalid Occupation Data");
+      return;
+    }
+
+    Get.to(() => OccupationDetailViewPage(
+      memberId: memberId.toString(),
+      memberOccupationId: memberOccupationId.toString(),
+    ));
   }
 
   Widget _buildInfoBox(String title, {String? subtitle}) {
