@@ -91,6 +91,9 @@ class Urls {
   static const String forgot_member_login_url = base_url+"api/forgot_member_login";
   static const String business_occupation_profile_url = base_url+"api/member_occupation_profile";
   static const String business_address_url = base_url+"api/member_occupation_address";
+  static const String add_occupation_url = base_url+"api/add_occupation";
+  static const String add_member_occupation_profile_url = base_url+"api/add_member_occupation_profile";
+  static const String get_all_business_occupation_profile_url = base_url+"api/member_occupation_profile";
 
   // Notification API URLs - Following same pattern as device_mapping
   static const String get_all_notifications_url = base_url+"api/notifications/get_all";

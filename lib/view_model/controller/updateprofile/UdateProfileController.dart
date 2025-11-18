@@ -8,6 +8,7 @@ import 'package:mpm/model/AddExistingFamilyMember/addExistingFamilyMemberData.da
 import 'package:mpm/model/ChangeFamilyHead/changeFamilyHeadData.dart';
 import 'package:mpm/model/CheckPinCode/Building.dart';
 import 'package:mpm/model/CheckUser/CheckUserData2.dart';
+import 'package:mpm/model/GetAllBusinessOccupationProfile/GetAllBusinessOccupationProfileModelClass.dart';
 import 'package:mpm/model/GetProfile/BusinessInfo.dart';
 import 'package:mpm/model/GetProfile/FamilyHeadMemberData.dart';
 import 'package:mpm/model/GetProfile/FamilyMembersData.dart';
@@ -25,6 +26,7 @@ import 'package:mpm/model/SaraswaniOption/SaraswaniOptionData.dart';
 import 'package:mpm/model/UpdateFamilyRelation/UpdateFamilyMember.dart';
 import 'package:mpm/model/relation/RelationData.dart';
 import 'package:mpm/repository/add_existing_family_member_repository/add_existing_family_member_repo.dart';
+import 'package:mpm/repository/add_occupation_business_repository/add_occupation_business_repo.dart';
 import 'package:mpm/repository/change_family_head_repository/change_family_head_repo.dart';
 import 'package:mpm/repository/register_repository/register_repo.dart';
 import 'package:mpm/repository/send_verification_email_repository/send_verification_email_repo.dart';
@@ -36,6 +38,8 @@ import 'package:mpm/utils/urls.dart';
 import 'package:http/http.dart' as http;
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/notification/NotificationApiController.dart';
+
+import '../../../repository/get_all_business_occupation_profile_repository/get_all_business_occupation_profile_repo.dart';
 
 class UdateProfileController extends GetxController {
   final api = UpdateProfileRepository();
@@ -96,8 +100,8 @@ class UdateProfileController extends GetxController {
       TextEditingController().obs;
   Rx<TextEditingController> udofficePincodeController =
       TextEditingController().obs;
-  Rx<TextEditingController> businessEmailController =
-      TextEditingController().obs;
+  // Rx<TextEditingController> businessEmailController =
+  //     TextEditingController().obs;
   Rx<TextEditingController> udbusinessEmailController =
       TextEditingController().obs;
   Rx<TextEditingController> websiteController = TextEditingController().obs;
@@ -579,10 +583,10 @@ class UdateProfileController extends GetxController {
         showDetailsField.value = true;
       } else {
         // Add "Other" option only if it doesn't exist
-        if (!occuptionSubCategoryList.any((sub) => sub.id == "Other")) {
+        if (!occuptionSubCategoryList.any((sub) => sub.specializationSubCategoryId == "Other")) {
           occuptionSubCategoryList.add(
             OccuptionSpecSubCategoryData(
-              id: "Other",
+              specializationSubCategoryId: "Other",
               specializationId: specId,
               specializationSubCategoryName: "Other",
               status: "1",
@@ -672,9 +676,9 @@ class UdateProfileController extends GetxController {
 
         final subCategoryName = subCategoryId == null ? null : occuptionSubCategoryList
             .firstWhere(
-              (sub) => sub.id == subCategoryId,
+              (sub) => sub.specializationSubCategoryId == subCategoryId,
           orElse: () => OccuptionSpecSubCategoryData(
-            id: '',
+            specializationSubCategoryId: '',
             specializationId: '',
             specializationSubCategoryName: '',
             status: '',
@@ -789,6 +793,66 @@ class UdateProfileController extends GetxController {
       }
     });
   }
+
+  // Occupation Business Profile
+  final Rx<GetAllBusinessOccupationProfileModelClass?> _businessProfiles = Rx<GetAllBusinessOccupationProfileModelClass?>(null);
+  GetAllBusinessOccupationProfileModelClass? get businessProfiles => _businessProfiles.value;
+
+  final Rx<Status> _rxBusinessProfileStatus = Status.LOADING.obs;
+  Status get rxBusinessProfileStatus => _rxBusinessProfileStatus.value;
+
+  // Add repository
+  final BusinessOccupationProfileRepository businessProfileRepo = BusinessOccupationProfileRepository();
+
+  // Method to fetch business profiles
+  Future<void> getBusinessOccupationProfiles(String memberId) async {
+    try {
+      _rxBusinessProfileStatus.value = Status.LOADING;
+      final response = await businessProfileRepo.fetchBusinessOccupationProfiles(
+        memberId: memberId,
+        fullDetails: true,
+      );
+
+      if (response.status == true) {
+        _businessProfiles.value = response;
+        _rxBusinessProfileStatus.value = Status.COMPLETE;
+      } else {
+        _rxBusinessProfileStatus.value = Status.ERROR;
+        Get.snackbar(
+          "Error",
+          response.message ?? "Failed to load business profiles",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      _rxBusinessProfileStatus.value = Status.ERROR;
+      debugPrint("❌ Error fetching business profiles: $e");
+      Get.snackbar(
+        "Error",
+        "Failed to load business profiles: $e",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  // Method to refresh after adding new business
+  Future<void> refreshBusinessProfiles(String memberId) async {
+    await getBusinessOccupationProfiles(memberId);
+  }
+
+  final AddOccupationBusinessRepository addOccupationBusinessRepo = AddOccupationBusinessRepository();
+
+  Rx<TextEditingController> businessNameController = TextEditingController().obs;
+  Rx<TextEditingController> businessMobileController = TextEditingController().obs;
+  Rx<TextEditingController> businessLandlineController = TextEditingController().obs;
+  Rx<TextEditingController> businessEmailController = TextEditingController().obs;
+  Rx<TextEditingController> businessWebsiteController = TextEditingController().obs;
+  Rx<TextEditingController> businessFlatNoController = TextEditingController().obs;
+  Rx<TextEditingController> businessAddressController = TextEditingController().obs;
+  Rx<TextEditingController> businessAreaNameController = TextEditingController().obs;
+  Rx<TextEditingController> businessPincodeController = TextEditingController().obs;
 
   // Qualification Controller
   final rxStatusQualification = Status.LOADING.obs;

@@ -1,5 +1,5 @@
 class OccuptionSpecSubCategoryData {
-  String? id;
+  String? specializationSubCategoryId;
   String? specializationId;
   String? specializationSubCategoryName;
   String? status;
@@ -7,7 +7,7 @@ class OccuptionSpecSubCategoryData {
   String? updatedAt;
 
   OccuptionSpecSubCategoryData({
-    this.id,
+    this.specializationSubCategoryId,
     this.specializationId,
     this.specializationSubCategoryName,
     this.status,
@@ -16,7 +16,7 @@ class OccuptionSpecSubCategoryData {
   });
 
   OccuptionSpecSubCategoryData.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
+    specializationSubCategoryId = json['occupation_specialization_sub_category_id '];
     specializationId = json['occupation_specialization_id'];
     specializationSubCategoryName = json['specialization_sub_category_name'];
     status = json['status'];
@@ -26,7 +26,7 @@ class OccuptionSpecSubCategoryData {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = {};
-    data['id'] = id;
+    data['occupation_specialization_sub_category_id '] = specializationSubCategoryId;
     data['occupation_specialization_id'] = specializationId;
     data['specialization_sub_category_name'] = specializationSubCategoryName;
     data['status'] = status;

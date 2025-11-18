@@ -14,13 +14,13 @@ class BusinessAddressRepository {
       final url =
           "${Urls.business_address_url}?business_profile_id=$businessProfileId";
 
-      debugPrint("🔵 Business Address API URL: $url");
+      debugPrint("Business Address API URL: $url");
 
       final response = await api.getApi(url, "");
 
       return BusinessAddressModelClass.fromJson(response);
     } catch (e) {
-      debugPrint("❌ Error Fetching Business Addresses: $e");
+      debugPrint("Error Fetching Business Addresses: $e");
       rethrow;
     }
   }

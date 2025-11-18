@@ -204,7 +204,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                   controller.selectedSubCategory.value != "Other";
               if (hasSubCategory) {
                 final subCategory = controller.occuptionSubCategoryList.firstWhere(
-                      (sub) => sub.id == controller.selectedSubCategory.value,
+                      (sub) => sub.specializationSubCategoryId == controller.selectedSubCategory.value,
                   orElse: () => OccuptionSpecSubCategoryData(specializationSubCategoryName: 'Unknown'),
                 );
                 return _buildInfoBox(
@@ -681,7 +681,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                     items: [
                       ...controller.occuptionSubCategoryList.map((OccuptionSpecSubCategoryData sub) {
                         return DropdownMenuItem<String>(
-                          value: sub.id.toString(),
+                          value: sub.specializationSubCategoryId.toString(),
                           child: Text(sub.specializationSubCategoryName ?? 'Unknown'),
                         );
                       }).toList(),
