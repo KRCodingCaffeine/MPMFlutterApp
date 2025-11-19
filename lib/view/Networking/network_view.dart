@@ -1,6 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:mpm/model/SearchOccupation/SearchOccupationData.dart';
+import 'package:mpm/model/SearchOccupation/SearchOccupationModelClass.dart';
+import 'package:mpm/repository/search_occupation_repository/search_occupation_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/utils/urls.dart';
 
 class NetworkView extends StatefulWidget {
   const NetworkView({super.key});
@@ -10,280 +15,231 @@ class NetworkView extends StatefulWidget {
 }
 
 class _NetworkViewState extends State<NetworkView> {
-  // ============================================================================
-  // EXISTING CODE PRESERVED BELOW - DO NOT DELETE
-  // This code will be restored when the networking feature is ready
-  // ============================================================================
-  
-  /*
-  String selectedCategory = 'All';
-  final List<String> categories = ['All', 'Professionals', 'Business', 'Entrepreneurs'];
-  final List<Map<String, String>> members = [
-    {
-      'name': 'Karthika Rajesh',
-      'profession': 'Android Developer',
-      'zone': 'Ghatkopar',
-      'image': 'https://avatar.iran.liara.run/public/girl?username=Ash'
-    },
-    {
-      'name': 'Manoj kumar Murugan',
-      'profession': 'Full Stack Developer',
-      'zone': 'Wadala',
-      'image': 'https://avatar.iran.liara.run/public/boy?username=Ash'
-    },
-    {
-      'name': 'Satya Narayan Somani',
-      'profession': 'Manager',
-      'zone': 'Dadar',
-      'image': 'https://avatar.iran.liara.run/public/45'
-    },
-    {
-      'name': 'Rajesh',
-      'profession': 'Chartered Accountant',
-      'zone': 'Thane',
-      'image': 'https://avatar.iran.liara.run/public/4'
-    },
-  ];
+  final TextEditingController searchController = TextEditingController();
+  final SearchOccupationRepository repo = SearchOccupationRepository();
+
+  bool isLoading = false;
+  List<SearchOccupationData> results = [];
+
+  Timer? _debounce;
+
+  Future<void> performSearch(String term) async {
+    if (term.trim().length < 3) {
+      setState(() => results = []);
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    try {
+      SearchOccupationModelClass response =
+      await repo.searchOccupation(searchTerm: term);
+
+      setState(() {
+        results = response.data ?? [];
+      });
+
+      print("RESULT COUNT: ${results.length}");
+    } catch (e) {
+      debugPrint("Search Error: $e");
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final themeColor =
+    ColorHelperClass.getColorFromHex(ColorResources.red_color);
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        title: Builder(
-          builder: (context) {
-            double fontSize = MediaQuery.of(context).size.width * 0.045;
-            return Text(
-              'Networking',
-              style: TextStyle(
-                  color: Colors.white, fontSize: fontSize, fontWeight: FontWeight.w500),
-            );
-          },
-        ),
+        title: const Text("Networking", style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
+
       body: Column(
         children: [
-          // 🔍 Search Bar
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Search by name, profession or zone...',
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+          // 🔍 AMAZON STYLE SEARCH BAR
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.black12),
+              ),
+              child: TextField(
+                controller: searchController,
+                onChanged: (value) {
+                  if (_debounce?.isActive ?? false) _debounce!.cancel();
+                  _debounce = Timer(const Duration(milliseconds: 350), () {
+                    performSearch(value);
+                  });
+                },
+                decoration: const InputDecoration(
+                  hintText: "Search members, profession, products...",
+                  border: InputBorder.none,
+                  icon: Icon(Icons.search, color: Colors.grey),
                 ),
               ),
             ),
           ),
 
-          // 🏷️ Filter Chips
-          SizedBox(
-            height: 45,
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              scrollDirection: Axis.horizontal,
-              itemCount: categories.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (context, index) {
-                final category = categories[index];
-                final isSelected = category == selectedCategory;
-                return ChoiceChip(
-                  label: Text(category),
-                  selected: isSelected,
-                  selectedColor:
-                  ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-                  backgroundColor: Colors.white,
-                  labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : Colors.black87,
-                      fontWeight: FontWeight.w500),
-                  onSelected: (_) {
-                    setState(() => selectedCategory = category);
-                  },
-                );
-              },
-            ),
-          ),
+          // LOADING INDICATOR
+          if (isLoading)
+            const Expanded(
+                child:
+                Center(child: CircularProgressIndicator(color: Colors.red))),
 
-          const SizedBox(height: 10),
-
-          // 👥 Members List
-          Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 0.78,
+          // EMPTY STATE
+          if (!isLoading && results.isEmpty)
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.people_alt_outlined,
+                      size: 100, color: Colors.grey.shade400),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Start searching to discover members",
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  )
+                ],
               ),
-              itemCount: members.length,
-              itemBuilder: (context, index) {
-                final member = members[index];
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black12.withOpacity(0.05),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      )
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 12),
-                      CircleAvatar(
-                        radius: 38,
-                        backgroundImage: NetworkImage(member['image']!),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        member['name']!,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 16),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        member['profession']!,
-                        style: TextStyle(
-                            fontSize: 13, color: Colors.grey[600]),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        member['zone']!,
-                        style: TextStyle(
-                            fontSize: 12,
-                            color: ColorHelperClass.getColorFromHex(
-                                ColorResources.logo_color),
-                            fontWeight: FontWeight.w500),
-                      ),
-                      const Spacer(),
-                      Container(
-                        width: double.infinity,
-                        margin:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Connecting with ${member['name']}...')),
-                            );
-                          },
-                          icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                          label: const Text('Connect'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: ColorHelperClass.getColorFromHex(
-                                ColorResources.red_color),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            textStyle: const TextStyle(fontSize: 13),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8)),
+            ),
+
+          // RESULT GRID
+          if (!isLoading && results.isNotEmpty)
+            Expanded(
+              child: GridView.builder(
+                padding: const EdgeInsets.all(12),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.62,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
+                itemCount: results.length,
+                itemBuilder: (context, index) {
+                  final member = results[index];
+                  final occ = member.occupation;
+
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.black12),
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.black12.withOpacity(0.07),
+                            blurRadius: 6,
+                            offset: const Offset(0, 3))
+                      ],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Profile Image - Amazon Style
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(60),
+                            child: SizedBox(
+                              height: 100,
+                              width: 100,
+                              child: (member.profileImage != null &&
+                                  member.profileImage!.isNotEmpty)
+                                  ? FadeInImage(
+                                placeholder: const AssetImage(
+                                    "assets/images/user3.png"),
+                                image: NetworkImage(
+                                    Urls.imagePathUrl +
+                                        member.profileImage!),
+                                fit: BoxFit.cover,
+                                imageErrorBuilder: (_, __, ___) =>
+                                    Image.asset(
+                                        "assets/images/user3.png"),
+                              )
+                                  : Image.asset("assets/images/user3.png",
+                                  fit: BoxFit.cover),
+                            ),
                           ),
-                        ),
-                      )
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  */
-  
-  // ============================================================================
-  // COMING SOON SCREEN - TEMPORARY IMPLEMENTATION
-  // ============================================================================
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        title: Builder(
-          builder: (context) {
-            double fontSize = MediaQuery.of(context).size.width * 0.045;
-            return Text(
-              'Networking',
-              style: TextStyle(
-                  color: Colors.white, fontSize: fontSize, fontWeight: FontWeight.w500),
-            );
-          },
-        ),
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.people_outline,
-                size: 120,
-                color: ColorHelperClass.getColorFromHex(ColorResources.logo_color).withOpacity(0.6),
+                          const SizedBox(height: 12),
+
+                          // Name
+                          Text(
+                            member.fullName ?? "No Name",
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                height: 1.2),
+                          ),
+
+                          const SizedBox(height: 6),
+
+                          // Profession
+                          Text(
+                            occ?.professionName ?? "",
+                            style: TextStyle(
+                                fontSize: 13, color: Colors.grey.shade700),
+                          ),
+
+                          const SizedBox(height: 4),
+
+                          // Specialization (Amazon badge style)
+                          if ((occ?.specializationName ?? "").isNotEmpty)
+                            Container(
+                              margin: const EdgeInsets.only(top: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.shade100,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                occ!.specializationName!,
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.orange.shade700,
+                                    fontWeight: FontWeight.w600),
+                              ),
+                            ),
+
+                          const SizedBox(height: 8),
+
+                          // Connect Button (Amazon Style)
+                          SizedBox(
+                            width: double.infinity,
+                            height: 38,
+                            child: ElevatedButton(
+                              onPressed: () {},
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: themeColor,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: const Text("Connect",
+                                  style: TextStyle(fontSize: 14)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
-              const SizedBox(height: 32),
-              Text(
-                'Coming Soon',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[800],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Networking feature is under development',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Stay tuned for exciting updates!',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[500],
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 48),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                decoration: BoxDecoration(
-                  color: ColorHelperClass.getColorFromHex(ColorResources.logo_color).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'Connect with members • Find professionals • Build your network',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-                    fontWeight: FontWeight.w500,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+          const SizedBox(height: 30),
+        ],
       ),
     );
   }

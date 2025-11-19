@@ -96,6 +96,10 @@ class Urls {
   static const String update_member_occupation_profile_url = base_url+"api/update_member_occupation_profile";
   static const String get_all_business_occupation_profile_url = base_url+"api/member_occupation_profile";
   static const String delete_member_occupation_profile_url = base_url+"api/delete_member_occupation_profile";
+  static const String get_all_occupation_products_url = base_url+"api/member_occupation_product";
+  static const String searchOccupation_url = base_url+"api/search_occupation";
+  static const String product_categories_url = base_url+"api/product_category";
+  static const String product_subcategories_url = base_url+"api/product_subcategory";
 
   // Notification API URLs - Following same pattern as device_mapping
   static const String get_all_notifications_url = base_url+"api/notifications/get_all";

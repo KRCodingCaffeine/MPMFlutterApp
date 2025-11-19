@@ -6,6 +6,7 @@ import 'package:mpm/OccuptionProfession/OccuptionProfessionData.dart';
 import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/AddExistingFamilyMember/addExistingFamilyMemberData.dart';
 import 'package:mpm/model/BusinessProfile/GetAllBusinessOccupationProfile/GetAllBusinessOccupationProfileModelClass.dart';
+import 'package:mpm/model/BusinessProfile/GetAllOccupationProduct/GetAllOccupationProductModelClass.dart';
 import 'package:mpm/model/ChangeFamilyHead/changeFamilyHeadData.dart';
 import 'package:mpm/model/CheckPinCode/Building.dart';
 import 'package:mpm/model/CheckUser/CheckUserData2.dart';
@@ -27,6 +28,7 @@ import 'package:mpm/model/UpdateFamilyRelation/UpdateFamilyMember.dart';
 import 'package:mpm/model/relation/RelationData.dart';
 import 'package:mpm/repository/BusinessProfileRepo/add_occupation_business_repository/add_occupation_business_repo.dart';
 import 'package:mpm/repository/BusinessProfileRepo/delete_occupation_business_repository/delete_occupation_business_repo.dart';
+import 'package:mpm/repository/BusinessProfileRepo/get_occupation_product_by_id_repository/get_occupation_product_by_id_repo.dart';
 import 'package:mpm/repository/BusinessProfileRepo/update_occupation_business_repository/update_occupation_business_repo.dart';
 import 'package:mpm/repository/add_existing_family_member_repository/add_existing_family_member_repo.dart';
 import 'package:mpm/repository/change_family_head_repository/change_family_head_repo.dart';
@@ -886,6 +888,21 @@ class UdateProfileController extends GetxController {
         colorText: Colors.white,
       );
       debugPrint("❌ DELETE BUSINESS PROFILE ERROR: $e");
+    }
+  }
+
+  // Business Profile
+  final OccupationProductRepository occupationProductRepository = OccupationProductRepository();
+
+  final Rx<GetAllOccupationProductsModelClass?> occupationProducts = Rx<GetAllOccupationProductsModelClass?>(null);
+
+  Future<void> getAllOccupationProducts(String profileId) async {
+    try {
+      final response = await occupationProductRepository.getAllProducts(profileId: profileId);
+      occupationProducts.value = response;
+    } catch (e) {
+      debugPrint("Error fetching occupation products: $e");
+      rethrow;
     }
   }
 

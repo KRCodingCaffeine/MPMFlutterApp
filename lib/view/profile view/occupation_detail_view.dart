@@ -5,6 +5,7 @@ import 'package:mpm/model/BusinessProfile/GetAllBusinessOccupationProfile/GetAll
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/profile%20view/business_info_page.dart';
+import 'package:mpm/view/profile%20view/product_list_view.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/model/CountryModel/CountryData.dart';
@@ -1204,7 +1205,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           onPressed: () {
-                            // _navigateToProductList(context, business);
+                            _navigateToProductList(context, business);
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
@@ -1218,8 +1219,6 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                           label: const Text("Product List"),
                         ),
                       ),
-
-
                       const SizedBox(height: 10),
                     ],
                   ),
@@ -1230,6 +1229,21 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
         );
       }),
     );
+  }
+
+  void _navigateToProductList(BuildContext context, BusinessOccupationProfile business) {
+    if (business.profileId != null && business.profileId!.isNotEmpty) {
+      Get.to(() => ProductListPage(
+        profileId: business.profileId!,
+      ));
+    } else {
+      Get.snackbar(
+        "Error",
+        "Unable to load product list",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
   }
 
   Widget _buildEmptyState() {
