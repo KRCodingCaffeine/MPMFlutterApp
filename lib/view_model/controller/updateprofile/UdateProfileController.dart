@@ -5,10 +5,10 @@ import 'package:get/get.dart';
 import 'package:mpm/OccuptionProfession/OccuptionProfessionData.dart';
 import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/AddExistingFamilyMember/addExistingFamilyMemberData.dart';
+import 'package:mpm/model/BusinessProfile/GetAllBusinessOccupationProfile/GetAllBusinessOccupationProfileModelClass.dart';
 import 'package:mpm/model/ChangeFamilyHead/changeFamilyHeadData.dart';
 import 'package:mpm/model/CheckPinCode/Building.dart';
 import 'package:mpm/model/CheckUser/CheckUserData2.dart';
-import 'package:mpm/model/GetAllBusinessOccupationProfile/GetAllBusinessOccupationProfileModelClass.dart';
 import 'package:mpm/model/GetProfile/BusinessInfo.dart';
 import 'package:mpm/model/GetProfile/FamilyHeadMemberData.dart';
 import 'package:mpm/model/GetProfile/FamilyMembersData.dart';
@@ -25,8 +25,10 @@ import 'package:mpm/model/Register/RegisterModelClass.dart';
 import 'package:mpm/model/SaraswaniOption/SaraswaniOptionData.dart';
 import 'package:mpm/model/UpdateFamilyRelation/UpdateFamilyMember.dart';
 import 'package:mpm/model/relation/RelationData.dart';
+import 'package:mpm/repository/BusinessProfileRepo/add_occupation_business_repository/add_occupation_business_repo.dart';
+import 'package:mpm/repository/BusinessProfileRepo/delete_occupation_business_repository/delete_occupation_business_repo.dart';
+import 'package:mpm/repository/BusinessProfileRepo/update_occupation_business_repository/update_occupation_business_repo.dart';
 import 'package:mpm/repository/add_existing_family_member_repository/add_existing_family_member_repo.dart';
-import 'package:mpm/repository/add_occupation_business_repository/add_occupation_business_repo.dart';
 import 'package:mpm/repository/change_family_head_repository/change_family_head_repo.dart';
 import 'package:mpm/repository/register_repository/register_repo.dart';
 import 'package:mpm/repository/send_verification_email_repository/send_verification_email_repo.dart';
@@ -38,8 +40,7 @@ import 'package:mpm/utils/urls.dart';
 import 'package:http/http.dart' as http;
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/notification/NotificationApiController.dart';
-
-import '../../../repository/get_all_business_occupation_profile_repository/get_all_business_occupation_profile_repo.dart';
+import '../../../repository/BusinessProfileRepo/get_all_business_occupation_profile_repository/get_all_business_occupation_profile_repo.dart';
 
 class UdateProfileController extends GetxController {
   final api = UpdateProfileRepository();
@@ -837,12 +838,9 @@ class UdateProfileController extends GetxController {
     }
   }
 
-  // Method to refresh after adding new business
-  Future<void> refreshBusinessProfiles(String memberId) async {
-    await getBusinessOccupationProfiles(memberId);
-  }
-
   final AddOccupationBusinessRepository addOccupationBusinessRepo = AddOccupationBusinessRepository();
+  final UpdateOccupationBusinessRepository updateOccupationBusiness = UpdateOccupationBusinessRepository();
+
 
   Rx<TextEditingController> businessNameController = TextEditingController().obs;
   Rx<TextEditingController> businessMobileController = TextEditingController().obs;
@@ -853,6 +851,43 @@ class UdateProfileController extends GetxController {
   Rx<TextEditingController> businessAddressController = TextEditingController().obs;
   Rx<TextEditingController> businessAreaNameController = TextEditingController().obs;
   Rx<TextEditingController> businessPincodeController = TextEditingController().obs;
+
+  // Add delete repository
+  final DeleteOccupationBusinessRepository deleteOccupationBusinessRepo = DeleteOccupationBusinessRepository();
+
+  // Add delete method
+  Future<void> deleteBusinessOccupationProfile(String businessOccupationProfileId, String memberId) async {
+    try {
+      final response = await deleteOccupationBusinessRepo.deleteOccupationBusinessProfile(
+        businessOccupationProfileId,
+      );
+
+      if (response.status == true) {
+        Get.snackbar(
+          "Success",
+          response.message ?? "Business profile deleted successfully",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+        await getBusinessOccupationProfiles(memberId);
+      } else {
+        Get.snackbar(
+          "Error",
+          response.message ?? "Failed to delete business profile",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        "Failed to delete business profile: $e",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      debugPrint("❌ DELETE BUSINESS PROFILE ERROR: $e");
+    }
+  }
 
   // Qualification Controller
   final rxStatusQualification = Status.LOADING.obs;
