@@ -1,12 +1,17 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mpm/model/BusinessProfile/AddOccupationProduct/AddOccupationProductData.dart';
 import 'package:mpm/model/ProductCategory/ProductCategoryData.dart';
 import 'package:mpm/model/ProductSubcategory/ProductSubcategoryData.dart';
 import 'package:mpm/repository/BusinessProfileRepo/add_occupation_product_repository/add_occupation_product_repo.dart';
 import 'package:mpm/repository/BusinessProfileRepo/delete_occupation_product_repository/delete_occupation_product_repo.dart';
+import 'package:mpm/repository/BusinessProfileRepo/product_image_repository/product_image_repo.dart';
 import 'package:mpm/repository/product_category_repository/product_category_repo.dart';
 import 'package:mpm/repository/product_subcategory_repository/product_subcategory_repo.dart';
+import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/model/BusinessProfile/GetAllOccupationProduct/GetAllOccupationProductData.dart';
@@ -46,10 +51,10 @@ class _ProductListPageState extends State<ProductListPage> {
   String? _selectedCategoryId;
   String? _selectedSubcategoryId;
 
+  File? _image;
+
   List<ProductCategoryData> _categories = [];
   List<ProductSubcategoryData> _subcategories = [];
-  bool _isLoadingCategories = false;
-  bool _isLoadingSubcategories = false;
   bool _isAddingProduct = false;
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -64,60 +69,11 @@ class _ProductListPageState extends State<ProductListPage> {
   void initState() {
     super.initState();
     _loadProducts();
-    _loadCategories();
-  }
-
-  Future<void> _loadCategories() async {
-    setState(() {
-      _isLoadingCategories = true;
-    });
-
-    try {
-      final response = await categoryRepository.getAllProductCategories();
-      if (response.status == true && response.data != null) {
-        setState(() {
-          _categories = response.data!;
-          _isLoadingCategories = false;
-        });
-      } else {
-        setState(() {
-          _isLoadingCategories = false;
-        });
-      }
-    } catch (e) {
+    controller.loadCategories().then((_) {
       setState(() {
-        _isLoadingCategories = false;
+        _categories = controller.categories;
       });
-      debugPrint("❌ Error loading categories: $e");
-    }
-  }
-
-  Future<void> _loadSubcategories(String categoryId) async {
-    setState(() {
-      _isLoadingSubcategories = true;
-      _selectedSubcategoryId = null;
     });
-
-    try {
-      final response = await subcategoryRepository.getAllSubcategories(categoryId: categoryId);
-      if (response.status == true && response.data != null) {
-        setState(() {
-          _subcategories = response.data!;
-          _isLoadingSubcategories = false;
-        });
-      } else {
-        setState(() {
-          _subcategories = [];
-          _isLoadingSubcategories = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _subcategories = [];
-        _isLoadingSubcategories = false;
-      });
-      debugPrint("❌ Error loading subcategories: $e");
-    }
   }
 
   Future<void> _loadProducts() async {
@@ -372,6 +328,54 @@ class _ProductListPageState extends State<ProductListPage> {
                                 });
                               },
                             ),
+                            const SizedBox(height: 16),
+
+                            // Upload Product Image
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                "Product Image",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  _showImagePicker(context);
+                                },
+                                icon: const Icon(Icons.image),
+                                label: const Text("Upload Image"),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Show selected image preview
+                            if (_image != null)
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Image.file(
+                                  _image!,
+                                  height: 120,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+
                             const SizedBox(height: 30),
                           ],
                         ),
@@ -385,6 +389,56 @@ class _ProductListPageState extends State<ProductListPage> {
         );
       },
     );
+  }
+
+  void _showImagePicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+      ),
+      builder: (BuildContext context) {
+        return Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
+              title: const Text("Take a Picture"),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImageFromCamera();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.image, color: Colors.redAccent),
+              title: const Text("Choose from Gallery"),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImageFromGallery();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _pickImageFromCamera() async {
+    final pickedFile = await ImagePicker().pickImage(source: ImageSource.camera);
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+    }
+  }
+
+  Future<void> _pickImageFromGallery() async {
+    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+    }
   }
 
   Widget _buildTextField({
@@ -421,69 +475,76 @@ class _ProductListPageState extends State<ProductListPage> {
       margin: const EdgeInsets.only(left: 5, right: 5),
       child: Row(
         children: [
-          if (_isLoadingCategories)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
-              child: SizedBox(
-                height: 24,
-                width: 24,
-                child: CircularProgressIndicator(
-                  color: Colors.redAccent,
+          Obx(() {
+            if (controller.isCategoryLoading.value) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                child: SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: CircularProgressIndicator(
+                    color: Colors.redAccent,
+                  ),
                 ),
-              ),
-            )
-          else if (_categories.isEmpty)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(8.0),
-                child: Text('No categories available'),
-              ),
-            )
-          else
-            Expanded(
-              child: InputDecorator(
-                decoration: InputDecoration(
-                  labelText: _selectedCategoryId != null ? 'Category *' : null,
-                  border: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black),
-                  ),
-                  enabledBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black),
-                  ),
-                  focusedBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black38, width: 1),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-                  labelStyle: const TextStyle(color: Colors.black),
+              );
+            } else if (controller.categories.isEmpty) {
+              return const Expanded(
+                child: Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text('No categories available'),
                 ),
-                child: DropdownButton<String>(
-                  dropdownColor: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  isExpanded: true,
-                  underline: Container(),
-                  hint: const Text(
-                    'Select Category *',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+              );
+            } else {
+              final selectedCategory = controller.selectedCategory.value;
+
+              return Expanded(
+                child: InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: selectedCategory.isNotEmpty ? 'Category *' : null,
+                    border: const OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black),
+                    ),
+                    enabledBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black),
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black38, width: 1),
+                    ),
+                    contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                    labelStyle: const TextStyle(color: Colors.black),
                   ),
-                  value: _selectedCategoryId,
-                  items: _categories.map((ProductCategoryData category) {
-                    return DropdownMenuItem<String>(
-                      value: category.categoryId,
-                      child: Text(category.name ?? 'Unknown'),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    if (newValue != null) {
-                      setState(() {
+                  child: DropdownButton<String>(
+                    dropdownColor: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    isExpanded: true,
+                    underline: Container(),
+                    hint: const Text(
+                      'Select Category *',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    value: selectedCategory.isNotEmpty ? selectedCategory : null,
+                    items: controller.categories.map((cat) {
+                      return DropdownMenuItem<String>(
+                        value: cat.categoryId,
+                        child: Text(cat.name ?? 'Unknown'),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        controller.selectedCategory.value = newValue;
                         _selectedCategoryId = newValue;
+                        controller.loadSubcategories(newValue);
+
+                        controller.selectedSubcategory.value = '';
                         _selectedSubcategoryId = null;
-                      });
-                      _loadSubcategories(newValue);
-                    }
-                  },
+                      }
+                    },
+                  ),
                 ),
-              ),
-            ),
+              );
+            }
+          }),
         ],
       ),
     );
@@ -495,74 +556,69 @@ class _ProductListPageState extends State<ProductListPage> {
       margin: const EdgeInsets.only(left: 5, right: 5),
       child: Row(
         children: [
-          if (_isLoadingSubcategories)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
-              child: SizedBox(
-                height: 24,
-                width: 24,
-                child: CircularProgressIndicator(
-                  color: Colors.redAccent,
-                ),
-              ),
-            )
-          else if (_selectedCategoryId == null)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(8.0),
-                child: Text('Please select category first'),
-              ),
-            )
-          else if (_subcategories.isEmpty)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text('No subcategories available'),
-                ),
-              )
-            else
-              Expanded(
-                child: InputDecorator(
-                  decoration: InputDecoration(
-                    labelText: _selectedSubcategoryId != null ? 'Subcategory' : null,
-                    border: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black),
-                    ),
-                    enabledBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black38, width: 1),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-                    labelStyle: const TextStyle(color: Colors.black),
-                  ),
-                  child: DropdownButton<String>(
-                    dropdownColor: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    isExpanded: true,
-                    underline: Container(),
-                    hint: const Text(
-                      'Select Subcategory',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    value: _selectedSubcategoryId,
-                    items: _subcategories.map((ProductSubcategoryData subcategory) {
-                      return DropdownMenuItem<String>(
-                        value: subcategory.subcategoryId,
-                        child: Text(subcategory.name ?? 'Unknown'),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        setState(() {
-                          _selectedSubcategoryId = newValue;
-                        });
-                      }
-                    },
+          Obx(() {
+
+            if (controller.isSubcategoryLoading.value) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                child: SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: CircularProgressIndicator(
+                    color: Colors.redAccent,
                   ),
                 ),
+              );
+            }
+
+            final selectedSub = controller.selectedSubcategory.value;
+
+            return Expanded(
+              child: InputDecorator(
+                decoration: InputDecoration(
+                  labelText: selectedSub.isNotEmpty ? 'Subcategory' : null,
+                  border: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black),
+                  ),
+                  enabledBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black),
+                  ),
+                  focusedBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black38, width: 1),
+                  ),
+                  contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                  labelStyle: const TextStyle(color: Colors.black),
+                ),
+                child: DropdownButton<String>(
+                  dropdownColor: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  isExpanded: true,
+                  underline: Container(),
+                  hint: Text(
+                    controller.subcategories.isEmpty
+                        ? "Select Subcategory"
+                        : "Select Subcategory",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  value: selectedSub.isNotEmpty ? selectedSub : null,
+                  items: controller.subcategories.map((sub) {
+                    return DropdownMenuItem<String>(
+                      value: sub.subcategoryId,
+                      child: Text(sub.name ?? 'Unknown'),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      controller.selectedSubcategory.value = newValue;
+                      _selectedSubcategoryId = newValue;
+                    }
+                  },
+
+                ),
               ),
+            );
+          }),
         ],
       ),
     );
@@ -576,31 +632,62 @@ class _ProductListPageState extends State<ProductListPage> {
     String? Function(String?)? validator,
   }) {
     return Container(
+      width: double.infinity,
       margin: const EdgeInsets.only(left: 5, right: 5),
-      child: DropdownButtonFormField<String>(
-        value: value,
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
-          enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
-          focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black38, width: 1)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-          labelStyle: const TextStyle(color: Colors.black),
-        ),
-        items: items.map((String item) {
-          return DropdownMenuItem<String>(
-            value: item,
-            child: Text(
-              item,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.black87,
+      child: Row(
+        children: [
+          Expanded(
+            child: InputDecorator(
+              decoration: InputDecoration(
+                labelText: (value != null && value.isNotEmpty) ? label : null,
+                hintText: label,
+                border: const OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                ),
+                enabledBorder: const OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                ),
+                focusedBorder: const OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black38, width: 1),
+                ),
+                contentPadding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                labelStyle: const TextStyle(color: Colors.black),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButtonFormField<String>(
+                  dropdownColor: Colors.white,
+                  value: items.contains(value) ? value : null,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                  ),
+                  hint: Text(
+                    label,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black54,
+                    ),
+                  ),
+                  items: items.map((String item) {
+                    return DropdownMenuItem<String>(
+                      value: item,
+                      child: Text(
+                        item.toString().capitalizeFirst ?? item,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: onChanged,
+                  validator: validator,
+                ),
               ),
             ),
-          );
-        }).toList(),
-        onChanged: onChanged,
-        validator: validator,
+          ),
+        ],
       ),
     );
   }
@@ -639,6 +726,9 @@ class _ProductListPageState extends State<ProductListPage> {
   }
 
   Future<void> _addProduct() async {
+    final userData = await SessionManager.getSession();
+    if (userData == null) throw Exception("User not logged in");
+
     setState(() {
       _isAddingProduct = true;
     });
@@ -658,16 +748,32 @@ class _ProductListPageState extends State<ProductListPage> {
         status: _selectedStatus,
         isFeatured: _selectedIsFeatured,
         displayOrder: _displayOrderController.text.trim().isNotEmpty ? _displayOrderController.text.trim() : null,
-        createdBy: "current_user_id",
+        createdBy: userData.memberId.toString(),
         createdAt: DateTime.now().toIso8601String(),
       );
 
-      // Call API to add product
+      // STEP 1 — CALL ADD PRODUCT API
       final response = await addProductRepository.addOccupationProduct(productData.toJson());
 
       if (response.status == true) {
-        // Close the modal
+
+        // ⛔ CLOSE MODAL BEFORE IMAGE UPLOAD
         Navigator.pop(context);
+
+        // 🚀 Product added successfully
+        final productServiceId = response.data?.productServiceId;
+
+        if (productServiceId != null) {
+
+          // STEP 2 — If user selected an image, upload it now
+          if (_image != null) {
+            final imageRepo = ProductImageUploadRepository();
+            await imageRepo.uploadProductImage(
+              productServiceId: productServiceId.toString(),
+              filePath: _image!.path,
+            );
+          }
+        }
 
         Get.snackbar(
           "Success",
@@ -676,11 +782,10 @@ class _ProductListPageState extends State<ProductListPage> {
           colorText: Colors.white,
         );
 
-        // Refresh the product list
         _refreshProducts();
-
-        // Clear form for next use
         _clearProductForm();
+        _image = null;
+
       } else {
         Get.snackbar(
           "Error",
@@ -689,7 +794,6 @@ class _ProductListPageState extends State<ProductListPage> {
           colorText: Colors.white,
         );
       }
-
     } catch (e) {
       Get.snackbar(
         "Error",
@@ -1135,7 +1239,7 @@ class _ProductListPageState extends State<ProductListPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Category: ${_getCategoryName(product.categoryId)}",
+                        "Category: ${product.categoryId} → ${product.subCategoryId}",
                         style: const TextStyle(
                           color: Colors.black87,
                           fontSize: 14,
@@ -1143,13 +1247,15 @@ class _ProductListPageState extends State<ProductListPage> {
                         ),
                       ),
                       const SizedBox(height: 4),
+
                       Text(
-                        "Subcategory: ${_getSubCategoryName(product.subCategoryId)}",
+                        "Quantity: ${product.unit ?? 'N/A'}",
                         style: const TextStyle(
                           color: Colors.black54,
                           fontSize: 13,
                         ),
                       ),
+
                     ],
                   ),
                 ),

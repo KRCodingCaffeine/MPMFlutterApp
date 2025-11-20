@@ -1,4 +1,5 @@
 class AddOccupationProductData {
+  String? productServiceId;
   String? memberBusinessOccupationProfileId;
   String? categoryId;
   String? subcategoryId;

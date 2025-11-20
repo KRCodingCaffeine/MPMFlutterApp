@@ -14,7 +14,7 @@ class AddOccupationProductRepository {
       debugPrint("🔵 Add Occupation Product API URL: $url");
       debugPrint("📤 Raw Body Received: $body");
 
-      final safeBody = _convertAllToStrings(body);
+      final safeBody = body;
 
       debugPrint("🔄 Safe Converted Body: $safeBody");
 
@@ -27,14 +27,5 @@ class AddOccupationProductRepository {
       debugPrint("❌ Error Adding Product: $e");
       rethrow;
     }
-  }
-
-  /// Convert all values to strings to avoid validation errors
-  Map<String, dynamic> _convertAllToStrings(Map<String, dynamic> input) {
-    final Map<String, dynamic> output = {};
-    input.forEach((key, value) {
-      output[key] = value?.toString() ?? "";
-    });
-    return output;
   }
 }
