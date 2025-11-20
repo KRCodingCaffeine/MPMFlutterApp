@@ -19,6 +19,7 @@ import 'package:mpm/model/GetProfile/Qualification.dart';
 import 'package:mpm/model/Occupation/OccupationData.dart';
 import 'package:mpm/model/OccupationSpec/OccuptionSpecData.dart';
 import 'package:mpm/model/OccuptionSpecSubCategory/OccuptionSpecSubCategoryData.dart';
+import 'package:mpm/model/ProductCategory/ProductCategoryData.dart';
 import 'package:mpm/model/Qualification/QualificationData.dart';
 import 'package:mpm/model/QualificationCategory/QualificationCategoryModel.dart';
 import 'package:mpm/model/QualificationMain/QualicationMainData.dart';
@@ -905,6 +906,25 @@ class UdateProfileController extends GetxController {
       rethrow;
     }
   }
+
+  // Add Product
+  final productNameController = TextEditingController();
+  final descriptionController = TextEditingController();
+  final keywordsController = TextEditingController();
+  final priceController = TextEditingController();
+  final currencyController = TextEditingController();
+  final unitController = TextEditingController();
+
+  final categoryIdController = TextEditingController();
+  final subcategoryIdController = TextEditingController();
+  final typeController = TextEditingController(text: "product");
+
+  final statusController = TextEditingController(text: "1");
+  final isFeaturedController = TextEditingController(text: "0");
+  final displayOrderController = TextEditingController(text: "1");
+
+  final createdByController = TextEditingController(text: "1");
+
 
   // Qualification Controller
   final rxStatusQualification = Status.LOADING.obs;

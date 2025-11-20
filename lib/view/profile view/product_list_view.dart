@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mpm/model/BusinessProfile/AddOccupationProduct/AddOccupationProductData.dart';
+import 'package:mpm/model/ProductCategory/ProductCategoryData.dart';
+import 'package:mpm/model/ProductSubcategory/ProductSubcategoryData.dart';
+import 'package:mpm/repository/BusinessProfileRepo/add_occupation_product_repository/add_occupation_product_repo.dart';
+import 'package:mpm/repository/BusinessProfileRepo/delete_occupation_product_repository/delete_occupation_product_repo.dart';
+import 'package:mpm/repository/product_category_repository/product_category_repo.dart';
+import 'package:mpm/repository/product_subcategory_repository/product_subcategory_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/model/BusinessProfile/GetAllOccupationProduct/GetAllOccupationProductData.dart';
@@ -21,15 +28,96 @@ class ProductListPage extends StatefulWidget {
 
 class _ProductListPageState extends State<ProductListPage> {
   final UdateProfileController controller = Get.find<UdateProfileController>();
+  final DeleteOccupationProductRepository deleteRepository = DeleteOccupationProductRepository();
+  final ProductCategoryRepository categoryRepository = ProductCategoryRepository();
+  final ProductSubcategoryRepository subcategoryRepository = ProductSubcategoryRepository();
+  final AddOccupationProductRepository addProductRepository = AddOccupationProductRepository();
+
+  final TextEditingController _productNameController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _priceController = TextEditingController();
+  final TextEditingController _unitController = TextEditingController();
+  final TextEditingController _keywordsController = TextEditingController();
+  final TextEditingController _displayOrderController = TextEditingController();
+
+  String? _selectedType = 'product';
+  String? _selectedStatus = '1';
+  String? _selectedIsFeatured = '1';
+  String? _selectedCategoryId;
+  String? _selectedSubcategoryId;
+
+  List<ProductCategoryData> _categories = [];
+  List<ProductSubcategoryData> _subcategories = [];
+  bool _isLoadingCategories = false;
+  bool _isLoadingSubcategories = false;
+  bool _isAddingProduct = false;
+
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
   List<GetAllOccupationProductData> _products = [];
   bool _isLoading = false;
   bool _hasError = false;
   String _errorMessage = '';
+  bool _isDeleting = false;
 
   @override
   void initState() {
     super.initState();
     _loadProducts();
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    setState(() {
+      _isLoadingCategories = true;
+    });
+
+    try {
+      final response = await categoryRepository.getAllProductCategories();
+      if (response.status == true && response.data != null) {
+        setState(() {
+          _categories = response.data!;
+          _isLoadingCategories = false;
+        });
+      } else {
+        setState(() {
+          _isLoadingCategories = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoadingCategories = false;
+      });
+      debugPrint("❌ Error loading categories: $e");
+    }
+  }
+
+  Future<void> _loadSubcategories(String categoryId) async {
+    setState(() {
+      _isLoadingSubcategories = true;
+      _selectedSubcategoryId = null;
+    });
+
+    try {
+      final response = await subcategoryRepository.getAllSubcategories(categoryId: categoryId);
+      if (response.status == true && response.data != null) {
+        setState(() {
+          _subcategories = response.data!;
+          _isLoadingSubcategories = false;
+        });
+      } else {
+        setState(() {
+          _subcategories = [];
+          _isLoadingSubcategories = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _subcategories = [];
+        _isLoadingSubcategories = false;
+      });
+      debugPrint("❌ Error loading subcategories: $e");
+    }
   }
 
   Future<void> _loadProducts() async {
@@ -84,93 +172,209 @@ class _ProductListPageState extends State<ProductListPage> {
             bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
           child: FractionallySizedBox(
-            heightFactor: 0.8,
+            heightFactor: 0.9,
             child: SafeArea(
               child: Column(
                 children: [
+                  // Header with buttons
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          "Add Product",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+                        OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                            side: BorderSide(color: ColorHelperClass.getColorFromHex(ColorResources.red_color)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          ),
+                          child: const Text(
+                            "Cancel",
+                            style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.close),
+                        ElevatedButton(
+                          onPressed: _isAddingProduct ? null : () async {
+                            if (_validateProductForm()) {
+                              await _addProduct();
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          ),
+                          child: _isAddingProduct
+                              ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                              : const Text(
+                            "Submit",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const Divider(),
+
+                  const SizedBox(height: 10),
 
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          _buildProductFormField(
-                            label: "Product Name *",
-                            hintText: "Enter product name",
-                          ),
-                          const SizedBox(height: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 10),
 
-                          _buildProductFormField(
-                            label: "Description *",
-                            hintText: "Enter product description",
-                            maxLines: 3,
-                          ),
-                          const SizedBox(height: 16),
+                            // Category Dropdown
+                            _buildCategoryDropdown(),
+                            const SizedBox(height: 16),
 
-                          _buildProductFormField(
-                            label: "Price *",
-                            hintText: "Enter price",
-                            keyboardType: TextInputType.number,
-                          ),
-                          const SizedBox(height: 16),
+                            // Subcategory Dropdown
+                            _buildSubcategoryDropdown(),
+                            const SizedBox(height: 16),
 
-                          _buildProductFormField(
-                            label: "Category *",
-                            hintText: "Enter category",
-                          ),
-                          const SizedBox(height: 16),
-
-                          _buildProductFormField(
-                            label: "SKU",
-                            hintText: "Enter SKU (optional)",
-                          ),
-                          const SizedBox(height: 24),
-
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                _addProduct();
+                            // Product Name
+                            _buildTextField(
+                              label: "Product Name *",
+                              controller: _productNameController,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter product name';
+                                }
+                                return null;
                               },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              child: const Text(
-                                "Add Product",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 16),
+
+                            // Description
+                            _buildTextField(
+                              label: "Description *",
+                              controller: _descriptionController,
+                              maxLines: 3,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter description';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Type Dropdown
+                            _buildDropdownFormField(
+                              label: "Product Type *",
+                              value: _selectedType,
+                              items: const ['product', 'service', 'both'],
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please select type';
+                                }
+                                return null;
+                              },
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedType = value;
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Keywords
+                            _buildTextField(
+                              label: "Keywords",
+                              controller: _keywordsController,
+                              hintText: "Enter keywords (comma separated)",
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Unit
+                            _buildTextField(
+                              label: "Unit *",
+                              controller: _unitController,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter unit';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Price
+                            _buildTextField(
+                              label: "Price *",
+                              controller: _priceController,
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter price';
+                                }
+                                if (double.tryParse(value) == null) {
+                                  return 'Please enter valid price';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Display Order
+                            _buildTextField(
+                              label: "Display Order",
+                              controller: _displayOrderController,
+                              keyboardType: TextInputType.number,
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Is Featured Dropdown
+                            _buildDropdownFormField(
+                              label: "Featured *",
+                              value: _selectedIsFeatured == '1' ? 'Yes' : 'No',
+                              items: const ['Yes', 'No'],
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please select featured status';
+                                }
+                                return null;
+                              },
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedIsFeatured = value == 'Yes' ? '1' : '0';
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Status Dropdown
+                            _buildDropdownFormField(
+                              label: "Status *",
+                              value: _selectedStatus == '1' ? 'Active' : 'Inactive',
+                              items: const ['Active', 'Inactive'],
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please select status';
+                                }
+                                return null;
+                              },
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedStatus = value == 'Active' ? '1' : '0';
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 30),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -183,71 +387,355 @@ class _ProductListPageState extends State<ProductListPage> {
     );
   }
 
-  Widget _buildProductFormField({
+  Widget _buildTextField({
     required String label,
-    required String hintText,
+    required TextEditingController controller,
     TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
+    String? Function(String?)? validator,
+    String? hintText,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Colors.black87,
-          ),
+    return Container(
+      margin: const EdgeInsets.only(left: 5, right: 5),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        maxLines: maxLines,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
+          enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
+          focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black38, width: 1)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          labelStyle: const TextStyle(color: Colors.black),
+          hintText: hintText,
         ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: TextField(
-            keyboardType: keyboardType,
-            maxLines: maxLines,
-            decoration: InputDecoration(
-              hintText: hintText,
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        validator: validator,
+      ),
+    );
+  }
+
+  Widget _buildCategoryDropdown() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(left: 5, right: 5),
+      child: Row(
+        children: [
+          if (_isLoadingCategories)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+              child: SizedBox(
+                height: 24,
+                width: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.redAccent,
+                ),
+              ),
+            )
+          else if (_categories.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('No categories available'),
+              ),
+            )
+          else
+            Expanded(
+              child: InputDecorator(
+                decoration: InputDecoration(
+                  labelText: _selectedCategoryId != null ? 'Category *' : null,
+                  border: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black),
+                  ),
+                  enabledBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black),
+                  ),
+                  focusedBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black38, width: 1),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                  labelStyle: const TextStyle(color: Colors.black),
+                ),
+                child: DropdownButton<String>(
+                  dropdownColor: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  isExpanded: true,
+                  underline: Container(),
+                  hint: const Text(
+                    'Select Category *',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  value: _selectedCategoryId,
+                  items: _categories.map((ProductCategoryData category) {
+                    return DropdownMenuItem<String>(
+                      value: category.categoryId,
+                      child: Text(category.name ?? 'Unknown'),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        _selectedCategoryId = newValue;
+                        _selectedSubcategoryId = null;
+                      });
+                      _loadSubcategories(newValue);
+                    }
+                  },
+                ),
+              ),
             ),
-          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubcategoryDropdown() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(left: 5, right: 5),
+      child: Row(
+        children: [
+          if (_isLoadingSubcategories)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+              child: SizedBox(
+                height: 24,
+                width: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.redAccent,
+                ),
+              ),
+            )
+          else if (_selectedCategoryId == null)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('Please select category first'),
+              ),
+            )
+          else if (_subcategories.isEmpty)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text('No subcategories available'),
+                ),
+              )
+            else
+              Expanded(
+                child: InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: _selectedSubcategoryId != null ? 'Subcategory' : null,
+                    border: const OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black),
+                    ),
+                    enabledBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black),
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black38, width: 1),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                    labelStyle: const TextStyle(color: Colors.black),
+                  ),
+                  child: DropdownButton<String>(
+                    dropdownColor: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    isExpanded: true,
+                    underline: Container(),
+                    hint: const Text(
+                      'Select Subcategory',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    value: _selectedSubcategoryId,
+                    items: _subcategories.map((ProductSubcategoryData subcategory) {
+                      return DropdownMenuItem<String>(
+                        value: subcategory.subcategoryId,
+                        child: Text(subcategory.name ?? 'Unknown'),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          _selectedSubcategoryId = newValue;
+                        });
+                      }
+                    },
+                  ),
+                ),
+              ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDropdownFormField({
+    required String label,
+    required String? value,
+    required List<String> items,
+    required Function(String?) onChanged,
+    String? Function(String?)? validator,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(left: 5, right: 5),
+      child: DropdownButtonFormField<String>(
+        value: value,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
+          enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
+          focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black38, width: 1)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          labelStyle: const TextStyle(color: Colors.black),
         ),
-      ],
+        items: items.map((String item) {
+          return DropdownMenuItem<String>(
+            value: item,
+            child: Text(
+              item,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black87,
+              ),
+            ),
+          );
+        }).toList(),
+        onChanged: onChanged,
+        validator: validator,
+      ),
     );
   }
 
-  void _addProduct() {
-    Get.back();
-    Get.snackbar(
-      "Success",
-      "Product added successfully",
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-    );
+  bool _validateProductForm() {
+    if (_selectedCategoryId == null) {
+      Get.snackbar(
+        "Error",
+        "Please select category",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return false;
+    }
+    if (_formKey.currentState!.validate()) {
+      return true;
+    }
+    return false;
   }
 
-  // Method to get category name from category ID
+  void _clearProductForm() {
+    _productNameController.clear();
+    _descriptionController.clear();
+    _priceController.clear();
+    _unitController.clear();
+    _keywordsController.clear();
+    _displayOrderController.clear();
+    setState(() {
+      _selectedType = 'product';
+      _selectedStatus = '1';
+      _selectedIsFeatured = '1';
+      _selectedCategoryId = null;
+      _selectedSubcategoryId = null;
+      _subcategories = [];
+    });
+  }
+
+  Future<void> _addProduct() async {
+    setState(() {
+      _isAddingProduct = true;
+    });
+
+    try {
+      final productData = AddOccupationProductData(
+        memberBusinessOccupationProfileId: widget.profileId,
+        categoryId: _selectedCategoryId!,
+        subcategoryId: _selectedSubcategoryId,
+        type: _selectedType,
+        productName: _productNameController.text.trim(),
+        description: _descriptionController.text.trim(),
+        keywords: _keywordsController.text.trim().isNotEmpty ? _keywordsController.text.trim() : null,
+        price: _priceController.text.trim(),
+        currency: 'INR',
+        unit: _unitController.text.trim(),
+        status: _selectedStatus,
+        isFeatured: _selectedIsFeatured,
+        displayOrder: _displayOrderController.text.trim().isNotEmpty ? _displayOrderController.text.trim() : null,
+        createdBy: "current_user_id",
+        createdAt: DateTime.now().toIso8601String(),
+      );
+
+      // Call API to add product
+      final response = await addProductRepository.addOccupationProduct(productData.toJson());
+
+      if (response.status == true) {
+        // Close the modal
+        Navigator.pop(context);
+
+        Get.snackbar(
+          "Success",
+          response.message ?? "Product added successfully",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+
+        // Refresh the product list
+        _refreshProducts();
+
+        // Clear form for next use
+        _clearProductForm();
+      } else {
+        Get.snackbar(
+          "Error",
+          response.message ?? "Failed to add product",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        "Failed to add product: $e",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      setState(() {
+        _isAddingProduct = false;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _productNameController.dispose();
+    _descriptionController.dispose();
+    _priceController.dispose();
+    _unitController.dispose();
+    _keywordsController.dispose();
+    _displayOrderController.dispose();
+    super.dispose();
+  }
+
+  void _showEditProduct(GetAllOccupationProductData product) {
+    // Navigate to edit page or open modal
+    print("Editing product: ${product.productServiceId}");
+  }
+
   String _getCategoryName(String? categoryId) {
     if (categoryId == null) return 'Not specified';
-
-    // You'll need to implement this method to fetch category names
-    // This could come from your controller or a separate API call
-    // For now, returning the ID as a placeholder
-    return 'Category $categoryId';
+    final category = _categories.firstWhere(
+          (cat) => cat.categoryId == categoryId,
+      orElse: () => ProductCategoryData(name: 'Unknown'),
+    );
+    return category.name ?? 'Unknown';
   }
 
-  // Method to get subcategory name from subcategory ID
   String _getSubCategoryName(String? subCategoryId) {
     if (subCategoryId == null) return 'Not specified';
-
-    // You'll need to implement this method to fetch subcategory names
-    // This could come from your controller or a separate API call
-    // For now, returning the ID as a placeholder
-    return 'Subcategory $subCategoryId';
+    final subcategory = _subcategories.firstWhere(
+          (sub) => sub.subcategoryId == subCategoryId,
+      orElse: () => ProductSubcategoryData(name: 'Unknown'),
+    );
+    return subcategory.name ?? 'Unknown';
   }
 
   void _showProductDetails(GetAllOccupationProductData product) {
@@ -319,8 +807,17 @@ class _ProductListPageState extends State<ProductListPage> {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
             child: const Text("Close"),
           ),
         ],
@@ -360,39 +857,144 @@ class _ProductListPageState extends State<ProductListPage> {
   void _showDeleteConfirmation(GetAllOccupationProductData product) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Delete Product"),
-        content: Text("Are you sure you want to delete '${product.productName ?? 'this product'}'?"),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text("Cancel"),
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Get.back();
-              _deleteProduct(product);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Delete Product",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+          content: Text(
+            "Are you sure you want to delete '${product.productName ?? 'this product'}'?",
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
             ),
-            child: const Text("Delete"),
           ),
-        ],
-      ),
+          actions: [
+            OutlinedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _deleteProduct(product);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Delete"),
+            ),
+          ],
+        );
+      },
     );
   }
 
-  void _deleteProduct(GetAllOccupationProductData product) {
+  Future<void> _deleteProduct(GetAllOccupationProductData product) async {
+    if (product.productServiceId == null || product.productServiceId!.isEmpty) {
+      Get.snackbar(
+        "Error",
+        "Invalid product ID",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
     setState(() {
-      _products.removeWhere((p) => p.productServiceId == product.productServiceId);
+      _isDeleting = true;
     });
-    Get.snackbar(
-      "Success",
-      "Product deleted successfully",
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-    );
+
+    try {
+      // Show loading dialog
+      Get.dialog(
+        const Center(
+          child: CircularProgressIndicator(),
+        ),
+        barrierDismissible: false,
+      );
+
+      // Call the delete repository
+      final response = await deleteRepository.deleteProduct(product.productServiceId!);
+
+      // Close loading dialog
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
+      }
+
+      if (response.status == true) {
+        // Remove product from local list
+        setState(() {
+          _products.removeWhere((p) => p.productServiceId == product.productServiceId);
+        });
+
+        Get.snackbar(
+          "Success",
+          response.message ?? "Product deleted successfully",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+      } else {
+        Get.snackbar(
+          "Error",
+          response.message ?? "Failed to delete product",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      // Close loading dialog if still open
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
+      }
+
+      Get.snackbar(
+        "Error",
+        "Failed to delete product: $e",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      debugPrint("❌ DELETE PRODUCT ERROR: $e");
+    } finally {
+      setState(() {
+        _isDeleting = false;
+      });
+    }
   }
 
   String _getStatusText(String? status) {
@@ -443,11 +1045,16 @@ class _ProductListPageState extends State<ProductListPage> {
             icon: const Icon(Icons.add),
             tooltip: 'Add Product',
           ),
+          IconButton(
+            onPressed: _refreshProducts,
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh',
+          ),
         ],
       ),
       body: Column(
         children: [
-        const SizedBox(height: 20),
+          const SizedBox(height: 20),
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -490,7 +1097,7 @@ class _ProductListPageState extends State<ProductListPage> {
               children: [
                 Expanded(
                   child: Text(
-                    product.productName ?? 'Unnamed Product',
+                    product.productName ?? 'Product Name',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -518,9 +1125,9 @@ class _ProductListPageState extends State<ProductListPage> {
                 ),
               ],
             ),
+
             const SizedBox(height: 12),
 
-            // Category and Subcategory
             Row(
               children: [
                 Expanded(
@@ -556,35 +1163,66 @@ class _ProductListPageState extends State<ProductListPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+
+            const SizedBox(height: 16),
+
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => _showProductDetails(product),
+                    onPressed: () => _showEditProduct(product),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+                      foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
                       side: BorderSide(
-                        color: ColorHelperClass.getColorFromHex(ColorResources.logo_color)!,
+                        color: ColorHelperClass.getColorFromHex(ColorResources.red_color),
                       ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    icon: const Icon(Icons.visibility, size: 18),
-                    label: const Text("View Details"),
+                    icon: const Icon(Icons.edit),
+                    label: const Text("Edit Product"),
                   ),
                 ),
-                const SizedBox(width: 8),
+
+                const SizedBox(width: 12),
+
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () => _showDeleteConfirmation(product),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
                       foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    icon: const Icon(Icons.delete, size: 18),
+                    icon: const Icon(Icons.delete),
                     label: const Text("Delete"),
                   ),
                 ),
               ],
+            ),
+
+            const SizedBox(height: 12),
+
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _showProductDetails(product),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                icon: const Icon(Icons.visibility),
+                label: const Text("View Details"),
+              ),
             ),
           ],
         ),
