@@ -98,6 +98,7 @@ class Urls {
   static const String delete_member_occupation_profile_url = base_url+"api/delete_member_occupation_profile";
   static const String get_all_occupation_products_url = base_url+"api/member_occupation_product";
   static const String add_member_occupation_product_url = base_url+"api/add_member_occupation_product";
+  static const String update_member_occupation_product_url = base_url+"api/update_member_occupation_product";
   static const String upload_product_image = base_url+"api/upload_offer_dicount_image";
   static const String delete_occupation_product_url = base_url+"api/delete_member_occupation_product";
   static const String searchOccupation_url = base_url+"api/search_occupation";

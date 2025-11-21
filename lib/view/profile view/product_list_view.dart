@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mpm/model/BusinessProfile/AddOccupationProduct/AddOccupationProductData.dart';
+import 'package:mpm/model/BusinessProfile/UpdateOccupationProduct/UpdateOccupationProductData.dart';
 import 'package:mpm/model/ProductCategory/ProductCategoryData.dart';
 import 'package:mpm/model/ProductSubcategory/ProductSubcategoryData.dart';
 import 'package:mpm/repository/BusinessProfileRepo/add_occupation_product_repository/add_occupation_product_repo.dart';
 import 'package:mpm/repository/BusinessProfileRepo/delete_occupation_product_repository/delete_occupation_product_repo.dart';
 import 'package:mpm/repository/BusinessProfileRepo/product_image_repository/product_image_repo.dart';
+import 'package:mpm/repository/BusinessProfileRepo/update_occupation_product_repository/update_occupation_product_repo.dart';
 import 'package:mpm/repository/product_category_repository/product_category_repo.dart';
 import 'package:mpm/repository/product_subcategory_repository/product_subcategory_repo.dart';
 import 'package:mpm/utils/Session.dart';
@@ -37,6 +39,8 @@ class _ProductListPageState extends State<ProductListPage> {
   final ProductCategoryRepository categoryRepository = ProductCategoryRepository();
   final ProductSubcategoryRepository subcategoryRepository = ProductSubcategoryRepository();
   final AddOccupationProductRepository addProductRepository = AddOccupationProductRepository();
+  final UpdateOccupationProductRepository updateRepository =
+  UpdateOccupationProductRepository();
 
   final TextEditingController _productNameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -52,10 +56,12 @@ class _ProductListPageState extends State<ProductListPage> {
   String? _selectedSubcategoryId;
 
   File? _image;
+  String? _currentProductImage;
 
   List<ProductCategoryData> _categories = [];
   List<ProductSubcategoryData> _subcategories = [];
   bool _isAddingProduct = false;
+  bool _isUpdatingProduct = false;
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
@@ -113,6 +119,7 @@ class _ProductListPageState extends State<ProductListPage> {
   }
 
   void _showAddProductModal() {
+    _clearProductForm();
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -389,6 +396,409 @@ class _ProductListPageState extends State<ProductListPage> {
         );
       },
     );
+  }
+
+  void _showEditProduct(GetAllOccupationProductData product) {
+    _populateEditForm(product);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      isDismissible: true,
+      enableDrag: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: FractionallySizedBox(
+            heightFactor: 0.9,
+            child: SafeArea(
+              child: Column(
+                children: [
+                  // Header with buttons
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                            side: BorderSide(color: ColorHelperClass.getColorFromHex(ColorResources.red_color)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          ),
+                          child: const Text(
+                            "Cancel",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: _isUpdatingProduct ? null : () async {
+                            if (_validateProductForm()) {
+                              await _updateProduct(product);
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          ),
+                          child: _isUpdatingProduct
+                              ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                              : const Text(
+                            "Submit",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 10),
+
+                            // Category Dropdown
+                            _buildCategoryDropdown(),
+                            const SizedBox(height: 16),
+
+                            // Subcategory Dropdown
+                            _buildSubcategoryDropdown(),
+                            const SizedBox(height: 16),
+
+                            // Product Name
+                            _buildTextField(
+                              label: "Product Name *",
+                              controller: _productNameController,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter product name';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Description
+                            _buildTextField(
+                              label: "Description *",
+                              controller: _descriptionController,
+                              maxLines: 3,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter description';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Type Dropdown
+                            _buildDropdownFormField(
+                              label: "Product Type *",
+                              value: _selectedType,
+                              items: const ['product', 'service', 'both'],
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please select type';
+                                }
+                                return null;
+                              },
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedType = value;
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Keywords
+                            _buildTextField(
+                              label: "Keywords",
+                              controller: _keywordsController,
+                              hintText: "Enter keywords (comma separated)",
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Unit
+                            _buildTextField(
+                              label: "Unit *",
+                              controller: _unitController,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter unit';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Price
+                            _buildTextField(
+                              label: "Price *",
+                              controller: _priceController,
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter price';
+                                }
+                                if (double.tryParse(value) == null) {
+                                  return 'Please enter valid price';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Display Order
+                            _buildTextField(
+                              label: "Display Order",
+                              controller: _displayOrderController,
+                              keyboardType: TextInputType.number,
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Is Featured Dropdown
+                            _buildDropdownFormField(
+                              label: "Featured *",
+                              value: _selectedIsFeatured == '1' ? 'Yes' : 'No',
+                              items: const ['Yes', 'No'],
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please select featured status';
+                                }
+                                return null;
+                              },
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedIsFeatured = value == 'Yes' ? '1' : '0';
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Status Dropdown
+                            _buildDropdownFormField(
+                              label: "Status *",
+                              value: _selectedStatus == '1' ? 'Active' : 'Inactive',
+                              items: const ['Active', 'Inactive'],
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please select status';
+                                }
+                                return null;
+                              },
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedStatus = value == 'Active' ? '1' : '0';
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Upload Product Image
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                "Product Image",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  _showImagePicker(context);
+                                },
+                                icon: const Icon(Icons.image),
+                                label: const Text("Upload Image"),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Show selected image preview or current image
+                            if (_image != null)
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Image.file(
+                                  _image!,
+                                  height: 120,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            else if (_currentProductImage != null && _currentProductImage!.isNotEmpty)
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: FadeInImage(
+                                  placeholder: const AssetImage("assets/images/placeholder.png"),
+                                  image: NetworkImage(Urls.imagePathUrl + _currentProductImage!),
+                                  height: 120,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  imageErrorBuilder: (context, error, stackTrace) {
+                                    return Image.asset(
+                                      "assets/images/no_image.png",
+                                      height: 120,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                    );
+                                  },
+                                ),
+                              ),
+
+                            const SizedBox(height: 30),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _populateEditForm(GetAllOccupationProductData product) {
+    _productNameController.text = product.productName ?? '';
+    _descriptionController.text = product.description ?? '';
+    _priceController.text = product.price ?? '';
+    _unitController.text = product.unit ?? '';
+    _keywordsController.text = product.keywords ?? '';
+    _displayOrderController.text = product.displayOrder ?? '';
+
+    _selectedType = product.type ?? "product";
+    _selectedStatus = product.status ?? "1";
+    _selectedIsFeatured = product.isFeatured ?? "1";
+    _selectedCategoryId = product.categoryId;
+    _selectedSubcategoryId = product.subCategoryId;
+
+    _currentProductImage = product.productImage;
+    _image = null;
+
+    controller.selectedCategory.value = product.categoryId ?? '';
+    controller.loadSubcategories(product.categoryId ?? '');
+
+    if (product.subCategoryId != null) {
+      controller.selectedSubcategory.value = product.subCategoryId!;
+    }
+  }
+
+  Future<void> _updateProduct(GetAllOccupationProductData product) async {
+    final userData = await SessionManager.getSession();
+    if (userData == null) throw Exception("User not logged in");
+
+    setState(() {
+      _isUpdatingProduct = true;
+    });
+
+    try {
+      final productData = UpdateOccupationProductData(
+        productServiceId: product.productServiceId,
+        memberBusinessOccupationProfileId: widget.profileId,
+        categoryId: _selectedCategoryId,
+        subcategoryId: _selectedSubcategoryId,
+        type: _selectedType,
+        productName: _productNameController.text.trim(),
+        description: _descriptionController.text.trim(),
+        keywords: _keywordsController.text.trim(),
+        price: _priceController.text.trim(),
+        currency: "INR",
+        unit: _unitController.text.trim(),
+        status: _selectedStatus,
+        isFeatured: _selectedIsFeatured,
+        displayOrder: _displayOrderController.text.trim(),
+        updatedBy: userData.memberId.toString(),
+        updatedAt: DateTime.now().toIso8601String(),
+      );
+
+      debugPrint("Sending update: ${productData.toJson()}");
+
+      /// ✔ CALL UPDATE API
+      final response =
+      await updateRepository.updateOccupationProduct(productData.toJson());
+
+      if (response.status == true) {
+        Navigator.pop(context);
+
+        final productServiceId = product.productServiceId;
+
+        /// ✔ Upload image only if a new one is selected
+        if (_image != null && productServiceId != null) {
+          final imageRepo = ProductImageUploadRepository();
+          await imageRepo.uploadProductImage(
+            productServiceId: productServiceId,
+            filePath: _image!.path,
+          );
+        }
+
+        Get.snackbar(
+          "Success",
+          response.message ?? "Product updated successfully",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+
+        _refreshProducts();
+        _clearProductForm();
+      } else {
+        Get.snackbar(
+          "Error",
+          response.message ?? "Failed to update product",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        "Failed to update product: $e",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      setState(() {
+        _isUpdatingProduct = false;
+      });
+    }
   }
 
   void _showImagePicker(BuildContext context) {
@@ -721,8 +1131,11 @@ class _ProductListPageState extends State<ProductListPage> {
       _selectedIsFeatured = '1';
       _selectedCategoryId = null;
       _selectedSubcategoryId = null;
-      _subcategories = [];
+      _image = null;
+      _currentProductImage = null;
     });
+    controller.selectedCategory.value = '';
+    controller.selectedSubcategory.value = '';
   }
 
   Future<void> _addProduct() async {
@@ -817,11 +1230,6 @@ class _ProductListPageState extends State<ProductListPage> {
     _keywordsController.dispose();
     _displayOrderController.dispose();
     super.dispose();
-  }
-
-  void _showEditProduct(GetAllOccupationProductData product) {
-    // Navigate to edit page or open modal
-    print("Editing product: ${product.productServiceId}");
   }
 
   String _getCategoryName(String? categoryId) {
@@ -1148,11 +1556,6 @@ class _ProductListPageState extends State<ProductListPage> {
             onPressed: _showAddProductModal,
             icon: const Icon(Icons.add),
             tooltip: 'Add Product',
-          ),
-          IconButton(
-            onPressed: _refreshProducts,
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
           ),
         ],
       ),
