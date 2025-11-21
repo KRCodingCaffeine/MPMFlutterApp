@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:mpm/OccuptionProfession/OccuptionProfessionData.dart';
 import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/GetProfile/BusinessInfo.dart';
+import 'package:mpm/model/GetProfile/Occupation.dart';
 import 'package:mpm/model/Occupation/OccupationData.dart';
 import 'package:mpm/model/OccupationSpec/OccuptionSpecData.dart';
 import 'package:mpm/model/OccuptionSpecSubCategory/OccuptionSpecSubCategoryData.dart';
@@ -68,167 +69,157 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Obx(() {
-          return !controller.hasOccupationData.value
+          // Use the existing occupation data list from controller
+          final occupationList = controller.currentOccupation.value != null ? [controller.currentOccupation.value!] : [];
+          return occupationList.isEmpty
               ? const Center(
             child: Text(
               "No Occupation added yet.",
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
           )
-              : _buildOccupationCard();
+              : ListView.builder(
+            itemCount: occupationList.length,
+            itemBuilder: (context, index) {
+              return occupationWidget(occupationList[index]!);
+            },
+          );
         }),
       ),
     );
   }
 
-  Widget _buildOccupationCard() {
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      elevation: 5,
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget occupationWidget(Occupation occupation) {
+    return Column(
+      children: [
+        Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 5,
+          color: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  controller.occupationController.value.text.isNotEmpty
-                      ? controller.occupationController.value.text
-                      : "Occupation",
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                PopupMenuButton<String>(
-                  color: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  onSelected: (value) {
-                    if (value == 'edit') {
-                      _showEditModalSheet(context);
-                    }
-                    else if (value == 'view more') {
-                      _goToProductPage();
-                    }
-                  },
-                  itemBuilder: (context) => const [
-                    PopupMenuItem(
-                      value: 'edit',
-                      child: Text(
-                        'Edit',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      occupation.occupation ?? "Occupation",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    PopupMenuItem(
-                      value: 'view more',
-                      child: Text(
-                        'View More',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.red,
+                    PopupMenuButton<String>(
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      onSelected: (value) {
+                        if (value == 'edit') {
+                          _showUpdateModalSheet(context, occupation);
+                        } else if (value == 'view more') {
+                          _goToProductPage(occupation);
+                        }
+                      },
+                      itemBuilder: (context) => const [
+                        PopupMenuItem(
+                          value: 'edit',
+                          child: Text(
+                            'Edit',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 'view more',
+                          child: Text(
+                            'View More',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ),
+                      ],
+                      child: ElevatedButton(
+                        onPressed: null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFFDC3545),
+                          elevation: 4,
+                          shadowColor: Colors.black,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              "View",
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.red,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ],
-                  child: ElevatedButton(
-                    onPressed: null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFFDC3545),
-                      elevation: 4,
-                      shadowColor: Colors.black,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          "View",
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.red,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ),
+                const Divider(color: Colors.black26),
+                const SizedBox(height: 8),
+
+                // Occupation Details
+                _buildInfoBox(
+                  'Occupation',
+                  subtitle: occupation.occupation ?? 'Other',
+                ),
+                _buildInfoBox(
+                  'Profession',
+                  subtitle: occupation.occupationProfessionName ?? 'Other',
+                ),
+                _buildInfoBox(
+                  'Specialization',
+                  subtitle: occupation.specializationName ?? 'Other',
+                ),
+                if (occupation.specializationSubCategoryName != null &&
+                    occupation.specializationSubCategoryName!.isNotEmpty)
+                  _buildInfoBox(
+                    'Sub Category',
+                    subtitle: occupation.specializationSubCategoryName ?? 'Other',
+                  ),
+                if (occupation.occupationOtherName != null &&
+                    occupation.occupationOtherName!.isNotEmpty)
+                  _buildInfoBox(
+                    'Details',
+                    subtitle: occupation.occupationOtherName!,
+                  ),
               ],
             ),
-            const Divider(color: Colors.black26),
-            const SizedBox(height: 8),
-
-            // Occupation Details
-            _buildInfoBox(
-              'Occupation',
-              subtitle: controller.occupationController.value.text.isNotEmpty
-                  ? controller.occupationController.value.text
-                  : 'Other',
-            ),
-
-            _buildInfoBox(
-              'Profession',
-              subtitle: controller.occupation_profession_nameController.value.text.isNotEmpty
-                  ? controller.occupation_profession_nameController.value.text
-                  : 'Other',
-            ),
-
-            _buildInfoBox(
-              'Specialization',
-              subtitle: controller.specialization_nameController.value.text.isNotEmpty
-                  ? controller.specialization_nameController.value.text
-                  : 'Other',
-            ),
-
-            Obx(() {
-              final hasSubCategory = controller.selectedSubCategory.value.isNotEmpty &&
-                  controller.selectedSubCategory.value != "Other";
-              if (hasSubCategory) {
-                final subCategory = controller.occuptionSubCategoryList.firstWhere(
-                      (sub) => sub.specializationSubCategoryId == controller.selectedSubCategory.value,
-                  orElse: () => OccuptionSpecSubCategoryData(specializationSubCategoryName: 'Unknown'),
-                );
-                return _buildInfoBox(
-                  'Sub Category',
-                  subtitle: subCategory.specializationSubCategoryName ?? 'Other',
-                );
-              }
-              return const SizedBox.shrink();
-            }),
-
-            if (controller.detailsController.value.text.isNotEmpty)
-              _buildInfoBox(
-                'Details',
-                subtitle: controller.detailsController.value.text,
-              ),
-          ],
+          ),
         ),
-      ),
+        const SizedBox(height: 20),
+      ],
     );
   }
 
-  void _goToProductPage() {
-    final memberId = controller.currentOccupation.value?.memberId;
-    final memberOccupationId = controller.currentOccupation.value?.memberOccupationId;
+  void _goToProductPage(Occupation occupation) {
+    final memberId = occupation.memberId;
+    final memberOccupationId = occupation.memberOccupationId;
 
     if (memberId == null || memberOccupationId == null) {
       Get.snackbar("Error", "Invalid Occupation Data");
@@ -353,10 +344,9 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
     );
   }
 
-  Future<void> _showEditModalSheet(BuildContext context) async {
-    if (controller.currentOccupation.value != null) {
-      controller.initOccupationData(controller.currentOccupation.value);
-    }
+  Future<void> _showUpdateModalSheet(BuildContext context, Occupation occupation) async {
+    // Initialize the form with existing occupation data
+    _initOccupationDataForEdit(occupation);
 
     showModalBottomSheet(
       context: context,
@@ -393,7 +383,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                         ),
                         ElevatedButton(
                           onPressed: () async {
-                            await controller.addAndupdateOccuption();
+                            await _updateOccupation(occupation);
                             if (mounted) Navigator.pop(context);
                           },
                           style: ElevatedButton.styleFrom(
@@ -412,7 +402,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                               strokeWidth: 2,
                             ),
                           )
-                              : const Text("Save"),
+                              : const Text("Update"),
                         ),
                       ],
                     ),
@@ -434,6 +424,29 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
       controller.detailsController.value.text = "";
       controller.showDetailsField.value = false;
     });
+  }
+
+  void _initOccupationDataForEdit(Occupation occupation) {
+    // Initialize form fields with existing occupation data
+    controller.selectedOccupation.value = occupation.occupationId?.toString() ?? "";
+    controller.selectedProfession.value = occupation.occupationProfessionId?.toString() ?? "";
+    controller.selectedSpecialization.value = occupation.occupationSpecializationId?.toString() ?? "";
+    controller.selectedSubCategory.value = occupation.occupationSpecializationSubCategoryId?.toString() ?? "";
+    controller.detailsController.value.text = occupation.occupationOtherName ?? "";
+
+    // Set the current occupation for update
+    controller.currentOccupation.value = occupation;
+
+    // Load dependent data based on the selected values
+    if (controller.selectedOccupation.value.isNotEmpty && controller.selectedOccupation.value != "0") {
+      controller.getOccupationProData(controller.selectedOccupation.value);
+    }
+  }
+
+  Future<void> _updateOccupation(Occupation occupation) async {
+    // Use the existing addAndupdateOccuption method which should handle updates
+    // when currentOccupation is set
+    await controller.addAndupdateOccuption();
   }
 
   Widget _buildOccupationForm() {
