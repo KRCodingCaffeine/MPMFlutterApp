@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 import 'package:mpm/OccuptionProfession/OccuptionProfessionData.dart';
 import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/AddExistingFamilyMember/addExistingFamilyMemberData.dart';
+import 'package:mpm/model/BusinessProfile/GetAllBusinessOccupationProfile/GetAllBusinessOccupationProfileModelClass.dart';
+import 'package:mpm/model/BusinessProfile/GetAllOccupationProduct/GetAllOccupationProductModelClass.dart';
 import 'package:mpm/model/ChangeFamilyHead/changeFamilyHeadData.dart';
 import 'package:mpm/model/CheckPinCode/Building.dart';
 import 'package:mpm/model/CheckUser/CheckUserData2.dart';
@@ -16,6 +18,9 @@ import 'package:mpm/model/GetProfile/Occupation.dart';
 import 'package:mpm/model/GetProfile/Qualification.dart';
 import 'package:mpm/model/Occupation/OccupationData.dart';
 import 'package:mpm/model/OccupationSpec/OccuptionSpecData.dart';
+import 'package:mpm/model/OccuptionSpecSubCategory/OccuptionSpecSubCategoryData.dart';
+import 'package:mpm/model/ProductCategory/ProductCategoryData.dart';
+import 'package:mpm/model/ProductSubcategory/ProductSubcategoryData.dart';
 import 'package:mpm/model/Qualification/QualificationData.dart';
 import 'package:mpm/model/QualificationCategory/QualificationCategoryModel.dart';
 import 'package:mpm/model/QualificationMain/QualicationMainData.dart';
@@ -23,8 +28,14 @@ import 'package:mpm/model/Register/RegisterModelClass.dart';
 import 'package:mpm/model/SaraswaniOption/SaraswaniOptionData.dart';
 import 'package:mpm/model/UpdateFamilyRelation/UpdateFamilyMember.dart';
 import 'package:mpm/model/relation/RelationData.dart';
+import 'package:mpm/repository/BusinessProfileRepo/add_occupation_business_repository/add_occupation_business_repo.dart';
+import 'package:mpm/repository/BusinessProfileRepo/delete_occupation_business_repository/delete_occupation_business_repo.dart';
+import 'package:mpm/repository/BusinessProfileRepo/get_occupation_product_by_id_repository/get_occupation_product_by_id_repo.dart';
+import 'package:mpm/repository/BusinessProfileRepo/update_occupation_business_repository/update_occupation_business_repo.dart';
 import 'package:mpm/repository/add_existing_family_member_repository/add_existing_family_member_repo.dart';
 import 'package:mpm/repository/change_family_head_repository/change_family_head_repo.dart';
+import 'package:mpm/repository/product_category_repository/product_category_repo.dart';
+import 'package:mpm/repository/product_subcategory_repository/product_subcategory_repo.dart';
 import 'package:mpm/repository/register_repository/register_repo.dart';
 import 'package:mpm/repository/send_verification_email_repository/send_verification_email_repo.dart';
 import 'package:mpm/repository/update_repository/UpdateProfileRepository.dart';
@@ -35,6 +46,7 @@ import 'package:mpm/utils/urls.dart';
 import 'package:http/http.dart' as http;
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/notification/NotificationApiController.dart';
+import '../../../repository/BusinessProfileRepo/get_all_business_occupation_profile_repository/get_all_business_occupation_profile_repo.dart';
 
 class UdateProfileController extends GetxController {
   final api = UpdateProfileRepository();
@@ -95,8 +107,8 @@ class UdateProfileController extends GetxController {
       TextEditingController().obs;
   Rx<TextEditingController> udofficePincodeController =
       TextEditingController().obs;
-  Rx<TextEditingController> businessEmailController =
-      TextEditingController().obs;
+  // Rx<TextEditingController> businessEmailController =
+  //     TextEditingController().obs;
   Rx<TextEditingController> udbusinessEmailController =
       TextEditingController().obs;
   Rx<TextEditingController> websiteController = TextEditingController().obs;
@@ -106,6 +118,9 @@ class UdateProfileController extends GetxController {
       TextEditingController().obs;
   Rx<TextEditingController> specialization_nameController =
       TextEditingController().obs;
+  RxList<OccuptionSpecSubCategoryData> occuptionSubCategoryList =
+      <OccuptionSpecSubCategoryData>[].obs;
+  RxString selectedSubCategory = "".obs;
 
   var newProfileImage = "".obs;
   var userdocumentImage = "".obs;
@@ -215,8 +230,8 @@ class UdateProfileController extends GetxController {
   void setRxRequestOccuptionSpec(Status _value) =>
       rxStatusOccupationSpec.value = _value;
   var relationShipTypeList = <RelationData>[].obs;
-  Rx<TextEditingController> educationdetailController = TextEditingController().obs;
-
+  Rx<TextEditingController> educationdetailController =
+      TextEditingController().obs;
 
   setRelationShipType(List<RelationData> _value) =>
       relationShipTypeList.value = _value;
@@ -326,9 +341,11 @@ class UdateProfileController extends GetxController {
           documentDynamicImage.value = '';
         }
       }
-      saraswaniOption.value = getUserData.value.saraswaniOption?.toString() ?? 'Not selected';
+      saraswaniOption.value =
+          getUserData.value.saraswaniOption?.toString() ?? 'Not selected';
       saraswaniOptionController.text = saraswaniOption.value;
-      saraswaniOptionId.value = getUserData.value.saraswaniOptionId?.toString() ?? '';
+      saraswaniOptionId.value =
+          getUserData.value.saraswaniOptionId?.toString() ?? '';
 
       bloodGroup.value = getUserData.value.bloodGroup.toString();
       blood_group_id.value = getUserData.value.bloodGroupId.toString();
@@ -437,8 +454,7 @@ class UdateProfileController extends GetxController {
       if (getUserData.value.familyHeadMemberData != null) {
         familyHeadMemberId.value =
             getUserData.value.familyHeadMemberData!.memberId.toString();
-        familyHeadData.value =
-            getUserData.value.familyHeadMemberData!;
+        familyHeadData.value = getUserData.value.familyHeadMemberData!;
       }
     }).onError((error, strack) {
       loading.value = false;
@@ -562,6 +578,47 @@ class UdateProfileController extends GetxController {
     }
   }
 
+  Future<void> getOccupationSpecializationSubCategoryData(String specId) async {
+    if (specId.isEmpty) return;
+
+    try {
+      rxStatusOccupationSpec.value = Status.LOADING;
+
+      final response = await api.userOccutionSpectionSubCategoryApi(specId);
+      occuptionSubCategoryList.value = response.data ?? [];
+
+      if (occuptionSubCategoryList.isEmpty) {
+        showDetailsField.value = true;
+      } else {
+        // Add "Other" option only if it doesn't exist
+        if (!occuptionSubCategoryList
+            .any((sub) => sub.specializationSubCategoryId == "Other")) {
+          occuptionSubCategoryList.add(
+            OccuptionSpecSubCategoryData(
+              specializationSubCategoryId: "Other",
+              specializationId: specId,
+              specializationSubCategoryName: "Other",
+              status: "1",
+              createdAt: null,
+              updatedAt: null,
+            ),
+          );
+        }
+      }
+
+      rxStatusOccupationSpec.value = Status.COMPLETE;
+    } catch (e) {
+      rxStatusOccupationSpec.value = Status.ERROR;
+      Get.snackbar(
+        'Error',
+        'Failed to load specialization sub-category',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
   Future<void> addAndupdateOccuption() async {
     try {
       isOccupationLoading.value = true;
@@ -572,63 +629,106 @@ class UdateProfileController extends GetxController {
         throw Exception("Please select an occupation");
       }
 
-      String? professionId = selectedProfession.value.isEmpty ? null : selectedProfession.value;
-      String? specializationId = selectedSpecialization.value.isEmpty ? null : selectedSpecialization.value;
+      String? professionId =
+          selectedProfession.value.isEmpty ? null : selectedProfession.value;
+      String? specializationId = selectedSpecialization.value.isEmpty
+          ? null
+          : selectedSpecialization.value;
+      String? subCategoryId =
+          selectedSubCategory.value.isEmpty ? null : selectedSubCategory.value;
 
+      // Handle "Other" values
       if (professionId == "Other") professionId = null;
       if (specializationId == "Other") specializationId = null;
+      if (subCategoryId == "Other") subCategoryId = null;
 
       final Map<String, dynamic> data = {
         "member_id": userData.memberId.toString(),
         "occupation_id": selectedOccupation.value,
         "occupation_profession_id": professionId ?? "",
         "occupation_specialization_id": specializationId ?? "",
+        "occupation_specialization_sub_category_id": subCategoryId ?? "",
         "occupation_other_name":
-        (showDetailsField.value || detailsController.value.text.isNotEmpty)
-            ? detailsController.value.text
-            : "",
+            (showDetailsField.value || detailsController.value.text.isNotEmpty)
+                ? detailsController.value.text
+                : "",
         "updated_by": userData.memberId.toString()
       };
+
+      print("Sending occupation data: $data");
 
       final response = await api.updateOrAddOccuption(data);
 
       if (response.status == true) {
+        // Get the display names for each selected option
+        final occupationName = occuptionList
+            .firstWhere(
+              (occ) => occ.id == selectedOccupation.value,
+              orElse: () => OccupationData(
+                  id: '',
+                  occupation: '',
+                  status: '',
+                  createdAt: null,
+                  updatedAt: null),
+            )
+            .occupation;
+
+        final professionName = professionId == null
+            ? null
+            : occuptionProfessionList
+                .firstWhere(
+                  (prof) => prof.id == professionId,
+                  orElse: () => OccuptionProfessionData(id: '', name: ''),
+                )
+                .name;
+
+        final specializationName = specializationId == null
+            ? null
+            : occuptionSpeList
+                .firstWhere(
+                  (spec) => spec.id == specializationId,
+                  orElse: () => OccuptionSpecData(id: '', name: ''),
+                )
+                .name;
+
+        final subCategoryName = subCategoryId == null
+            ? null
+            : occuptionSubCategoryList
+                .firstWhere(
+                  (sub) => sub.specializationSubCategoryId == subCategoryId,
+                  orElse: () => OccuptionSpecSubCategoryData(
+                    specializationSubCategoryId: '',
+                    specializationId: '',
+                    specializationSubCategoryName: '',
+                    status: '',
+                    createdAt: null,
+                    updatedAt: null,
+                  ),
+                )
+                .specializationSubCategoryName;
+
         currentOccupation.value = Occupation(
           occupationId: selectedOccupation.value,
-          occupation: occuptionList
-              .firstWhere(
-                (occ) => occ.id == selectedOccupation.value,
-            orElse: () => OccupationData(
-                id: '',
-                occupation: '',
-                status: '',
-                createdAt: null,
-                updatedAt: null),
-          )
-              .occupation,
+          occupation: occupationName,
           occupationProfessionId: professionId,
-          occupationProfessionName: professionId == null ? null : occuptionProfessionList
-              .firstWhere(
-                (prof) => prof.id == professionId,
-            orElse: () => OccuptionProfessionData(id: '', name: ''),
-          )
-              .name,
+          occupationProfessionName: professionName,
           occupationSpecializationId: specializationId,
-          specializationName: specializationId == null ? null : occuptionSpeList
-              .firstWhere(
-                (spec) => spec.id == specializationId,
-            orElse: () => OccuptionSpecData(id: '', name: ''),
-          )
-              .name,
-          occupationOtherName: showDetailsField.value ? detailsController.value.text : null,
+          specializationName: specializationName,
+          occupationSpecializationSubCategoryId: subCategoryId,
+          specializationSubCategoryName: subCategoryName,
+          occupationOtherName:
+              showDetailsField.value ? detailsController.value.text : null,
         );
 
         hasOccupationData.value = true;
 
-        occupationController.value.text = currentOccupation.value?.occupation ?? '';
-        occupation_profession_nameController.value.text = currentOccupation.value?.occupationProfessionName ?? '';
-        specialization_nameController.value.text = currentOccupation.value?.specializationName ?? '';
-        detailsController.value.text = currentOccupation.value?.occupationOtherName ?? '';
+        // Update controllers for display
+        occupationController.value.text =
+            currentOccupation.value?.occupation ?? '';
+        occupation_profession_nameController.value.text =
+            currentOccupation.value?.occupationProfessionName ?? '';
+        specialization_nameController.value.text =
+            currentOccupation.value?.specializationName ?? '';
 
         Get.back();
 
@@ -661,6 +761,7 @@ class UdateProfileController extends GetxController {
   void initOccupationData(Occupation? occupation) {
     resetDependentFields();
     detailsController.value.clear();
+    selectedSubCategory.value = "";
 
     if (occupation == null) return;
 
@@ -675,7 +776,6 @@ class UdateProfileController extends GetxController {
     getOccupationProData(selectedOccupation.value).then((_) {
       if (occupation.occupationProfessionId != null &&
           occupation.occupationProfessionId!.isNotEmpty) {
-        // Profession ID exists in the data
         selectedProfession.value = occupation.occupationProfessionId!;
 
         if (selectedProfession.value == "Other") {
@@ -686,12 +786,29 @@ class UdateProfileController extends GetxController {
         getOccupationSpectData(selectedProfession.value).then((_) {
           if (occupation.occupationSpecializationId != null &&
               occupation.occupationSpecializationId!.isNotEmpty) {
-            selectedSpecialization.value = occupation.occupationSpecializationId!;
-            showDetailsField.value = true;
+            selectedSpecialization.value =
+                occupation.occupationSpecializationId!;
 
-            if (selectedSpecialization.value == "Other") {
-              showDetailsField.value = true;
-            }
+            // Load sub-categories if specialization exists
+            getOccupationSpecializationSubCategoryData(
+                    selectedSpecialization.value)
+                .then((_) {
+              if (occupation.occupationSpecializationSubCategoryId != null &&
+                  occupation
+                      .occupationSpecializationSubCategoryId!.isNotEmpty) {
+                selectedSubCategory.value =
+                    occupation.occupationSpecializationSubCategoryId!;
+
+                if (selectedSubCategory.value == "Other") {
+                  showDetailsField.value = true;
+                } else {
+                  showDetailsField.value = false;
+                }
+              } else {
+                selectedSubCategory.value = "Other";
+                showDetailsField.value = true;
+              }
+            });
           } else {
             selectedSpecialization.value = "Other";
             showDetailsField.value = true;
@@ -703,6 +820,231 @@ class UdateProfileController extends GetxController {
       }
     });
   }
+
+  // Business Product Category and subcategory
+
+  final ProductCategoryRepository categoryRepo = ProductCategoryRepository();
+  final ProductSubcategoryRepository subRepo = ProductSubcategoryRepository();
+
+  /// Reactive Variables
+  var categories = <ProductCategoryData>[].obs;
+  var subcategories = <ProductSubcategoryData>[].obs;
+
+  var selectedCategory = ''.obs;
+  var selectedSubcategory = ''.obs;
+
+  var isCategoryLoading = false.obs;
+  var isSubcategoryLoading = false.obs;
+
+  /// Reset when category changes
+  void resetSubcategory() {
+    selectedSubcategory.value = '';
+    subcategories.clear();
+  }
+
+  /// Load Product Categories
+  Future<void> loadCategories() async {
+    try {
+      isCategoryLoading.value = true;
+
+      final response = await categoryRepo.getAllProductCategories();
+
+      categories.value = response.data ?? [];
+
+      // Add "Other" option
+      categories.add(
+        ProductCategoryData(
+          categoryId: "Other",
+          name: "Other",
+          status: "1",
+        ),
+      );
+
+      isCategoryLoading.value = false;
+    } catch (e) {
+      isCategoryLoading.value = false;
+      Get.snackbar("Error", "Failed to load categories");
+    }
+  }
+
+  /// Load Subcategories on category selection
+  Future<void> loadSubcategories(String categoryId) async {
+    if (categoryId == '') return;
+
+    try {
+      isSubcategoryLoading.value = true;
+      resetSubcategory();
+
+      final response =
+          await subRepo.getAllSubcategories(categoryId: categoryId);
+
+      subcategories.value = response.data ?? [];
+
+      if (subcategories.isEmpty) {
+        // no subcategories
+      } else {
+        subcategories.add(
+          ProductSubcategoryData(
+            subcategoryId: "Other",
+            name: "Other",
+            status: "1",
+          ),
+        );
+      }
+
+      isSubcategoryLoading.value = false;
+    } catch (e) {
+      isSubcategoryLoading.value = false;
+      Get.snackbar("Error", "Failed to load subcategories");
+    }
+  }
+
+  // Occupation Business Profile
+  final Rx<GetAllBusinessOccupationProfileModelClass?> _businessProfiles =
+      Rx<GetAllBusinessOccupationProfileModelClass?>(null);
+  GetAllBusinessOccupationProfileModelClass? get businessProfiles =>
+      _businessProfiles.value;
+
+  final Rx<Status> _rxBusinessProfileStatus = Status.LOADING.obs;
+  Status get rxBusinessProfileStatus => _rxBusinessProfileStatus.value;
+
+  // Add repository
+  final BusinessOccupationProfileRepository businessProfileRepo =
+      BusinessOccupationProfileRepository();
+
+  // Method to fetch business profiles
+  Future<void> getBusinessOccupationProfiles(String memberId) async {
+    try {
+      _rxBusinessProfileStatus.value = Status.LOADING;
+      final response =
+          await businessProfileRepo.fetchBusinessOccupationProfiles(
+        memberId: memberId,
+        fullDetails: true,
+      );
+
+      if (response.status == true) {
+        _businessProfiles.value = response;
+        _rxBusinessProfileStatus.value = Status.COMPLETE;
+      } else {
+        _rxBusinessProfileStatus.value = Status.ERROR;
+        Get.snackbar(
+          "Error",
+          response.message ?? "Failed to load business profiles",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      _rxBusinessProfileStatus.value = Status.ERROR;
+      debugPrint("❌ Error fetching business profiles: $e");
+      Get.snackbar(
+        "Error",
+        "Failed to load business profiles: $e",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  final AddOccupationBusinessRepository addOccupationBusinessRepo =
+      AddOccupationBusinessRepository();
+  final UpdateOccupationBusinessRepository updateOccupationBusiness =
+      UpdateOccupationBusinessRepository();
+
+  Rx<TextEditingController> businessNameController =
+      TextEditingController().obs;
+  Rx<TextEditingController> businessMobileController =
+      TextEditingController().obs;
+  Rx<TextEditingController> businessLandlineController =
+      TextEditingController().obs;
+  Rx<TextEditingController> businessEmailController =
+      TextEditingController().obs;
+  Rx<TextEditingController> businessWebsiteController =
+      TextEditingController().obs;
+  Rx<TextEditingController> businessFlatNoController =
+      TextEditingController().obs;
+  Rx<TextEditingController> businessAddressController =
+      TextEditingController().obs;
+  Rx<TextEditingController> businessAreaNameController =
+      TextEditingController().obs;
+  Rx<TextEditingController> businessPincodeController =
+      TextEditingController().obs;
+
+  // Add delete repository
+  final DeleteOccupationBusinessRepository deleteOccupationBusinessRepo =
+      DeleteOccupationBusinessRepository();
+
+  // Add delete method
+  Future<void> deleteBusinessOccupationProfile(
+      String businessOccupationProfileId, String memberId) async {
+    try {
+      final response =
+          await deleteOccupationBusinessRepo.deleteOccupationBusinessProfile(
+        businessOccupationProfileId,
+      );
+
+      if (response.status == true) {
+        Get.snackbar(
+          "Success",
+          response.message ?? "Business profile deleted successfully",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+        await getBusinessOccupationProfiles(memberId);
+      } else {
+        Get.snackbar(
+          "Error",
+          response.message ?? "Failed to delete business profile",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        "Failed to delete business profile: $e",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      debugPrint("❌ DELETE BUSINESS PROFILE ERROR: $e");
+    }
+  }
+
+  // Business Profile
+  final OccupationProductRepository occupationProductRepository =
+      OccupationProductRepository();
+
+  final Rx<GetAllOccupationProductsModelClass?> occupationProducts =
+      Rx<GetAllOccupationProductsModelClass?>(null);
+
+  Future<void> getAllOccupationProducts(String profileId) async {
+    try {
+      final response = await occupationProductRepository.getAllProducts(
+          profileId: profileId);
+      occupationProducts.value = response;
+    } catch (e) {
+      debugPrint("Error fetching occupation products: $e");
+      rethrow;
+    }
+  }
+
+  // Add Product
+  final productNameController = TextEditingController();
+  final descriptionController = TextEditingController();
+  final keywordsController = TextEditingController();
+  final priceController = TextEditingController();
+  final currencyController = TextEditingController();
+  final unitController = TextEditingController();
+
+  final categoryIdController = TextEditingController();
+  final subcategoryIdController = TextEditingController();
+  final typeController = TextEditingController(text: "product");
+
+  final statusController = TextEditingController(text: "1");
+  final isFeaturedController = TextEditingController(text: "0");
+  final displayOrderController = TextEditingController(text: "1");
+
+  final createdByController = TextEditingController(text: "1");
 
   // Qualification Controller
   final rxStatusQualification = Status.LOADING.obs;
@@ -786,7 +1128,8 @@ class UdateProfileController extends GetxController {
       if (_value.data != null && _value.data!.isNotEmpty) {
         qulicationMainList.value = _value.data!;
 
-        final hasOther = qulicationMainList.value.any((item) => item.id == "other_main");
+        final hasOther =
+            qulicationMainList.value.any((item) => item.id == "other_main");
         if (!hasOther) {
           qulicationMainList.value.add(QualicationMainData(
             id: "other_main",
@@ -817,7 +1160,8 @@ class UdateProfileController extends GetxController {
       if (_value.data != null && _value.data!.isNotEmpty) {
         qulicationCategoryList.value = _value.data!;
 
-        final hasOther = qulicationCategoryList.value.any((item) => item.id == "other_category");
+        final hasOther = qulicationCategoryList.value
+            .any((item) => item.id == "other_category");
         if (!hasOther) {
           qulicationCategoryList.value.add(Qualificationcategorydata(
             id: "other_category",
@@ -848,25 +1192,29 @@ class UdateProfileController extends GetxController {
     addloading.value = true;
     try {
       final qualificationIdToSend =
-      selectQlification.value == "other" ? null : selectQlification.value;
+          selectQlification.value == "other" ? null : selectQlification.value;
 
       final qualificationMainIdToSend =
-      selectQualicationMain.value == "other_main" || selectQualicationMain.value.isEmpty
-          ? null
-          : selectQualicationMain.value;
+          selectQualicationMain.value == "other_main" ||
+                  selectQualicationMain.value.isEmpty
+              ? null
+              : selectQualicationMain.value;
 
       final qualificationCategoryIdToSend =
-      selectQualicationCat.value == "other_category" || selectQualicationCat.value.isEmpty
-          ? null
-          : selectQualicationCat.value;
+          selectQualicationCat.value == "other_category" ||
+                  selectQualicationCat.value.isEmpty
+              ? null
+              : selectQualicationCat.value;
 
       Map<String, dynamic> map = {
         "member_id": memberId.value,
         if (qualificationIdToSend != null && qualificationIdToSend != "other")
           "qualification_id": qualificationIdToSend,
-        if (qualificationMainIdToSend != null && qualificationMainIdToSend != "other_main")
+        if (qualificationMainIdToSend != null &&
+            qualificationMainIdToSend != "other_main")
           "qualification_main_id": qualificationMainIdToSend,
-        if (qualificationCategoryIdToSend != null && qualificationCategoryIdToSend != "other_category")
+        if (qualificationCategoryIdToSend != null &&
+            qualificationCategoryIdToSend != "other_category")
           "qualification_category_id": qualificationCategoryIdToSend,
         "qualification_other_name": educationdetailController.value.text,
         "created_by": memberId.value,
@@ -936,9 +1284,10 @@ class UdateProfileController extends GetxController {
         'member_qualification_id': member_qualification_id.toString(),
         'qualification_main_id': selectQualicationMain.value.toString(),
         'qualification_category_id':
-        (selectQualicationCat.value == "other_category" || selectQualicationCat.value.isEmpty)
-            ? "0"
-            : selectQualicationCat.value.toString(),
+            (selectQualicationCat.value == "other_category" ||
+                    selectQualicationCat.value.isEmpty)
+                ? "0"
+                : selectQualicationCat.value.toString(),
         'qualification_other_name': educationdetailController.value.text,
         'updated_by': memberId.value.toString(),
       };
@@ -1247,7 +1596,7 @@ class UdateProfileController extends GetxController {
       // Get building name from selected building
       String buildingName = "";
       String buildingId = "";
-      
+
       if (regiController.selectBuilding.value == "other") {
         // For "other", use custom building name
         buildingId = "";
@@ -1324,7 +1673,9 @@ class UdateProfileController extends GetxController {
   Future<dynamic> updateAddress(Map<String, dynamic> data) async {
     try {
       // Convert to multipart request if image is included
-      if (data.containsKey('document_image') && data['document_image'] != null && data['document_image'].isNotEmpty) {
+      if (data.containsKey('document_image') &&
+          data['document_image'] != null &&
+          data['document_image'].isNotEmpty) {
         final file = File(data['document_image']);
         final request = http.MultipartRequest(
             'POST', Uri.parse(Urls.updateMemberAddress_url));
@@ -1487,12 +1838,12 @@ class UdateProfileController extends GetxController {
         String mobile = regiController.mobileController.value.text.trim();
 
         if (mobile.isNotEmpty) {
-        //   print("Sending OTP to: $mobile");
-        //   sendOtp(regiController.mobileController.value.text);
-        //   Navigator.of(context!).pop();
-        //   showOtpBottomSheet(
-        //       context!, regiController.mobileController.value.text);
-        // }
+          //   print("Sending OTP to: $mobile");
+          //   sendOtp(regiController.mobileController.value.text);
+          //   Navigator.of(context!).pop();
+          //   showOtpBottomSheet(
+          //       context!, regiController.mobileController.value.text);
+          // }
           Navigator.of(context).pop();
           Get.snackbar(
             "Success",
@@ -1569,7 +1920,8 @@ class UdateProfileController extends GetxController {
     }
   }
 
-  void checkOtp(String otps, BuildContext context, String otpValidationFor, {VoidCallback? onSuccess}) {
+  void checkOtp(String otps, BuildContext context, String otpValidationFor,
+      {VoidCallback? onSuccess}) {
     if (otpValidationFor != "add_family_member") {
       return;
     }

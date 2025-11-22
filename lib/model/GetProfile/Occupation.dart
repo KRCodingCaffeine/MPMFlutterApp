@@ -4,6 +4,7 @@ class Occupation {
   String? occupationId;
   String? occupationProfessionId;
   String? occupationSpecializationId;
+  String? occupationSpecializationSubCategoryId;
   String? occupationOtherName;
   String? createdAt;
   String? createdBy;
@@ -12,21 +13,25 @@ class Occupation {
   String? occupation;
   String? occupationProfessionName;
   String? specializationName;
+  String? specializationSubCategoryName;
 
-  Occupation(
-      {this.memberOccupationId,
-        this.memberId,
-        this.occupationId,
-        this.occupationProfessionId,
-        this.occupationSpecializationId,
-        this.occupationOtherName,
-        this.createdAt,
-        this.createdBy,
-        this.updatedAt,
-        this.updatedBy,
-        this.occupation,
-        this.occupationProfessionName,
-        this.specializationName});
+  Occupation({
+    this.memberOccupationId,
+    this.memberId,
+    this.occupationId,
+    this.occupationProfessionId,
+    this.occupationSpecializationId,
+    this.occupationSpecializationSubCategoryId,
+    this.occupationOtherName,
+    this.createdAt,
+    this.createdBy,
+    this.updatedAt,
+    this.updatedBy,
+    this.occupation,
+    this.occupationProfessionName,
+    this.specializationName,
+    this.specializationSubCategoryName,
+  });
 
   Occupation.fromJson(Map<String, dynamic> json) {
     memberOccupationId = json['member_occupation_id'];
@@ -34,6 +39,7 @@ class Occupation {
     occupationId = json['occupation_id'];
     occupationProfessionId = json['occupation_profession_id'];
     occupationSpecializationId = json['occupation_specialization_id'];
+    occupationSpecializationSubCategoryId = json['occupation_specialization_sub_category_id'];
     occupationOtherName = json['occupation_other_name'];
     createdAt = json['created_at'];
     createdBy = json['created_by'];
@@ -42,6 +48,7 @@ class Occupation {
     occupation = json['occupation'];
     occupationProfessionName = json['occupation_profession_name'];
     specializationName = json['specialization_name'];
+    specializationSubCategoryName = json['specialization_sub_category_name'];
   }
 
   Map<String, dynamic> toJson() {
@@ -51,6 +58,7 @@ class Occupation {
     data['occupation_id'] = this.occupationId;
     data['occupation_profession_id'] = this.occupationProfessionId;
     data['occupation_specialization_id'] = this.occupationSpecializationId;
+    data['occupation_specialization_sub_category_id'] = this.occupationSpecializationSubCategoryId;
     data['occupation_other_name'] = this.occupationOtherName;
     data['created_at'] = this.createdAt;
     data['created_by'] = this.createdBy;
@@ -59,6 +67,7 @@ class Occupation {
     data['occupation'] = this.occupation;
     data['occupation_profession_name'] = this.occupationProfessionName;
     data['specialization_name'] = this.specializationName;
+    data['specialization_sub_category_name'] = this.specializationSubCategoryName;
     return data;
   }
 }

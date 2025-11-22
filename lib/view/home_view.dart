@@ -447,7 +447,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                           ),
                           SizedBox(height: cardHeight * 0.02),
                           Text(
-                            "Free Home Delivery",
+                              "Free Home Delivery • Arrives in 2–3 Days",
                             style: TextStyle(
                               fontSize: subtitleFontSize,
                               fontWeight: FontWeight.w600,
