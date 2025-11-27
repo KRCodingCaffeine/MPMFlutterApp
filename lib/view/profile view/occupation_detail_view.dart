@@ -35,6 +35,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
   void initState() {
     super.initState();
     _clearBusinessForm();
+    
     _loadCountries();
     _loadBusinessProfiles();
   }
@@ -1045,7 +1046,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
           builder: (context) {
             double fontSize = MediaQuery.of(context).size.width * 0.045;
             return Text(
-              "Occupation Details",
+              "Detailed Business Profile",
               style: TextStyle(
                 color: Colors.white,
                 fontSize: fontSize,
@@ -1269,7 +1270,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    "No Business Details Added",
+                    "No Detail Added",
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -1297,7 +1298,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                       ),
                     ),
                     icon: const Icon(Icons.add_business),
-                    label: const Text("Add Business Details"),
+                    label: const Text("Add Details"),
                   ),
                 ],
               ),

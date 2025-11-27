@@ -185,21 +185,21 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
 
                 // Occupation Details
                 _buildInfoBox(
-                  'Occupation',
+                  'Level 1',
                   subtitle: occupation.occupation ?? 'Other',
                 ),
                 _buildInfoBox(
-                  'Profession',
+                  'Level 2',
                   subtitle: occupation.occupationProfessionName ?? 'Other',
                 ),
                 _buildInfoBox(
-                  'Specialization',
+                  'Level 3',
                   subtitle: occupation.specializationName ?? 'Other',
                 ),
                 if (occupation.specializationSubCategoryName != null &&
                     occupation.specializationSubCategoryName!.isNotEmpty)
                   _buildInfoBox(
-                    'Sub Category',
+                    'Level 4',
                     subtitle: occupation.specializationSubCategoryName ?? 'Other',
                   ),
                 if (occupation.occupationOtherName != null &&
@@ -444,8 +444,6 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
   }
 
   Future<void> _updateOccupation(Occupation occupation) async {
-    // Use the existing addAndupdateOccuption method which should handle updates
-    // when currentOccupation is set
     await controller.addAndupdateOccuption();
   }
 
@@ -463,7 +461,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
             } else {
               return InputDecorator(
                 decoration: InputDecoration(
-                  labelText: 'Occupation *',
+                  labelText: 'Level 1 *',
                   border: const OutlineInputBorder(
                     borderSide: BorderSide(color: Colors.black26),
                   ),
@@ -530,7 +528,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
               } else {
                 return InputDecorator(
                   decoration: InputDecoration(
-                    labelText: 'Occupation Profession',
+                    labelText: 'Level 2',
                     border: const OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.black26),
                     ),
@@ -599,7 +597,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
               } else {
                 return InputDecorator(
                   decoration: InputDecoration(
-                    labelText: 'Occupation Specialization',
+                    labelText: 'Level 3',
                     border: const OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.black26),
                     ),
@@ -669,7 +667,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
               } else {
                 return InputDecorator(
                   decoration: InputDecoration(
-                    labelText: 'Specialization Subcategory',
+                    labelText: 'Level 4',
                     border: const OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.black26),
                     ),

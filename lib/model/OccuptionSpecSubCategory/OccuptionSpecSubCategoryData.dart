@@ -16,7 +16,7 @@ class OccuptionSpecSubCategoryData {
   });
 
   OccuptionSpecSubCategoryData.fromJson(Map<String, dynamic> json) {
-    specializationSubCategoryId = json['occupation_specialization_sub_category_id '];
+    specializationSubCategoryId = json['occupation_specialization_sub_category_id'];
     specializationId = json['occupation_specialization_id'];
     specializationSubCategoryName = json['specialization_sub_category_name'];
     status = json['status'];
@@ -26,7 +26,7 @@ class OccuptionSpecSubCategoryData {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = {};
-    data['occupation_specialization_sub_category_id '] = specializationSubCategoryId;
+    data['occupation_specialization_sub_category_id'] = specializationSubCategoryId;
     data['occupation_specialization_id'] = specializationId;
     data['specialization_sub_category_name'] = specializationSubCategoryName;
     data['status'] = status;

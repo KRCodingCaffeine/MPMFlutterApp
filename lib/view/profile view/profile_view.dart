@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mpm/model/GetProfile/Occupation.dart';
 import 'package:mpm/utils/AppDrawer.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
@@ -13,6 +14,7 @@ import 'package:mpm/view/payment/PaymentScreen.dart';
 import 'package:mpm/view/profile%20view/Education_page_info.dart';
 import 'package:mpm/view/profile%20view/business_info_page.dart';
 import 'package:mpm/view/profile%20view/family_info_page.dart';
+import 'package:mpm/view/profile%20view/occupation_detail_view.dart';
 import 'package:mpm/view/profile%20view/personal_info_page.dart';
 import 'package:mpm/view/profile%20view/residence_info_page.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
@@ -261,6 +263,28 @@ class _ProfileViewState extends State<ProfileView> {
                         builder: (context) => const BusinessInformationPage(),
                       ),
                     ),
+                  ),
+                  buildCustomButton(
+                    title: "Detailed Business Profile",
+                    icon: Icons.badge,
+                    onTap: () {
+                      final occ = controller.currentOccupation.value;
+
+                      if (occ == null) {
+                        Get.snackbar("Error", "No occupation found");
+                        return;
+                      }
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => OccupationDetailViewPage(
+                            memberId: occ.memberId.toString(),
+                            memberOccupationId: occ.memberOccupationId.toString(),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
