@@ -72,6 +72,8 @@ class _DashboardViewState extends State<DashboardView> {
     final userData = await SessionManager.getSession();
     if (userData != null) {
       controller.memberId.value = userData.memberId ?? "";
+      // Fetch user profile data when dashboard initializes
+      await controller.getUserProfile();
     }
   }
 

@@ -197,7 +197,11 @@ class GetProfileData {
       addressProofPath: json['address_proof_path']?.toString(),
       documentType: json['document_type']?.toString(),
       address: json['address'] != null
-          ? Address.fromJson(json['address'] as Map<String, dynamic>)
+          ? (json['address'] is List
+              ? (json['address'] as List).isNotEmpty
+                  ? Address.fromJson(json['address'][0] as Map<String, dynamic>)
+                  : null
+              : Address.fromJson(json['address'] as Map<String, dynamic>))
           : null,
       familyMembersData: json['family_members_data'] != null
           ? List<FamilyMembersData>.from(
@@ -213,7 +217,11 @@ class GetProfileData {
               .map((x) => Qualification.fromJson(x)))
           : null,
       occupation: json['occupation'] != null
-          ? Occupation.fromJson(json['occupation'])
+          ? (json['occupation'] is List
+              ? (json['occupation'] as List).isNotEmpty
+                  ? Occupation.fromJson(json['occupation'][0] as Map<String, dynamic>)
+                  : null
+              : Occupation.fromJson(json['occupation'] as Map<String, dynamic>))
           : null,
       businessInfo: json['business_info'] != null
           ? List<BusinessInfo>.from(

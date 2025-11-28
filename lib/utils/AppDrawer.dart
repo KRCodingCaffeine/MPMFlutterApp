@@ -71,7 +71,7 @@ class AppDrawer extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Column(
+                    child: Obx(() => Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -100,7 +100,7 @@ class AppDrawer extends StatelessWidget {
                               fontSize: 12, color: Colors.white70),
                         ),
                       ],
-                    ),
+                    )),
                   )
                 ],
               ),
