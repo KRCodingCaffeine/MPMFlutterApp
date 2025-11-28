@@ -305,12 +305,49 @@ class UdateProfileController extends GetxController {
   }
 
   Future<void> getUserProfile() async {
-    CheckUserData2? userData = await SessionManager.getSession();
-    loading.value = true;
-    var id = userData?.memberId.toString();
-    //id="1";
-    api.getUserData(id!).then((_value) async {
+    try {
+      CheckUserData2? userData = await SessionManager.getSession();
+      if (userData == null || userData.memberId == null) {
+        loading.value = false;
+        Get.snackbar(
+          'Error',
+          'Please login again',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
+      
+      loading.value = true;
+      var id = userData.memberId.toString();
+      
+      if (id.isEmpty) {
+        loading.value = false;
+        Get.snackbar(
+          'Error',
+          'Member ID is missing',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
+      
+      final _value = await api.getUserData(id);
       loading.value = false;
+      
+      if (_value.data == null) {
+        Get.snackbar(
+          'Error',
+          'Failed to load profile data',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
+      
       getUserData.value = _value.data!;
       memberId.value = id.toString();
       fathersName.value = getUserData.value.fatherName.toString();
@@ -423,9 +460,6 @@ class UdateProfileController extends GetxController {
             getUserData.value.occupation?.specializationName ?? '';
         detailsController.value.text =
             getUserData.value.occupation?.occupationOtherName ?? '';
-
-        // Add debug prints to verify values
-        print('Occupation Data: ${getUserData.value.occupation?.toJson()}');
       }
       var member_type_id = getUserData.value.membershipTypeId.toString();
       var memberapprovalstatusid =
@@ -460,10 +494,17 @@ class UdateProfileController extends GetxController {
             getUserData.value.familyHeadMemberData!.memberId.toString();
         familyHeadData.value = getUserData.value.familyHeadMemberData!;
       }
-    }).onError((error, strack) {
+    } catch (error, stackTrace) {
       loading.value = false;
-      print("err" + error.toString());
-    });
+      Get.snackbar(
+        'Error',
+        'Failed to load profile: ${error.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: Duration(seconds: 4),
+      );
+    }
   }
 
   void isPayButton() {}
