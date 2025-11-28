@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/data/response/status.dart';
+import 'package:mpm/model/BusinessProfile/BusinessAddress/BusinessAddressData.dart';
 import 'package:mpm/model/BusinessProfile/GetAllBusinessOccupationProfile/GetAllBusinessOccupationProfileModelClass.dart';
+import 'package:mpm/model/GetProfile/Address.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/profile%20view/business_info_page.dart';
@@ -35,7 +37,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
   void initState() {
     super.initState();
     _clearBusinessForm();
-    
+
     _loadCountries();
     _loadBusinessProfiles();
   }
@@ -1066,9 +1068,9 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
           return _buildEmptyState();
         }
 
-        // Get the first business profile (you can modify this to show all)
+        // Get the first business profile
         final business = businessProfiles.first;
-        // Get the first address from the business profile
+        // Get the first address from the business profile - using BusinessAddressData
         final address = business.addresses?.isNotEmpty == true ? business.addresses!.first : null;
 
         return SingleChildScrollView(
@@ -1085,142 +1087,34 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildInfoBox(
-                        'Business Name:',
-                        subtitle: business.businessName?.toString() ?? "N/A",
+                      // Occupation Hierarchy Section
+                      _buildOccupationHierarchySection(),
+                      const SizedBox(height: 20),
+
+                      const Divider(color: Colors.grey),
+                      const SizedBox(height: 20),
+
+                      // Business Name
+                      Text(
+                        business.businessName?.toString() ?? "N/A",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+                        ),
                       ),
                       const SizedBox(height: 20),
 
-                      _buildInfoBox(
-                        'Business Mobile:',
-                        subtitle: business.businessMobile?.toString() ?? "N/A",
-                      ),
-                      const SizedBox(height: 20),
+                      // Business Address Section
+                      if (address != null) _buildBusinessAddressSection(address),
 
-                      _buildInfoBox(
-                        'Business Landline:',
-                        subtitle: business.businessLandline?.toString() ?? "N/A",
-                      ),
-                      const SizedBox(height: 20),
+                      // Contact Details Section
+                      _buildContactDetailsSection(business),
 
-                      _buildInfoBox(
-                        'Business Email:',
-                        subtitle: business.businessEmail?.toString() ?? "N/A",
-                      ),
-                      const SizedBox(height: 20),
-
-                      _buildInfoBox(
-                        'Business Website:',
-                        subtitle: business.businessWebsite?.toString() ?? "N/A",
-                      ),
-                      const SizedBox(height: 20),
-
-                      if (address != null) ...[
-                        _buildInfoBox(
-                          'Flat No:',
-                          subtitle: address.flatNo?.toString() ?? "N/A",
-                        ),
-                        const SizedBox(height: 20),
-
-                        _buildInfoBox(
-                          'Address:',
-                          subtitle: address.address?.toString() ?? "N/A",
-                        ),
-                        const SizedBox(height: 20),
-
-                        _buildInfoBox(
-                          'Area:',
-                          subtitle: address.areaName?.toString() ?? "N/A",
-                        ),
-                        const SizedBox(height: 20),
-
-                        _buildInfoBox(
-                          'City:',
-                          subtitle: address.cityName?.toString() ?? "N/A",
-                        ),
-                        const SizedBox(height: 20),
-
-                        _buildInfoBox(
-                          'State:',
-                          subtitle: address.stateName?.toString() ?? "N/A",
-                        ),
-                        const SizedBox(height: 20),
-
-                        _buildInfoBox(
-                          'Country:',
-                          subtitle: address.countryName?.toString() ?? "N/A",
-                        ),
-                        const SizedBox(height: 20),
-                        _buildInfoBox(
-                          'Pincode:',
-                          subtitle: address.pincode?.toString() ?? "N/A",
-                        ),
-                        const SizedBox(height: 20),
-                      ],
-
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () => _showEditBusinessModalSheet(context, business),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                                side: BorderSide(
-                                  color: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                              ),
-                              icon: const Icon(Icons.edit),
-                              label: const Text("Edit Business"),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                _showDeleteConfirmationDialog(context, business);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                              ),
-                              icon: const Icon(Icons.delete),
-                              label: const Text("Delete"),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Product List Button
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            _navigateToProductList(context, business);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          icon: const Icon(Icons.inventory_2_outlined),
-                          label: const Text("Product List"),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
+                      // Action Buttons
+                      _buildActionButtons(business),
                     ],
                   ),
                 ),
@@ -1229,6 +1123,403 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
           ),
         );
       }),
+    );
+  }
+
+// Update this method to use BusinessAddressData
+  Widget _buildBusinessAddressSection(BusinessAddressData address) {
+    // Build the full address string similar to your screenshot
+    final addressParts = [
+      address.flatNo,
+      address.address,
+      address.areaName,
+      address.cityName,
+      address.stateName,
+      address.countryName,
+      address.pincode
+    ].where((part) => part != null && part.isNotEmpty).toList();
+
+    final fullAddress = addressParts.join(', ');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Business Address Label
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "Business Address:",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 2),
+
+        // Address Text
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+          child: Text(
+            fullAddress.isNotEmpty ? fullAddress : "No address available",
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.black87,
+              height: 1.4,
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+// Add this method to build the contact details section
+  Widget _buildContactDetailsSection(BusinessOccupationProfile business) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Contact Details",
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Contact details in a clean layout
+        if (business.businessMobile != null && business.businessMobile!.isNotEmpty)
+          _buildContactDetailItem(
+            icon: Icons.phone,
+            label: "Mobile",
+            value: business.businessMobile!,
+          ),
+
+        if (business.businessLandline != null && business.businessLandline!.isNotEmpty)
+          _buildContactDetailItem(
+            icon: Icons.phone_in_talk,
+            label: "Landline",
+            value: business.businessLandline!,
+          ),
+
+        if (business.businessEmail != null && business.businessEmail!.isNotEmpty)
+          _buildContactDetailItem(
+            icon: Icons.email,
+            label: "Email",
+            value: business.businessEmail!,
+          ),
+
+        if (business.businessWebsite != null && business.businessWebsite!.isNotEmpty)
+          _buildContactDetailItem(
+            icon: Icons.language,
+            label: "Website",
+            value: business.businessWebsite!,
+          ),
+
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+// Add this method to build individual contact detail items
+  Widget _buildContactDetailItem({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 20,
+            color: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+// Update the occupation hierarchy section to be more compact
+  Widget _buildOccupationHierarchySection() {
+    // Get the current occupation from controller
+    final occupation = controller.currentOccupation.value;
+
+    if (occupation == null) {
+      return const SizedBox();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            children: [
+              // Level 1 - Occupation
+              _buildCompactHierarchyLevel(
+                level: "Level 1",
+                value: occupation.occupation ?? "Not specified",
+              ),
+              const SizedBox(height: 8),
+
+              // Level 2 - Profession
+              _buildCompactHierarchyLevel(
+                level: "Level 2",
+                value: occupation.occupationProfessionName ?? "Not specified",
+              ),
+              const SizedBox(height: 8),
+
+              // Level 3 - Specialization
+              _buildCompactHierarchyLevel(
+                level: "Level 3",
+                value: occupation.specializationName ?? "Not specified",
+              ),
+
+              // Level 4 - Sub Category (if available)
+              if (occupation.specializationSubCategoryName != null &&
+                  occupation.specializationSubCategoryName!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                _buildCompactHierarchyLevel(
+                  level: "Level 4",
+                  value: occupation.specializationSubCategoryName!,
+                ),
+              ],
+
+              // Additional Details (if available)
+              if (occupation.occupationOtherName != null &&
+                  occupation.occupationOtherName!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                _buildCompactHierarchyLevel(
+                  level: "Details",
+                  value: occupation.occupationOtherName!,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+// Update the hierarchy level to be more compact
+  Widget _buildCompactHierarchyLevel({required String level, required String value}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 70,
+          child: Text(
+            level,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          ":",
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+// Update the empty state to include the new structure
+  Widget _buildEmptyState() {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16.0),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Column(
+            children: [
+              // Show occupation hierarchy even when no business data
+              _buildOccupationHierarchySection(),
+              const SizedBox(height: 20),
+
+              Card(
+                color: Colors.white,
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(32.0),
+                  child: Column(
+                    children: [
+                      const Icon(
+                        Icons.business_center_outlined,
+                        size: 64,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        "No Business Details Added",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        "Add your business information to complete your occupation profile",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: () => _showAddBusinessModalSheet(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        icon: const Icon(Icons.add_business),
+                        label: const Text("Add Business Details"),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+// Update the action buttons method to include in the main column
+  // Update the action buttons method to conditionally show Product List button
+  Widget _buildActionButtons(BusinessOccupationProfile business) {
+    // Get the current occupation from controller
+    final occupation = controller.currentOccupation.value;
+
+    // Check if occupation ID is 2
+    final bool showProductListButton = occupation?.occupationId == "2";
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => _showEditBusinessModalSheet(context, business),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                  side: BorderSide(
+                    color: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                icon: const Icon(Icons.edit),
+                label: const Text("Edit Business"),
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  _showDeleteConfirmationDialog(context, business);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                icon: const Icon(Icons.delete),
+                label: const Text("Delete"),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // Product List Button
+        if (showProductListButton)
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                _navigateToProductList(context, business);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+              icon: const Icon(Icons.inventory_2_outlined),
+              label: const Text("Product List"),
+            ),
+          ),
+
+        if (showProductListButton) const SizedBox(height: 10),
+      ],
     );
   }
 
@@ -1245,68 +1536,6 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
         colorText: Colors.white,
       );
     }
-  }
-
-  Widget _buildEmptyState() {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16.0),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Card(
-            color: Colors.white,
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(32.0),
-              child: Column(
-                children: [
-                  const Icon(
-                    Icons.business_center_outlined,
-                    size: 64,
-                    color: Colors.grey,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    "No Detail Added",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    "Add your business information to complete your occupation profile",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    onPressed: () => _showAddBusinessModalSheet(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    icon: const Icon(Icons.add_business),
-                    label: const Text("Add Details"),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   void _loadBusinessProfiles() {

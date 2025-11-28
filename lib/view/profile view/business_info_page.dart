@@ -7,6 +7,7 @@ import 'package:mpm/model/GetProfile/Occupation.dart';
 import 'package:mpm/model/Occupation/OccupationData.dart';
 import 'package:mpm/model/OccupationSpec/OccuptionSpecData.dart';
 import 'package:mpm/model/OccuptionSpecSubCategory/OccuptionSpecSubCategoryData.dart';
+import 'package:mpm/model/OccuptionSpecSubSubCategory/OccuptionSpecSubSubCategoryData.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/profile%20view/occupation_detail_view.dart';
@@ -700,6 +701,69 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                     onChanged: (String? newValue) {
                       if (newValue != null) {
                         controller.selectedSubCategory.value = newValue;
+                        controller.selectedSubSubCategory.value = "";
+
+                        if (newValue == "Other") {
+                          controller.showDetailsField.value = true;
+                        } else {
+                          controller.showDetailsField.value = false;
+                          controller.getOccupationSubSubCategoryData(newValue);
+                        }
+                      }
+                    },
+                  ),
+                );
+              }
+            }),
+          );
+        }),
+        const SizedBox(height: 20),
+
+        // Level 5 – Sub-Sub-Category
+        Obx(() {
+          if (controller.selectedSubCategory.value.isEmpty ||
+              controller.selectedSubCategory.value == "Other") {
+            return const SizedBox();
+          }
+
+          return Container(
+            margin: const EdgeInsets.only(left: 5, right: 5, top: 8),
+            child: Obx(() {
+              if (controller.rxStatusOccupationSpec.value == Status.LOADING) {
+                return _buildLoadingIndicator();
+              } else if (controller.rxStatusOccupationSpec.value == Status.ERROR) {
+                return const Center(child: Text('Failed to load level 5'));
+              } else if (controller.occuptionSubSubCategoryList.isEmpty) {
+                return const SizedBox();
+              } else {
+                return InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Level 5',
+                    border: OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
+                    enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
+                    focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black26, width: 1.5)),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                  ),
+                  isEmpty: controller.selectedSubSubCategory.value.isEmpty,
+                  child: DropdownButton<String>(
+                    dropdownColor: Colors.white,
+                    isExpanded: true,
+                    underline: Container(),
+                    value: controller.selectedSubSubCategory.value.isEmpty
+                        ? null
+                        : controller.selectedSubSubCategory.value,
+                    items: controller.occuptionSubSubCategoryList
+                        .map((OccuptionSpecSubSubCategoryData item) {
+                      return DropdownMenuItem<String>(
+                        value: item.subSubCategoryId.toString(),
+                        child: Text(item.subSubCategoryName ?? 'Unknown'),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        controller.selectedSubSubCategory.value = newValue;
+
                         if (newValue == "Other") {
                           controller.showDetailsField.value = true;
                         } else {

@@ -9,6 +9,7 @@ import 'package:mpm/model/Occupation/OccupationModel.dart';
 import 'package:mpm/model/Occupation/addoccuption/AddOccuptionModel.dart';
 import 'package:mpm/model/OccupationSpec/OccuptionSpecialization.dart';
 import 'package:mpm/model/OccuptionSpecSubCategory/OccuptionSpecSubCategoryModel.dart';
+import 'package:mpm/model/OccuptionSpecSubSubCategory/OccuptionSpecSubSubCategoryModelClass.dart';
 import 'package:mpm/model/Qualification/QualificationModel.dart';
 import 'package:mpm/model/QualificationCategory/QualificationCategoryModel.dart';
 import 'package:mpm/model/QualificationMain/QualicationMainModel.dart';
@@ -134,6 +135,22 @@ class UpdateProfileRepository {
     );
 
     return OccuptionSpecSubCategoryModel.fromJson(response);
+  }
+
+  Future<OccuptionSpecSubSubCategoryModelClass> userOccutionSpectionSubSubCategoryApi(
+      String specId) async {
+
+    final url = "${Urls.occuption_specialization_subcategory_url}"
+        "?occupation_specialization_id=$specId"
+        "&status=1"
+        "&limit=50"
+        "&offset=0";
+
+    print("🔎 SubCategory GET API URL: $url");
+
+    dynamic response = await api.getApi(url, "");
+
+    return OccuptionSpecSubSubCategoryModelClass.fromJson(response);
   }
 
   Future<AddOccuptionModel> updateOrAddOccuption(data) async {

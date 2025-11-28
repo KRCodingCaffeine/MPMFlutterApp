@@ -19,6 +19,7 @@ import 'package:mpm/model/GetProfile/Qualification.dart';
 import 'package:mpm/model/Occupation/OccupationData.dart';
 import 'package:mpm/model/OccupationSpec/OccuptionSpecData.dart';
 import 'package:mpm/model/OccuptionSpecSubCategory/OccuptionSpecSubCategoryData.dart';
+import 'package:mpm/model/OccuptionSpecSubSubCategory/OccuptionSpecSubSubCategoryData.dart';
 import 'package:mpm/model/ProductCategory/ProductCategoryData.dart';
 import 'package:mpm/model/ProductSubcategory/ProductSubcategoryData.dart';
 import 'package:mpm/model/Qualification/QualificationData.dart';
@@ -121,6 +122,9 @@ class UdateProfileController extends GetxController {
   RxList<OccuptionSpecSubCategoryData> occuptionSubCategoryList =
       <OccuptionSpecSubCategoryData>[].obs;
   RxString selectedSubCategory = "".obs;
+  final RxString selectedSubSubCategory = ''.obs;
+  final RxList<OccuptionSpecSubSubCategoryData> occuptionSubSubCategoryList = <OccuptionSpecSubSubCategoryData>[].obs;
+
 
   var newProfileImage = "".obs;
   var userdocumentImage = "".obs;
@@ -612,6 +616,45 @@ class UdateProfileController extends GetxController {
       Get.snackbar(
         'Error',
         'Failed to load specialization sub-category',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  Future<void> getOccupationSubSubCategoryData(String subCategoryId) async {
+    if (subCategoryId.isEmpty) return;
+
+    try {
+      rxStatusOccupationSpec.value = Status.LOADING;
+
+      final response = await api.userOccutionSpectionSubSubCategoryApi(subCategoryId);
+      occuptionSubSubCategoryList.value = response.data ?? [];
+
+      if (occuptionSubSubCategoryList.isEmpty) {
+        showDetailsField.value = true;
+      } else {
+        // Add “Other” option
+        if (!occuptionSubSubCategoryList
+            .any((item) => item.subSubCategoryId == "Other")) {
+          occuptionSubSubCategoryList.add(
+            OccuptionSpecSubSubCategoryData(
+              subSubCategoryId: "Other",
+              subCategoryId: subCategoryId,
+              subSubCategoryName: "Other",
+              status: "1",
+            ),
+          );
+        }
+      }
+
+      rxStatusOccupationSpec.value = Status.COMPLETE;
+    } catch (e) {
+      rxStatusOccupationSpec.value = Status.ERROR;
+      Get.snackbar(
+        'Error',
+        'Failed to load sub-sub-category',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
