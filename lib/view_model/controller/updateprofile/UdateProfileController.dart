@@ -34,6 +34,7 @@ import 'package:mpm/repository/BusinessProfileRepo/delete_occupation_business_re
 import 'package:mpm/repository/BusinessProfileRepo/get_occupation_product_by_id_repository/get_occupation_product_by_id_repo.dart';
 import 'package:mpm/repository/BusinessProfileRepo/update_occupation_business_repository/update_occupation_business_repo.dart';
 import 'package:mpm/repository/add_existing_family_member_repository/add_existing_family_member_repo.dart';
+import 'package:mpm/repository/add_occupation_repository/add_occupation_repo.dart';
 import 'package:mpm/repository/change_family_head_repository/change_family_head_repo.dart';
 import 'package:mpm/repository/product_category_repository/product_category_repo.dart';
 import 'package:mpm/repository/product_subcategory_repository/product_subcategory_repo.dart';
@@ -65,6 +66,7 @@ class UdateProfileController extends GetxController {
       AddExistingMemberIntoFamilyRepository();
   final ChangeFamilyHeadRepository _changeHeadRepo =
       ChangeFamilyHeadRepository();
+  final addOccupationRepo = AddOccupationRepository();
 
   var isPay = false.obs;
   RxBool showEmailVerifyBanner = false.obs;
@@ -118,6 +120,10 @@ class UdateProfileController extends GetxController {
   Rx<TextEditingController> occupation_profession_nameController =
       TextEditingController().obs;
   Rx<TextEditingController> specialization_nameController =
+      TextEditingController().obs;
+  Rx<TextEditingController> specialization_sub_nameController =
+      TextEditingController().obs;
+  Rx<TextEditingController> specialization_sub_sub_nameController =
       TextEditingController().obs;
   RxList<OccuptionSpecSubCategoryData> occuptionSubCategoryList =
       <OccuptionSpecSubCategoryData>[].obs;
@@ -447,19 +453,29 @@ class UdateProfileController extends GetxController {
       saraswaniOptionController.text = saraswaniOption.value;
 
       // Occupation
-      if (getUserData.value.occupation != null) {
-        currentOccupation.value = getUserData.value.occupation!;
-        hasOccupationData.value = true;
+      // In UdateProfileController - Update the occupation section
 
-        // Update all occupation fields including null checks
-        occupationController.value.text =
-            getUserData.value.occupation?.occupation ?? '';
-        occupation_profession_nameController.value.text =
-            getUserData.value.occupation?.occupationProfessionName ?? '';
-        specialization_nameController.value.text =
-            getUserData.value.occupation?.specializationName ?? '';
-        detailsController.value.text =
-            getUserData.value.occupation?.occupationOtherName ?? '';
+// Occupation
+      if (getUserData.value.occupation != null && getUserData.value.occupation!.isNotEmpty) {
+        // For backward compatibility, set the first occupation as current
+        if (getUserData.value.occupation!.isNotEmpty) {
+          currentOccupation.value = getUserData.value.occupation!.first;
+          hasOccupationData.value = true;
+
+          // Update all occupation fields including null checks - use .first to get the first occupation
+          occupationController.value.text =
+              getUserData.value.occupation!.first.occupation ?? '';
+          occupation_profession_nameController.value.text =
+              getUserData.value.occupation!.first.occupationProfessionName ?? '';
+          specialization_nameController.value.text =
+              getUserData.value.occupation!.first.specializationName ?? '';
+          specialization_sub_nameController.value.text =
+              getUserData.value.occupation!.first.specializationSubCategoryName ?? '';
+          specialization_sub_sub_nameController.value.text =
+              getUserData.value.occupation!.first.specializationSubSubCategoryName ?? '';
+          detailsController.value.text =
+              getUserData.value.occupation!.first.occupationOtherName ?? '';
+        }
       }
       var member_type_id = getUserData.value.membershipTypeId.toString();
       var memberapprovalstatusid =
@@ -508,6 +524,18 @@ class UdateProfileController extends GetxController {
   }
 
   void isPayButton() {}
+
+  // In UdateProfileController - Add this method
+  List<Occupation> get allOccupations {
+    return getUserData.value.occupation ?? [];
+  }
+
+// Optional: Keep currentOccupation for backward compatibility but update its usage
+  Occupation? get firstOccupation {
+    return getUserData.value.occupation != null && getUserData.value.occupation!.isNotEmpty
+        ? getUserData.value.occupation!.first
+        : null;
+  }
 
   // Occupation Controller
   final Rx<Occupation?> currentOccupation = Rx<Occupation?>(null);
@@ -670,7 +698,7 @@ class UdateProfileController extends GetxController {
     try {
       rxStatusOccupationSpec.value = Status.LOADING;
 
-      final response = await api.userOccutionSpectionSubSubCategoryApi(subCategoryId);
+      final response = await api.userOccutionSpecializationSubSubCategoryApi(subCategoryId);
       occuptionSubSubCategoryList.value = response.data ?? [];
 
       if (occuptionSubSubCategoryList.isEmpty) {
@@ -703,9 +731,10 @@ class UdateProfileController extends GetxController {
     }
   }
 
-  Future<void> addAndupdateOccuption() async {
+  Future<void> addOccupation() async {
     try {
       isOccupationLoading.value = true;
+
       final userData = await SessionManager.getSession();
       if (userData == null) throw Exception("User not logged in");
 
@@ -713,130 +742,67 @@ class UdateProfileController extends GetxController {
         throw Exception("Please select an occupation");
       }
 
-      String? professionId =
-          selectedProfession.value.isEmpty ? null : selectedProfession.value;
-      String? specializationId = selectedSpecialization.value.isEmpty
-          ? null
-          : selectedSpecialization.value;
-      String? subCategoryId =
-          selectedSubCategory.value.isEmpty ? null : selectedSubCategory.value;
+      // Handle dropdown values
+      String occupationId = selectedOccupation.value;
+      String professionId = (selectedProfession.value == "Other") ? "" : selectedProfession.value;
+      String specializationId = (selectedSpecialization.value == "Other") ? "" : selectedSpecialization.value;
+      String subCategoryId = (selectedSubCategory.value == "Other") ? "" : selectedSubCategory.value;
+      String subSubCategoryId = (selectedSubSubCategory.value == "Other") ? "" : selectedSubSubCategory.value;
 
-      // Handle "Other" values
-      if (professionId == "Other") professionId = null;
-      if (specializationId == "Other") specializationId = null;
-      if (subCategoryId == "Other") subCategoryId = null;
+      // Final "Other Details"
+      String otherName = showDetailsField.value ? detailsController.value.text : "";
 
       final Map<String, dynamic> data = {
         "member_id": userData.memberId.toString(),
-        "occupation_id": selectedOccupation.value,
-        "occupation_profession_id": professionId ?? "",
-        "occupation_specialization_id": specializationId ?? "",
-        "occupation_specialization_sub_category_id": subCategoryId ?? "",
-        "occupation_other_name":
-            (showDetailsField.value || detailsController.value.text.isNotEmpty)
-                ? detailsController.value.text
-                : "",
-        "updated_by": userData.memberId.toString()
+        "occupation_id": occupationId,
+        "occupation_profession_id": professionId,
+        "occupation_specialization_id": specializationId,
+        "occupation_specialization_sub_category_id": subCategoryId,
+        "occupation_specialization_sub_sub_category_id": subSubCategoryId,
+        "occupation_other_name": otherName,
+        "created_by": userData.memberId.toString()
       };
 
-      print("Sending occupation data: $data");
+      print("📤 Add Occupation Payload: $data");
 
-      final response = await api.updateOrAddOccuption(data);
+      // Call Add repository
+      final response = await addOccupationRepo.addOccupation(data);
 
       if (response.status == true) {
-        // Get the display names for each selected option
-        final occupationName = occuptionList
-            .firstWhere(
-              (occ) => occ.id == selectedOccupation.value,
-              orElse: () => OccupationData(
-                  id: '',
-                  occupation: '',
-                  status: '',
-                  createdAt: null,
-                  updatedAt: null),
-            )
-            .occupation;
-
-        final professionName = professionId == null
-            ? null
-            : occuptionProfessionList
-                .firstWhere(
-                  (prof) => prof.id == professionId,
-                  orElse: () => OccuptionProfessionData(id: '', name: ''),
-                )
-                .name;
-
-        final specializationName = specializationId == null
-            ? null
-            : occuptionSpeList
-                .firstWhere(
-                  (spec) => spec.id == specializationId,
-                  orElse: () => OccuptionSpecData(id: '', name: ''),
-                )
-                .name;
-
-        final subCategoryName = subCategoryId == null
-            ? null
-            : occuptionSubCategoryList
-                .firstWhere(
-                  (sub) => sub.specializationSubCategoryId == subCategoryId,
-                  orElse: () => OccuptionSpecSubCategoryData(
-                    specializationSubCategoryId: '',
-                    specializationId: '',
-                    specializationSubCategoryName: '',
-                    status: '',
-                    createdAt: null,
-                    updatedAt: null,
-                  ),
-                )
-                .specializationSubCategoryName;
-
-        currentOccupation.value = Occupation(
-          occupationId: selectedOccupation.value,
-          occupation: occupationName,
-          occupationProfessionId: professionId,
-          occupationProfessionName: professionName,
-          occupationSpecializationId: specializationId,
-          specializationName: specializationName,
-          occupationSpecializationSubCategoryId: subCategoryId,
-          specializationSubCategoryName: subCategoryName,
-          occupationOtherName:
-              showDetailsField.value ? detailsController.value.text : null,
-        );
-
-        hasOccupationData.value = true;
-
-        // Update controllers for display
-        occupationController.value.text =
-            currentOccupation.value?.occupation ?? '';
-        occupation_profession_nameController.value.text =
-            currentOccupation.value?.occupationProfessionName ?? '';
-        specialization_nameController.value.text =
-            currentOccupation.value?.specializationName ?? '';
-
-        Get.back();
-
         Get.snackbar(
           'Success',
-          'Occupation saved successfully',
+          response.message ?? "Occupation added successfully",
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.green,
           colorText: Colors.white,
+          duration: Duration(seconds: 3),
         );
+
+        getUserProfile();
+        Navigator.of(context!).pop();
+
+        // ⚡ Reset fields after success
+        selectedOccupation.value = "";
+        selectedProfession.value = "";
+        selectedSpecialization.value = "";
+        selectedSubCategory.value = "";
+        selectedSubSubCategory.value = "";
+        detailsController.value.text = "";
+        showDetailsField.value = false;
+
       } else {
-        throw Exception(response.message ?? 'Failed to save occupation');
+        throw Exception(response.message ?? "Failed to add occupation");
       }
     } catch (e) {
+      print("❌ Add Occupation Error: $e");
+
       Get.snackbar(
         'Error',
-        'Something went wrong. Please try again.',
+        e.toString().replaceAll("Exception:", "").trim(),
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
-        duration: Duration(seconds: 3),
       );
-
-      print('Occupation save error: $e');
     } finally {
       isOccupationLoading.value = false;
     }

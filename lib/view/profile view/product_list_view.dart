@@ -35,12 +35,16 @@ class ProductListPage extends StatefulWidget {
 
 class _ProductListPageState extends State<ProductListPage> {
   final UdateProfileController controller = Get.find<UdateProfileController>();
-  final DeleteOccupationProductRepository deleteRepository = DeleteOccupationProductRepository();
-  final ProductCategoryRepository categoryRepository = ProductCategoryRepository();
-  final ProductSubcategoryRepository subcategoryRepository = ProductSubcategoryRepository();
-  final AddOccupationProductRepository addProductRepository = AddOccupationProductRepository();
+  final DeleteOccupationProductRepository deleteRepository =
+      DeleteOccupationProductRepository();
+  final ProductCategoryRepository categoryRepository =
+      ProductCategoryRepository();
+  final ProductSubcategoryRepository subcategoryRepository =
+      ProductSubcategoryRepository();
+  final AddOccupationProductRepository addProductRepository =
+      AddOccupationProductRepository();
   final UpdateOccupationProductRepository updateRepository =
-  UpdateOccupationProductRepository();
+      UpdateOccupationProductRepository();
 
   final TextEditingController _productNameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -135,23 +139,29 @@ class _ProductListPageState extends State<ProductListPage> {
             bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
           child: FractionallySizedBox(
-            heightFactor: 0.9,
+            heightFactor: 0.7,
             child: SafeArea(
               child: Column(
                 children: [
                   // Header with buttons
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 16.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         OutlinedButton(
                           onPressed: () => Navigator.pop(context),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                            side: BorderSide(color: ColorHelperClass.getColorFromHex(ColorResources.red_color)),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            foregroundColor: ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color),
+                            side: BorderSide(
+                                color: ColorHelperClass.getColorFromHex(
+                                    ColorResources.red_color)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
                           ),
                           child: const Text(
                             "Cancel",
@@ -159,30 +169,35 @@ class _ProductListPageState extends State<ProductListPage> {
                           ),
                         ),
                         ElevatedButton(
-                          onPressed: _isAddingProduct ? null : () async {
-                            if (_validateProductForm()) {
-                              await _addProduct();
-                            }
-                          },
+                          onPressed: _isAddingProduct
+                              ? null
+                              : () async {
+                                  if (_validateProductForm()) {
+                                    await _addProduct();
+                                  }
+                                },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                            backgroundColor: ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color),
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
                           ),
                           child: _isAddingProduct
                               ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
                               : const Text(
-                            "Submit",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
+                                  "Submit",
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
                         ),
                       ],
                     ),
@@ -199,14 +214,6 @@ class _ProductListPageState extends State<ProductListPage> {
                           children: [
                             const SizedBox(height: 10),
 
-                            // Category Dropdown
-                            _buildCategoryDropdown(),
-                            const SizedBox(height: 16),
-
-                            // Subcategory Dropdown
-                            _buildSubcategoryDropdown(),
-                            const SizedBox(height: 16),
-
                             // Product Name
                             _buildTextField(
                               label: "Product Name *",
@@ -220,118 +227,33 @@ class _ProductListPageState extends State<ProductListPage> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Description
-                            _buildTextField(
-                              label: "Description *",
-                              controller: _descriptionController,
-                              maxLines: 3,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter description';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Type Dropdown
-                            _buildDropdownFormField(
-                              label: "Product Type *",
-                              value: _selectedType,
-                              items: const ['product', 'service', 'both'],
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please select type';
-                                }
-                                return null;
-                              },
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedType = value;
-                                });
-                              },
-                            ),
-                            const SizedBox(height: 16),
-
                             // Keywords
                             _buildTextField(
-                              label: "Keywords",
+                              label: "Keywords *",
                               controller: _keywordsController,
                               hintText: "Enter keywords (comma separated)",
                             ),
                             const SizedBox(height: 16),
 
-                            // Unit
+                            // Description
                             _buildTextField(
-                              label: "Unit *",
-                              controller: _unitController,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter unit';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Price
-                            _buildTextField(
-                              label: "Price *",
-                              controller: _priceController,
-                              keyboardType: TextInputType.number,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter price';
-                                }
-                                if (double.tryParse(value) == null) {
-                                  return 'Please enter valid price';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Display Order
-                            _buildTextField(
-                              label: "Display Order",
-                              controller: _displayOrderController,
-                              keyboardType: TextInputType.number,
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Is Featured Dropdown
-                            _buildDropdownFormField(
-                              label: "Featured *",
-                              value: _selectedIsFeatured == '1' ? 'Yes' : 'No',
-                              items: const ['Yes', 'No'],
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please select featured status';
-                                }
-                                return null;
-                              },
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedIsFeatured = value == 'Yes' ? '1' : '0';
-                                });
-                              },
+                              label: "Description",
+                              controller: _descriptionController,
+                              maxLines: 3,
                             ),
                             const SizedBox(height: 16),
 
                             // Status Dropdown
                             _buildDropdownFormField(
-                              label: "Status *",
-                              value: _selectedStatus == '1' ? 'Active' : 'Inactive',
+                              label: "Status",
+                              value: _selectedStatus == '1'
+                                  ? 'Active'
+                                  : 'Inactive',
                               items: const ['Active', 'Inactive'],
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please select status';
-                                }
-                                return null;
-                              },
                               onChanged: (value) {
                                 setState(() {
-                                  _selectedStatus = value == 'Active' ? '1' : '0';
+                                  _selectedStatus =
+                                      value == 'Active' ? '1' : '0';
                                 });
                               },
                             ),
@@ -360,12 +282,15 @@ class _ProductListPageState extends State<ProductListPage> {
                                 icon: const Icon(Icons.image),
                                 label: const Text("Upload Image"),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                                  backgroundColor:
+                                      ColorHelperClass.getColorFromHex(
+                                          ColorResources.red_color),
                                   foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 12),
                                 ),
                               ),
                             ),
@@ -415,23 +340,28 @@ class _ProductListPageState extends State<ProductListPage> {
             bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
           child: FractionallySizedBox(
-            heightFactor: 0.9,
+            heightFactor: 0.6,
             child: SafeArea(
               child: Column(
                 children: [
-                  // Header with buttons
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 16.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         OutlinedButton(
                           onPressed: () => Navigator.pop(context),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                            side: BorderSide(color: ColorHelperClass.getColorFromHex(ColorResources.red_color)),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            foregroundColor: ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color),
+                            side: BorderSide(
+                                color: ColorHelperClass.getColorFromHex(
+                                    ColorResources.red_color)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
                           ),
                           child: const Text(
                             "Cancel",
@@ -439,37 +369,38 @@ class _ProductListPageState extends State<ProductListPage> {
                           ),
                         ),
                         ElevatedButton(
-                          onPressed: _isUpdatingProduct ? null : () async {
-                            if (_validateProductForm()) {
-                              await _updateProduct(product);
-                            }
-                          },
+                          onPressed: _isUpdatingProduct
+                              ? null
+                              : () async {
+                                  await _updateProduct(product);
+                                },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                            backgroundColor: ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color),
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
                           ),
                           child: _isUpdatingProduct
                               ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
                               : const Text(
-                            "Submit",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
+                                  "Submit",
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
                         ),
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 10),
-
                   Expanded(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -478,14 +409,6 @@ class _ProductListPageState extends State<ProductListPage> {
                         child: Column(
                           children: [
                             const SizedBox(height: 10),
-
-                            // Category Dropdown
-                            _buildCategoryDropdown(),
-                            const SizedBox(height: 16),
-
-                            // Subcategory Dropdown
-                            _buildSubcategoryDropdown(),
-                            const SizedBox(height: 16),
 
                             // Product Name
                             _buildTextField(
@@ -500,118 +423,33 @@ class _ProductListPageState extends State<ProductListPage> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Description
-                            _buildTextField(
-                              label: "Description *",
-                              controller: _descriptionController,
-                              maxLines: 3,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter description';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Type Dropdown
-                            _buildDropdownFormField(
-                              label: "Product Type *",
-                              value: _selectedType,
-                              items: const ['product', 'service', 'both'],
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please select type';
-                                }
-                                return null;
-                              },
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedType = value;
-                                });
-                              },
-                            ),
-                            const SizedBox(height: 16),
-
                             // Keywords
                             _buildTextField(
-                              label: "Keywords",
+                              label: "Keywords *",
                               controller: _keywordsController,
                               hintText: "Enter keywords (comma separated)",
                             ),
                             const SizedBox(height: 16),
 
-                            // Unit
+                            // Description
                             _buildTextField(
-                              label: "Unit *",
-                              controller: _unitController,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter unit';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Price
-                            _buildTextField(
-                              label: "Price *",
-                              controller: _priceController,
-                              keyboardType: TextInputType.number,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter price';
-                                }
-                                if (double.tryParse(value) == null) {
-                                  return 'Please enter valid price';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Display Order
-                            _buildTextField(
-                              label: "Display Order",
-                              controller: _displayOrderController,
-                              keyboardType: TextInputType.number,
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Is Featured Dropdown
-                            _buildDropdownFormField(
-                              label: "Featured *",
-                              value: _selectedIsFeatured == '1' ? 'Yes' : 'No',
-                              items: const ['Yes', 'No'],
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please select featured status';
-                                }
-                                return null;
-                              },
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedIsFeatured = value == 'Yes' ? '1' : '0';
-                                });
-                              },
+                              label: "Description",
+                              controller: _descriptionController,
+                              maxLines: 3,
                             ),
                             const SizedBox(height: 16),
 
                             // Status Dropdown
                             _buildDropdownFormField(
-                              label: "Status *",
-                              value: _selectedStatus == '1' ? 'Active' : 'Inactive',
+                              label: "Status",
+                              value: _selectedStatus == '1'
+                                  ? 'Active'
+                                  : 'Inactive',
                               items: const ['Active', 'Inactive'],
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please select status';
-                                }
-                                return null;
-                              },
                               onChanged: (value) {
                                 setState(() {
-                                  _selectedStatus = value == 'Active' ? '1' : '0';
+                                  _selectedStatus =
+                                      value == 'Active' ? '1' : '0';
                                 });
                               },
                             ),
@@ -640,12 +478,15 @@ class _ProductListPageState extends State<ProductListPage> {
                                 icon: const Icon(Icons.image),
                                 label: const Text("Upload Image"),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                                  backgroundColor:
+                                      ColorHelperClass.getColorFromHex(
+                                          ColorResources.red_color),
                                   foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 12),
                                 ),
                               ),
                             ),
@@ -662,16 +503,20 @@ class _ProductListPageState extends State<ProductListPage> {
                                   fit: BoxFit.cover,
                                 ),
                               )
-                            else if (_currentProductImage != null && _currentProductImage!.isNotEmpty)
+                            else if (_currentProductImage != null &&
+                                _currentProductImage!.isNotEmpty)
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(10),
                                 child: FadeInImage(
-                                  placeholder: const AssetImage("assets/images/placeholder.png"),
-                                  image: NetworkImage(Urls.imagePathUrl + _currentProductImage!),
+                                  placeholder: const AssetImage(
+                                      "assets/images/placeholder.png"),
+                                  image: NetworkImage(Urls.imagePathUrl +
+                                      _currentProductImage!),
                                   height: 120,
                                   width: double.infinity,
                                   fit: BoxFit.cover,
-                                  imageErrorBuilder: (context, error, stackTrace) {
+                                  imageErrorBuilder:
+                                      (context, error, stackTrace) {
                                     return Image.asset(
                                       "assets/images/no_image.png",
                                       height: 120,
@@ -754,7 +599,7 @@ class _ProductListPageState extends State<ProductListPage> {
 
       /// ✔ CALL UPDATE API
       final response =
-      await updateRepository.updateOccupationProduct(productData.toJson());
+          await updateRepository.updateOccupationProduct(productData.toJson());
 
       if (response.status == true) {
         Navigator.pop(context);
@@ -834,7 +679,8 @@ class _ProductListPageState extends State<ProductListPage> {
   }
 
   Future<void> _pickImageFromCamera() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.camera);
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.camera);
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
@@ -843,7 +689,8 @@ class _ProductListPageState extends State<ProductListPage> {
   }
 
   Future<void> _pickImageFromGallery() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
@@ -867,169 +714,18 @@ class _ProductListPageState extends State<ProductListPage> {
         maxLines: maxLines,
         decoration: InputDecoration(
           labelText: label,
-          border: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
-          enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
-          focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black38, width: 1)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          border: const OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black)),
+          enabledBorder: const OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black)),
+          focusedBorder: const OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black38, width: 1)),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           labelStyle: const TextStyle(color: Colors.black),
           hintText: hintText,
         ),
         validator: validator,
-      ),
-    );
-  }
-
-  Widget _buildCategoryDropdown() {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(left: 5, right: 5),
-      child: Row(
-        children: [
-          Obx(() {
-            if (controller.isCategoryLoading.value) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
-                child: SizedBox(
-                  height: 24,
-                  width: 24,
-                  child: CircularProgressIndicator(
-                    color: Colors.redAccent,
-                  ),
-                ),
-              );
-            } else if (controller.categories.isEmpty) {
-              return const Expanded(
-                child: Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text('No categories available'),
-                ),
-              );
-            } else {
-              final selectedCategory = controller.selectedCategory.value;
-
-              return Expanded(
-                child: InputDecorator(
-                  decoration: InputDecoration(
-                    labelText: selectedCategory.isNotEmpty ? 'Category *' : null,
-                    border: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black),
-                    ),
-                    enabledBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black38, width: 1),
-                    ),
-                    contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-                    labelStyle: const TextStyle(color: Colors.black),
-                  ),
-                  child: DropdownButton<String>(
-                    dropdownColor: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    isExpanded: true,
-                    underline: Container(),
-                    hint: const Text(
-                      'Select Category *',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    value: selectedCategory.isNotEmpty ? selectedCategory : null,
-                    items: controller.categories.map((cat) {
-                      return DropdownMenuItem<String>(
-                        value: cat.categoryId,
-                        child: Text(cat.name ?? 'Unknown'),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        controller.selectedCategory.value = newValue;
-                        _selectedCategoryId = newValue;
-                        controller.loadSubcategories(newValue);
-
-                        controller.selectedSubcategory.value = '';
-                        _selectedSubcategoryId = null;
-                      }
-                    },
-                  ),
-                ),
-              );
-            }
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSubcategoryDropdown() {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(left: 5, right: 5),
-      child: Row(
-        children: [
-          Obx(() {
-
-            if (controller.isSubcategoryLoading.value) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
-                child: SizedBox(
-                  height: 24,
-                  width: 24,
-                  child: CircularProgressIndicator(
-                    color: Colors.redAccent,
-                  ),
-                ),
-              );
-            }
-
-            final selectedSub = controller.selectedSubcategory.value;
-
-            return Expanded(
-              child: InputDecorator(
-                decoration: InputDecoration(
-                  labelText: selectedSub.isNotEmpty ? 'Subcategory' : null,
-                  border: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black),
-                  ),
-                  enabledBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black),
-                  ),
-                  focusedBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black38, width: 1),
-                  ),
-                  contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-                  labelStyle: const TextStyle(color: Colors.black),
-                ),
-                child: DropdownButton<String>(
-                  dropdownColor: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  isExpanded: true,
-                  underline: Container(),
-                  hint: Text(
-                    controller.subcategories.isEmpty
-                        ? "Select Subcategory"
-                        : "Select Subcategory",
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  value: selectedSub.isNotEmpty ? selectedSub : null,
-                  items: controller.subcategories.map((sub) {
-                    return DropdownMenuItem<String>(
-                      value: sub.subcategoryId,
-                      child: Text(sub.name ?? 'Unknown'),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    if (newValue != null) {
-                      controller.selectedSubcategory.value = newValue;
-                      _selectedSubcategoryId = newValue;
-                    }
-                  },
-
-                ),
-              ),
-            );
-          }),
-        ],
       ),
     );
   }
@@ -1061,7 +757,7 @@ class _ProductListPageState extends State<ProductListPage> {
                   borderSide: BorderSide(color: Colors.black38, width: 1),
                 ),
                 contentPadding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
                 labelStyle: const TextStyle(color: Colors.black),
               ),
               child: DropdownButtonHideUnderline(
@@ -1102,22 +798,6 @@ class _ProductListPageState extends State<ProductListPage> {
     );
   }
 
-  bool _validateProductForm() {
-    if (_selectedCategoryId == null) {
-      Get.snackbar(
-        "Error",
-        "Please select category",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      return false;
-    }
-    if (_formKey.currentState!.validate()) {
-      return true;
-    }
-    return false;
-  }
-
   void _clearProductForm() {
     _productNameController.clear();
     _descriptionController.clear();
@@ -1138,6 +818,10 @@ class _ProductListPageState extends State<ProductListPage> {
     controller.selectedSubcategory.value = '';
   }
 
+  bool _validateProductForm() {
+    return _formKey.currentState!.validate();
+  }
+
   Future<void> _addProduct() async {
     final userData = await SessionManager.getSession();
     if (userData == null) throw Exception("User not logged in");
@@ -1149,35 +833,36 @@ class _ProductListPageState extends State<ProductListPage> {
     try {
       final productData = AddOccupationProductData(
         memberBusinessOccupationProfileId: widget.profileId,
-        categoryId: _selectedCategoryId!,
-        subcategoryId: _selectedSubcategoryId,
-        type: _selectedType,
+        categoryId: null,
+        subcategoryId: null,
+        type: "product",
         productName: _productNameController.text.trim(),
         description: _descriptionController.text.trim(),
-        keywords: _keywordsController.text.trim().isNotEmpty ? _keywordsController.text.trim() : null,
-        price: _priceController.text.trim(),
+        keywords: _keywordsController.text.trim().isNotEmpty
+            ? _keywordsController.text.trim()
+            : null,
+        price: null,
         currency: 'INR',
-        unit: _unitController.text.trim(),
+        unit: null,
         status: _selectedStatus,
-        isFeatured: _selectedIsFeatured,
-        displayOrder: _displayOrderController.text.trim().isNotEmpty ? _displayOrderController.text.trim() : null,
+        isFeatured: '1',
+        displayOrder: _displayOrderController.text.trim().isNotEmpty
+            ? _displayOrderController.text.trim()
+            : '0',
         createdBy: userData.memberId.toString(),
         createdAt: DateTime.now().toIso8601String(),
       );
 
       // STEP 1 — CALL ADD PRODUCT API
-      final response = await addProductRepository.addOccupationProduct(productData.toJson());
+      final response =
+          await addProductRepository.addOccupationProduct(productData.toJson());
 
       if (response.status == true) {
-
-        // ⛔ CLOSE MODAL BEFORE IMAGE UPLOAD
         Navigator.pop(context);
 
-        // 🚀 Product added successfully
         final productServiceId = response.data?.productServiceId;
 
         if (productServiceId != null) {
-
           // STEP 2 — If user selected an image, upload it now
           if (_image != null) {
             final imageRepo = ProductImageUploadRepository();
@@ -1198,7 +883,6 @@ class _ProductListPageState extends State<ProductListPage> {
         _refreshProducts();
         _clearProductForm();
         _image = null;
-
       } else {
         Get.snackbar(
           "Error",
@@ -1235,7 +919,7 @@ class _ProductListPageState extends State<ProductListPage> {
   String _getCategoryName(String? categoryId) {
     if (categoryId == null) return 'Not specified';
     final category = _categories.firstWhere(
-          (cat) => cat.categoryId == categoryId,
+      (cat) => cat.categoryId == categoryId,
       orElse: () => ProductCategoryData(name: 'Unknown'),
     );
     return category.name ?? 'Unknown';
@@ -1244,7 +928,7 @@ class _ProductListPageState extends State<ProductListPage> {
   String _getSubCategoryName(String? subCategoryId) {
     if (subCategoryId == null) return 'Not specified';
     final subcategory = _subcategories.firstWhere(
-          (sub) => sub.subcategoryId == subCategoryId,
+      (sub) => sub.subcategoryId == subCategoryId,
       orElse: () => ProductSubcategoryData(name: 'Unknown'),
     );
     return subcategory.name ?? 'Unknown';
@@ -1271,14 +955,17 @@ class _ProductListPageState extends State<ProductListPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Product Image
-              if (product.productImage != null && product.productImage!.isNotEmpty)
+              if (product.productImage != null &&
+                  product.productImage!.isNotEmpty)
                 Column(
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: FadeInImage(
-                        placeholder: const AssetImage("assets/images/placeholder.png"),
-                        image: NetworkImage(Urls.imagePathUrl + product.productImage!),
+                        placeholder:
+                            const AssetImage("assets/images/placeholder.png"),
+                        image: NetworkImage(
+                            Urls.imagePathUrl + product.productImage!),
                         width: MediaQuery.of(context).size.width,
                         height: 250,
                         fit: BoxFit.cover,
@@ -1297,24 +984,9 @@ class _ProductListPageState extends State<ProductListPage> {
                 ),
 
               // Description
-              _buildDetailRow("Description:", product.description ?? 'Not available'),
+              _buildDetailRow(
+                  "Description:", product.description ?? 'Not available'),
               const SizedBox(height: 8),
-
-              // Display Order
-              if (product.displayOrder != null)
-                Column(
-                  children: [
-                    _buildDetailRow("Display Order:", product.displayOrder!),
-                    const SizedBox(height: 8),
-                  ],
-                ),
-
-              // Price
-              _buildDetailRow("Price:", "${product.price ?? '0'} ${product.currency ?? ''}"),
-              const SizedBox(height: 8),
-
-              // Featured Status
-              _buildDetailRow("Featured:", product.isFeatured == "1" ? "Yes" : "No"),
             ],
           ),
         ),
@@ -1324,7 +996,8 @@ class _ProductListPageState extends State<ProductListPage> {
               Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              backgroundColor:
+                  ColorHelperClass.getColorFromHex(ColorResources.red_color),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -1408,7 +1081,8 @@ class _ProductListPageState extends State<ProductListPage> {
                 Navigator.pop(context);
               },
               style: OutlinedButton.styleFrom(
-                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: const BorderSide(color: Colors.red),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -1422,7 +1096,8 @@ class _ProductListPageState extends State<ProductListPage> {
                 _deleteProduct(product);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -1461,7 +1136,8 @@ class _ProductListPageState extends State<ProductListPage> {
       );
 
       // Call the delete repository
-      final response = await deleteRepository.deleteProduct(product.productServiceId!);
+      final response =
+          await deleteRepository.deleteProduct(product.productServiceId!);
 
       // Close loading dialog
       if (Get.isDialogOpen ?? false) {
@@ -1471,7 +1147,8 @@ class _ProductListPageState extends State<ProductListPage> {
       if (response.status == true) {
         // Remove product from local list
         setState(() {
-          _products.removeWhere((p) => p.productServiceId == product.productServiceId);
+          _products.removeWhere(
+              (p) => p.productServiceId == product.productServiceId);
         });
 
         Get.snackbar(
@@ -1536,7 +1213,8 @@ class _ProductListPageState extends State<ProductListPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        backgroundColor:
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1566,20 +1244,21 @@ class _ProductListPageState extends State<ProductListPage> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _hasError
-                ? _buildErrorState()
-                : _products.isEmpty
-                ? _buildEmptyState()
-                : RefreshIndicator(
-              onRefresh: _refreshProducts,
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                itemCount: _products.length,
-                itemBuilder: (context, index) {
-                  final product = _products[index];
-                  return _buildProductCard(product);
-                },
-              ),
-            ),
+                    ? _buildErrorState()
+                    : _products.isEmpty
+                        ? _buildEmptyState()
+                        : RefreshIndicator(
+                            onRefresh: _refreshProducts,
+                            child: ListView.builder(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
+                              itemCount: _products.length,
+                              itemBuilder: (context, index) {
+                                final product = _products[index];
+                                return _buildProductCard(product);
+                              },
+                            ),
+                          ),
           ),
         ],
       ),
@@ -1599,6 +1278,7 @@ class _ProductListPageState extends State<ProductListPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            /// 🔥 PRODUCT NAME + STATUS
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -1612,6 +1292,7 @@ class _ProductListPageState extends State<ProductListPage> {
                     ),
                   ),
                 ),
+
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
@@ -1633,57 +1314,32 @@ class _ProductListPageState extends State<ProductListPage> {
               ],
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
 
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Category: ${product.categoryId} → ${product.subCategoryId}",
-                        style: const TextStyle(
-                          color: Colors.black87,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-
-                      Text(
-                        "Quantity: ${product.unit ?? 'N/A'}",
-                        style: const TextStyle(
-                          color: Colors.black54,
-                          fontSize: 13,
-                        ),
-                      ),
-
-                    ],
-                  ),
-                ),
-                Text(
-                  "${product.price ?? '0'} ${product.currency ?? ''}",
-                  style: TextStyle(
-                    color: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+            /// 🔥 DESCRIPTION
+            Text(
+              product.description ?? "No description available",
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black54,
+                height: 1.4,
+              ),
             ),
 
             const SizedBox(height: 16),
 
+            /// 🔥 EDIT + DELETE BUTTONS
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () => _showEditProduct(product),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                      foregroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
                       side: BorderSide(
-                        color: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                        color: ColorHelperClass.getColorFromHex(
+                            ColorResources.red_color),
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -1694,9 +1350,7 @@ class _ProductListPageState extends State<ProductListPage> {
                     label: const Text("Edit Product"),
                   ),
                 ),
-
                 const SizedBox(width: 12),
-
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () => _showDeleteConfirmation(product),
@@ -1717,12 +1371,14 @@ class _ProductListPageState extends State<ProductListPage> {
 
             const SizedBox(height: 12),
 
+            /// 🔥 VIEW DETAILS BUTTON
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () => _showProductDetails(product),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                  backgroundColor: ColorHelperClass.getColorFromHex(
+                      ColorResources.red_color),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -1802,7 +1458,8 @@ class _ProductListPageState extends State<ProductListPage> {
           ElevatedButton.icon(
             onPressed: _refreshProducts,
             style: ElevatedButton.styleFrom(
-              backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              backgroundColor:
+                  ColorHelperClass.getColorFromHex(ColorResources.red_color),
               foregroundColor: Colors.white,
             ),
             icon: const Icon(Icons.refresh),

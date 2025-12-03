@@ -93,6 +93,7 @@ class Urls {
   static const String business_occupation_profile_url = base_url+"api/member_occupation_profile";
   static const String business_address_url = base_url+"api/member_occupation_address";
   static const String add_occupation_url = base_url+"api/add_occupation";
+  static const String update_occupation_url = base_url+"api/update_occupation";
   static const String add_member_occupation_profile_url = base_url+"api/add_member_occupation_profile";
   static const String update_member_occupation_profile_url = base_url+"api/update_member_occupation_profile";
   static const String get_all_business_occupation_profile_url = base_url+"api/member_occupation_profile";

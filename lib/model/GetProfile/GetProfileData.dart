@@ -68,7 +68,7 @@ class GetProfileData {
   final List<FamilyMembersData>? familyMembersData;
   final FamilyHeadMemberData? familyHeadMemberData;
   final List<Qualification>? qualification;
-  final Occupation? occupation;
+  final List<Occupation>? occupation;
   final List<BusinessInfo>? businessInfo;
 
   GetProfileData({
@@ -217,11 +217,9 @@ class GetProfileData {
               .map((x) => Qualification.fromJson(x)))
           : null,
       occupation: json['occupation'] != null
-          ? (json['occupation'] is List
-              ? (json['occupation'] as List).isNotEmpty
-                  ? Occupation.fromJson(json['occupation'][0] as Map<String, dynamic>)
-                  : null
-              : Occupation.fromJson(json['occupation'] as Map<String, dynamic>))
+          ? List<Occupation>.from(
+          (json['occupation'] as List)
+              .map((x) => Occupation.fromJson(x)))
           : null,
       businessInfo: json['business_info'] != null
           ? List<BusinessInfo>.from(
@@ -294,7 +292,7 @@ class GetProfileData {
       'family_members_data': familyMembersData?.map((x) => x.toJson()).toList(),
       'family_head_member_data': familyHeadMemberData?.toJson(),
       'qualification': qualification?.map((x) => x.toJson()).toList(),
-      'occupation': occupation?.toJson(),
+      'occupation': occupation?.map((x) => x.toJson()).toList(),
       'business_info': businessInfo?.map((x) => x.toJson()).toList(),
     };
   }

@@ -6,6 +6,8 @@ import 'package:mpm/repository/search_occupation_repository/search_occupation_re
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/urls.dart';
+import 'package:mpm/view/Networking/filter_bottom_sheet.dart';
+import 'package:mpm/view/Networking/network_filters.dart';
 
 class NetworkView extends StatefulWidget {
   const NetworkView({super.key});
@@ -23,6 +25,9 @@ class _NetworkViewState extends State<NetworkView> {
 
   Timer? _debounce;
 
+  // Current filters
+  NetworkFilters _filters = NetworkFilters.empty;
+
   Future<void> performSearch(String term) async {
     if (term.trim().length < 3) {
       setState(() => results = []);
@@ -38,19 +43,37 @@ class _NetworkViewState extends State<NetworkView> {
       setState(() {
         results = response.data ?? [];
       });
-
-      print("RESULT COUNT: ${results.length}");
     } catch (e) {
       debugPrint("Search Error: $e");
     } finally {
-      setState(() => isLoading = false);
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _openFilterSheet() async {
+    final newFilters = await showModalBottomSheet<NetworkFilters>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return FilterBottomSheet(initialFilters: _filters);
+      },
+    );
+
+    if (newFilters != null) {
+      setState(() => _filters = newFilters);
+
+      if (searchController.text.trim().isNotEmpty) {
+        performSearch(searchController.text.trim());
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final themeColor =
-    ColorHelperClass.getColorFromHex(ColorResources.red_color);
+    final themeColor = ColorHelperClass.getColorFromHex(ColorResources.red_color);
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -61,9 +84,10 @@ class _NetworkViewState extends State<NetworkView> {
       ),
 
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🔍 AMAZON STYLE SEARCH BAR
-          Container(
+          // SEARCH BAR
+          Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -75,7 +99,7 @@ class _NetworkViewState extends State<NetworkView> {
               child: TextField(
                 controller: searchController,
                 onChanged: (value) {
-                  if (_debounce?.isActive ?? false) _debounce!.cancel();
+                  _debounce?.cancel();
                   _debounce = Timer(const Duration(milliseconds: 350), () {
                     performSearch(value);
                   });
@@ -89,30 +113,70 @@ class _NetworkViewState extends State<NetworkView> {
             ),
           ),
 
-          // LOADING INDICATOR
-          if (isLoading)
-            const Expanded(
-                child:
-                Center(child: CircularProgressIndicator(color: Colors.red))),
-
-          // EMPTY STATE
-          if (!isLoading && results.isEmpty)
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+          // Result Count + Filter Button
+          if (results.isNotEmpty && !isLoading)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(Icons.people_alt_outlined,
-                      size: 100, color: Colors.grey.shade400),
-                  const SizedBox(height: 16),
-                  const Text(
-                    "Start searching to discover members",
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
-                  )
+                  Text("${results.length} results",
+                      style:
+                      const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+
+                  GestureDetector(
+                    onTap: _openFilterSheet,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: themeColor,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: Colors.redAccent),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.12),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          )
+                        ],
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.filter_alt, size: 18, color: Colors.white),
+                          SizedBox(width: 6),
+                          Text("Filter",
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white)),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
 
-          // RESULT GRID
+          const SizedBox(height: 10),
+
+          // LOADING
+          if (isLoading)
+            const Expanded(
+              child: Center(
+                child: CircularProgressIndicator(color: Colors.red),
+              ),
+            ),
+
+          // EMPTY STATE
+          if (!isLoading && results.isEmpty)
+            const Expanded(
+              child: Center(
+                child: Text("Start searching to discover members",
+                    style: TextStyle(fontSize: 16, color: Colors.grey)),
+              ),
+            ),
+
+          // GRID VIEW
           if (!isLoading && results.isNotEmpty)
             Expanded(
               child: GridView.builder(
@@ -135,65 +199,47 @@ class _NetworkViewState extends State<NetworkView> {
                       border: Border.all(color: Colors.black12),
                       boxShadow: [
                         BoxShadow(
-                            color: Colors.black12.withOpacity(0.07),
-                            blurRadius: 6,
-                            offset: const Offset(0, 3))
+                          color: Colors.black12.withOpacity(0.07),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        ),
                       ],
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(10),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // Profile Image - Amazon Style
                           ClipRRect(
                             borderRadius: BorderRadius.circular(60),
                             child: SizedBox(
                               height: 100,
                               width: 100,
-                              child: (member.profileImage != null &&
-                                  member.profileImage!.isNotEmpty)
+                              child: member.profileImage != null &&
+                                  member.profileImage!.isNotEmpty
                                   ? FadeInImage(
-                                placeholder: const AssetImage(
-                                    "assets/images/user3.png"),
+                                placeholder: const AssetImage("assets/images/user3.png"),
                                 image: NetworkImage(
-                                    Urls.imagePathUrl +
-                                        member.profileImage!),
+                                    Urls.imagePathUrl + member.profileImage!),
                                 fit: BoxFit.cover,
-                                imageErrorBuilder: (_, __, ___) =>
-                                    Image.asset(
-                                        "assets/images/user3.png"),
                               )
-                                  : Image.asset("assets/images/user3.png",
-                                  fit: BoxFit.cover),
+                                  : Image.asset("assets/images/user3.png"),
                             ),
                           ),
 
                           const SizedBox(height: 12),
 
-                          // Name
-                          Text(
-                            member.fullName ?? "No Name",
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                height: 1.2),
-                          ),
+                          Text(member.fullName ?? "No Name",
+                              maxLines: 2,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                  fontSize: 15, fontWeight: FontWeight.w600)),
 
                           const SizedBox(height: 6),
 
-                          // Profession
-                          Text(
-                            occ?.professionName ?? "",
-                            style: TextStyle(
-                                fontSize: 13, color: Colors.grey.shade700),
-                          ),
+                          Text(occ?.professionName ?? "",
+                              style: TextStyle(
+                                  fontSize: 13, color: Colors.grey.shade700)),
 
-                          const SizedBox(height: 4),
-
-                          // Specialization (Amazon badge style)
                           if ((occ?.specializationName ?? "").isNotEmpty)
                             Container(
                               margin: const EdgeInsets.only(top: 4),
@@ -214,7 +260,6 @@ class _NetworkViewState extends State<NetworkView> {
 
                           const SizedBox(height: 8),
 
-                          // Connect Button (Amazon Style)
                           SizedBox(
                             width: double.infinity,
                             height: 38,
@@ -223,14 +268,11 @@ class _NetworkViewState extends State<NetworkView> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: themeColor,
                                 foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
                               ),
                               child: const Text("Connect",
                                   style: TextStyle(fontSize: 14)),
                             ),
-                          ),
+                          )
                         ],
                       ),
                     ),
@@ -238,7 +280,6 @@ class _NetworkViewState extends State<NetworkView> {
                 },
               ),
             ),
-          const SizedBox(height: 30),
         ],
       ),
     );

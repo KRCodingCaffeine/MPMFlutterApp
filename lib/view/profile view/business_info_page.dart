@@ -8,6 +8,7 @@ import 'package:mpm/model/Occupation/OccupationData.dart';
 import 'package:mpm/model/OccupationSpec/OccuptionSpecData.dart';
 import 'package:mpm/model/OccuptionSpecSubCategory/OccuptionSpecSubCategoryData.dart';
 import 'package:mpm/model/OccuptionSpecSubSubCategory/OccuptionSpecSubSubCategoryData.dart';
+import 'package:mpm/repository/update_occupation_repository/update_occupation_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/profile%20view/occupation_detail_view.dart';
@@ -25,19 +26,22 @@ class BusinessInformationPage extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _BusinessInformationPageState createState() => _BusinessInformationPageState();
+  _BusinessInformationPageState createState() =>
+      _BusinessInformationPageState();
 }
 
 class _BusinessInformationPageState extends State<BusinessInformationPage> {
   NewMemberController regiController = Get.put(NewMemberController());
   UdateProfileController controller = Get.put(UdateProfileController());
+  final updateOccupationRepo = UpdateOccupationRepository();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        backgroundColor:
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Builder(
           builder: (context) {
             double fontSize = MediaQuery.of(context).size.width * 0.045;
@@ -71,26 +75,33 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
         padding: const EdgeInsets.all(20.0),
         child: Obx(() {
           // Use the existing occupation data list from controller
-          final occupationList = controller.currentOccupation.value != null ? [controller.currentOccupation.value!] : [];
+          final occupationList = controller.allOccupations;
+
           return occupationList.isEmpty
               ? const Center(
-            child: Text(
-              "No Occupation added yet.",
-              style: TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-          )
+                  child: Text(
+                    "No Occupation added yet.",
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                )
               : ListView.builder(
-            itemCount: occupationList.length,
-            itemBuilder: (context, index) {
-              return occupationWidget(occupationList[index]!);
-            },
-          );
+                  itemCount: occupationList.length,
+                  itemBuilder: (context, index) {
+                    return occupationWidget(occupationList[index]!);
+                  },
+                );
         }),
       ),
     );
   }
 
   Widget occupationWidget(Occupation occupation) {
+    // print('Occupation Data:');
+    // print('Level 1: ${occupation.occupation}');
+    // print('Level 2: ${occupation.occupationProfessionName}');
+    // print('Level 3: ${occupation.specializationName}');
+    // print('Level 4: ${occupation.specializationSubCategoryName}');
+    // print('Level 5: ${occupation.specializationSubSubCategoryName}');
     return Column(
       children: [
         Card(
@@ -104,6 +115,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // HEADER ROW
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -114,77 +126,38 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    PopupMenuButton<String>(
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      onSelected: (value) {
-                        if (value == 'edit') {
-                          _showUpdateModalSheet(context, occupation);
-                        } else if (value == 'view more') {
-                          _goToProductPage(occupation);
-                        }
+
+                    // VIEW / EDIT POPUP BUTTON
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        _showUpdateModalSheet(context, occupation);
                       },
-                      itemBuilder: (context) => const [
-                        PopupMenuItem(
-                          value: 'edit',
-                          child: Text(
-                            'Edit',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                        PopupMenuItem(
-                          value: 'view more',
-                          child: Text(
-                            'View More',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.red,
-                            ),
-                          ),
-                        ),
-                      ],
-                      child: ElevatedButton(
-                        onPressed: null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: const Color(0xFFDC3545),
-                          elevation: 4,
-                          shadowColor: Colors.black,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              "View",
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.red,
-                              ),
-                            ),
-                          ],
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFDC3545),
+                        foregroundColor: Colors.white,
+                        elevation: 4,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                    ),
+                      icon: const Icon(Icons.edit, size: 16),
+                      label: const Text(
+                        "Edit",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    )
+
                   ],
                 ),
+
                 const Divider(color: Colors.black26),
                 const SizedBox(height: 8),
 
-                // Occupation Details
+                // LEVELS
                 _buildInfoBox(
                   'Level 1',
                   subtitle: occupation.occupation ?? 'Other',
@@ -197,12 +170,18 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                   'Level 3',
                   subtitle: occupation.specializationName ?? 'Other',
                 ),
-                if (occupation.specializationSubCategoryName != null &&
-                    occupation.specializationSubCategoryName!.isNotEmpty)
-                  _buildInfoBox(
-                    'Level 4',
-                    subtitle: occupation.specializationSubCategoryName ?? 'Other',
-                  ),
+                _buildInfoBox(
+                  'Level 4',
+                  // Use the correct property name for sub-category
+                  subtitle: occupation.specializationSubCategoryName ?? 'Other',
+                ),
+                _buildInfoBox(
+                  'Level 5',
+                  // Use the correct property name for sub-sub-category
+                  subtitle: occupation.specializationSubSubCategoryName ?? 'Other',
+                ),
+
+                // OTHER DETAILS (If exists)
                 if (occupation.occupationOtherName != null &&
                     occupation.occupationOtherName!.isNotEmpty)
                   _buildInfoBox(
@@ -228,9 +207,9 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
     }
 
     Get.to(() => OccupationDetailViewPage(
-      memberId: memberId.toString(),
-      memberOccupationId: memberOccupationId.toString(),
-    ));
+          memberId: memberId.toString(),
+          memberOccupationId: memberOccupationId.toString(),
+        ));
   }
 
   Widget _buildInfoBox(String title, {String? subtitle}) {
@@ -303,7 +282,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                   OutlinedButton(
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                      foregroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
                       side: const BorderSide(color: Colors.red),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -313,11 +293,12 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                   ),
                   ElevatedButton(
                     onPressed: () async {
-                      await controller.addAndupdateOccuption();
+                      await controller.addOccupation();
                       if (mounted) Navigator.pop(context);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                      backgroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -325,13 +306,13 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                     ),
                     child: controller.isOccupationLoading.value
                         ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
                         : const Text("Save"),
                   ),
                 ],
@@ -345,7 +326,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
     );
   }
 
-  Future<void> _showUpdateModalSheet(BuildContext context, Occupation occupation) async {
+  Future<void> _showUpdateModalSheet(
+      BuildContext context, Occupation occupation) async {
     // Initialize the form with existing occupation data
     _initOccupationDataForEdit(occupation);
 
@@ -374,7 +356,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                         OutlinedButton(
                           onPressed: () => Navigator.pop(context),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                            foregroundColor: ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color),
                             side: const BorderSide(color: Colors.red),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -388,7 +371,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                             if (mounted) Navigator.pop(context);
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                            backgroundColor: ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color),
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -396,13 +380,13 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                           ),
                           child: controller.isOccupationLoading.value
                               ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
                               : const Text("Update"),
                         ),
                       ],
@@ -429,26 +413,89 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
 
   void _initOccupationDataForEdit(Occupation occupation) {
     // Initialize form fields with existing occupation data
-    controller.selectedOccupation.value = occupation.occupationId?.toString() ?? "";
-    controller.selectedProfession.value = occupation.occupationProfessionId?.toString() ?? "";
-    controller.selectedSpecialization.value = occupation.occupationSpecializationId?.toString() ?? "";
-    controller.selectedSubCategory.value = occupation.occupationSpecializationSubCategoryId?.toString() ?? "";
-    controller.detailsController.value.text = occupation.occupationOtherName ?? "";
+    controller.selectedOccupation.value =
+        occupation.occupationId?.toString() ?? "";
+    controller.selectedProfession.value =
+        occupation.occupationProfessionId?.toString() ?? "";
+    controller.selectedSpecialization.value =
+        occupation.occupationSpecializationId?.toString() ?? "";
+    controller.selectedSubCategory.value =
+        occupation.occupationSpecializationSubCategoryId?.toString() ?? "";
+    controller.detailsController.value.text =
+        occupation.occupationOtherName ?? "";
 
     // Set the current occupation for update
     controller.currentOccupation.value = occupation;
 
     // Load dependent data based on the selected values
-    if (controller.selectedOccupation.value.isNotEmpty && controller.selectedOccupation.value != "0") {
+    if (controller.selectedOccupation.value.isNotEmpty &&
+        controller.selectedOccupation.value != "0") {
       controller.getOccupationProData(controller.selectedOccupation.value);
     }
   }
 
-  Future<void> _updateOccupation(Occupation occupation) async {
-    await controller.addAndupdateOccuption();
+  Future<void> _updateOccupation(Occupation oldData) async {
+    // Validate
+    if (controller.selectedOccupation.value.isEmpty) {
+      Get.snackbar("Error", "Please select Level 1");
+      return;
+    }
+
+    controller.isOccupationLoading.value = true;
+
+    try {
+      final payload = {
+        "member_occupation_id": oldData.memberOccupationId ?? "",
+        "member_id": oldData.memberId ?? "",
+        "occupation_id": controller.selectedOccupation.value,
+        "occupation_profession_id": controller.selectedProfession.value,
+        "occupation_specialization_id": controller.selectedSpecialization.value,
+        "occupation_specialization_sub_category_id":
+        controller.selectedSubCategory.value,
+        "occupation_specialization_sub_sub_category_id":
+        controller.selectedSubSubCategory.value,
+        "occupation_other_name": controller.detailsController.value.text,
+        "updated_by": oldData.memberId ?? "",
+      };
+
+      print("📤 UPDATE PAYLOAD: $payload");
+      final res = await updateOccupationRepo.updateOccupation(payload);
+
+      if (res == true) {
+        Get.snackbar(
+          "Success",
+          "Occupation updated successfully!",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+
+        Navigator.of(context!).pop();
+      } else {
+        Get.snackbar(
+          "Error",
+          "Failed to update occupation!",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        "Unexpected error: $e",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+
+    controller.isOccupationLoading.value = false;
   }
 
-  Widget _buildOccupationForm() {
+
+  Widget
+  _buildOccupationForm() {
     return Column(
       children: [
         // Occupation Dropdown
@@ -484,7 +531,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                   value: controller.selectedOccupation.value.isEmpty
                       ? null
                       : controller.selectedOccupation.value,
-                  items: controller.occuptionList.map((OccupationData occupation) {
+                  items:
+                      controller.occuptionList.map((OccupationData occupation) {
                     return DropdownMenuItem<String>(
                       value: occupation.id.toString(),
                       child: Text(occupation.occupation ?? 'Unknown'),
@@ -524,7 +572,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
             child: Obx(() {
               if (controller.rxStatusOccupationData.value == Status.LOADING) {
                 return _buildLoadingIndicator();
-              } else if (controller.rxStatusOccupationData.value == Status.ERROR) {
+              } else if (controller.rxStatusOccupationData.value ==
+                  Status.ERROR) {
                 return const Center(child: Text('Failed to load profession'));
               } else {
                 return InputDecorator(
@@ -552,7 +601,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                         ? null
                         : controller.selectedProfession.value,
                     items: [
-                      ...controller.occuptionProfessionList.map((OccuptionProfessionData profession) {
+                      ...controller.occuptionProfessionList
+                          .map((OccuptionProfessionData profession) {
                         return DropdownMenuItem<String>(
                           value: profession.id.toString(),
                           child: Text(profession.name ?? 'Unknown'),
@@ -593,8 +643,10 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
             child: Obx(() {
               if (controller.rxStatusOccupationSpec.value == Status.LOADING) {
                 return _buildLoadingIndicator();
-              } else if (controller.rxStatusOccupationSpec.value == Status.ERROR) {
-                return const Center(child: Text('Failed to load specialization'));
+              } else if (controller.rxStatusOccupationSpec.value ==
+                  Status.ERROR) {
+                return const Center(
+                    child: Text('Failed to load specialization'));
               } else {
                 return InputDecorator(
                   decoration: InputDecoration(
@@ -621,7 +673,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                         ? null
                         : controller.selectedSpecialization.value,
                     items: [
-                      ...controller.occuptionSpeList.map((OccuptionSpecData specialization) {
+                      ...controller.occuptionSpeList
+                          .map((OccuptionSpecData specialization) {
                         return DropdownMenuItem<String>(
                           value: specialization.id?.toString(),
                           child: Text(specialization.name ?? 'Unknown'),
@@ -638,7 +691,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                           controller.showDetailsField.value = true;
                         } else if (newValue.isNotEmpty) {
                           controller.showDetailsField.value = false;
-                          controller.getOccupationSpecializationSubCategoryData(newValue);
+                          controller.getOccupationSpecializationSubCategoryData(
+                              newValue);
                         }
                       }
                     },
@@ -661,7 +715,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
             child: Obx(() {
               if (controller.rxStatusOccupationSpec.value == Status.LOADING) {
                 return _buildLoadingIndicator();
-              } else if (controller.rxStatusOccupationSpec.value == Status.ERROR) {
+              } else if (controller.rxStatusOccupationSpec.value ==
+                  Status.ERROR) {
                 return const Center(child: Text('Failed to load subcategory'));
               } else if (controller.occuptionSubCategoryList.isEmpty) {
                 return const SizedBox();
@@ -691,10 +746,12 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                         ? null
                         : controller.selectedSubCategory.value,
                     items: [
-                      ...controller.occuptionSubCategoryList.map((OccuptionSpecSubCategoryData sub) {
+                      ...controller.occuptionSubCategoryList
+                          .map((OccuptionSpecSubCategoryData sub) {
                         return DropdownMenuItem<String>(
                           value: sub.specializationSubCategoryId.toString(),
-                          child: Text(sub.specializationSubCategoryName ?? 'Unknown'),
+                          child: Text(
+                              sub.specializationSubCategoryName ?? 'Unknown'),
                         );
                       }).toList(),
                     ],
@@ -731,7 +788,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
             child: Obx(() {
               if (controller.rxStatusOccupationSpec.value == Status.LOADING) {
                 return _buildLoadingIndicator();
-              } else if (controller.rxStatusOccupationSpec.value == Status.ERROR) {
+              } else if (controller.rxStatusOccupationSpec.value ==
+                  Status.ERROR) {
                 return const Center(child: Text('Failed to load level 5'));
               } else if (controller.occuptionSubSubCategoryList.isEmpty) {
                 return const SizedBox();
@@ -739,10 +797,13 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                 return InputDecorator(
                   decoration: const InputDecoration(
                     labelText: 'Level 5',
-                    border: OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
-                    enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
+                    border: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black26)),
+                    enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black26)),
                     focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black26, width: 1.5)),
+                        borderSide:
+                            BorderSide(color: Colors.black26, width: 1.5)),
                     contentPadding: EdgeInsets.symmetric(horizontal: 20),
                   ),
                   isEmpty: controller.selectedSubSubCategory.value.isEmpty,
@@ -805,7 +866,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                 focusedBorder: const OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.black26, width: 1.5),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                 labelStyle: const TextStyle(color: Colors.black45),
               ),
               validator: (value) {

@@ -1,9 +1,11 @@
+// occupation_detail_view_page.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/BusinessProfile/BusinessAddress/BusinessAddressData.dart';
 import 'package:mpm/model/BusinessProfile/GetAllBusinessOccupationProfile/GetAllBusinessOccupationProfileModelClass.dart';
 import 'package:mpm/model/GetProfile/Address.dart';
+import 'package:mpm/model/GetProfile/Occupation.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/profile%20view/business_info_page.dart';
@@ -25,7 +27,8 @@ class OccupationDetailViewPage extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<OccupationDetailViewPage> createState() => _OccupationDetailViewPageState();
+  State<OccupationDetailViewPage> createState() =>
+      _OccupationDetailViewPageState();
 }
 
 class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
@@ -63,7 +66,10 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
     regiController.city_id.value = '';
   }
 
-  Future<void> _showAddBusinessModalSheet(BuildContext context) async {
+  Future<void> _showAddBusinessModalSheet(
+      BuildContext context,
+      Occupation occupation,
+      ) async {
     _clearBusinessForm();
 
     showModalBottomSheet(
@@ -87,17 +93,23 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                 children: [
                   // Header with buttons
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 16.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         OutlinedButton(
                           onPressed: () => Navigator.pop(context),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                            side: BorderSide(color: ColorHelperClass.getColorFromHex(ColorResources.red_color)),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            foregroundColor: ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color),
+                            side: BorderSide(
+                                color: ColorHelperClass.getColorFromHex(
+                                    ColorResources.red_color)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
                           ),
                           child: const Text(
                             "Cancel",
@@ -105,33 +117,38 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                           ),
                         ),
                         Obx(() => ElevatedButton(
-                          onPressed: controller.isOccupationLoading.value
-                              ? null
-                              : () async {
-                            if (_validateForm()) {
-                              await _addBusinessDetails();
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                          ),
-                          child: controller.isOccupationLoading.value
-                              ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                              : const Text(
-                            "Submit",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        )),
+                              onPressed: controller.isOccupationLoading.value
+                                  ? null
+                                  : () async {
+                                      if (_validateForm()) {
+                                        await _addBusinessDetails(occupation);
+                                      }
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    ColorHelperClass.getColorFromHex(
+                                        ColorResources.red_color),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10)),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 12),
+                              ),
+                              child: controller.isOccupationLoading.value
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text(
+                                      "Submit",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                            )),
                       ],
                     ),
                   ),
@@ -192,7 +209,9 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                               keyboardType: TextInputType.emailAddress,
                               validator: (value) {
                                 if (value != null && value.isNotEmpty) {
-                                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                                  if (!RegExp(
+                                          r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                                      .hasMatch(value)) {
                                     return 'Please enter valid email';
                                   }
                                 }
@@ -292,14 +311,20 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
   }
 
   void _populateEditForm(BusinessOccupationProfile business) {
-    final address = business.addresses?.isNotEmpty == true ? business.addresses!.first : null;
+    final address = business.addresses?.isNotEmpty == true
+        ? business.addresses!.first
+        : null;
 
     // Populate business details
     controller.businessNameController.value.text = business.businessName ?? '';
-    controller.businessMobileController.value.text = business.businessMobile ?? '';
-    controller.businessLandlineController.value.text = business.businessLandline ?? '';
-    controller.businessEmailController.value.text = business.businessEmail ?? '';
-    controller.businessWebsiteController.value.text = business.businessWebsite ?? '';
+    controller.businessMobileController.value.text =
+        business.businessMobile ?? '';
+    controller.businessLandlineController.value.text =
+        business.businessLandline ?? '';
+    controller.businessEmailController.value.text =
+        business.businessEmail ?? '';
+    controller.businessWebsiteController.value.text =
+        business.businessWebsite ?? '';
 
     // Populate address details
     if (address != null) {
@@ -321,8 +346,8 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
     }
   }
 
-// Method to show edit modal sheet
-  Future<void> _showEditBusinessModalSheet(BuildContext context, BusinessOccupationProfile business) async {
+  Future<void> _showEditBusinessModalSheet(
+      BuildContext context, BusinessOccupationProfile business) async {
     _populateEditForm(business);
 
     showModalBottomSheet(
@@ -346,17 +371,23 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                 children: [
                   // Header with buttons
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 16.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         OutlinedButton(
                           onPressed: () => Navigator.pop(context),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                            side: BorderSide(color: ColorHelperClass.getColorFromHex(ColorResources.red_color)),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            foregroundColor: ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color),
+                            side: BorderSide(
+                                color: ColorHelperClass.getColorFromHex(
+                                    ColorResources.red_color)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
                           ),
                           child: const Text(
                             "Cancel",
@@ -364,33 +395,38 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                           ),
                         ),
                         Obx(() => ElevatedButton(
-                          onPressed: controller.isOccupationLoading.value
-                              ? null
-                              : () async {
-                            if (_validateForm()) {
-                              await _updateBusinessDetails(business);
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                          ),
-                          child: controller.isOccupationLoading.value
-                              ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                              : const Text(
-                            "Submit",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        )),
+                              onPressed: controller.isOccupationLoading.value
+                                  ? null
+                                  : () async {
+                                      if (_validateForm()) {
+                                        await _updateBusinessDetails(business);
+                                      }
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    ColorHelperClass.getColorFromHex(
+                                        ColorResources.red_color),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10)),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 12),
+                              ),
+                              child: controller.isOccupationLoading.value
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text(
+                                      "Submit",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                            )),
                       ],
                     ),
                   ),
@@ -452,7 +488,9 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                               keyboardType: TextInputType.emailAddress,
                               validator: (value) {
                                 if (value != null && value.isNotEmpty) {
-                                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                                  if (!RegExp(
+                                          r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                                      .hasMatch(value)) {
                                     return 'Please enter valid email';
                                   }
                                 }
@@ -566,10 +604,14 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
         maxLines: maxLines,
         decoration: InputDecoration(
           labelText: label,
-          border: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
-          enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
-          focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black38, width: 1)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          border: const OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black)),
+          enabledBorder: const OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black)),
+          focusedBorder: const OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black38, width: 1)),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           labelStyle: const TextStyle(color: Colors.black),
         ),
         validator: validator,
@@ -593,7 +635,8 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                   child: CircularProgressIndicator(color: Colors.redAccent),
                 ),
               );
-            } else if (regiController.rxStatusCountryLoading.value == Status.ERROR) {
+            } else if (regiController.rxStatusCountryLoading.value ==
+                Status.ERROR) {
               return const Center(
                 child: Padding(
                   padding: EdgeInsets.all(8.0),
@@ -613,9 +656,13 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                 child: InputDecorator(
                   decoration: InputDecoration(
                     labelText: selectedCountry.isNotEmpty ? 'Country *' : null,
-                    border: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
-                    enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
-                    focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black38, width: 1)),
+                    border: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black)),
+                    enabledBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black)),
+                    focusedBorder: const OutlineInputBorder(
+                        borderSide:
+                            BorderSide(color: Colors.black38, width: 1)),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 20),
                     labelStyle: const TextStyle(color: Colors.black),
                   ),
@@ -629,7 +676,8 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     value: selectedCountry.isNotEmpty ? selectedCountry : null,
-                    items: regiController.countryList.map((CountryData country) {
+                    items:
+                        regiController.countryList.map((CountryData country) {
                       return DropdownMenuItem<String>(
                         value: country.id.toString(),
                         child: Text(country.countryName ?? 'Unknown'),
@@ -666,7 +714,8 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                   child: CircularProgressIndicator(color: Colors.redAccent),
                 ),
               );
-            } else if (regiController.rxStatusStateLoading.value == Status.ERROR) {
+            } else if (regiController.rxStatusStateLoading.value ==
+                Status.ERROR) {
               return const Center(
                 child: Padding(
                   padding: EdgeInsets.all(8.0),
@@ -686,10 +735,15 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                 child: InputDecorator(
                   decoration: InputDecoration(
                     labelText: selectedState.isNotEmpty ? 'State *' : null,
-                    border: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
-                    enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
-                    focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black38, width: 1)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                    border: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black)),
+                    enabledBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black)),
+                    focusedBorder: const OutlineInputBorder(
+                        borderSide:
+                            BorderSide(color: Colors.black38, width: 1)),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
                     labelStyle: const TextStyle(color: Colors.black),
                   ),
                   child: DropdownButton<String>(
@@ -739,7 +793,8 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                   child: CircularProgressIndicator(color: Colors.redAccent),
                 ),
               );
-            } else if (regiController.rxStatusCityLoading.value == Status.ERROR) {
+            } else if (regiController.rxStatusCityLoading.value ==
+                Status.ERROR) {
               return const Center(
                 child: Padding(
                   padding: EdgeInsets.all(8.0),
@@ -759,10 +814,15 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                 child: InputDecorator(
                   decoration: InputDecoration(
                     labelText: selectedCity.isNotEmpty ? 'City *' : null,
-                    border: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
-                    enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
-                    focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black38, width: 1)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                    border: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black)),
+                    enabledBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black)),
+                    focusedBorder: const OutlineInputBorder(
+                        borderSide:
+                            BorderSide(color: Colors.black38, width: 1)),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
                     labelStyle: const TextStyle(color: Colors.black),
                   ),
                   child: DropdownButton<String>(
@@ -798,7 +858,8 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
 
   bool _validateForm() {
     final businessName = controller.businessNameController.value.text.trim();
-    final businessMobile = controller.businessMobileController.value.text.trim();
+    final businessMobile =
+        controller.businessMobileController.value.text.trim();
     final flatNo = controller.businessFlatNoController.value.text.trim();
     final address = controller.businessAddressController.value.text.trim();
     final areaName = controller.businessAreaNameController.value.text.trim();
@@ -920,16 +981,19 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
     return true;
   }
 
-  Future<void> _addBusinessDetails() async {
+  Future<void> _addBusinessDetails(Occupation occupation) async {
     try {
       final businessBody = {
         'member_id': widget.memberId,
-        "member_occupation_id": widget.memberOccupationId,
+        "member_occupation_id": occupation.memberOccupationId,
         "business_name": controller.businessNameController.value.text.trim(),
-        "business_mobile": controller.businessMobileController.value.text.trim(),
-        "business_landline": controller.businessLandlineController.value.text.trim(),
+        "business_mobile":
+            controller.businessMobileController.value.text.trim(),
+        "business_landline":
+            controller.businessLandlineController.value.text.trim(),
         "business_email": controller.businessEmailController.value.text.trim(),
-        "business_website": controller.businessWebsiteController.value.text.trim(),
+        "business_website":
+            controller.businessWebsiteController.value.text.trim(),
         "created_by": widget.memberId,
         "address_type": "office",
         "flat_no": controller.businessFlatNoController.value.text.trim(),
@@ -943,7 +1007,8 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
 
       debugPrint("📤 Business Details Body: $businessBody");
 
-      final businessResponse = await controller.addOccupationBusinessRepo.addOccupationBusiness(businessBody);
+      final businessResponse = await controller.addOccupationBusinessRepo
+          .addOccupationBusiness(businessBody);
 
       if (businessResponse.status == true) {
         Get.back();
@@ -954,6 +1019,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
           colorText: Colors.white,
         );
         _clearBusinessForm();
+        _loadBusinessProfiles();
       } else {
         Get.snackbar(
           "Error",
@@ -962,7 +1028,6 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
           colorText: Colors.white,
         );
       }
-
     } catch (e) {
       Get.snackbar(
         "Error",
@@ -970,12 +1035,12 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
-      debugPrint("❌ ADD BUSINESS DETAILS ERROR: $e");
+      debugPrint("ADD BUSINESS DETAILS ERROR: $e");
     }
   }
 
-  // Method to update business details
-  Future<void> _updateBusinessDetails(BusinessOccupationProfile business) async {
+  Future<void> _updateBusinessDetails(
+      BusinessOccupationProfile business) async {
     try {
       controller.isOccupationLoading.value = true;
 
@@ -983,10 +1048,13 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
         "member_business_occupation_profile_id": business.profileId,
         "member_occupation_id": widget.memberOccupationId,
         "business_name": controller.businessNameController.value.text.trim(),
-        "business_mobile": controller.businessMobileController.value.text.trim(),
-        "business_landline": controller.businessLandlineController.value.text.trim(),
+        "business_mobile":
+            controller.businessMobileController.value.text.trim(),
+        "business_landline":
+            controller.businessLandlineController.value.text.trim(),
         "business_email": controller.businessEmailController.value.text.trim(),
-        "business_website": controller.businessWebsiteController.value.text.trim(),
+        "business_website":
+            controller.businessWebsiteController.value.text.trim(),
         "updated_by": widget.memberId,
         "address_type": "office",
         "flat_no": controller.businessFlatNoController.value.text.trim(),
@@ -1000,8 +1068,8 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
 
       debugPrint("📤 UPDATE BODY: $body");
 
-      final response =
-      await controller.updateOccupationBusiness.updateOccupationBusiness(body);
+      final response = await controller.updateOccupationBusiness
+          .updateOccupationBusiness(body);
 
       controller.isOccupationLoading.value = false;
 
@@ -1043,7 +1111,8 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        backgroundColor:
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Builder(
           builder: (context) {
             double fontSize = MediaQuery.of(context).size.width * 0.045;
@@ -1060,65 +1129,37 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Obx(() {
-        // Check if we have business profiles data
-        final businessProfiles = controller.businessProfiles?.data;
+        final occupations = controller.allOccupations;
+        final businessProfiles = controller.businessProfiles?.data ?? [];
 
-        // If no data or empty, show empty state
-        if (businessProfiles == null || businessProfiles.isEmpty) {
-          return _buildEmptyState();
+        if (controller.isOccupationLoading.value && occupations.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
         }
 
-        // Get the first business profile
-        final business = businessProfiles.first;
-        // Get the first address from the business profile - using BusinessAddressData
-        final address = business.addresses?.isNotEmpty == true ? business.addresses!.first : null;
+        if (occupations.isEmpty) {
+          return const Center(child: Text("No occupation found"));
+        }
 
         return SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16.0),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Card(
-                color: Colors.white,
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Occupation Hierarchy Section
-                      _buildOccupationHierarchySection(),
-                      const SizedBox(height: 20),
+            padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16),
+            child: Column(
+              children: occupations.map((occupation) {
+                // Filter businesses for this occupation
+                final relatedBusinesses = businessProfiles
+                    .where((b) =>
+                        b.memberOccupationId == occupation.memberOccupationId)
+                    .toList();
 
-                      const Divider(color: Colors.grey),
-                      const SizedBox(height: 20),
-
-                      // Business Name
-                      Text(
-                        business.businessName?.toString() ?? "N/A",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Business Address Section
-                      if (address != null) _buildBusinessAddressSection(address),
-
-                      // Contact Details Section
-                      _buildContactDetailsSection(business),
-
-                      // Action Buttons
-                      _buildActionButtons(business),
-                    ],
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(10),
+                  child: _buildOccupationGroupCard(
+                    occupation,
+                    relatedBusinesses,
                   ),
-                ),
-              ),
+                );
+              }).toList(),
             ),
           ),
         );
@@ -1126,9 +1167,224 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
     );
   }
 
-// Update this method to use BusinessAddressData
+  Widget _buildOccupationGroupCard(
+      Occupation occupation,
+      List<BusinessOccupationProfile> businesses,
+      ) {
+
+    final bool hasBusiness = businesses.isNotEmpty;
+    final BusinessOccupationProfile? firstBusiness =
+    hasBusiness ? businesses.first : null;
+
+    return Card(
+      color: Colors.white,
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+
+            /// 🔥 HEADER ROW (Title + Button)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    occupation.occupation ?? "Occupation",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red.shade600,
+                    ),
+                  ),
+                ),
+
+                /// ➕ IF NO BUSINESS → Show Add button
+                if (!hasBusiness)
+                  ElevatedButton.icon(
+                    label: const Text("Add Business"),
+                    onPressed: () {
+                      _showAddBusinessModalSheet(context, occupation);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      elevation: 3,
+                      padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+
+                if (hasBusiness)
+                  PopupMenuButton<String>(
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    onSelected: (value) {
+                      if (value == 'edit') {
+                        _showEditBusinessModalSheet(context, firstBusiness!);
+                      } else if (value == 'delete') {
+                        _showDeleteConfirmationDialog(context, firstBusiness!);
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: Text(
+                          'Edit Business',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Text(
+                          'Delete',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ),
+                    ],
+                    child: ElevatedButton(
+                      onPressed: null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFFDC3545),
+                        elevation: 2,
+                        shadowColor: Colors.black26,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                      ),
+                      child: const Text(
+                        "Edit",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+
+            const Divider(height: 20, thickness: .7),
+
+            /// 🔥 LEVELS 1–5
+            _buildOccupationInfoRow("Level 1", occupation.occupation),
+            _buildOccupationInfoRow(
+                "Level 2", occupation.occupationProfessionName),
+            _buildOccupationInfoRow("Level 3", occupation.specializationName),
+            _buildOccupationInfoRow(
+                "Level 4", occupation.specializationSubCategoryName),
+            _buildOccupationInfoRow(
+                "Level 5", occupation.specializationSubSubCategoryName),
+
+            if (occupation.occupationOtherName != null &&
+                occupation.occupationOtherName!.isNotEmpty)
+              _buildOccupationInfoRow("Details", occupation.occupationOtherName),
+
+            const SizedBox(height: 10),
+
+            /// 🔥 BUSINESS CONTENT
+            if (hasBusiness)
+              Column(
+                children: businesses
+                    .map((b) => _buildBusinessCardInsideGroup(b, occupation))
+                    .toList(),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOccupationInfoRow(String title, String? value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 90,
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          const Text(" : ", style: TextStyle(fontWeight: FontWeight.bold)),
+          Expanded(
+            child: Text(
+              value?.isNotEmpty == true ? value! : "N/A",
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBusinessCardInsideGroup(
+      BusinessOccupationProfile business,
+      Occupation occupation,
+      ) {
+    final address =
+        (business.addresses != null && business.addresses!.isNotEmpty)
+            ? business.addresses!.first as BusinessAddressData
+            : null;
+
+    return Container(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Divider(height: 20),
+          Text(
+            business.businessName ?? "N/A",
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 12),
+          address != null
+              ? _buildBusinessAddressSection(address)
+              : const Text(
+                  "No address available",
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+          const SizedBox(height: 12),
+          const Divider(height: 20),
+          _buildContactDetailsSection(business),
+          const SizedBox(height: 12),
+          _buildActionButtons(business, occupation),
+        ],
+      ),
+    );
+  }
+
   Widget _buildBusinessAddressSection(BusinessAddressData address) {
-    // Build the full address string similar to your screenshot
     final addressParts = [
       address.flatNo,
       address.address,
@@ -1158,12 +1414,12 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
             ),
           ],
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 6),
 
         // Address Text
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           child: Text(
             fullAddress.isNotEmpty ? fullAddress : "No address available",
             style: TextStyle(
@@ -1173,18 +1429,17 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
             ),
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 10),
       ],
     );
   }
 
-// Add this method to build the contact details section
   Widget _buildContactDetailsSection(BusinessOccupationProfile business) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Contact Details",
+          "Contact Details:",
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -1192,42 +1447,39 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
           ),
         ),
         const SizedBox(height: 12),
-
-        // Contact details in a clean layout
-        if (business.businessMobile != null && business.businessMobile!.isNotEmpty)
+        if (business.businessMobile != null &&
+            business.businessMobile!.isNotEmpty)
           _buildContactDetailItem(
             icon: Icons.phone,
             label: "Mobile",
             value: business.businessMobile!,
           ),
-
-        if (business.businessLandline != null && business.businessLandline!.isNotEmpty)
+        if (business.businessLandline != null &&
+            business.businessLandline!.isNotEmpty)
           _buildContactDetailItem(
             icon: Icons.phone_in_talk,
             label: "Landline",
             value: business.businessLandline!,
           ),
-
-        if (business.businessEmail != null && business.businessEmail!.isNotEmpty)
+        if (business.businessEmail != null &&
+            business.businessEmail!.isNotEmpty)
           _buildContactDetailItem(
             icon: Icons.email,
             label: "Email",
             value: business.businessEmail!,
           ),
-
-        if (business.businessWebsite != null && business.businessWebsite!.isNotEmpty)
+        if (business.businessWebsite != null &&
+            business.businessWebsite!.isNotEmpty)
           _buildContactDetailItem(
             icon: Icons.language,
             label: "Website",
             value: business.businessWebsite!,
           ),
-
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
       ],
     );
   }
 
-// Add this method to build individual contact detail items
   Widget _buildContactDetailItem({
     required IconData icon,
     required String label,
@@ -1235,7 +1487,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Row(
         children: [
           Icon(
@@ -1271,233 +1523,14 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
     );
   }
 
-// Update the occupation hierarchy section to be more compact
-  Widget _buildOccupationHierarchySection() {
-    // Get the current occupation from controller
-    final occupation = controller.currentOccupation.value;
-
-    if (occupation == null) {
-      return const SizedBox();
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            children: [
-              // Level 1 - Occupation
-              _buildCompactHierarchyLevel(
-                level: "Level 1",
-                value: occupation.occupation ?? "Not specified",
-              ),
-              const SizedBox(height: 8),
-
-              // Level 2 - Profession
-              _buildCompactHierarchyLevel(
-                level: "Level 2",
-                value: occupation.occupationProfessionName ?? "Not specified",
-              ),
-              const SizedBox(height: 8),
-
-              // Level 3 - Specialization
-              _buildCompactHierarchyLevel(
-                level: "Level 3",
-                value: occupation.specializationName ?? "Not specified",
-              ),
-
-              // Level 4 - Sub Category (if available)
-              if (occupation.specializationSubCategoryName != null &&
-                  occupation.specializationSubCategoryName!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                _buildCompactHierarchyLevel(
-                  level: "Level 4",
-                  value: occupation.specializationSubCategoryName!,
-                ),
-              ],
-
-              // Additional Details (if available)
-              if (occupation.occupationOtherName != null &&
-                  occupation.occupationOtherName!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                _buildCompactHierarchyLevel(
-                  level: "Details",
-                  value: occupation.occupationOtherName!,
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-// Update the hierarchy level to be more compact
-  Widget _buildCompactHierarchyLevel({required String level, required String value}) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 70,
-          child: Text(
-            level,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: Colors.black87,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          ":",
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-// Update the empty state to include the new structure
-  Widget _buildEmptyState() {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16.0),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Column(
-            children: [
-              // Show occupation hierarchy even when no business data
-              _buildOccupationHierarchySection(),
-              const SizedBox(height: 20),
-
-              Card(
-                color: Colors.white,
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(32.0),
-                  child: Column(
-                    children: [
-                      const Icon(
-                        Icons.business_center_outlined,
-                        size: 64,
-                        color: Colors.grey,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        "No Business Details Added",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        "Add your business information to complete your occupation profile",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        onPressed: () => _showAddBusinessModalSheet(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        icon: const Icon(Icons.add_business),
-                        label: const Text("Add Business Details"),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-// Update the action buttons method to include in the main column
-  // Update the action buttons method to conditionally show Product List button
-  Widget _buildActionButtons(BusinessOccupationProfile business) {
-    // Get the current occupation from controller
-    final occupation = controller.currentOccupation.value;
-
-    // Check if occupation ID is 2
-    final bool showProductListButton = occupation?.occupationId == "2";
+  Widget _buildActionButtons(
+      BusinessOccupationProfile business,
+      Occupation occupation,
+      ) {
+    final bool showProductListButton = occupation.occupationId == "2";
 
     return Column(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => _showEditBusinessModalSheet(context, business),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                  side: BorderSide(
-                    color: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                icon: const Icon(Icons.edit),
-                label: const Text("Edit Business"),
-              ),
-            ),
-            const SizedBox(width: 12),
-
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  _showDeleteConfirmationDialog(context, business);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                icon: const Icon(Icons.delete),
-                label: const Text("Delete"),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-
-        // Product List Button
         if (showProductListButton)
           SizedBox(
             width: double.infinity,
@@ -1506,7 +1539,8 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                 _navigateToProductList(context, business);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                backgroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -1517,17 +1551,17 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
               label: const Text("Product List"),
             ),
           ),
-
         if (showProductListButton) const SizedBox(height: 10),
       ],
     );
   }
 
-  void _navigateToProductList(BuildContext context, BusinessOccupationProfile business) {
+  void _navigateToProductList(
+      BuildContext context, BusinessOccupationProfile business) {
     if (business.profileId != null && business.profileId!.isNotEmpty) {
       Get.to(() => ProductListPage(
-        profileId: business.profileId!,
-      ));
+            profileId: business.profileId!,
+          ));
     } else {
       Get.snackbar(
         "Error",
@@ -1542,57 +1576,8 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
     controller.getBusinessOccupationProfiles(widget.memberId);
   }
 
-  Widget _buildInfoBox(String title, {String? subtitle, Widget? subtitleWidget}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 120,
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.black,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                const Text(
-                  ':',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
-            ),
-          ),
-          Expanded(
-            child: subtitleWidget ??
-                (subtitle != null
-                    ? Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                )
-                    : const SizedBox.shrink()),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showDeleteConfirmationDialog(BuildContext context, BusinessOccupationProfile business) {
+  void _showDeleteConfirmationDialog(
+      BuildContext context, BusinessOccupationProfile business) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -1634,7 +1619,8 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                 Navigator.pop(context);
               },
               style: OutlinedButton.styleFrom(
-                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: const BorderSide(color: Colors.red),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -1648,7 +1634,8 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                 _deleteBusinessDetails(business);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -1662,7 +1649,8 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
     );
   }
 
-  Future<void> _deleteBusinessDetails(BusinessOccupationProfile business) async {
+  Future<void> _deleteBusinessDetails(
+      BusinessOccupationProfile business) async {
     try {
       if (business.profileId == null || business.profileId!.isEmpty) {
         Get.snackbar(
@@ -1684,7 +1672,8 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
         );
       }
 
-      await controller.deleteBusinessOccupationProfile(business.profileId!, widget.memberId);
+      await controller.deleteBusinessOccupationProfile(
+          business.profileId!, widget.memberId);
 
       // Close loading dialog if still open
       if (Get.isDialogOpen ?? false) {
@@ -1699,14 +1688,10 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
         snackPosition: SnackPosition.TOP,
       );
 
-      // Wait for snackbar to be visible, then redirect
-      await Future.delayed(const Duration(milliseconds: 1500));
-
-      // Redirect to BusinessInformationPage
-      Get.off(() => BusinessInformationPage());
-
+      await Future.delayed(const Duration(milliseconds: 800));
+      // Refresh profiles after delete
+      _loadBusinessProfiles();
     } catch (e) {
-      // Close loading dialog if still open
       if (Get.isDialogOpen ?? false) {
         Get.back();
       }
@@ -1720,4 +1705,5 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
       );
       debugPrint("DELETE BUSINESS ERROR: $e");
     }
-  }}
+  }
+}

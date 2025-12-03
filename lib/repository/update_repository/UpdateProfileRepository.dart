@@ -172,18 +172,15 @@ class UpdateProfileRepository {
     return OccuptionSpecSubCategoryModel.fromJson(response);
   }
 
-  Future<OccuptionSpecSubSubCategoryModelClass> userOccutionSpectionSubSubCategoryApi(
-      String specId) async {
+  Future<OccuptionSpecSubSubCategoryModelClass>
+  userOccutionSpecializationSubSubCategoryApi(String subCategoryId) async {
 
-    final url = "${Urls.occuption_specialization_subcategory_url}"
-        "?occupation_specialization_id=$specId"
-        "&status=1"
-        "&limit=50"
-        "&offset=0";
+    final url = "${Urls.occupation_specialization_sub_sub_category_url}"
+        "?occupation_specialization_sub_category_id=$subCategoryId";
 
-    print("🔎 SubCategory GET API URL: $url");
+    print("🔎 Level-5 Sub-Sub-Category API URL: $url");
 
-    dynamic response = await api.getApi(url, "");
+    final response = await api.getApi(url, "");
 
     return OccuptionSpecSubSubCategoryModelClass.fromJson(response);
   }
