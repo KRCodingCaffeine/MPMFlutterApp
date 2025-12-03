@@ -324,10 +324,10 @@ class UdateProfileController extends GetxController {
         );
         return;
       }
-      
+
       loading.value = true;
       var id = userData.memberId.toString();
-      
+
       if (id.isEmpty) {
         loading.value = false;
         Get.snackbar(
@@ -339,10 +339,10 @@ class UdateProfileController extends GetxController {
         );
         return;
       }
-      
+
       final _value = await api.getUserData(id);
       loading.value = false;
-      
+
       if (_value.data == null) {
         Get.snackbar(
           'Error',
@@ -353,7 +353,7 @@ class UdateProfileController extends GetxController {
         );
         return;
       }
-      
+
       getUserData.value = _value.data!;
       memberId.value = id.toString();
       fathersName.value = getUserData.value.fatherName.toString();

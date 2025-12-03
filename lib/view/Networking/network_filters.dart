@@ -1,29 +1,110 @@
+// lib/view/Networking/network_filters.dart
 class NetworkFilters {
-  final int? occupationId;
-  final int? professionId;
-  final List<int> specializationIds;
-  final List<int> subCategoryIds;
+  final List<String> occupations;
+  final List<String> professions;
+  final List<String> specializations;
+  final List<String> subcategories;
+  final List<String> productCategories;
+  final List<String> productSubcategories;
 
   const NetworkFilters({
-    this.occupationId,
-    this.professionId,
-    this.specializationIds = const [],
-    this.subCategoryIds = const [],
+    this.occupations = const [],
+    this.professions = const [],
+    this.specializations = const [],
+    this.subcategories = const [],
+    this.productCategories = const [],
+    this.productSubcategories = const [],
   });
 
+  factory NetworkFilters.empty() => const NetworkFilters();
+
   NetworkFilters copyWith({
-    int? occupationId,
-    int? professionId,
-    List<int>? specializationIds,
-    List<int>? subCategoryIds,
+    List<String>? occupations,
+    List<String>? professions,
+    List<String>? specializations,
+    List<String>? subcategories,
+    List<String>? productCategories,
+    List<String>? productSubcategories,
   }) {
     return NetworkFilters(
-      occupationId: occupationId ?? this.occupationId,
-      professionId: professionId ?? this.professionId,
-      specializationIds: specializationIds ?? this.specializationIds,
-      subCategoryIds: subCategoryIds ?? this.subCategoryIds,
+      occupations: occupations ?? this.occupations,
+      professions: professions ?? this.professions,
+      specializations: specializations ?? this.specializations,
+      subcategories: subcategories ?? this.subcategories,
+      productCategories: productCategories ?? this.productCategories,
+      productSubcategories: productSubcategories ?? this.productSubcategories,
     );
   }
 
-  static const empty = NetworkFilters();
+  bool get hasFilters =>
+      occupations.isNotEmpty ||
+          professions.isNotEmpty ||
+          specializations.isNotEmpty ||
+          subcategories.isNotEmpty ||
+          productCategories.isNotEmpty ||
+          productSubcategories.isNotEmpty;
+
+  // Convert to query string for GET requests
+  String toQueryString() {
+    final params = <String>[];
+
+    if (occupations.isNotEmpty) {
+      for (var occupation in occupations) {
+        params.add('occupations[]=${Uri.encodeComponent(occupation)}');
+      }
+    }
+    if (professions.isNotEmpty) {
+      for (var profession in professions) {
+        params.add('professions[]=${Uri.encodeComponent(profession)}');
+      }
+    }
+    if (specializations.isNotEmpty) {
+      for (var specialization in specializations) {
+        params.add('specializations[]=${Uri.encodeComponent(specialization)}');
+      }
+    }
+    if (subcategories.isNotEmpty) {
+      for (var subcategory in subcategories) {
+        params.add('subcategories[]=${Uri.encodeComponent(subcategory)}');
+      }
+    }
+    if (productCategories.isNotEmpty) {
+      for (var category in productCategories) {
+        params.add('product_categories[]=${Uri.encodeComponent(category)}');
+      }
+    }
+    if (productSubcategories.isNotEmpty) {
+      for (var subcategory in productSubcategories) {
+        params.add('product_subcategories[]=${Uri.encodeComponent(subcategory)}');
+      }
+    }
+
+    return params.join('&');
+  }
+
+  // For POST requests
+  Map<String, dynamic> toJson() {
+    final json = <String, dynamic>{};
+
+    if (occupations.isNotEmpty) {
+      json['occupations'] = occupations;
+    }
+    if (professions.isNotEmpty) {
+      json['professions'] = professions;
+    }
+    if (specializations.isNotEmpty) {
+      json['specializations'] = specializations;
+    }
+    if (subcategories.isNotEmpty) {
+      json['subcategories'] = subcategories;
+    }
+    if (productCategories.isNotEmpty) {
+      json['product_categories'] = productCategories;
+    }
+    if (productSubcategories.isNotEmpty) {
+      json['product_subcategories'] = productSubcategories;
+    }
+
+    return json;
+  }
 }
