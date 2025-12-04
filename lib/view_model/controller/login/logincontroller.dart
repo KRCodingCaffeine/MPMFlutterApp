@@ -25,6 +25,7 @@ class LoginController {
   RxBool loadinng = false.obs;
   RxBool isLoading = false.obs;
   var isMobileValid = false.obs;
+  var showForgotButton = false.obs;
   var mobilecon = ''.obs;
   var emailcon = ''.obs;
   var LMCODEDYANMIC = "".obs;
@@ -466,6 +467,7 @@ class LoginController {
                   otherMobVisible.value = true;
                   lmCodeVisible.value = false;
                 }
+                showForgotButton.value = true;
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
