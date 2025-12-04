@@ -20,12 +20,22 @@ class NetworkView extends StatefulWidget {
 class _NetworkViewState extends State<NetworkView> {
   final TextEditingController _searchController = TextEditingController();
   final SearchOccupationRepository _repo = SearchOccupationRepository();
+  
+  @override
+  void initState() {
+    super.initState();
+    // Listen to search controller changes to update UI (for clear button)
+    _searchController.addListener(() {
+      setState(() {}); // Rebuild to show/hide clear button
+    });
+  }
 
   // Search state
   Timer? _debounceTimer;
   bool _isLoading = false;
   bool _hasSearched = false;
   List<SearchOccupationData> _results = [];
+  List<SearchOccupationData> _allResults = []; // Store all unfiltered results from API
 
   // Filters
   NetworkFilters _filters = NetworkFilters.empty();
@@ -42,15 +52,79 @@ class _NetworkViewState extends State<NetworkView> {
     'professions': [],
     'specializations': [],
     'subcategories': [],
+    'sub_subcategories': [],
     'product_categories': [],
     'product_subcategories': [],
   };
+
+  // Track matched level and value from search
+  String? _matchedLevel;
+  String? _matchedValue;
+
+  // Search suggestions - using dynamic to avoid import issues
+  List<dynamic> _suggestions = [];
+  bool _showSuggestions = false;
+  final FocusNode _searchFocusNode = FocusNode();
 
   @override
   void dispose() {
     _debounceTimer?.cancel();
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  // Load search suggestions
+  Future<void> _loadSuggestions(String query) async {
+    if (query.length < 2) {
+      setState(() {
+        _suggestions = [];
+        _showSuggestions = false;
+      });
+      return;
+    }
+
+    try {
+      debugPrint("Loading suggestions for: $query");
+      final suggestions = await _repo.searchSuggestions(keyword: query);
+      debugPrint("Received ${suggestions.length} suggestions");
+      for (var sug in suggestions) {
+        debugPrint("  - ${sug.displayText ?? sug.name} (${sug.type})");
+      }
+      setState(() {
+        _suggestions = suggestions;
+        _showSuggestions = suggestions.isNotEmpty;
+        debugPrint("Setting _showSuggestions to: ${suggestions.isNotEmpty}");
+        debugPrint("_suggestions.length: ${_suggestions.length}");
+      });
+    } catch (e) {
+      debugPrint("Error loading suggestions: $e");
+      setState(() {
+        _suggestions = [];
+        _showSuggestions = false;
+      });
+    }
+  }
+
+  // Handle suggestion tap - THIS IS THE ONLY WAY TO TRIGGER SEARCH
+  void _onSuggestionTap(dynamic suggestion) {
+    // Use search_term from suggestion for the actual search
+    final searchValue = suggestion.searchTerm ?? suggestion.value ?? suggestion.name ?? '';
+    debugPrint("Suggestion tapped: ${suggestion.displayText ?? suggestion.name} (${suggestion.type})");
+    debugPrint("Using search_term: $searchValue");
+    
+    setState(() {
+      _searchController.text = searchValue;
+      _showSuggestions = false;
+      _searchFocusNode.unfocus();
+    });
+    
+    // Trigger search ONLY when suggestion is clicked
+    if (searchValue.isNotEmpty) {
+      _performSearch(resetPage: true);
+    } else {
+      debugPrint("Search term is empty");
+    }
   }
 
 // In your NetworkView class
@@ -104,18 +178,82 @@ class _NetworkViewState extends State<NetworkView> {
 
       setState(() {
         if (resetPage) {
-          _results = response.data ?? [];
+          _allResults = response.data ?? [];
         } else {
           // For pagination, append new results
-          _results.addAll(response.data ?? []);
+          _allResults.addAll(response.data ?? []);
         }
 
         _totalResults = response.totalResults ?? 0;
         _totalPages = (_totalResults / _limit).ceil();
+        debugPrint("Total results from API: $_totalResults");
+        debugPrint("Results data length: ${response.data?.length ?? 0}");
+        
+        // Apply filters to the results
+        _applyLocalFilters();
+
+        // Update filter options from API response or extract from results
+        if (response.filters != null) {
+          debugPrint("========== FILTERS FROM API ==========");
+          debugPrint("Occupations (${response.filters!.occupations.length}): ${response.filters!.occupations}");
+          debugPrint("Professions (${response.filters!.professions.length}): ${response.filters!.professions}");
+          debugPrint("Specializations (${response.filters!.specializations.length}): ${response.filters!.specializations}");
+          debugPrint("Subcategories (${response.filters!.subcategories.length}): ${response.filters!.subcategories}");
+          debugPrint("Sub-subcategories (${response.filters!.subSubcategories.length}): ${response.filters!.subSubcategories}");
+          debugPrint("======================================");
+          
+          // Check if subcategories should be hidden (if it only contains the matched search term)
+          List<String> subcategoriesToShow = response.filters!.subcategories;
+          if (subcategoriesToShow.length == 1 && 
+              subcategoriesToShow.first.toLowerCase() == searchTerm.toLowerCase()) {
+            debugPrint("Hiding subcategories - only contains matched search term: ${subcategoriesToShow.first}");
+            subcategoriesToShow = [];
+          }
+          
+          _availableFilters = {
+            'occupations': response.filters!.occupations, // Will be hidden if empty
+            'professions': response.filters!.professions, // Will be hidden if empty
+            'specializations': response.filters!.specializations, // Will be hidden if empty
+            'subcategories': subcategoriesToShow, // Hidden if empty or only matched term
+            'sub_subcategories': response.filters!.subSubcategories, // Show all sub-subcategories
+            'product_categories': [],
+            'product_subcategories': [],
+          };
+        } else {
+          debugPrint("========== NO FILTERS IN API - EXTRACTING FROM RESULTS ==========");
+          // Extract filters from search results (matching PHP formatFilters logic)
+          _availableFilters = _extractFiltersFromResults(_allResults);
+          debugPrint("Extracted Occupations (${_availableFilters['occupations']!.length}): ${_availableFilters['occupations']}");
+          debugPrint("Extracted Professions (${_availableFilters['professions']!.length}): ${_availableFilters['professions']}");
+          debugPrint("Extracted Specializations (${_availableFilters['specializations']!.length}): ${_availableFilters['specializations']}");
+          debugPrint("Extracted Subcategories (${_availableFilters['subcategories']!.length}): ${_availableFilters['subcategories']}");
+          debugPrint("Extracted Sub-subcategories (${_availableFilters['sub_subcategories']!.length}): ${_availableFilters['sub_subcategories']}");
+          debugPrint("=================================================================");
+        }
+
+        // Update matched level and value
+        _matchedLevel = response.matchedLevel;
+        // Clean matched value if it's an object string
+        String? cleanMatchedValue = response.matchedValue;
+        if (cleanMatchedValue != null && cleanMatchedValue.startsWith('{')) {
+          // Try to extract name from object string
+          final match = RegExp(r'occupation_name:\s*([^,}]+)').firstMatch(cleanMatchedValue);
+          if (match != null) {
+            cleanMatchedValue = match.group(1)?.trim();
+          } else {
+            // Try profession_name
+            final profMatch = RegExp(r'profession_name:\s*([^,}]+)').firstMatch(cleanMatchedValue);
+            if (profMatch != null) {
+              cleanMatchedValue = profMatch.group(1)?.trim();
+            }
+          }
+        }
+        _matchedValue = cleanMatchedValue;
 
         // Debug information
         debugPrint("Updated results count: ${_results.length}");
         debugPrint("Total pages: $_totalPages");
+        debugPrint("Matched level: $_matchedLevel, Matched value: $_matchedValue");
       });
 
     } catch (e) {
@@ -166,27 +304,213 @@ class _NetworkViewState extends State<NetworkView> {
       backgroundColor: Colors.transparent,
       builder: (context) {
         return FilterBottomSheet(
-          initialFilters: _filters,
+          initialFilters: _filters, // Pass current filters to maintain state
           searchQuery: _searchController.text.trim(),
           availableFilters: _availableFilters,
+          matchedLevel: _matchedLevel,
+          matchedValue: _matchedValue,
+          onFilterChanged: (updatedFilters) {
+            // Apply filters immediately when changed (without closing sheet)
+            setState(() {
+              _filters = updatedFilters;
+              _applyLocalFilters(); // Filter locally instead of making API call
+            });
+          },
         );
       },
     );
 
+    // Update filters when sheet is closed (for final state)
     if (newFilters != null) {
-      setState(() => _filters = newFilters);
-      if (_searchController.text.trim().isNotEmpty) {
-        _performSearch(resetPage: true);
-      }
+      setState(() {
+        _filters = newFilters;
+        _applyLocalFilters(); // Apply filters locally
+      });
     }
   }
 
   void _clearFilters() {
     setState(() {
       _filters = NetworkFilters.empty();
+      _applyLocalFilters(); // Re-apply filters (will show all results)
     });
-    if (_searchController.text.trim().isNotEmpty) {
-      _performSearch(resetPage: true);
+  }
+
+  void _clearSearch() {
+    setState(() {
+      _searchController.clear();
+      _showSuggestions = false;
+      _suggestions = [];
+      _results = [];
+      _allResults = [];
+      _hasSearched = false;
+      _totalResults = 0;
+      _filters = NetworkFilters.empty();
+      _matchedLevel = null;
+      _matchedValue = null;
+      _searchFocusNode.unfocus();
+    });
+  }
+
+  // Filter results locally based on selected filters
+  void _applyLocalFilters() {
+    if (_allResults.isEmpty) {
+      _results = [];
+      return;
+    }
+
+    if (!_filters.hasFilters) {
+      // No filters selected, show all results
+      _results = List.from(_allResults);
+      return;
+    }
+
+    // Filter results based on selected filters
+    _results = _allResults.where((member) {
+      // Check occupation filter
+      if (_filters.occupations.isNotEmpty) {
+        final memberOccupation = member.occupationNameValue ?? '';
+        if (!_filters.occupations.contains(memberOccupation)) {
+          return false;
+        }
+      }
+
+      // Check profession filter
+      if (_filters.professions.isNotEmpty) {
+        final memberProfession = member.professionNameValue ?? '';
+        if (!_filters.professions.contains(memberProfession)) {
+          return false;
+        }
+      }
+
+      // Check specialization filter
+      if (_filters.specializations.isNotEmpty) {
+        final memberSpecialization = member.specializationNameValue ?? '';
+        if (!_filters.specializations.contains(memberSpecialization)) {
+          return false;
+        }
+      }
+
+      // Check subcategory filter
+      if (_filters.subcategories.isNotEmpty) {
+        final memberSubcategory = member.subCategoryNameValue ?? '';
+        if (!_filters.subcategories.contains(memberSubcategory)) {
+          return false;
+        }
+      }
+
+      // Check sub-subcategory filter
+      if (_filters.subSubcategories.isNotEmpty) {
+        final memberSubSubcategory = member.subSubCategoryNameValue ?? '';
+        if (!_filters.subSubcategories.contains(memberSubSubcategory)) {
+          return false;
+        }
+      }
+
+      return true;
+    }).toList();
+
+    debugPrint("Filtered results: ${_results.length} out of ${_allResults.length}");
+  }
+
+  // Extract filters from search results - matches PHP formatFilters() function
+  Map<String, List<String>> _extractFiltersFromResults(List<SearchOccupationData> results) {
+    // Helper function to format filters (matches PHP formatFilters logic)
+    // BUT exclude 'Other' as per requirement
+    List<String> formatFilters(List<String?> list) {
+      // Filter out null, empty, and 'Other' values
+      final mapped = list
+          .where((v) => v != null && v.isNotEmpty && v.toLowerCase() != 'other')
+          .map((v) => v!)
+          .toList();
+      // Get unique values
+      final unique = mapped.toSet().toList();
+      // Limit to 100 items
+      return unique.take(100).toList();
+    }
+
+    // Extract from results - handle both direct fields and nested occupation object
+    final occupations = <String>[];
+    final professions = <String>[];
+    final specializations = <String>[];
+    final subcategories = <String>[];
+    final subSubcategories = <String>[];
+
+    for (var result in results) {
+      // Extract occupation name
+      final occName = result.occupationNameValue;
+      if (occName != null && occName.isNotEmpty && occName.toLowerCase() != 'other') {
+        occupations.add(occName);
+      }
+
+      // Extract profession name
+      final profName = result.professionNameValue;
+      if (profName != null && profName.isNotEmpty && profName.toLowerCase() != 'other') {
+        professions.add(profName);
+      }
+
+      // Extract specialization name
+      final specName = result.specializationNameValue;
+      if (specName != null && specName.isNotEmpty && specName.toLowerCase() != 'other') {
+        specializations.add(specName);
+      }
+
+      // Extract subcategory name
+      final subcatName = result.subCategoryName;
+      if (subcatName != null && subcatName.isNotEmpty && subcatName.toLowerCase() != 'other') {
+        subcategories.add(subcatName);
+      }
+
+      // Extract sub-subcategory name
+      final subSubcatName = result.subSubCategoryName;
+      if (subSubcatName != null && subSubcatName.isNotEmpty && subSubcatName.toLowerCase() != 'other') {
+        subSubcategories.add(subSubcatName);
+      }
+    }
+
+    return {
+      'occupations': occupations.toSet().toList(),
+      'professions': professions.toSet().toList(),
+      'specializations': specializations.toSet().toList(),
+      'subcategories': subcategories.toSet().toList(),
+      'sub_subcategories': subSubcategories.toSet().toList(),
+      'product_categories': [],
+      'product_subcategories': [],
+    };
+  }
+
+  // Get icon for suggestion type
+  IconData _getSuggestionIcon(String type) {
+    switch (type.toLowerCase()) {
+      case 'occupation':
+        return Icons.work;
+      case 'profession':
+        return Icons.business_center;
+      case 'specialization':
+        return Icons.star;
+      case 'specialization_sub_category':
+      case 'subcategory':
+        return Icons.category;
+      case 'specialization_sub_sub_category':
+      case 'sub subcategory':
+        return Icons.label;
+      default:
+        return Icons.search;
+    }
+  }
+
+  // Format suggestion type for display
+  String _formatSuggestionType(String type) {
+    switch (type.toLowerCase()) {
+      case 'specialization_sub_category':
+        return 'Sub Category';
+      case 'specialization_sub_sub_category':
+        return 'Sub Subcategory';
+      default:
+        return type.replaceAll('_', ' ').split(' ').map((word) {
+          if (word.isEmpty) return '';
+          return word[0].toUpperCase() + word.substring(1);
+        }).join(' ');
     }
   }
 
@@ -255,7 +579,7 @@ class _NetworkViewState extends State<NetworkView> {
 
             // Profession
             Text(
-              occ?.professionName ?? "",
+              member.professionNameValue ?? "",
               maxLines: 1,
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -265,7 +589,7 @@ class _NetworkViewState extends State<NetworkView> {
             ),
 
             // Specialization
-            if ((occ?.specializationName ?? "").isNotEmpty)
+            if ((member.specializationNameValue ?? "").isNotEmpty)
               Container(
                 margin: const EdgeInsets.only(top: 4),
                 padding: const EdgeInsets.symmetric(
@@ -277,7 +601,7 @@ class _NetworkViewState extends State<NetworkView> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  occ!.specializationName!,
+                  member.specializationNameValue!,
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.orange.shade700,
@@ -380,18 +704,28 @@ class _NetworkViewState extends State<NetworkView> {
     final themeColor =
         ColorHelperClass.getColorFromHex(ColorResources.red_color);
 
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor:
-            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        title: const Text(
-          "Networking",
-          style: TextStyle(color: Colors.white),
+    return GestureDetector(
+      onTap: () {
+        // Close suggestions when tapping outside
+        if (_showSuggestions) {
+          setState(() {
+            _showSuggestions = false;
+            _searchFocusNode.unfocus();
+          });
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          backgroundColor:
+              ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+          title: const Text(
+            "Networking",
+            style: TextStyle(color: Colors.white),
+          ),
+          iconTheme: const IconThemeData(color: Colors.white),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      body: Column(
+        body: Column(
         children: [
           // Search bar
           Container(
@@ -408,21 +742,50 @@ class _NetworkViewState extends State<NetworkView> {
                     ),
                     child: TextField(
                       controller: _searchController,
+                      focusNode: _searchFocusNode,
                       onChanged: (value) {
-                        _debounceTimer?.cancel();
-                        _debounceTimer =
-                            Timer(const Duration(milliseconds: 500), () {
-                          _performSearch(resetPage: true);
+                        // Only load suggestions when typing (min 2 chars)
+                        // DO NOT trigger search API while typing
+                        if (value.length >= 2) {
+                          _loadSuggestions(value);
+                        } else {
+                          setState(() {
+                            _showSuggestions = false;
+                            _suggestions = [];
+                            _results = [];
+                            _hasSearched = false;
+                          });
+                        }
+                        // Remove auto-search - only search on suggestion click
+                      },
+                      onSubmitted: (value) {
+                        // Don't search on Enter - user must click a suggestion
+                        // Just hide suggestions if Enter is pressed
+                        setState(() {
+                          _showSuggestions = false;
                         });
                       },
-                      onSubmitted: (value) => _performSearch(resetPage: true),
-                      decoration: const InputDecoration(
+                      onTap: () {
+                        // Show suggestions when tapping the search box
+                        if (_searchController.text.length >= 2) {
+                          _loadSuggestions(_searchController.text);
+                        }
+                      },
+                      decoration: InputDecoration(
                         hintText:
                             "Search members, profession, specialization...",
                         border: InputBorder.none,
                         contentPadding:
-                            EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        prefixIcon: Icon(Icons.search, color: Colors.grey),
+                            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                        suffixIcon: _searchController.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.close, color: Colors.grey),
+                                onPressed: () {
+                                  _clearSearch();
+                                },
+                              )
+                            : null,
                       ),
                     ),
                   ),
@@ -462,6 +825,85 @@ class _NetworkViewState extends State<NetworkView> {
             ),
           ),
 
+          // Suggestions dropdown - Show below search box
+          if (_showSuggestions && _suggestions.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              constraints: const BoxConstraints(maxHeight: 300),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey[300]!),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ListView.builder(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                itemCount: _suggestions.length,
+                itemBuilder: (context, index) {
+                  final suggestion = _suggestions[index];
+                  return InkWell(
+                    onTap: () {
+                      debugPrint("Suggestion clicked: ${suggestion.displayText ?? suggestion.name}");
+                      _onSuggestionTap(suggestion);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Colors.grey[200]!,
+                            width: index < _suggestions.length - 1 ? 1 : 0,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            _getSuggestionIcon(suggestion.type ?? ''),
+                            size: 20,
+                            color: Colors.grey[600],
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  suggestion.displayText ?? suggestion.name ?? '',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.black87,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _formatSuggestionType(suggestion.type ?? ''),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+
           // Results header
           if (_hasSearched && !_isLoading)
             Container(
@@ -471,7 +913,9 @@ class _NetworkViewState extends State<NetworkView> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "$_totalResults ${_totalResults == 1 ? 'result' : 'results'} found",
+                    _filters.hasFilters && _allResults.isNotEmpty
+                        ? "${_results.length} ${_results.length == 1 ? 'result' : 'results'} found (Filtered from ${_allResults.length} total ${_allResults.length == 1 ? 'result' : 'results'})"
+                        : "${_results.length} ${_results.length == 1 ? 'result' : 'results'} found",
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -553,6 +997,7 @@ class _NetworkViewState extends State<NetworkView> {
 
           if (!_hasSearched && !_isLoading) Expanded(child: _buildEmptyState()),
         ],
+        ),
       ),
     );
   }

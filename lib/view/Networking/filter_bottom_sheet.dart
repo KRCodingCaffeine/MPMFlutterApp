@@ -8,12 +8,18 @@ class FilterBottomSheet extends StatefulWidget {
   final NetworkFilters initialFilters;
   final String? searchQuery;
   final Map<String, List<String>>? availableFilters;
+  final String? matchedLevel;
+  final String? matchedValue;
+  final Function(NetworkFilters)? onFilterChanged; // Callback for immediate filter application
 
   const FilterBottomSheet({
     super.key,
     required this.initialFilters,
     this.searchQuery,
     this.availableFilters,
+    this.matchedLevel,
+    this.matchedValue,
+    this.onFilterChanged,
   });
 
   @override
@@ -32,6 +38,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   List<String> _availableProfessions = [];
   List<String> _availableSpecializations = [];
   List<String> _availableSubcategories = [];
+  List<String> _availableSubSubcategories = [];
   List<String> _availableProductCategories = [];
   List<String> _availableProductSubcategories = [];
 
@@ -47,24 +54,112 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   void initState() {
     super.initState();
     _currentFilters = widget.initialFilters;
+    _matchedLevel = widget.matchedLevel;
+    _matchedValue = widget.matchedValue;
     _loadFilterOptions();
+  }
+
+  // Helper function to ensure filter items are strings
+  // Exclude 'Other' as per requirement
+  List<String> _ensureStringList(List<dynamic>? list) {
+    if (list == null) return [];
+    return list.map((item) {
+      if (item == null) return null;
+      if (item is String) {
+        if (item.isEmpty || item.toLowerCase() == 'other') return null;
+        return item;
+      }
+      if (item is Map) {
+        // If it's an object, try to extract the name field
+        final value = item['occupation_name']?.toString() ?? 
+               item['name']?.toString() ?? 
+               item['occupation']?.toString() ?? 
+               item.toString();
+        if (value.toLowerCase() == 'other') return null;
+        return value;
+      }
+      final str = item.toString();
+      if (str.toLowerCase() == 'other') return null;
+      return str;
+    }).where((s) => s != null && s!.isNotEmpty && s != 'null').cast<String>().toList();
   }
 
   Future<void> _loadFilterOptions() async {
     // If availableFilters provided, use them
     if (widget.availableFilters != null) {
+      debugPrint("Loading filter options:");
+      debugPrint("Occupations: ${widget.availableFilters!['occupations']?.length ?? 0}");
+      debugPrint("Professions: ${widget.availableFilters!['professions']?.length ?? 0}");
+      debugPrint("Specializations: ${widget.availableFilters!['specializations']?.length ?? 0}");
+      debugPrint("Subcategories: ${widget.availableFilters!['subcategories']?.length ?? 0}");
+      debugPrint("Sub-subcategories: ${widget.availableFilters!['sub_subcategories']?.length ?? 0}");
+      
       setState(() {
-        _availableOccupations = widget.availableFilters!['occupations'] ?? [];
-        _availableProfessions = widget.availableFilters!['professions'] ?? [];
-        _availableSpecializations = widget.availableFilters!['specializations'] ?? [];
-        _availableSubcategories = widget.availableFilters!['subcategories'] ?? [];
-        _availableProductCategories = widget.availableFilters!['product_categories'] ?? [];
-        _availableProductSubcategories = widget.availableFilters!['product_subcategories'] ?? [];
+        // Ensure all filter items are strings, not objects
+        _availableOccupations = _ensureStringList(widget.availableFilters!['occupations'] as List<dynamic>?);
+        _availableProfessions = _ensureStringList(widget.availableFilters!['professions'] as List<dynamic>?);
+        _availableSpecializations = _ensureStringList(widget.availableFilters!['specializations'] as List<dynamic>?);
+        _availableSubcategories = _ensureStringList(widget.availableFilters!['subcategories'] as List<dynamic>?);
+        _availableSubSubcategories = _ensureStringList(widget.availableFilters!['sub_subcategories'] as List<dynamic>?);
+        _availableProductCategories = _ensureStringList(widget.availableFilters!['product_categories'] as List<dynamic>?);
+        _availableProductSubcategories = _ensureStringList(widget.availableFilters!['product_subcategories'] as List<dynamic>?);
+        
+        // Remove duplicates and ensure 'Other' is at the end
+        _availableOccupations = _formatFilterList(_availableOccupations);
+        _availableProfessions = _formatFilterList(_availableProfessions);
+        _availableSpecializations = _formatFilterList(_availableSpecializations);
+        _availableSubcategories = _formatFilterList(_availableSubcategories);
+        _availableSubSubcategories = _formatFilterList(_availableSubSubcategories);
       });
 
-      // Determine matched level based on search query
-      _determineMatchedLevel();
+      // Clean matched value if it's an object
+      if (_matchedValue != null && _matchedValue!.startsWith('{')) {
+        // Try to extract the name from object string
+        final match = RegExp(r'occupation_name:\s*([^,}]+)').firstMatch(_matchedValue!);
+        if (match != null) {
+          _matchedValue = match.group(1)?.trim();
+        }
+      }
+
+      // Use matched level/value from API if provided, otherwise determine from search query
+      if (_matchedLevel == null || _matchedValue == null) {
+        _determineMatchedLevel();
+      }
+    } else {
+      debugPrint("No availableFilters provided to FilterBottomSheet");
     }
+  }
+
+  // Format filter list - remove duplicates, exclude 'Other'
+  List<String> _formatFilterList(List<String> list) {
+    return list
+        .where((item) => item.toLowerCase() != 'other')
+        .toSet()
+        .toList();
+  }
+
+  // Get clean matched value (extract name from object if needed)
+  String _getCleanMatchedValue() {
+    if (_matchedValue == null) return '';
+    
+    // If it's already a clean string, return it
+    if (!_matchedValue!.startsWith('{')) {
+      return _matchedValue!;
+    }
+    
+    // Try to extract name from object string
+    final match = RegExp(r'occupation_name:\s*([^,}]+)').firstMatch(_matchedValue!);
+    if (match != null) {
+      return match.group(1)?.trim() ?? _matchedValue!;
+    }
+    
+    // Try profession_name
+    final profMatch = RegExp(r'profession_name:\s*([^,}]+)').firstMatch(_matchedValue!);
+    if (profMatch != null) {
+      return profMatch.group(1)?.trim() ?? _matchedValue!;
+    }
+    
+    return _matchedValue!;
   }
 
   void _determineMatchedLevel() {
@@ -72,40 +167,106 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     if (searchQuery == null || searchQuery.isEmpty) return;
 
     // Check which level the search query matches
-    // Similar to PHP logic
-    final occupationMatch = _availableOccupations.any(
-            (item) => item.toLowerCase() == searchQuery
-    );
-    final professionMatch = _availableProfessions.any(
-            (item) => item.toLowerCase() == searchQuery
-    );
-    final specializationMatch = _availableSpecializations.any(
-            (item) => item.toLowerCase() == searchQuery
-    );
-    final subcategoryMatch = _availableSubcategories.any(
-            (item) => item.toLowerCase() == searchQuery
-    );
+    // Similar to PHP logic - check exact match first, then partial
+    String? matchedOcc;
+    String? matchedProf;
+    String? matchedSpec;
+    String? matchedSubcat;
 
-    if (occupationMatch) {
+    // Check exact matches first
+    for (var occ in _availableOccupations) {
+      if (occ.toLowerCase().trim() == searchQuery) {
+        matchedOcc = occ;
+        break;
+      }
+    }
+
+    if (matchedOcc == null) {
+      // Check partial matches for occupation
+      for (var occ in _availableOccupations) {
+        final occLower = occ.toLowerCase().trim();
+        if (occLower.contains(searchQuery) || searchQuery.contains(occLower)) {
+          matchedOcc = occ;
+          break;
+        }
+      }
+    }
+
+    if (matchedOcc != null) {
       _matchedLevel = 'occupation';
-      _matchedValue = _availableOccupations.firstWhere(
-              (item) => item.toLowerCase() == searchQuery
-      );
-    } else if (professionMatch) {
+      _matchedValue = matchedOcc;
+      return;
+    }
+
+    // Check profession
+    for (var prof in _availableProfessions) {
+      if (prof.toLowerCase().trim() == searchQuery) {
+        matchedProf = prof;
+        break;
+      }
+    }
+
+    if (matchedProf == null) {
+      for (var prof in _availableProfessions) {
+        final profLower = prof.toLowerCase().trim();
+        if (profLower.contains(searchQuery)) {
+          matchedProf = prof;
+          break;
+        }
+      }
+    }
+
+    if (matchedProf != null) {
       _matchedLevel = 'profession';
-      _matchedValue = _availableProfessions.firstWhere(
-              (item) => item.toLowerCase() == searchQuery
-      );
-    } else if (specializationMatch) {
+      _matchedValue = matchedProf;
+      return;
+    }
+
+    // Check specialization
+    for (var spec in _availableSpecializations) {
+      if (spec.toLowerCase().trim() == searchQuery) {
+        matchedSpec = spec;
+        break;
+      }
+    }
+
+    if (matchedSpec == null) {
+      for (var spec in _availableSpecializations) {
+        final specLower = spec.toLowerCase().trim();
+        if (specLower.contains(searchQuery)) {
+          matchedSpec = spec;
+          break;
+        }
+      }
+    }
+
+    if (matchedSpec != null) {
       _matchedLevel = 'specialization';
-      _matchedValue = _availableSpecializations.firstWhere(
-              (item) => item.toLowerCase() == searchQuery
-      );
-    } else if (subcategoryMatch) {
+      _matchedValue = matchedSpec;
+      return;
+    }
+
+    // Check subcategory
+    for (var subcat in _availableSubcategories) {
+      if (subcat.toLowerCase().trim() == searchQuery) {
+        matchedSubcat = subcat;
+        break;
+      }
+    }
+
+    if (matchedSubcat == null) {
+      for (var subcat in _availableSubcategories) {
+        final subcatLower = subcat.toLowerCase().trim();
+        if (subcatLower.contains(searchQuery)) {
+          matchedSubcat = subcat;
+          break;
+        }
+      }
+    }
+
+    if (matchedSubcat != null) {
       _matchedLevel = 'subcategory';
-      _matchedValue = _availableSubcategories.firstWhere(
-              (item) => item.toLowerCase() == searchQuery
-      );
+      _matchedValue = matchedSubcat;
     }
   }
 
@@ -113,10 +274,20 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     setState(() {
       _currentFilters = NetworkFilters.empty();
     });
+    // Apply immediately when clearing
+    widget.onFilterChanged?.call(_currentFilters);
+    Navigator.of(context).pop<NetworkFilters>(_currentFilters);
   }
 
   void _applyFilters() {
+    // Notify parent about final filter state before closing
+    widget.onFilterChanged?.call(_currentFilters);
     Navigator.of(context).pop<NetworkFilters>(_currentFilters);
+  }
+
+  void _notifyFilterChange() {
+    // Notify parent about filter change without closing the sheet
+    widget.onFilterChanged?.call(_currentFilters);
   }
 
   void _toggleOccupation(String occupation) {
@@ -129,6 +300,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           professions: [],
           specializations: [],
           subcategories: [],
+          subSubcategories: [],
         );
       } else {
         _currentFilters = _currentFilters.copyWith(
@@ -137,6 +309,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         );
       }
     });
+    // Apply filter immediately without closing sheet
+    _notifyFilterChange();
   }
 
   void _toggleProfession(String profession) {
@@ -148,6 +322,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           // Clear child filters
           specializations: [],
           subcategories: [],
+          subSubcategories: [],
         );
       } else {
         _currentFilters = _currentFilters.copyWith(
@@ -156,6 +331,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         );
       }
     });
+    // Apply filter immediately without closing sheet
+    _notifyFilterChange();
   }
 
   void _toggleSpecialization(String specialization) {
@@ -165,6 +342,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           specializations: List.from(_currentFilters.specializations)
             ..remove(specialization),
           subcategories: [],
+          subSubcategories: [],
         );
       } else {
         _currentFilters = _currentFilters.copyWith(
@@ -173,6 +351,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         );
       }
     });
+    // Apply filter immediately without closing sheet
+    _notifyFilterChange();
   }
 
   void _toggleSubcategory(String subcategory) {
@@ -181,6 +361,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         _currentFilters = _currentFilters.copyWith(
           subcategories: List.from(_currentFilters.subcategories)
             ..remove(subcategory),
+          subSubcategories: [],
         );
       } else {
         _currentFilters = _currentFilters.copyWith(
@@ -189,6 +370,26 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         );
       }
     });
+    // Apply filter immediately without closing sheet
+    _notifyFilterChange();
+  }
+
+  void _toggleSubSubcategory(String subSubcategory) {
+    setState(() {
+      if (_currentFilters.subSubcategories.contains(subSubcategory)) {
+        _currentFilters = _currentFilters.copyWith(
+          subSubcategories: List.from(_currentFilters.subSubcategories)
+            ..remove(subSubcategory),
+        );
+      } else {
+        _currentFilters = _currentFilters.copyWith(
+          subSubcategories: List.from(_currentFilters.subSubcategories)
+            ..add(subSubcategory),
+        );
+      }
+    });
+    // Apply filter immediately without closing sheet
+    _notifyFilterChange();
   }
 
   Widget _buildFilterSection({
@@ -203,16 +404,20 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         ? items
         : items.where((item) => item.isNotEmpty).toList();
 
+    // Don't show section if empty (as per requirement)
     if (filteredItems.isEmpty) {
       return const SizedBox.shrink();
     }
 
     return Card(
       elevation: 0,
+      color: Colors.white,
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ExpansionTile(
         initiallyExpanded: true,
+        backgroundColor: Colors.white,
+        collapsedBackgroundColor: Colors.white,
         title: Text(
           title,
           style: const TextStyle(
@@ -222,22 +427,44 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         ),
         children: [
           Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 4,
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Column(
               children: filteredItems.map((item) {
                 final isSelected = selectedItems.contains(item);
-                return FilterChip(
-                  label: Text(item),
-                  selected: isSelected,
-                  onSelected: (selected) => onToggle(item),
-                  backgroundColor: isSelected ? null : Colors.grey[100],
-                  selectedColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                  checkmarkColor: Colors.white,
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : Colors.black87,
-                    fontSize: 13,
+                return InkWell(
+                  onTap: () => onToggle(item),
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border(
+                        bottom: BorderSide(
+                          color: Colors.grey[200]!,
+                          width: 0.5,
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                        Checkbox(
+                          value: isSelected,
+                          onChanged: (value) => onToggle(item),
+                          activeColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               }).toList(),
@@ -338,7 +565,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                "Search matched $_matchedLevel: $_matchedValue",
+                                "Search matched $_matchedLevel: ${_getCleanMatchedValue()}",
                                 style: const TextStyle(
                                   color: Colors.blue,
                                   fontSize: 13,
@@ -349,41 +576,54 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                         ),
                       ),
 
-                    // OCCUPATION FILTER
-                    _buildFilterSection(
-                      title: "Occupation",
-                      items: _availableOccupations,
-                      selectedItems: _currentFilters.occupations,
-                      onToggle: _toggleOccupation,
-                      showAll: _matchedLevel != 'occupation',
-                    ),
+                    // OCCUPATION FILTER - Only show if occupation matched or no match
+                    if (_matchedLevel == null || _matchedLevel == 'occupation')
+                      _buildFilterSection(
+                        title: "Level 1",
+                        items: _availableOccupations,
+                        selectedItems: _currentFilters.occupations,
+                        onToggle: _toggleOccupation,
+                        showAll: true,
+                      ),
 
-                    // PROFESSION FILTER
-                    _buildFilterSection(
-                      title: "Profession",
-                      items: _availableProfessions,
-                      selectedItems: _currentFilters.professions,
-                      onToggle: _toggleProfession,
-                      showAll: _matchedLevel != 'profession',
-                    ),
+                    // PROFESSION FILTER - Hide if profession matched (show only child levels)
+                    if (_matchedLevel == null || _matchedLevel == 'occupation' || _matchedLevel == 'profession')
+                      if (_matchedLevel != 'profession')
+                        _buildFilterSection(
+                          title: "Level 2",
+                          items: _availableProfessions,
+                          selectedItems: _currentFilters.professions,
+                          onToggle: _toggleProfession,
+                          showAll: true,
+                        ),
 
-                    // SPECIALIZATION FILTER
+                    // SPECIALIZATION FILTER - Always show if available
                     _buildFilterSection(
-                      title: "Specialization",
+                      title: "Level 3",
                       items: _availableSpecializations,
                       selectedItems: _currentFilters.specializations,
                       onToggle: _toggleSpecialization,
-                      showAll: _matchedLevel != 'specialization',
+                      showAll: true,
                     ),
 
-                    // SUB-CATEGORY FILTER
+                    // SUB-CATEGORY FILTER - Always show if available
                     _buildFilterSection(
-                      title: "Sub Category",
+                      title: "Level 4",
                       items: _availableSubcategories,
                       selectedItems: _currentFilters.subcategories,
                       onToggle: _toggleSubcategory,
-                      showAll: _matchedLevel != 'subcategory',
+                      showAll: true,
                     ),
+
+                    // SUB-SUB-CATEGORY FILTER
+                    if (_availableSubSubcategories.isNotEmpty)
+                      _buildFilterSection(
+                        title: "Level 5",
+                        items: _availableSubSubcategories,
+                        selectedItems: _currentFilters.subSubcategories,
+                        onToggle: _toggleSubSubcategory,
+                        showAll: true,
+                      ),
 
                     // PRODUCT CATEGORY FILTER (if you have product search)
                     if (_availableProductCategories.isNotEmpty)

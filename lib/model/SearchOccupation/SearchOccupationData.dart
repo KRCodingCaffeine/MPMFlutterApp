@@ -6,6 +6,10 @@ class OccupationInfo {
   String? professionName;
   String? specializationId;
   String? specializationName;
+  String? specializationSubCategoryId;
+  String? specializationSubCategoryName;
+  String? specializationSubSubCategoryId;
+  String? specializationSubSubCategoryName;
 
   OccupationInfo({
     this.occupationId,
@@ -14,6 +18,10 @@ class OccupationInfo {
     this.professionName,
     this.specializationId,
     this.specializationName,
+    this.specializationSubCategoryId,
+    this.specializationSubCategoryName,
+    this.specializationSubSubCategoryId,
+    this.specializationSubSubCategoryName,
   });
 
   factory OccupationInfo.fromJson(Map<String, dynamic> json) {
@@ -24,6 +32,10 @@ class OccupationInfo {
       professionName: json['profession_name']?.toString(),
       specializationId: json['specialization_id']?.toString(),
       specializationName: json['specialization_name']?.toString(),
+      specializationSubCategoryId: json['specialization_sub_category_id']?.toString(),
+      specializationSubCategoryName: json['specialization_sub_category_name']?.toString(),
+      specializationSubSubCategoryId: json['specialization_sub_sub_category_id']?.toString(),
+      specializationSubSubCategoryName: json['specialization_sub_sub_category_name']?.toString(),
     );
   }
 }
@@ -39,6 +51,13 @@ class SearchOccupationData {
   String? email;
   String? profileImage;
   OccupationInfo? occupation;
+  
+  // Additional fields from API response for filtering
+  String? occupationName;
+  String? occupationProfessionName;
+  String? specializationName;
+  String? subCategoryName;
+  String? subSubCategoryName;
 
   SearchOccupationData({
     this.memberId,
@@ -51,6 +70,11 @@ class SearchOccupationData {
     this.email,
     this.profileImage,
     this.occupation,
+    this.occupationName,
+    this.occupationProfessionName,
+    this.specializationName,
+    this.subCategoryName,
+    this.subSubCategoryName,
   });
 
   factory SearchOccupationData.fromJson(Map<String, dynamic> json) {
@@ -72,11 +96,30 @@ class SearchOccupationData {
       email: json['email']?.toString(),
       profileImage: json['profile_image']?.toString(),
       occupation: occupationInfo,
+      // Extract filter fields directly from JSON (matching PHP structure)
+      // Check if occupation is a Map/object first, then extract name
+      occupationName: json['occupation'] is Map 
+          ? json['occupation']['occupation_name']?.toString()
+          : (json['occupation_name']?.toString() ?? json['occupation']?.toString() ?? occupationInfo?.occupationName),
+      occupationProfessionName: json['occupation'] is Map
+          ? json['occupation']['profession_name']?.toString()
+          : (json['occupation_profession_name']?.toString() ?? occupationInfo?.professionName),
+      specializationName: json['occupation'] is Map
+          ? json['occupation']['specialization_name']?.toString()
+          : (json['specialization_name']?.toString() ?? occupationInfo?.specializationName),
+      subCategoryName: json['occupation'] is Map
+          ? json['occupation']['specialization_sub_category_name']?.toString()
+          : (json['sub_category_name']?.toString() ?? occupationInfo?.specializationSubCategoryName),
+      subSubCategoryName: json['occupation'] is Map
+          ? json['occupation']['specialization_sub_sub_category_name']?.toString()
+          : (json['sub_sub_category_name']?.toString() ?? occupationInfo?.specializationSubSubCategoryName),
     );
   }
 
   // Helper getters for occupation data
-  String? get occupationName => occupation?.occupationName;
-  String? get professionName => occupation?.professionName;
-  String? get specializationName => occupation?.specializationName;
+  String? get occupationNameValue => occupationName ?? occupation?.occupationName;
+  String? get professionNameValue => occupationProfessionName ?? occupation?.professionName;
+  String? get specializationNameValue => specializationName ?? occupation?.specializationName;
+  String? get subCategoryNameValue => subCategoryName ?? occupation?.specializationSubCategoryName;
+  String? get subSubCategoryNameValue => subSubCategoryName ?? occupation?.specializationSubSubCategoryName;
 }

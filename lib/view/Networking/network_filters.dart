@@ -4,6 +4,7 @@ class NetworkFilters {
   final List<String> professions;
   final List<String> specializations;
   final List<String> subcategories;
+  final List<String> subSubcategories;
   final List<String> productCategories;
   final List<String> productSubcategories;
 
@@ -12,6 +13,7 @@ class NetworkFilters {
     this.professions = const [],
     this.specializations = const [],
     this.subcategories = const [],
+    this.subSubcategories = const [],
     this.productCategories = const [],
     this.productSubcategories = const [],
   });
@@ -23,6 +25,7 @@ class NetworkFilters {
     List<String>? professions,
     List<String>? specializations,
     List<String>? subcategories,
+    List<String>? subSubcategories,
     List<String>? productCategories,
     List<String>? productSubcategories,
   }) {
@@ -31,6 +34,7 @@ class NetworkFilters {
       professions: professions ?? this.professions,
       specializations: specializations ?? this.specializations,
       subcategories: subcategories ?? this.subcategories,
+      subSubcategories: subSubcategories ?? this.subSubcategories,
       productCategories: productCategories ?? this.productCategories,
       productSubcategories: productSubcategories ?? this.productSubcategories,
     );
@@ -41,6 +45,7 @@ class NetworkFilters {
           professions.isNotEmpty ||
           specializations.isNotEmpty ||
           subcategories.isNotEmpty ||
+          subSubcategories.isNotEmpty ||
           productCategories.isNotEmpty ||
           productSubcategories.isNotEmpty;
 
@@ -66,6 +71,11 @@ class NetworkFilters {
     if (subcategories.isNotEmpty) {
       for (var subcategory in subcategories) {
         params.add('subcategories[]=${Uri.encodeComponent(subcategory)}');
+      }
+    }
+    if (subSubcategories.isNotEmpty) {
+      for (var subSubcategory in subSubcategories) {
+        params.add('sub_subcategories[]=${Uri.encodeComponent(subSubcategory)}');
       }
     }
     if (productCategories.isNotEmpty) {
@@ -97,6 +107,9 @@ class NetworkFilters {
     }
     if (subcategories.isNotEmpty) {
       json['subcategories'] = subcategories;
+    }
+    if (subSubcategories.isNotEmpty) {
+      json['sub_subcategories'] = subSubcategories;
     }
     if (productCategories.isNotEmpty) {
       json['product_categories'] = productCategories;
