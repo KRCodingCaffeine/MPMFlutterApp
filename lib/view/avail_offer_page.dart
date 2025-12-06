@@ -667,6 +667,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // Left Side: Medicine List
                 const Text(
                   'Medicine List',
                   style: TextStyle(
@@ -675,6 +676,25 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
                     color: Colors.black87,
                   ),
                 ),
+
+                // Middle: Place Order Button
+                ElevatedButton(
+                  onPressed: offerList.isNotEmpty ? _showConfirmDialog : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    "Place Order",
+                    style: TextStyle(fontSize: 14),
+                  ),
+                ),
+
+                // Right: Add Medicine Button
                 TextButton(
                   onPressed: _showInputDialog,
                   style: TextButton.styleFrom(
@@ -728,28 +748,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
           const SizedBox(height: 80),
         ],
       ),
-      bottomNavigationBar: selectedImage != null
-          ? Container(
-        padding: const EdgeInsets.all(16),
-        child: ElevatedButton(
-          onPressed: offerList.isNotEmpty ? _showConfirmDialog : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-            foregroundColor: Colors.white,
-            disabledForegroundColor: Colors.white.withOpacity(0.6),
-            disabledBackgroundColor: Colors.redAccent.withOpacity(0.6),
-            minimumSize: const Size(double.infinity, 50),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          child: const Text(
-            "Place Order",
-            style: TextStyle(fontSize: 16),
-          ),
-        ),
-      )
-          : null,
+
     );
   }
 }

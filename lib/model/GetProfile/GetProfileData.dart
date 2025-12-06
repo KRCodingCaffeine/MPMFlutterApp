@@ -68,7 +68,7 @@ class GetProfileData {
   final List<FamilyMembersData>? familyMembersData;
   final FamilyHeadMemberData? familyHeadMemberData;
   final List<Qualification>? qualification;
-  final Occupation? occupation;
+  final List<Occupation>? occupation;
   final List<BusinessInfo>? businessInfo;
 
   GetProfileData({
@@ -167,11 +167,13 @@ class GetProfileData {
       emailVerifyStatus: json['email_verify_status']?.toString(),
       emailVerificationToken: json['email_verification_token']?.toString(),
       sangathanApprovalStatus: json['sangathan_approval_status']?.toString(),
-      vyavasthapikaApprovalStatus: json['vyavasthapika_approval_status']?.toString(),
+      vyavasthapikaApprovalStatus:
+          json['vyavasthapika_approval_status']?.toString(),
       memberStatusId: json['member_status_id']?.toString(),
       deceasedReason: json['deceased_reason']?.toString(),
       deceasedDate: json['deceased_date']?.toString(),
-      membershipApprovalStatusId: json['membership_approval_status_id']?.toString(),
+      membershipApprovalStatusId:
+          json['membership_approval_status_id']?.toString(),
       membershipTypeId: json['membership_type_id']?.toString(),
       isPaymentReceived: json['is_payment_received']?.toString(),
       maritalStatus: json['marital_status']?.toString(),
@@ -181,7 +183,8 @@ class GetProfileData {
       saraswaniOptionId: json['saraswani_option_id']?.toString(),
       saraswaniOption: json['saraswani_option']?.toString(),
       isSaraswaniBlocked: json['is_saraswani_blocked']?.toString(),
-      memberApplicationDocument: json['member_application_document']?.toString(),
+      memberApplicationDocument:
+          json['member_application_document']?.toString(),
       membershipAllotmentDate: json['membership_allotment_date']?.toString(),
       deviceToken: json['device_token']?.toString(),
       familyHeadMemberId: json['family_head_member_id']?.toString(),
@@ -197,27 +200,32 @@ class GetProfileData {
       addressProofPath: json['address_proof_path']?.toString(),
       documentType: json['document_type']?.toString(),
       address: json['address'] != null
-          ? Address.fromJson(json['address'] as Map<String, dynamic>)
+          ? (json['address'] is List
+              ? (json['address'] as List).isNotEmpty
+                  ? Address.fromJson(json['address'][0] as Map<String, dynamic>)
+                  : null
+              : Address.fromJson(json['address'] as Map<String, dynamic>))
           : null,
       familyMembersData: json['family_members_data'] != null
-          ? List<FamilyMembersData>.from(
-          (json['family_members_data'] as List)
+          ? List<FamilyMembersData>.from((json['family_members_data'] as List)
               .map((x) => FamilyMembersData.fromJson(x)))
           : null,
       familyHeadMemberData: json['family_head_member_data'] != null
           ? FamilyHeadMemberData.fromJson(json['family_head_member_data'])
           : null,
       qualification: json['qualification'] != null
-          ? List<Qualification>.from(
-          (json['qualification'] as List)
+          ? List<Qualification>.from((json['qualification'] as List)
               .map((x) => Qualification.fromJson(x)))
           : null,
       occupation: json['occupation'] != null
-          ? Occupation.fromJson(json['occupation'])
-          : null,
+          ? (json['occupation'] is List
+          ? (json['occupation'] as List)
+          .map((x) => Occupation.fromJson(x))
+          .toList()
+          : [Occupation.fromJson(json['occupation'])])
+          : [],
       businessInfo: json['business_info'] != null
-          ? List<BusinessInfo>.from(
-          (json['business_info'] as List)
+          ? List<BusinessInfo>.from((json['business_info'] as List)
               .map((x) => BusinessInfo.fromJson(x)))
           : null,
     );
@@ -286,7 +294,7 @@ class GetProfileData {
       'family_members_data': familyMembersData?.map((x) => x.toJson()).toList(),
       'family_head_member_data': familyHeadMemberData?.toJson(),
       'qualification': qualification?.map((x) => x.toJson()).toList(),
-      'occupation': occupation?.toJson(),
+      'occupation': occupation?.map((x) => x.toJson()).toList(),
       'business_info': businessInfo?.map((x) => x.toJson()).toList(),
     };
   }

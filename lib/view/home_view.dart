@@ -59,9 +59,12 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
       {'icon': Images.discount, 'label': 'Discounts & Offers'},
       {'icon': Images.events, 'label': 'Events'},
       {'icon': Images.saraswani, 'label': 'Saraswani'},
-      {'icon': Images.event_trip, 'label': 'Trips'},
-      {'icon': Images.network, 'label': 'Networking'}
+      {'icon': Images.event_trip, 'label': 'Trips'}
     ];
+
+    if (memberId == 1 || memberId == 2 || memberId == 2040) {
+      items.add({'icon': Images.network, 'label': 'Networking'});
+    }
 
     if (memberId == 1 || memberId == 2) {
       items.add({'icon': Images.qr_code, 'label': 'QR Code Scanner'});
@@ -447,7 +450,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                           ),
                           SizedBox(height: cardHeight * 0.02),
                           Text(
-                            "Free Home Delivery",
+                              "Free Home Delivery • Arrives in 2–3 Days",
                             style: TextStyle(
                               fontSize: subtitleFontSize,
                               fontWeight: FontWeight.w600,

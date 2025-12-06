@@ -8,6 +8,8 @@ import 'package:mpm/model/GetProfile/GetProfileModel.dart';
 import 'package:mpm/model/Occupation/OccupationModel.dart';
 import 'package:mpm/model/Occupation/addoccuption/AddOccuptionModel.dart';
 import 'package:mpm/model/OccupationSpec/OccuptionSpecialization.dart';
+import 'package:mpm/model/OccuptionSpecSubCategory/OccuptionSpecSubCategoryModel.dart';
+import 'package:mpm/model/OccuptionSpecSubSubCategory/OccuptionSpecSubSubCategoryModelClass.dart';
 import 'package:mpm/model/Qualification/QualificationModel.dart';
 import 'package:mpm/model/QualificationCategory/QualificationCategoryModel.dart';
 import 'package:mpm/model/QualificationMain/QualicationMainModel.dart';
@@ -20,18 +22,54 @@ class UpdateProfileRepository {
   var http;
 
   Future<GetUserProfileModel> getUserData(String memberId) async {
+    dynamic response;
     try {
       final url = Uri.parse(Urls.getProfile_url).replace(
         queryParameters: {'member_id': memberId},
       );
 
-      final response = await api.getApi(url.toString(), "");
+      response = await api.getApi(url.toString(), "");
 
       if (response == null) {
         throw Exception("Null response from API");
       }
 
-      final parsedResponse = GetUserProfileModel.fromJson(response);
+      // Handle case where response might be a List instead of Map
+      Map<String, dynamic> responseMap;
+      if (response is List) {
+        // If response is a List, wrap it in a Map structure
+        if (response.isEmpty) {
+          throw Exception("Empty response from API");
+        }
+        // Take first element if it's a list
+        responseMap = response[0] as Map<String, dynamic>;
+      } else if (response is Map<String, dynamic>) {
+        responseMap = response;
+      } else {
+        throw Exception("Unexpected response type: ${response.runtimeType}");
+      }
+
+      // Check if data field exists and handle if it's a List
+      if (responseMap.containsKey('data')) {
+        final dataValue = responseMap['data'];
+        if (dataValue is List) {
+          if (dataValue.isEmpty) {
+            throw Exception("Profile data is empty in API response");
+          }
+          // If data is a List, take the first element
+          final firstElement = dataValue[0];
+          if (firstElement is Map<String, dynamic>) {
+            responseMap['data'] = firstElement;
+          } else {
+            throw Exception("Profile data list element is not a valid Map");
+          }
+        } else if (dataValue != null && dataValue is! Map<String, dynamic>) {
+          throw Exception("Profile data is not a valid Map or List");
+        }
+        // If data is already a Map, keep it as is
+      }
+
+      final parsedResponse = GetUserProfileModel.fromJson(responseMap);
 
       if (parsedResponse.data == null) {
         throw Exception("Profile data is null in API response");
@@ -39,7 +77,6 @@ class UpdateProfileRepository {
 
       return parsedResponse;
     } catch (e) {
-      print("Error fetching user data: $e");
       rethrow;
     }
   }
@@ -115,6 +152,37 @@ class UpdateProfileRepository {
         await api.postApi(data, Urls.occuption_specialization_url, "", "2");
     //print("vdgvgdv"+response.toString());
     return OccuptionSpectionModel.fromJson(response);
+  }
+
+  Future<OccuptionSpecSubCategoryModel> userOccutionSpectionSubCategoryApi(
+      String specId) async {
+
+    // Use form-data with POST request instead of query parameters
+    Map<String, dynamic> data = {
+      "occupation_specialization_id": specId,
+    };
+
+    dynamic response = await api.postApi(
+      data,
+      Urls.occuption_specialization_subcategory_url,
+      "",
+      "2",
+    );
+
+    return OccuptionSpecSubCategoryModel.fromJson(response);
+  }
+
+  Future<OccuptionSpecSubSubCategoryModelClass>
+  userOccutionSpecializationSubSubCategoryApi(String subCategoryId) async {
+
+    final url = "${Urls.occupation_specialization_sub_sub_category_url}"
+        "?occupation_specialization_sub_category_id=$subCategoryId";
+
+    print("🔎 Level-5 Sub-Sub-Category API URL: $url");
+
+    final response = await api.getApi(url, "");
+
+    return OccuptionSpecSubSubCategoryModelClass.fromJson(response);
   }
 
   Future<AddOccuptionModel> updateOrAddOccuption(data) async {
