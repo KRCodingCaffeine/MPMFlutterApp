@@ -66,6 +66,10 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
       items.add({'icon': Images.network, 'label': 'Networking'});
     }
 
+    if (memberId == 1 || memberId == 2 || memberId == 2040) {
+      items.add({'icon': Images.shiksha, 'label': 'Shiksha Sahayata'});
+    }
+
     if (memberId == 1 || memberId == 2) {
       items.add({'icon': Images.qr_code, 'label': 'QR Code Scanner'});
     }
@@ -719,6 +723,9 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
       case "Networking":
         Navigator.pushNamed(context, RouteNames.networking);
         break;
+      case "Shiksha Sahayata":
+        _showShikshaDialog();
+        break;
       case "QR Code Scanner":
          Navigator.pushNamed(context, RouteNames.qr_code);
          break;
@@ -726,6 +733,81 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
       //   _showAttendanceMarkedDialog(context);
       //   break;
     }
+  }
+
+  void _showShikshaDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Shiksha Sahayata By Parenting",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(color: Colors.grey),
+            ],
+          ),
+
+          content: const Text(
+            "Do you want to apply Shiksha Sahayata for?",
+            style: TextStyle(fontSize: 16, color: Colors.black87),
+          ),
+
+          actions: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                OutlinedButton(
+                  onPressed: () {
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.red),
+                    foregroundColor: Colors.red,
+                    padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text("My Self"),
+                ),
+
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, RouteNames.shiksha_sahayata);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text("By Parenting"),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
+        );
+      },
+    );
   }
 
   void _showAttendanceMarkedDialog(BuildContext context) {
