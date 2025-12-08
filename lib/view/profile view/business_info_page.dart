@@ -411,33 +411,61 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
     });
   }
 
-  void _initOccupationDataForEdit(Occupation occupation) {
-    // Initialize form fields with existing occupation data
+  void _initOccupationDataForEdit(Occupation occupation) async {
     controller.selectedOccupation.value =
         occupation.occupationId?.toString() ?? "";
+
     controller.selectedProfession.value =
         occupation.occupationProfessionId?.toString() ?? "";
+
     controller.selectedSpecialization.value =
         occupation.occupationSpecializationId?.toString() ?? "";
+
     controller.selectedSubCategory.value =
         occupation.occupationSpecializationSubCategoryId?.toString() ?? "";
+
+    controller.selectedSubSubCategory.value =
+        occupation.occupationSpecializationSubSubCategoryId?.toString() ?? "";
+
     controller.detailsController.value.text =
         occupation.occupationOtherName ?? "";
 
-    // Set the current occupation for update
     controller.currentOccupation.value = occupation;
 
-    // Load dependent data based on the selected values
     if (controller.selectedOccupation.value.isNotEmpty &&
         controller.selectedOccupation.value != "0") {
-      controller.getOccupationProData(controller.selectedOccupation.value);
+      await controller.getOccupationProData(
+          controller.selectedOccupation.value);
+    }
+
+    if (controller.selectedProfession.value.isNotEmpty &&
+        controller.selectedProfession.value != "Other") {
+      await controller.getOccupationSpectData(
+          controller.selectedProfession.value);
+    }
+
+    if (controller.selectedSpecialization.value.isNotEmpty &&
+        controller.selectedSpecialization.value != "Other") {
+      await controller.getOccupationSpecializationSubCategoryData(
+          controller.selectedSpecialization.value);
+    }
+
+    if (controller.selectedSubCategory.value.isNotEmpty &&
+        controller.selectedSubCategory.value != "Other") {
+      await controller.getOccupationSubSubCategoryData(
+          controller.selectedSubCategory.value);
     }
   }
 
   Future<void> _updateOccupation(Occupation oldData) async {
-    // Validate
     if (controller.selectedOccupation.value.isEmpty) {
-      Get.snackbar("Error", "Please select Level 1");
+      Get.snackbar(
+        "Error",
+        "Please select Level 1",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
       return;
     }
 
@@ -459,9 +487,13 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
       };
 
       print("📤 UPDATE PAYLOAD: $payload");
+
       final res = await updateOccupationRepo.updateOccupation(payload);
 
       if (res == true) {
+        final updateCtrl = Get.find<UdateProfileController>();
+        await updateCtrl.getUserProfile();
+
         Get.snackbar(
           "Success",
           "Occupation updated successfully!",
@@ -470,7 +502,9 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
           colorText: Colors.white,
         );
 
-        Navigator.of(context!).pop();
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
       } else {
         Get.snackbar(
           "Error",
@@ -492,7 +526,6 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
 
     controller.isOccupationLoading.value = false;
   }
-
 
   Widget
   _buildOccupationForm() {

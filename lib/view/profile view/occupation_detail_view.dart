@@ -60,16 +60,15 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
     controller.businessAreaNameController.value.clear();
     controller.businessPincodeController.value.clear();
 
-    // Clear dropdown selections
     regiController.country_id.value = '';
     regiController.state_id.value = '';
     regiController.city_id.value = '';
   }
 
   Future<void> _showAddBusinessModalSheet(
-      BuildContext context,
-      Occupation occupation,
-      ) async {
+    BuildContext context,
+    Occupation occupation,
+  ) async {
     _clearBusinessForm();
 
     showModalBottomSheet(
@@ -91,7 +90,6 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
             child: SafeArea(
               child: Column(
                 children: [
-                  // Header with buttons
                   Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16.0, vertical: 16.0),
@@ -152,9 +150,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 10),
-
                   Expanded(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -164,7 +160,6 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                           children: [
                             const SizedBox(height: 10),
 
-                            // Business Name
                             _buildTextField(
                               label: "Business Name *",
                               controller: controller.businessNameController,
@@ -315,7 +310,8 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
         ? business.addresses!.first
         : null;
 
-    // Populate business details
+    if (address == null) return;
+
     controller.businessNameController.value.text = business.businessName ?? '';
     controller.businessMobileController.value.text =
         business.businessMobile ?? '';
@@ -326,28 +322,87 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
     controller.businessWebsiteController.value.text =
         business.businessWebsite ?? '';
 
-    // Populate address details
-    if (address != null) {
-      controller.businessFlatNoController.value.text = address.flatNo ?? '';
-      controller.businessAddressController.value.text = address.address ?? '';
-      controller.businessAreaNameController.value.text = address.areaName ?? '';
-      controller.businessPincodeController.value.text = address.pincode ?? '';
+    controller.businessFlatNoController.value.text = address.flatNo ?? '';
+    controller.businessAddressController.value.text = address.address ?? '';
+    controller.businessAreaNameController.value.text = address.areaName ?? '';
+    controller.businessPincodeController.value.text = address.pincode ?? '';
 
-      // Set dropdown values
-      if (address.countryId != null) {
-        regiController.country_id.value = address.countryId.toString();
-      }
-      if (address.stateId != null) {
-        regiController.state_id.value = address.stateId.toString();
-      }
-      if (address.cityId != null) {
-        regiController.city_id.value = address.cityId.toString();
+    if (address.countryName != null && address.countryName!.isNotEmpty) {
+      final country = regiController.countryList.firstWhereOrNull(
+        (c) =>
+            c.countryName!.toLowerCase().trim() ==
+            address.countryName!.toLowerCase().trim(),
+      );
+
+      if (country != null) {
+        regiController.country_id.value = country.id.toString();
+        regiController.setSelectedCountry(country.id.toString());
       }
     }
+
+    ever(regiController.stateList, (_) {
+      if (address.stateName != null && address.stateName!.isNotEmpty) {
+        final state = regiController.stateList.firstWhereOrNull(
+          (s) =>
+              s.stateName!.toLowerCase().trim() ==
+              address.stateName!.toLowerCase().trim(),
+        );
+
+        if (state != null) {
+          regiController.state_id.value = state.id.toString();
+          regiController.setSelectedState(state.id.toString()); // loads cities
+        }
+      }
+    });
+
+    ever(regiController.cityList, (_) {
+      if (address.cityName != null && address.cityName!.isNotEmpty) {
+        final city = regiController.cityList.firstWhereOrNull(
+          (c) =>
+              c.cityName!.toLowerCase().trim() ==
+              address.cityName!.toLowerCase().trim(),
+        );
+
+        if (city != null) {
+          regiController.city_id.value = city.id.toString();
+        }
+      }
+    });
   }
 
   Future<void> _showEditBusinessModalSheet(
       BuildContext context, BusinessOccupationProfile business) async {
+    final address = business.addresses!.first;
+
+    await regiController.getState();
+    await regiController.getCity();
+
+    final selectedCountry = regiController.countryList.firstWhereOrNull(
+          (c) => c.countryName?.toLowerCase().trim() ==
+          address.countryName?.toLowerCase().trim(),
+    );
+
+    if (selectedCountry != null) {
+      regiController.country_id.value = selectedCountry.id.toString();
+    }
+
+    final selectedState = regiController.stateList.firstWhereOrNull(
+          (s) => s.stateName?.toLowerCase().trim() ==
+          address.stateName?.toLowerCase().trim(),
+    );
+
+    if (selectedState != null) {
+      regiController.state_id.value = selectedState.id.toString();
+    }
+
+    final selectedCity = regiController.cityList.firstWhereOrNull(
+          (c) => c.cityName?.toLowerCase().trim() ==
+          address.cityName?.toLowerCase().trim(),
+    );
+
+    if (selectedCity != null) {
+      regiController.city_id.value = selectedCity.id.toString();
+    }
     _populateEditForm(business);
 
     showModalBottomSheet(
@@ -369,7 +424,6 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
             child: SafeArea(
               child: Column(
                 children: [
-                  // Header with buttons
                   Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16.0, vertical: 16.0),
@@ -430,10 +484,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 10),
-
-                  // Form Content - This should be scrollable
                   Expanded(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -443,7 +494,6 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                           children: [
                             const SizedBox(height: 10),
 
-                            // Business Name
                             _buildTextField(
                               label: "Business Name *",
                               controller: controller.businessNameController,
@@ -456,7 +506,68 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Business Mobile
+                            _buildTextField(
+                              label: "Flat No *",
+                              controller: controller.businessFlatNoController,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter flat number';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+
+                            _buildTextField(
+                              label: "Address *",
+                              controller: controller.businessAddressController,
+                              maxLines: 3,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter address';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+
+                            _buildTextField(
+                              label: "Area *",
+                              controller: controller.businessAreaNameController,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter area';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+
+                            _buildCityDropdown(),
+                            const SizedBox(height: 16),
+
+                            _buildStateDropdown(),
+                            const SizedBox(height: 16),
+
+                            _buildCountryDropdown(),
+                            const SizedBox(height: 16),
+
+                            _buildTextField(
+                              label: "Pincode *",
+                              controller: controller.businessPincodeController,
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter pincode';
+                                }
+                                if (value.length != 6) {
+                                  return 'Please enter valid 6-digit pincode';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+
                             _buildTextField(
                               label: "Business Mobile *",
                               controller: controller.businessMobileController,
@@ -473,7 +584,6 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Business Landline
                             _buildTextField(
                               label: "Business Landline",
                               controller: controller.businessLandlineController,
@@ -481,7 +591,6 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Business Email
                             _buildTextField(
                               label: "Business Email",
                               controller: controller.businessEmailController,
@@ -489,7 +598,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                               validator: (value) {
                                 if (value != null && value.isNotEmpty) {
                                   if (!RegExp(
-                                          r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
                                       .hasMatch(value)) {
                                     return 'Please enter valid email';
                                   }
@@ -499,80 +608,10 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Business Website
                             _buildTextField(
                               label: "Business Website",
                               controller: controller.businessWebsiteController,
                               keyboardType: TextInputType.url,
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Flat No
-                            _buildTextField(
-                              label: "Flat No *",
-                              controller: controller.businessFlatNoController,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter flat number';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Address
-                            _buildTextField(
-                              label: "Address *",
-                              controller: controller.businessAddressController,
-                              maxLines: 3,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter address';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Area Name
-                            _buildTextField(
-                              label: "Area *",
-                              controller: controller.businessAreaNameController,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter area';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-
-                            // City Dropdown
-                            _buildCityDropdown(),
-                            const SizedBox(height: 16),
-
-                            // State Dropdown
-                            _buildStateDropdown(),
-                            const SizedBox(height: 16),
-
-                            // Country Dropdown
-                            _buildCountryDropdown(),
-                            const SizedBox(height: 16),
-
-                            // Pincode
-                            _buildTextField(
-                              label: "Pincode *",
-                              controller: controller.businessPincodeController,
-                              keyboardType: TextInputType.number,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter pincode';
-                                }
-                                if (value.length != 6) {
-                                  return 'Please enter valid 6-digit pincode';
-                                }
-                                return null;
-                              },
                             ),
                             const SizedBox(height: 30),
                           ],
@@ -1168,13 +1207,12 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
   }
 
   Widget _buildOccupationGroupCard(
-      Occupation occupation,
-      List<BusinessOccupationProfile> businesses,
-      ) {
-
+    Occupation occupation,
+    List<BusinessOccupationProfile> businesses,
+  ) {
     final bool hasBusiness = businesses.isNotEmpty;
     final BusinessOccupationProfile? firstBusiness =
-    hasBusiness ? businesses.first : null;
+        hasBusiness ? businesses.first : null;
 
     return Card(
       color: Colors.white,
@@ -1185,7 +1223,6 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             /// 🔥 HEADER ROW (Title + Button)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1200,8 +1237,6 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                     ),
                   ),
                 ),
-
-                /// ➕ IF NO BUSINESS → Show Add button
                 if (!hasBusiness)
                   ElevatedButton.icon(
                     label: const Text("Add Business"),
@@ -1212,13 +1247,12 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                       backgroundColor: Colors.red,
                       foregroundColor: Colors.white,
                       elevation: 3,
-                      padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8)),
                     ),
                   ),
-
                 if (hasBusiness)
                   PopupMenuButton<String>(
                     color: Colors.white,
@@ -1285,7 +1319,6 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
 
             const Divider(height: 20, thickness: .7),
 
-            /// 🔥 LEVELS 1–5
             _buildOccupationInfoRow("Level 1", occupation.occupation),
             _buildOccupationInfoRow(
                 "Level 2", occupation.occupationProfessionName),
@@ -1297,11 +1330,11 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
 
             if (occupation.occupationOtherName != null &&
                 occupation.occupationOtherName!.isNotEmpty)
-              _buildOccupationInfoRow("Details", occupation.occupationOtherName),
+              _buildOccupationInfoRow(
+                  "Details", occupation.occupationOtherName),
 
             const SizedBox(height: 10),
 
-            /// 🔥 BUSINESS CONTENT
             if (hasBusiness)
               Column(
                 children: businesses
@@ -1346,9 +1379,9 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
   }
 
   Widget _buildBusinessCardInsideGroup(
-      BusinessOccupationProfile business,
-      Occupation occupation,
-      ) {
+    BusinessOccupationProfile business,
+    Occupation occupation,
+  ) {
     final address =
         (business.addresses != null && business.addresses!.isNotEmpty)
             ? business.addresses!.first as BusinessAddressData
@@ -1524,9 +1557,9 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
   }
 
   Widget _buildActionButtons(
-      BusinessOccupationProfile business,
-      Occupation occupation,
-      ) {
+    BusinessOccupationProfile business,
+    Occupation occupation,
+  ) {
     final bool showProductListButton = occupation.occupationId == "2";
 
     return Column(
@@ -1540,7 +1573,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),

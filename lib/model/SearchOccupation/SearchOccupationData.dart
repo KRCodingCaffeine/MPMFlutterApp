@@ -85,8 +85,21 @@ class SearchOccupationData {
       occupationInfo = OccupationInfo.fromJson(json['occupation']);
     }
 
+    // 🔥 FIX: Handle nested member object OR direct member_id
+    String? parsedMemberId;
+
+    if (json['member_id'] != null) {
+      parsedMemberId = json['member_id'].toString();
+    } else if (json['member'] != null &&
+        json['member'] is Map &&
+        json['member']['member_id'] != null) {
+      parsedMemberId = json['member']['member_id'].toString();
+    } else {
+      parsedMemberId = null;
+    }
+
     return SearchOccupationData(
-      memberId: json['member_id']?.toString(),
+      memberId: parsedMemberId,
       memberCode: json['member_code']?.toString(),
       firstName: json['first_name']?.toString(),
       middleName: json['middle_name']?.toString(),

@@ -1,9 +1,12 @@
 // lib/view/Networking/network_view.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/model/SearchOccupation/SearchOccupationData.dart';
 import 'package:mpm/model/SearchOccupation/SearchOccupationModelClass.dart';
+import 'package:mpm/repository/BusinessProfileRepo/send_business_profile_repository/send_business_profile_repo.dart';
 import 'package:mpm/repository/search_occupation_repository/search_occupation_repo.dart';
+import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/urls.dart';
@@ -20,7 +23,9 @@ class NetworkView extends StatefulWidget {
 class _NetworkViewState extends State<NetworkView> {
   final TextEditingController _searchController = TextEditingController();
   final SearchOccupationRepository _repo = SearchOccupationRepository();
-  
+  final SendBusinessProfileRepository _sendRepo = SendBusinessProfileRepository();
+
+
   @override
   void initState() {
     super.initState();
@@ -637,28 +642,146 @@ class _NetworkViewState extends State<NetworkView> {
   void _showConnectDialog(SearchOccupationData member) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Connect with Member"),
-        content: Text(
-            "Send connection request to ${member.fullName ?? 'this member'}?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Implement connection request logic
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content:
-                      Text("Connection request sent to ${member.fullName}"),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Contact Member",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              Divider(thickness: 1, color: Colors.grey),
+            ],
+          ),
+
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildInfoRow("Name", member.fullName ?? "N/A"),
+              const SizedBox(height: 12),
+              _buildInfoRow("Mobile", member.mobile ?? "N/A"),
+              const SizedBox(height: 12),
+              _buildInfoRow(
+                "Profession",
+                "${member.occupationProfessionName ?? ''} - ${member.specializationName ?? ''}".trim(),
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              style: OutlinedButton.styleFrom(
+                foregroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
-              );
-            },
-            child: const Text("Send Request"),
+              ),
+              child: const Text("Cancel"),
+            ),
+
+            // SEND MESSAGE BUTTON
+            ElevatedButton(
+              onPressed: () async {
+                // Keep dialog open until API finishes
+                try {
+                  final CheckUserData2? userData = await SessionManager.getSession();
+
+                  if (userData == null || userData.memberId == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("User session expired. Please login again."),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+
+                  final String requestMemberId = userData.memberId.toString();
+                  final String memberId = member.memberId.toString();
+
+                  debugPrint("📤 Sending request: member_id=$memberId, request_member_id=$requestMemberId");
+
+                  final response = await _sendRepo.sendBusinessProfile(
+                    memberId: memberId,
+                    requestMemberId: requestMemberId,
+                  );
+
+                  // Close dialog AFTER API response
+                  Navigator.pop(dialogContext);
+
+                  // Show snackbar on main screen
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        response.message ?? "Message sent successfully",
+                      ),
+                      backgroundColor: response.status == true
+                          ? Colors.green
+                          : Colors.red,
+                    ),
+                  );
+
+                } catch (e) {
+                  Navigator.pop(dialogContext);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Something went wrong"),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Send Message"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoRow(String title, String value) {
+    return RichText(
+      text: TextSpan(
+        children: [
+          TextSpan(
+            text: "$title: ",
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+              color: Colors.black,
+            ),
           ),
+          TextSpan(
+            text: value,
+            style: const TextStyle(
+              fontWeight: FontWeight.w500,
+              fontSize: 15,
+              color: Colors.black87,
+            ),
+          )
         ],
       ),
     );
