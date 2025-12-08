@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/ShikshaSahayata/applicant_detail.dart';
+import 'package:mpm/view/ShikshaSahayata/family_detail.dart';
 
 class ShikshaSahayataView extends StatefulWidget {
   const ShikshaSahayataView({super.key});
@@ -49,8 +50,12 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
             buildCustomButton(
               title: "Family Detail",
               icon: Icons.family_restroom,
-              onTap: () {},
-            ),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const FamilyDetail(),
+                ),
+              ),            ),
 
             buildCustomButton(
               title: "Education Detail",
