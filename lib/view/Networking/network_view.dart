@@ -126,17 +126,16 @@ class _NetworkViewState extends State<NetworkView> {
         fullDetails: true,
       );
 
-      if (res.data != null && res.data!.isNotEmpty) {
-        return res.data!.first;   // This is BusinessOccupationProfileData
-      }
+      // If no data, return null
+      if (res.data == null || res.data!.isEmpty) return null;
 
-      return null;
+      // Return the first profile directly
+      return res.data!.first;
     } catch (e) {
       debugPrint("❌ Error fetching business profile: $e");
       return null;
     }
   }
-
 
   // Handle suggestion tap - THIS IS THE ONLY WAY TO TRIGGER SEARCH
   void _onSuggestionTap(dynamic suggestion) {
@@ -161,7 +160,6 @@ class _NetworkViewState extends State<NetworkView> {
     }
   }
 
-// In your NetworkView class
 // In your NetworkView class
   Future<void> _performSearch({bool resetPage = true}) async {
     if (resetPage) {
@@ -613,7 +611,7 @@ class _NetworkViewState extends State<NetworkView> {
             ClipRRect(
               borderRadius: BorderRadius.circular(60),
               child: SizedBox(
-                height: 80,
+                height: 100,
                 width: 100,
                 child: member.profileImage != null &&
                     member.profileImage!.isNotEmpty
@@ -692,41 +690,40 @@ class _NetworkViewState extends State<NetworkView> {
               ),
             ),
 
-            const SizedBox(height: 8),
+            // const SizedBox(height: 8),
 
             // 🔥 NEW — View Detail Button
-            SizedBox(
-              width: double.infinity,
-              height: 36,
-              child: OutlinedButton(
-                onPressed: () async {
-                  // Show loader
-                  showDialog(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (_) => const Center(child: CircularProgressIndicator()),
-                  );
-
-                  final business = await _fetchBusinessProfile(member.memberId.toString());
-
-                  Navigator.pop(context); // Close loader
-
-                  _showMemberDetailDialog(member, business);
-                },
-
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: themeColor),
-                  foregroundColor: themeColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: const Text(
-                  "View Detail",
-                  style: TextStyle(fontSize: 13),
-                ),
-              ),
-            ),
+            // SizedBox(
+            //   width: double.infinity,
+            //   height: 36,
+            //   child: OutlinedButton(
+            //     onPressed: () async {
+            //       showDialog(
+            //         context: context,
+            //         barrierDismissible: false,
+            //         builder: (_) => const Center(child: CircularProgressIndicator()),
+            //       );
+            //
+            //       final business = await _fetchBusinessProfile(member.memberId.toString());
+            //
+            //       Navigator.pop(context);
+            //
+            //       _showMemberDetailDialog(member, business);
+            //     },
+            //
+            //     style: OutlinedButton.styleFrom(
+            //       side: BorderSide(color: themeColor),
+            //       foregroundColor: themeColor,
+            //       shape: RoundedRectangleBorder(
+            //         borderRadius: BorderRadius.circular(10),
+            //       ),
+            //     ),
+            //     child: const Text(
+            //       "View Detail",
+            //       style: TextStyle(fontSize: 13),
+            //     ),
+            //   ),
+            // ),
           ],
         ),
       ),
@@ -897,6 +894,7 @@ class _NetworkViewState extends State<NetworkView> {
       barrierDismissible: true,
       builder: (context) {
         return Dialog(
+          backgroundColor: Colors.white,
           insetPadding: const EdgeInsets.all(20),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Container(
@@ -968,10 +966,13 @@ class _NetworkViewState extends State<NetworkView> {
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            const SizedBox(height: 16),
+
+                            const SizedBox(height: 12),
+                            Divider(color: Colors.grey[400]),
+                            const SizedBox(height: 12),
 
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.start,
                               children: [
                                 const Icon(Icons.phone, size: 18),
                                 const SizedBox(width: 6),
@@ -1088,7 +1089,7 @@ class _NetworkViewState extends State<NetworkView> {
           ),
           const SizedBox(height: 20),
           Text(
-            _hasSearched ? "No results found" : "Search for members",
+            _hasSearched ? "No results found" : "Search for Connect",
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w500,
@@ -1099,7 +1100,7 @@ class _NetworkViewState extends State<NetworkView> {
           Text(
             _hasSearched
                 ? "Try different search terms or filters"
-                : "Enter a name, profession, or specialization to find members",
+                : "Enter occupation(doctors, lawyers, consultants) to find members",
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
@@ -1182,7 +1183,7 @@ class _NetworkViewState extends State<NetworkView> {
                         },
                         decoration: InputDecoration(
                           hintText:
-                              "Search members, profession, specialization...",
+                              "Search occupation(doctors, lawyers, consultants)…",
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 14),
