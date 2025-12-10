@@ -1,14 +1,27 @@
 // lib/view/Networking/network_view.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_navigation/get_navigation.dart';
+import 'package:mpm/model/BusinessProfile/BusinessAddress/BusinessAddressData.dart';
+import 'package:mpm/model/BusinessProfile/BusinessOccupationProfile/BusinessOccupationProfileData.dart';
+import 'package:mpm/model/BusinessProfile/GetAllBusinessOccupationProfile/GetAllBusinessOccupationProfileModelClass.dart';
+import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/model/SearchOccupation/SearchOccupationData.dart';
 import 'package:mpm/model/SearchOccupation/SearchOccupationModelClass.dart';
+import 'package:mpm/repository/BusinessProfileRepo/business_occupation_profile_repository/business_occupation_profile_repo.dart';
+import 'package:mpm/repository/BusinessProfileRepo/send_business_profile_repository/send_business_profile_repo.dart';
 import 'package:mpm/repository/search_occupation_repository/search_occupation_repo.dart';
+import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/urls.dart';
 import 'package:mpm/view/Networking/filter_bottom_sheet.dart';
 import 'package:mpm/view/Networking/network_filters.dart';
+import 'package:mpm/view/profile%20view/occupation_detail_view.dart';
+import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
+
 
 class NetworkView extends StatefulWidget {
   const NetworkView({super.key});
@@ -18,9 +31,14 @@ class NetworkView extends StatefulWidget {
 }
 
 class _NetworkViewState extends State<NetworkView> {
+  UdateProfileController controller =Get.put(UdateProfileController());
   final TextEditingController _searchController = TextEditingController();
   final SearchOccupationRepository _repo = SearchOccupationRepository();
-  
+  final SendBusinessProfileRepository _sendRepo =
+      SendBusinessProfileRepository();
+  final BusinessOccupationProfileRepository _businessRepo =
+  BusinessOccupationProfileRepository();
+
   @override
   void initState() {
     super.initState();
@@ -35,7 +53,8 @@ class _NetworkViewState extends State<NetworkView> {
   bool _isLoading = false;
   bool _hasSearched = false;
   List<SearchOccupationData> _results = [];
-  List<SearchOccupationData> _allResults = []; // Store all unfiltered results from API
+  List<SearchOccupationData> _allResults =
+      []; // Store all unfiltered results from API
 
   // Filters
   NetworkFilters _filters = NetworkFilters.empty();
@@ -106,19 +125,39 @@ class _NetworkViewState extends State<NetworkView> {
     }
   }
 
+  Future<BusinessOccupationProfileData?> _fetchBusinessProfile(String memberId) async {
+    try {
+      final res = await _businessRepo.fetchBusinessOccupationProfiles(
+        memberId: memberId,
+        fullDetails: true,
+      );
+
+      // If no data, return null
+      if (res.data == null || res.data!.isEmpty) return null;
+
+      // Return the first profile directly
+      return res.data!.first;
+    } catch (e) {
+      debugPrint("❌ Error fetching business profile: $e");
+      return null;
+    }
+  }
+
   // Handle suggestion tap - THIS IS THE ONLY WAY TO TRIGGER SEARCH
   void _onSuggestionTap(dynamic suggestion) {
     // Use search_term from suggestion for the actual search
-    final searchValue = suggestion.searchTerm ?? suggestion.value ?? suggestion.name ?? '';
-    debugPrint("Suggestion tapped: ${suggestion.displayText ?? suggestion.name} (${suggestion.type})");
+    final searchValue =
+        suggestion.searchTerm ?? suggestion.value ?? suggestion.name ?? '';
+    debugPrint(
+        "Suggestion tapped: ${suggestion.displayText ?? suggestion.name} (${suggestion.type})");
     debugPrint("Using search_term: $searchValue");
-    
+
     setState(() {
       _searchController.text = searchValue;
       _showSuggestions = false;
       _searchFocusNode.unfocus();
     });
-    
+
     // Trigger search ONLY when suggestion is clicked
     if (searchValue.isNotEmpty) {
       _performSearch(resetPage: true);
@@ -127,7 +166,6 @@ class _NetworkViewState extends State<NetworkView> {
     }
   }
 
-// In your NetworkView class
 // In your NetworkView class
   Future<void> _performSearch({bool resetPage = true}) async {
     if (resetPage) {
@@ -188,47 +226,66 @@ class _NetworkViewState extends State<NetworkView> {
         _totalPages = (_totalResults / _limit).ceil();
         debugPrint("Total results from API: $_totalResults");
         debugPrint("Results data length: ${response.data?.length ?? 0}");
-        
+
         // Apply filters to the results
         _applyLocalFilters();
 
         // Update filter options from API response or extract from results
         if (response.filters != null) {
           debugPrint("========== FILTERS FROM API ==========");
-          debugPrint("Occupations (${response.filters!.occupations.length}): ${response.filters!.occupations}");
-          debugPrint("Professions (${response.filters!.professions.length}): ${response.filters!.professions}");
-          debugPrint("Specializations (${response.filters!.specializations.length}): ${response.filters!.specializations}");
-          debugPrint("Subcategories (${response.filters!.subcategories.length}): ${response.filters!.subcategories}");
-          debugPrint("Sub-subcategories (${response.filters!.subSubcategories.length}): ${response.filters!.subSubcategories}");
+          debugPrint(
+              "Occupations (${response.filters!.occupations.length}): ${response.filters!.occupations}");
+          debugPrint(
+              "Professions (${response.filters!.professions.length}): ${response.filters!.professions}");
+          debugPrint(
+              "Specializations (${response.filters!.specializations.length}): ${response.filters!.specializations}");
+          debugPrint(
+              "Subcategories (${response.filters!.subcategories.length}): ${response.filters!.subcategories}");
+          debugPrint(
+              "Sub-subcategories (${response.filters!.subSubcategories.length}): ${response.filters!.subSubcategories}");
           debugPrint("======================================");
-          
+
           // Check if subcategories should be hidden (if it only contains the matched search term)
           List<String> subcategoriesToShow = response.filters!.subcategories;
-          if (subcategoriesToShow.length == 1 && 
-              subcategoriesToShow.first.toLowerCase() == searchTerm.toLowerCase()) {
-            debugPrint("Hiding subcategories - only contains matched search term: ${subcategoriesToShow.first}");
+          if (subcategoriesToShow.length == 1 &&
+              subcategoriesToShow.first.toLowerCase() ==
+                  searchTerm.toLowerCase()) {
+            debugPrint(
+                "Hiding subcategories - only contains matched search term: ${subcategoriesToShow.first}");
             subcategoriesToShow = [];
           }
-          
+
           _availableFilters = {
-            'occupations': response.filters!.occupations, // Will be hidden if empty
-            'professions': response.filters!.professions, // Will be hidden if empty
-            'specializations': response.filters!.specializations, // Will be hidden if empty
-            'subcategories': subcategoriesToShow, // Hidden if empty or only matched term
-            'sub_subcategories': response.filters!.subSubcategories, // Show all sub-subcategories
+            'occupations':
+                response.filters!.occupations, // Will be hidden if empty
+            'professions':
+                response.filters!.professions, // Will be hidden if empty
+            'specializations':
+                response.filters!.specializations, // Will be hidden if empty
+            'subcategories':
+                subcategoriesToShow, // Hidden if empty or only matched term
+            'sub_subcategories': response
+                .filters!.subSubcategories, // Show all sub-subcategories
             'product_categories': [],
             'product_subcategories': [],
           };
         } else {
-          debugPrint("========== NO FILTERS IN API - EXTRACTING FROM RESULTS ==========");
+          debugPrint(
+              "========== NO FILTERS IN API - EXTRACTING FROM RESULTS ==========");
           // Extract filters from search results (matching PHP formatFilters logic)
           _availableFilters = _extractFiltersFromResults(_allResults);
-          debugPrint("Extracted Occupations (${_availableFilters['occupations']!.length}): ${_availableFilters['occupations']}");
-          debugPrint("Extracted Professions (${_availableFilters['professions']!.length}): ${_availableFilters['professions']}");
-          debugPrint("Extracted Specializations (${_availableFilters['specializations']!.length}): ${_availableFilters['specializations']}");
-          debugPrint("Extracted Subcategories (${_availableFilters['subcategories']!.length}): ${_availableFilters['subcategories']}");
-          debugPrint("Extracted Sub-subcategories (${_availableFilters['sub_subcategories']!.length}): ${_availableFilters['sub_subcategories']}");
-          debugPrint("=================================================================");
+          debugPrint(
+              "Extracted Occupations (${_availableFilters['occupations']!.length}): ${_availableFilters['occupations']}");
+          debugPrint(
+              "Extracted Professions (${_availableFilters['professions']!.length}): ${_availableFilters['professions']}");
+          debugPrint(
+              "Extracted Specializations (${_availableFilters['specializations']!.length}): ${_availableFilters['specializations']}");
+          debugPrint(
+              "Extracted Subcategories (${_availableFilters['subcategories']!.length}): ${_availableFilters['subcategories']}");
+          debugPrint(
+              "Extracted Sub-subcategories (${_availableFilters['sub_subcategories']!.length}): ${_availableFilters['sub_subcategories']}");
+          debugPrint(
+              "=================================================================");
         }
 
         // Update matched level and value
@@ -237,12 +294,14 @@ class _NetworkViewState extends State<NetworkView> {
         String? cleanMatchedValue = response.matchedValue;
         if (cleanMatchedValue != null && cleanMatchedValue.startsWith('{')) {
           // Try to extract name from object string
-          final match = RegExp(r'occupation_name:\s*([^,}]+)').firstMatch(cleanMatchedValue);
+          final match = RegExp(r'occupation_name:\s*([^,}]+)')
+              .firstMatch(cleanMatchedValue);
           if (match != null) {
             cleanMatchedValue = match.group(1)?.trim();
           } else {
             // Try profession_name
-            final profMatch = RegExp(r'profession_name:\s*([^,}]+)').firstMatch(cleanMatchedValue);
+            final profMatch = RegExp(r'profession_name:\s*([^,}]+)')
+                .firstMatch(cleanMatchedValue);
             if (profMatch != null) {
               cleanMatchedValue = profMatch.group(1)?.trim();
             }
@@ -253,9 +312,9 @@ class _NetworkViewState extends State<NetworkView> {
         // Debug information
         debugPrint("Updated results count: ${_results.length}");
         debugPrint("Total pages: $_totalPages");
-        debugPrint("Matched level: $_matchedLevel, Matched value: $_matchedValue");
+        debugPrint(
+            "Matched level: $_matchedLevel, Matched value: $_matchedValue");
       });
-
     } catch (e) {
       debugPrint("Search Error: $e");
 
@@ -410,11 +469,13 @@ class _NetworkViewState extends State<NetworkView> {
       return true;
     }).toList();
 
-    debugPrint("Filtered results: ${_results.length} out of ${_allResults.length}");
+    debugPrint(
+        "Filtered results: ${_results.length} out of ${_allResults.length}");
   }
 
   // Extract filters from search results - matches PHP formatFilters() function
-  Map<String, List<String>> _extractFiltersFromResults(List<SearchOccupationData> results) {
+  Map<String, List<String>> _extractFiltersFromResults(
+      List<SearchOccupationData> results) {
     // Helper function to format filters (matches PHP formatFilters logic)
     // BUT exclude 'Other' as per requirement
     List<String> formatFilters(List<String?> list) {
@@ -439,31 +500,41 @@ class _NetworkViewState extends State<NetworkView> {
     for (var result in results) {
       // Extract occupation name
       final occName = result.occupationNameValue;
-      if (occName != null && occName.isNotEmpty && occName.toLowerCase() != 'other') {
+      if (occName != null &&
+          occName.isNotEmpty &&
+          occName.toLowerCase() != 'other') {
         occupations.add(occName);
       }
 
       // Extract profession name
       final profName = result.professionNameValue;
-      if (profName != null && profName.isNotEmpty && profName.toLowerCase() != 'other') {
+      if (profName != null &&
+          profName.isNotEmpty &&
+          profName.toLowerCase() != 'other') {
         professions.add(profName);
       }
 
       // Extract specialization name
       final specName = result.specializationNameValue;
-      if (specName != null && specName.isNotEmpty && specName.toLowerCase() != 'other') {
+      if (specName != null &&
+          specName.isNotEmpty &&
+          specName.toLowerCase() != 'other') {
         specializations.add(specName);
       }
 
       // Extract subcategory name
       final subcatName = result.subCategoryName;
-      if (subcatName != null && subcatName.isNotEmpty && subcatName.toLowerCase() != 'other') {
+      if (subcatName != null &&
+          subcatName.isNotEmpty &&
+          subcatName.toLowerCase() != 'other') {
         subcategories.add(subcatName);
       }
 
       // Extract sub-subcategory name
       final subSubcatName = result.subSubCategoryName;
-      if (subSubcatName != null && subSubcatName.isNotEmpty && subSubcatName.toLowerCase() != 'other') {
+      if (subSubcatName != null &&
+          subSubcatName.isNotEmpty &&
+          subSubcatName.toLowerCase() != 'other') {
         subSubcategories.add(subSubcatName);
       }
     }
@@ -522,8 +593,8 @@ class _NetworkViewState extends State<NetworkView> {
   }
 
   Widget _buildMemberCard(SearchOccupationData member) {
-    final themeColor = ColorHelperClass.getColorFromHex(ColorResources.red_color);
-    final occ = member.occupation;
+    final themeColor =
+    ColorHelperClass.getColorFromHex(ColorResources.red_color);
 
     return Container(
       decoration: BoxDecoration(
@@ -551,8 +622,7 @@ class _NetworkViewState extends State<NetworkView> {
                 child: member.profileImage != null &&
                     member.profileImage!.isNotEmpty
                     ? FadeInImage(
-                  placeholder:
-                  const AssetImage("assets/images/user3.png"),
+                  placeholder: const AssetImage("assets/images/user3.png"),
                   image: NetworkImage(
                     Urls.imagePathUrl + member.profileImage!,
                   ),
@@ -588,14 +658,11 @@ class _NetworkViewState extends State<NetworkView> {
               ),
             ),
 
-            // Specialization
+            // Specialization pill
             if ((member.specializationNameValue ?? "").isNotEmpty)
               Container(
                 margin: const EdgeInsets.only(top: 4),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.orange.shade100,
                   borderRadius: BorderRadius.circular(8),
@@ -627,7 +694,42 @@ class _NetworkViewState extends State<NetworkView> {
                   style: TextStyle(fontSize: 14),
                 ),
               ),
-            )
+            ),
+
+            // const SizedBox(height: 8),
+
+            // 🔥 NEW — View Detail Button
+            // SizedBox(
+            //   width: double.infinity,
+            //   height: 36,
+            //   child: OutlinedButton(
+            //     onPressed: () async {
+            //       showDialog(
+            //         context: context,
+            //         barrierDismissible: false,
+            //         builder: (_) => const Center(child: CircularProgressIndicator()),
+            //       );
+            //
+            //       final business = await _fetchBusinessProfile(member.memberId.toString());
+            //
+            //       Navigator.pop(context);
+            //
+            //       _showMemberDetailDialog(member, business);
+            //     },
+            //
+            //     style: OutlinedButton.styleFrom(
+            //       side: BorderSide(color: themeColor),
+            //       foregroundColor: themeColor,
+            //       shape: RoundedRectangleBorder(
+            //         borderRadius: BorderRadius.circular(10),
+            //       ),
+            //     ),
+            //     child: const Text(
+            //       "View Detail",
+            //       style: TextStyle(fontSize: 13),
+            //     ),
+            //   ),
+            // ),
           ],
         ),
       ),
@@ -637,31 +739,344 @@ class _NetworkViewState extends State<NetworkView> {
   void _showConnectDialog(SearchOccupationData member) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Connect with Member"),
-        content: Text(
-            "Send connection request to ${member.fullName ?? 'this member'}?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Implement connection request logic
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content:
-                      Text("Connection request sent to ${member.fullName}"),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Contact Member",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              Divider(thickness: 1, color: Colors.grey),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildInfoRow("Name", member.fullName ?? "N/A"),
+              const SizedBox(height: 12),
+              _buildInfoRow("Mobile", member.mobile ?? "N/A"),
+              const SizedBox(height: 12),
+              _buildInfoRow(
+                "Profession",
+                "${member.occupationProfessionName ?? ''} - ${member.specializationName ?? ''}"
+                    .trim(),
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              style: OutlinedButton.styleFrom(
+                foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
-              );
-            },
-            child: const Text("Send Request"),
+              ),
+              child: const Text("Cancel"),
+            ),
+
+            // SEND MESSAGE BUTTON
+            ElevatedButton(
+              onPressed: () async {
+                // Keep dialog open until API finishes
+                try {
+                  final CheckUserData2? userData =
+                      await SessionManager.getSession();
+
+                  if (userData == null || userData.memberId == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content:
+                            Text("User session expired. Please login again."),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+
+                  final String requestMemberId = userData.memberId.toString();
+                  final String memberId = member.memberId.toString();
+
+                  debugPrint(
+                      "📤 Sending request: member_id=$memberId, request_member_id=$requestMemberId");
+
+                  final response = await _sendRepo.sendBusinessProfile(
+                    memberId: memberId,
+                    requestMemberId: requestMemberId,
+                  );
+
+                  // Close dialog AFTER API response
+                  Navigator.pop(dialogContext);
+
+                  // Show snackbar on main screen
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        response.message ?? "Message sent successfully",
+                      ),
+                      backgroundColor:
+                          response.status == true ? Colors.green : Colors.red,
+                    ),
+                  );
+                } catch (e) {
+                  Navigator.pop(dialogContext);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Something went wrong"),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Send Message"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoRow(String title, String value) {
+    return RichText(
+      text: TextSpan(
+        children: [
+          TextSpan(
+            text: "$title: ",
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+              color: Colors.black,
+            ),
           ),
+          TextSpan(
+            text: value,
+            style: const TextStyle(
+              fontWeight: FontWeight.w500,
+              fontSize: 15,
+              color: Colors.black87,
+            ),
+          )
         ],
       ),
     );
+  }
+
+  void _showMemberDetailDialog(
+      SearchOccupationData member,
+      BusinessOccupationProfileData? business,
+      ) {
+    final themeColor =
+    ColorHelperClass.getColorFromHex(ColorResources.red_color);
+
+    BusinessAddressData? address =
+    (business?.addresses != null && business!.addresses!.isNotEmpty)
+        ? business.addresses!.first
+        : null;
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          insetPadding: const EdgeInsets.all(20),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.person_outline, size: 22),
+                          SizedBox(width: 8),
+                          Text(
+                            "Member Details",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      InkWell(
+                        onTap: () => Navigator.pop(context),
+                        child: const Icon(Icons.close, size: 26),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 1,
+                        child: Column(
+                          children: [
+                            CircleAvatar(
+                              radius: 45,
+                              backgroundImage: (member.profileImage != null &&
+                                  member.profileImage!.isNotEmpty)
+                                  ? NetworkImage(
+                                  Urls.imagePathUrl + member.profileImage!)
+                                  : const AssetImage("assets/images/user3.png")
+                              as ImageProvider,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              member.fullName ?? "No Name",
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              member.memberCode ?? "",
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: themeColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+
+                            const SizedBox(height: 12),
+                            Divider(color: Colors.grey[400]),
+                            const SizedBox(height: 12),
+
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                const Icon(Icons.phone, size: 18),
+                                const SizedBox(width: 6),
+                                Text(member.mobile ?? "N/A"),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.email_outlined, size: 18),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    member.email ?? "N/A",
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(width: 20),
+
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              business?.businessName ??
+                                  "Business Name Not Available",
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+
+                            const Text(
+                              "Business Address",
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+
+                            Text(
+                              _formatAddress(address),
+                              style: const TextStyle(
+                                fontSize: 14,
+                                height: 1.4,
+                              ),
+                            ),
+
+                            const SizedBox(height: 12),
+                            Divider(color: Colors.grey[400]),
+                            const SizedBox(height: 12),
+
+                            const Text(
+                              "Contact Detail",
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+
+                            const SizedBox(height: 6),
+
+                            Text("Mobile: ${business?.businessMobile ?? 'N/A'}"),
+                            const SizedBox(height: 4),
+                            Text("Landline: ${business?.businessLandline ?? 'N/A'}"),
+                            const SizedBox(height: 4),
+                            Text("Email: ${business?.businessEmail ?? 'N/A'}"),
+                            const SizedBox(height: 4),
+                            Text("Website: ${business?.businessWebsite ?? 'N/A'}"),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _formatAddress(BusinessAddressData? addr) {
+    if (addr == null) return "N/A";
+
+    return "${addr.flatNo ?? ''}, ${addr.address ?? ''}, ${addr.areaName ?? ''}\n"
+        "${addr.cityName ?? ''}, ${addr.stateName ?? ''}, ${addr.countryName ?? ''}\n"
+        "Pincode: ${addr.pincode ?? ''}";
   }
 
   Widget _buildEmptyState() {
@@ -676,7 +1091,7 @@ class _NetworkViewState extends State<NetworkView> {
           ),
           const SizedBox(height: 20),
           Text(
-            _hasSearched ? "No results found" : "Search for members",
+            _hasSearched ? "No results found" : "Search for Connect",
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w500,
@@ -687,7 +1102,7 @@ class _NetworkViewState extends State<NetworkView> {
           Text(
             _hasSearched
                 ? "Try different search terms or filters"
-                : "Enter a name, profession, or specialization to find members",
+                : "Enter occupation(doctors, lawyers, consultants) to find members",
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
@@ -718,287 +1133,356 @@ class _NetworkViewState extends State<NetworkView> {
         backgroundColor: Colors.grey[50],
         appBar: AppBar(
           backgroundColor:
-              ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+          ColorHelperClass.getColorFromHex(ColorResources.logo_color),
           title: const Text(
             "Networking",
             style: TextStyle(color: Colors.white),
           ),
           iconTheme: const IconThemeData(color: Colors.white),
-        ),
-        body: Column(
-        children: [
-          // Search bar
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.white,
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey[300]!),
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      focusNode: _searchFocusNode,
-                      onChanged: (value) {
-                        // Only load suggestions when typing (min 2 chars)
-                        // DO NOT trigger search API while typing
-                        if (value.length >= 2) {
-                          _loadSuggestions(value);
-                        } else {
-                          setState(() {
-                            _showSuggestions = false;
-                            _suggestions = [];
-                            _results = [];
-                            _hasSearched = false;
-                          });
-                        }
-                        // Remove auto-search - only search on suggestion click
-                      },
-                      onSubmitted: (value) {
-                        // Don't search on Enter - user must click a suggestion
-                        // Just hide suggestions if Enter is pressed
-                        setState(() {
-                          _showSuggestions = false;
-                        });
-                      },
-                      onTap: () {
-                        // Show suggestions when tapping the search box
-                        if (_searchController.text.length >= 2) {
-                          _loadSuggestions(_searchController.text);
-                        }
-                      },
-                      decoration: InputDecoration(
-                        hintText:
-                            "Search members, profession, specialization...",
-                        border: InputBorder.none,
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                        suffixIcon: _searchController.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.close, color: Colors.grey),
-                                onPressed: () {
-                                  _clearSearch();
-                                },
-                              )
-                            : null,
-                      ),
-                    ),
-                  ),
-                ),
 
-                const SizedBox(width: 12),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: OutlinedButton(
+                onPressed: () {
+                  final occ = controller.currentOccupation.value;
 
-                // Filter button
-                GestureDetector(
-                  onTap: _openFilterSheet,
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: _filters.hasFilters ? themeColor : Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: _filters.hasFilters
-                            ? themeColor
-                            : Colors.grey[300]!,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.filter_alt,
-                      color: _filters.hasFilters ? Colors.white : themeColor,
-                      size: 24,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+                  if (occ == null) {
+                    Get.snackbar(
+                      "Error",
+                      "No occupation found",
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                    );
+                    return;
+                  }
 
-          // Suggestions dropdown - Show below search box
-          if (_showSuggestions && _suggestions.isNotEmpty)
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              constraints: const BoxConstraints(maxHeight: 300),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[300]!),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: ListView.builder(
-                shrinkWrap: true,
-                padding: EdgeInsets.zero,
-                itemCount: _suggestions.length,
-                itemBuilder: (context, index) {
-                  final suggestion = _suggestions[index];
-                  return InkWell(
-                    onTap: () {
-                      debugPrint("Suggestion clicked: ${suggestion.displayText ?? suggestion.name}");
-                      _onSuggestionTap(suggestion);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: Colors.grey[200]!,
-                            width: index < _suggestions.length - 1 ? 1 : 0,
-                          ),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            _getSuggestionIcon(suggestion.type ?? ''),
-                            size: 20,
-                            color: Colors.grey[600],
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  suggestion.displayText ?? suggestion.name ?? '',
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.black87,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _formatSuggestionType(suggestion.type ?? ''),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => OccupationDetailViewPage(
+                        memberId: occ.memberId.toString(),
+                        memberOccupationId: occ.memberOccupationId.toString(),
                       ),
                     ),
                   );
                 },
+                child: const Text(
+                  'Add Business Profile',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Colors.white),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
               ),
             ),
-
-          // Results header
-          if (_hasSearched && !_isLoading)
+          ],
+        ),
+        body: Column(
+          children: [
+            // Search bar
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.all(16),
               color: Colors.white,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    _filters.hasFilters && _allResults.isNotEmpty
-                        ? "${_results.length} ${_results.length == 1 ? 'result' : 'results'} found (Filtered from ${_allResults.length} total ${_allResults.length == 1 ? 'result' : 'results'})"
-                        : "${_results.length} ${_results.length == 1 ? 'result' : 'results'} found",
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  if (_filters.hasFilters)
-                    GestureDetector(
-                      onTap: _clearFilters,
-                      child: Row(
-                        children: [
-                          const Icon(Icons.filter_alt_off,
-                              size: 16, color: Colors.red),
-                          const SizedBox(width: 4),
-                          Text(
-                            "Clear filters",
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.red[600],
-                            ),
-                          ),
-                        ],
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        focusNode: _searchFocusNode,
+                        onChanged: (value) {
+                          // Only load suggestions when typing (min 2 chars)
+                          // DO NOT trigger search API while typing
+                          if (value.length >= 2) {
+                            _loadSuggestions(value);
+                          } else {
+                            setState(() {
+                              _showSuggestions = false;
+                              _suggestions = [];
+                              _results = [];
+                              _hasSearched = false;
+                            });
+                          }
+                          // Remove auto-search - only search on suggestion click
+                        },
+                        onSubmitted: (value) {
+                          setState(() {
+                            _showSuggestions = false;
+                          });
+                        },
+                        onTap: () {
+                          if (_searchController.text.length >= 2) {
+                            _loadSuggestions(_searchController.text);
+                          }
+                        },
+                        decoration: InputDecoration(
+                          hintText:
+                              "Search occupation(doctors, lawyers, consultants)…",
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 14),
+                          prefixIcon:
+                              const Icon(Icons.search, color: Colors.grey),
+                          suffixIcon: _searchController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.close,
+                                      color: Colors.grey),
+                                  onPressed: () {
+                                    _clearSearch();
+                                  },
+                                )
+                              : null,
+                        ),
                       ),
                     ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  // Filter button
+                  IgnorePointer(
+                    ignoring: !_hasSearched, // Disable when no search yet
+                    child: Opacity(
+                      opacity: _hasSearched ? 1 : 0.4, // Dim when disabled
+                      child: GestureDetector(
+                        onTap: _hasSearched ? _openFilterSheet : null,
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color:
+                                _filters.hasFilters ? themeColor : Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _filters.hasFilters
+                                  ? themeColor
+                                  : Colors.grey[300]!,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.filter_alt,
+                            color:
+                                _filters.hasFilters ? Colors.white : themeColor,
+                            size: 24,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
 
-          // Loading indicator
-          if (_isLoading && _results.isEmpty)
-            const Expanded(
-              child: Center(
-                child: CircularProgressIndicator(),
-              ),
-            ),
-
-          // Results list
-          if (_results.isNotEmpty)
-            Expanded(
-              child: NotificationListener<ScrollNotification>(
-                onNotification: (scrollNotification) {
-                  if (scrollNotification is ScrollEndNotification &&
-                      scrollNotification.metrics.extentAfter == 0 &&
-                      !_isLoading &&
-                      _currentPage < _totalPages) {
-                    _loadMore();
-                  }
-                  return false;
-                },
-                child: GridView.builder(
-                  padding: const EdgeInsets.all(16),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.62,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                  ),
-                  itemCount: _results.length + (_isLoading ? 1 : 0),
-                  physics: const BouncingScrollPhysics(),
+            // Suggestions dropdown - Show below search box
+            if (_showSuggestions && _suggestions.isNotEmpty)
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                constraints: const BoxConstraints(maxHeight: 300),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[300]!),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ListView.builder(
                   shrinkWrap: true,
+                  padding: EdgeInsets.zero,
+                  itemCount: _suggestions.length,
                   itemBuilder: (context, index) {
-                    if (index < _results.length) {
-                      return _buildMemberCard(_results[index]);
-                    } else {
-                      return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(16),
-                          child: CircularProgressIndicator(),
+                    final suggestion = _suggestions[index];
+                    return InkWell(
+                      onTap: () {
+                        debugPrint(
+                            "Suggestion clicked: ${suggestion.displayText ?? suggestion.name}");
+                        _onSuggestionTap(suggestion);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Colors.grey[200]!,
+                              width: index < _suggestions.length - 1 ? 1 : 0,
+                            ),
+                          ),
                         ),
-                      );
-                    }
+                        child: Row(
+                          children: [
+                            Icon(
+                              _getSuggestionIcon(suggestion.type ?? ''),
+                              size: 20,
+                              color: Colors.grey[600],
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _cleanSuggestionText(
+                                        suggestion.displayText ??
+                                            suggestion.name ??
+                                            ''),
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black87,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _formatSuggestionType(
+                                        suggestion.type ?? ''),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
                   },
                 ),
               ),
-            ),
 
-          // Empty state
-          if (_results.isEmpty && !_isLoading && _hasSearched)
-            Expanded(child: _buildEmptyState()),
+            // Results header
+            if (_hasSearched && !_isLoading)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                color: Colors.white,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _filters.hasFilters && _allResults.isNotEmpty
+                          ? "${_results.length} ${_results.length == 1 ? 'result' : 'results'} found (Filtered from ${_allResults.length} total ${_allResults.length == 1 ? 'result' : 'results'})"
+                          : "${_results.length} ${_results.length == 1 ? 'result' : 'results'} found",
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    if (_filters.hasFilters)
+                      GestureDetector(
+                        onTap: _clearFilters,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.filter_alt_off,
+                                size: 16, color: Colors.red),
+                            const SizedBox(width: 4),
+                            Text(
+                              "Clear filters",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.red[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
 
-          if (!_hasSearched && !_isLoading) Expanded(child: _buildEmptyState()),
-        ],
+            // Loading indicator
+            if (_isLoading && _results.isEmpty)
+              const Expanded(
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+
+            // Results list
+            if (_results.isNotEmpty)
+              Expanded(
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: (scrollNotification) {
+                    if (scrollNotification is ScrollEndNotification &&
+                        scrollNotification.metrics.extentAfter == 0 &&
+                        !_isLoading &&
+                        _currentPage < _totalPages) {
+                      _loadMore();
+                    }
+                    return false;
+                  },
+                  child: GridView.builder(
+                    padding: const EdgeInsets.all(16),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.62,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                    ),
+                    itemCount: _results.length + (_isLoading ? 1 : 0),
+                    physics: const BouncingScrollPhysics(),
+                    shrinkWrap: true,
+                    itemBuilder: (context, index) {
+                      if (index < _results.length) {
+                        return _buildMemberCard(_results[index]);
+                      } else {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(16),
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ),
+              ),
+
+            // Empty state
+            if (_results.isEmpty && !_isLoading && _hasSearched)
+              Expanded(child: _buildEmptyState()),
+
+            if (!_hasSearched && !_isLoading)
+              Expanded(child: _buildEmptyState()),
+          ],
         ),
       ),
     );
+  }
+
+  String _cleanSuggestionText(String text) {
+    // Remove everything after first " ("
+    if (text.contains("(")) {
+      return text.split("(").first.trim();
+    }
+    return text.trim();
   }
 }
