@@ -586,33 +586,49 @@ class UdateProfileController extends GetxController {
 
     try {
       rxStatusOccupationData.value = Status.LOADING;
-      final response =
-          await api.userOccutionPreCodeApi({"occupation_id": occupationId});
-      occuptionProfessionList.value = response.data ?? [];
 
-      if (occuptionProfessionList.isEmpty) {
-        showDetailsField.value = true;
-      } else {
-        occuptionProfessionList.add(OccuptionProfessionData(
+      final response = await api.userOccutionPreCodeApi(
+        {"occupation_id": occupationId},
+      );
+
+      occuptionProfessionList.clear();
+
+      if (response.data == null || response.data!.isEmpty) {
+        occuptionProfessionList.add(
+          OccuptionProfessionData(
+            id: "Other",
+            name: "Other",
+          ),
+        );
+
+        showDetailsField.value = false;
+
+        rxStatusOccupationData.value = Status.COMPLETE;
+        return;
+      }
+
+      occuptionProfessionList.value = response.data!;
+
+      occuptionProfessionList.add(
+        OccuptionProfessionData(
           id: "Other",
           name: "Other",
-          occupationId: occupationId,
-          status: '1',
-          createdAt: null,
-          updatedAt: null,
-        ));
-      }
+        ),
+      );
 
       rxStatusOccupationData.value = Status.COMPLETE;
     } catch (error) {
-      rxStatusOccupationData.value = Status.ERROR;
-      Get.snackbar(
-        'Error',
-        'Failed to load professions',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      occuptionProfessionList.clear();
+      occuptionProfessionList.add(
+        OccuptionProfessionData(
+          id: "Other",
+          name: "Other",
+        ),
       );
+
+      showDetailsField.value = false;
+
+      rxStatusOccupationData.value = Status.COMPLETE;
     }
   }
 
@@ -622,32 +638,38 @@ class UdateProfileController extends GetxController {
     try {
       rxStatusOccupationSpec.value = Status.LOADING;
       final response = await api.userOccutionSpectionCodeApi(
-          {"occupation_profession_id": professionId});
-      occuptionSpeList.value = response.data ?? [];
+        {"occupation_profession_id": professionId},
+      );
 
-      if (occuptionSpeList.isEmpty) {
-        showDetailsField.value = true;
-      } else {
-        occuptionSpeList.add(OccuptionSpecData(
-          id: "Other",
-          name: "Other",
-          occupationId: professionId,
-          status: '1',
-          createdAt: null,
-          updatedAt: null,
-        ));
+      occuptionSpeList.clear();
+
+      if (response.data == null || response.data!.isEmpty) {
+        occuptionSpeList.add(
+          OccuptionSpecData(id: "Other", name: "Other"),
+        );
+
+        showDetailsField.value = false;
+
+        rxStatusOccupationSpec.value = Status.COMPLETE;
+        return;
       }
+
+      occuptionSpeList.value = response.data!;
+
+      occuptionSpeList.add(
+        OccuptionSpecData(id: "Other", name: "Other"),
+      );
 
       rxStatusOccupationSpec.value = Status.COMPLETE;
     } catch (error) {
-      rxStatusOccupationSpec.value = Status.ERROR;
-      Get.snackbar(
-        'Error',
-        'Failed to load specializations',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      occuptionSpeList.clear();
+      occuptionSpeList.add(
+        OccuptionSpecData(id: "Other", name: "Other"),
       );
+
+      showDetailsField.value = false;
+
+      rxStatusOccupationSpec.value = Status.COMPLETE;
     }
   }
 
@@ -840,25 +862,25 @@ class UdateProfileController extends GetxController {
                 occupation.occupationSpecializationId!;
 
             // Load sub-categories if specialization exists
-            getOccupationSpecializationSubCategoryData(
-                    selectedSpecialization.value)
-                .then((_) {
-              if (occupation.occupationSpecializationSubCategoryId != null &&
-                  occupation
-                      .occupationSpecializationSubCategoryId!.isNotEmpty) {
-                selectedSubCategory.value =
-                    occupation.occupationSpecializationSubCategoryId!;
-
-                if (selectedSubCategory.value == "Other") {
-                  showDetailsField.value = true;
-                } else {
-                  showDetailsField.value = false;
-                }
-              } else {
-                selectedSubCategory.value = "Other";
-                showDetailsField.value = true;
-              }
-            });
+            // getOccupationSpecializationSubCategoryData(
+            //         selectedSpecialization.value)
+            //     .then((_) {
+            //   if (occupation.occupationSpecializationSubCategoryId != null &&
+            //       occupation
+            //           .occupationSpecializationSubCategoryId!.isNotEmpty) {
+            //     selectedSubCategory.value =
+            //         occupation.occupationSpecializationSubCategoryId!;
+            //
+            //     if (selectedSubCategory.value == "Other") {
+            //       showDetailsField.value = true;
+            //     } else {
+            //       showDetailsField.value = false;
+            //     }
+            //   } else {
+            //     selectedSubCategory.value = "Other";
+            //     showDetailsField.value = true;
+            //   }
+            // });
           } else {
             selectedSpecialization.value = "Other";
             showDetailsField.value = true;

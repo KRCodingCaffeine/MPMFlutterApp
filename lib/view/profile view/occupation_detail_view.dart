@@ -1366,7 +1366,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
           const Text(" : ", style: TextStyle(fontWeight: FontWeight.bold)),
           Expanded(
             child: Text(
-              value?.isNotEmpty == true ? value! : "N/A",
+              value?.isNotEmpty == true ? value! : "Other",
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,

@@ -475,11 +475,14 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
         "member_id": oldData.memberId ?? "",
         "occupation_id": controller.selectedOccupation.value,
         "occupation_profession_id": controller.selectedProfession.value,
-        "occupation_specialization_id": controller.selectedSpecialization.value,
-        "occupation_specialization_sub_category_id":
-        controller.selectedSubCategory.value,
-        "occupation_specialization_sub_sub_category_id":
-        controller.selectedSubSubCategory.value,
+        "occupation_specialization_id":
+        controller.selectedSpecialization.value == "Other"
+            ? ""
+            : controller.selectedSpecialization.value,
+        // "occupation_specialization_sub_category_id":
+        // controller.selectedSubCategory.value,
+        // "occupation_specialization_sub_sub_category_id":
+        // controller.selectedSubSubCategory.value,
         "occupation_other_name": controller.detailsController.value.text,
         "updated_by": oldData.memberId ?? "",
       };
@@ -574,7 +577,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                       controller.selectedOccupation.value = newValue;
                       controller.selectedProfession.value = "";
                       controller.selectedSpecialization.value = "";
-                      controller.selectedSubCategory.value = "";
+                      // controller.selectedSubCategory.value = "";
                       controller.detailsController.value.text = "";
 
                       if (newValue == "0") {
@@ -605,7 +608,26 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                 return _buildLoadingIndicator();
               } else if (controller.rxStatusOccupationData.value ==
                   Status.ERROR) {
-                return const Center(child: Text('Failed to load profession'));
+                return InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: 'Level 2',
+                    border: const OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black26),
+                    ),
+                    enabledBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black26),
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                    labelStyle: const TextStyle(color: Colors.black45),
+                  ),
+                  child: const Text(
+                    "Other",
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                );
               } else {
                 return InputDecorator(
                   decoration: InputDecoration(
@@ -676,8 +698,26 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                 return _buildLoadingIndicator();
               } else if (controller.rxStatusOccupationSpec.value ==
                   Status.ERROR) {
-                return const Center(
-                    child: Text('Failed to load specialization'));
+                return InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: 'Level 3',
+                    border: const OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black26),
+                    ),
+                    enabledBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black26),
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                    labelStyle: const TextStyle(color: Colors.black45),
+                  ),
+                  child: const Text(
+                    "Other",
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                );
               } else {
                 return InputDecorator(
                   decoration: InputDecoration(
@@ -715,15 +755,15 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                     onChanged: (String? newValue) {
                       if (newValue != null) {
                         controller.selectedSpecialization.value = newValue;
-                        controller.selectedSubCategory.value = "";
+                        // controller.selectedSubCategory.value = "";
                         controller.detailsController.value.text = "";
 
                         if (newValue == "Other") {
                           controller.showDetailsField.value = true;
                         } else if (newValue.isNotEmpty) {
                           controller.showDetailsField.value = false;
-                          controller.getOccupationSpecializationSubCategoryData(
-                              newValue);
+                          // controller.getOccupationSpecializationSubCategoryData(
+                          //     newValue);
                         }
                       }
                     },
@@ -876,7 +916,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
           final showDetails = controller.selectedOccupation.value == "0" ||
               controller.selectedProfession.value == "Other" ||
               controller.selectedSpecialization.value == "Other" ||
-              controller.selectedSubCategory.value == "Other" ||
+              // controller.selectedSubCategory.value == "Other" ||
               controller.showDetailsField.value;
 
           if (!showDetails) return const SizedBox();
