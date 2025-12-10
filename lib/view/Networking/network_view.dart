@@ -1,6 +1,9 @@
 // lib/view/Networking/network_view.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_navigation/get_navigation.dart';
 import 'package:mpm/model/BusinessProfile/BusinessAddress/BusinessAddressData.dart';
 import 'package:mpm/model/BusinessProfile/BusinessOccupationProfile/BusinessOccupationProfileData.dart';
 import 'package:mpm/model/BusinessProfile/GetAllBusinessOccupationProfile/GetAllBusinessOccupationProfileModelClass.dart';
@@ -16,6 +19,8 @@ import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/urls.dart';
 import 'package:mpm/view/Networking/filter_bottom_sheet.dart';
 import 'package:mpm/view/Networking/network_filters.dart';
+import 'package:mpm/view/profile%20view/occupation_detail_view.dart';
+import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
 
 class NetworkView extends StatefulWidget {
@@ -26,6 +31,7 @@ class NetworkView extends StatefulWidget {
 }
 
 class _NetworkViewState extends State<NetworkView> {
+  UdateProfileController controller =Get.put(UdateProfileController());
   final TextEditingController _searchController = TextEditingController();
   final SearchOccupationRepository _repo = SearchOccupationRepository();
   final SendBusinessProfileRepository _sendRepo =
@@ -904,7 +910,6 @@ class _NetworkViewState extends State<NetworkView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ---------------- HEADER ----------------
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -930,11 +935,9 @@ class _NetworkViewState extends State<NetworkView> {
 
                   const SizedBox(height: 20),
 
-                  // ---------- LEFT PROFILE + RIGHT BUSINESS ----------
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // LEFT — PROFILE
                       Expanded(
                         flex: 1,
                         child: Column(
@@ -1001,7 +1004,6 @@ class _NetworkViewState extends State<NetworkView> {
 
                       const SizedBox(width: 20),
 
-                      // ----------- RIGHT — BUSINESS DETAILS -------------
                       Expanded(
                         flex: 2,
                         child: Column(
@@ -1131,12 +1133,57 @@ class _NetworkViewState extends State<NetworkView> {
         backgroundColor: Colors.grey[50],
         appBar: AppBar(
           backgroundColor:
-              ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+          ColorHelperClass.getColorFromHex(ColorResources.logo_color),
           title: const Text(
             "Networking",
             style: TextStyle(color: Colors.white),
           ),
           iconTheme: const IconThemeData(color: Colors.white),
+
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: OutlinedButton(
+                onPressed: () {
+                  final occ = controller.currentOccupation.value;
+
+                  if (occ == null) {
+                    Get.snackbar(
+                      "Error",
+                      "No occupation found",
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                    );
+                    return;
+                  }
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => OccupationDetailViewPage(
+                        memberId: occ.memberId.toString(),
+                        memberOccupationId: occ.memberOccupationId.toString(),
+                      ),
+                    ),
+                  );
+                },
+                child: const Text(
+                  'Add Business Profile',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Colors.white),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
         body: Column(
           children: [

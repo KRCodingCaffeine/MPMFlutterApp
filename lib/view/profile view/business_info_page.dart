@@ -170,16 +170,14 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                   'Level 3',
                   subtitle: occupation.specializationName ?? 'Other',
                 ),
-                _buildInfoBox(
-                  'Level 4',
-                  // Use the correct property name for sub-category
-                  subtitle: occupation.specializationSubCategoryName ?? 'Other',
-                ),
-                _buildInfoBox(
-                  'Level 5',
-                  // Use the correct property name for sub-sub-category
-                  subtitle: occupation.specializationSubSubCategoryName ?? 'Other',
-                ),
+                // _buildInfoBox(
+                //   'Level 4',
+                //   subtitle: occupation.specializationSubCategoryName ?? 'Other',
+                // ),
+                // _buildInfoBox(
+                //   'Level 5',
+                //   subtitle: occupation.specializationSubSubCategoryName ?? 'Other',
+                // ),
 
                 // OTHER DETAILS (If exists)
                 if (occupation.occupationOtherName != null &&
@@ -738,140 +736,140 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
         const SizedBox(height: 20),
 
         // Sub Category Dropdown
-        Obx(() {
-          if (controller.selectedSpecialization.value.isEmpty ||
-              controller.selectedSpecialization.value == "Other") {
-            return const SizedBox();
-          }
-          return Container(
-            margin: const EdgeInsets.only(left: 5, right: 5, top: 8),
-            child: Obx(() {
-              if (controller.rxStatusOccupationSpec.value == Status.LOADING) {
-                return _buildLoadingIndicator();
-              } else if (controller.rxStatusOccupationSpec.value ==
-                  Status.ERROR) {
-                return const Center(child: Text('Failed to load subcategory'));
-              } else if (controller.occuptionSubCategoryList.isEmpty) {
-                return const SizedBox();
-              } else {
-                return InputDecorator(
-                  decoration: InputDecoration(
-                    labelText: 'Level 4',
-                    border: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black26),
-                    ),
-                    enabledBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black26),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black26, width: 1.5),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                    labelStyle: const TextStyle(color: Colors.black45),
-                  ),
-                  isEmpty: controller.selectedSubCategory.value.isEmpty,
-                  child: DropdownButton<String>(
-                    dropdownColor: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    isExpanded: true,
-                    underline: Container(),
-                    value: controller.selectedSubCategory.value.isEmpty
-                        ? null
-                        : controller.selectedSubCategory.value,
-                    items: [
-                      ...controller.occuptionSubCategoryList
-                          .map((OccuptionSpecSubCategoryData sub) {
-                        return DropdownMenuItem<String>(
-                          value: sub.specializationSubCategoryId.toString(),
-                          child: Text(
-                              sub.specializationSubCategoryName ?? 'Unknown'),
-                        );
-                      }).toList(),
-                    ],
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        controller.selectedSubCategory.value = newValue;
-                        controller.selectedSubSubCategory.value = "";
-
-                        if (newValue == "Other") {
-                          controller.showDetailsField.value = true;
-                        } else {
-                          controller.showDetailsField.value = false;
-                          controller.getOccupationSubSubCategoryData(newValue);
-                        }
-                      }
-                    },
-                  ),
-                );
-              }
-            }),
-          );
-        }),
-        const SizedBox(height: 20),
+        // Obx(() {
+        //   if (controller.selectedSpecialization.value.isEmpty ||
+        //       controller.selectedSpecialization.value == "Other") {
+        //     return const SizedBox();
+        //   }
+        //   return Container(
+        //     margin: const EdgeInsets.only(left: 5, right: 5, top: 8),
+        //     child: Obx(() {
+        //       if (controller.rxStatusOccupationSpec.value == Status.LOADING) {
+        //         return _buildLoadingIndicator();
+        //       } else if (controller.rxStatusOccupationSpec.value ==
+        //           Status.ERROR) {
+        //         return const Center(child: Text('Failed to load subcategory'));
+        //       } else if (controller.occuptionSubCategoryList.isEmpty) {
+        //         return const SizedBox();
+        //       } else {
+        //         return InputDecorator(
+        //           decoration: InputDecoration(
+        //             labelText: 'Level 4',
+        //             border: const OutlineInputBorder(
+        //               borderSide: BorderSide(color: Colors.black26),
+        //             ),
+        //             enabledBorder: const OutlineInputBorder(
+        //               borderSide: BorderSide(color: Colors.black26),
+        //             ),
+        //             focusedBorder: const OutlineInputBorder(
+        //               borderSide: BorderSide(color: Colors.black26, width: 1.5),
+        //             ),
+        //             contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+        //             labelStyle: const TextStyle(color: Colors.black45),
+        //           ),
+        //           isEmpty: controller.selectedSubCategory.value.isEmpty,
+        //           child: DropdownButton<String>(
+        //             dropdownColor: Colors.white,
+        //             borderRadius: BorderRadius.circular(10),
+        //             isExpanded: true,
+        //             underline: Container(),
+        //             value: controller.selectedSubCategory.value.isEmpty
+        //                 ? null
+        //                 : controller.selectedSubCategory.value,
+        //             items: [
+        //               ...controller.occuptionSubCategoryList
+        //                   .map((OccuptionSpecSubCategoryData sub) {
+        //                 return DropdownMenuItem<String>(
+        //                   value: sub.specializationSubCategoryId.toString(),
+        //                   child: Text(
+        //                       sub.specializationSubCategoryName ?? 'Unknown'),
+        //                 );
+        //               }).toList(),
+        //             ],
+        //             onChanged: (String? newValue) {
+        //               if (newValue != null) {
+        //                 controller.selectedSubCategory.value = newValue;
+        //                 controller.selectedSubSubCategory.value = "";
+        //
+        //                 if (newValue == "Other") {
+        //                   controller.showDetailsField.value = true;
+        //                 } else {
+        //                   controller.showDetailsField.value = false;
+        //                   controller.getOccupationSubSubCategoryData(newValue);
+        //                 }
+        //               }
+        //             },
+        //           ),
+        //         );
+        //       }
+        //     }),
+        //   );
+        // }),
+        // const SizedBox(height: 20),
 
         // Level 5 – Sub-Sub-Category
-        Obx(() {
-          if (controller.selectedSubCategory.value.isEmpty ||
-              controller.selectedSubCategory.value == "Other") {
-            return const SizedBox();
-          }
-
-          return Container(
-            margin: const EdgeInsets.only(left: 5, right: 5, top: 8),
-            child: Obx(() {
-              if (controller.rxStatusOccupationSpec.value == Status.LOADING) {
-                return _buildLoadingIndicator();
-              } else if (controller.rxStatusOccupationSpec.value ==
-                  Status.ERROR) {
-                return const Center(child: Text('Failed to load level 5'));
-              } else if (controller.occuptionSubSubCategoryList.isEmpty) {
-                return const SizedBox();
-              } else {
-                return InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Level 5',
-                    border: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black26)),
-                    enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black26)),
-                    focusedBorder: OutlineInputBorder(
-                        borderSide:
-                            BorderSide(color: Colors.black26, width: 1.5)),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 20),
-                  ),
-                  isEmpty: controller.selectedSubSubCategory.value.isEmpty,
-                  child: DropdownButton<String>(
-                    dropdownColor: Colors.white,
-                    isExpanded: true,
-                    underline: Container(),
-                    value: controller.selectedSubSubCategory.value.isEmpty
-                        ? null
-                        : controller.selectedSubSubCategory.value,
-                    items: controller.occuptionSubSubCategoryList
-                        .map((OccuptionSpecSubSubCategoryData item) {
-                      return DropdownMenuItem<String>(
-                        value: item.subSubCategoryId.toString(),
-                        child: Text(item.subSubCategoryName ?? 'Unknown'),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        controller.selectedSubSubCategory.value = newValue;
-
-                        if (newValue == "Other") {
-                          controller.showDetailsField.value = true;
-                        } else {
-                          controller.showDetailsField.value = false;
-                        }
-                      }
-                    },
-                  ),
-                );
-              }
-            }),
-          );
-        }),
-        const SizedBox(height: 20),
+        // Obx(() {
+        //   if (controller.selectedSubCategory.value.isEmpty ||
+        //       controller.selectedSubCategory.value == "Other") {
+        //     return const SizedBox();
+        //   }
+        //
+        //   return Container(
+        //     margin: const EdgeInsets.only(left: 5, right: 5, top: 8),
+        //     child: Obx(() {
+        //       if (controller.rxStatusOccupationSpec.value == Status.LOADING) {
+        //         return _buildLoadingIndicator();
+        //       } else if (controller.rxStatusOccupationSpec.value ==
+        //           Status.ERROR) {
+        //         return const Center(child: Text('Failed to load level 5'));
+        //       } else if (controller.occuptionSubSubCategoryList.isEmpty) {
+        //         return const SizedBox();
+        //       } else {
+        //         return InputDecorator(
+        //           decoration: const InputDecoration(
+        //             labelText: 'Level 5',
+        //             border: OutlineInputBorder(
+        //                 borderSide: BorderSide(color: Colors.black26)),
+        //             enabledBorder: OutlineInputBorder(
+        //                 borderSide: BorderSide(color: Colors.black26)),
+        //             focusedBorder: OutlineInputBorder(
+        //                 borderSide:
+        //                     BorderSide(color: Colors.black26, width: 1.5)),
+        //             contentPadding: EdgeInsets.symmetric(horizontal: 20),
+        //           ),
+        //           isEmpty: controller.selectedSubSubCategory.value.isEmpty,
+        //           child: DropdownButton<String>(
+        //             dropdownColor: Colors.white,
+        //             isExpanded: true,
+        //             underline: Container(),
+        //             value: controller.selectedSubSubCategory.value.isEmpty
+        //                 ? null
+        //                 : controller.selectedSubSubCategory.value,
+        //             items: controller.occuptionSubSubCategoryList
+        //                 .map((OccuptionSpecSubSubCategoryData item) {
+        //               return DropdownMenuItem<String>(
+        //                 value: item.subSubCategoryId.toString(),
+        //                 child: Text(item.subSubCategoryName ?? 'Unknown'),
+        //               );
+        //             }).toList(),
+        //             onChanged: (String? newValue) {
+        //               if (newValue != null) {
+        //                 controller.selectedSubSubCategory.value = newValue;
+        //
+        //                 if (newValue == "Other") {
+        //                   controller.showDetailsField.value = true;
+        //                 } else {
+        //                   controller.showDetailsField.value = false;
+        //                 }
+        //               }
+        //             },
+        //           ),
+        //         );
+        //       }
+        //     }),
+        //   );
+        // }),
+        // const SizedBox(height: 20),
 
         // Details Field
         Obx(() {

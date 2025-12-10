@@ -1323,10 +1323,10 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
             _buildOccupationInfoRow(
                 "Level 2", occupation.occupationProfessionName),
             _buildOccupationInfoRow("Level 3", occupation.specializationName),
-            _buildOccupationInfoRow(
-                "Level 4", occupation.specializationSubCategoryName),
-            _buildOccupationInfoRow(
-                "Level 5", occupation.specializationSubSubCategoryName),
+            // _buildOccupationInfoRow(
+            //     "Level 4", occupation.specializationSubCategoryName),
+            // _buildOccupationInfoRow(
+            //     "Level 5", occupation.specializationSubSubCategoryName),
 
             if (occupation.occupationOtherName != null &&
                 occupation.occupationOtherName!.isNotEmpty)
