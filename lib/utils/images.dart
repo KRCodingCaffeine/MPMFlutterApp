@@ -27,7 +27,7 @@ class Images {
   static const String networking = 'assets/images/networking.svg';
   static const String network = 'assets/images/network.svg';
   static const String publication = 'assets/images/publication.svg';
-  static const String shiksha = 'assets/images/shiksha.svg';
+  static const String shiksha = 'assets/images/shiksha_sahayata.svg';
   static const String vivah = 'assets/images/vivah.svg';
   static const String makenewmember = 'assets/images/newmember.svg';
   static const String sucess = 'assets/images/check.gif';
