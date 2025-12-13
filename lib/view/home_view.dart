@@ -724,7 +724,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
         Navigator.pushNamed(context, RouteNames.networking);
         break;
       case "Shiksha Sahayata":
-        _showShikshaDialog();
+        Navigator.pushNamed(context, RouteNames.shiksha_sahayata);
         break;
       case "QR Code Scanner":
          Navigator.pushNamed(context, RouteNames.qr_code);
@@ -752,7 +752,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
             crossAxisAlignment: CrossAxisAlignment.start,
             children: const [
               Text(
-                "Shiksha Sahayata By Parenting",
+                "Shiksha Sahayata",
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
