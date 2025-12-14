@@ -63,6 +63,17 @@ class GetProfileData {
   final String? profileImagePath;
   final String? addressProofPath;
   final String? documentType;
+  final String? proposerFirstName;
+  final String? proposerMiddleName;
+  final String? proposerLastName;
+  final String? proposerMemberCode;
+  final String? hasFamilyRemoved;
+  final String? familyDeleteReason;
+  final String? hasApp;
+  final String? existingMemberCode;
+  final String? sangathanSamitiComment;
+  final String? vyaspathikaSamitiComment;
+  final String? deceasedStatusId;
 
   final Address? address;
   final List<FamilyMembersData>? familyMembersData;
@@ -129,6 +140,17 @@ class GetProfileData {
     this.profileImagePath,
     this.addressProofPath,
     this.documentType,
+    this.proposerFirstName,
+    this.proposerMiddleName,
+    this.proposerLastName,
+    this.proposerMemberCode,
+    this.hasFamilyRemoved,
+    this.familyDeleteReason,
+    this.hasApp,
+    this.existingMemberCode,
+    this.sangathanSamitiComment,
+    this.vyaspathikaSamitiComment,
+    this.deceasedStatusId,
     this.address,
     this.familyMembersData,
     this.familyHeadMemberData,
@@ -199,6 +221,17 @@ class GetProfileData {
       profileImagePath: json['profile_image_path']?.toString(),
       addressProofPath: json['address_proof_path']?.toString(),
       documentType: json['document_type']?.toString(),
+      proposerFirstName: json['proposer_first_name']?.toString(),
+      proposerMiddleName: json['proposer_middle_name']?.toString(),
+      proposerLastName: json['proposer_last_name']?.toString(),
+      proposerMemberCode: json['proposer_member_code']?.toString(),
+      hasFamilyRemoved: json['has_family_removed']?.toString(),
+      familyDeleteReason: json['family_delete_reason']?.toString(),
+      hasApp: json['has_app']?.toString(),
+      existingMemberCode: json['existing_member_code']?.toString(),
+      sangathanSamitiComment: json['sangathan_samiti_comment']?.toString(),
+      vyaspathikaSamitiComment: json['vyaspathika_samiti_comment']?.toString(),
+      deceasedStatusId: json['deceased_status_id']?.toString(),
       address: json['address'] != null
           ? (json['address'] is List
               ? (json['address'] as List).isNotEmpty
@@ -290,6 +323,17 @@ class GetProfileData {
       'profile_image_path': profileImagePath,
       'address_proof_path': addressProofPath,
       'document_type': documentType,
+      'proposer_first_name': proposerFirstName,
+      'proposer_middle_name': proposerMiddleName,
+      'proposer_last_name': proposerLastName,
+      'proposer_member_code': proposerMemberCode,
+      'has_family_removed': hasFamilyRemoved,
+      'family_delete_reason': familyDeleteReason,
+      'has_app': hasApp,
+      'existing_member_code': existingMemberCode,
+      'sangathan_samiti_comment': sangathanSamitiComment,
+      'vyaspathika_samiti_comment': vyaspathikaSamitiComment,
+      'deceased_status_id': deceasedStatusId,
       'address': address?.toJson(),
       'family_members_data': familyMembersData?.map((x) => x.toJson()).toList(),
       'family_head_member_data': familyHeadMemberData?.toJson(),

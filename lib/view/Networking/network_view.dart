@@ -19,6 +19,7 @@ import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/urls.dart';
 import 'package:mpm/view/Networking/filter_bottom_sheet.dart';
 import 'package:mpm/view/Networking/network_filters.dart';
+import 'package:mpm/view/profile%20view/business_info_page.dart';
 import 'package:mpm/view/profile%20view/occupation_detail_view.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
@@ -66,7 +67,8 @@ class _NetworkViewState extends State<NetworkView> {
   int _totalPages = 1;
 
   // Filter options from API
-  Map<String, List<String>> _availableFilters = {
+  Map<String, dynamic> _availableFilters = {
+    'zones': [],
     'occupations': [],
     'professions': [],
     'specializations': [],
@@ -256,6 +258,7 @@ class _NetworkViewState extends State<NetworkView> {
           }
 
           _availableFilters = {
+            'zones': response.filters!.zones, // Zones from API
             'occupations':
                 response.filters!.occupations, // Will be hidden if empty
             'professions':
@@ -395,6 +398,23 @@ class _NetworkViewState extends State<NetworkView> {
     });
   }
 
+  // Check if there are any filters available to show (more than 1 item per filter type)
+  bool _hasFiltersAvailable() {
+    // Check zones
+    final zones = _availableFilters['zones'] as List?;
+    if (zones != null && zones.length > 1) return true;
+    
+    // Check other filters (they should be List<String>)
+    final filterKeys = ['occupations', 'professions', 'specializations', 'subcategories', 'sub_subcategories', 'product_categories', 'product_subcategories'];
+    for (var key in filterKeys) {
+      final filterList = _availableFilters[key] as List?;
+      if (filterList != null && filterList.length > 1) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   void _clearSearch() {
     setState(() {
       _searchController.clear();
@@ -421,47 +441,94 @@ class _NetworkViewState extends State<NetworkView> {
     if (!_filters.hasFilters) {
       // No filters selected, show all results
       _results = List.from(_allResults);
+      debugPrint("No filters applied - showing all ${_results.length} results");
       return;
+    }
+
+    debugPrint("========== APPLYING FILTERS ==========");
+    debugPrint("Selected occupations: ${_filters.occupations}");
+    debugPrint("Selected professions: ${_filters.professions}");
+    debugPrint("Selected specializations: ${_filters.specializations}");
+    debugPrint("Selected subcategories: ${_filters.subcategories}");
+    debugPrint("Selected subSubcategories: ${_filters.subSubcategories}");
+    debugPrint("Selected zones: ${_filters.zones}");
+    debugPrint("Total results before filtering: ${_allResults.length}");
+    if (_filters.zones.isNotEmpty) {
+      debugPrint("Sample member zones: ${_allResults.take(3).map((m) => '${m.fullName}: zone=${m.zoneName} (id=${m.zoneId})').join(', ')}");
+    }
+
+    // Helper function to normalize strings for comparison
+    String normalize(String? str) {
+      if (str == null) return '';
+      return str.trim().toLowerCase();
     }
 
     // Filter results based on selected filters
     _results = _allResults.where((member) {
       // Check occupation filter
       if (_filters.occupations.isNotEmpty) {
-        final memberOccupation = member.occupationNameValue ?? '';
-        if (!_filters.occupations.contains(memberOccupation)) {
+        final memberOccupation = normalize(member.occupationNameValue);
+        final matches = _filters.occupations.any((filterOcc) => 
+          normalize(filterOcc) == memberOccupation
+        );
+        if (!matches) {
           return false;
         }
       }
 
       // Check profession filter
       if (_filters.professions.isNotEmpty) {
-        final memberProfession = member.professionNameValue ?? '';
-        if (!_filters.professions.contains(memberProfession)) {
+        final memberProfession = normalize(member.professionNameValue);
+        final matches = _filters.professions.any((filterProf) => 
+          normalize(filterProf) == memberProfession
+        );
+        if (!matches) {
           return false;
         }
       }
 
       // Check specialization filter
       if (_filters.specializations.isNotEmpty) {
-        final memberSpecialization = member.specializationNameValue ?? '';
-        if (!_filters.specializations.contains(memberSpecialization)) {
+        final memberSpecialization = normalize(member.specializationNameValue);
+        final matches = _filters.specializations.any((filterSpec) => 
+          normalize(filterSpec) == memberSpecialization
+        );
+        if (!matches) {
           return false;
         }
       }
 
       // Check subcategory filter
       if (_filters.subcategories.isNotEmpty) {
-        final memberSubcategory = member.subCategoryNameValue ?? '';
-        if (!_filters.subcategories.contains(memberSubcategory)) {
+        final memberSubcategory = normalize(member.subCategoryNameValue);
+        final matches = _filters.subcategories.any((filterSubcat) => 
+          normalize(filterSubcat) == memberSubcategory
+        );
+        if (!matches) {
           return false;
         }
       }
 
       // Check sub-subcategory filter
       if (_filters.subSubcategories.isNotEmpty) {
-        final memberSubSubcategory = member.subSubCategoryNameValue ?? '';
-        if (!_filters.subSubcategories.contains(memberSubSubcategory)) {
+        final memberSubSubcategory = normalize(member.subSubCategoryNameValue);
+        final matches = _filters.subSubcategories.any((filterSubSubcat) => 
+          normalize(filterSubSubcat) == memberSubSubcategory
+        );
+        if (!matches) {
+          return false;
+        }
+      }
+
+      // Check zone filter
+      if (_filters.zones.isNotEmpty) {
+        final memberZoneName = normalize(member.zoneName);
+        final memberZoneId = normalize(member.zoneId);
+        final matches = _filters.zones.any((filterZone) {
+          final normalizedFilterZone = normalize(filterZone);
+          return normalizedFilterZone == memberZoneName || normalizedFilterZone == memberZoneId;
+        });
+        if (!matches) {
           return false;
         }
       }
@@ -469,12 +536,12 @@ class _NetworkViewState extends State<NetworkView> {
       return true;
     }).toList();
 
-    debugPrint(
-        "Filtered results: ${_results.length} out of ${_allResults.length}");
+    debugPrint("Filtered results: ${_results.length} out of ${_allResults.length}");
+    debugPrint("======================================");
   }
 
   // Extract filters from search results - matches PHP formatFilters() function
-  Map<String, List<String>> _extractFiltersFromResults(
+  Map<String, dynamic> _extractFiltersFromResults(
       List<SearchOccupationData> results) {
     // Helper function to format filters (matches PHP formatFilters logic)
     // BUT exclude 'Other' as per requirement
@@ -540,6 +607,7 @@ class _NetworkViewState extends State<NetworkView> {
     }
 
     return {
+      'zones': [], // Zones come from API filters, not from results
       'occupations': occupations.toSet().toList(),
       'professions': professions.toSet().toList(),
       'specializations': specializations.toSet().toList(),
@@ -610,89 +678,111 @@ class _NetworkViewState extends State<NetworkView> {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Profile image
-            ClipRRect(
-              borderRadius: BorderRadius.circular(60),
-              child: SizedBox(
-                height: 100,
-                width: 100,
-                child: member.profileImage != null &&
-                    member.profileImage!.isNotEmpty
-                    ? FadeInImage(
-                  placeholder: const AssetImage("assets/images/user3.png"),
-                  image: NetworkImage(
-                    Urls.imagePathUrl + member.profileImage!,
-                  ),
-                  fit: BoxFit.cover,
-                )
-                    : Image.asset("assets/images/user3.png"),
+            Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(40),
+                child: SizedBox(
+                  height: 80,
+                  width: 80,
+                  child: member.profileImage != null &&
+                      member.profileImage!.isNotEmpty
+                      ? FadeInImage(
+                    placeholder: const AssetImage("assets/images/user3.png"),
+                    image: NetworkImage(
+                      Urls.imagePathUrl + member.profileImage!,
+                    ),
+                    fit: BoxFit.cover,
+                    imageErrorBuilder: (context, error, stackTrace) {
+                      return Image.asset("assets/images/user3.png", fit: BoxFit.cover);
+                    },
+                  )
+                      : Image.asset(
+                          "assets/images/user3.png",
+                          fit: BoxFit.cover,
+                        ),
+                ),
               ),
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
 
             // Name
             Text(
               member.fullName ?? "No Name",
               maxLines: 2,
               textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                fontSize: 15,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
+                height: 1.2,
               ),
             ),
 
             const SizedBox(height: 6),
 
             // Profession
-            Text(
-              member.professionNameValue ?? "",
-              maxLines: 1,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey.shade700,
+            if ((member.professionNameValue ?? "").isNotEmpty)
+              Text(
+                member.professionNameValue!,
+                maxLines: 1,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade700,
+                ),
               ),
-            ),
 
             // Specialization pill
             if ((member.specializationNameValue ?? "").isNotEmpty)
-              Container(
-                margin: const EdgeInsets.only(top: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade100,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  member.specializationNameValue!,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.orange.shade700,
-                    fontWeight: FontWeight.w600,
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.orange.shade200, width: 1),
+                  ),
+                  child: Text(
+                    member.specializationNameValue!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.orange.shade800,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
 
             // Connect Button
-            SizedBox(
-              width: double.infinity,
-              height: 38,
-              child: ElevatedButton(
-                onPressed: () => _showConnectDialog(member),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: themeColor,
-                  foregroundColor: Colors.white,
+            ElevatedButton(
+              onPressed: () => _showConnectDialog(member),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: themeColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                minimumSize: const Size(double.infinity, 36),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
-                  "Connect",
-                  style: TextStyle(fontSize: 14),
-                ),
+                elevation: 0,
+              ),
+              child: const Text(
+                "Connect",
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
               ),
             ),
 
@@ -1139,54 +1229,94 @@ class _NetworkViewState extends State<NetworkView> {
             style: TextStyle(color: Colors.white),
           ),
           iconTheme: const IconThemeData(color: Colors.white),
-
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: OutlinedButton(
-                onPressed: () {
-                  final occ = controller.currentOccupation.value;
-
-                  if (occ == null) {
-                    Get.snackbar(
-                      "Error",
-                      "No occupation found",
-                      backgroundColor: Colors.red,
-                      colorText: Colors.white,
-                    );
-                    return;
-                  }
-
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => OccupationDetailViewPage(
-                        memberId: occ.memberId.toString(),
-                        memberOccupationId: occ.memberOccupationId.toString(),
-                      ),
-                    ),
-                  );
-                },
-                child: const Text(
-                  'Add Business Profile',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: const BorderSide(color: Colors.white),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-            ),
-          ],
         ),
         body: Column(
           children: [
+            // Warning banner for missing occupation or business profile
+            Obx(() {
+              final occ = controller.currentOccupation.value;
+              final allOccupations = controller.allOccupations;
+              
+              // Check if banner should be shown
+              // Show if: no occupation data OR (occupation exists with ID 1/2/3 but no business profile)
+              final hasNoOccupation = allOccupations.isEmpty || occ == null;
+              final hasOccupationButNoBusiness = occ != null &&
+                  (occ.occupationId == "1" || occ.occupationId == "2" || occ.occupationId == "3") &&
+                  occ.memberBusinessOccupationProfile == null;
+              
+              final shouldShowBanner = hasNoOccupation || hasOccupationButNoBusiness;
+              
+              // Determine navigation target
+              final shouldGoToOccupationEntry = hasNoOccupation;
+              final shouldGoToBusinessProfile = hasOccupationButNoBusiness;
+
+              if (shouldShowBanner) {
+                return Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: GestureDetector(
+                    onTap: () {
+                      if (hasNoOccupation) {
+                        // Navigate to occupation entry screen
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const BusinessInformationPage(),
+                          ),
+                        );
+                      } else if (hasOccupationButNoBusiness) {
+                        // Navigate to detailed business profile screen
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => OccupationDetailViewPage(
+                              memberId: occ.memberId.toString(),
+                              memberOccupationId: occ.memberOccupationId.toString(),
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(16.0),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade700,
+                        borderRadius: BorderRadius.circular(8.0),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.orange.shade900.withOpacity(0.2),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.warning_amber_rounded,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Click here to update your Occupation and Detailed Business Profile',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              } else {
+                return const SizedBox.shrink();
+              }
+            }),
+            
             // Search bar
             Container(
               padding: const EdgeInsets.all(16),
@@ -1254,11 +1384,11 @@ class _NetworkViewState extends State<NetworkView> {
 
                   // Filter button
                   IgnorePointer(
-                    ignoring: !_hasSearched, // Disable when no search yet
+                    ignoring: !_hasSearched || !_hasFiltersAvailable(), // Disable when no search or no filters available
                     child: Opacity(
-                      opacity: _hasSearched ? 1 : 0.4, // Dim when disabled
+                      opacity: (_hasSearched && _hasFiltersAvailable()) ? 1 : 0.4, // Dim when disabled
                       child: GestureDetector(
-                        onTap: _hasSearched ? _openFilterSheet : null,
+                        onTap: (_hasSearched && _hasFiltersAvailable()) ? _openFilterSheet : null,
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
@@ -1443,7 +1573,7 @@ class _NetworkViewState extends State<NetworkView> {
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      childAspectRatio: 0.62,
+                      childAspectRatio: 0.68,
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
                     ),

@@ -58,6 +58,8 @@ class SearchOccupationData {
   String? specializationName;
   String? subCategoryName;
   String? subSubCategoryName;
+  String? zoneId;
+  String? zoneName;
 
   SearchOccupationData({
     this.memberId,
@@ -75,6 +77,8 @@ class SearchOccupationData {
     this.specializationName,
     this.subCategoryName,
     this.subSubCategoryName,
+    this.zoneId,
+    this.zoneName,
   });
 
   factory SearchOccupationData.fromJson(Map<String, dynamic> json) {
@@ -126,6 +130,8 @@ class SearchOccupationData {
       subSubCategoryName: json['occupation'] is Map
           ? json['occupation']['specialization_sub_sub_category_name']?.toString()
           : (json['sub_sub_category_name']?.toString() ?? occupationInfo?.specializationSubSubCategoryName),
+      zoneId: json['zone_id']?.toString(),
+      zoneName: json['zone_name']?.toString(),
     );
   }
 
