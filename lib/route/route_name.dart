@@ -39,6 +39,9 @@ class RouteNames {
   // Networking
   static const String shiksha_sahayata = "shiksha_sahayata";
 
+  // Networking
+  static const String shiksha_sahayata_by_parenting = "shiksha_sahayata_by_parenting";
+
   // OutSide Mumbai Login
   static const String outside_mumbai_login = "outside_mumbai_login";
 
