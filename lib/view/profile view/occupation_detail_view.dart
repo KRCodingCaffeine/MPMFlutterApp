@@ -142,12 +142,24 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                                       ),
                                     )
                                   : const Text(
-                                      "Submit",
+                                      "Add details",
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold),
                                     ),
                             )),
+                        const SizedBox(height: 12),
                       ],
+                    ),
+                  ),
+
+                  // ✅ HELPER MESSAGE
+                  Text(
+                    "Add your details to complete your business profile",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -174,12 +186,12 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
 
                             // Business Mobile
                             _buildTextField(
-                              label: "Business Mobile *",
+                              label: "Mobile *",
                               controller: controller.businessMobileController,
                               keyboardType: TextInputType.phone,
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Please enter business mobile';
+                                  return 'Please enter mobile';
                                 }
                                 if (value.length != 10) {
                                   return 'Please enter valid 10-digit mobile number';
@@ -191,7 +203,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
 
                             // Business Landline
                             _buildTextField(
-                              label: "Business Landline",
+                              label: "Landline",
                               controller: controller.businessLandlineController,
                               keyboardType: TextInputType.phone,
                             ),
@@ -199,7 +211,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
 
                             // Business Email
                             _buildTextField(
-                              label: "Business Email",
+                              label: "Email",
                               controller: controller.businessEmailController,
                               keyboardType: TextInputType.emailAddress,
                               validator: (value) {
@@ -217,24 +229,24 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
 
                             // Business Website
                             _buildTextField(
-                              label: "Business Website",
+                              label: "Website",
                               controller: controller.businessWebsiteController,
                               keyboardType: TextInputType.url,
                             ),
                             const SizedBox(height: 16),
 
                             // Flat No
-                            _buildTextField(
-                              label: "Flat No *",
-                              controller: controller.businessFlatNoController,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter flat number';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
+                            // _buildTextField(
+                            //   label: "Flat No *",
+                            //   controller: controller.businessFlatNoController,
+                            //   validator: (value) {
+                            //     if (value == null || value.isEmpty) {
+                            //       return 'Please enter flat number';
+                            //     }
+                            //     return null;
+                            //   },
+                            // ),
+                            // const SizedBox(height: 16),
 
                             // Address
                             _buildTextField(
@@ -378,7 +390,8 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
     await regiController.getCity();
 
     final selectedCountry = regiController.countryList.firstWhereOrNull(
-          (c) => c.countryName?.toLowerCase().trim() ==
+      (c) =>
+          c.countryName?.toLowerCase().trim() ==
           address.countryName?.toLowerCase().trim(),
     );
 
@@ -387,7 +400,8 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
     }
 
     final selectedState = regiController.stateList.firstWhereOrNull(
-          (s) => s.stateName?.toLowerCase().trim() ==
+      (s) =>
+          s.stateName?.toLowerCase().trim() ==
           address.stateName?.toLowerCase().trim(),
     );
 
@@ -396,7 +410,8 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
     }
 
     final selectedCity = regiController.cityList.firstWhereOrNull(
-          (c) => c.cityName?.toLowerCase().trim() ==
+      (c) =>
+          c.cityName?.toLowerCase().trim() ==
           address.cityName?.toLowerCase().trim(),
     );
 
@@ -507,16 +522,63 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                             const SizedBox(height: 16),
 
                             _buildTextField(
-                              label: "Flat No *",
-                              controller: controller.businessFlatNoController,
+                              label: "Mobile *",
+                              controller: controller.businessMobileController,
+                              keyboardType: TextInputType.phone,
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Please enter flat number';
+                                  return 'Please enter business mobile';
+                                }
+                                if (value.length != 10) {
+                                  return 'Please enter valid 10-digit mobile number';
                                 }
                                 return null;
                               },
                             ),
                             const SizedBox(height: 16),
+
+                            _buildTextField(
+                              label: "Landline",
+                              controller: controller.businessLandlineController,
+                              keyboardType: TextInputType.phone,
+                            ),
+                            const SizedBox(height: 16),
+
+                            _buildTextField(
+                              label: "Email",
+                              controller: controller.businessEmailController,
+                              keyboardType: TextInputType.emailAddress,
+                              validator: (value) {
+                                if (value != null && value.isNotEmpty) {
+                                  if (!RegExp(
+                                          r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                                      .hasMatch(value)) {
+                                    return 'Please enter valid email';
+                                  }
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+
+                            _buildTextField(
+                              label: "Website",
+                              controller: controller.businessWebsiteController,
+                              keyboardType: TextInputType.url,
+                            ),
+                            const SizedBox(height: 16),
+
+                            // _buildTextField(
+                            //   label: "Flat No *",
+                            //   controller: controller.businessFlatNoController,
+                            //   validator: (value) {
+                            //     if (value == null || value.isEmpty) {
+                            //       return 'Please enter flat number';
+                            //     }
+                            //     return null;
+                            //   },
+                            // ),
+                            // const SizedBox(height: 16),
 
                             _buildTextField(
                               label: "Address *",
@@ -565,53 +627,6 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                                 }
                                 return null;
                               },
-                            ),
-                            const SizedBox(height: 16),
-
-                            _buildTextField(
-                              label: "Business Mobile *",
-                              controller: controller.businessMobileController,
-                              keyboardType: TextInputType.phone,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter business mobile';
-                                }
-                                if (value.length != 10) {
-                                  return 'Please enter valid 10-digit mobile number';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-
-                            _buildTextField(
-                              label: "Business Landline",
-                              controller: controller.businessLandlineController,
-                              keyboardType: TextInputType.phone,
-                            ),
-                            const SizedBox(height: 16),
-
-                            _buildTextField(
-                              label: "Business Email",
-                              controller: controller.businessEmailController,
-                              keyboardType: TextInputType.emailAddress,
-                              validator: (value) {
-                                if (value != null && value.isNotEmpty) {
-                                  if (!RegExp(
-                                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                                      .hasMatch(value)) {
-                                    return 'Please enter valid email';
-                                  }
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-
-                            _buildTextField(
-                              label: "Business Website",
-                              controller: controller.businessWebsiteController,
-                              keyboardType: TextInputType.url,
                             ),
                             const SizedBox(height: 30),
                           ],
@@ -1419,7 +1434,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
 
   Widget _buildBusinessAddressSection(BusinessAddressData address) {
     final addressParts = [
-      address.flatNo,
+      // address.flatNo,
       address.address,
       address.areaName,
       address.cityName,
