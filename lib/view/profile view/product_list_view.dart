@@ -1219,7 +1219,7 @@ class _ProductListPageState extends State<ProductListPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              "Product List",
+              "Product / Service List",
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 18,
@@ -1278,7 +1278,6 @@ class _ProductListPageState extends State<ProductListPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// 🔥 PRODUCT NAME + STATUS
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -1316,7 +1315,6 @@ class _ProductListPageState extends State<ProductListPage> {
 
             const SizedBox(height: 10),
 
-            /// 🔥 DESCRIPTION
             Text(
               product.description ?? "No description available",
               style: const TextStyle(
@@ -1328,7 +1326,6 @@ class _ProductListPageState extends State<ProductListPage> {
 
             const SizedBox(height: 16),
 
-            /// 🔥 EDIT + DELETE BUTTONS
             Row(
               children: [
                 Expanded(
@@ -1371,7 +1368,6 @@ class _ProductListPageState extends State<ProductListPage> {
 
             const SizedBox(height: 12),
 
-            /// 🔥 VIEW DETAILS BUTTON
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -1407,7 +1403,7 @@ class _ProductListPageState extends State<ProductListPage> {
           ),
           const SizedBox(height: 16),
           const Text(
-            "No Products Found",
+            "No Product / Service Found",
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -1416,7 +1412,7 @@ class _ProductListPageState extends State<ProductListPage> {
           ),
           const SizedBox(height: 8),
           const Text(
-            "Add your first product to get started",
+            "Add your first product / service to get started",
             style: TextStyle(
               color: Colors.grey,
             ),
@@ -1439,7 +1435,7 @@ class _ProductListPageState extends State<ProductListPage> {
           ),
           const SizedBox(height: 16),
           const Text(
-            "Failed to Load Products",
+            "Failed to Load Product / Service",
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,

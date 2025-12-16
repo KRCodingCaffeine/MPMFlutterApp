@@ -1,13 +1,18 @@
 // occupation_detail_view_page.dart
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/BusinessProfile/BusinessAddress/BusinessAddressData.dart';
 import 'package:mpm/model/BusinessProfile/GetAllBusinessOccupationProfile/GetAllBusinessOccupationProfileModelClass.dart';
 import 'package:mpm/model/GetProfile/Address.dart';
 import 'package:mpm/model/GetProfile/Occupation.dart';
+import 'package:mpm/repository/BusinessProfileRepo/business_profile_document_upload_repository/business_profile_document_upload_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/utils/urls.dart';
 import 'package:mpm/view/profile%20view/business_info_page.dart';
 import 'package:mpm/view/profile%20view/product_list_view.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
@@ -34,7 +39,12 @@ class OccupationDetailViewPage extends StatefulWidget {
 class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
   final UdateProfileController controller = Get.find<UdateProfileController>();
   final NewMemberController regiController = Get.put(NewMemberController());
+  final BusinessProfileDocumentUploadRepository
+  _businessProfileDocumentRepo =
+  BusinessProfileDocumentUploadRepository();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  File? _image;
 
   @override
   void initState() {
@@ -91,41 +101,47 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
               child: Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0, vertical: 16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: ColorHelperClass.getColorFromHex(
-                                ColorResources.red_color),
-                            side: BorderSide(
-                                color: ColorHelperClass.getColorFromHex(
-                                    ColorResources.red_color)),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 12),
-                          ),
-                          child: const Text(
-                            "Cancel",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        Obx(() => ElevatedButton(
+                        // 🔹 BUTTON ROW
+                        Row(
+                          children: [
+                            OutlinedButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: ColorHelperClass.getColorFromHex(
+                                    ColorResources.red_color),
+                                side: BorderSide(
+                                  color: ColorHelperClass.getColorFromHex(
+                                      ColorResources.red_color),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10)),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 12),
+                              ),
+                              child: const Text(
+                                "Cancel",
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+
+                            const Spacer(), // ✅ pushes Add button to right
+
+                            Obx(() => ElevatedButton(
                               onPressed: controller.isOccupationLoading.value
                                   ? null
                                   : () async {
-                                      if (_validateForm()) {
-                                        await _addBusinessDetails(occupation);
-                                      }
-                                    },
+                                if (_validateForm()) {
+                                  await _addBusinessDetails(occupation);
+                                }
+                              },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
-                                    ColorHelperClass.getColorFromHex(
-                                        ColorResources.red_color),
+                                ColorHelperClass.getColorFromHex(
+                                    ColorResources.red_color),
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)),
@@ -134,34 +150,38 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                               ),
                               child: controller.isOccupationLoading.value
                                   ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
-                                      ),
-                                    )
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
                                   : const Text(
-                                      "Add details",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold),
-                                    ),
+                                "Add Business Detail",
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
                             )),
-                        const SizedBox(height: 12),
+                          ],
+                        ),
+
+                        const SizedBox(height: 18),
+
+                        Center(
+                          child: Text(
+                            "Add your details to complete your business profile",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.black,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
 
-                  // ✅ HELPER MESSAGE
-                  Text(
-                    "Add your details to complete your business profile",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey.shade600,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
                   const SizedBox(height: 10),
                   Expanded(
                     child: SingleChildScrollView(
@@ -201,7 +221,6 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Business Landline
                             _buildTextField(
                               label: "Landline",
                               controller: controller.businessLandlineController,
@@ -209,9 +228,8 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Business Email
                             _buildTextField(
-                              label: "Email",
+                              label: "Email *",
                               controller: controller.businessEmailController,
                               keyboardType: TextInputType.emailAddress,
                               validator: (value) {
@@ -227,9 +245,8 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Business Website
                             _buildTextField(
-                              label: "Website",
+                              label: "Website *",
                               controller: controller.businessWebsiteController,
                               keyboardType: TextInputType.url,
                             ),
@@ -248,7 +265,6 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                             // ),
                             // const SizedBox(height: 16),
 
-                            // Address
                             _buildTextField(
                               label: "Address *",
                               controller: controller.businessAddressController,
@@ -262,7 +278,6 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Area Name
                             _buildTextField(
                               label: "Area *",
                               controller: controller.businessAreaNameController,
@@ -275,19 +290,15 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                             ),
                             const SizedBox(height: 16),
 
-                            // City Dropdown
                             _buildCityDropdown(),
                             const SizedBox(height: 16),
 
-                            // State Dropdown
                             _buildStateDropdown(),
                             const SizedBox(height: 16),
 
-                            // Country Dropdown
                             _buildCountryDropdown(),
                             const SizedBox(height: 16),
 
-                            // Pincode
                             _buildTextField(
                               label: "Pincode *",
                               controller: controller.businessPincodeController,
@@ -301,6 +312,29 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                                 }
                                 return null;
                               },
+                            ),
+                            const SizedBox(height: 16),
+
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  _showImagePicker(context);
+                                },
+                                icon: const Icon(Icons.image),
+                                label: const Text("Upload Document"),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                  ColorHelperClass.getColorFromHex(
+                                      ColorResources.red_color),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  padding:
+                                  const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
                             ),
                             const SizedBox(height: 30),
                           ],
@@ -362,7 +396,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
 
         if (state != null) {
           regiController.state_id.value = state.id.toString();
-          regiController.setSelectedState(state.id.toString()); // loads cities
+          regiController.setSelectedState(state.id.toString());
         }
       }
     });
@@ -491,7 +525,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                                       ),
                                     )
                                   : const Text(
-                                      "Submit",
+                                      "Edit Business Detail",
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold),
                                     ),
@@ -545,7 +579,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                             const SizedBox(height: 16),
 
                             _buildTextField(
-                              label: "Email",
+                              label: "Email *",
                               controller: controller.businessEmailController,
                               keyboardType: TextInputType.emailAddress,
                               validator: (value) {
@@ -562,7 +596,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                             const SizedBox(height: 16),
 
                             _buildTextField(
-                              label: "Website",
+                              label: "Website *",
                               controller: controller.businessWebsiteController,
                               keyboardType: TextInputType.url,
                             ),
@@ -628,6 +662,47 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                                 return null;
                               },
                             ),
+                            const SizedBox(height: 16),
+
+                            Column(
+                              children: [
+                                if (_image != null)
+                                  Container(
+                                    height: 200,
+                                    width: double.infinity,
+                                    margin: const EdgeInsets.only(bottom: 10),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: Colors.grey),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.file(
+                                        _image!,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    onPressed: () {
+                                      _showImagePicker(context);
+                                    },
+                                    icon: const Icon(Icons.image),
+                                    label: const Text("Upload Document"),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                             const SizedBox(height: 30),
                           ],
                         ),
@@ -641,6 +716,58 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
         );
       },
     );
+  }
+
+  void _showImagePicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+      ),
+      builder: (BuildContext context) {
+        return Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
+              title: const Text("Take a Picture"),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImageFromCamera();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.image, color: Colors.redAccent),
+              title: const Text("Choose from Gallery"),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImageFromGallery();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _pickImageFromCamera() async {
+    final pickedFile =
+    await ImagePicker().pickImage(source: ImageSource.camera);
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+    }
+  }
+
+  Future<void> _pickImageFromGallery() async {
+    final pickedFile =
+    await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+    }
   }
 
   Widget _buildTextField({
@@ -914,7 +1041,6 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
     final businessName = controller.businessNameController.value.text.trim();
     final businessMobile =
         controller.businessMobileController.value.text.trim();
-    final flatNo = controller.businessFlatNoController.value.text.trim();
     final address = controller.businessAddressController.value.text.trim();
     final areaName = controller.businessAreaNameController.value.text.trim();
     final pincode = controller.businessPincodeController.value.text.trim();
@@ -946,16 +1072,6 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
       Get.snackbar(
         "Error",
         "Please enter valid 10-digit mobile number",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      return false;
-    }
-
-    if (flatNo.isEmpty) {
-      Get.snackbar(
-        "Error",
-        "Please enter flat/building number",
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
@@ -1037,17 +1153,20 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
 
   Future<void> _addBusinessDetails(Occupation occupation) async {
     try {
+      controller.isOccupationLoading.value = true;
+
       final businessBody = {
         'member_id': widget.memberId,
         "member_occupation_id": occupation.memberOccupationId,
         "business_name": controller.businessNameController.value.text.trim(),
         "business_mobile":
-            controller.businessMobileController.value.text.trim(),
+        controller.businessMobileController.value.text.trim(),
         "business_landline":
-            controller.businessLandlineController.value.text.trim(),
-        "business_email": controller.businessEmailController.value.text.trim(),
+        controller.businessLandlineController.value.text.trim(),
+        "business_email":
+        controller.businessEmailController.value.text.trim(),
         "business_website":
-            controller.businessWebsiteController.value.text.trim(),
+        controller.businessWebsiteController.value.text.trim(),
         "created_by": widget.memberId,
         "address_type": "office",
         "flat_no": controller.businessFlatNoController.value.text.trim(),
@@ -1056,40 +1175,59 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
         "city_id": regiController.city_id.value,
         "state_id": regiController.state_id.value,
         "country_id": regiController.country_id.value,
-        "pincode": controller.businessPincodeController.value.text.trim(),
+        "pincode":
+        controller.businessPincodeController.value.text.trim(),
       };
 
       debugPrint("📤 Business Details Body: $businessBody");
 
-      final businessResponse = await controller.addOccupationBusinessRepo
+      final businessResponse = await controller
+          .addOccupationBusinessRepo
           .addOccupationBusiness(businessBody);
 
+      controller.isOccupationLoading.value = false;
+
       if (businessResponse.status == true) {
+        final String? profileId =
+            businessResponse.data?.profile?.memberBusinessOccupationProfileId;
+
+        if (_image != null && profileId != null && profileId.isNotEmpty) {
+          await _businessProfileDocumentRepo.uploadBusinessProfileDocument(
+            memberBusinessOccupationProfileId: profileId,
+            filePath: _image!.path,
+          );
+        }
+
         Get.back();
         Get.snackbar(
           "Success",
-          businessResponse.message ?? "Business details added successfully",
+          businessResponse.message ?? "Business added successfully",
           backgroundColor: Colors.green,
           colorText: Colors.white,
         );
+
         _clearBusinessForm();
+        _image = null;
         _loadBusinessProfiles();
       } else {
         Get.snackbar(
           "Error",
-          businessResponse.message ?? "Failed to add business details",
+          businessResponse.message ??
+              "Failed to add business details",
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );
       }
     } catch (e) {
+      controller.isOccupationLoading.value = false;
+      debugPrint("❌ ADD BUSINESS ERROR: $e");
+
       Get.snackbar(
         "Error",
         "Something went wrong: $e",
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
-      debugPrint("ADD BUSINESS DETAILS ERROR: $e");
     }
   }
 
@@ -1100,7 +1238,6 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
 
       final body = {
         "member_business_occupation_profile_id": business.profileId,
-        "member_occupation_id": widget.memberOccupationId,
         "business_name": controller.businessNameController.value.text.trim(),
         "business_mobile":
             controller.businessMobileController.value.text.trim(),
@@ -1128,8 +1265,19 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
       controller.isOccupationLoading.value = false;
 
       if (response.status == true) {
-        Get.back();
+        if (_image != null &&
+            business.profileId != null &&
+            business.profileId!.isNotEmpty) {
+          await _businessProfileDocumentRepo.uploadBusinessProfileDocument(
+            memberBusinessOccupationProfileId: business.profileId!,
+            filePath: _image!.path,
+          );
+        }
 
+        _image = null;
+        _loadBusinessProfiles();
+
+        Get.back();
         Get.snackbar(
           "Success",
           response.message ?? "Business updated successfully",
@@ -1254,7 +1402,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                 ),
                 if (!hasBusiness)
                   ElevatedButton.icon(
-                    label: const Text("Add Business"),
+                    label: const Text("Add Business Detail"),
                     onPressed: () {
                       _showAddBusinessModalSheet(context, occupation);
                     },
@@ -1285,7 +1433,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                       const PopupMenuItem(
                         value: 'edit',
                         child: Text(
-                          'Edit Business',
+                          'Edit Business Detail',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
@@ -1295,7 +1443,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                       PopupMenuItem(
                         value: 'delete',
                         child: Text(
-                          'Delete',
+                          'Delete Business Detail',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
@@ -1394,19 +1542,20 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
   }
 
   Widget _buildBusinessCardInsideGroup(
-    BusinessOccupationProfile business,
-    Occupation occupation,
-  ) {
+      BusinessOccupationProfile business,
+      Occupation occupation,
+      ) {
     final address =
-        (business.addresses != null && business.addresses!.isNotEmpty)
-            ? business.addresses!.first as BusinessAddressData
-            : null;
+    (business.addresses != null && business.addresses!.isNotEmpty)
+        ? business.addresses!.first as BusinessAddressData
+        : null;
 
     return Container(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Divider(height: 20),
+
           Text(
             business.businessName ?? "N/A",
             style: const TextStyle(
@@ -1415,19 +1564,94 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
               color: Colors.black87,
             ),
           ),
+
           const SizedBox(height: 12),
-          address != null
-              ? _buildBusinessAddressSection(address)
-              : const Text(
-                  "No address available",
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+
+          if (address != null)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildBusinessAddressSection(address),
+
+                const SizedBox(height: 10),
+
+                Builder(
+                  builder: (context) {
+                    final String imagePath =
+                        business.businessProfileDocumentUrl ??
+                            (business.businessProfileDocument != null &&
+                                business.businessProfileDocument!.isNotEmpty
+                                ? "${Urls.base_url}/public/${business.businessProfileDocument}"
+                                : "");
+
+                    final bool isImageAvailable = imagePath.isNotEmpty;
+
+                    return SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: isImageAvailable
+                            ? () {
+                          _showBusinessDocumentPreviewDialog(
+                            context,
+                            imagePath,
+                          );
+                        }
+                            : null,
+                        icon: const Icon(Icons.visibility),
+                        label: const Text("View Document"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                          ColorHelperClass.getColorFromHex(
+                              ColorResources.red_color),
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor: Colors.grey.shade400,
+                          disabledForegroundColor: Colors.white70,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding:
+                          const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    );
+                  },
                 ),
+              ],
+            )
+          else
+            const Text(
+              "No address available",
+              style: TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+
           const SizedBox(height: 12),
           const Divider(height: 20),
+
           _buildContactDetailsSection(business),
+
           const SizedBox(height: 12),
+
           _buildActionButtons(business, occupation),
         ],
+      ),
+    );
+  }
+
+  void _showBusinessDocumentPreviewDialog(
+      BuildContext context,
+      String imageUrl,
+      ) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        child: InteractiveViewer(
+          child: Image.network(
+            imageUrl,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) =>
+            const Center(child: Text("Unable to load document")),
+          ),
+        ),
       ),
     );
   }
@@ -1596,7 +1820,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
               icon: const Icon(Icons.inventory_2_outlined),
-              label: const Text("Product List"),
+              label: const Text("Product / Service List"),
             ),
           ),
         if (showProductListButton) const SizedBox(height: 10),
