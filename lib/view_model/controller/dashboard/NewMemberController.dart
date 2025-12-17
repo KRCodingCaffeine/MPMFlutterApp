@@ -298,9 +298,18 @@ class NewMemberController extends GetxController {
   Future<void> getState() async {
     try {
       setRxRequestState(Status.LOADING);
-      final _value = await api.StateApi();
+
+      final response = await api.StateApi();
+      List<StateData> states = response.data ?? [];
+
+      final List<StateData> reorderedStates = [
+        ...states.where((s) => s.id == '2'),
+        ...states.where((s) => s.id == '22'),
+        ...states.where((s) => s.id != '2' && s.id != '22'),
+      ];
+
       setRxRequestState(Status.COMPLETE);
-      setState(_value.data!);
+      setState(reorderedStates);
     } catch (e) {
       setRxRequestState(Status.ERROR);
     }

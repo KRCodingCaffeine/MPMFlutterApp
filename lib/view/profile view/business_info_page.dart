@@ -444,14 +444,14 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
 
     if (controller.selectedSpecialization.value.isNotEmpty &&
         controller.selectedSpecialization.value != "Other") {
-      await controller.getOccupationSpecializationSubCategoryData(
-          controller.selectedSpecialization.value);
+      // await controller.getOccupationSpecializationSubCategoryData(
+      //     controller.selectedSpecialization.value);
     }
 
     if (controller.selectedSubCategory.value.isNotEmpty &&
         controller.selectedSubCategory.value != "Other") {
-      await controller.getOccupationSubSubCategoryData(
-          controller.selectedSubCategory.value);
+      // await controller.getOccupationSubSubCategoryData(
+      //     controller.selectedSubCategory.value);
     }
   }
 

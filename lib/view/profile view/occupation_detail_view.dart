@@ -279,7 +279,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                             const SizedBox(height: 16),
 
                             _buildTextField(
-                              label: "Area *",
+                              label: "Area",
                               controller: controller.businessAreaNameController,
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
@@ -628,7 +628,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                             const SizedBox(height: 16),
 
                             _buildTextField(
-                              label: "Area *",
+                              label: "Area",
                               controller: controller.businessAreaNameController,
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
@@ -1042,7 +1042,6 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
     final businessMobile =
         controller.businessMobileController.value.text.trim();
     final address = controller.businessAddressController.value.text.trim();
-    final areaName = controller.businessAreaNameController.value.text.trim();
     final pincode = controller.businessPincodeController.value.text.trim();
     final countryId = regiController.country_id.value;
     final stateId = regiController.state_id.value;
@@ -1082,16 +1081,6 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
       Get.snackbar(
         "Error",
         "Please enter address",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      return false;
-    }
-
-    if (areaName.isEmpty) {
-      Get.snackbar(
-        "Error",
-        "Please enter area/locality",
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
@@ -1573,49 +1562,39 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
               children: [
                 _buildBusinessAddressSection(address),
 
-                const SizedBox(height: 10),
-
+                if (business.businessProfileDocument != null &&
+                    business.businessProfileDocument!.isNotEmpty)
                 Builder(
-                  builder: (context) {
-                    final String imagePath =
-                        business.businessProfileDocumentUrl ??
-                            (business.businessProfileDocument != null &&
-                                business.businessProfileDocument!.isNotEmpty
-                                ? "${Urls.base_url}/public/${business.businessProfileDocument}"
-                                : "");
+                    builder: (context) {
+                      final String imagePath =
+                          business.businessProfileDocumentUrl ??
+                              "${Urls.base_url}/public/${business.businessProfileDocument}";
 
-                    final bool isImageAvailable = imagePath.isNotEmpty;
-
-                    return SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: isImageAvailable
-                            ? () {
-                          _showBusinessDocumentPreviewDialog(
-                            context,
-                            imagePath,
-                          );
-                        }
-                            : null,
-                        icon: const Icon(Icons.visibility),
-                        label: const Text("View Document"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                          ColorHelperClass.getColorFromHex(
-                              ColorResources.red_color),
-                          foregroundColor: Colors.white,
-                          disabledBackgroundColor: Colors.grey.shade400,
-                          disabledForegroundColor: Colors.white70,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                      return SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            _showBusinessDocumentPreviewDialog(
+                              context,
+                              imagePath,
+                            );
+                          },
+                          icon: const Icon(Icons.visibility),
+                          label: const Text("View Document"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: ColorHelperClass.getColorFromHex(
+                              ColorResources.red_color,
+                            ),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
-                          padding:
-                          const EdgeInsets.symmetric(vertical: 12),
                         ),
-                      ),
-                    );
-                  },
-                ),
+                      );
+                    },
+                  ),
               ],
             )
           else
