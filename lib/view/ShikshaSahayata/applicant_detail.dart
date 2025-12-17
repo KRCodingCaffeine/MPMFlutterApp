@@ -299,8 +299,8 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                               const SizedBox(height: 20),
 
                               _buildDropdown(
-                                "Gender",
-                                ["Male", "Female", "Other"],
+                                label: "Gender",
+                                items: ["Male", "Female", "Other"],
                                 selectedValue: selectedGender,
                                 onChanged: (val) {
                                   setModalState(() {
@@ -324,15 +324,15 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                               const SizedBox(height: 20),
 
                               _buildDropdown(
-                                "Marital Status",
-                                ["Married", "Unmarried"],
+                                label: "Marital Status",
+                                items: ["Married", "Unmarried"],
                                 selectedValue: maritalStatus,
                                 onChanged: (val) {
-                                  setState(() {
+                                  setModalState(() {
                                     maritalStatus = val;
 
-                                    // ✅ Clear anniversary when Unmarried
-                                    if (maritalStatus != "Married") {
+                                    // Disable anniversary if Unmarried
+                                    if (val == "Unmarried") {
                                       anniversaryCtrl.clear();
                                     }
                                   });
@@ -386,12 +386,12 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     );
   }
 
-  Widget _buildDropdown(
-      String label,
-      List<String> items, {
-        required String selectedValue,
-        required Function(String) onChanged,
-      }) {
+  Widget _buildDropdown({
+    required String label,
+    required List<String> items,
+    required String selectedValue,
+    required Function(String) onChanged,
+  }) {
     return InputDecorator(
       decoration: InputDecoration(
         labelText: label,
@@ -404,7 +404,10 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
         focusedBorder: const OutlineInputBorder(
           borderSide: BorderSide(color: Colors.black26, width: 1.5),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 4,
+        ),
         labelStyle: const TextStyle(color: Colors.black45),
       ),
       isEmpty: selectedValue.isEmpty,
@@ -412,16 +415,19 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
         dropdownColor: Colors.white,
         borderRadius: BorderRadius.circular(10),
         isExpanded: true,
-        underline: const SizedBox(),
+        underline: Container(),
 
-        items: items.map((e) {
+        /// ✅ IMPORTANT: value handling (same as Saraswani)
+        value: selectedValue.isEmpty ? null : selectedValue,
+
+        items: items.map((item) {
           return DropdownMenuItem<String>(
-            value: e,
-            child: Text(e),
+            value: item,
+            child: Text(item),
           );
         }).toList(),
 
-        onChanged: (String? val) {
+        onChanged: (val) {
           if (val != null) {
             onChanged(val);
           }
