@@ -20,7 +20,7 @@ class _ShikshaSahayataByParentingViewState extends State<ShikshaSahayataByParent
         backgroundColor:
         ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Text(
-          "Shiksha Sahayata By Parenting",
+          "Shiksha Sahayata For Children",
           style: TextStyle(
             color: Colors.white,
             fontSize: MediaQuery.of(context).size.width * 0.045,

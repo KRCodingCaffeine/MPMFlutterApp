@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 
@@ -10,15 +14,44 @@ class ApplicantDetail extends StatefulWidget {
 }
 
 class _ApplicantDetailState extends State<ApplicantDetail> {
-  final String fullName = "Ramesh K. Maheshwari";
-  final String mobile = "9876543210";
-  final String email = "demo@gmail.com";
-  final String dob = "12-08-1995";
-  final String age = "23";
-  final String gender = "Male";
-  final String maritalStatus = "Married";
-  final String anniversary = "14-02-2020";
-  final String aadhar = "XXXX XXXX 1234";
+  bool hasApplicant = false;
+  File? _aadharImage;
+  final ImagePicker _picker = ImagePicker();
+
+  // ================= Controllers =================
+  final TextEditingController firstNameCtrl = TextEditingController();
+  final TextEditingController middleNameCtrl = TextEditingController();
+  final TextEditingController lastNameCtrl = TextEditingController();
+  final TextEditingController emailCtrl = TextEditingController();
+  final TextEditingController mobileCtrl = TextEditingController();
+  final TextEditingController ageCtrl = TextEditingController();
+  final TextEditingController aadharCtrl = TextEditingController();
+  final TextEditingController dobCtrl = TextEditingController();
+  final TextEditingController anniversaryCtrl = TextEditingController();
+
+  String selectedGender = '';
+  String maritalStatus = '';
+
+  // ================= Stored UI Data =================
+  String fullName = '';
+  String mobile = '';
+  String email = '';
+  String dob = '';
+  String age = '';
+  String aadhar = '';
+  String anniversary = '';
+
+  @override
+  void initState() {
+    super.initState();
+
+    /// Auto open bottom sheet if no applicant
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!hasApplicant) {
+        _showAddApplicantModalSheet(context);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,301 +59,524 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor:
-            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        title: Builder(
-          builder: (context) {
-            double fontSize = MediaQuery.of(context).size.width * 0.045;
-            return Text(
-              "Applicant Detail",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: fontSize,
-                fontWeight: FontWeight.w500,
-              ),
-            );
-          },
+        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        title: const Text(
+          "Applicant Detail",
+          style: TextStyle(color: Colors.white),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Container(
-              decoration: BoxDecoration(
-                color:
-                    ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.add, color: Colors.white),
-                onPressed: () {
-                  _showAddApplicantDetailModalSheet(context);
-                },
-              ),
-            ),
-          ),
+          IconButton(
+            icon: const Icon(Icons.add, color: Colors.white),
+            onPressed: () => _showAddApplicantModalSheet(context),
+          )
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5.0),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Card(
-              color: Colors.white,
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    _buildInfoBox("Full Name", subtitle: fullName),
-                    const SizedBox(height: 20),
-                    _buildInfoBox("Email", subtitle: email),
-                    const SizedBox(height: 20),
-                    _buildInfoBox("Mobile Number", subtitle: mobile),
-                    const SizedBox(height: 20),
-                    _buildInfoBox("Gender", subtitle: gender),
-                    const SizedBox(height: 20),
-                    _buildInfoBox("Date of Birth", subtitle: dob),
-                    const SizedBox(height: 20),
-                    _buildInfoBox("Age", subtitle: age),
-                    const SizedBox(height: 20),
-                    _buildInfoBox("Marital Status", subtitle: maritalStatus),
-                    const SizedBox(height: 20),
-                    maritalStatus.toLowerCase() == "unmarried"
-                        ? const SizedBox()
-                        : Column(
-                            children: [
-                              _buildInfoBox("Anniversary Date",
-                                  subtitle: anniversary),
-                              const SizedBox(height: 20),
-                            ],
-                          ),
-                    _buildInfoBox("Aadhar Number", subtitle: aadhar),
-                    const SizedBox(height: 20),
-                  ],
-                ),
-              ),
-            ),
-          ),
+      body: hasApplicant
+          ? _buildApplicantCard()
+          : const Center(
+        child: Text(
+          "No applicant details added",
+          style: TextStyle(color: Colors.grey),
         ),
       ),
     );
   }
 
-  Widget _buildInfoBox(String title, {String? subtitle}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 105,
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
-                const Text(
-                  ':',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
-            ),
-          ),
-          // Subtitle
-          Expanded(
-            child: subtitle != null
-                ? Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  )
-                : const SizedBox.shrink(),
-          ),
-        ],
-      ),
-    );
-  }
+  // ================= Applicant Card =================
 
-  void _showAddApplicantDetailModalSheet(BuildContext context) {
-    double heightFactor = 0.85;
+  Widget _buildApplicantCard() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Card(
+        elevation: 4,
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              _infoRow("Full Name", fullName),
+              _infoRow("Email", email),
+              _infoRow("Mobile", mobile),
+              _infoRow("Gender", selectedGender),
+              _infoRow("Date of Birth", dob),
+              _infoRow("Age", age),
+              _infoRow("Marital Status", maritalStatus),
+              if (maritalStatus == "Married")
+                _infoRow("Anniversary", anniversary),
+              const SizedBox(height: 10),
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      backgroundColor: Colors.white,
-      builder: (BuildContext context) {
-        return SafeArea(
-          child: FractionallySizedBox(
-            heightFactor: heightFactor,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 20),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      OutlinedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.red,
-                          side: const BorderSide(color: Colors.red),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const Text("Cancel"),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const Text("Save"),
-                      ),
-                    ],
+                  const SizedBox(
+                    width: 130,
+                    child: Text(
+                      "Aadhaar :",
+                      style: TextStyle(fontSize: 12),
+                    ),
                   ),
-
-                  const SizedBox(height: 10),
-
                   Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-
-                          _buildTextField("Full Name"),
-                          const SizedBox(height: 20),
-
-                          _buildTextField("Email"),
-                          const SizedBox(height: 20),
-
-                          _buildTextField("Mobile Number",
-                              keyboard: TextInputType.number),
-                          const SizedBox(height: 20),
-
-                          _buildDropdown("Gender", ["Male", "Female", "Other"]),
-                          const SizedBox(height: 20),
-
-                          _buildDatePicker("Date of Birth"),
-                          const SizedBox(height: 20),
-
-                          _buildTextField("Age",
-                              keyboard: TextInputType.number),
-                          const SizedBox(height: 20),
-
-                          _buildDropdown(
-                              "Marital Status", ["Married", "Unmarried"]),
-                          const SizedBox(height: 20),
-
-                          // Show anniversary only if married
-                          _buildDatePicker("Anniversary Date"),
-                          const SizedBox(height: 20),
-
-                          _buildTextField("Aadhar Number",
-                              keyboard: TextInputType.number),
-                          const SizedBox(height: 40),
-                        ],
+                    child: _aadharImage == null
+                        ? const Text(
+                      "Not Uploaded",
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                        : GestureDetector(
+                      onTap: () => _showAadhaarPreview(context),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(
+                          _aadharImage!,
+                          height: 80,
+                          width: 120,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _infoRow(String title, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 130,
+            child: Text("$title :", style: const TextStyle(fontSize: 12)),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                  fontSize: 13, fontWeight: FontWeight.bold),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  void _showAadhaarPreview(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.black,
+          insetPadding: const EdgeInsets.all(16),
+          child: Stack(
+            children: [
+              InteractiveViewer(
+                child: Image.file(
+                  _aadharImage!,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              Positioned(
+                top: 10,
+                right: 10,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // ================= Bottom Sheet =================
+
+  void _showAddApplicantModalSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SafeArea(
+              child: FractionallySizedBox(
+                heightFactor: 0.8,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 30),
+
+                      /// ACTION ROW
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor:
+                              ColorHelperClass.getColorFromHex(
+                                  ColorResources.red_color),
+                              side: BorderSide(
+                                color: ColorHelperClass.getColorFromHex(
+                                    ColorResources.red_color),
+                              ),
+                            ),
+                            child: const Text("Cancel"),
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                fullName =
+                                "${firstNameCtrl.text} ${middleNameCtrl
+                                    .text} ${lastNameCtrl.text}";
+                                email = emailCtrl.text;
+                                mobile = mobileCtrl.text;
+                                dob = dobCtrl.text;
+                                age = ageCtrl.text;
+                                aadhar = aadharCtrl.text;
+                                anniversary = anniversaryCtrl.text;
+                                hasApplicant = true;
+                              });
+
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                      "Applicant details added successfully"),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                              ColorHelperClass.getColorFromHex(
+                                  ColorResources.red_color),
+                              foregroundColor: Colors.white,
+                            ),
+                            child: const Text("Add Detail"),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      /// FORM
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Column(
+                            children: [
+                              _buildTextField("First Name",
+                                  controller: firstNameCtrl),
+                              const SizedBox(height: 20),
+                              _buildTextField("Middle Name",
+                                  controller: middleNameCtrl),
+                              const SizedBox(height: 20),
+                              _buildTextField("Last Name",
+                                  controller: lastNameCtrl),
+                              const SizedBox(height: 20),
+                              _buildTextField("Email",
+                                  controller: emailCtrl),
+                              const SizedBox(height: 20),
+                              _buildTextField("Mobile Number",
+                                  controller: mobileCtrl,
+                                  keyboard: TextInputType.number),
+                              const SizedBox(height: 20),
+
+                              _buildDropdown(
+                                "Gender",
+                                ["Male", "Female", "Other"],
+                                selectedValue: selectedGender,
+                                onChanged: (val) {
+                                  setModalState(() {
+                                    selectedGender = val;
+                                  });
+                                },
+                              ),
+                              const SizedBox(height: 20),
+
+                              themedDatePickerField(
+                                context: context,
+                                label: "Date of Birth *",
+                                hint: "Select DOB",
+                                controller: dobCtrl,
+                              ),
+                              const SizedBox(height: 20),
+
+                              _buildTextField("Age",
+                                  controller: ageCtrl,
+                                  keyboard: TextInputType.number),
+                              const SizedBox(height: 20),
+
+                              _buildDropdown(
+                                "Marital Status",
+                                ["Married", "Unmarried"],
+                                selectedValue: maritalStatus,
+                                onChanged: (val) {
+                                  setState(() {
+                                    maritalStatus = val;
+
+                                    // ✅ Clear anniversary when Unmarried
+                                    if (maritalStatus != "Married") {
+                                      anniversaryCtrl.clear();
+                                    }
+                                  });
+                                },
+                              ),
+                              const SizedBox(height: 20),
+
+                              if (maritalStatus == "Married") ...[
+                                themedDatePickerField(
+                                  context: context,
+                                  label: "Marriage Anniversary",
+                                  hint: "Select Anniversary Date",
+                                  controller: anniversaryCtrl,
+                                ),
+                                const SizedBox(height: 20),
+                              ],
+                              const SizedBox(height: 20),
+
+                              _buildAadharUploadField(context),
+                              const SizedBox(height: 40),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
         );
       },
     );
   }
 
   Widget _buildTextField(String label,
-      {TextInputType keyboard = TextInputType.text}) {
+      {required TextEditingController controller,
+        TextInputType keyboard = TextInputType.text}) {
     return TextFormField(
+      controller: controller,
       keyboardType: keyboard,
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+        border: const OutlineInputBorder(),
+        enabledBorder:
+        const OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
+        focusedBorder:
+        const OutlineInputBorder(borderSide: BorderSide(color: Colors.black26, width: 1.5)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
       ),
     );
   }
 
-  Widget _buildDropdown(String label, List<String> items) {
-    String? selectedValue;
-
-    return DropdownButtonFormField<String>(
+  Widget _buildDropdown(
+      String label,
+      List<String> items, {
+        required String selectedValue,
+        required Function(String) onChanged,
+      }) {
+    return InputDecorator(
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+        border: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black26),
+        ),
+        enabledBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black26),
+        ),
+        focusedBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black26, width: 1.5),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+        labelStyle: const TextStyle(color: Colors.black45),
       ),
-      value: selectedValue,
-      items: items.map((e) {
-        return DropdownMenuItem(
-          value: e,
-          child: Text(e),
+      isEmpty: selectedValue.isEmpty,
+      child: DropdownButton<String>(
+        dropdownColor: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        isExpanded: true,
+        underline: const SizedBox(),
+
+        items: items.map((e) {
+          return DropdownMenuItem<String>(
+            value: e,
+            child: Text(e),
+          );
+        }).toList(),
+
+        onChanged: (String? val) {
+          if (val != null) {
+            onChanged(val);
+          }
+        },
+      ),
+    );
+  }
+
+
+  Widget themedDatePickerField({
+    required BuildContext context,
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: TextFormField(
+        readOnly: true,
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          border: const OutlineInputBorder(),
+          enabledBorder:
+          const OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
+          focusedBorder:
+          const OutlineInputBorder(borderSide: BorderSide(color: Colors.black26, width: 1.5)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+        ),
+        onTap: () async {
+          DateTime? picked = await showDatePicker(
+            context: context,
+            initialDate: DateTime.now(),
+            firstDate: DateTime(1900),
+            lastDate: DateTime.now(),
+            builder: (context, child) {
+              return Theme(
+                data: Theme.of(context).copyWith(
+                  colorScheme: ColorScheme.light(
+                    primary: ColorHelperClass.getColorFromHex(
+                        ColorResources.red_color),
+                  ),
+                ),
+                child: child!,
+              );
+            },
+          );
+
+          if (picked != null) {
+            controller.text =
+                DateFormat('dd/MM/yyyy').format(picked);
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildAadharUploadField(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_aadharImage != null)
+          Container(
+            height: 200,
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.black26),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.file(
+                _aadharImage!,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () => _showImagePicker(context),
+            icon: const Icon(Icons.upload_file),
+            label: Text(
+              _aadharImage == null
+                  ? "Upload Aadhaar"
+                  : "Change Aadhaar Image",
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: ColorHelperClass.getColorFromHex(
+                  ColorResources.red_color),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showImagePicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+      ),
+      builder: (BuildContext context) {
+        return Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
+              title: const Text("Take a Picture"),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImageFromCamera();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.image, color: Colors.redAccent),
+              title: const Text("Choose from Gallery"),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImageFromGallery();
+              },
+            ),
+          ],
         );
-      }).toList(),
-      onChanged: (val) {
-        setState(() => selectedValue = val);
       },
     );
   }
 
-  Widget _buildDatePicker(String label) {
-    TextEditingController controller = TextEditingController();
-
-    return TextFormField(
-      controller: controller,
-      readOnly: true,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-        suffixIcon: const Icon(Icons.calendar_month),
-      ),
-      onTap: () async {
-        DateTime? picked = await showDatePicker(
-          context: context,
-          initialDate: DateTime.now(),
-          firstDate: DateTime(1900),
-          lastDate: DateTime.now(),
-        );
-
-        if (picked != null) {
-          controller.text = "${picked.day}/${picked.month}/${picked.year}";
-        }
-      },
-    );
+  Future<void> _pickImageFromCamera() async {
+    final pickedFile =
+    await ImagePicker().pickImage(source: ImageSource.camera);
+    if (pickedFile != null) {
+      setState(() {
+        _aadharImage = File(pickedFile.path);
+      });
+    }
   }
+
+  Future<void> _pickImageFromGallery() async {
+    final pickedFile =
+    await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _aadharImage = File(pickedFile.path);
+      });
+    }
+  }
+
 }

@@ -32,56 +32,88 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
       ),
 
       body: Center(
-        child: Card(
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 25),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-
-                Icon(
-                  Icons.school,
-                  size: 50,
-                  color: ColorHelperClass.getColorFromHex(
-                      ColorResources.logo_color),
-                ),
-
-                const SizedBox(height: 15),
-
-                const Text(
-                  "Add Shiksha Sahayata",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                ElevatedButton.icon(
-                  onPressed: () {
-                    _showShikshaDialog();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                    ColorHelperClass.getColorFromHex(
-                        ColorResources.red_color),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+        child: SizedBox(
+          width: 320, // 🔽 reduce width (adjust: 280–360)
+          child: Card(
+            color: Colors.white,
+            elevation: 6,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 🎓 Icon
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color)
+                          .withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.school_rounded,
+                      size: 42,
+                      color: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
                     ),
                   ),
-                  icon: const Icon(Icons.add),
-                  label: const Text("Add"),
-                ),
-              ],
+
+                  const SizedBox(height: 16),
+
+                  const Text(
+                    "Shiksha Sahayata",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  Text(
+                    "To apply for Shiksha Sahayata, click the Apply button below.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade700,
+                      height: 1.4,
+                    ),
+                  ),
+
+                  const SizedBox(height: 22),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _showShikshaDialog,
+                      icon: const Icon(Icons.arrow_forward_rounded),
+                      label: const Text(
+                        "Apply Now",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                        ColorHelperClass.getColorFromHex(
+                            ColorResources.red_color),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
