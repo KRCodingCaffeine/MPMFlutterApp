@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import 'package:mpm/model/BusinessProfile/ProductImage/ProductImageModelClass.dart';
+import 'package:mpm/model/BusinessProfile/BusinessProfileDocument/BusinessProfileDocumentModelClass.dart';
 import 'package:mpm/utils/urls.dart';
 
-class ProductImageUploadRepository {
+class BusinessProfileDocumentUploadRepository {
   final Dio _dio = Dio(
     BaseOptions(
       baseUrl: Urls.base_url,
@@ -15,21 +15,24 @@ class ProductImageUploadRepository {
     ),
   );
 
-  Future<ProductImageModelClass> uploadProductImage({
-    required String productServiceId,
+  Future<BusinessProfileDocumentModelClass>
+  uploadBusinessProfileDocument({
+    required String memberBusinessOccupationProfileId,
     required String filePath,
   }) async {
     try {
       final formData = FormData.fromMap({
-        'product_service_id': productServiceId,
-        'product_image': await MultipartFile.fromFile(
+        'member_business_occupation_profile_id':
+        memberBusinessOccupationProfileId,
+        'business_profile_document':
+        await MultipartFile.fromFile(
           filePath,
           filename: filePath.split('/').last,
         ),
       });
 
       final response = await _dio.post(
-        Urls.upload_product_image, // ✅ correct product image API
+        Urls.upload_business_profile_document,
         data: formData,
         options: Options(
           contentType: 'multipart/form-data',
@@ -37,14 +40,14 @@ class ProductImageUploadRepository {
       );
 
       debugPrint(
-          "🖼 Product Image Upload Response: ${response.data}");
+          "📎 Business Profile Document Upload Response: ${response.data}");
 
-      return ProductImageModelClass.fromJson(response.data);
+      return BusinessProfileDocumentModelClass.fromJson(response.data);
     } on DioException catch (e) {
-      debugPrint("❌ Dio product image upload error: ${e.response?.data}");
+      debugPrint("❌ Dio upload error: ${e.response?.data}");
       rethrow;
     } catch (e) {
-      debugPrint("❌ Product image upload error: $e");
+      debugPrint("❌ Upload error: $e");
       rethrow;
     }
   }

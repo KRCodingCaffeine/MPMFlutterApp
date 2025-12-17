@@ -410,7 +410,6 @@ class _ProductListPageState extends State<ProductListPage> {
                           children: [
                             const SizedBox(height: 10),
 
-                            // Product Name
                             _buildTextField(
                               label: "Product Name *",
                               controller: _productNameController,
@@ -423,7 +422,6 @@ class _ProductListPageState extends State<ProductListPage> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Keywords
                             _buildTextField(
                               label: "Keywords *",
                               controller: _keywordsController,
@@ -431,7 +429,6 @@ class _ProductListPageState extends State<ProductListPage> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Description
                             _buildTextField(
                               label: "Description",
                               controller: _descriptionController,
@@ -439,7 +436,6 @@ class _ProductListPageState extends State<ProductListPage> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Status Dropdown
                             _buildDropdownFormField(
                               label: "Status",
                               value: _selectedStatus == '1'
@@ -602,18 +598,20 @@ class _ProductListPageState extends State<ProductListPage> {
           await updateRepository.updateOccupationProduct(productData.toJson());
 
       if (response.status == true) {
-        Navigator.pop(context);
-
         final productServiceId = product.productServiceId;
 
-        /// ✔ Upload image only if a new one is selected
         if (_image != null && productServiceId != null) {
           final imageRepo = ProductImageUploadRepository();
+
           await imageRepo.uploadProductImage(
             productServiceId: productServiceId,
             filePath: _image!.path,
           );
+
+          debugPrint("✅ Product image updated successfully");
         }
+
+        Navigator.pop(context);
 
         Get.snackbar(
           "Success",
@@ -858,9 +856,22 @@ class _ProductListPageState extends State<ProductListPage> {
           await addProductRepository.addOccupationProduct(productData.toJson());
 
       if (response.status == true) {
-        Navigator.pop(context);
-
         final productServiceId = response.data?.productServiceId;
+
+        // ✅ STEP 2: UPLOAD IMAGE (WAIT for it)
+        if (_image != null && productServiceId != null) {
+          final imageRepo = ProductImageUploadRepository();
+
+          await imageRepo.uploadProductImage(
+            productServiceId: productServiceId.toString(),
+            filePath: _image!.path,
+          );
+
+          debugPrint("✅ Product image uploaded successfully");
+        }
+
+        // ✅ STEP 3: CLOSE BOTTOM SHEET AFTER EVERYTHING
+        Navigator.pop(context);
 
         if (productServiceId != null) {
           // STEP 2 — If user selected an image, upload it now
@@ -963,7 +974,7 @@ class _ProductListPageState extends State<ProductListPage> {
                       borderRadius: BorderRadius.circular(10),
                       child: FadeInImage(
                         placeholder:
-                            const AssetImage("assets/images/placeholder.png"),
+                            const AssetImage("assets/images/product_img.png"),
                         image: NetworkImage(
                             Urls.imagePathUrl + product.productImage!),
                         width: MediaQuery.of(context).size.width,
@@ -971,7 +982,7 @@ class _ProductListPageState extends State<ProductListPage> {
                         fit: BoxFit.cover,
                         imageErrorBuilder: (context, error, stackTrace) {
                           return Image.asset(
-                            "assets/images/no_image.png",
+                            "assets/images/product_img.png",
                             width: double.infinity,
                             height: 200,
                             fit: BoxFit.cover,
@@ -1219,7 +1230,7 @@ class _ProductListPageState extends State<ProductListPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              "Product List",
+              "Product / Service List",
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 18,
@@ -1248,6 +1259,7 @@ class _ProductListPageState extends State<ProductListPage> {
                     : _products.isEmpty
                         ? _buildEmptyState()
                         : RefreshIndicator(
+                            color: Colors.redAccent,
                             onRefresh: _refreshProducts,
                             child: ListView.builder(
                               padding: const EdgeInsets.symmetric(
@@ -1278,7 +1290,6 @@ class _ProductListPageState extends State<ProductListPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// 🔥 PRODUCT NAME + STATUS
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -1292,9 +1303,9 @@ class _ProductListPageState extends State<ProductListPage> {
                     ),
                   ),
                 ),
-
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: _getStatusColor(product.status).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(4),
@@ -1313,10 +1324,7 @@ class _ProductListPageState extends State<ProductListPage> {
                 ),
               ],
             ),
-
             const SizedBox(height: 10),
-
-            /// 🔥 DESCRIPTION
             Text(
               product.description ?? "No description available",
               style: const TextStyle(
@@ -1325,10 +1333,7 @@ class _ProductListPageState extends State<ProductListPage> {
                 height: 1.4,
               ),
             ),
-
             const SizedBox(height: 16),
-
-            /// 🔥 EDIT + DELETE BUTTONS
             Row(
               children: [
                 Expanded(
@@ -1347,7 +1352,7 @@ class _ProductListPageState extends State<ProductListPage> {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     icon: const Icon(Icons.edit),
-                    label: const Text("Edit Product"),
+                    label: const Text("Edit Product / Service"),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -1368,10 +1373,7 @@ class _ProductListPageState extends State<ProductListPage> {
                 ),
               ],
             ),
-
             const SizedBox(height: 12),
-
-            /// 🔥 VIEW DETAILS BUTTON
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -1407,7 +1409,7 @@ class _ProductListPageState extends State<ProductListPage> {
           ),
           const SizedBox(height: 16),
           const Text(
-            "No Products Found",
+            "No Product / Service Found",
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -1416,7 +1418,7 @@ class _ProductListPageState extends State<ProductListPage> {
           ),
           const SizedBox(height: 8),
           const Text(
-            "Add your first product to get started",
+            "Add your first product / service to get started",
             style: TextStyle(
               color: Colors.grey,
             ),
@@ -1439,7 +1441,7 @@ class _ProductListPageState extends State<ProductListPage> {
           ),
           const SizedBox(height: 16),
           const Text(
-            "Failed to Load Products",
+            "Failed to Load Product / Service",
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,

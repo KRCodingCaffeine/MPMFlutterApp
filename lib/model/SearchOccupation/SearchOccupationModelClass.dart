@@ -7,6 +7,7 @@ class FilterOptions {
   final List<String> specializations;
   final List<String> subcategories;
   final List<String> subSubcategories;
+  final List<Map<String, dynamic>> zones;
 
   FilterOptions({
     this.occupations = const [],
@@ -14,6 +15,7 @@ class FilterOptions {
     this.specializations = const [],
     this.subcategories = const [],
     this.subSubcategories = const [],
+    this.zones = const [],
   });
 
   factory FilterOptions.fromJson(Map<String, dynamic> json) {
@@ -38,6 +40,15 @@ class FilterOptions {
       return str;
     }
 
+    // Helper to extract zones
+    List<Map<String, dynamic>> extractZones(dynamic zonesData) {
+      if (zonesData == null || zonesData is! List) return [];
+      return zonesData
+          .where((zone) => zone != null && zone is Map)
+          .map((zone) => Map<String, dynamic>.from(zone as Map))
+          .toList();
+    }
+
     return FilterOptions(
       occupations: json['occupations'] != null && (json['occupations'] as List).isNotEmpty
           ? json['occupations'].map(extractFilterValue).whereType<String>().toList()
@@ -58,6 +69,9 @@ class FilterOptions {
           : (json['specialization_sub_sub_categories'] != null && (json['specialization_sub_sub_categories'] as List).isNotEmpty
               ? json['specialization_sub_sub_categories'].map(extractFilterValue).whereType<String>().toList()
               : []),
+      zones: json['zones'] != null && (json['zones'] as List).isNotEmpty
+          ? extractZones(json['zones'])
+          : [],
     );
   }
 }

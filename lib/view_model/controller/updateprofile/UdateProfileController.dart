@@ -455,7 +455,7 @@ class UdateProfileController extends GetxController {
       // Occupation
       // In UdateProfileController - Update the occupation section
 
-// Occupation
+      // Occupation
       if (getUserData.value.occupation != null && getUserData.value.occupation!.isNotEmpty) {
         // For backward compatibility, set the first occupation as current
         if (getUserData.value.occupation!.isNotEmpty) {
@@ -586,33 +586,42 @@ class UdateProfileController extends GetxController {
 
     try {
       rxStatusOccupationData.value = Status.LOADING;
-      final response =
-          await api.userOccutionPreCodeApi({"occupation_id": occupationId});
-      occuptionProfessionList.value = response.data ?? [];
 
-      if (occuptionProfessionList.isEmpty) {
-        showDetailsField.value = true;
-      } else {
-        occuptionProfessionList.add(OccuptionProfessionData(
-          id: "Other",
-          name: "Other",
-          occupationId: occupationId,
-          status: '1',
-          createdAt: null,
-          updatedAt: null,
-        ));
+      final response = await api.userOccutionPreCodeApi({
+        "occupation_id": occupationId,
+      });
+
+      occuptionProfessionList.clear();
+
+      List<OccuptionProfessionData> list = response.data ?? [];
+
+      if (list.isEmpty) {
+        occuptionProfessionList.add(
+          OccuptionProfessionData(id: "Other", name: "Other"),
+        );
+        showDetailsField.value = false;
+        rxStatusOccupationData.value = Status.COMPLETE;
+        return;
       }
+
+      list.sort((a, b) =>
+          (a.name ?? '').toLowerCase().compareTo((b.name ?? '').toLowerCase()));
+
+      occuptionProfessionList.addAll(list);
+
+      occuptionProfessionList.add(
+        OccuptionProfessionData(id: "Other", name: "Other"),
+      );
 
       rxStatusOccupationData.value = Status.COMPLETE;
     } catch (error) {
-      rxStatusOccupationData.value = Status.ERROR;
-      Get.snackbar(
-        'Error',
-        'Failed to load professions',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      occuptionProfessionList.clear();
+      occuptionProfessionList.add(
+        OccuptionProfessionData(id: "Other", name: "Other"),
       );
+
+      showDetailsField.value = false;
+      rxStatusOccupationData.value = Status.COMPLETE;
     }
   }
 
@@ -621,115 +630,124 @@ class UdateProfileController extends GetxController {
 
     try {
       rxStatusOccupationSpec.value = Status.LOADING;
-      final response = await api.userOccutionSpectionCodeApi(
-          {"occupation_profession_id": professionId});
-      occuptionSpeList.value = response.data ?? [];
 
-      if (occuptionSpeList.isEmpty) {
-        showDetailsField.value = true;
-      } else {
-        occuptionSpeList.add(OccuptionSpecData(
-          id: "Other",
-          name: "Other",
-          occupationId: professionId,
-          status: '1',
-          createdAt: null,
-          updatedAt: null,
-        ));
+      final response = await api.userOccutionSpectionCodeApi({
+        "occupation_profession_id": professionId,
+      });
+
+      occuptionSpeList.clear();
+
+      List<OccuptionSpecData> list = response.data ?? [];
+
+      if (list.isEmpty) {
+        occuptionSpeList.add(
+          OccuptionSpecData(id: "Other", name: "Other"),
+        );
+        showDetailsField.value = false;
+        rxStatusOccupationSpec.value = Status.COMPLETE;
+        return;
       }
+
+      list.sort((a, b) =>
+          (a.name ?? '').toLowerCase().compareTo((b.name ?? '').toLowerCase()));
+
+      occuptionSpeList.addAll(list);
+
+      occuptionSpeList.add(
+        OccuptionSpecData(id: "Other", name: "Other"),
+      );
 
       rxStatusOccupationSpec.value = Status.COMPLETE;
     } catch (error) {
-      rxStatusOccupationSpec.value = Status.ERROR;
-      Get.snackbar(
-        'Error',
-        'Failed to load specializations',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      occuptionSpeList.clear();
+      occuptionSpeList.add(
+        OccuptionSpecData(id: "Other", name: "Other"),
       );
-    }
-  }
 
-  Future<void> getOccupationSpecializationSubCategoryData(String specId) async {
-    if (specId.isEmpty) return;
-
-    try {
-      rxStatusOccupationSpec.value = Status.LOADING;
-
-      final response = await api.userOccutionSpectionSubCategoryApi(specId);
-      occuptionSubCategoryList.value = response.data ?? [];
-
-      if (occuptionSubCategoryList.isEmpty) {
-        showDetailsField.value = true;
-      } else {
-        // Add "Other" option only if it doesn't exist
-        if (!occuptionSubCategoryList
-            .any((sub) => sub.specializationSubCategoryId == "Other")) {
-          occuptionSubCategoryList.add(
-            OccuptionSpecSubCategoryData(
-              specializationSubCategoryId: "Other",
-              specializationId: specId,
-              specializationSubCategoryName: "Other",
-              status: "1",
-              createdAt: null,
-              updatedAt: null,
-            ),
-          );
-        }
-      }
-
+      showDetailsField.value = false;
       rxStatusOccupationSpec.value = Status.COMPLETE;
-    } catch (e) {
-      rxStatusOccupationSpec.value = Status.ERROR;
-      Get.snackbar(
-        'Error',
-        'Failed to load specialization sub-category',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
     }
   }
 
-  Future<void> getOccupationSubSubCategoryData(String subCategoryId) async {
-    if (subCategoryId.isEmpty) return;
-
-    try {
-      rxStatusOccupationSpec.value = Status.LOADING;
-
-      final response = await api.userOccutionSpecializationSubSubCategoryApi(subCategoryId);
-      occuptionSubSubCategoryList.value = response.data ?? [];
-
-      if (occuptionSubSubCategoryList.isEmpty) {
-        showDetailsField.value = true;
-      } else {
-        // Add “Other” option
-        if (!occuptionSubSubCategoryList
-            .any((item) => item.subSubCategoryId == "Other")) {
-          occuptionSubSubCategoryList.add(
-            OccuptionSpecSubSubCategoryData(
-              subSubCategoryId: "Other",
-              subCategoryId: subCategoryId,
-              subSubCategoryName: "Other",
-              status: "1",
-            ),
-          );
-        }
-      }
-
-      rxStatusOccupationSpec.value = Status.COMPLETE;
-    } catch (e) {
-      rxStatusOccupationSpec.value = Status.ERROR;
-      Get.snackbar(
-        'Error',
-        'Failed to load sub-sub-category',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    }
-  }
+  // Future<void> getOccupationSpecializationSubCategoryData(String specId) async {
+  //   if (specId.isEmpty) return;
+  //
+  //   try {
+  //     rxStatusOccupationSpec.value = Status.LOADING;
+  //
+  //     final response = await api.userOccutionSpectionSubCategoryApi(specId);
+  //     occuptionSubCategoryList.value = response.data ?? [];
+  //
+  //     if (occuptionSubCategoryList.isEmpty) {
+  //       showDetailsField.value = true;
+  //     } else {
+  //       // Add "Other" option only if it doesn't exist
+  //       if (!occuptionSubCategoryList
+  //           .any((sub) => sub.specializationSubCategoryId == "Other")) {
+  //         occuptionSubCategoryList.add(
+  //           OccuptionSpecSubCategoryData(
+  //             specializationSubCategoryId: "Other",
+  //             specializationId: specId,
+  //             specializationSubCategoryName: "Other",
+  //             status: "1",
+  //             createdAt: null,
+  //             updatedAt: null,
+  //           ),
+  //         );
+  //       }
+  //     }
+  //
+  //     rxStatusOccupationSpec.value = Status.COMPLETE;
+  //   } catch (e) {
+  //     rxStatusOccupationSpec.value = Status.ERROR;
+  //     Get.snackbar(
+  //       'Error',
+  //       'Failed to load specialization sub-category',
+  //       snackPosition: SnackPosition.BOTTOM,
+  //       backgroundColor: Colors.red,
+  //       colorText: Colors.white,
+  //     );
+  //   }
+  // }
+  //
+  // Future<void> getOccupationSubSubCategoryData(String subCategoryId) async {
+  //   if (subCategoryId.isEmpty) return;
+  //
+  //   try {
+  //     rxStatusOccupationSpec.value = Status.LOADING;
+  //
+  //     final response = await api.userOccutionSpecializationSubSubCategoryApi(subCategoryId);
+  //     occuptionSubSubCategoryList.value = response.data ?? [];
+  //
+  //     if (occuptionSubSubCategoryList.isEmpty) {
+  //       showDetailsField.value = true;
+  //     } else {
+  //       // Add “Other” option
+  //       if (!occuptionSubSubCategoryList
+  //           .any((item) => item.subSubCategoryId == "Other")) {
+  //         occuptionSubSubCategoryList.add(
+  //           OccuptionSpecSubSubCategoryData(
+  //             subSubCategoryId: "Other",
+  //             subCategoryId: subCategoryId,
+  //             subSubCategoryName: "Other",
+  //             status: "1",
+  //           ),
+  //         );
+  //       }
+  //     }
+  //
+  //     rxStatusOccupationSpec.value = Status.COMPLETE;
+  //   } catch (e) {
+  //     rxStatusOccupationSpec.value = Status.ERROR;
+  //     Get.snackbar(
+  //       'Error',
+  //       'Failed to load sub-sub-category',
+  //       snackPosition: SnackPosition.BOTTOM,
+  //       backgroundColor: Colors.red,
+  //       colorText: Colors.white,
+  //     );
+  //   }
+  // }
 
   Future<void> addOccupation() async {
     try {
@@ -840,25 +858,25 @@ class UdateProfileController extends GetxController {
                 occupation.occupationSpecializationId!;
 
             // Load sub-categories if specialization exists
-            getOccupationSpecializationSubCategoryData(
-                    selectedSpecialization.value)
-                .then((_) {
-              if (occupation.occupationSpecializationSubCategoryId != null &&
-                  occupation
-                      .occupationSpecializationSubCategoryId!.isNotEmpty) {
-                selectedSubCategory.value =
-                    occupation.occupationSpecializationSubCategoryId!;
-
-                if (selectedSubCategory.value == "Other") {
-                  showDetailsField.value = true;
-                } else {
-                  showDetailsField.value = false;
-                }
-              } else {
-                selectedSubCategory.value = "Other";
-                showDetailsField.value = true;
-              }
-            });
+            // getOccupationSpecializationSubCategoryData(
+            //         selectedSpecialization.value)
+            //     .then((_) {
+            //   if (occupation.occupationSpecializationSubCategoryId != null &&
+            //       occupation
+            //           .occupationSpecializationSubCategoryId!.isNotEmpty) {
+            //     selectedSubCategory.value =
+            //         occupation.occupationSpecializationSubCategoryId!;
+            //
+            //     if (selectedSubCategory.value == "Other") {
+            //       showDetailsField.value = true;
+            //     } else {
+            //       showDetailsField.value = false;
+            //     }
+            //   } else {
+            //     selectedSubCategory.value = "Other";
+            //     showDetailsField.value = true;
+            //   }
+            // });
           } else {
             selectedSpecialization.value = "Other";
             showDetailsField.value = true;

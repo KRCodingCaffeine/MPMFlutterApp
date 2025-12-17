@@ -7,7 +7,7 @@ import 'package:mpm/view/Networking/network_filters.dart';
 class FilterBottomSheet extends StatefulWidget {
   final NetworkFilters initialFilters;
   final String? searchQuery;
-  final Map<String, List<String>>? availableFilters;
+  final Map<String, dynamic>? availableFilters;
   final String? matchedLevel;
   final String? matchedValue;
   final Function(NetworkFilters)? onFilterChanged; // Callback for immediate filter application
@@ -41,6 +41,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   List<String> _availableSubSubcategories = [];
   List<String> _availableProductCategories = [];
   List<String> _availableProductSubcategories = [];
+  List<String> _availableZones = [];
 
   // Expansion states
   bool _occupationExpanded = true;
@@ -70,16 +71,20 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         return item;
       }
       if (item is Map) {
-        // If it's an object, try to extract the name field
-        final value = item['occupation_name']?.toString() ?? 
-               item['name']?.toString() ?? 
+        // If it's an object, try to extract the name field (prioritize 'name' field)
+        final value = item['name']?.toString() ?? 
+               item['occupation_name']?.toString() ?? 
+               item['profession_name']?.toString() ??
+               item['specialization_name']?.toString() ??
+               item['specialization_sub_category_name']?.toString() ??
+               item['specialization_sub_sub_category_name']?.toString() ??
                item['occupation']?.toString() ?? 
                item.toString();
-        if (value.toLowerCase() == 'other') return null;
+        if (value.isEmpty || value.toLowerCase() == 'other') return null;
         return value;
       }
       final str = item.toString();
-      if (str.toLowerCase() == 'other') return null;
+      if (str.isEmpty || str == 'null' || str.toLowerCase() == 'other') return null;
       return str;
     }).where((s) => s != null && s!.isNotEmpty && s != 'null').cast<String>().toList();
   }
@@ -88,6 +93,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     // If availableFilters provided, use them
     if (widget.availableFilters != null) {
       debugPrint("Loading filter options:");
+      debugPrint("Zones: ${widget.availableFilters!['zones']?.length ?? 0}");
       debugPrint("Occupations: ${widget.availableFilters!['occupations']?.length ?? 0}");
       debugPrint("Professions: ${widget.availableFilters!['professions']?.length ?? 0}");
       debugPrint("Specializations: ${widget.availableFilters!['specializations']?.length ?? 0}");
@@ -95,6 +101,17 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       debugPrint("Sub-subcategories: ${widget.availableFilters!['sub_subcategories']?.length ?? 0}");
       
       setState(() {
+        // Handle zones - extract name from zone objects
+        final zonesData = widget.availableFilters!['zones'] as List<dynamic>?;
+        if (zonesData != null && zonesData.isNotEmpty) {
+          _availableZones = zonesData.map((zone) {
+            if (zone is Map) {
+              return zone['name']?.toString() ?? '';
+            }
+            return zone.toString();
+          }).where((name) => name.isNotEmpty).toList();
+        }
+        
         // Ensure all filter items are strings, not objects
         _availableOccupations = _ensureStringList(widget.availableFilters!['occupations'] as List<dynamic>?);
         _availableProfessions = _ensureStringList(widget.availableFilters!['professions'] as List<dynamic>?);
@@ -392,6 +409,24 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     _notifyFilterChange();
   }
 
+  void _toggleZone(String zone) {
+    setState(() {
+      if (_currentFilters.zones.contains(zone)) {
+        _currentFilters = _currentFilters.copyWith(
+          zones: List.from(_currentFilters.zones)
+            ..remove(zone),
+        );
+      } else {
+        _currentFilters = _currentFilters.copyWith(
+          zones: List.from(_currentFilters.zones)
+            ..add(zone),
+        );
+      }
+    });
+    // Apply filter immediately without closing sheet
+    _notifyFilterChange();
+  }
+
   Widget _buildFilterSection({
     required String title,
     required List<String> items,
@@ -404,8 +439,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         ? items
         : items.where((item) => item.isNotEmpty).toList();
 
-    // Don't show section if empty (as per requirement)
-    if (filteredItems.isEmpty) {
+    // Don't show section if empty or has only one item (as per requirement)
+    if (filteredItems.isEmpty || filteredItems.length == 1) {
       return const SizedBox.shrink();
     }
 
@@ -575,6 +610,15 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                           ],
                         ),
                       ),
+
+                    // ZONES FILTER - Show first
+                    _buildFilterSection(
+                      title: "Zones",
+                      items: _availableZones,
+                      selectedItems: _currentFilters.zones,
+                      onToggle: _toggleZone,
+                      showAll: true,
+                    ),
 
                     // OCCUPATION FILTER - Only show if occupation matched or no match
                     if (_matchedLevel == null || _matchedLevel == 'occupation')

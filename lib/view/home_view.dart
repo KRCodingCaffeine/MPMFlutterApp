@@ -159,130 +159,176 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
     screenWidth = MediaQuery.of(context).size.width * 0.8;
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Membership notice
-            Obx(() => int.tryParse(controller.membershipApprovalStatusId.value) != null &&
-                int.parse(controller.membershipApprovalStatusId.value) < 6
-                ? _buildMembershipNotice()
-                : const SizedBox.shrink()),
+      body: Column(
+        children: [
+          // Scrollable content
+          Expanded(
+            child: Stack(
+              children: [
+                SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Membership notice
+                  Obx(() => int.tryParse(controller.membershipApprovalStatusId.value) != null &&
+                      int.parse(controller.membershipApprovalStatusId.value) < 6
+                      ? _buildMembershipNotice()
+                      : const SizedBox.shrink()),
 
-            // Jangana Notice
-            Obx(() => Visibility(
-                visible: controller.showDashboardReviewFlag.value,
-                child: _buildJanganaNotice())),
+                  // Jangana Notice
+                  Obx(() => Visibility(
+                      visible: controller.showDashboardReviewFlag.value,
+                      child: _buildJanganaNotice())),
 
-            // Email verification banner
-            Obx(() => Visibility(
-              visible: controller.showEmailVerifyBanner.value,
-              child: _buildEmailVerifyBanner(),
-            )),
+                  // Email verification banner
+                  Obx(() => Visibility(
+                    visible: controller.showEmailVerifyBanner.value,
+                    child: _buildEmailVerifyBanner(),
+                  )),
 
-            // Pay Now button
-            Center(
-              child: Obx(() => Visibility(
-                visible: controller.isPay.value,
-                child: SizedBox(
-                  height: 48,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorHelperClass.getColorFromHex(
-                          ColorResources.red_color),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                    ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => PaymentScreen(paymentAmount: '1')),
-                      );
-                    },
-                    child: Text("Pay Now", style: TextStyleClass.white14style),
-                  ),
-                ),
-              )),
-            ),
-
-            Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: MediaQuery.of(context).size.width * 0.03,
-                vertical: 10
-              ),
-              child: GridView.builder(
-                itemCount: gridItems.length,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: (MediaQuery.of(context).size.width ~/ 120).clamp(2, 4),
-                  crossAxisSpacing: MediaQuery.of(context).size.width * 0.02,
-                  mainAxisSpacing: MediaQuery.of(context).size.width * 0.02,
-                  childAspectRatio: 1,
-                ),
-                itemBuilder: (context, index) {
-                  final item = gridItems[index];
-                  final screenWidth = MediaQuery.of(context).size.width;
-                  final iconSize = screenWidth * 0.08;
-                  final fontSize = screenWidth * 0.040;
-                  
-                  return GestureDetector(
-                    onTap: () => _handleGridItemClick(item['label']),
-                    child: Card(
-                      color: Colors.white,
-                      elevation: 4.0,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10.0)),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SvgPicture.asset(item['icon'], height: iconSize, width: iconSize),
-                          SizedBox(height: screenWidth * 0.02),
-                          Text(
-                            item['label'],
-                            style: TextStyleClass.pink14style.copyWith(fontSize: fontSize),
-                            textAlign: TextAlign.center,
-                            softWrap: true,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                  // Pay Now button
+                  Center(
+                    child: Obx(() => Visibility(
+                      visible: controller.isPay.value,
+                      child: SizedBox(
+                        height: 48,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(5),
+                            ),
                           ),
-                        ],
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => PaymentScreen(paymentAmount: '1')),
+                            );
+                          },
+                          child: Text("Pay Now", style: TextStyleClass.white14style),
+                        ),
                       ),
-                    ),
-                  );
-                },
-              ),
-            ),
+                    )),
+                  ),
 
-            // Banner card
-            Obx(() {
-              if (offerController.isLoading.value) {
-                return const SizedBox(
-                  height: 120,
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
-              if (offerController.offerList.isEmpty) {
-                return const SizedBox.shrink();
-              }
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: _buildBannerCard(
-                    offerController.offerList.first,
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: MediaQuery.of(context).size.width * 0.03,
+                      vertical: 10
+                    ),
+                    child: GridView.builder(
+                      itemCount: gridItems.length,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: (MediaQuery.of(context).size.width ~/ 120).clamp(2, 4),
+                        crossAxisSpacing: MediaQuery.of(context).size.width * 0.02,
+                        mainAxisSpacing: MediaQuery.of(context).size.width * 0.02,
+                        childAspectRatio: 1,
+                      ),
+                      itemBuilder: (context, index) {
+                        final item = gridItems[index];
+                        final screenWidth = MediaQuery.of(context).size.width;
+                        final iconSize = screenWidth * 0.08;
+                        final fontSize = screenWidth * 0.040;
+                        
+                        return GestureDetector(
+                          onTap: () => _handleGridItemClick(item['label']),
+                          child: Card(
+                            color: Colors.white,
+                            elevation: 4.0,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.0)),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SvgPicture.asset(item['icon'], height: iconSize, width: iconSize),
+                                SizedBox(height: screenWidth * 0.02),
+                                Text(
+                                  item['label'],
+                                  style: TextStyleClass.pink14style.copyWith(fontSize: fontSize),
+                                  textAlign: TextAlign.center,
+                                  softWrap: true,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
+                  // Banner card
+                  Obx(() {
+                    if (offerController.isLoading.value) {
+                      return const SizedBox(
+                        height: 120,
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                    if (offerController.offerList.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: _buildBannerCard(
+                          offerController.offerList.first,
+                        ),
+                      ),
+                    );
+                  }),
+
+                      const SizedBox(height: 16),
+                    ],
                   ),
                 ),
-              );
-            }),
-
-            _buildAdvertisementTitle(),
-            _buildDashboardEventsList(),
-            const SizedBox(height: 30),
-          ],
-        ),
+                // Fade gradient at bottom to indicate scrollability
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: IgnorePointer(
+                    child: Container(
+                      height: 60,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.grey[100]!.withOpacity(0.0),
+                            Colors.grey[100]!.withOpacity(0.5),
+                            Colors.grey[100]!.withOpacity(0.9),
+                            Colors.grey[100]!,
+                          ],
+                          stops: const [0.0, 0.3, 0.7, 1.0],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Fixed advertisement section at bottom
+          Container(
+            color: Colors.grey[100],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildAdvertisementTitle(),
+                _buildDashboardEventsList(),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

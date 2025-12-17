@@ -1,3 +1,5 @@
+import 'package:mpm/model/BusinessProfile/BusinessOccupationProfile/BusinessOccupationProfileData.dart';
+
 class Occupation {
   String? memberOccupationId;
   String? memberId;
@@ -17,6 +19,7 @@ class Occupation {
   String? specializationName;
   String? specializationSubCategoryName;
   String? specializationSubSubCategoryName;
+  BusinessOccupationProfileData? memberBusinessOccupationProfile;
 
   Occupation({
     this.memberOccupationId,
@@ -36,6 +39,7 @@ class Occupation {
     this.specializationName,
     this.specializationSubCategoryName,
     this.specializationSubSubCategoryName,
+    this.memberBusinessOccupationProfile,
   });
 
   Occupation.fromJson(Map<String, dynamic> json) {
@@ -59,6 +63,9 @@ class Occupation {
     specializationSubCategoryName = json['occupation_specialization_sub_category_name'];
     specializationSubSubCategoryName =
     json['occupation_specialization_sub_sub_category_name'];
+    memberBusinessOccupationProfile = json['member_business_occupation_profile'] != null
+        ? BusinessOccupationProfileData.fromJson(json['member_business_occupation_profile'] as Map<String, dynamic>)
+        : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -84,6 +91,9 @@ class Occupation {
     data['occupation_specialization_sub_category_name'] = specializationSubCategoryName;
     data['occupation_specialization_sub_sub_category_name'] =
         specializationSubSubCategoryName;
+    if (memberBusinessOccupationProfile != null) {
+      data['member_business_occupation_profile'] = memberBusinessOccupationProfile!.toJson();
+    }
 
     return data;
   }
