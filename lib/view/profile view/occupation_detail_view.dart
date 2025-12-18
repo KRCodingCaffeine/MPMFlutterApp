@@ -322,7 +322,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                                   _showImagePicker(context);
                                 },
                                 icon: const Icon(Icons.image),
-                                label: const Text("Upload Document"),
+                                label: const Text("Upload Document (Business Profile)"),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor:
                                   ColorHelperClass.getColorFromHex(
@@ -690,7 +690,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                                       _showImagePicker(context);
                                     },
                                     icon: const Icon(Icons.image),
-                                    label: const Text("Upload Document"),
+                                    label: const Text("Upload Document (Business Profile)"),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
                                       foregroundColor: Colors.white,
