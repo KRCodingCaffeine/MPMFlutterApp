@@ -433,10 +433,11 @@ class NotificationService {
     return await _getSavedBadgeCount();
   }
 
-  // Method to sync badge count with database
+  // Method to sync badge count with database (using default notification type count)
   static Future<void> syncBadgeWithDatabase() async {
     try {
-      final dbCount = await NotificationDatabase.instance.getUnreadNotificationCount();
+      // Use default notification type count for bottom navigation badge
+      final dbCount = await NotificationDatabase.instance.getUnreadNotificationCountByType('default');
       await _saveBadgeCount(dbCount);
       
       // Use the enhanced badge update method
@@ -446,7 +447,7 @@ class NotificationService {
       // Update notification controller
       await updateNotificationController();
       
-      debugPrint("✅ Badge synced with database: $dbCount");
+      debugPrint("✅ Badge synced with database (default count): $dbCount");
     } catch (e) {
       debugPrint("❌ Error syncing badge with database: $e");
     }

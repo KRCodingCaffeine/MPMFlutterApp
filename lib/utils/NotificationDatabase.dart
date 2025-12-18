@@ -112,6 +112,59 @@ class NotificationDatabase {
     }
   }
 
+  /// Get unread notification count by type (e.g., "event", "offer", "default")
+  Future<int> getUnreadNotificationCountByType(String type) async {
+    try {
+      final db = await database;
+      final result = await db.rawQuery(
+        'SELECT COUNT(*) as count FROM notifications WHERE isRead = 0 AND type = ?',
+        [type]
+      );
+      final count = Sqflite.firstIntValue(result) ?? 0;
+      print('📊 Unread count for type "$type": $count');
+      
+      // Debug: List all notifications of this type
+      final allOfType = await db.query(
+        'notifications',
+        where: 'type = ?',
+        whereArgs: [type],
+      );
+      final unreadOfType = await db.query(
+        'notifications',
+        where: 'isRead = 0 AND type = ?',
+        whereArgs: [type],
+      );
+      print('📊 Type "$type": Total=${allOfType.length}, Unread=${unreadOfType.length}');
+      for (final notif in unreadOfType) {
+        print('  - Unread: ${notif['title']} (ID: ${notif['id']}, ServerID: ${notif['serverId']}, Read: ${notif['isRead']})');
+      }
+      
+      return count;
+    } catch (e) {
+      print('Get unread count by type error: $e');
+      return 0;
+    }
+  }
+
+  /// Mark all notifications as read by type
+  /// Returns the number of notifications updated
+  Future<int> markNotificationsAsReadByType(String type) async {
+    try {
+      final db = await database;
+      final count = await db.update(
+        'notifications',
+        {'isRead': 1},
+        where: 'isRead = 0 AND type = ?',
+        whereArgs: [type],
+      );
+      print('✅ Marked $count $type notifications as read');
+      return count;
+    } catch (e) {
+      print('❌ Error marking notifications as read by type: $e');
+      return 0;
+    }
+  }
+
   Future<void> markNotificationAsRead(int id) async {
     final db = await database;
     await db.update(
