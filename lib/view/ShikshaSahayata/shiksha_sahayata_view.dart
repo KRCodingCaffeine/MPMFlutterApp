@@ -93,7 +93,7 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
                       onPressed: _showShikshaDialog,
                       icon: const Icon(Icons.arrow_forward_rounded),
                       label: const Text(
-                        "Apply Now",
+                        "Apply",
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,

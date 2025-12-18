@@ -18,7 +18,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
   File? _aadharImage;
   final ImagePicker _picker = ImagePicker();
 
-  // ================= Controllers =================
   final TextEditingController firstNameCtrl = TextEditingController();
   final TextEditingController middleNameCtrl = TextEditingController();
   final TextEditingController lastNameCtrl = TextEditingController();
@@ -32,7 +31,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
   String selectedGender = '';
   String maritalStatus = '';
 
-  // ================= Stored UI Data =================
   String fullName = '';
   String mobile = '';
   String email = '';
@@ -45,7 +43,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
   void initState() {
     super.initState();
 
-    /// Auto open bottom sheet if no applicant
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!hasApplicant) {
         _showAddApplicantModalSheet(context);
@@ -59,7 +56,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: const Text(
           "Applicant Detail",
           style: TextStyle(color: Colors.white),
@@ -75,23 +72,21 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
       body: hasApplicant
           ? _buildApplicantCard()
           : const Center(
-        child: Text(
-          "No applicant details added",
-          style: TextStyle(color: Colors.grey),
-        ),
-      ),
+              child: Text(
+                "No applicant details added",
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
     );
   }
-
-  // ================= Applicant Card =================
 
   Widget _buildApplicantCard() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Card(
+        color: Colors.white,
         elevation: 4,
-        shape:
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -106,7 +101,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
               if (maritalStatus == "Married")
                 _infoRow("Anniversary", anniversary),
               const SizedBox(height: 10),
-
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -120,24 +114,24 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                   Expanded(
                     child: _aadharImage == null
                         ? const Text(
-                      "Not Uploaded",
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    )
+                            "Not Uploaded",
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
                         : GestureDetector(
-                      onTap: () => _showAadhaarPreview(context),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.file(
-                          _aadharImage!,
-                          height: 80,
-                          width: 120,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
+                            onTap: () => _showAadhaarPreview(context),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.file(
+                                _aadharImage!,
+                                height: 80,
+                                width: 120,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
                   ),
                 ],
               ),
@@ -150,19 +144,46 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
 
   Widget _infoRow(String title, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.only(bottom: 10.0),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 130,
-            child: Text("$title :", style: const TextStyle(fontSize: 12)),
+            width: 105,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+                const Text(
+                  ':',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+            ),
           ),
           Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.bold),
-            ),
+            child: value.isNotEmpty
+                ? Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  )
+                : const SizedBox.shrink(),
           ),
         ],
       ),
@@ -199,8 +220,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     );
   }
 
-  // ================= Bottom Sheet =================
-
   void _showAddApplicantModalSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -221,15 +240,13 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                     children: [
                       const SizedBox(height: 30),
 
-                      /// ACTION ROW
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           OutlinedButton(
                             onPressed: () => Navigator.pop(context),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor:
-                              ColorHelperClass.getColorFromHex(
+                              foregroundColor: ColorHelperClass.getColorFromHex(
                                   ColorResources.red_color),
                               side: BorderSide(
                                 color: ColorHelperClass.getColorFromHex(
@@ -242,8 +259,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                             onPressed: () {
                               setState(() {
                                 fullName =
-                                "${firstNameCtrl.text} ${middleNameCtrl
-                                    .text} ${lastNameCtrl.text}";
+                                    "${firstNameCtrl.text} ${middleNameCtrl.text} ${lastNameCtrl.text}";
                                 email = emailCtrl.text;
                                 mobile = mobileCtrl.text;
                                 dob = dobCtrl.text;
@@ -263,8 +279,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                               );
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                              ColorHelperClass.getColorFromHex(
+                              backgroundColor: ColorHelperClass.getColorFromHex(
                                   ColorResources.red_color),
                               foregroundColor: Colors.white,
                             ),
@@ -275,7 +290,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
 
                       const SizedBox(height: 10),
 
-                      /// FORM
                       Expanded(
                         child: SingleChildScrollView(
                           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -290,14 +304,12 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                               _buildTextField("Last Name",
                                   controller: lastNameCtrl),
                               const SizedBox(height: 20),
-                              _buildTextField("Email",
-                                  controller: emailCtrl),
+                              _buildTextField("Email", controller: emailCtrl),
                               const SizedBox(height: 20),
                               _buildTextField("Mobile Number",
                                   controller: mobileCtrl,
                                   keyboard: TextInputType.number),
                               const SizedBox(height: 20),
-
                               _buildDropdown(
                                 label: "Gender",
                                 items: ["Male", "Female", "Other"],
@@ -309,20 +321,21 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 },
                               ),
                               const SizedBox(height: 20),
-
                               themedDatePickerField(
                                 context: context,
                                 label: "Date of Birth *",
                                 hint: "Select DOB",
                                 controller: dobCtrl,
+                                calculateAge: true,
                               ),
                               const SizedBox(height: 20),
-
-                              _buildTextField("Age",
-                                  controller: ageCtrl,
-                                  keyboard: TextInputType.number),
+                              _buildTextField(
+                                "Age",
+                                controller: ageCtrl,
+                                keyboard: TextInputType.number,
+                                readOnly: true,
+                              ),
                               const SizedBox(height: 20),
-
                               _buildDropdown(
                                 label: "Marital Status",
                                 items: ["Married", "Unmarried"],
@@ -331,7 +344,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                   setModalState(() {
                                     maritalStatus = val;
 
-                                    // Disable anniversary if Unmarried
                                     if (val == "Unmarried") {
                                       anniversaryCtrl.clear();
                                     }
@@ -339,18 +351,17 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 },
                               ),
                               const SizedBox(height: 20),
-
                               if (maritalStatus == "Married") ...[
                                 themedDatePickerField(
                                   context: context,
                                   label: "Marriage Anniversary",
                                   hint: "Select Anniversary Date",
                                   controller: anniversaryCtrl,
+                                  calculateAge: false,
                                 ),
                                 const SizedBox(height: 20),
                               ],
                               const SizedBox(height: 20),
-
                               _buildAadharUploadField(context),
                               const SizedBox(height: 40),
                             ],
@@ -368,19 +379,22 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     );
   }
 
-  Widget _buildTextField(String label,
-      {required TextEditingController controller,
-        TextInputType keyboard = TextInputType.text}) {
+  Widget _buildTextField(
+    String label, {
+    required TextEditingController controller,
+    TextInputType keyboard = TextInputType.text,
+    bool readOnly = false,
+  }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboard,
       decoration: InputDecoration(
         labelText: label,
         border: const OutlineInputBorder(),
-        enabledBorder:
-        const OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
-        focusedBorder:
-        const OutlineInputBorder(borderSide: BorderSide(color: Colors.black26, width: 1.5)),
+        enabledBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black26)),
+        focusedBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black26, width: 1.5)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20),
       ),
     );
@@ -416,17 +430,13 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
         borderRadius: BorderRadius.circular(10),
         isExpanded: true,
         underline: Container(),
-
-        /// ✅ IMPORTANT: value handling (same as Saraswani)
         value: selectedValue.isEmpty ? null : selectedValue,
-
         items: items.map((item) {
           return DropdownMenuItem<String>(
             value: item,
             child: Text(item),
           );
         }).toList(),
-
         onChanged: (val) {
           if (val != null) {
             onChanged(val);
@@ -436,12 +446,25 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     );
   }
 
+  void _calculateAgeFromDob(DateTime dob) {
+    final DateTime today = DateTime.now();
+
+    int age = today.year - dob.year;
+
+    if (today.month < dob.month ||
+        (today.month == dob.month && today.day < dob.day)) {
+      age--;
+    }
+
+    ageCtrl.text = age.toString();
+  }
 
   Widget themedDatePickerField({
     required BuildContext context,
     required String label,
     required String hint,
     required TextEditingController controller,
+    bool calculateAge = false,
   }) {
     return SizedBox(
       width: double.infinity,
@@ -452,10 +475,10 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
           labelText: label,
           hintText: hint,
           border: const OutlineInputBorder(),
-          enabledBorder:
-          const OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
-          focusedBorder:
-          const OutlineInputBorder(borderSide: BorderSide(color: Colors.black26, width: 1.5)),
+          enabledBorder: const OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black26)),
+          focusedBorder: const OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black26, width: 1.5)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 20),
         ),
         onTap: () async {
@@ -469,7 +492,8 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                 data: Theme.of(context).copyWith(
                   colorScheme: ColorScheme.light(
                     primary: ColorHelperClass.getColorFromHex(
-                        ColorResources.red_color),
+                      ColorResources.red_color,
+                    ),
                   ),
                 ),
                 child: child!,
@@ -478,8 +502,11 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
           );
 
           if (picked != null) {
-            controller.text =
-                DateFormat('dd/MM/yyyy').format(picked);
+            controller.text = DateFormat('dd/MM/yyyy').format(picked);
+
+            if (calculateAge) {
+              _calculateAgeFromDob(picked);
+            }
           }
         },
       ),
@@ -507,20 +534,17 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
               ),
             ),
           ),
-
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
             onPressed: () => _showImagePicker(context),
             icon: const Icon(Icons.upload_file),
             label: Text(
-              _aadharImage == null
-                  ? "Upload Aadhaar"
-                  : "Change Aadhaar Image",
+              _aadharImage == null ? "Upload Aadhaar" : "Change Aadhaar Image",
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: ColorHelperClass.getColorFromHex(
-                  ColorResources.red_color),
+              backgroundColor:
+                  ColorHelperClass.getColorFromHex(ColorResources.red_color),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -567,7 +591,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
 
   Future<void> _pickImageFromCamera() async {
     final pickedFile =
-    await ImagePicker().pickImage(source: ImageSource.camera);
+        await ImagePicker().pickImage(source: ImageSource.camera);
     if (pickedFile != null) {
       setState(() {
         _aadharImage = File(pickedFile.path);
@@ -577,12 +601,11 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
 
   Future<void> _pickImageFromGallery() async {
     final pickedFile =
-    await ImagePicker().pickImage(source: ImageSource.gallery);
+        await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
         _aadharImage = File(pickedFile.path);
       });
     }
   }
-
 }
