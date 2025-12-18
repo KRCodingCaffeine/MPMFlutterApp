@@ -14,6 +14,9 @@ class NotificationApiController extends GetxController with WidgetsBindingObserv
   // Observable variables
   final RxList<NotificationDataModel> notificationList = <NotificationDataModel>[].obs;
   final RxInt unreadCount = 0.obs;
+  final RxInt unreadEventCount = 0.obs; // Unread notifications with type "event"
+  final RxInt unreadOfferCount = 0.obs; // Unread notifications with type "offer"
+  final RxInt unreadDefaultCount = 0.obs; // Unread notifications with type "default"
   final Rx<Status> requestStatus = Status.LOADING.obs;
   final RxBool isLoading = false.obs;
   
@@ -92,20 +95,38 @@ class NotificationApiController extends GetxController with WidgetsBindingObserv
       final unreadCountValue = await NotificationDatabase.instance.getUnreadNotificationCount();
       unreadCount.value = unreadCountValue;
       
-      // Update badge count
-      await NotificationService.updateBadgeCount(unreadCount.value);
+      // Update type-specific unread counts
+      unreadEventCount.value = await NotificationDatabase.instance.getUnreadNotificationCountByType('event');
+      unreadOfferCount.value = await NotificationDatabase.instance.getUnreadNotificationCountByType('offer');
+      unreadDefaultCount.value = await NotificationDatabase.instance.getUnreadNotificationCountByType('default');
       
-      debugPrint('📊 Local notifications loaded: ${notificationList.length}, unread: $unreadCount');
+      // Update badge count (use default count for bottom navigation badge)
+      await NotificationService.updateBadgeCount(unreadDefaultCount.value);
       
-      // Debug: Print each notification's read status and timestamp
+      debugPrint('📊 Local notifications loaded: ${notificationList.length}, unread: $unreadCount, events: $unreadEventCount, offers: $unreadOfferCount, default: $unreadDefaultCount');
+      
+      // Debug: Print each notification's read status, type, and timestamp
+      debugPrint('📋 === NOTIFICATION DETAILS ===');
       for (int i = 0; i < notificationList.length; i++) {
         final notification = notificationList[i];
-        debugPrint('📋 Notification $i: ${notification.title} (ID: ${notification.id}, Read: ${notification.isRead}, Time: ${notification.timestamp})');
+        debugPrint('📋 Notification $i: ${notification.title} (ID: ${notification.id}, ServerID: ${notification.serverId}, Type: ${notification.type}, Read: ${notification.isRead}, Time: ${notification.timestamp})');
+      }
+      debugPrint('📋 === END NOTIFICATION DETAILS ===');
+      
+      // Debug: Count by type
+      final eventNotifications = notificationList.where((n) => n.type == 'event').toList();
+      final unreadEventNotifications = eventNotifications.where((n) => !n.isRead).toList();
+      debugPrint('📊 Event notifications: Total=${eventNotifications.length}, Unread=${unreadEventNotifications.length}');
+      for (final event in unreadEventNotifications) {
+        debugPrint('  - Unread Event: ${event.title} (ServerID: ${event.serverId}, Read: ${event.isRead})');
       }
     } catch (e) {
       debugPrint('❌ Error loading local notifications: $e');
       notificationList.value = [];
       unreadCount.value = 0;
+      unreadEventCount.value = 0;
+      unreadOfferCount.value = 0;
+      unreadDefaultCount.value = 0;
     }
   }
 
@@ -146,9 +167,15 @@ class NotificationApiController extends GetxController with WidgetsBindingObserv
         // Insert server notifications in sorted order
         for (final serverNotification in sortedNotifications) {
           final localNotification = serverNotification.toLocalModel();
-          debugPrint('📝 Inserting notification: ${localNotification.title} (ID: ${localNotification.id}, Read: ${localNotification.isRead}, Time: ${localNotification.timestamp})');
+          debugPrint('📝 Inserting notification: ${localNotification.title} (ID: ${localNotification.id}, ServerID: ${localNotification.serverId}, Type: ${localNotification.type}, Read: ${localNotification.isRead}, Time: ${localNotification.timestamp})');
           await NotificationDatabase.instance.insertNotification(localNotification);
         }
+        
+        // Debug: Count event notifications after insert
+        final allAfterInsert = await NotificationDatabase.instance.getAllNotifications();
+        final eventAfterInsert = allAfterInsert.where((n) => n.type == 'event').toList();
+        final unreadEventAfterInsert = eventAfterInsert.where((n) => !n.isRead).toList();
+        debugPrint('📊 After insert - Event notifications: Total=${eventAfterInsert.length}, Unread=${unreadEventAfterInsert.length}');
 
         // Reload local notifications
         await loadLocalNotifications();
@@ -197,36 +224,139 @@ class NotificationApiController extends GetxController with WidgetsBindingObserv
     }
   }
 
+  /// Mark all notifications as read by type (e.g., "event", "offer")
+  Future<void> markNotificationsAsReadByType(String type) async {
+    try {
+      debugPrint('📖 Marking all $type notifications as read...');
+      
+      // Get all unread notifications of this type from database (more reliable than notificationList)
+      final allNotifications = await NotificationDatabase.instance.getAllNotifications();
+      final unreadNotifications = allNotifications.where((n) => !n.isRead && n.type == type).toList();
+      
+      if (unreadNotifications.isEmpty) {
+        debugPrint('ℹ️ No unread $type notifications to mark as read');
+        return;
+      }
+      
+      debugPrint('📋 Found ${unreadNotifications.length} unread $type notifications to mark as read');
+      
+      // Update server for each notification - use Future.wait to ensure all are processed
+      final List<Future<void>> serverUpdates = [];
+      for (final notification in unreadNotifications) {
+        if (notification.serverId != null) {
+          final serverId = int.tryParse(notification.serverId!);
+          if (serverId != null) {
+            serverUpdates.add(
+              _repository.markNotificationAsRead(serverId).then((response) {
+                if (response.status) {
+                  debugPrint('✅ Marked $type notification ${notification.serverId} as read on server');
+                } else {
+                  debugPrint('❌ Server returned error for notification ${notification.serverId}: ${response.message}');
+                }
+              }).catchError((e) {
+                debugPrint('❌ Error marking $type notification ${notification.serverId} as read on server: $e');
+              })
+            );
+          } else {
+            debugPrint('⚠️ Invalid serverId for notification: ${notification.serverId}');
+          }
+        } else {
+          debugPrint('⚠️ Notification ${notification.id} has no serverId');
+        }
+      }
+      
+      // Wait for all server updates to complete (don't fail if some fail)
+      await Future.wait(serverUpdates, eagerError: false);
+      debugPrint('📡 Completed ${serverUpdates.length} server update requests');
+      
+      // Update local database - mark all unread notifications of this type as read
+      final updatedCount = await NotificationDatabase.instance.markNotificationsAsReadByType(type);
+      debugPrint('✅ Updated local database: marked $updatedCount $type notifications as read');
+      
+      // Force sync with server to get updated read status
+      debugPrint('🔄 Syncing with server to get updated read status...');
+      await _simpleSyncWithServer();
+      
+      debugPrint('✅ All $type notifications marked as read');
+    } catch (e) {
+      debugPrint('❌ Error marking $type notifications as read: $e');
+      // Even if there's an error, try to update local database
+      try {
+        await NotificationDatabase.instance.markNotificationsAsReadByType(type);
+        await loadLocalNotifications();
+      } catch (localError) {
+        debugPrint('❌ Error updating local database: $localError');
+      }
+    }
+  }
+
   /// Mark all notifications as read - Update server first, then sync
   Future<void> markAllNotificationsAsRead() async {
     try {
       debugPrint('📖 Marking all notifications as read...');
 
-      // Update server first
-      try {
-        final response = await _repository.markAllNotificationsAsRead();
-        debugPrint('📡 Server response for all notifications: ${response.status} - ${response.message}');
-        if (response.status) {
-          debugPrint('✅ Server updated for all notifications');
-          
-          // Force sync with server to get updated data
-          debugPrint('🔄 Syncing with server after update...');
-          await _simpleSyncWithServer();
-        } else {
-          debugPrint('❌ Server update failed for all notifications: ${response.message}');
-          // If server update fails, still update local
-          await NotificationDatabase.instance.markAllNotificationsAsRead();
-          await loadLocalNotifications();
-        }
-      } catch (e) {
-        debugPrint('❌ Error updating server for all notifications: $e');
-        // If server update fails, still update local
-        await NotificationDatabase.instance.markAllNotificationsAsRead();
-        await loadLocalNotifications();
+      // Get all unread notifications from database
+      final allNotifications = await NotificationDatabase.instance.getAllNotifications();
+      final unreadNotifications = allNotifications.where((n) => !n.isRead).toList();
+      
+      if (unreadNotifications.isEmpty) {
+        debugPrint('ℹ️ No unread notifications to mark as read');
+        return;
       }
-
+      
+      debugPrint('📋 Found ${unreadNotifications.length} unread notifications to mark as read');
+      debugPrint('📋 Unread notifications breakdown:');
+      for (final notification in unreadNotifications) {
+        debugPrint('  - ${notification.title} (ServerID: ${notification.serverId}, Type: ${notification.type}, LocalID: ${notification.id})');
+      }
+      
+      // Update server for each notification - use Future.wait to ensure all are processed
+      final List<Future<void>> serverUpdates = [];
+      for (final notification in unreadNotifications) {
+        if (notification.serverId != null) {
+          final serverId = int.tryParse(notification.serverId!);
+          if (serverId != null) {
+            serverUpdates.add(
+              _repository.markNotificationAsRead(serverId).then((response) {
+                if (response.status) {
+                  debugPrint('✅ Marked notification ${notification.serverId} as read on server');
+                } else {
+                  debugPrint('❌ Server returned error for notification ${notification.serverId}: ${response.message}');
+                }
+              }).catchError((e) {
+                debugPrint('❌ Error marking notification ${notification.serverId} as read on server: $e');
+              })
+            );
+          } else {
+            debugPrint('⚠️ Invalid serverId for notification: ${notification.serverId}');
+          }
+        } else {
+          debugPrint('⚠️ Notification ${notification.id} has no serverId');
+        }
+      }
+      
+      // Wait for all server updates to complete (don't fail if some fail)
+      await Future.wait(serverUpdates, eagerError: false);
+      debugPrint('📡 Completed ${serverUpdates.length} server update requests');
+      
+      // Update local database - mark all unread notifications as read
+      await NotificationDatabase.instance.markAllNotificationsAsRead();
+      debugPrint('✅ Updated local database: marked all notifications as read');
+      
+      // Force sync with server to get updated read status
+      debugPrint('🔄 Syncing with server to get updated read status...');
+      await _simpleSyncWithServer();
+      
+      debugPrint('✅ All notifications marked as read');
     } catch (e) {
       debugPrint('❌ Error marking all notifications as read: $e');
+      // Even if there's an error, try to update local database
+      try {
+        await NotificationDatabase.instance.markAllNotificationsAsRead();
+        await loadLocalNotifications();
+      } catch (localError) {
+        debugPrint('❌ Error updating local database: $localError');
+      }
     }
   }
 

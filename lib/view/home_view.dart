@@ -20,6 +20,7 @@ import 'package:mpm/view/Events/event_detail_page.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/offer/OfferController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
+import 'package:mpm/view_model/controller/notification/NotificationApiController.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -32,6 +33,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
   final regiController = Get.put(NewMemberController());
   final controller = Get.put(UdateProfileController());
   final offerController = Get.put(OfferController());
+  late NotificationApiController notificationController;
   late AnimationController _tagController;
   late Animation<double> _fadeAnimation;
   final ScrollController _scrollController = ScrollController();
@@ -76,6 +78,13 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
   @override
   void initState() {
     super.initState();
+    // Initialize notification controller safely
+    if (Get.isRegistered<NotificationApiController>()) {
+      notificationController = Get.find<NotificationApiController>();
+    } else {
+      notificationController = Get.put(NotificationApiController());
+    }
+    
     controller.getUserProfile().then((_) {
       memberId = int.tryParse(controller.memberId.value);
       if (memberId != null && memberId! > 0) {
@@ -235,6 +244,14 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                         final iconSize = screenWidth * 0.08;
                         final fontSize = screenWidth * 0.040;
                         
+                        // Get badge count based on menu item
+                        int badgeCount = 0;
+                        if (item['label'] == 'Events') {
+                          badgeCount = notificationController.unreadEventCount.value;
+                        } else if (item['label'] == 'Discounts & Offers') {
+                          badgeCount = notificationController.unreadOfferCount.value;
+                        }
+                        
                         return GestureDetector(
                           onTap: () => _handleGridItemClick(item['label']),
                           child: Card(
@@ -242,20 +259,88 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                             elevation: 4.0,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10.0)),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                SvgPicture.asset(item['icon'], height: iconSize, width: iconSize),
-                                SizedBox(height: screenWidth * 0.02),
-                                Text(
-                                  item['label'],
-                                  style: TextStyleClass.pink14style.copyWith(fontSize: fontSize),
-                                  textAlign: TextAlign.center,
-                                  softWrap: true,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Icon with badge - wrapped in SizedBox to contain overflow
+                                  SizedBox(
+                                    width: iconSize + 16, // Extra space for badge
+                                    height: iconSize + 16, // Extra space for badge
+                                    child: Stack(
+                                      clipBehavior: Clip.none,
+                                      alignment: Alignment.center,
+                                      children: [
+                                        Center(
+                                          child: SvgPicture.asset(
+                                            item['icon'], 
+                                            height: iconSize, 
+                                            width: iconSize,
+                                          ),
+                                        ),
+                                        // Only wrap the badge in Obx
+                                        if (item['label'] == 'Events' || item['label'] == 'Discounts & Offers')
+                                          Obx(() {
+                                            final count = item['label'] == 'Events' 
+                                                ? notificationController.unreadEventCount.value
+                                                : notificationController.unreadOfferCount.value;
+                                            
+                                            if (count <= 0) {
+                                              return const SizedBox.shrink();
+                                            }
+                                            
+                                            return Positioned(
+                                              right: 0,
+                                              top: 0,
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 6,
+                                                  vertical: 2,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.red,
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(
+                                                    color: Colors.white, 
+                                                    width: 2,
+                                                  ),
+                                                ),
+                                                constraints: const BoxConstraints(
+                                                  minWidth: 22,
+                                                  minHeight: 22,
+                                                ),
+                                                child: Center(
+                                                  child: Text(
+                                                    count > 99 ? '99+' : count.toString(),
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 12,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                    textAlign: TextAlign.center,
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          }),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(height: screenWidth * 0.02),
+                                  Flexible(
+                                    child: Text(
+                                      item['label'],
+                                      style: TextStyleClass.pink14style.copyWith(fontSize: fontSize),
+                                      textAlign: TextAlign.center,
+                                      softWrap: true,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         );
@@ -740,7 +825,16 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
     );
   }
 
-  void _handleGridItemClick(String label) {
+  void _handleGridItemClick(String label) async {
+    // Mark notifications as read based on menu item clicked
+    if (label == "Events") {
+      // Mark only event type notifications as read when Events is clicked
+      await notificationController.markNotificationsAsReadByType('event');
+    } else if (label == "Discounts & Offers") {
+      // Mark only offer type notifications as read when Offers is clicked
+      await notificationController.markNotificationsAsReadByType('offer');
+    }
+    
     switch (label) {
       case "Saraswani":
         Navigator.pushNamed(context, RouteNames.saraswani_label);

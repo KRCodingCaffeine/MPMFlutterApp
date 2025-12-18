@@ -42,7 +42,9 @@ class NotificationApiModel {
     if (json['is_read'] != null) {
       isRead = json['is_read'] == 1 || json['is_read'] == true;
     } else if (json['read_status'] != null) {
-      isRead = json['read_status'] == 'read' || json['read_status'] == '1' || json['read_status'] == true;
+      // Handle "read"/"unread" string format from API
+      final readStatus = json['read_status'].toString().toLowerCase();
+      isRead = readStatus == 'read' || readStatus == '1' || readStatus == 'true';
     }
     
     // Debug logging for read status parsing
@@ -56,9 +58,9 @@ class NotificationApiModel {
       title: json['title'] ?? '',
       body: json['subject'] ?? json['body'] ?? '',
       image: json['notification_image_path'] ?? json['image'],
-      timestamp: json['timestamp'] ?? json['created_at'] ?? DateTime.now().toIso8601String(),
+      timestamp: json['timestamp'] ?? json['created_at'] ?? json['updated_at'] ?? DateTime.now().toIso8601String(),
       isRead: isRead,
-      type: json['type'],
+      type: json['notification_type'] ?? json['type'],
       data: json['data'] != null ? Map<String, dynamic>.from(json['data']) : null,
       actionUrl: json['action_url'],
       notificationQueueId: json['notification_queue_id']?.toString(), // Capture the server's notification_queue_id
@@ -88,6 +90,7 @@ class NotificationApiModel {
       image: image ?? '',
       timestamp: timestamp,
       isRead: isRead,
+      type: type, // Include notification type (event, offer, default)
       serverId: notificationQueueId, // Store the server's notification_queue_id
     );
   }

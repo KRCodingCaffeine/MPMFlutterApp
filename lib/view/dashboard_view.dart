@@ -164,32 +164,39 @@ class _DashboardViewState extends State<DashboardView> {
                   icon: Icon(Icons.account_balance), label: "Samiti"),
               BottomNavigationBarItem(
                 icon: Obx(() {
+                  // Show only default notification count in bottom bar badge
                   final count =
-                      Get.find<NotificationApiController>().unreadCount.value;
+                      Get.find<NotificationApiController>().unreadDefaultCount.value;
                   return Stack(
                     alignment: Alignment.topRight,
+                    clipBehavior: Clip.none,
                     children: [
                       const Icon(Icons.notifications),
                       if (count > 0)
                         Positioned(
-                          right: 0,
-                          top: 0,
+                          right: -6,
+                          top: -8,
                           child: Container(
-                            padding: const EdgeInsets.all(2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.red,
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             constraints: const BoxConstraints(
-                                minWidth: 10, minHeight: 10),
-                            child: Text(
-                              '$count',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 8,
-                                fontWeight: FontWeight.bold,
+                                minWidth: 20, minHeight: 20),
+                            child: Center(
+                              child: Text(
+                                count > 99 ? '99+' : '$count',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
                               ),
-                              textAlign: TextAlign.center,
                             ),
                           ),
                         ),
