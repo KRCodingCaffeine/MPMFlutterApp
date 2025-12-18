@@ -312,7 +312,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                               const SizedBox(height: 20),
                               _buildDropdown(
                                 label: "Gender",
-                                items: ["Male", "Female", "Other"],
+                                items: ["Male", "Female"],
                                 selectedValue: selectedGender,
                                 onChanged: (val) {
                                   setModalState(() {
