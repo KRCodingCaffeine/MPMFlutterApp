@@ -57,9 +57,18 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
       appBar: AppBar(
         backgroundColor:
             ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        title: const Text(
-          "Applicant Detail",
-          style: TextStyle(color: Colors.white),
+        title: Builder(
+          builder: (context) {
+            double fontSize = MediaQuery.of(context).size.width * 0.045;
+            return Text(
+              "Applicant Detail",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: fontSize,
+                fontWeight: FontWeight.w500,
+              ),
+            );
+          },
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
@@ -283,7 +292,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                   ColorResources.red_color),
                               foregroundColor: Colors.white,
                             ),
-                            child: const Text("Add Detail"),
+                            child: const Text("Add Details"),
                           ),
                         ],
                       ),
@@ -332,8 +341,8 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                               _buildTextField(
                                 "Age",
                                 controller: ageCtrl,
-                                keyboard: TextInputType.number,
                                 readOnly: true,
+                                keyboard: TextInputType.none,
                               ),
                               const SizedBox(height: 20),
                               _buildDropdown(

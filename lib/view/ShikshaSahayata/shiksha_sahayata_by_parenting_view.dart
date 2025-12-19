@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/ShikshaSahayata/applicant_detail.dart';
+import 'package:mpm/view/ShikshaSahayata/current_year_education.dart';
 import 'package:mpm/view/ShikshaSahayata/education_detail.dart';
 import 'package:mpm/view/ShikshaSahayata/family_detail.dart';
 
@@ -9,17 +10,19 @@ class ShikshaSahayataByParentingView extends StatefulWidget {
   const ShikshaSahayataByParentingView({super.key});
 
   @override
-  State<ShikshaSahayataByParentingView> createState() => _ShikshaSahayataByParentingViewState();
+  State<ShikshaSahayataByParentingView> createState() =>
+      _ShikshaSahayataByParentingViewState();
 }
 
-class _ShikshaSahayataByParentingViewState extends State<ShikshaSahayataByParentingView> {
+class _ShikshaSahayataByParentingViewState
+    extends State<ShikshaSahayataByParentingView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Text(
           "Shiksha Sahayata For Children",
           style: TextStyle(
@@ -31,12 +34,10 @@ class _ShikshaSahayataByParentingViewState extends State<ShikshaSahayataByParent
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
       ),
-
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: [
-
             buildCustomButton(
               title: "Applicant Detail",
               icon: Icons.person,
@@ -67,12 +68,18 @@ class _ShikshaSahayataByParentingViewState extends State<ShikshaSahayataByParent
                 MaterialPageRoute(
                   builder: (context) => const EducationDetailView(),
                 ),
-              ),                  ),
+              ),
+            ),
 
             buildCustomButton(
               title: "Current Year Education",
               icon: Icons.school,
-              onTap: () {},
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CurrentYearEducationView(),
+                ),
+              ),
             ),
 
             buildCustomButton(
