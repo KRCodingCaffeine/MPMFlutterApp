@@ -437,7 +437,11 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
     final rightElementHeight = screenHeight * 0.025;
 
     return InkWell(
-      onTap: () {
+      onTap: () async {
+        // Mark notifications as read for this specific offer
+        if (offer.organisationOfferDiscountId != null) {
+          await notificationController.markNotificationsAsReadByEventOfferId(offer.organisationOfferDiscountId!);
+        }
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -826,14 +830,9 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
   }
 
   void _handleGridItemClick(String label) async {
-    // Mark notifications as read based on menu item clicked
-    if (label == "Events") {
-      // Mark only event type notifications as read when Events is clicked
-      await notificationController.markNotificationsAsReadByType('event');
-    } else if (label == "Discounts & Offers") {
-      // Mark only offer type notifications as read when Offers is clicked
-      await notificationController.markNotificationsAsReadByType('offer');
-    }
+    // Note: We no longer mark all notifications as read when clicking Events/Offers menu
+    // Instead, we mark specific notifications when clicking individual events/offers
+    // This allows users to see which specific items have unread notifications
     
     switch (label) {
       case "Saraswani":
@@ -962,7 +961,11 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
         itemBuilder: (context, index) {
           final event = dashboardEvents[index];
           return GestureDetector(
-            onTap: () {
+            onTap: () async {
+              // Mark notifications as read for this specific event
+              if (event.id != null) {
+                await notificationController.markNotificationsAsReadByEventOfferId(event.id!);
+              }
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -976,8 +979,12 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
       )
           : Padding(
         padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-        child: GestureDetector(
-          onTap: () {
+          child: GestureDetector(
+          onTap: () async {
+            // Mark notifications as read for this specific event
+            if (dashboardEvents.first.id != null) {
+              await notificationController.markNotificationsAsReadByEventOfferId(dashboardEvents.first.id!);
+            }
             Navigator.push(
               context,
               MaterialPageRoute(

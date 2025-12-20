@@ -11,6 +11,9 @@ import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/Events/event_detail_page.dart';
 import 'package:mpm/view/Events/member_registered_event.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
+import 'package:mpm/view_model/controller/notification/NotificationApiController.dart';
+import 'package:mpm/utils/color_helper.dart';
+import 'package:mpm/utils/color_resources.dart';
 
 class EventsPage extends StatefulWidget {
   const EventsPage({Key? key}) : super(key: key);
@@ -22,6 +25,7 @@ class EventsPage extends StatefulWidget {
 class _EventsPageState extends State<EventsPage> {
   final EventRepository _eventRepo = EventRepository();
   final ZoneRepository _zoneRepo = ZoneRepository();
+  late NotificationApiController notificationController;
 
   List<EventData> _upcomingEvents = [];
   List<EventData> _pastEvents = [];
@@ -45,6 +49,12 @@ class _EventsPageState extends State<EventsPage> {
   @override
   void initState() {
     super.initState();
+    // Initialize notification controller
+    if (Get.isRegistered<NotificationApiController>()) {
+      notificationController = Get.find<NotificationApiController>();
+    } else {
+      notificationController = Get.put(NotificationApiController());
+    }
     _fetchZones();
     _fetchEvents();
   }
@@ -192,7 +202,11 @@ class _EventsPageState extends State<EventsPage> {
     final isPastEvent = parsedDate.isBefore(DateTime.now());
 
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
+        // Mark notifications as read for this specific event
+        if (event.eventId != null) {
+          await notificationController.markNotificationsAsReadByEventOfferId(event.eventId!);
+        }
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -200,21 +214,32 @@ class _EventsPageState extends State<EventsPage> {
           ),
         );
       },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.2),
-                spreadRadius: 1,
-                blurRadius: 3,
-                offset: const Offset(0, 1),
+      child: FutureBuilder<bool>(
+        future: event.eventId != null 
+            ? notificationController.hasUnreadNotificationsByEventOfferId(event.eventId!)
+            : Future.value(false),
+        builder: (context, snapshot) {
+          final hasUnread = snapshot.data ?? false;
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: hasUnread 
+                    ? Border.all(color: ColorHelperClass.getColorFromHex(ColorResources.red_color), width: 2)
+                    : null,
+                boxShadow: [
+                  BoxShadow(
+                    color: hasUnread 
+                        ? ColorHelperClass.getColorFromHex(ColorResources.red_color).withOpacity(0.3)
+                        : Colors.grey.withOpacity(0.2),
+                    spreadRadius: 1,
+                    blurRadius: hasUnread ? 5 : 3,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
               ),
-            ],
-          ),
           padding: const EdgeInsets.all(12),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -303,7 +328,9 @@ class _EventsPageState extends State<EventsPage> {
               ),
             ],
           ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

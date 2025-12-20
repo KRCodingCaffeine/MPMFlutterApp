@@ -8,6 +8,7 @@ class NotificationDataModel {
   final String? type;
   final String? actionUrl;
   final String? serverId; // To track server notification ID
+  final String? eventOfferId; // To link notifications to events/offers
 
   NotificationDataModel({
     this.id,
@@ -19,6 +20,7 @@ class NotificationDataModel {
     this.type,
     this.actionUrl,
     this.serverId,
+    this.eventOfferId,
   });
 
   Map<String, dynamic> toMap() {
@@ -32,6 +34,7 @@ class NotificationDataModel {
       'type': type,
       'actionUrl': actionUrl,
       'serverId': serverId,
+      'eventOfferId': eventOfferId,
     };
   }
 
@@ -46,6 +49,7 @@ class NotificationDataModel {
       type: map['type'],
       actionUrl: map['actionUrl'],
       serverId: map['serverId'],
+      eventOfferId: map['eventOfferId'],
     );
   }
 }

@@ -224,6 +224,77 @@ class NotificationApiController extends GetxController with WidgetsBindingObserv
     }
   }
 
+  /// Mark notifications as read by event_offer_id
+  Future<void> markNotificationsAsReadByEventOfferId(String eventOfferId) async {
+    try {
+      debugPrint('📖 Marking notifications as read for eventOfferId: $eventOfferId...');
+      
+      // Get all unread notifications with this event_offer_id from database
+      final allNotifications = await NotificationDatabase.instance.getAllNotifications();
+      final unreadNotifications = allNotifications.where((n) => !n.isRead && n.eventOfferId == eventOfferId).toList();
+      
+      if (unreadNotifications.isEmpty) {
+        debugPrint('ℹ️ No unread notifications found for eventOfferId: $eventOfferId');
+        return;
+      }
+      
+      debugPrint('📋 Found ${unreadNotifications.length} unread notifications for eventOfferId: $eventOfferId');
+      
+      // Update server for each notification
+      final List<Future<void>> serverUpdates = [];
+      for (final notification in unreadNotifications) {
+        if (notification.serverId != null) {
+          final serverId = int.tryParse(notification.serverId!);
+          if (serverId != null) {
+            serverUpdates.add(
+              _repository.markNotificationAsRead(serverId).then((response) {
+                if (response.status) {
+                  debugPrint('✅ Marked notification ${notification.serverId} as read on server');
+                } else {
+                  debugPrint('❌ Server returned error for notification ${notification.serverId}: ${response.message}');
+                }
+              }).catchError((e) {
+                debugPrint('❌ Error marking notification ${notification.serverId} as read on server: $e');
+              })
+            );
+          }
+        }
+      }
+      
+      // Wait for all server updates to complete
+      await Future.wait(serverUpdates, eagerError: false);
+      debugPrint('📡 Completed ${serverUpdates.length} server update requests');
+      
+      // Update local database
+      final updatedCount = await NotificationDatabase.instance.markNotificationsAsReadByEventOfferId(eventOfferId);
+      debugPrint('✅ Updated local database: marked $updatedCount notifications as read');
+      
+      // Reload local notifications to update UI
+      await loadLocalNotifications();
+      
+      debugPrint('✅ Notifications for eventOfferId $eventOfferId marked as read');
+    } catch (e) {
+      debugPrint('❌ Error marking notifications as read by eventOfferId: $e');
+      // Even if there's an error, try to update local database
+      try {
+        await NotificationDatabase.instance.markNotificationsAsReadByEventOfferId(eventOfferId);
+        await loadLocalNotifications();
+      } catch (localError) {
+        debugPrint('❌ Error updating local database: $localError');
+      }
+    }
+  }
+
+  /// Check if a specific event_offer_id has unread notifications
+  Future<bool> hasUnreadNotificationsByEventOfferId(String eventOfferId) async {
+    try {
+      return await NotificationDatabase.instance.hasUnreadNotificationsByEventOfferId(eventOfferId);
+    } catch (e) {
+      debugPrint('❌ Error checking unread notifications by eventOfferId: $e');
+      return false;
+    }
+  }
+
   /// Mark all notifications as read by type (e.g., "event", "offer")
   Future<void> markNotificationsAsReadByType(String type) async {
     try {

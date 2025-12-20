@@ -13,6 +13,8 @@ import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/model/Offer/OfferModelClass.dart';
 import 'package:mpm/view/DiscountOfferDetailPage.dart';
 import 'package:mpm/view/offer_claimed_view.dart';
+import 'package:mpm/view_model/controller/notification/NotificationApiController.dart';
+import 'package:get/get.dart';
 
 class DiscountofferView extends StatefulWidget {
   const DiscountofferView({super.key});
@@ -34,6 +36,7 @@ class _DiscountofferViewState extends State<DiscountofferView> {
   final offerRepo = OfferRepository();
   final categoryRepo = OrganisationCategoryRepository();
   final subcategoryRepo = OrganisationSubcategoryRepository();
+  late NotificationApiController notificationController;
   List<OfferData> allOffers = [];
   List<OrganisationCategoryData> allCategories = [];
   List<OrganisationSubcategoryData> allSubcategories = [];
@@ -42,6 +45,12 @@ class _DiscountofferViewState extends State<DiscountofferView> {
   @override
   void initState() {
     super.initState();
+    // Initialize notification controller
+    if (Get.isRegistered<NotificationApiController>()) {
+      notificationController = Get.find<NotificationApiController>();
+    } else {
+      notificationController = Get.put(NotificationApiController());
+    }
     _fetchData();
   }
 
@@ -421,7 +430,11 @@ class _DiscountofferViewState extends State<DiscountofferView> {
     }
 
     return InkWell(
-      onTap: () {
+      onTap: () async {
+        // Mark notifications as read for this specific offer
+        if (offer.organisationOfferDiscountId != null) {
+          await notificationController.markNotificationsAsReadByEventOfferId(offer.organisationOfferDiscountId!);
+        }
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -429,11 +442,22 @@ class _DiscountofferViewState extends State<DiscountofferView> {
           ),
         );
       },
-      child: Card(
-        color: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        elevation: 2,
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: FutureBuilder<bool>(
+        future: offer.organisationOfferDiscountId != null 
+            ? notificationController.hasUnreadNotificationsByEventOfferId(offer.organisationOfferDiscountId!)
+            : Future.value(false),
+        builder: (context, snapshot) {
+          final hasUnread = snapshot.data ?? false;
+          return Card(
+            color: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: hasUnread 
+                  ? BorderSide(color: ColorHelperClass.getColorFromHex(ColorResources.red_color), width: 2)
+                  : BorderSide.none,
+            ),
+            elevation: hasUnread ? 4 : 2,
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: IntrinsicHeight(
@@ -536,6 +560,8 @@ class _DiscountofferViewState extends State<DiscountofferView> {
             ),
           ),
         ),
+            );
+        },
       ),
     );
   }

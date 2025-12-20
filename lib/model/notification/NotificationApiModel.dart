@@ -12,6 +12,7 @@ class NotificationApiModel {
   final Map<String, dynamic>? data;
   final String? actionUrl;
   final String? notificationQueueId; // Store the server's notification_queue_id
+  final String? eventOfferId; // Store the event_offer_id for linking to events/offers
 
   NotificationApiModel({
     this.id,
@@ -24,6 +25,7 @@ class NotificationApiModel {
     this.data,
     this.actionUrl,
     this.notificationQueueId,
+    this.eventOfferId,
   });
 
   // Helper method to safely parse integer values
@@ -64,6 +66,7 @@ class NotificationApiModel {
       data: json['data'] != null ? Map<String, dynamic>.from(json['data']) : null,
       actionUrl: json['action_url'],
       notificationQueueId: json['notification_queue_id']?.toString(), // Capture the server's notification_queue_id
+      eventOfferId: json['event_offer_id']?.toString(), // Capture the event_offer_id for linking to events/offers
     );
   }
 
@@ -92,6 +95,7 @@ class NotificationApiModel {
       isRead: isRead,
       type: type, // Include notification type (event, offer, default)
       serverId: notificationQueueId, // Store the server's notification_queue_id
+      eventOfferId: eventOfferId, // Store the event_offer_id for linking to events/offers
     );
   }
 }

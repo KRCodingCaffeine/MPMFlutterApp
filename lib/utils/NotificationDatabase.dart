@@ -16,7 +16,7 @@ class NotificationDatabase {
       final path = join(dbPath, filePath);
       return await openDatabase(
         path, 
-        version: 2, // Increment version to trigger migration
+        version: 3, // Increment version to trigger migration for eventOfferId
         onCreate: _createDB,
         onUpgrade: _onUpgrade,
       );
@@ -37,7 +37,8 @@ class NotificationDatabase {
         isRead INTEGER,
         type TEXT,
         actionUrl TEXT,
-        serverId TEXT
+        serverId TEXT,
+        eventOfferId TEXT
       )
     ''');
   }
@@ -48,6 +49,15 @@ class NotificationDatabase {
       await db.execute('ALTER TABLE notifications ADD COLUMN type TEXT');
       await db.execute('ALTER TABLE notifications ADD COLUMN actionUrl TEXT');
       await db.execute('ALTER TABLE notifications ADD COLUMN serverId TEXT');
+    }
+    if (oldVersion < 3) {
+      // Add eventOfferId column for version 3
+      try {
+        await db.execute('ALTER TABLE notifications ADD COLUMN eventOfferId TEXT');
+      } catch (e) {
+        // Column might already exist, ignore error
+        print('Note: eventOfferId column may already exist: $e');
+      }
     }
   }
   Future<void> insertNotification(NotificationDataModel notification) async {
@@ -173,6 +183,41 @@ class NotificationDatabase {
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  /// Check if a specific event_offer_id has unread notifications
+  Future<bool> hasUnreadNotificationsByEventOfferId(String eventOfferId) async {
+    try {
+      final db = await database;
+      final result = await db.rawQuery(
+        'SELECT COUNT(*) as count FROM notifications WHERE isRead = 0 AND eventOfferId = ?',
+        [eventOfferId]
+      );
+      final count = Sqflite.firstIntValue(result) ?? 0;
+      return count > 0;
+    } catch (e) {
+      print('Error checking unread notifications by eventOfferId: $e');
+      return false;
+    }
+  }
+
+  /// Mark all notifications as read by event_offer_id
+  /// Returns the number of notifications updated
+  Future<int> markNotificationsAsReadByEventOfferId(String eventOfferId) async {
+    try {
+      final db = await database;
+      final count = await db.update(
+        'notifications',
+        {'isRead': 1},
+        where: 'isRead = 0 AND eventOfferId = ?',
+        whereArgs: [eventOfferId],
+      );
+      print('✅ Marked $count notifications as read for eventOfferId: $eventOfferId');
+      return count;
+    } catch (e) {
+      print('❌ Error marking notifications as read by eventOfferId: $e');
+      return 0;
+    }
   }
 
   Future close() async {
