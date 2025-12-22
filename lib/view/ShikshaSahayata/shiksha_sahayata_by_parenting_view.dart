@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/view/ShikshaSahayata/any_other_charity_fund.dart';
 import 'package:mpm/view/ShikshaSahayata/applicant_detail.dart';
 import 'package:mpm/view/ShikshaSahayata/current_year_education.dart';
 import 'package:mpm/view/ShikshaSahayata/education_detail.dart';
 import 'package:mpm/view/ShikshaSahayata/family_detail.dart';
+import 'package:mpm/view/ShikshaSahayata/other_charity_fund.dart';
 
 class ShikshaSahayataByParentingView extends StatefulWidget {
   const ShikshaSahayataByParentingView({super.key});
@@ -83,16 +85,25 @@ class _ShikshaSahayataByParentingViewState
             ),
 
             buildCustomButton(
-              title: "Other Charity Fund",
+              title: "Past Year: Loans Avail",
               icon: Icons.volunteer_activism,
-              onTap: () {},
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const OtherCharityFundView(),
+                ),
+              ),
             ),
 
             buildCustomButton(
-              title: "Any Other Charity?",
+              title: "Current Year: Any Other Loan",
               icon: Icons.handshake,
-              onTap: () {},
-            ),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AnyOtherCharityFundView(),
+                ),
+              ),            ),
 
             buildCustomButton(
               title: "MPM",
