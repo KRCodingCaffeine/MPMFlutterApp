@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/view/ShikshaSahayata/family_detail.dart';
 
 class ApplicantDetail extends StatefulWidget {
   const ApplicantDetail({super.key});
@@ -15,7 +16,8 @@ class ApplicantDetail extends StatefulWidget {
 
 class _ApplicantDetailState extends State<ApplicantDetail> {
   bool hasApplicant = false;
-  File? _aadharImage;
+  File? _aadharFrontImage;
+  File? _aadharBackImage;
   final ImagePicker _picker = ImagePicker();
 
   final TextEditingController firstNameCtrl = TextEditingController();
@@ -50,42 +52,67 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     });
   }
 
+  bool get _canSubmitApplicant {
+    if (firstNameCtrl.text.trim().isEmpty) return false;
+    if (lastNameCtrl.text.trim().isEmpty) return false;
+    if (emailCtrl.text.trim().isEmpty) return false;
+    if (mobileCtrl.text.trim().isEmpty) return false;
+    if (selectedGender.isEmpty) return false;
+    if (dobCtrl.text.trim().isEmpty) return false;
+    if (ageCtrl.text.trim().isEmpty) return false;
+    if (maritalStatus.isEmpty) return false;
+
+    if (maritalStatus == "Married" &&
+        anniversaryCtrl.text.trim().isEmpty) {
+      return false;
+    }
+
+    if (_aadharFrontImage == null) return false;
+    if (_aadharBackImage == null) return false;
+
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
+
       appBar: AppBar(
         backgroundColor:
-            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        title: Builder(
-          builder: (context) {
-            double fontSize = MediaQuery.of(context).size.width * 0.045;
-            return Text(
-              "Applicant Detail",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: fontSize,
-                fontWeight: FontWeight.w500,
-              ),
-            );
-          },
+        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        title: Text(
+          "Applicant Detail",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: MediaQuery.of(context).size.width * 0.045,
+            fontWeight: FontWeight.w500,
+          ),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add, color: Colors.white),
-            onPressed: () => _showAddApplicantModalSheet(context),
-          )
-        ],
       ),
+
       body: hasApplicant
           ? _buildApplicantCard()
           : const Center(
-              child: Text(
-                "No applicant details added",
-                style: TextStyle(color: Colors.grey),
-              ),
-            ),
+        child: Text(
+          "No applicant details added",
+          style: TextStyle(color: Colors.grey),
+        ),
+      ),
+
+      floatingActionButton: !hasApplicant
+          ? FloatingActionButton(
+        backgroundColor:
+        ColorHelperClass.getColorFromHex(ColorResources.red_color),
+        onPressed: () {
+          _showAddApplicantModalSheet(context);
+        },
+        child: const Icon(Icons.add, color: Colors.white),
+      )
+          : null,
+
+      bottomNavigationBar: hasApplicant ? _buildBottomNextBar() : null,
     );
   }
 
@@ -120,32 +147,98 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                       style: TextStyle(fontSize: 12),
                     ),
                   ),
-                  Expanded(
-                    child: _aadharImage == null
-                        ? const Text(
-                            "Not Uploaded",
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(
+                        width: 130,
+                        child: Text(
+                          "Aadhaar :",
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildAadhaarPreview(
+                              title: "Front",
+                              image: _aadharFrontImage,
                             ),
-                          )
-                        : GestureDetector(
-                            onTap: () => _showAadhaarPreview(context),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.file(
-                                _aadharImage!,
-                                height: 80,
-                                width: 120,
-                                fit: BoxFit.cover,
-                              ),
+                            const SizedBox(height: 8),
+                            _buildAadhaarPreview(
+                              title: "Back",
+                              image: _aadharBackImage,
                             ),
-                          ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNextBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                "Once you complete this detail, click Submit to proceed.",
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 12),
+
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => FamilyDetail()),
+                );
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Successfully sumbited your applicant detail"),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                padding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text("Submit"),
+            ),
+          ],
         ),
       ),
     );
@@ -199,33 +292,37 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     );
   }
 
-  void _showAadhaarPreview(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: Colors.black,
-          insetPadding: const EdgeInsets.all(16),
-          child: Stack(
-            children: [
-              InteractiveViewer(
-                child: Image.file(
-                  _aadharImage!,
-                  fit: BoxFit.contain,
-                ),
-              ),
-              Positioned(
-                top: 10,
-                right: 10,
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ),
-            ],
+  Widget _buildAadhaarPreview({
+    required String title,
+    required File? image,
+  }) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 45,
+          child: Text(
+            "$title:",
+            style: const TextStyle(fontSize: 12),
           ),
-        );
-      },
+        ),
+        image == null
+            ? const Text(
+          "Not Uploaded",
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+        )
+            : GestureDetector(
+          onTap: () => _showImagePreview(image),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: Image.file(
+              image,
+              height: 60,
+              width: 90,
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -265,34 +362,37 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                             child: const Text("Cancel"),
                           ),
                           ElevatedButton(
-                            onPressed: () {
+                            onPressed: _canSubmitApplicant
+                                ? () {
                               setState(() {
                                 fullName =
-                                    "${firstNameCtrl.text} ${middleNameCtrl.text} ${lastNameCtrl.text}";
+                                "${firstNameCtrl.text} ${middleNameCtrl.text} ${lastNameCtrl.text}";
                                 email = emailCtrl.text;
                                 mobile = mobileCtrl.text;
                                 dob = dobCtrl.text;
                                 age = ageCtrl.text;
-                                aadhar = aadharCtrl.text;
                                 anniversary = anniversaryCtrl.text;
                                 hasApplicant = true;
                               });
 
                               Navigator.pop(context);
+
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text(
-                                      "Applicant details added successfully"),
+                                  content: Text("Applicant details added successfully"),
                                   backgroundColor: Colors.green,
                                 ),
                               );
-                            },
+                            }
+                                : null,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: ColorHelperClass.getColorFromHex(
                                   ColorResources.red_color),
                               foregroundColor: Colors.white,
+                              disabledBackgroundColor: Colors.grey.shade400,
+                              disabledForegroundColor: Colors.white70,
                             ),
-                            child: const Text("Add Details"),
+                            child: const Text("Submit"),
                           ),
                         ],
                       ),
@@ -304,23 +404,35 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           child: Column(
                             children: [
-                              _buildTextField("First Name",
+                              const Center(
+                                child: Text(
+                                  "Applicant details",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 30),
+
+                              _buildTextField("First Name *",
                                   controller: firstNameCtrl),
                               const SizedBox(height: 20),
                               _buildTextField("Middle Name",
                                   controller: middleNameCtrl),
                               const SizedBox(height: 20),
-                              _buildTextField("Last Name",
+                              _buildTextField("Last Name *",
                                   controller: lastNameCtrl),
                               const SizedBox(height: 20),
-                              _buildTextField("Email", controller: emailCtrl),
+                              _buildTextField("Email *", controller: emailCtrl),
                               const SizedBox(height: 20),
-                              _buildTextField("Mobile Number",
+                              _buildTextField("Mobile Number *",
                                   controller: mobileCtrl,
                                   keyboard: TextInputType.number),
                               const SizedBox(height: 20),
                               _buildDropdown(
-                                label: "Gender",
+                                label: "Gender *",
                                 items: ["Male", "Female"],
                                 selectedValue: selectedGender,
                                 onChanged: (val) {
@@ -339,14 +451,14 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                               ),
                               const SizedBox(height: 20),
                               _buildTextField(
-                                "Age",
+                                "Age *",
                                 controller: ageCtrl,
                                 readOnly: true,
                                 keyboard: TextInputType.none,
                               ),
                               const SizedBox(height: 20),
                               _buildDropdown(
-                                label: "Marital Status",
+                                label: "Marital Status *",
                                 items: ["Married", "Unmarried"],
                                 selectedValue: maritalStatus,
                                 onChanged: (val) {
@@ -370,7 +482,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 ),
                                 const SizedBox(height: 20),
                               ],
-                              const SizedBox(height: 20),
                               _buildAadharUploadField(context),
                               const SizedBox(height: 40),
                             ],
@@ -399,12 +510,27 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
       keyboardType: keyboard,
       decoration: InputDecoration(
         labelText: label,
-        border: const OutlineInputBorder(),
-        enabledBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.black26)),
-        focusedBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.black26, width: 1.5)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+        border:
+        const OutlineInputBorder(
+          borderSide: BorderSide(
+              color: Colors.black),
+        ),
+        enabledBorder:
+        const OutlineInputBorder(
+          borderSide: BorderSide(
+              color: Colors.black),
+        ),
+        focusedBorder:
+        const OutlineInputBorder(
+          borderSide: BorderSide(
+              color: Colors.black38,
+              width: 1),
+        ),
+        contentPadding:
+        const EdgeInsets.symmetric(
+            horizontal: 20),
+        labelStyle: const TextStyle(
+            color: Colors.black),
       ),
     );
   }
@@ -418,20 +544,27 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     return InputDecorator(
       decoration: InputDecoration(
         labelText: label,
-        border: const OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.black26),
+        border:
+        const OutlineInputBorder(
+          borderSide: BorderSide(
+              color: Colors.black),
         ),
-        enabledBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.black26),
+        enabledBorder:
+        const OutlineInputBorder(
+          borderSide: BorderSide(
+              color: Colors.black),
         ),
-        focusedBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.black26, width: 1.5),
+        focusedBorder:
+        const OutlineInputBorder(
+          borderSide: BorderSide(
+              color: Colors.black38,
+              width: 1),
         ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 4,
-        ),
-        labelStyle: const TextStyle(color: Colors.black45),
+        contentPadding:
+        const EdgeInsets.symmetric(
+            horizontal: 20),
+        labelStyle: const TextStyle(
+            color: Colors.black),
       ),
       isEmpty: selectedValue.isEmpty,
       child: DropdownButton<String>(
@@ -483,12 +616,27 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
-          border: const OutlineInputBorder(),
-          enabledBorder: const OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.black26)),
-          focusedBorder: const OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.black26, width: 1.5)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+          border:
+          const OutlineInputBorder(
+            borderSide: BorderSide(
+                color: Colors.black),
+          ),
+          enabledBorder:
+          const OutlineInputBorder(
+            borderSide: BorderSide(
+                color: Colors.black),
+          ),
+          focusedBorder:
+          const OutlineInputBorder(
+            borderSide: BorderSide(
+                color: Colors.black38,
+                width: 1),
+          ),
+          contentPadding:
+          const EdgeInsets.symmetric(
+              horizontal: 20),
+          labelStyle: const TextStyle(
+              color: Colors.black),
         ),
         onTap: () async {
           DateTime? picked = await showDatePicker(
@@ -526,41 +674,28 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (_aadharImage != null)
-          Container(
-            height: 200,
-            width: double.infinity,
-            margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.black26),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Image.file(
-                _aadharImage!,
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: () => _showImagePicker(context),
-            icon: const Icon(Icons.upload_file),
-            label: Text(
-              _aadharImage == null ? "Upload Aadhaar" : "Change Aadhaar Image",
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  ColorHelperClass.getColorFromHex(ColorResources.red_color),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-            ),
-          ),
+        const Text(
+          "Aadhaar Upload *",
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 12),
+
+        /// FRONT
+        _buildUploadCard(
+          context: context,
+          title: "Upload Aadhaar Front",
+          image: _aadharFrontImage,
+          onPick: () => _showImagePicker(context, isFront: true),
+        ),
+
+        const SizedBox(height: 16),
+
+        /// BACK
+        _buildUploadCard(
+          context: context,
+          title: "Upload Aadhaar Back",
+          image: _aadharBackImage,
+          onPick: () => _showImagePicker(context, isFront: false),
         ),
       ],
     );

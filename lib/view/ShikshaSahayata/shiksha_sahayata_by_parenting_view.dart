@@ -6,6 +6,7 @@ import 'package:mpm/view/ShikshaSahayata/applicant_detail.dart';
 import 'package:mpm/view/ShikshaSahayata/current_year_education.dart';
 import 'package:mpm/view/ShikshaSahayata/education_detail.dart';
 import 'package:mpm/view/ShikshaSahayata/family_detail.dart';
+import 'package:mpm/view/ShikshaSahayata/mpm.dart';
 import 'package:mpm/view/ShikshaSahayata/other_charity_fund.dart';
 
 class ShikshaSahayataByParentingView extends StatefulWidget {
@@ -85,7 +86,7 @@ class _ShikshaSahayataByParentingViewState
             ),
 
             buildCustomButton(
-              title: "Past Year: Loans Avail",
+              title: "Past Year: Loans Availed",
               icon: Icons.volunteer_activism,
               onTap: () => Navigator.push(
                 context,
@@ -96,19 +97,25 @@ class _ShikshaSahayataByParentingViewState
             ),
 
             buildCustomButton(
-              title: "Current Year: Any Other Loan",
+              title: "Current Year: Any Other Applied Loan",
               icon: Icons.handshake,
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const AnyOtherCharityFundView(),
                 ),
-              ),            ),
+              ),
+            ),
 
             buildCustomButton(
-              title: "MPM",
-              icon: Icons.verified, // or Icons.approval
-              onTap: () {},
+              title: "MPM Verification",
+              icon: Icons.verified,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MPMView(),
+                ),
+              ),
             ),
             const SizedBox(height: 30),
           ],

@@ -73,6 +73,7 @@ dependencies:
   qr_code_scanner_plus: ^2.0.10+1
   flutter_app_badger: ^1.5.0
   awesome_notifications: ^0.10.1
+  signature: ^5.5.0
 
 dev_dependencies:
   flutter_test:

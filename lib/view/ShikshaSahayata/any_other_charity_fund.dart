@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/view/ShikshaSahayata/mpm.dart';
 
 class AnyOtherCharityFundView extends StatefulWidget {
   const AnyOtherCharityFundView({super.key});
@@ -50,7 +51,7 @@ class _AnyOtherCharityFundViewState extends State<AnyOtherCharityFundView> {
       body: charityList.isEmpty
           ? const Center(
         child: Text(
-          "No other charity / loan added",
+          "Current Year Any Other Loan Applied added Yet",
           style: TextStyle(color: Colors.grey),
         ),
       )
@@ -61,6 +62,7 @@ class _AnyOtherCharityFundViewState extends State<AnyOtherCharityFundView> {
           final item = charityList[index];
 
           return Card(
+            color: Colors.white,
             elevation: 4,
             margin: const EdgeInsets.only(bottom: 12),
             shape: RoundedRectangleBorder(
@@ -149,7 +151,7 @@ class _AnyOtherCharityFundViewState extends State<AnyOtherCharityFundView> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text(
-                                      "Other charity added successfully"),
+                                      "Current Year Any Other Loan Applied Submitted Successfully"),
                                   backgroundColor: Colors.green,
                                 ),
                               );
@@ -244,9 +246,13 @@ class _AnyOtherCharityFundViewState extends State<AnyOtherCharityFundView> {
             const SizedBox(width: 12),
             ElevatedButton(
               onPressed: () {
+                Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => MPMView()),
+                );
+
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text("All charity details completed"),
+                    content: Text("Current Year Any Other Loan Applied Submitted Successfully"),
                     backgroundColor: Colors.green,
                   ),
                 );
@@ -256,7 +262,7 @@ class _AnyOtherCharityFundViewState extends State<AnyOtherCharityFundView> {
                 ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
               ),
-              child: const Text("Next"),
+              child: const Text("Submit"),
             ),
           ],
         ),
