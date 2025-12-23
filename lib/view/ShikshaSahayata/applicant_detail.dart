@@ -298,31 +298,23 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
   }) {
     return Row(
       children: [
-        SizedBox(
-          width: 45,
-          child: Text(
-            "$title:",
-            style: const TextStyle(fontSize: 12),
-          ),
-        ),
+        SizedBox(width: 60, child: Text("$title:")),
         image == null
-            ? const Text(
-          "Not Uploaded",
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-        )
+            ? const Text("Not Uploaded")
             : GestureDetector(
           onTap: () => _showImagePreview(image),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: Image.file(
-              image,
-              height: 60,
-              width: 90,
-              fit: BoxFit.cover,
-            ),
-          ),
+          child: Image.file(image, height: 60, width: 90),
         ),
       ],
+    );
+  }
+
+  void _showImagePreview(File image) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        child: Image.file(image),
+      ),
     );
   }
 
@@ -675,7 +667,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          "Aadhaar Upload *",
+          "Self Attached Aadhaar Upload *",
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
@@ -701,14 +693,59 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     );
   }
 
-  void _showImagePicker(BuildContext context) {
+  Widget _buildUploadCard({
+    required BuildContext context,
+    required String title,
+    required File? image,
+    required VoidCallback onPick,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (image != null)
+          Container(
+            height: 180,
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 10),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.black26),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.file(image, fit: BoxFit.cover),
+            ),
+          ),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: onPick,
+            icon: const Icon(Icons.upload_file),
+            label: Text(image == null ? title : "Change $title"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor:
+              ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+
+  void _showImagePicker(BuildContext context, {required bool isFront}) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
       ),
-      builder: (BuildContext context) {
+      builder: (context) {
         return Wrap(
           children: [
             ListTile(
@@ -716,7 +753,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
               title: const Text("Take a Picture"),
               onTap: () {
                 Navigator.pop(context);
-                _pickImageFromCamera();
+                _pickImage(ImageSource.camera, isFront);
               },
             ),
             ListTile(
@@ -724,7 +761,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
               title: const Text("Choose from Gallery"),
               onTap: () {
                 Navigator.pop(context);
-                _pickImageFromGallery();
+                _pickImage(ImageSource.gallery, isFront);
               },
             ),
           ],
@@ -733,23 +770,17 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     );
   }
 
-  Future<void> _pickImageFromCamera() async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.camera);
+  Future<void> _pickImage(ImageSource source, bool isFront) async {
+    final pickedFile = await _picker.pickImage(source: source);
     if (pickedFile != null) {
       setState(() {
-        _aadharImage = File(pickedFile.path);
+        if (isFront) {
+          _aadharFrontImage = File(pickedFile.path);
+        } else {
+          _aadharBackImage = File(pickedFile.path);
+        }
       });
     }
   }
 
-  Future<void> _pickImageFromGallery() async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _aadharImage = File(pickedFile.path);
-      });
-    }
-  }
 }
