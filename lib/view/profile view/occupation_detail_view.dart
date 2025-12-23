@@ -158,7 +158,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                                 ),
                               )
                                   : const Text(
-                                "Add Business Detail",
+                                "Submit",
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                             )),
@@ -525,7 +525,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                                       ),
                                     )
                                   : const Text(
-                                      "Edit Business Detail",
+                                      "Submit",
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold),
                                     ),
@@ -1457,7 +1457,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                         ),
                       ),
                       child: const Text(
-                        "Edit",
+                        "Edit / Delete",
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -1916,11 +1916,8 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
       debugPrint("🗑️ Deleting business: ${business.businessName}");
       debugPrint("🗑️ Business Profile ID: ${business.profileId}");
 
-      if (!(Get.isDialogOpen ?? false)) {
-        Get.dialog(
-          const Center(child: CircularProgressIndicator()),
-          barrierDismissible: false,
-        );
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
       }
 
       await controller.deleteBusinessOccupationProfile(

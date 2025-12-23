@@ -311,7 +311,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                               strokeWidth: 2,
                             ),
                           )
-                        : const Text("Save"),
+                        : const Text("Submit"),
                   ),
                 ],
               ),
@@ -577,10 +577,11 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                       controller.selectedOccupation.value = newValue;
                       controller.selectedProfession.value = "";
                       controller.selectedSpecialization.value = "";
-                      // controller.selectedSubCategory.value = "";
                       controller.detailsController.value.text = "";
 
-                      if (newValue == "0") {
+                      const detailOnlyOccupationIds = ["4", "5", "6"];
+
+                      if (newValue == "0" || detailOnlyOccupationIds.contains(newValue)) {
                         controller.showDetailsField.value = true;
                       } else {
                         controller.showDetailsField.value = false;
@@ -597,183 +598,193 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
 
         // Profession Dropdown
         Obx(() {
-          if (controller.selectedOccupation.value.isEmpty ||
-              controller.selectedOccupation.value == "0") {
+          final occId = controller.selectedOccupation.value;
+          const detailOnlyOccupationIds = ["4", "5", "6"];
+
+          if (occId.isEmpty ||
+              occId == "0" ||
+              detailOnlyOccupationIds.contains(occId)) {
             return const SizedBox();
           }
-          return Container(
-            margin: const EdgeInsets.only(left: 5, right: 5, top: 8),
-            child: Obx(() {
-              if (controller.rxStatusOccupationData.value == Status.LOADING) {
-                return _buildLoadingIndicator();
-              } else if (controller.rxStatusOccupationData.value ==
-                  Status.ERROR) {
-                return InputDecorator(
-                  decoration: InputDecoration(
-                    labelText: 'Level 2',
-                    border: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black26),
-                    ),
-                    enabledBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black26),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black26, width: 1.5),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                    labelStyle: const TextStyle(color: Colors.black45),
-                  ),
-                  child: const Text(
-                    "Other",
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                  ),
-                );
-              } else {
-                return InputDecorator(
-                  decoration: InputDecoration(
-                    labelText: 'Level 2',
-                    border: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black26),
-                    ),
-                    enabledBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black26),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black26, width: 1.5),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                    labelStyle: const TextStyle(color: Colors.black45),
-                  ),
-                  isEmpty: controller.selectedProfession.value.isEmpty,
-                  child: DropdownButton<String>(
-                    dropdownColor: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    isExpanded: true,
-                    underline: Container(),
-                    value: controller.selectedProfession.value.isEmpty
-                        ? null
-                        : controller.selectedProfession.value,
-                    items: [
-                      ...controller.occuptionProfessionList
-                          .map((OccuptionProfessionData profession) {
-                        return DropdownMenuItem<String>(
-                          value: profession.id.toString(),
-                          child: Text(profession.name ?? 'Unknown'),
-                        );
-                      }).toList(),
-                    ],
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        controller.selectedProfession.value = newValue;
-                        controller.selectedSpecialization.value = "";
-                        controller.selectedSubCategory.value = "";
-                        controller.detailsController.value.text = "";
 
-                        if (newValue == "Other") {
-                          controller.showDetailsField.value = true;
-                        } else if (newValue.isNotEmpty) {
-                          controller.showDetailsField.value = false;
-                          controller.getOccupationSpectData(newValue);
-                        }
-                      }
-                    },
-                  ),
-                );
-              }
-            }),
+          return Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.only(left: 5, right: 5, top: 8),
+                child: Obx(() {
+                  if (controller.rxStatusOccupationData.value == Status.LOADING) {
+                    return _buildLoadingIndicator();
+                  } else if (controller.rxStatusOccupationData.value == Status.ERROR) {
+                    return InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: 'Level 2',
+                        border: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black26),
+                        ),
+                        enabledBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black26),
+                        ),
+                        focusedBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                        ),
+                        contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 20),
+                        labelStyle: const TextStyle(color: Colors.black45),
+                      ),
+                      child: const Text(
+                        "Other",
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                      ),
+                    );
+                  } else {
+                    return InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: 'Level 2',
+                        border: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black26),
+                        ),
+                        enabledBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black26),
+                        ),
+                        focusedBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                        ),
+                        contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 20),
+                        labelStyle: const TextStyle(color: Colors.black45),
+                      ),
+                      isEmpty: controller.selectedProfession.value.isEmpty,
+                      child: DropdownButton<String>(
+                        dropdownColor: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        isExpanded: true,
+                        underline: Container(),
+                        value: controller.selectedProfession.value.isEmpty
+                            ? null
+                            : controller.selectedProfession.value,
+                        items: controller.occuptionProfessionList
+                            .map((OccuptionProfessionData profession) {
+                          return DropdownMenuItem<String>(
+                            value: profession.id.toString(),
+                            child: Text(profession.name ?? 'Unknown'),
+                          );
+                        }).toList(),
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            controller.selectedProfession.value = newValue;
+                            controller.selectedSpecialization.value = "";
+                            controller.selectedSubCategory.value = "";
+                            controller.detailsController.value.text = "";
+
+                            if (newValue == "Other") {
+                              controller.showDetailsField.value = true;
+                            } else {
+                              controller.showDetailsField.value = false;
+                              controller.getOccupationSpectData(newValue);
+                            }
+                          }
+                        },
+                      ),
+                    );
+                  }
+                }),
+              ),
+              const SizedBox(height: 20),
+            ],
           );
         }),
-        const SizedBox(height: 20),
 
         // Specialization Dropdown
         Obx(() {
+          // Hide Level 3 if profession is empty or "Other"
           if (controller.selectedProfession.value.isEmpty ||
               controller.selectedProfession.value == "Other") {
             return const SizedBox();
           }
-          return Container(
-            margin: const EdgeInsets.only(left: 5, right: 5, top: 8),
-            child: Obx(() {
-              if (controller.rxStatusOccupationSpec.value == Status.LOADING) {
-                return _buildLoadingIndicator();
-              } else if (controller.rxStatusOccupationSpec.value ==
-                  Status.ERROR) {
-                return InputDecorator(
-                  decoration: InputDecoration(
-                    labelText: 'Level 3',
-                    border: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black26),
-                    ),
-                    enabledBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black26),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black26, width: 1.5),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                    labelStyle: const TextStyle(color: Colors.black45),
-                  ),
-                  child: const Text(
-                    "Other",
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                  ),
-                );
-              } else {
-                return InputDecorator(
-                  decoration: InputDecoration(
-                    labelText: 'Level 3',
-                    border: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black26),
-                    ),
-                    enabledBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black26),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black26, width: 1.5),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                    labelStyle: const TextStyle(color: Colors.black45),
-                  ),
-                  isEmpty: controller.selectedSpecialization.value.isEmpty,
-                  child: DropdownButton<String>(
-                    dropdownColor: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    isExpanded: true,
-                    underline: Container(),
-                    value: controller.selectedSpecialization.value.isEmpty
-                        ? null
-                        : controller.selectedSpecialization.value,
-                    items: [
-                      ...controller.occuptionSpeList
-                          .map((OccuptionSpecData specialization) {
-                        return DropdownMenuItem<String>(
-                          value: specialization.id?.toString(),
-                          child: Text(specialization.name ?? 'Unknown'),
-                        );
-                      }).toList(),
-                    ],
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        controller.selectedSpecialization.value = newValue;
-                        // controller.selectedSubCategory.value = "";
-                        controller.detailsController.value.text = "";
 
-                        if (newValue == "Other") {
-                          controller.showDetailsField.value = true;
-                        } else if (newValue.isNotEmpty) {
-                          controller.showDetailsField.value = false;
-                          // controller.getOccupationSpecializationSubCategoryData(
-                          //     newValue);
-                        }
-                      }
-                    },
-                  ),
-                );
-              }
-            }),
+          return Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.only(left: 5, right: 5, top: 8),
+                child: Obx(() {
+                  if (controller.rxStatusOccupationSpec.value == Status.LOADING) {
+                    return _buildLoadingIndicator();
+                  } else if (controller.rxStatusOccupationSpec.value == Status.ERROR) {
+                    return InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: 'Level 3',
+                        border: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black26),
+                        ),
+                        enabledBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black26),
+                        ),
+                        focusedBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                        ),
+                        contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 20),
+                        labelStyle: const TextStyle(color: Colors.black45),
+                      ),
+                      child: const Text(
+                        "Other",
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                      ),
+                    );
+                  } else {
+                    return InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: 'Level 3',
+                        border: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black26),
+                        ),
+                        enabledBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black26),
+                        ),
+                        focusedBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black26, width: 1.5),
+                        ),
+                        contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 20),
+                        labelStyle: const TextStyle(color: Colors.black45),
+                      ),
+                      isEmpty: controller.selectedSpecialization.value.isEmpty,
+                      child: DropdownButton<String>(
+                        dropdownColor: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        isExpanded: true,
+                        underline: Container(),
+                        value: controller.selectedSpecialization.value.isEmpty
+                            ? null
+                            : controller.selectedSpecialization.value,
+                        items: controller.occuptionSpeList
+                            .map((OccuptionSpecData specialization) {
+                          return DropdownMenuItem<String>(
+                            value: specialization.id?.toString(),
+                            child: Text(specialization.name ?? 'Unknown'),
+                          );
+                        }).toList(),
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            controller.selectedSpecialization.value = newValue;
+                            controller.detailsController.value.text = "";
+
+                            if (newValue == "Other") {
+                              controller.showDetailsField.value = true;
+                            } else {
+                              controller.showDetailsField.value = false;
+                            }
+                          }
+                        },
+                      ),
+                    );
+                  }
+                }),
+              ),
+              const SizedBox(height: 20),
+            ],
           );
         }),
-        const SizedBox(height: 20),
 
         // Sub Category Dropdown
         // Obx(() {
@@ -913,11 +924,14 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
 
         // Details Field
         Obx(() {
-          final showDetails = controller.selectedOccupation.value == "0" ||
-              controller.selectedProfession.value == "Other" ||
-              controller.selectedSpecialization.value == "Other" ||
-              // controller.selectedSubCategory.value == "Other" ||
-              controller.showDetailsField.value;
+          final showDetailsOccupationIds = ["4", "5", "6"];
+
+          final showDetails =
+              controller.selectedOccupation.value == "0" ||
+                  showDetailsOccupationIds.contains(controller.selectedOccupation.value) ||
+                  controller.selectedProfession.value == "Other" ||
+                  controller.selectedSpecialization.value == "Other" ||
+                  controller.showDetailsField.value;
 
           if (!showDetails) return const SizedBox();
 
