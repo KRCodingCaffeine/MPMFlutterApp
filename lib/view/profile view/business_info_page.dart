@@ -579,7 +579,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                       controller.selectedSpecialization.value = "";
                       controller.detailsController.value.text = "";
 
-                      const detailOnlyOccupationIds = ["4", "5", "6"];
+                      const detailOnlyOccupationIds = ["6"];
 
                       if (newValue == "0" || detailOnlyOccupationIds.contains(newValue)) {
                         controller.showDetailsField.value = true;
@@ -599,7 +599,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
         // Profession Dropdown
         Obx(() {
           final occId = controller.selectedOccupation.value;
-          const detailOnlyOccupationIds = ["4", "5", "6"];
+          const detailOnlyOccupationIds = ["6"];
 
           if (occId.isEmpty ||
               occId == "0" ||
@@ -924,16 +924,20 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
 
         // Details Field
         Obx(() {
-          final showDetailsOccupationIds = ["4", "5", "6"];
+          const studentOccupationId = "6";
+
+          final selectedOccId = controller.selectedOccupation.value;
 
           final showDetails =
-              controller.selectedOccupation.value == "0" ||
-                  showDetailsOccupationIds.contains(controller.selectedOccupation.value) ||
+              selectedOccId == "0" ||
+                  selectedOccId == studentOccupationId ||
                   controller.selectedProfession.value == "Other" ||
                   controller.selectedSpecialization.value == "Other" ||
                   controller.showDetailsField.value;
 
           if (!showDetails) return const SizedBox();
+
+          final isStudent = selectedOccId == studentOccupationId;
 
           return Container(
             margin: const EdgeInsets.only(left: 5, right: 5, top: 8),
@@ -941,7 +945,10 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
               keyboardType: TextInputType.text,
               controller: controller.detailsController.value,
               decoration: InputDecoration(
-                labelText: "Occupation Details",
+                // 🎯 Dynamic label
+                labelText: isStudent
+                    ? "Enter your standard or course details"
+                    : "Occupation Details",
                 border: const OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.black26),
                 ),
@@ -952,12 +959,13 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                   borderSide: BorderSide(color: Colors.black26, width: 1.5),
                 ),
                 contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                 labelStyle: const TextStyle(color: Colors.black45),
               ),
+
               validator: (value) {
-                if (showDetails && (value == null || value.isEmpty)) {
-                  return 'Please enter occupation details';
+                if (isStudent && (value == null || value.trim().isEmpty)) {
+                  return "Please enter your standard or course details";
                 }
                 return null;
               },

@@ -1573,9 +1573,9 @@ class _NetworkViewState extends State<NetworkView> {
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      childAspectRatio: 0.68,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
+                      childAspectRatio: 0.61,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
                     ),
                     itemCount: _results.length + (_isLoading ? 1 : 0),
                     physics: const BouncingScrollPhysics(),
