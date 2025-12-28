@@ -1336,11 +1336,15 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
             padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16),
             child: Column(
               children: occupations.map((occupation) {
-                // Filter businesses for this occupation
                 final relatedBusinesses = businessProfiles
                     .where((b) =>
                         b.memberOccupationId == occupation.memberOccupationId)
                     .toList();
+
+                if (occupation.occupationId == "6" ||
+                    occupation.occupationId?.toString() == "6") {
+                  return const SizedBox.shrink();
+                }
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 16),
@@ -1350,6 +1354,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
                     relatedBusinesses,
                   ),
                 );
+
               }).toList(),
             ),
           ),
