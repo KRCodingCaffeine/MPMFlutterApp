@@ -58,6 +58,11 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
     // Step 4: If update is required, wait for user to handle it
     if (_updateRequired && _updateCompleter != null) {
       await _updateCompleter!.future;
+      // After completer completes, reset the flag to allow navigation
+      // User has either clicked update or dismissed the dialog
+      setState(() {
+        _updateRequired = false;
+      });
     }
 
     // Step 5: Splash delay (only if no update required)
@@ -65,13 +70,8 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
       await Future.delayed(const Duration(seconds: 2));
     }
 
-    // Step 6: Session routing (only if update not required or user dismissed)
+    // Step 6: Session routing
     if (!mounted) return;
-    
-    if (_updateRequired) {
-      // Don't navigate if update is required
-      return;
-    }
 
     final userData = await SessionManager.getSession();
     final mobile = userData?.mobile ?? "";
@@ -103,11 +103,18 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
   Future<void> _checkAndroidUpdate() async {
     try {
       _updateInfo = await InAppUpdate.checkForUpdate();
+      debugPrint("Android update check - Availability: ${_updateInfo?.updateAvailability}");
+      debugPrint("Android update check - Immediate allowed: ${_updateInfo?.immediateUpdateAllowed}");
+      debugPrint("Android update check - Flexible allowed: ${_updateInfo?.flexibleUpdateAllowed}");
+      
+      // Check if update is available
       if (_updateInfo?.updateAvailability == UpdateAvailability.updateAvailable) {
         // Get app store URL for Android
         final packageInfo = await PackageInfo.fromPlatform();
         final packageName = packageInfo.packageName;
         final appStoreUrl = "https://play.google.com/store/apps/details?id=$packageName";
+        
+        debugPrint("✅ Update available! Showing update dialog. Package: $packageName");
         
         setState(() {
           _updateRequired = true;
@@ -115,9 +122,19 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
         });
         
         _showUpdateDialog(appStoreUrl);
+      } else if (_updateInfo?.updateAvailability == UpdateAvailability.updateNotAvailable) {
+        debugPrint("✅ No update available - app is up to date");
+      } else if (_updateInfo?.updateAvailability == UpdateAvailability.unknown) {
+        debugPrint("⚠️ Update availability unknown - this may happen in debug builds or when Play Store services are unavailable. Proceeding without update check.");
+      } else if (_updateInfo == null) {
+        debugPrint("⚠️ Update info is null - InAppUpdate.checkForUpdate() returned null. This may happen in debug builds. Proceeding without update check.");
+      } else {
+        debugPrint("ℹ️ Update status: ${_updateInfo?.updateAvailability}");
       }
-    } catch (e) {
-      debugPrint("Update check failed (Android): $e");
+    } catch (e, stackTrace) {
+      debugPrint("❌ Update check failed (Android): $e");
+      debugPrint("Stack trace: $stackTrace");
+      // Don't block app startup if update check fails
     }
   }
 
@@ -127,26 +144,42 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
       final currentVersion = packageInfo.version;
       final bundleId = packageInfo.packageName;
 
+      debugPrint("iOS update check - Current version: $currentVersion, Bundle ID: $bundleId");
+
       final url = "https://itunes.apple.com/lookup?bundleId=$bundleId";
       final response = await http.get(Uri.parse(url));
 
+      debugPrint("iOS update check - Response status: ${response.statusCode}");
+
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
+        debugPrint("iOS update check - Result count: ${jsonData['resultCount']}");
+        
         if (jsonData['resultCount'] > 0) {
           final storeVersion = jsonData['results'][0]['version'];
           final appStoreUrl = jsonData['results'][0]['trackViewUrl'];
 
+          debugPrint("iOS update check - Store version: $storeVersion, Current: $currentVersion");
+
           if (_isVersionNewer(storeVersion, currentVersion)) {
+            debugPrint("Update available! Showing update dialog.");
             setState(() {
               _updateRequired = true;
               _updateCompleter = Completer<void>();
             });
             _showUpdateDialog(appStoreUrl);
+          } else {
+            debugPrint("No update needed - Store version ($storeVersion) is not newer than current ($currentVersion)");
           }
+        } else {
+          debugPrint("App not found in App Store for bundle ID: $bundleId");
         }
+      } else {
+        debugPrint("Failed to fetch App Store data. Status code: ${response.statusCode}");
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint("Update check failed (iOS): $e");
+      debugPrint("Stack trace: $stackTrace");
     }
   }
 
@@ -233,15 +266,23 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
                     child: ElevatedButton(
                       onPressed: () async {
                         Navigator.of(ctx).pop();
-                        if (await canLaunchUrl(Uri.parse(appStoreUrl))) {
-                          await launchUrl(
-                            Uri.parse(appStoreUrl),
-                            mode: LaunchMode.externalApplication,
-                          );
+                        try {
+                          if (await canLaunchUrl(Uri.parse(appStoreUrl))) {
+                            await launchUrl(
+                              Uri.parse(appStoreUrl),
+                              mode: LaunchMode.externalApplication,
+                            );
+                            debugPrint("Launched app store URL: $appStoreUrl");
+                          } else {
+                            debugPrint("Cannot launch URL: $appStoreUrl");
+                          }
+                        } catch (e) {
+                          debugPrint("Error launching app store: $e");
                         }
                         // Complete the completer after launching app store
                         if (_updateCompleter != null && !_updateCompleter!.isCompleted) {
                           _updateCompleter!.complete();
+                          debugPrint("Update completer completed");
                         }
                       },
                       style: ElevatedButton.styleFrom(
