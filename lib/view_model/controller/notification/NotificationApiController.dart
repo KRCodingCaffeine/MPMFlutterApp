@@ -17,6 +17,8 @@ class NotificationApiController extends GetxController with WidgetsBindingObserv
   final RxInt unreadEventCount = 0.obs; // Unread notifications with type "event"
   final RxInt unreadOfferCount = 0.obs; // Unread notifications with type "offer"
   final RxInt unreadDefaultCount = 0.obs; // Unread notifications with type "default"
+  final RxInt unreadSaraswaniCount = 0.obs; // Unread notifications with type "saraswani"
+  final RxInt unreadTripsCount = 0.obs; // Unread notifications with type "trips"
   final Rx<Status> requestStatus = Status.LOADING.obs;
   final RxBool isLoading = false.obs;
   
@@ -99,6 +101,8 @@ class NotificationApiController extends GetxController with WidgetsBindingObserv
       unreadEventCount.value = await NotificationDatabase.instance.getUnreadNotificationCountByType('event');
       unreadOfferCount.value = await NotificationDatabase.instance.getUnreadNotificationCountByType('offer');
       unreadDefaultCount.value = await NotificationDatabase.instance.getUnreadNotificationCountByType('default');
+      unreadSaraswaniCount.value = await NotificationDatabase.instance.getUnreadNotificationCountByType('saraswani');
+      unreadTripsCount.value = await NotificationDatabase.instance.getUnreadNotificationCountByType('trips');
       
       // Update badge count (use default count for bottom navigation badge)
       await NotificationService.updateBadgeCount(unreadDefaultCount.value);
@@ -127,6 +131,8 @@ class NotificationApiController extends GetxController with WidgetsBindingObserv
       unreadEventCount.value = 0;
       unreadOfferCount.value = 0;
       unreadDefaultCount.value = 0;
+      unreadSaraswaniCount.value = 0;
+      unreadTripsCount.value = 0;
     }
   }
 

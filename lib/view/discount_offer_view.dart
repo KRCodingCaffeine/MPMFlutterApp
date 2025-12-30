@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'dart:math' as math;
 import 'package:mpm/model/Offer/OfferData.dart';
 import 'package:mpm/model/OfferCategory/OfferCatData.dart';
 import 'package:mpm/model/OfferDiscountById/OfferDiscountByIdData.dart';
@@ -23,7 +24,7 @@ class DiscountofferView extends StatefulWidget {
   State<DiscountofferView> createState() => _DiscountofferViewState();
 }
 
-class _DiscountofferViewState extends State<DiscountofferView> {
+class _DiscountofferViewState extends State<DiscountofferView> with SingleTickerProviderStateMixin {
   List<String> selectedSubcategories = [];
   List<String> selectedCategories = [];
   List<String> pendingSelectedCategories = [];
@@ -37,6 +38,7 @@ class _DiscountofferViewState extends State<DiscountofferView> {
   final categoryRepo = OrganisationCategoryRepository();
   final subcategoryRepo = OrganisationSubcategoryRepository();
   late NotificationApiController notificationController;
+  late AnimationController _pulseController;
   List<OfferData> allOffers = [];
   List<OrganisationCategoryData> allCategories = [];
   List<OrganisationSubcategoryData> allSubcategories = [];
@@ -51,7 +53,18 @@ class _DiscountofferViewState extends State<DiscountofferView> {
     } else {
       notificationController = Get.put(NotificationApiController());
     }
+    // Initialize pulse animation controller
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
     _fetchData();
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchData() async {
@@ -448,119 +461,152 @@ class _DiscountofferViewState extends State<DiscountofferView> {
             : Future.value(false),
         builder: (context, snapshot) {
           final hasUnread = snapshot.data ?? false;
-          return Card(
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-              side: hasUnread 
-                  ? BorderSide(color: ColorHelperClass.getColorFromHex(ColorResources.red_color), width: 2)
-                  : BorderSide.none,
-            ),
-            elevation: hasUnread ? 4 : 2,
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: IntrinsicHeight(
-            child: Row(
-              children: [
-                // Left Logo & Name
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+          return AnimatedBuilder(
+            animation: _pulseController,
+            builder: (context, _) {
+              final pulseValue = hasUnread ? _pulseController.value : 0.0;
+              final borderWidth = hasUnread ? 2.0 + (pulseValue * 1.5) : 0.0;
+              final glowOpacity = hasUnread ? 0.4 + (pulseValue * 0.3) : 0.0;
+              final shadowBlur = hasUnread ? 10.0 + (pulseValue * 5.0) : 2.0;
+              final shadowSpread = hasUnread ? 2.0 + (pulseValue * 1.5) : 0.0;
+              
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: hasUnread 
+                      ? Border.all(
+                          color: ColorHelperClass.getColorFromHex(ColorResources.logo_color).withOpacity(0.8 + pulseValue * 0.2),
+                          width: borderWidth,
+                        )
+                      : null,
+                  boxShadow: [
+                    if (hasUnread)
+                      BoxShadow(
+                        color: ColorHelperClass.getColorFromHex(ColorResources.logo_color).withOpacity(glowOpacity),
+                        spreadRadius: 0,
+                        blurRadius: shadowBlur,
+                        offset: const Offset(0, 0),
+                      ),
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 0,
+                      blurRadius: 2,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: Stack(
                   children: [
-                    (offer.orgLogo != null && offer.orgLogo!.isNotEmpty)
-                        ? ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        offer.orgLogo!,
-                        width: 40,
-                        height: 40,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => _buildDefaultLogo(),
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return SizedBox(
-                            width: 50,
-                            height: 50,
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                                    : null,
+                    // Content
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: IntrinsicHeight(
+                        child: Row(
+                          children: [
+                            // Left Logo & Name
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                (offer.orgLogo != null && offer.orgLogo!.isNotEmpty)
+                                    ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    offer.orgLogo!,
+                                    width: 40,
+                                    height: 40,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => _buildDefaultLogo(),
+                                    loadingBuilder: (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return SizedBox(
+                                        width: 50,
+                                        height: 50,
+                                        child: Center(
+                                          child: CircularProgressIndicator(
+                                            value: loadingProgress.expectedTotalBytes != null
+                                                ? loadingProgress.cumulativeBytesLoaded /
+                                                loadingProgress.expectedTotalBytes!
+                                                : null,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                )
+                                    : _buildDefaultLogo(),
+                                const SizedBox(height: 4),
+                                SizedBox(
+                                  width: 95,
+                                  child: Text(
+                                    offer.orgName ?? 'Unknown',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 15,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(width: 12),
+                            Container(width: 1, color: Colors.grey[400]),
+                            const SizedBox(width: 12),
+
+                            Expanded(
+                              child: Stack(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 30),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          offer.offerDiscountName ?? 'No title',
+                                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          offer.offerDescription ?? 'No description',
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        if (dateTag != null) dateTag!,
+                                      ],
+                                    ),
+                                  ),
+
+                                  if (subcategory.organisationSubcategoryName != null &&
+                                      subcategory.organisationSubcategoryName!.isNotEmpty)
+                                    Positioned(
+                                      top: 4,
+                                      right: 0,
+                                      child: _buildTag(
+                                        subcategory.organisationSubcategoryName!,
+                                        ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                                        textColor: Colors.white,
+                                        fontSize: 10,
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
-                          );
-                        },
-                      ),
-                    )
-                        : _buildDefaultLogo(),
-                  const SizedBox(height: 4),
-                    SizedBox(
-                      width: 95,
-                      child: Text(
-                        offer.orgName ?? 'Unknown',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
+                          ],
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
                       ),
                     ),
                   ],
                 ),
-
-                const SizedBox(width: 12),
-                Container(width: 1, color: Colors.grey[400]),
-                const SizedBox(width: 12),
-
-                Expanded(
-                  child: Stack(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 30),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              offer.offerDiscountName ?? 'No title',
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              offer.offerDescription ?? 'No description',
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-                            ),
-                            const SizedBox(height: 8),
-                            if (dateTag != null) dateTag!,
-                          ],
-                        ),
-                      ),
-
-                      if (subcategory.organisationSubcategoryName != null &&
-                          subcategory.organisationSubcategoryName!.isNotEmpty)
-                        Positioned(
-                          top: 4,
-                          right: 0,
-                          child: _buildTag(
-                            subcategory.organisationSubcategoryName!,
-                            ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                            textColor: Colors.white,
-                            fontSize: 10,
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-            );
+              );
+            },
+          );
         },
       ),
     );

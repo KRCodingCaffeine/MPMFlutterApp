@@ -250,6 +250,10 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                           badgeCount = notificationController.unreadEventCount.value;
                         } else if (item['label'] == 'Discounts & Offers') {
                           badgeCount = notificationController.unreadOfferCount.value;
+                        } else if (item['label'] == 'Saraswani') {
+                          badgeCount = notificationController.unreadSaraswaniCount.value;
+                        } else if (item['label'] == 'Trips') {
+                          badgeCount = notificationController.unreadTripsCount.value;
                         }
                         
                         return GestureDetector(
@@ -281,11 +285,18 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                                           ),
                                         ),
                                         // Only wrap the badge in Obx
-                                        if (item['label'] == 'Events' || item['label'] == 'Discounts & Offers')
+                                        if (item['label'] == 'Events' || item['label'] == 'Discounts & Offers' || item['label'] == 'Saraswani' || item['label'] == 'Trips')
                                           Obx(() {
-                                            final count = item['label'] == 'Events' 
-                                                ? notificationController.unreadEventCount.value
-                                                : notificationController.unreadOfferCount.value;
+                                            int count = 0;
+                                            if (item['label'] == 'Events') {
+                                              count = notificationController.unreadEventCount.value;
+                                            } else if (item['label'] == 'Discounts & Offers') {
+                                              count = notificationController.unreadOfferCount.value;
+                                            } else if (item['label'] == 'Saraswani') {
+                                              count = notificationController.unreadSaraswaniCount.value;
+                                            } else if (item['label'] == 'Trips') {
+                                              count = notificationController.unreadTripsCount.value;
+                                            }
                                             
                                             if (count <= 0) {
                                               return const SizedBox.shrink();
@@ -830,8 +841,8 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
   }
 
   void _handleGridItemClick(String label) async {
-    // Note: We no longer mark all notifications as read when clicking Events/Offers menu
-    // Instead, we mark specific notifications when clicking individual events/offers
+    // Note: We no longer mark all notifications as read when clicking menu items
+    // Instead, we mark specific notifications when clicking individual items
     // This allows users to see which specific items have unread notifications
     
     switch (label) {
