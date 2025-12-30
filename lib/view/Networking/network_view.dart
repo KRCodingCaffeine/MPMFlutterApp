@@ -680,7 +680,7 @@ class _NetworkViewState extends State<NetworkView> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: MainAxisSize.max,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Profile image
@@ -1568,31 +1568,27 @@ class _NetworkViewState extends State<NetworkView> {
                     }
                     return false;
                   },
-                  child: GridView.builder(
+                  child: SingleChildScrollView(
                     padding: const EdgeInsets.all(16),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.68,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                    ),
-                    itemCount: _results.length + (_isLoading ? 1 : 0),
                     physics: const BouncingScrollPhysics(),
-                    shrinkWrap: true,
-                    itemBuilder: (context, index) {
-                      if (index < _results.length) {
-                        return _buildMemberCard(_results[index]);
-                      } else {
-                        return const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(16),
-                            child: CircularProgressIndicator(),
-                          ),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final itemWidth = (constraints.maxWidth - 10) / 2;
+
+                        return Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: List.generate(_results.length, (index) {
+                            return SizedBox(
+                              width: itemWidth,
+                              child: _buildMemberCard(_results[index]),
+                            );
+                          }),
                         );
-                      }
-                    },
+                      },
+                    ),
                   ),
+
                 ),
               ),
 
