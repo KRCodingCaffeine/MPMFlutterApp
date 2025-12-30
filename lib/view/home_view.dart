@@ -20,6 +20,7 @@ import 'package:mpm/view/Events/event_detail_page.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/offer/OfferController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
+import 'package:mpm/view_model/controller/notification/NotificationApiController.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -32,6 +33,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
   final regiController = Get.put(NewMemberController());
   final controller = Get.put(UdateProfileController());
   final offerController = Get.put(OfferController());
+  late NotificationApiController notificationController;
   late AnimationController _tagController;
   late Animation<double> _fadeAnimation;
   final ScrollController _scrollController = ScrollController();
@@ -76,6 +78,13 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
   @override
   void initState() {
     super.initState();
+    // Initialize notification controller safely
+    if (Get.isRegistered<NotificationApiController>()) {
+      notificationController = Get.find<NotificationApiController>();
+    } else {
+      notificationController = Get.put(NotificationApiController());
+    }
+    
     controller.getUserProfile().then((_) {
       memberId = int.tryParse(controller.memberId.value);
       if (memberId != null && memberId! > 0) {
@@ -235,6 +244,18 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                         final iconSize = screenWidth * 0.08;
                         final fontSize = screenWidth * 0.040;
                         
+                        // Get badge count based on menu item
+                        int badgeCount = 0;
+                        if (item['label'] == 'Events') {
+                          badgeCount = notificationController.unreadEventCount.value;
+                        } else if (item['label'] == 'Discounts & Offers') {
+                          badgeCount = notificationController.unreadOfferCount.value;
+                        } else if (item['label'] == 'Saraswani') {
+                          badgeCount = notificationController.unreadSaraswaniCount.value;
+                        } else if (item['label'] == 'Trips') {
+                          badgeCount = notificationController.unreadTripsCount.value;
+                        }
+                        
                         return GestureDetector(
                           onTap: () => _handleGridItemClick(item['label']),
                           child: Card(
@@ -242,20 +263,95 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                             elevation: 4.0,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10.0)),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                SvgPicture.asset(item['icon'], height: iconSize, width: iconSize),
-                                SizedBox(height: screenWidth * 0.02),
-                                Text(
-                                  item['label'],
-                                  style: TextStyleClass.pink14style.copyWith(fontSize: fontSize),
-                                  textAlign: TextAlign.center,
-                                  softWrap: true,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Icon with badge - wrapped in SizedBox to contain overflow
+                                  SizedBox(
+                                    width: iconSize + 16, // Extra space for badge
+                                    height: iconSize + 16, // Extra space for badge
+                                    child: Stack(
+                                      clipBehavior: Clip.none,
+                                      alignment: Alignment.center,
+                                      children: [
+                                        Center(
+                                          child: SvgPicture.asset(
+                                            item['icon'], 
+                                            height: iconSize, 
+                                            width: iconSize,
+                                          ),
+                                        ),
+                                        // Only wrap the badge in Obx
+                                        if (item['label'] == 'Events' || item['label'] == 'Discounts & Offers' || item['label'] == 'Saraswani' || item['label'] == 'Trips')
+                                          Obx(() {
+                                            int count = 0;
+                                            if (item['label'] == 'Events') {
+                                              count = notificationController.unreadEventCount.value;
+                                            } else if (item['label'] == 'Discounts & Offers') {
+                                              count = notificationController.unreadOfferCount.value;
+                                            } else if (item['label'] == 'Saraswani') {
+                                              count = notificationController.unreadSaraswaniCount.value;
+                                            } else if (item['label'] == 'Trips') {
+                                              count = notificationController.unreadTripsCount.value;
+                                            }
+                                            
+                                            if (count <= 0) {
+                                              return const SizedBox.shrink();
+                                            }
+                                            
+                                            return Positioned(
+                                              right: 0,
+                                              top: 0,
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 6,
+                                                  vertical: 2,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.red,
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(
+                                                    color: Colors.white, 
+                                                    width: 2,
+                                                  ),
+                                                ),
+                                                constraints: const BoxConstraints(
+                                                  minWidth: 22,
+                                                  minHeight: 22,
+                                                ),
+                                                child: Center(
+                                                  child: Text(
+                                                    count > 99 ? '99+' : count.toString(),
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 12,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                    textAlign: TextAlign.center,
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          }),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(height: screenWidth * 0.02),
+                                  Flexible(
+                                    child: Text(
+                                      item['label'],
+                                      style: TextStyleClass.pink14style.copyWith(fontSize: fontSize),
+                                      textAlign: TextAlign.center,
+                                      softWrap: true,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         );
@@ -352,7 +448,11 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
     final rightElementHeight = screenHeight * 0.025;
 
     return InkWell(
-      onTap: () {
+      onTap: () async {
+        // Mark notifications as read for this specific offer
+        if (offer.organisationOfferDiscountId != null) {
+          await notificationController.markNotificationsAsReadByEventOfferId(offer.organisationOfferDiscountId!);
+        }
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -740,7 +840,11 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
     );
   }
 
-  void _handleGridItemClick(String label) {
+  void _handleGridItemClick(String label) async {
+    // Note: We no longer mark all notifications as read when clicking menu items
+    // Instead, we mark specific notifications when clicking individual items
+    // This allows users to see which specific items have unread notifications
+    
     switch (label) {
       case "Saraswani":
         Navigator.pushNamed(context, RouteNames.saraswani_label);
@@ -868,7 +972,11 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
         itemBuilder: (context, index) {
           final event = dashboardEvents[index];
           return GestureDetector(
-            onTap: () {
+            onTap: () async {
+              // Mark notifications as read for this specific event
+              if (event.id != null) {
+                await notificationController.markNotificationsAsReadByEventOfferId(event.id!);
+              }
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -882,8 +990,12 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
       )
           : Padding(
         padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-        child: GestureDetector(
-          onTap: () {
+          child: GestureDetector(
+          onTap: () async {
+            // Mark notifications as read for this specific event
+            if (dashboardEvents.first.id != null) {
+              await notificationController.markNotificationsAsReadByEventOfferId(dashboardEvents.first.id!);
+            }
             Navigator.push(
               context,
               MaterialPageRoute(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'dart:math' as math;
 import 'package:mpm/model/GetEventsList/GetEventsListData.dart';
 import 'package:mpm/model/GetEventsList/GetEventsListModelClass.dart';
 import 'package:mpm/model/Zone/ZoneData.dart';
@@ -11,6 +12,7 @@ import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/Events/event_detail_page.dart';
 import 'package:mpm/view/Events/member_registered_event.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
+import 'package:mpm/view_model/controller/notification/NotificationApiController.dart';
 
 class EventsPage extends StatefulWidget {
   const EventsPage({Key? key}) : super(key: key);
@@ -19,9 +21,11 @@ class EventsPage extends StatefulWidget {
   _EventsPageState createState() => _EventsPageState();
 }
 
-class _EventsPageState extends State<EventsPage> {
+class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateMixin {
   final EventRepository _eventRepo = EventRepository();
   final ZoneRepository _zoneRepo = ZoneRepository();
+  late NotificationApiController notificationController;
+  late AnimationController _pulseController;
 
   List<EventData> _upcomingEvents = [];
   List<EventData> _pastEvents = [];
@@ -45,8 +49,25 @@ class _EventsPageState extends State<EventsPage> {
   @override
   void initState() {
     super.initState();
+    // Initialize notification controller
+    if (Get.isRegistered<NotificationApiController>()) {
+      notificationController = Get.find<NotificationApiController>();
+    } else {
+      notificationController = Get.put(NotificationApiController());
+    }
+    // Initialize pulse animation controller
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
     _fetchZones();
     _fetchEvents();
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchZones() async {
@@ -192,7 +213,11 @@ class _EventsPageState extends State<EventsPage> {
     final isPastEvent = parsedDate.isBefore(DateTime.now());
 
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
+        // Mark notifications as read for this specific event
+        if (event.eventId != null) {
+          await notificationController.markNotificationsAsReadByEventOfferId(event.eventId!);
+        }
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -200,25 +225,57 @@ class _EventsPageState extends State<EventsPage> {
           ),
         );
       },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.2),
-                spreadRadius: 1,
-                blurRadius: 3,
-                offset: const Offset(0, 1),
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
+      child: FutureBuilder<bool>(
+        future: event.eventId != null 
+            ? notificationController.hasUnreadNotificationsByEventOfferId(event.eventId!)
+            : Future.value(false),
+        builder: (context, snapshot) {
+          final hasUnread = snapshot.data ?? false;
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: AnimatedBuilder(
+              animation: _pulseController,
+              builder: (context, _) {
+                final pulseValue = hasUnread ? _pulseController.value : 0.0;
+                final borderWidth = hasUnread ? 2.0 + (pulseValue * 1.5) : 0.0;
+                final glowOpacity = hasUnread ? 0.4 + (pulseValue * 0.3) : 0.0;
+                final shadowBlur = hasUnread ? 8.0 + (pulseValue * 4.0) : 3.0;
+                final shadowSpread = hasUnread ? 2.0 + (pulseValue * 1.0) : 1.0;
+                
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: hasUnread 
+                        ? Border.all(
+                            color: ColorHelperClass.getColorFromHex(ColorResources.logo_color).withOpacity(0.8 + pulseValue * 0.2),
+                            width: borderWidth,
+                          )
+                        : null,
+                    boxShadow: [
+                      if (hasUnread)
+                        BoxShadow(
+                          color: ColorHelperClass.getColorFromHex(ColorResources.logo_color).withOpacity(glowOpacity),
+                          spreadRadius: 0,
+                          blurRadius: shadowBlur,
+                          offset: const Offset(0, 0),
+                        ),
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.2),
+                        spreadRadius: 1,
+                        blurRadius: 3,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    children: [
+                      // Content
+                      Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
               Container(
                 width: 60,
                 padding: const EdgeInsets.only(top: 4),
@@ -302,8 +359,15 @@ class _EventsPageState extends State<EventsPage> {
                 ),
               ),
             ],
-          ),
-        ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          );
+        },
       ),
     );
   }
