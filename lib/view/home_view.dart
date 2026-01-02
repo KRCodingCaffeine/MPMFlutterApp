@@ -29,7 +29,8 @@ class HomeView extends StatefulWidget {
   State<HomeView> createState() => _HomeViewState();
 }
 
-class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin {
+class _HomeViewState extends State<HomeView>
+    with SingleTickerProviderStateMixin {
   final regiController = Get.put(NewMemberController());
   final controller = Get.put(UdateProfileController());
   final offerController = Get.put(OfferController());
@@ -61,7 +62,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
       {'icon': Images.discount, 'label': 'Discounts & Offers'},
       {'icon': Images.events, 'label': 'Events'},
       {'icon': Images.saraswani, 'label': 'Saraswani'},
-      {'icon': Images.event_trip, 'label': 'Trips'}
+      {'icon': Images.event_trip, 'label': 'Trips'},
     ];
 
     if (memberId == 1 || memberId == 2 || memberId == 2040) {
@@ -69,7 +70,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
     }
 
     if (memberId == 1 || memberId == 2) {
-      items.add({'icon': Images.qr_code, 'label': 'QR Code Scanner'});
+      items.add({'icon': Images.qr_code, 'label': 'QR Scanner'});
     }
 
     return items;
@@ -84,7 +85,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
     } else {
       notificationController = Get.put(NotificationApiController());
     }
-    
+
     controller.getUserProfile().then((_) {
       memberId = int.tryParse(controller.memberId.value);
       if (memberId != null && memberId! > 0) {
@@ -142,7 +143,8 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
 
   Future<void> fetchDashboardEvents(int memberId) async {
     try {
-      final response = await DashboardEventsRepository().getDashboardEvents(memberId);
+      final response =
+          await DashboardEventsRepository().getDashboardEvents(memberId);
       if (response.status == true && response.data != null) {
         setState(() {
           dashboardEvents = response.data!;
@@ -180,205 +182,138 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Membership notice
-                  Obx(() => int.tryParse(controller.membershipApprovalStatusId.value) != null &&
-                      int.parse(controller.membershipApprovalStatusId.value) < 6
-                      ? _buildMembershipNotice()
-                      : const SizedBox.shrink()),
+                      Obx(() => int.tryParse(controller
+                                      .membershipApprovalStatusId.value) !=
+                                  null &&
+                              int.parse(controller
+                                      .membershipApprovalStatusId.value) <
+                                  6
+                          ? _buildMembershipNotice()
+                          : const SizedBox.shrink()),
 
-                  // Jangana Notice
-                  Obx(() => Visibility(
-                      visible: controller.showDashboardReviewFlag.value,
-                      child: _buildJanganaNotice())),
+                      // Jangana Notice
+                      Obx(() => Visibility(
+                          visible: controller.showDashboardReviewFlag.value,
+                          child: _buildJanganaNotice())),
 
-                  // Email verification banner
-                  Obx(() => Visibility(
-                    visible: controller.showEmailVerifyBanner.value,
-                    child: _buildEmailVerifyBanner(),
-                  )),
+                      // Email verification banner
+                      Obx(() => Visibility(
+                            visible: controller.showEmailVerifyBanner.value,
+                            child: _buildEmailVerifyBanner(),
+                          )),
 
-                  // Pay Now button
-                  Center(
-                    child: Obx(() => Visibility(
-                      visible: controller.isPay.value,
-                      child: SizedBox(
-                        height: 48,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: ColorHelperClass.getColorFromHex(
-                                ColorResources.red_color),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(5),
+                      // Pay Now button
+                      Center(
+                        child: Obx(() => Visibility(
+                              visible: controller.isPay.value,
+                              child: SizedBox(
+                                height: 48,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        ColorHelperClass.getColorFromHex(
+                                            ColorResources.red_color),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (_) => PaymentScreen(
+                                              paymentAmount: '1')),
+                                    );
+                                  },
+                                  child: Text("Pay Now",
+                                      style: TextStyleClass.white14style),
+                                ),
+                              ),
+                            )),
+                      ),
+
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: SizedBox(
+                          height: 175, // controls total height (2 rows)
+                          child: GridView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: gridItems.length,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,          // ✅ 2 ROWS
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 12,
+                              mainAxisExtent: 110,        // width of each item
                             ),
+                            itemBuilder: (context, index) {
+                              final item = gridItems[index];
+                              final screenWidth = MediaQuery.of(context).size.width;
+
+                              return GestureDetector(
+                                onTap: () => _handleGridItemClick(item['label']),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.08),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      SvgPicture.asset(
+                                        item['icon'],
+                                        height: screenWidth * 0.06,
+                                        width: screenWidth * 0.06,
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        item['label'],
+                                        style: TextStyle(
+                                          fontSize: screenWidth * 0.03,
+                                          fontWeight: FontWeight.w600,
+                                          color: ColorHelperClass.getColorFromHex(
+                                              ColorResources.red_color),
+                                        ),
+                                        textAlign: TextAlign.center,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => PaymentScreen(paymentAmount: '1')),
-                            );
-                          },
-                          child: Text("Pay Now", style: TextStyleClass.white14style),
                         ),
                       ),
-                    )),
-                  ),
 
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: MediaQuery.of(context).size.width * 0.03,
-                      vertical: 10
-                    ),
-                    child: GridView.builder(
-                      itemCount: gridItems.length,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: (MediaQuery.of(context).size.width ~/ 120).clamp(2, 4),
-                        crossAxisSpacing: MediaQuery.of(context).size.width * 0.02,
-                        mainAxisSpacing: MediaQuery.of(context).size.width * 0.02,
-                        childAspectRatio: 1,
-                      ),
-                      itemBuilder: (context, index) {
-                        final item = gridItems[index];
-                        final screenWidth = MediaQuery.of(context).size.width;
-                        final iconSize = screenWidth * 0.08;
-                        final fontSize = screenWidth * 0.040;
-                        
-                        // Get badge count based on menu item
-                        int badgeCount = 0;
-                        if (item['label'] == 'Events') {
-                          badgeCount = notificationController.unreadEventCount.value;
-                        } else if (item['label'] == 'Discounts & Offers') {
-                          badgeCount = notificationController.unreadOfferCount.value;
-                        } else if (item['label'] == 'Saraswani') {
-                          badgeCount = notificationController.unreadSaraswaniCount.value;
-                        } else if (item['label'] == 'Trips') {
-                          badgeCount = notificationController.unreadTripsCount.value;
+                      // Banner card
+                      Obx(() {
+                        if (offerController.isLoading.value) {
+                          return const SizedBox(
+                            height: 120,
+                            child: Center(child: CircularProgressIndicator()),
+                          );
                         }
-                        
-                        return GestureDetector(
-                          onTap: () => _handleGridItemClick(item['label']),
-                          child: Card(
-                            color: Colors.white,
-                            elevation: 4.0,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10.0)),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  // Icon with badge - wrapped in SizedBox to contain overflow
-                                  SizedBox(
-                                    width: iconSize + 16, // Extra space for badge
-                                    height: iconSize + 16, // Extra space for badge
-                                    child: Stack(
-                                      clipBehavior: Clip.none,
-                                      alignment: Alignment.center,
-                                      children: [
-                                        Center(
-                                          child: SvgPicture.asset(
-                                            item['icon'], 
-                                            height: iconSize, 
-                                            width: iconSize,
-                                          ),
-                                        ),
-                                        // Only wrap the badge in Obx
-                                        if (item['label'] == 'Events' || item['label'] == 'Discounts & Offers' || item['label'] == 'Saraswani' || item['label'] == 'Trips')
-                                          Obx(() {
-                                            int count = 0;
-                                            if (item['label'] == 'Events') {
-                                              count = notificationController.unreadEventCount.value;
-                                            } else if (item['label'] == 'Discounts & Offers') {
-                                              count = notificationController.unreadOfferCount.value;
-                                            } else if (item['label'] == 'Saraswani') {
-                                              count = notificationController.unreadSaraswaniCount.value;
-                                            } else if (item['label'] == 'Trips') {
-                                              count = notificationController.unreadTripsCount.value;
-                                            }
-                                            
-                                            if (count <= 0) {
-                                              return const SizedBox.shrink();
-                                            }
-                                            
-                                            return Positioned(
-                                              right: 0,
-                                              top: 0,
-                                              child: Container(
-                                                padding: const EdgeInsets.symmetric(
-                                                  horizontal: 6,
-                                                  vertical: 2,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.red,
-                                                  shape: BoxShape.circle,
-                                                  border: Border.all(
-                                                    color: Colors.white, 
-                                                    width: 2,
-                                                  ),
-                                                ),
-                                                constraints: const BoxConstraints(
-                                                  minWidth: 22,
-                                                  minHeight: 22,
-                                                ),
-                                                child: Center(
-                                                  child: Text(
-                                                    count > 99 ? '99+' : count.toString(),
-                                                    style: const TextStyle(
-                                                      color: Colors.white,
-                                                      fontSize: 12,
-                                                      fontWeight: FontWeight.bold,
-                                                    ),
-                                                    textAlign: TextAlign.center,
-                                                  ),
-                                                ),
-                                              ),
-                                            );
-                                          }),
-                                      ],
-                                    ),
-                                  ),
-                                  SizedBox(height: screenWidth * 0.02),
-                                  Flexible(
-                                    child: Text(
-                                      item['label'],
-                                      style: TextStyleClass.pink14style.copyWith(fontSize: fontSize),
-                                      textAlign: TextAlign.center,
-                                      softWrap: true,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                        if (offerController.offerList.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: _buildBannerCard(
+                              offerController.offerList.first,
                             ),
                           ),
                         );
-                      },
-                    ),
-                  ),
-
-                  // Banner card
-                  Obx(() {
-                    if (offerController.isLoading.value) {
-                      return const SizedBox(
-                        height: 120,
-                        child: Center(child: CircularProgressIndicator()),
-                      );
-                    }
-                    if (offerController.offerList.isEmpty) {
-                      return const SizedBox.shrink();
-                    }
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        child: _buildBannerCard(
-                          offerController.offerList.first,
-                        ),
-                      ),
-                    );
-                  }),
+                      }),
 
                       const SizedBox(height: 16),
                     ],
@@ -391,7 +326,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                   right: 0,
                   child: IgnorePointer(
                     child: Container(
-                      height: 60,
+                      height: 15,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
@@ -411,7 +346,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
               ],
             ),
           ),
-          
+
           // Fixed advertisement section at bottom
           Container(
             color: Colors.grey[100],
@@ -451,7 +386,8 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
       onTap: () async {
         // Mark notifications as read for this specific offer
         if (offer.organisationOfferDiscountId != null) {
-          await notificationController.markNotificationsAsReadByEventOfferId(offer.organisationOfferDiscountId!);
+          await notificationController.markNotificationsAsReadByEventOfferId(
+              offer.organisationOfferDiscountId!);
         }
         Navigator.push(
           context,
@@ -462,7 +398,8 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
       },
       child: Card(
         elevation: 10,
-        margin: EdgeInsets.symmetric(horizontal: horizontalMargin, vertical: 12),
+        margin:
+            EdgeInsets.symmetric(horizontal: horizontalMargin, vertical: 12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Container(
           height: cardHeight,
@@ -531,7 +468,10 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
-                      colors: [Colors.white.withOpacity(0.15), Colors.transparent],
+                      colors: [
+                        Colors.white.withOpacity(0.15),
+                        Colors.transparent
+                      ],
                       radius: 0.8,
                     ),
                   ),
@@ -546,7 +486,10 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
-                      colors: [Colors.white.withOpacity(0.1), Colors.transparent],
+                      colors: [
+                        Colors.white.withOpacity(0.1),
+                        Colors.transparent
+                      ],
                       radius: 0.9,
                     ),
                   ),
@@ -596,7 +539,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                           ),
                           SizedBox(height: cardHeight * 0.02),
                           Text(
-                              "Free Home Delivery • Arrives in 2–3 Days",
+                            "Free Home Delivery • Arrives in 2–3 Days",
                             style: TextStyle(
                               fontSize: subtitleFontSize,
                               fontWeight: FontWeight.w600,
@@ -679,11 +622,12 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
   Widget _buildMembershipNotice() {
     final status = controller.membershipApprovalStatusId.value.trim();
     final message = {
-      '2': "Your payment is pending.",
-      '3': "We received your payment and it's under approval.",
-      '4': "Your membership is under Sangathan Samiti review.",
-      '5': "Your membership is under Vyaspathika Samiti review.",
-    }[status] ?? "Membership status unknown. Please check your account.";
+          '2': "Your payment is pending.",
+          '3': "We received your payment and it's under approval.",
+          '4': "Your membership is under Sangathan Samiti review.",
+          '5': "Your membership is under Vyaspathika Samiti review.",
+        }[status] ??
+        "Membership status unknown. Please check your account.";
 
     return _buildNoticeContainer(message);
   }
@@ -691,7 +635,8 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
   Widget _buildJanganaNotice() {
     return GestureDetector(
       onTap: () => Navigator.pushNamed(context, RouteNames.profile),
-      child: _buildNoticeContainer("Your Janaganana is pending. Please click here to complete it."),
+      child: _buildNoticeContainer(
+          "Your Janaganana is pending. Please click here to complete it."),
     );
   }
 
@@ -703,7 +648,8 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
 
       return GestureDetector(
         onTap: () => _showVerificationDialog(context),
-        child: _buildNoticeContainer("Your email is not verified. Please click here to verify it."),
+        child: _buildNoticeContainer(
+            "Your email is not verified. Please click here to verify it."),
       );
     });
   }
@@ -748,7 +694,8 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
             OutlinedButton(
               onPressed: () => Navigator.pop(context),
               style: OutlinedButton.styleFrom(
-                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: const BorderSide(color: Colors.red),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -762,7 +709,8 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
                 controller.sendVerificationEmail();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -789,7 +737,9 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
           children: [
             const Icon(Icons.error, color: Color(0xFFe61428)),
             const SizedBox(width: 10),
-            Expanded(child: Text(message, style: const TextStyle(color: Colors.black))),
+            Expanded(
+                child:
+                    Text(message, style: const TextStyle(color: Colors.black))),
           ],
         ),
       ),
@@ -816,7 +766,8 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
               child: Card(
                 color: Colors.white,
                 elevation: 4.0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.0)),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -844,7 +795,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
     // Note: We no longer mark all notifications as read when clicking menu items
     // Instead, we mark specific notifications when clicking individual items
     // This allows users to see which specific items have unread notifications
-    
+
     switch (label) {
       case "Saraswani":
         Navigator.pushNamed(context, RouteNames.saraswani_label);
@@ -870,8 +821,8 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
         Navigator.pushNamed(context, RouteNames.networking);
         break;
       case "QR Code Scanner":
-         Navigator.pushNamed(context, RouteNames.qr_code);
-         break;
+        Navigator.pushNamed(context, RouteNames.qr_code);
+        break;
       // case "QR Code Scanner":
       //   _showAttendanceMarkedDialog(context);
       //   break;
@@ -921,7 +872,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -939,10 +890,11 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
     final screenWidth = MediaQuery.of(context).size.width;
     final fontSize = screenWidth * 0.045; // 4.5% of screen width
     final horizontalPadding = screenWidth * 0.04; // 4% of screen width
-    
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
-      child: Text("Advertisement", style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.bold)),
+      child: Text("Advertisement",
+          style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.bold)),
     );
   }
 
@@ -951,7 +903,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
     final screenWidth = MediaQuery.of(context).size.width;
     final listHeight = screenHeight * 0.20; // 18% of screen height
     final horizontalPadding = screenWidth * 0.04; // 4% of screen width
-    
+
     if (dashboardEvents.isEmpty) {
       return Center(
         child: Padding(
@@ -965,47 +917,52 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
       height: listHeight,
       child: dashboardEvents.length > 1
           ? ListView.builder(
-        controller: _scrollController,
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-        itemCount: dashboardEvents.length,
-        itemBuilder: (context, index) {
-          final event = dashboardEvents[index];
-          return GestureDetector(
-            onTap: () async {
-              // Mark notifications as read for this specific event
-              if (event.id != null) {
-                await notificationController.markNotificationsAsReadByEventOfferId(event.id!);
-              }
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => EventDetailPage(eventId: event.id?.toString() ?? ''),
-                ),
-              );
-            },
-            child: _buildEventCard(event),
-          );
-        },
-      )
+              controller: _scrollController,
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+              itemCount: dashboardEvents.length,
+              itemBuilder: (context, index) {
+                final event = dashboardEvents[index];
+                return GestureDetector(
+                  onTap: () async {
+                    // Mark notifications as read for this specific event
+                    if (event.id != null) {
+                      await notificationController
+                          .markNotificationsAsReadByEventOfferId(event.id!);
+                    }
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => EventDetailPage(
+                            eventId: event.id?.toString() ?? ''),
+                      ),
+                    );
+                  },
+                  child: _buildEventCard(event),
+                );
+              },
+            )
           : Padding(
-        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-          child: GestureDetector(
-          onTap: () async {
-            // Mark notifications as read for this specific event
-            if (dashboardEvents.first.id != null) {
-              await notificationController.markNotificationsAsReadByEventOfferId(dashboardEvents.first.id!);
-            }
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => EventDetailPage(eventId: dashboardEvents.first.id?.toString() ?? ''),
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+              child: GestureDetector(
+                onTap: () async {
+                  // Mark notifications as read for this specific event
+                  if (dashboardEvents.first.id != null) {
+                    await notificationController
+                        .markNotificationsAsReadByEventOfferId(
+                            dashboardEvents.first.id!);
+                  }
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => EventDetailPage(
+                          eventId: dashboardEvents.first.id?.toString() ?? ''),
+                    ),
+                  );
+                },
+                child: _buildEventCard(dashboardEvents.first),
               ),
-            );
-          },
-          child: _buildEventCard(dashboardEvents.first),
-        ),
-      ),
+            ),
     );
   }
 
@@ -1015,7 +972,7 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
     final imageSize = screenWidth * 0.27; // 20% of screen width
     final fontSize = screenWidth * 0.047; // 3.5% of screen width
     final smallFontSize = screenWidth * 0.03; // 3% of screen width+
-    
+
     Widget? dateTag;
     if (event.date != null && event.date!.isNotEmpty) {
       final dateText = "Till : ${_formatDate(event.date!)}";
@@ -1024,7 +981,8 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
         Colors.grey[300]!,
         textColor: Colors.black45,
         fontSize: smallFontSize,
-        padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.015, vertical: screenWidth * 0.005),
+        padding: EdgeInsets.symmetric(
+            horizontal: screenWidth * 0.015, vertical: screenWidth * 0.005),
       );
     }
 
@@ -1071,14 +1029,16 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
               children: [
                 Text(
                   event.title ?? '',
-                  style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      fontSize: fontSize, fontWeight: FontWeight.bold),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: screenWidth * 0.01),
                 Text(
                   'Hosted by ${event.organizedBy ?? ''}',
-                  style: TextStyle(color: Colors.grey[600], fontSize: smallFontSize),
+                  style: TextStyle(
+                      color: Colors.grey[600], fontSize: smallFontSize),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -1104,9 +1064,12 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
   }
 
   Widget _buildTag(String text, Color bgColor,
-      {Color textColor = Colors.white, double fontSize = 12, EdgeInsets? padding}) {
+      {Color textColor = Colors.white,
+      double fontSize = 12,
+      EdgeInsets? padding}) {
     return Container(
-      padding: padding ?? const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding:
+          padding ?? const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(4),
