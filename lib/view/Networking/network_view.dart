@@ -17,6 +17,7 @@ import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/urls.dart';
+import 'package:mpm/view/Networking/connected_member_view.dart';
 import 'package:mpm/view/Networking/filter_bottom_sheet.dart';
 import 'package:mpm/view/Networking/network_filters.dart';
 import 'package:mpm/view/profile%20view/business_info_page.dart';
@@ -789,37 +790,37 @@ class _NetworkViewState extends State<NetworkView> {
             // const SizedBox(height: 8),
 
             // 🔥 NEW — View Detail Button
-            // SizedBox(
-            //   width: double.infinity,
-            //   height: 36,
-            //   child: OutlinedButton(
-            //     onPressed: () async {
-            //       showDialog(
-            //         context: context,
-            //         barrierDismissible: false,
-            //         builder: (_) => const Center(child: CircularProgressIndicator()),
-            //       );
-            //
-            //       final business = await _fetchBusinessProfile(member.memberId.toString());
-            //
-            //       Navigator.pop(context);
-            //
-            //       _showMemberDetailDialog(member, business);
-            //     },
-            //
-            //     style: OutlinedButton.styleFrom(
-            //       side: BorderSide(color: themeColor),
-            //       foregroundColor: themeColor,
-            //       shape: RoundedRectangleBorder(
-            //         borderRadius: BorderRadius.circular(10),
-            //       ),
-            //     ),
-            //     child: const Text(
-            //       "View Detail",
-            //       style: TextStyle(fontSize: 13),
-            //     ),
-            //   ),
-            // ),
+            SizedBox(
+              width: double.infinity,
+              height: 36,
+              child: OutlinedButton(
+                onPressed: () async {
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (_) => const Center(child: CircularProgressIndicator()),
+                  );
+
+                  final business = await _fetchBusinessProfile(member.memberId.toString());
+
+                  Navigator.pop(context);
+
+                  _showMemberDetailDialog(member, business);
+                },
+
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: themeColor),
+                  foregroundColor: themeColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text(
+                  "View Detail",
+                  style: TextStyle(fontSize: 13),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -1224,11 +1225,55 @@ class _NetworkViewState extends State<NetworkView> {
         appBar: AppBar(
           backgroundColor:
           ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-          title: const Text(
-            "Networking",
-            style: TextStyle(color: Colors.white),
+          title: Builder(
+            builder: (context) {
+              double fontSize = MediaQuery.of(context).size.width * 0.045;
+              return Text(
+                "Networking",
+                style: TextStyle(color: Colors.white, fontSize: fontSize, fontWeight: FontWeight.w500),
+              );
+            },
           ),
           iconTheme: const IconThemeData(color: Colors.white),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ConnectedMemberView(),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.6),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Text(
+                        "Connected Member",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
         body: Column(
           children: [

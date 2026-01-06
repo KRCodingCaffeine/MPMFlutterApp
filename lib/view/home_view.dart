@@ -244,7 +244,7 @@ class _HomeViewState extends State<HomeView>
                               crossAxisCount: 2,          // ✅ 2 ROWS
                               mainAxisSpacing: 12,
                               crossAxisSpacing: 12,
-                              mainAxisExtent: 110,        // width of each item
+                              mainAxisExtent: 95,        // width of each item
                             ),
                             itemBuilder: (context, index) {
                               final item = gridItems[index];
