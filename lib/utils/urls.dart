@@ -101,6 +101,7 @@ class Urls {
   static const String upload_business_profile_document = base_url+"api/upload_business_profile_document";
   static const String send_business_profile_url = base_url+"api/send_business_profile";
   static const String get_member_business_connect_request_url = base_url+"api/getMemberBusinessConnectRequest";
+  static const String add_member_business_connect_request_url = base_url+"api/add_member_business_connect_request";
   static const String get_all_occupation_products_url = base_url+"api/member_occupation_product";
   static const String add_member_occupation_product_url = base_url+"api/add_member_occupation_product";
   static const String update_member_occupation_product_url = base_url+"api/update_member_occupation_product";

@@ -18,7 +18,7 @@ class ConnectedMemberData {
   String? specializationName;
 
   String? status;
-  String? requestedAt;
+  String? createdAt; // ✅ ADDED
 
   ConnectedMemberData({
     this.requestId,
@@ -34,7 +34,7 @@ class ConnectedMemberData {
     this.professionName,
     this.specializationName,
     this.status,
-    this.requestedAt,
+    this.createdAt,
   });
 
   ConnectedMemberData.fromJson(Map<String, dynamic> json) {
@@ -54,11 +54,12 @@ class ConnectedMemberData {
     occupationName = json['occupation_name'];
     professionName = json['occupation_profession_name'];
     specializationName = json['occupation_specialization_name'];
+
     status = json['business_connect_requested_status'];
-    requestedAt = json['created_at'];
+    createdAt = json['created_at']; // ✅ MAPPED
   }
 
-  /// ✅ Safe full name builder
+  /// Full name fallback logic
   String get displayName {
     if (fullName != null && fullName!.isNotEmpty) {
       return fullName!;
@@ -71,6 +72,7 @@ class ConnectedMemberData {
     ].where((e) => e != null && e!.isNotEmpty).join(" ");
   }
 
+  /// Profession display logic
   String get professionDisplay {
     if ((professionName ?? "").isNotEmpty &&
         (specializationName ?? "").isNotEmpty) {
@@ -88,5 +90,43 @@ class ConnectedMemberData {
     return "";
   }
 
-  toJson() {}
+  String get connectedDateFormatted {
+    if (createdAt == null || createdAt!.isEmpty) return "";
+
+    try {
+      final dateTime = DateTime.parse(createdAt!.replaceAll(" ", "T"));
+      return "${dateTime.day.toString().padLeft(2, '0')} "
+          "${_monthName(dateTime.month)} "
+          "${dateTime.year}";
+    } catch (_) {
+      return createdAt!.split(" ").first; // fallback
+    }
+  }
+
+  String _monthName(int month) {
+    const months = [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ];
+    return months[month - 1];
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "member_business_connect_request_id": requestId,
+      "requested_to_member_id": memberId,
+      "requested_to_member_code": memberCode,
+      "requested_to_first_name": firstName,
+      "requested_to_middle_name": middleName,
+      "requested_to_last_name": lastName,
+      "requested_to_full_name": fullName,
+      "requested_to_mobile": mobile,
+      "requested_to_profile_image": profileImage,
+      "occupation_name": occupationName,
+      "occupation_profession_name": professionName,
+      "occupation_specialization_name": specializationName,
+      "business_connect_requested_status": status,
+      "created_at": createdAt,
+    };
+  }
 }

@@ -141,4 +141,7 @@ class SearchOccupationData {
   String? get specializationNameValue => specializationName ?? occupation?.specializationName;
   String? get subCategoryNameValue => subCategoryName ?? occupation?.specializationSubCategoryName;
   String? get subSubCategoryNameValue => subSubCategoryName ?? occupation?.specializationSubSubCategoryName;
+
+  String? get occupationIdValue =>
+      occupation?.occupationId;
 }

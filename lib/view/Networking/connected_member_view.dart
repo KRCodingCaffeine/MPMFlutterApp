@@ -26,6 +26,8 @@ class _ConnectedMemberViewState extends State<ConnectedMemberView> {
   }
 
   Future<void> _loadConnectedMembers() async {
+    setState(() => _isLoading = true);
+
     try {
       final user = await SessionManager.getSession();
 
@@ -81,16 +83,24 @@ class _ConnectedMemberViewState extends State<ConnectedMemberView> {
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _members.isEmpty
-          ? _buildEmptyState()
-          : ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _members.length,
-        itemBuilder: (context, index) {
-          return _buildMemberCard(_members[index], themeColor);
-        },
+      body: RefreshIndicator(
+        color: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+        onRefresh: _loadConnectedMembers,
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _members.isEmpty
+            ? ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [_buildEmptyState()],
+        )
+            : ListView.builder(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          itemCount: _members.length,
+          itemBuilder: (context, index) {
+            return _buildMemberCard(_members[index], themeColor);
+          },
+        ),
       ),
     );
   }
@@ -184,66 +194,35 @@ class _ConnectedMemberViewState extends State<ConnectedMemberView> {
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
-                      "Connect for : ${member.professionDisplay}",
+                      "Contact for : ${member.professionDisplay}",
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade700,
-                        fontWeight: FontWeight.w500,
                       ),
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+
+                if (member.connectedDateFormatted.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      "Contact on : ${member.connectedDateFormatted}",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
                     ),
                   ),
 
               ],
             ),
           ),
-
-          // Status Badge
-          _buildStatusBadge(member.status),
         ],
       ),
     );
   }
-
-  Widget _buildStatusBadge(String? status) {
-    final text = status ?? "sent";
-
-    Color bgColor;
-    Color textColor;
-
-    switch (text.toLowerCase()) {
-      case "accepted":
-        bgColor = Colors.green.shade100;
-        textColor = Colors.green.shade800;
-        break;
-      case "rejected":
-        bgColor = Colors.red.shade100;
-        textColor = Colors.red.shade800;
-        break;
-      default:
-        bgColor = Colors.orange.shade100;
-        textColor = Colors.orange.shade800;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: textColor,
-        ),
-      ),
-    );
-  }
-
-  // ================= EMPTY STATE =================
 
   Widget _buildEmptyState() {
     return Center(

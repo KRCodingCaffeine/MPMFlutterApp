@@ -282,7 +282,7 @@ class _HomeViewState extends State<HomeView>
                                               ColorResources.red_color),
                                         ),
                                         textAlign: TextAlign.center,
-                                        maxLines: 1,
+                                        maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     ],

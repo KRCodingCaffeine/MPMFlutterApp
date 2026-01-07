@@ -10,6 +10,7 @@ import 'package:mpm/model/BusinessProfile/GetAllBusinessOccupationProfile/GetAll
 import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/model/SearchOccupation/SearchOccupationData.dart';
 import 'package:mpm/model/SearchOccupation/SearchOccupationModelClass.dart';
+import 'package:mpm/repository/BusinessProfileRepo/add_business_connect_request_repository/add_business_connect_request_repo.dart';
 import 'package:mpm/repository/BusinessProfileRepo/business_occupation_profile_repository/business_occupation_profile_repo.dart';
 import 'package:mpm/repository/BusinessProfileRepo/send_business_profile_repository/send_business_profile_repo.dart';
 import 'package:mpm/repository/search_occupation_repository/search_occupation_repo.dart';
@@ -24,7 +25,6 @@ import 'package:mpm/view/profile%20view/business_info_page.dart';
 import 'package:mpm/view/profile%20view/occupation_detail_view.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
-
 class NetworkView extends StatefulWidget {
   const NetworkView({super.key});
 
@@ -33,13 +33,15 @@ class NetworkView extends StatefulWidget {
 }
 
 class _NetworkViewState extends State<NetworkView> {
-  UdateProfileController controller =Get.put(UdateProfileController());
+  UdateProfileController controller = Get.put(UdateProfileController());
   final TextEditingController _searchController = TextEditingController();
   final SearchOccupationRepository _repo = SearchOccupationRepository();
   final SendBusinessProfileRepository _sendRepo =
       SendBusinessProfileRepository();
+  final AddBusinessConnectRequestRepository _connectRepo =
+      AddBusinessConnectRequestRepository();
   final BusinessOccupationProfileRepository _businessRepo =
-  BusinessOccupationProfileRepository();
+      BusinessOccupationProfileRepository();
 
   @override
   void initState() {
@@ -128,7 +130,8 @@ class _NetworkViewState extends State<NetworkView> {
     }
   }
 
-  Future<BusinessOccupationProfileData?> _fetchBusinessProfile(String memberId) async {
+  Future<BusinessOccupationProfileData?> _fetchBusinessProfile(
+      String memberId) async {
     try {
       final res = await _businessRepo.fetchBusinessOccupationProfiles(
         memberId: memberId,
@@ -404,9 +407,17 @@ class _NetworkViewState extends State<NetworkView> {
     // Check zones
     final zones = _availableFilters['zones'] as List?;
     if (zones != null && zones.length > 1) return true;
-    
+
     // Check other filters (they should be List<String>)
-    final filterKeys = ['occupations', 'professions', 'specializations', 'subcategories', 'sub_subcategories', 'product_categories', 'product_subcategories'];
+    final filterKeys = [
+      'occupations',
+      'professions',
+      'specializations',
+      'subcategories',
+      'sub_subcategories',
+      'product_categories',
+      'product_subcategories'
+    ];
     for (var key in filterKeys) {
       final filterList = _availableFilters[key] as List?;
       if (filterList != null && filterList.length > 1) {
@@ -455,7 +466,8 @@ class _NetworkViewState extends State<NetworkView> {
     debugPrint("Selected zones: ${_filters.zones}");
     debugPrint("Total results before filtering: ${_allResults.length}");
     if (_filters.zones.isNotEmpty) {
-      debugPrint("Sample member zones: ${_allResults.take(3).map((m) => '${m.fullName}: zone=${m.zoneName} (id=${m.zoneId})').join(', ')}");
+      debugPrint(
+          "Sample member zones: ${_allResults.take(3).map((m) => '${m.fullName}: zone=${m.zoneName} (id=${m.zoneId})').join(', ')}");
     }
 
     // Helper function to normalize strings for comparison
@@ -469,9 +481,8 @@ class _NetworkViewState extends State<NetworkView> {
       // Check occupation filter
       if (_filters.occupations.isNotEmpty) {
         final memberOccupation = normalize(member.occupationNameValue);
-        final matches = _filters.occupations.any((filterOcc) => 
-          normalize(filterOcc) == memberOccupation
-        );
+        final matches = _filters.occupations
+            .any((filterOcc) => normalize(filterOcc) == memberOccupation);
         if (!matches) {
           return false;
         }
@@ -480,9 +491,8 @@ class _NetworkViewState extends State<NetworkView> {
       // Check profession filter
       if (_filters.professions.isNotEmpty) {
         final memberProfession = normalize(member.professionNameValue);
-        final matches = _filters.professions.any((filterProf) => 
-          normalize(filterProf) == memberProfession
-        );
+        final matches = _filters.professions
+            .any((filterProf) => normalize(filterProf) == memberProfession);
         if (!matches) {
           return false;
         }
@@ -491,9 +501,8 @@ class _NetworkViewState extends State<NetworkView> {
       // Check specialization filter
       if (_filters.specializations.isNotEmpty) {
         final memberSpecialization = normalize(member.specializationNameValue);
-        final matches = _filters.specializations.any((filterSpec) => 
-          normalize(filterSpec) == memberSpecialization
-        );
+        final matches = _filters.specializations
+            .any((filterSpec) => normalize(filterSpec) == memberSpecialization);
         if (!matches) {
           return false;
         }
@@ -502,9 +511,8 @@ class _NetworkViewState extends State<NetworkView> {
       // Check subcategory filter
       if (_filters.subcategories.isNotEmpty) {
         final memberSubcategory = normalize(member.subCategoryNameValue);
-        final matches = _filters.subcategories.any((filterSubcat) => 
-          normalize(filterSubcat) == memberSubcategory
-        );
+        final matches = _filters.subcategories.any(
+            (filterSubcat) => normalize(filterSubcat) == memberSubcategory);
         if (!matches) {
           return false;
         }
@@ -513,9 +521,8 @@ class _NetworkViewState extends State<NetworkView> {
       // Check sub-subcategory filter
       if (_filters.subSubcategories.isNotEmpty) {
         final memberSubSubcategory = normalize(member.subSubCategoryNameValue);
-        final matches = _filters.subSubcategories.any((filterSubSubcat) => 
-          normalize(filterSubSubcat) == memberSubSubcategory
-        );
+        final matches = _filters.subSubcategories.any((filterSubSubcat) =>
+            normalize(filterSubSubcat) == memberSubSubcategory);
         if (!matches) {
           return false;
         }
@@ -527,7 +534,8 @@ class _NetworkViewState extends State<NetworkView> {
         final memberZoneId = normalize(member.zoneId);
         final matches = _filters.zones.any((filterZone) {
           final normalizedFilterZone = normalize(filterZone);
-          return normalizedFilterZone == memberZoneName || normalizedFilterZone == memberZoneId;
+          return normalizedFilterZone == memberZoneName ||
+              normalizedFilterZone == memberZoneId;
         });
         if (!matches) {
           return false;
@@ -537,7 +545,8 @@ class _NetworkViewState extends State<NetworkView> {
       return true;
     }).toList();
 
-    debugPrint("Filtered results: ${_results.length} out of ${_allResults.length}");
+    debugPrint(
+        "Filtered results: ${_results.length} out of ${_allResults.length}");
     debugPrint("======================================");
   }
 
@@ -663,167 +672,182 @@ class _NetworkViewState extends State<NetworkView> {
 
   Widget _buildMemberCard(SearchOccupationData member) {
     final themeColor =
-    ColorHelperClass.getColorFromHex(ColorResources.red_color);
+        ColorHelperClass.getColorFromHex(ColorResources.red_color);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12.withOpacity(0.07),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
+    return Stack(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.black12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12.withOpacity(0.07),
+                blurRadius: 6,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-        child: Column(
-          mainAxisSize: MainAxisSize.max,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Profile image
-            Center(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(40),
-                child: SizedBox(
-                  height: 80,
-                  width: 80,
-                  child: member.profileImage != null &&
-                      member.profileImage!.isNotEmpty
-                      ? FadeInImage(
-                    placeholder: const AssetImage("assets/images/user3.png"),
-                    image: NetworkImage(
-                      Urls.imagePathUrl + member.profileImage!,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 30),
+
+                // Profile image
+                Center(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(40),
+                    child: SizedBox(
+                      height: 80,
+                      width: 80,
+                      child: member.profileImage != null &&
+                              member.profileImage!.isNotEmpty
+                          ? FadeInImage(
+                              placeholder:
+                                  const AssetImage("assets/images/user3.png"),
+                              image: NetworkImage(
+                                Urls.imagePathUrl + member.profileImage!,
+                              ),
+                              fit: BoxFit.cover,
+                              imageErrorBuilder: (_, __, ___) {
+                                return Image.asset(
+                                  "assets/images/user3.png",
+                                  fit: BoxFit.cover,
+                                );
+                              },
+                            )
+                          : Image.asset(
+                              "assets/images/user3.png",
+                              fit: BoxFit.cover,
+                            ),
                     ),
-                    fit: BoxFit.cover,
-                    imageErrorBuilder: (context, error, stackTrace) {
-                      return Image.asset("assets/images/user3.png", fit: BoxFit.cover);
-                    },
-                  )
-                      : Image.asset(
-                          "assets/images/user3.png",
-                          fit: BoxFit.cover,
-                        ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            // Name
-            Text(
-              member.fullName ?? "No Name",
-              maxLines: 2,
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                height: 1.2,
-              ),
-            ),
-
-            const SizedBox(height: 6),
-
-            // Profession
-            if ((member.professionNameValue ?? "").isNotEmpty)
-              Text(
-                member.professionNameValue!,
-                maxLines: 1,
-                textAlign: TextAlign.center,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade700,
-                ),
-              ),
-
-            // Specialization pill
-            if ((member.specializationNameValue ?? "").isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.orange.shade200, width: 1),
                   ),
-                  child: Text(
-                    member.specializationNameValue!,
+                ),
+
+                const SizedBox(height: 10),
+
+                // Name
+                Text(
+                  member.fullName ?? "No Name",
+                  maxLines: 2,
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    height: 1.2,
+                  ),
+                ),
+
+                const SizedBox(height: 6),
+
+                // Profession
+                if ((member.professionNameValue ?? "").isNotEmpty)
+                  Text(
+                    member.professionNameValue!,
                     maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.orange.shade800,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 12,
+                      color: Colors.grey.shade700,
                     ),
                   ),
+
+                // Specialization pill
+                if ((member.specializationNameValue ?? "").isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border:
+                            Border.all(color: Colors.orange.shade200, width: 1),
+                      ),
+                      child: Text(
+                        member.specializationNameValue!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.orange.shade800,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                const SizedBox(height: 12),
+
+                // Connect Button
+                ElevatedButton(
+                  onPressed: () => _showConnectDialog(member),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: themeColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    minimumSize: const Size(double.infinity, 36),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    "Contact",
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
                 ),
-              ),
+              ],
+            ),
+          ),
+        ),
 
-            const SizedBox(height: 10),
+        // 🔥 VIEW DETAIL BUTTON — TOP RIGHT
+        Positioned(
+          top: 8,
+          right: 8,
+          child: SizedBox(
+            height: 25,
+            child: OutlinedButton(
+              onPressed: () async {
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (_) =>
+                      const Center(child: CircularProgressIndicator()),
+                );
 
-            // Connect Button
-            ElevatedButton(
-              onPressed: () => _showConnectDialog(member),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: themeColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                minimumSize: const Size(double.infinity, 36),
+                final business =
+                    await _fetchBusinessProfile(member.memberId.toString());
+
+                Navigator.pop(context);
+
+                _showMemberDetailDialog(member, business);
+              },
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: themeColor),
+                foregroundColor: themeColor,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                elevation: 0,
               ),
               child: const Text(
-                "Connect",
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                "View Profile",
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
               ),
             ),
-
-            // const SizedBox(height: 8),
-
-            // 🔥 NEW — View Detail Button
-            SizedBox(
-              width: double.infinity,
-              height: 36,
-              child: OutlinedButton(
-                onPressed: () async {
-                  showDialog(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (_) => const Center(child: CircularProgressIndicator()),
-                  );
-
-                  final business = await _fetchBusinessProfile(member.memberId.toString());
-
-                  Navigator.pop(context);
-
-                  _showMemberDetailDialog(member, business);
-                },
-
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: themeColor),
-                  foregroundColor: themeColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: const Text(
-                  "View Detail",
-                  style: TextStyle(fontSize: 13),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -858,11 +882,15 @@ class _NetworkViewState extends State<NetworkView> {
               const SizedBox(height: 12),
               _buildInfoRow("Mobile", member.mobile ?? "N/A"),
               const SizedBox(height: 12),
-              _buildInfoRow(
-                "Profession",
-                "${member.occupationProfessionName ?? ''} - ${member.specializationName ?? ''}"
-                    .trim(),
-              ),
+
+              if ((member.occupationProfessionName ?? "").isNotEmpty)
+                _buildInfoRow(
+                  "Profession",
+                  (member.specializationName ?? "").isNotEmpty
+                      ? "${member.occupationProfessionName} - ${member.specializationName}"
+                      : member.occupationProfessionName!,
+                ),
+
               const SizedBox(height: 10),
             ],
           ),
@@ -883,7 +911,6 @@ class _NetworkViewState extends State<NetworkView> {
             // SEND MESSAGE BUTTON
             ElevatedButton(
               onPressed: () async {
-                // Keep dialog open until API finishes
                 try {
                   final CheckUserData2? userData =
                       await SessionManager.getSession();
@@ -899,34 +926,66 @@ class _NetworkViewState extends State<NetworkView> {
                     return;
                   }
 
-                  final String requestMemberId = userData.memberId.toString();
-                  final String memberId = member.memberId.toString();
+                  final String requestedByMemberId =
+                      userData.memberId.toString();
+                  final String requestedToMemberId = member.memberId.toString();
+                  final String createdBy = requestedByMemberId;
 
-                  debugPrint(
-                      "📤 Sending request: member_id=$memberId, request_member_id=$requestMemberId");
+                  final String? occupationId = member.occupationIdValue;
 
-                  final response = await _sendRepo.sendBusinessProfile(
-                    memberId: memberId,
-                    requestMemberId: requestMemberId,
+                  if (occupationId == null || occupationId.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Occupation information not available"),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+
+                  debugPrint("📤 CONNECT REQUEST DATA");
+                  debugPrint("Requested By : $requestedByMemberId");
+                  debugPrint("Requested To : $requestedToMemberId");
+                  debugPrint("OccupationId : $occupationId");
+
+                  final sendProfileResponse =
+                      await _sendRepo.sendBusinessProfile(
+                    memberId: requestedToMemberId,
+                    requestMemberId: requestedByMemberId,
                   );
 
-                  // Close dialog AFTER API response
+                  debugPrint(
+                      "📧 SendBusinessProfile Response: ${sendProfileResponse.message}");
+
+                  final connectResponse =
+                      await _connectRepo.sendBusinessConnectRequest(
+                    requestedByMemberId: requestedByMemberId,
+                    requestedToMemberId: requestedToMemberId,
+                    occupationId: occupationId,
+                    createdBy: createdBy,
+                  );
+
                   Navigator.pop(dialogContext);
 
-                  // Show snackbar on main screen
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        response.message ?? "Message sent successfully",
+                        connectResponse.message ??
+                            sendProfileResponse.message ??
+                            "Request sent successfully",
                       ),
-                      backgroundColor:
-                          response.status == true ? Colors.green : Colors.red,
+                      backgroundColor: connectResponse.status == true
+                          ? Colors.green
+                          : Colors.red,
                     ),
                   );
                 } catch (e) {
+                  debugPrint("❌ Send Message Error: $e");
+
                   Navigator.pop(dialogContext);
+
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
+                    const SnackBar(
                       content: Text("Something went wrong"),
                       backgroundColor: Colors.red,
                     ),
@@ -975,16 +1034,16 @@ class _NetworkViewState extends State<NetworkView> {
   }
 
   void _showMemberDetailDialog(
-      SearchOccupationData member,
-      BusinessOccupationProfileData? business,
-      ) {
+    SearchOccupationData member,
+    BusinessOccupationProfileData? business,
+  ) {
     final themeColor =
-    ColorHelperClass.getColorFromHex(ColorResources.red_color);
+        ColorHelperClass.getColorFromHex(ColorResources.red_color);
 
     BusinessAddressData? address =
-    (business?.addresses != null && business!.addresses!.isNotEmpty)
-        ? business.addresses!.first
-        : null;
+        (business?.addresses != null && business!.addresses!.isNotEmpty)
+            ? business.addresses!.first
+            : null;
 
     showDialog(
       context: context,
@@ -993,7 +1052,8 @@ class _NetworkViewState extends State<NetworkView> {
         return Dialog(
           backgroundColor: Colors.white,
           insetPadding: const EdgeInsets.all(20),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -1001,31 +1061,36 @@ class _NetworkViewState extends State<NetworkView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Row(
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.person_outline, size: 22),
-                          SizedBox(width: 8),
-                          Text(
-                            "Member Details",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                            ),
+                          const Row(
+                            children: [
+                              Icon(Icons.person_outline, size: 22),
+                              SizedBox(width: 8),
+                              Text(
+                                "Member Details",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Spacer(),
+                          InkWell(
+                            onTap: () => Navigator.pop(context),
+                            child: const Icon(Icons.close, size: 26),
                           ),
                         ],
-                      ),
-                      InkWell(
-                        onTap: () => Navigator.pop(context),
-                        child: const Icon(Icons.close, size: 26),
-                      ),
-                    ],
+                      );
+                    },
                   ),
-
+                  const SizedBox(height: 12),
+                  Divider(color: Colors.grey[400]),
                   const SizedBox(height: 20),
-
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1036,11 +1101,11 @@ class _NetworkViewState extends State<NetworkView> {
                             CircleAvatar(
                               radius: 45,
                               backgroundImage: (member.profileImage != null &&
-                                  member.profileImage!.isNotEmpty)
+                                      member.profileImage!.isNotEmpty)
                                   ? NetworkImage(
-                                  Urls.imagePathUrl + member.profileImage!)
+                                      Urls.imagePathUrl + member.profileImage!)
                                   : const AssetImage("assets/images/user3.png")
-                              as ImageProvider,
+                                      as ImageProvider,
                             ),
                             const SizedBox(height: 12),
                             Text(
@@ -1060,29 +1125,34 @@ class _NetworkViewState extends State<NetworkView> {
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-
                             const SizedBox(height: 12),
                             Divider(color: Colors.grey[400]),
                             const SizedBox(height: 12),
-
                             Row(
                               mainAxisAlignment: MainAxisAlignment.start,
                               children: [
-                                const Icon(Icons.phone, size: 18),
-                                const SizedBox(width: 6),
-                                Text(member.mobile ?? "N/A"),
+                                const Icon(Icons.phone, size: 12),
+                                const SizedBox(width: 3),
+                                Expanded(
+                                  child: Text(
+                                    member.mobile ?? "N/A",
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
                               ],
                             ),
                             const SizedBox(height: 10),
-
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.email_outlined, size: 18),
-                                const SizedBox(width: 6),
+                                const Icon(Icons.email_outlined, size: 12),
+                                const SizedBox(width: 3),
                                 Expanded(
                                   child: Text(
                                     member.email ?? "N/A",
+                                    maxLines: 3,
                                     overflow: TextOverflow.ellipsis,
                                     textAlign: TextAlign.center,
                                   ),
@@ -1092,9 +1162,7 @@ class _NetworkViewState extends State<NetworkView> {
                           ],
                         ),
                       ),
-
                       const SizedBox(width: 20),
-
                       Expanded(
                         flex: 2,
                         child: Column(
@@ -1109,7 +1177,6 @@ class _NetworkViewState extends State<NetworkView> {
                               ),
                             ),
                             const SizedBox(height: 12),
-
                             const Text(
                               "Business Address",
                               style: TextStyle(
@@ -1118,7 +1185,6 @@ class _NetworkViewState extends State<NetworkView> {
                               ),
                             ),
                             const SizedBox(height: 6),
-
                             Text(
                               _formatAddress(address),
                               style: const TextStyle(
@@ -1126,11 +1192,9 @@ class _NetworkViewState extends State<NetworkView> {
                                 height: 1.4,
                               ),
                             ),
-
                             const SizedBox(height: 12),
                             Divider(color: Colors.grey[400]),
                             const SizedBox(height: 12),
-
                             const Text(
                               "Contact Detail",
                               style: TextStyle(
@@ -1138,16 +1202,17 @@ class _NetworkViewState extends State<NetworkView> {
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
-
                             const SizedBox(height: 6),
-
-                            Text("Mobile: ${business?.businessMobile ?? 'N/A'}"),
+                            Text(
+                                "Mobile: ${business?.businessMobile ?? 'N/A'}"),
                             const SizedBox(height: 4),
-                            Text("Landline: ${business?.businessLandline ?? 'N/A'}"),
+                            Text(
+                                "Landline: ${business?.businessLandline ?? 'N/A'}"),
                             const SizedBox(height: 4),
                             Text("Email: ${business?.businessEmail ?? 'N/A'}"),
                             const SizedBox(height: 4),
-                            Text("Website: ${business?.businessWebsite ?? 'N/A'}"),
+                            Text(
+                                "Website: ${business?.businessWebsite ?? 'N/A'}"),
                           ],
                         ),
                       ),
@@ -1193,7 +1258,7 @@ class _NetworkViewState extends State<NetworkView> {
           Text(
             _hasSearched
                 ? "Try different search terms or filters"
-                : "Enter occupation(doctors, lawyers, consultants) to find members",
+                : "Enter occupation eg: doctors, lawyers, consultants, etc... to find members",
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
@@ -1224,13 +1289,16 @@ class _NetworkViewState extends State<NetworkView> {
         backgroundColor: Colors.grey[50],
         appBar: AppBar(
           backgroundColor:
-          ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+              ColorHelperClass.getColorFromHex(ColorResources.logo_color),
           title: Builder(
             builder: (context) {
               double fontSize = MediaQuery.of(context).size.width * 0.045;
               return Text(
                 "Networking",
-                style: TextStyle(color: Colors.white, fontSize: fontSize, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: fontSize,
+                    fontWeight: FontWeight.w500),
               );
             },
           ),
@@ -1249,7 +1317,8 @@ class _NetworkViewState extends State<NetworkView> {
                   );
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
@@ -1261,7 +1330,7 @@ class _NetworkViewState extends State<NetworkView> {
                     mainAxisSize: MainAxisSize.min,
                     children: const [
                       Text(
-                        "Connected Member",
+                        "Connected Members",
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 13,
@@ -1281,16 +1350,19 @@ class _NetworkViewState extends State<NetworkView> {
             Obx(() {
               final occ = controller.currentOccupation.value;
               final allOccupations = controller.allOccupations;
-              
+
               // Check if banner should be shown
               // Show if: no occupation data OR (occupation exists with ID 1/2/3 but no business profile)
               final hasNoOccupation = allOccupations.isEmpty || occ == null;
               final hasOccupationButNoBusiness = occ != null &&
-                  (occ.occupationId == "1" || occ.occupationId == "2" || occ.occupationId == "3") &&
+                  (occ.occupationId == "1" ||
+                      occ.occupationId == "2" ||
+                      occ.occupationId == "3") &&
                   occ.memberBusinessOccupationProfile == null;
-              
-              final shouldShowBanner = hasNoOccupation || hasOccupationButNoBusiness;
-              
+
+              final shouldShowBanner =
+                  hasNoOccupation || hasOccupationButNoBusiness;
+
               // Determine navigation target
               final shouldGoToOccupationEntry = hasNoOccupation;
               final shouldGoToBusinessProfile = hasOccupationButNoBusiness;
@@ -1305,7 +1377,8 @@ class _NetworkViewState extends State<NetworkView> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const BusinessInformationPage(),
+                            builder: (context) =>
+                                const BusinessInformationPage(),
                           ),
                         );
                       } else if (hasOccupationButNoBusiness) {
@@ -1315,7 +1388,8 @@ class _NetworkViewState extends State<NetworkView> {
                           MaterialPageRoute(
                             builder: (context) => OccupationDetailViewPage(
                               memberId: occ.memberId.toString(),
-                              memberOccupationId: occ.memberOccupationId.toString(),
+                              memberOccupationId:
+                                  occ.memberOccupationId.toString(),
                             ),
                           ),
                         );
@@ -1361,7 +1435,7 @@ class _NetworkViewState extends State<NetworkView> {
                 return const SizedBox.shrink();
               }
             }),
-            
+
             // Search bar
             Container(
               padding: const EdgeInsets.all(16),
@@ -1405,7 +1479,7 @@ class _NetworkViewState extends State<NetworkView> {
                         },
                         decoration: InputDecoration(
                           hintText:
-                              "Search occupation(doctors, lawyers, consultants)…",
+                              "Search occupation eg: doctors, lawyers, consultants, etc…",
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 14),
@@ -1429,11 +1503,16 @@ class _NetworkViewState extends State<NetworkView> {
 
                   // Filter button
                   IgnorePointer(
-                    ignoring: !_hasSearched || !_hasFiltersAvailable(), // Disable when no search or no filters available
+                    ignoring: !_hasSearched ||
+                        !_hasFiltersAvailable(), // Disable when no search or no filters available
                     child: Opacity(
-                      opacity: (_hasSearched && _hasFiltersAvailable()) ? 1 : 0.4, // Dim when disabled
+                      opacity: (_hasSearched && _hasFiltersAvailable())
+                          ? 1
+                          : 0.4, // Dim when disabled
                       child: GestureDetector(
-                        onTap: (_hasSearched && _hasFiltersAvailable()) ? _openFilterSheet : null,
+                        onTap: (_hasSearched && _hasFiltersAvailable())
+                            ? _openFilterSheet
+                            : null,
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
@@ -1633,7 +1712,6 @@ class _NetworkViewState extends State<NetworkView> {
                       },
                     ),
                   ),
-
                 ),
               ),
 
