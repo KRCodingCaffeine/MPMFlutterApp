@@ -24,6 +24,7 @@ import 'package:mpm/view/Networking/network_filters.dart';
 import 'package:mpm/view/profile%20view/business_info_page.dart';
 import 'package:mpm/view/profile%20view/occupation_detail_view.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class NetworkView extends StatefulWidget {
   const NetworkView({super.key});
@@ -865,13 +866,36 @@ class _NetworkViewState extends State<NetworkView> {
           actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text(
-                "Contact Member",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            children: [
+              Row(
+                children: [
+                  const Text(
+                    "Contact Member",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const Spacer(),
+
+                  InkWell(
+                    onTap: () => Navigator.pop(dialogContext),
+                    child: const Icon(
+                      Icons.close,
+                      size: 22,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(height: 8),
-              Divider(thickness: 1, color: Colors.grey),
+
+              const SizedBox(height: 8),
+
+              const Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
             ],
           ),
           content: Column(
@@ -895,17 +919,45 @@ class _NetworkViewState extends State<NetworkView> {
             ],
           ),
           actions: [
-            OutlinedButton(
-              onPressed: () => Navigator.pop(dialogContext),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.call),
+              label: const Text("Call"),
+              onPressed: () async {
+                final mobile = member.mobile;
+
+                if (mobile == null || mobile.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Mobile number not available"),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+
+                final Uri callUri = Uri(scheme: 'tel', path: mobile);
+
+                if (await canLaunchUrl(callUri)) {
+                  await launchUrl(callUri);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Unable to open dial pad"),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
               style: OutlinedButton.styleFrom(
                 foregroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                side: const BorderSide(color: Colors.red),
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: BorderSide(
+                  color: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: const Text("Cancel"),
             ),
 
             // SEND MESSAGE BUTTON
