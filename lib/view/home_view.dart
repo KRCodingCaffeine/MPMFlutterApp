@@ -235,16 +235,16 @@ class _HomeViewState extends State<HomeView>
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         child: SizedBox(
-                          height: 175, // controls total height (2 rows)
+                          height: 175,
                           child: GridView.builder(
                             scrollDirection: Axis.horizontal,
                             itemCount: gridItems.length,
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,          // ✅ 2 ROWS
+                              crossAxisCount: 2,
                               mainAxisSpacing: 12,
                               crossAxisSpacing: 12,
-                              mainAxisExtent: 95,        // width of each item
+                              mainAxisExtent: 95,
                             ),
                             itemBuilder: (context, index) {
                               final item = gridItems[index];

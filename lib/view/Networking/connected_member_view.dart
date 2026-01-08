@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mpm/model/BusinessProfile/ConnectedMember/ConnectedMemberData.dart';
 import 'package:mpm/repository/BusinessProfileRepo/connected_member_repository/connected_member_repo.dart';
+import 'package:mpm/repository/BusinessProfileRepo/delete_business_connect_request_repository/delete_business_connect_request_repo.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
@@ -15,6 +16,8 @@ class ConnectedMemberView extends StatefulWidget {
 
 class _ConnectedMemberViewState extends State<ConnectedMemberView> {
   final ConnectedMemberRepository _repo = ConnectedMemberRepository();
+  final DeleteBusinessConnectRequestRepository _deleteRepo =
+  DeleteBusinessConnectRequestRepository();
 
   bool _isLoading = true;
   List<ConnectedMemberData> _members = [];
@@ -125,6 +128,7 @@ class _ConnectedMemberViewState extends State<ConnectedMemberView> {
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Profile Image
           ClipRRect(
@@ -161,9 +165,6 @@ class _ConnectedMemberViewState extends State<ConnectedMemberView> {
                   overflow: TextOverflow.ellipsis,
                 ),
 
-                const SizedBox(height: 2),
-
-                // Membership Code
                 if ((member.memberCode ?? "").isNotEmpty)
                   Text(
                     "Membership Code : ${member.memberCode}",
@@ -177,16 +178,12 @@ class _ConnectedMemberViewState extends State<ConnectedMemberView> {
                 if ((member.mobile ?? "").isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
-                    child: Row(
-                      children: [
-                        Text(
-                          "Mobile : ${member.mobile!}",
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey.shade700,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      "Mobile : ${member.mobile!}",
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade700,
+                      ),
                     ),
                   ),
 
@@ -215,13 +212,184 @@ class _ConnectedMemberViewState extends State<ConnectedMemberView> {
                       ),
                     ),
                   ),
-
               ],
+            ),
+          ),
+
+          // ⋮ MENU
+          PopupMenuButton<String>(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            onSelected: (value) {
+              if (value == 'delete') {
+                _confirmDelete(member);
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete, color: Colors.red, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'Delete',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            child: const Icon(
+              Icons.more_vert,
+              color: Colors.grey,
             ),
           ),
         ],
       ),
     );
+  }
+
+  void _confirmDelete(ConnectedMemberData member) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+
+          // TITLE + DIVIDER (SAME AS LOGOUT)
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Delete Connection",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+
+          // CONTENT
+          content: Text(
+            "Are you sure you want to delete ${member.displayName} from your connected members?",
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+
+          // ACTIONS
+          actions: [
+            // NO BUTTON
+            OutlinedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("No"),
+            ),
+
+            // YES / DELETE BUTTON
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _deleteConnectedMember(member);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Yes"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteConnectedMember(ConnectedMemberData member) async {
+    if (member.requestId == null || member.requestId!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Invalid connection ID"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Optional: show loader dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final response =
+      await _deleteRepo.deleteBusinessConnectRequest(member.requestId!);
+
+      Navigator.pop(context); // close loader
+
+      if (response.status == true) {
+        setState(() {
+          _members.removeWhere(
+                (m) => m.requestId == member.requestId,
+          );
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              response.message ?? "Connection deleted successfully",
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.message ?? "Failed to delete connection"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      Navigator.pop(context); // close loader
+
+      debugPrint("❌ Delete error: $e");
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Something went wrong while deleting"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Widget _buildEmptyState() {
