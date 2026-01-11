@@ -61,12 +61,13 @@ class _HomeViewState extends State<HomeView> with SingleTickerProviderStateMixin
       {'icon': Images.discount, 'label': 'Discounts & Offers'},
       {'icon': Images.events, 'label': 'Events'},
       {'icon': Images.saraswani, 'label': 'Saraswani'},
-      {'icon': Images.event_trip, 'label': 'Trips'}
+      {'icon': Images.event_trip, 'label': 'Trips'},
+      {'icon': Images.network, 'label': 'Networking'}
     ];
 
-    if (memberId == 1 || memberId == 2 || memberId == 2040) {
+   /* if (memberId == 1 || memberId == 2 || memberId == 2040) {
       items.add({'icon': Images.network, 'label': 'Networking'});
-    }
+    }*/
 
     if (memberId == 1 || memberId == 2) {
       items.add({'icon': Images.qr_code, 'label': 'QR Code Scanner'});
