@@ -70,6 +70,10 @@ class _HomeViewState extends State<HomeView>
       items.add({'icon': Images.network, 'label': 'Networking'});
     }*/
 
+    if (memberId == 1 || memberId == 2 || memberId == 2040) {
+      items.add({'icon': Images.shiksha, 'label': 'Shiksha Sahayata'});
+    }
+
     if (memberId == 1 || memberId == 2) {
       items.add({'icon': Images.qr_code, 'label': 'QR Scanner'});
     }
@@ -820,6 +824,9 @@ class _HomeViewState extends State<HomeView>
         break;
       case "Networking":
         Navigator.pushNamed(context, RouteNames.networking);
+        break;
+      case "Shiksha Sahayata":
+        Navigator.pushNamed(context, RouteNames.shiksha_sahayata);
         break;
       case "QR Code Scanner":
         Navigator.pushNamed(context, RouteNames.qr_code);
