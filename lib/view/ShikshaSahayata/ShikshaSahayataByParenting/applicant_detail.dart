@@ -16,8 +16,9 @@ class ApplicantDetail extends StatefulWidget {
 
 class _ApplicantDetailState extends State<ApplicantDetail> {
   bool hasApplicant = false;
-  File? _aadharFrontImage;
-  File? _aadharBackImage;
+  File? applicantAadharFile;
+  File? fatherPanFile;
+  File? addressProofFile;
   final ImagePicker _picker = ImagePicker();
 
   final TextEditingController firstNameCtrl = TextEditingController();
@@ -29,6 +30,13 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
   final TextEditingController aadharCtrl = TextEditingController();
   final TextEditingController dobCtrl = TextEditingController();
   final TextEditingController anniversaryCtrl = TextEditingController();
+  final TextEditingController landlineCtrl = TextEditingController();
+  final TextEditingController fatherNameCtrl = TextEditingController();
+  final TextEditingController motherNameCtrl = TextEditingController();
+  final TextEditingController fatherEmailCtrl = TextEditingController();
+  final TextEditingController fatherMobileCtrl = TextEditingController();
+  final TextEditingController fatherCityCtrl = TextEditingController();
+  final TextEditingController fatherStateCtrl = TextEditingController();
 
   String selectedGender = '';
   String maritalStatus = '';
@@ -57,18 +65,18 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     if (lastNameCtrl.text.trim().isEmpty) return false;
     if (emailCtrl.text.trim().isEmpty) return false;
     if (mobileCtrl.text.trim().isEmpty) return false;
-    if (selectedGender.isEmpty) return false;
     if (dobCtrl.text.trim().isEmpty) return false;
     if (ageCtrl.text.trim().isEmpty) return false;
     if (maritalStatus.isEmpty) return false;
 
-    if (maritalStatus == "Married" &&
-        anniversaryCtrl.text.trim().isEmpty) {
-      return false;
-    }
+    if (fatherNameCtrl.text.trim().isEmpty) return false;
+    if (motherNameCtrl.text.trim().isEmpty) return false;
+    if (fatherMobileCtrl.text.trim().isEmpty) return false;
+    if (fatherCityCtrl.text.trim().isEmpty) return false;
+    if (fatherStateCtrl.text.trim().isEmpty) return false;
 
-    if (_aadharFrontImage == null) return false;
-    if (_aadharBackImage == null) return false;
+    if (applicantAadharFile == null) return false;
+    if (fatherPanFile == null) return false;
 
     return true;
   }
@@ -137,46 +145,46 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
               if (maritalStatus == "Married")
                 _infoRow("Anniversary", anniversary),
               const SizedBox(height: 10),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(
-                    width: 130,
-                    child: Text(
-                      "Aadhaar :",
-                      style: TextStyle(fontSize: 12),
-                    ),
-                  ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(
-                        width: 130,
-                        child: Text(
-                          "Aadhaar :",
-                          style: TextStyle(fontSize: 12),
-                        ),
-                      ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildAadhaarPreview(
-                              title: "Front",
-                              image: _aadharFrontImage,
-                            ),
-                            const SizedBox(height: 8),
-                            _buildAadhaarPreview(
-                              title: "Back",
-                              image: _aadharBackImage,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+              // Row(
+              //   crossAxisAlignment: CrossAxisAlignment.start,
+              //   children: [
+              //     const SizedBox(
+              //       width: 130,
+              //       child: Text(
+              //         "Aadhaar :",
+              //         style: TextStyle(fontSize: 12),
+              //       ),
+              //     ),
+              //     Row(
+              //       crossAxisAlignment: CrossAxisAlignment.start,
+              //       children: [
+              //         const SizedBox(
+              //           width: 130,
+              //           child: Text(
+              //             "Aadhaar :",
+              //             style: TextStyle(fontSize: 12),
+              //           ),
+              //         ),
+              //         Expanded(
+              //           child: Column(
+              //             crossAxisAlignment: CrossAxisAlignment.start,
+              //             children: [
+              //               _buildAadhaarPreview(
+              //                 title: "Front",
+              //                 image: _aadharFrontImage,
+              //               ),
+              //               const SizedBox(height: 8),
+              //               _buildAadhaarPreview(
+              //                 title: "Back",
+              //                 image: _aadharBackImage,
+              //               ),
+              //             ],
+              //           ),
+              //         ),
+              //       ],
+              //     ),
+              //   ],
+              // ),
             ],
           ),
         ),
@@ -331,11 +339,12 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
           builder: (context, setModalState) {
             return SafeArea(
               child: FractionallySizedBox(
-                heightFactor: 0.8,
+                heightFactor: 0.9,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
                     children: [
+
                       const SizedBox(height: 30),
 
                       Row(
@@ -343,14 +352,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                         children: [
                           OutlinedButton(
                             onPressed: () => Navigator.pop(context),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: ColorHelperClass.getColorFromHex(
-                                  ColorResources.red_color),
-                              side: BorderSide(
-                                color: ColorHelperClass.getColorFromHex(
-                                    ColorResources.red_color),
-                              ),
-                            ),
                             child: const Text("Cancel"),
                           ),
                           ElevatedButton(
@@ -363,7 +364,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 mobile = mobileCtrl.text;
                                 dob = dobCtrl.text;
                                 age = ageCtrl.text;
-                                anniversary = anniversaryCtrl.text;
                                 hasApplicant = true;
                               });
 
@@ -371,19 +371,13 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
 
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text("Applicant details added successfully"),
+                                  content: Text(
+                                      "Applicant details added successfully"),
                                   backgroundColor: Colors.green,
                                 ),
                               );
                             }
                                 : null,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: ColorHelperClass.getColorFromHex(
-                                  ColorResources.red_color),
-                              foregroundColor: Colors.white,
-                              disabledBackgroundColor: Colors.grey.shade400,
-                              disabledForegroundColor: Colors.white70,
-                            ),
                             child: const Text("Submit"),
                           ),
                         ],
@@ -396,13 +390,12 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           child: Column(
                             children: [
-                              const Center(
-                                child: Text(
-                                  "Applicant details",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+
+                              const Text(
+                                "Applicant Details",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
 
@@ -411,29 +404,52 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                               _buildTextField("First Name *",
                                   controller: firstNameCtrl),
                               const SizedBox(height: 20),
+
                               _buildTextField("Middle Name",
                                   controller: middleNameCtrl),
                               const SizedBox(height: 20),
-                              _buildTextField("Last Name *",
+
+                              _buildTextField("Surname *",
                                   controller: lastNameCtrl),
                               const SizedBox(height: 20),
-                              _buildTextField("Email *", controller: emailCtrl),
+
+                              _buildTextField("Email *",
+                                  controller: emailCtrl),
                               const SizedBox(height: 20),
-                              _buildTextField("Mobile Number *",
-                                  controller: mobileCtrl,
-                                  keyboard: TextInputType.number),
-                              const SizedBox(height: 20),
-                              _buildDropdown(
-                                label: "Gender *",
-                                items: ["Male", "Female"],
-                                selectedValue: selectedGender,
-                                onChanged: (val) {
-                                  setModalState(() {
-                                    selectedGender = val;
-                                  });
-                                },
+
+                              _buildTextField(
+                                "Mobile Number *",
+                                controller: mobileCtrl,
+                                keyboard: TextInputType.number,
                               ),
                               const SizedBox(height: 20),
+
+                              _buildTextField(
+                                "Landline Number",
+                                controller: landlineCtrl,
+                                keyboard: TextInputType.number,
+                              ),
+                              const SizedBox(height: 20),
+
+                              _buildTextField("Father's Name *",
+                                  controller: fatherNameCtrl),
+                              const SizedBox(height: 20),
+
+                              _buildTextField("Mother's Name",
+                                  controller: motherNameCtrl),
+                              const SizedBox(height: 20),
+
+                              _buildTextField("Father's Email *",
+                                  controller: fatherEmailCtrl),
+                              const SizedBox(height: 20),
+
+                              _buildTextField(
+                                "Father's Mobile *",
+                                controller: fatherMobileCtrl,
+                                keyboard: TextInputType.number,
+                              ),
+                              const SizedBox(height: 20),
+
                               themedDatePickerField(
                                 context: context,
                                 label: "Date of Birth *",
@@ -442,13 +458,14 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 calculateAge: true,
                               ),
                               const SizedBox(height: 20),
+
                               _buildTextField(
                                 "Age *",
                                 controller: ageCtrl,
                                 readOnly: true,
-                                keyboard: TextInputType.none,
                               ),
                               const SizedBox(height: 20),
+
                               _buildDropdown(
                                 label: "Marital Status *",
                                 items: ["Married", "Unmarried"],
@@ -456,25 +473,60 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 onChanged: (val) {
                                   setModalState(() {
                                     maritalStatus = val;
-
-                                    if (val == "Unmarried") {
-                                      anniversaryCtrl.clear();
-                                    }
                                   });
                                 },
                               ),
+
                               const SizedBox(height: 20),
-                              if (maritalStatus == "Married") ...[
-                                themedDatePickerField(
-                                  context: context,
-                                  label: "Marriage Anniversary",
-                                  hint: "Select Anniversary Date",
-                                  controller: anniversaryCtrl,
-                                  calculateAge: false,
-                                ),
-                                const SizedBox(height: 20),
-                              ],
-                              _buildAadharUploadField(context),
+
+                              _buildTextField("Father City *",
+                                  controller: fatherCityCtrl),
+                              const SizedBox(height: 20),
+
+                              _buildTextField("Father State *",
+                                  controller: fatherStateCtrl),
+                              const SizedBox(height: 20),
+
+                              buildImageUploadField(
+                                context: context,
+                                imageFile: applicantAadharFile,
+                                buttonText: "Applicant Aadhaar *",
+                                onPick: () {
+                                  _showImagePicker(
+                                    context,
+                                        (file) => applicantAadharFile = file,
+                                  );
+                                },
+                              ),
+
+                              const SizedBox(height: 20),
+
+                              buildImageUploadField(
+                                context: context,
+                                imageFile: fatherPanFile,
+                                buttonText: "Father PAN Card *",
+                                onPick: () {
+                                  _showImagePicker(
+                                    context,
+                                        (file) => fatherPanFile = file,
+                                  );
+                                },
+                              ),
+
+                              const SizedBox(height: 20),
+
+                              buildImageUploadField(
+                                context: context,
+                                imageFile: addressProofFile,
+                                buttonText:
+                                "Address Proof (If Aadhaar address is not same)",
+                                onPick: () {
+                                  _showImagePicker(
+                                    context,
+                                        (file) => addressProofFile = file,
+                                  );
+                                },
+                              ),
                               const SizedBox(height: 40),
                             ],
                           ),
@@ -662,74 +714,45 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     );
   }
 
-  Widget _buildAadharUploadField(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Self Attached Aadhaar Upload *",
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 12),
-
-        /// FRONT
-        _buildUploadCard(
-          context: context,
-          title: "Upload Aadhaar Front",
-          image: _aadharFrontImage,
-          onPick: () => _showImagePicker(context, isFront: true),
-        ),
-
-        const SizedBox(height: 16),
-
-        /// BACK
-        _buildUploadCard(
-          context: context,
-          title: "Upload Aadhaar Back",
-          image: _aadharBackImage,
-          onPick: () => _showImagePicker(context, isFront: false),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildUploadCard({
+  Widget buildImageUploadField({
     required BuildContext context,
-    required String title,
-    required File? image,
+    required File? imageFile,
+    required String buttonText,
     required VoidCallback onPick,
   }) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (image != null)
+        if (imageFile != null)
           Container(
-            height: 180,
+            height: 200,
             width: double.infinity,
             margin: const EdgeInsets.only(bottom: 10),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.black26),
-              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Image.file(image, fit: BoxFit.cover),
+              borderRadius: BorderRadius.circular(8),
+              child: Image.file(
+                imageFile,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
             onPressed: onPick,
-            icon: const Icon(Icons.upload_file),
-            label: Text(image == null ? title : "Change $title"),
+            icon: const Icon(Icons.image),
+            label: Text(buttonText),
             style: ElevatedButton.styleFrom(
               backgroundColor:
               ColorHelperClass.getColorFromHex(ColorResources.red_color),
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
               ),
+              padding: const EdgeInsets.symmetric(vertical: 12),
             ),
           ),
         ),
@@ -737,31 +760,41 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     );
   }
 
-
-  void _showImagePicker(BuildContext context, {required bool isFront}) {
+  void _showImagePicker(
+      BuildContext context,
+      Function(File) onImagePicked,
+      ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
       ),
-      builder: (context) {
+      builder: (_) {
         return Wrap(
           children: [
             ListTile(
               leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
               title: const Text("Take a Picture"),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(context);
-                _pickImage(ImageSource.camera, isFront);
+                final picked =
+                await _picker.pickImage(source: ImageSource.camera);
+                if (picked != null) {
+                  setState(() => onImagePicked(File(picked.path)));
+                }
               },
             ),
             ListTile(
               leading: const Icon(Icons.image, color: Colors.redAccent),
               title: const Text("Choose from Gallery"),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(context);
-                _pickImage(ImageSource.gallery, isFront);
+                final picked =
+                await _picker.pickImage(source: ImageSource.gallery);
+                if (picked != null) {
+                  setState(() => onImagePicked(File(picked.path)));
+                }
               },
             ),
           ],
@@ -770,17 +803,5 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     );
   }
 
-  Future<void> _pickImage(ImageSource source, bool isFront) async {
-    final pickedFile = await _picker.pickImage(source: source);
-    if (pickedFile != null) {
-      setState(() {
-        if (isFront) {
-          _aadharFrontImage = File(pickedFile.path);
-        } else {
-          _aadharBackImage = File(pickedFile.path);
-        }
-      });
-    }
-  }
 
 }
