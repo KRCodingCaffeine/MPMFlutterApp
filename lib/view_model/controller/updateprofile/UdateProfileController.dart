@@ -67,6 +67,8 @@ class UdateProfileController extends GetxController {
   final ChangeFamilyHeadRepository _changeHeadRepo =
       ChangeFamilyHeadRepository();
   final addOccupationRepo = AddOccupationRepository();
+  NewMemberController regiController = Get.put(NewMemberController());
+
 
   var isPay = false.obs;
   RxBool showEmailVerifyBanner = false.obs;
@@ -97,7 +99,6 @@ class UdateProfileController extends GetxController {
       TextEditingController().obs;
   Rx<TextEditingController> upaddressbusinessinfoNameController =
       TextEditingController().obs;
-
   Rx<TextEditingController> addressController = TextEditingController().obs;
   Rx<TextEditingController> areaNameController = TextEditingController().obs;
   Rx<TextEditingController> udareaNameController = TextEditingController().obs;
@@ -355,6 +356,21 @@ class UdateProfileController extends GetxController {
       }
 
       getUserData.value = _value.data!;
+      final address = getUserData.value.address;
+
+      if (address != null &&
+          address.stateId != null &&
+          address.stateId.toString().isNotEmpty) {
+
+        regiController.state_id.value = address.stateId.toString();
+      }
+
+      if (address != null &&
+          address.city_id != null &&
+          address.city_id.toString().isNotEmpty) {
+
+        regiController.city_id.value = address.city_id.toString();
+      }
       memberId.value = id.toString();
       fathersName.value = getUserData.value.fatherName.toString();
       firstName.value = getUserData.value.firstName.toString();
