@@ -1,11 +1,19 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:mpm/data/response/status.dart';
+import 'package:mpm/model/State/StateData.dart';
+import 'package:mpm/model/city/CityData.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/ShikshaSahayata/family_detail.dart';
+import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
+import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
 class ApplicantDetail extends StatefulWidget {
   const ApplicantDetail({super.key});
@@ -20,6 +28,8 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
   File? fatherPanFile;
   File? addressProofFile;
   final ImagePicker _picker = ImagePicker();
+  UdateProfileController controller = Get.put(UdateProfileController());
+  NewMemberController regiController = Get.put(NewMemberController());
 
   final TextEditingController firstNameCtrl = TextEditingController();
   final TextEditingController middleNameCtrl = TextEditingController();
@@ -53,12 +63,25 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
   void initState() {
     super.initState();
 
+    controller.getUserProfile();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!hasApplicant) {
+        _prefillFatherFromUser();
         _showAddApplicantModalSheet(context);
       }
     });
   }
+
+  void _prefillFatherFromUser() {
+    fatherNameCtrl.text = controller.userName.value;
+
+    fatherEmailCtrl.text = controller.email.value;
+
+    fatherMobileCtrl.text = controller.mobileNumber.value;
+
+  }
+
 
   bool get _canSubmitApplicant {
     if (firstNameCtrl.text.trim().isEmpty) return false;
@@ -72,8 +95,8 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     if (fatherNameCtrl.text.trim().isEmpty) return false;
     if (motherNameCtrl.text.trim().isEmpty) return false;
     if (fatherMobileCtrl.text.trim().isEmpty) return false;
-    if (fatherCityCtrl.text.trim().isEmpty) return false;
-    if (fatherStateCtrl.text.trim().isEmpty) return false;
+    if (regiController.city_id.value.isEmpty) return false;
+    if (regiController.state_id.value.isEmpty) return false;
 
     if (applicantAadharFile == null) return false;
     if (fatherPanFile == null) return false;
@@ -317,6 +340,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     );
   }
 
+
   void _showImagePreview(File image) {
     showDialog(
       context: context,
@@ -421,6 +445,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 "Mobile Number *",
                                 controller: mobileCtrl,
                                 keyboard: TextInputType.number,
+                                inputFormatters: number10DigitFormatter,
                               ),
                               const SizedBox(height: 20),
 
@@ -431,8 +456,10 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                               ),
                               const SizedBox(height: 20),
 
-                              _buildTextField("Father's Name *",
-                                  controller: fatherNameCtrl),
+                              _buildTextField(
+                                "Father's Name *",
+                                controller: fatherNameCtrl,
+                              ),
                               const SizedBox(height: 20),
 
                               _buildTextField("Mother's Name",
@@ -447,6 +474,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 "Father's Mobile *",
                                 controller: fatherMobileCtrl,
                                 keyboard: TextInputType.number,
+                                inputFormatters: number10DigitFormatter,
                               ),
                               const SizedBox(height: 20),
 
@@ -460,7 +488,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                               const SizedBox(height: 20),
 
                               _buildTextField(
-                                "Age *",
+                                "Age",
                                 controller: ageCtrl,
                                 readOnly: true,
                               ),
@@ -479,12 +507,134 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
 
                               const SizedBox(height: 20),
 
-                              _buildTextField("Father City *",
-                                  controller: fatherCityCtrl),
+                              Container(
+                                width: double.infinity,
+                                margin: const EdgeInsets.only(left: 5, right: 5),
+                                child: Row(
+                                  children: [
+                                    Obx(() {
+                                      if (regiController.rxStatusCityLoading.value == Status.LOADING) {
+                                        return const Padding(
+                                          padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                                          child: SizedBox(
+                                            height: 24,
+                                            width: 24,
+                                            child: CircularProgressIndicator(color: Colors.redAccent),
+                                          ),
+                                        );
+                                      } else if (regiController.rxStatusCityLoading.value == Status.ERROR) {
+                                        return const Center(child: Text('Failed to load city'));
+                                      } else if (regiController.cityList.isEmpty) {
+                                        return const Center(child: Text('No City available'));
+                                      } else {
+                                        final selectedCity = regiController.city_id.value;
+                                        return Expanded(
+                                          child: InputDecorator(
+                                            decoration: const InputDecoration(
+                                              labelText: 'Father City *',
+                                              border: OutlineInputBorder(
+                                                borderSide: BorderSide(color: Colors.black),
+                                              ),
+                                              enabledBorder: OutlineInputBorder(
+                                                borderSide: BorderSide(color: Colors.black),
+                                              ),
+                                              focusedBorder: OutlineInputBorder(
+                                                borderSide: BorderSide(color: Colors.black38, width: 1),
+                                              ),
+                                              contentPadding:
+                                              EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                                            ),
+                                            child: DropdownButton<String>(
+                                              dropdownColor: Colors.white,
+                                              borderRadius: BorderRadius.circular(10),
+                                              isExpanded: true,
+                                              underline: Container(),
+                                              hint: const Text('Select Father City *'),
+                                              value: selectedCity.isNotEmpty ? selectedCity : null,
+                                              items: regiController.cityList.map((CityData city) {
+                                                return DropdownMenuItem<String>(
+                                                  value: city.id.toString(),
+                                                  child: Text(city.cityName ?? 'Unknown'),
+                                                );
+                                              }).toList(),
+                                              onChanged: (val) {
+                                                if (val != null) {
+                                                  regiController.setSelectedCity(val);
+                                                }
+                                              },
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    }),
+                                  ],
+                                ),
+                              ),
                               const SizedBox(height: 20),
 
-                              _buildTextField("Father State *",
-                                  controller: fatherStateCtrl),
+                              Container(
+                                width: double.infinity,
+                                margin: const EdgeInsets.only(left: 5, right: 5),
+                                child: Row(
+                                  children: [
+                                    Obx(() {
+                                      if (regiController.rxStatusStateLoading.value == Status.LOADING) {
+                                        return const Padding(
+                                          padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                                          child: SizedBox(
+                                            height: 24,
+                                            width: 24,
+                                            child: CircularProgressIndicator(color: Colors.redAccent),
+                                          ),
+                                        );
+                                      } else if (regiController.rxStatusStateLoading.value == Status.ERROR) {
+                                        return const Center(child: Text('Failed to load state'));
+                                      } else if (regiController.stateList.isEmpty) {
+                                        return const Center(child: Text('No State available'));
+                                      } else {
+                                        final selectedState = regiController.state_id.value;
+                                        return Expanded(
+                                          child: InputDecorator(
+                                            decoration: const InputDecoration(
+                                              labelText: 'Father State *',
+                                              border: OutlineInputBorder(
+                                                borderSide: BorderSide(color: Colors.black),
+                                              ),
+                                              enabledBorder: OutlineInputBorder(
+                                                borderSide: BorderSide(color: Colors.black),
+                                              ),
+                                              focusedBorder: OutlineInputBorder(
+                                                borderSide: BorderSide(color: Colors.black38, width: 1),
+                                              ),
+                                              contentPadding:
+                                              EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                                            ),
+                                            child: DropdownButton<String>(
+                                              dropdownColor: Colors.white,
+                                              borderRadius: BorderRadius.circular(10),
+                                              isExpanded: true,
+                                              underline: Container(),
+                                              hint: const Text('Select Father State *'),
+                                              value: selectedState.isNotEmpty ? selectedState : null,
+                                              items: regiController.stateList.map((StateData state) {
+                                                return DropdownMenuItem<String>(
+                                                  value: state.id.toString(),
+                                                  child: Text(state.stateName ?? 'Unknown'),
+                                                );
+                                              }).toList(),
+                                              onChanged: (val) {
+                                                if (val != null) {
+                                                  regiController.setSelectedState(val);
+                                                }
+                                              },
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    }),
+                                  ],
+                                ),
+                              ),
                               const SizedBox(height: 20),
 
                               buildImageUploadField(
@@ -548,10 +698,13 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     required TextEditingController controller,
     TextInputType keyboard = TextInputType.text,
     bool readOnly = false,
-  }) {
+        List<TextInputFormatter>? inputFormatters,
+      }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboard,
+      readOnly: readOnly,
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         labelText: label,
         border:
@@ -578,6 +731,11 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
       ),
     );
   }
+
+  List<TextInputFormatter> number10DigitFormatter = [
+    FilteringTextInputFormatter.digitsOnly,
+    LengthLimitingTextInputFormatter(10),
+  ];
 
   Widget _buildDropdown({
     required String label,
