@@ -108,6 +108,10 @@ class Urls {
   static const String product_categories_url = base_url+"api/product_category";
   static const String product_subcategories_url = base_url+"api/product_subcategory";
 
+  //Shiksha Sahayata
+  static const String create_shiksha_application_url = base_url+"api/create_shiksha_application";
+  static const String update_father_data_url = base_url+"api/update_father_data";
+
   // Notification API URLs - Following same pattern as device_mapping
   static const String get_all_notifications_url = base_url+"api/notifications/get_all";
   static const String mark_notification_read_url = base_url+"api/notifications/mark_read";

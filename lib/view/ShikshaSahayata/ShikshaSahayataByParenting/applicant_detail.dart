@@ -29,7 +29,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
   File? addressProofFile;
   final ImagePicker _picker = ImagePicker();
   UdateProfileController controller = Get.put(UdateProfileController());
-  NewMemberController regiController = Get.put(NewMemberController());
+  NewMemberController regiController = Get.find<NewMemberController>();
 
   final TextEditingController firstNameCtrl = TextEditingController();
   final TextEditingController middleNameCtrl = TextEditingController();
@@ -62,15 +62,33 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
   @override
   void initState() {
     super.initState();
+    _initializeData();
+  }
 
-    controller.getUserProfile();
+  Future<void> _initializeData() async {
+    await controller.getUserProfile();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!hasApplicant) {
-        _prefillFatherFromUser();
-        _showAddApplicantModalSheet(context);
+    // 🔥 IMPORTANT — LOAD STATES FIRST
+    await regiController.getState();
+
+    final address = controller.getUserData.value.address;
+
+    if (address != null && address.stateId != null) {
+      regiController.setSelectedState(address.stateId.toString());
+
+      // load cities for that state
+      await regiController.getCityByState(address.stateId.toString());
+
+      if (address.city_id != null) {
+        regiController.setSelectedCity(address.city_id.toString());
       }
-    });
+    }
+
+    _prefillFatherFromUser();
+
+    if (!hasApplicant) {
+      _showAddApplicantModalSheet(context);
+    }
   }
 
   void _prefillFatherFromUser() {

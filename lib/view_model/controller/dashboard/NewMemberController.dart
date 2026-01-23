@@ -295,14 +295,16 @@ class NewMemberController extends GetxController {
     });
   }
 
-  void getState() {
+  Future<void> getState() async {
     setRxRequestState(Status.LOADING);
-    api.StateApi().then((_value) {
+
+    try {
+      final response = await api.StateApi();
+      setState(response.data!);
       setRxRequestState(Status.COMPLETE);
-      setState(_value.data!);
-    }).onError((error, strack) {
+    } catch (e) {
       setRxRequestState(Status.ERROR);
-    });
+    }
   }
 
   void getCity() {
@@ -318,6 +320,24 @@ class NewMemberController extends GetxController {
       setRxRequestCity(Status.ERROR);
     });
   }
+
+  Future<void> getCityByState(String stateId) async {
+    setRxRequestCity(Status.LOADING);
+
+    try {
+      final response = await api.CityApi();
+
+      final filteredCities = response.data!
+          .where((city) => city.stateId.toString() == stateId)
+          .toList();
+
+      setCity(filteredCities);
+      setRxRequestCity(Status.COMPLETE);
+    } catch (e) {
+      setRxRequestCity(Status.ERROR);
+    }
+  }
+
 
   void setSaraswaniOption(String value) {
     saraswaniOptionId.value = value;
