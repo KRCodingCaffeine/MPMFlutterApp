@@ -20,6 +20,22 @@ class NotificationService {
 
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   static const String _badgeKey = "badge_count";
+  static final Set<String> _processedMessageIds = <String>{};
+  
+  // Check if message has already been processed (to prevent duplicates)
+  static bool isMessageProcessed(String messageId) {
+    return _processedMessageIds.contains(messageId);
+  }
+  
+  // Mark message as processed
+  static void markMessageProcessed(String messageId) {
+    _processedMessageIds.add(messageId);
+    // Clean up old message IDs (keep only last 100)
+    if (_processedMessageIds.length > 100) {
+      final toRemove = _processedMessageIds.take(_processedMessageIds.length - 100).toList();
+      _processedMessageIds.removeAll(toRemove);
+    }
+  }
 
   Future<void> init() async {
     // Initialize Awesome Notifications
@@ -98,7 +114,7 @@ class NotificationService {
     if (initialMessage != null) {
       handleNotificationTap(initialMessage);
     }
-    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    // Note: Background handler is registered in main.dart, don't register here to avoid duplicates
 
     // Token
     final token = await _messaging.getToken();
@@ -132,6 +148,14 @@ class NotificationService {
     debugPrint("   Sent Time: ${message.sentTime}");
     debugPrint("   Platform: ${Platform.isIOS ? 'iOS' : 'Android'}");
     debugPrint("   Has notification payload: ${message.notification != null}");
+    
+    // Prevent duplicate processing
+    final messageId = message.messageId ?? '${message.sentTime?.millisecondsSinceEpoch ?? DateTime.now().millisecondsSinceEpoch}';
+    if (isMessageProcessed(messageId)) {
+      debugPrint("⚠️ Duplicate message detected, skipping: $messageId");
+      return;
+    }
+    markMessageProcessed(messageId);
     
     try {
       final service = NotificationService();
@@ -1067,6 +1091,15 @@ class NotificationService {
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   debugPrint("🔥 Background FCM received: ${message.data}");
+  
+  // Prevent duplicate processing
+  final messageId = message.messageId ?? '${message.sentTime?.millisecondsSinceEpoch ?? DateTime.now().millisecondsSinceEpoch}';
+  if (NotificationService.isMessageProcessed(messageId)) {
+    debugPrint("⚠️ Duplicate background message detected, skipping: $messageId");
+    return;
+  }
+  NotificationService.markMessageProcessed(messageId);
+  
   try {
     // Initialize Firebase for background context
     await Firebase.initializeApp();
@@ -1116,8 +1149,15 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     // Handle the notification in background-safe way
     await NotificationService.handleIncomingFCMBackground(message);
     
-    // Also create a local notification to ensure it shows on device
-    await NotificationService.createLocalNotificationFromMessage(message);
+    // Only create a local notification if this is a data-only message (no notification payload)
+    // If the message has a notification payload, the system will display it automatically
+    // Creating a local notification here would cause duplicates
+    if (message.notification == null) {
+      debugPrint("📱 Data-only message detected, creating local notification");
+      await NotificationService.createLocalNotificationFromMessage(message);
+    } else {
+      debugPrint("📱 Notification payload detected, system will handle display");
+    }
     
     debugPrint("✅ Background notification handled successfully");
   } catch (e) {
