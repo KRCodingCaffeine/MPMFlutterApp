@@ -72,6 +72,15 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
   String age = '';
   String aadhar = '';
   String anniversary = '';
+  String landline = '';
+  String fatherName = '';
+  String motherName = '';
+  String fatherEmail = '';
+  String fatherMobile = '';
+  String fatherAddress = '';
+  String fatherCityName = '';
+  String fatherStateName = '';
+
 
   @override
   void initState() {
@@ -430,58 +439,52 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
       child: Card(
         color: Colors.white,
         elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12)),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+
+              const Text(
+                "Applicant Details",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+
               _infoRow("Full Name", fullName),
               _infoRow("Email", email),
               _infoRow("Mobile", mobile),
+              _infoRow("Landline", landline),
               _infoRow("Date of Birth", dob),
               _infoRow("Age", age),
               _infoRow("Marital Status", maritalStatus),
+
+              const SizedBox(height: 20),
+              const Divider(),
               const SizedBox(height: 10),
-              // Row(
-              //   crossAxisAlignment: CrossAxisAlignment.start,
-              //   children: [
-              //     const SizedBox(
-              //       width: 130,
-              //       child: Text(
-              //         "Aadhaar :",
-              //         style: TextStyle(fontSize: 12),
-              //       ),
-              //     ),
-              //     Row(
-              //       crossAxisAlignment: CrossAxisAlignment.start,
-              //       children: [
-              //         const SizedBox(
-              //           width: 130,
-              //           child: Text(
-              //             "Aadhaar :",
-              //             style: TextStyle(fontSize: 12),
-              //           ),
-              //         ),
-              //         Expanded(
-              //           child: Column(
-              //             crossAxisAlignment: CrossAxisAlignment.start,
-              //             children: [
-              //               _buildAadhaarPreview(
-              //                 title: "Front",
-              //                 image: _aadharFrontImage,
-              //               ),
-              //               const SizedBox(height: 8),
-              //               _buildAadhaarPreview(
-              //                 title: "Back",
-              //                 image: _aadharBackImage,
-              //               ),
-              //             ],
-              //           ),
-              //         ),
-              //       ],
-              //     ),
-              //   ],
-              // ),
+
+              const Text(
+                "Father / Mother Details",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              _infoRow("Father Name", fatherName),
+              _infoRow("Mother Name", motherName),
+              _infoRow("Father Mobile", fatherMobile),
+              _infoRow("Father Email", fatherEmail),
+              _infoRow("Father Address", fatherAddress),
+              _infoRow("City", fatherCityName),
+              _infoRow("State", fatherStateName),
+
             ],
           ),
         ),
@@ -655,12 +658,33 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 ? () {
                               setState(() {
                                 fullName =
-                                "${firstNameCtrl.text} ${middleNameCtrl.text} ${lastNameCtrl.text}";
+                                    "${firstNameCtrl.text} ${middleNameCtrl.text} ${lastNameCtrl.text}"
+                                        .trim();
                                 email = emailCtrl.text;
                                 mobile = mobileCtrl.text;
+                                landline = landlineCtrl.text;
                                 dob = dobCtrl.text;
                                 age = ageCtrl.text;
                                 hasApplicant = true;
+
+                                fatherName = fatherNameCtrl.text;
+                                motherName = motherNameCtrl.text;
+                                fatherEmail = fatherEmailCtrl.text;
+                                fatherMobile = fatherMobileCtrl.text;
+
+                                fatherAddress = _safeAddress();
+
+                                fatherCityName = regiController.cityList
+                                    .firstWhereOrNull(
+                                        (e) => e.id.toString() == regiController.city_id.value)
+                                    ?.cityName ??
+                                    '';
+
+                                fatherStateName = regiController.stateList
+                                    .firstWhereOrNull(
+                                        (e) => e.id.toString() == regiController.state_id.value)
+                                    ?.stateName ??
+                                    '';
                               });
 
                               Navigator.pop(context);

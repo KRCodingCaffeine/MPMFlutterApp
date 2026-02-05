@@ -2,32 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/ShikshaSahayata/any_other_charity_fund.dart';
-import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/applicant_detail.dart';
 import 'package:mpm/view/ShikshaSahayata/current_year_education.dart';
 import 'package:mpm/view/ShikshaSahayata/education_detail.dart';
 import 'package:mpm/view/ShikshaSahayata/family_detail.dart';
 import 'package:mpm/view/ShikshaSahayata/mpm.dart';
 import 'package:mpm/view/ShikshaSahayata/other_charity_fund.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByYourself/applicant_detail_yourself.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class ShikshaSahayataByParentingView extends StatefulWidget {
-  const ShikshaSahayataByParentingView({super.key});
+class ShikshaSahayataByYourself extends StatefulWidget {
+  const ShikshaSahayataByYourself({super.key});
 
   @override
-  State<ShikshaSahayataByParentingView> createState() =>
-      _ShikshaSahayataByParentingViewState();
+  State<ShikshaSahayataByYourself> createState() =>
+      _ShikshaSahayataByYourselfState();
 }
 
-class _ShikshaSahayataByParentingViewState
-    extends State<ShikshaSahayataByParentingView> {
+class _ShikshaSahayataByYourselfState
+    extends State<ShikshaSahayataByYourself> {
+
   static const String _prefsApplicantIdKey = 'shiksha_applicant_id';
 
   bool applicantCompleted = false;
-  bool familyCompleted = false;
-  bool educationCompleted = false;
-  bool currentYearCompleted = false;
-  bool previousLoanCompleted = false;
-  bool otherLoanCompleted = false;
 
   @override
   void initState() {
@@ -41,11 +37,6 @@ class _ShikshaSahayataByParentingViewState
 
     setState(() {
       applicantCompleted = applicantId != null && applicantId.isNotEmpty;
-      familyCompleted = false;
-      educationCompleted = false;
-      currentYearCompleted = false;
-      previousLoanCompleted = false;
-      otherLoanCompleted = false;
     });
   }
 
@@ -57,7 +48,7 @@ class _ShikshaSahayataByParentingViewState
         backgroundColor:
         ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: const Text(
-          "Shiksha Sahayata For Children",
+          "Shiksha Sahayata For Yourself",
           style: TextStyle(color: Colors.white),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
@@ -74,9 +65,10 @@ class _ShikshaSahayataByParentingViewState
               onTap: () async {
                 await Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const ApplicantDetail()),
+                  MaterialPageRoute(
+                      builder: (_) => const ApplicantDetailYourself()),
                 );
-                setState(() => applicantCompleted = true);
+                await loadProgress();
               },
             ),
 
@@ -99,7 +91,8 @@ class _ShikshaSahayataByParentingViewState
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const EducationDetailView()),
+                  MaterialPageRoute(
+                      builder: (_) => const EducationDetailView()),
                 );
               },
             ),
@@ -162,7 +155,6 @@ class _ShikshaSahayataByParentingViewState
     );
   }
 
-  /// DISABLED / ENABLED STEP BUTTON
   Widget buildStepButton({
     required String title,
     required IconData icon,

@@ -8,6 +8,7 @@ import 'package:mpm/view/OutsideMumbaiLogin/outside_mumbai_login.dart';
 import 'package:mpm/view/QRCodeScanner/qr_code.dart';
 import 'package:mpm/view/Saraswanilabel/saraswani_label.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/shiksha_sahayata_by_parenting_view.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByYourself/shiksha_sahayata_by_yourself.dart';
 import 'package:mpm/view/ShikshaSahayata/shiksha_sahayata_view.dart';
 import 'package:mpm/view/addmember/add_member_first.dart';
 import 'package:mpm/view/addmember/add_member_second.dart';
@@ -122,6 +123,10 @@ class RoutePages {
       // Shiksha Sahayata By Parenting
       case RouteNames.shiksha_sahayata_by_parenting:
         return _buildRoute(ShikshaSahayataByParentingView(), settings);
+
+      // Shiksha Sahayata By Yourself
+      case RouteNames.shiksha_sahayata_by_yourself:
+        return _buildRoute(ShikshaSahayataByYourself(), settings);
 
       // OutSide Mumbai Login
       case RouteNames.outside_mumbai_login:

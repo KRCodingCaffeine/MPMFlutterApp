@@ -31,7 +31,7 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
       ),
       body: Center(
         child: SizedBox(
-          width: 320, // 🔽 reduce width (adjust: 280–360)
+          width: 320,
           child: Card(
             color: Colors.white,
             elevation: 6,
@@ -43,7 +43,6 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // 🎓 Icon
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
@@ -135,7 +134,7 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: const [
               Text(
-                " Mandatory Documents Required",
+                "Documents Required to complete your application",
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -150,7 +149,7 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                "Please ensure the following documents are available before proceeding with the application.",
+                "Please ensure the following documents are available with you before submit with the application.",
                 style:
                     TextStyle(fontSize: 16, color: Colors.black87, height: 1.4),
               ),
@@ -161,7 +160,8 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
               ),
               _bulletRichText(
                 prefix: "Copy of ",
-                bold: "Address proof (If Aadhar and current address are not the same)",
+                bold:
+                    "Address proof (If Aadhar and current address are not the same)",
               ),
               _bulletRichText(
                 prefix: "Copy of ",
@@ -170,10 +170,12 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
               const SizedBox(height: 8),
               _bulletRichText(
                 prefix:
-                    "Copy of Bonafide Certificate & Fees Structure by authority from college",
+                    "Copy of ",
+                bold: "Bonafide Certificate & Fees Structure by authority from college",
               ),
               _bulletRichText(
-                prefix: "Copy of ", bold: "Marksheet starting from Class X",
+                prefix: "Copy of ",
+                bold: "Marksheet starting from Class X",
               ),
               _bulletRichText(
                 prefix: "Copy of ",
@@ -194,7 +196,7 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
                     Navigator.pop(context, true);
                   },
                   label: const Text(
-                    "OK, Understood",
+                    "OK, Understood, Click to proceed",
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -260,7 +262,11 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 OutlinedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(
+                        context, RouteNames.shiksha_sahayata_by_yourself);
+                  },
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Colors.red),
                     foregroundColor: Colors.red,
