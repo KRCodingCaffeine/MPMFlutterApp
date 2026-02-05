@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -9,11 +10,16 @@ import 'package:intl/intl.dart';
 import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/State/StateData.dart';
 import 'package:mpm/model/city/CityData.dart';
+import 'package:mpm/model/ShikshaSahayata/ApplicantDetail/CreateApplicantDetail/CreateApplicantDetailData.dart';
+import 'package:mpm/model/ShikshaSahayata/UpdateFatherDetail/UpdateFatherData.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/ApplicantDetailRepo/create_shiksha_application_repository/create_shiksha_application_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/UpdateFatherRepo/update_father_repository/update_father_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/ShikshaSahayata/family_detail.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApplicantDetail extends StatefulWidget {
   const ApplicantDetail({super.key});
@@ -23,13 +29,21 @@ class ApplicantDetail extends StatefulWidget {
 }
 
 class _ApplicantDetailState extends State<ApplicantDetail> {
+  static const String _prefsApplicantKey = 'shiksha_applicant_data';
+  static const String _prefsApplicantIdKey = 'shiksha_applicant_id';
+
   bool hasApplicant = false;
+  bool _isSubmitting = false;
   File? applicantAadharFile;
   File? fatherPanFile;
   File? addressProofFile;
   final ImagePicker _picker = ImagePicker();
   UdateProfileController controller = Get.put(UdateProfileController());
   NewMemberController regiController = Get.find<NewMemberController>();
+  final CreateShikshaApplicationRepository _createRepo =
+      CreateShikshaApplicationRepository();
+  final UpdateFatherRepository _updateFatherRepo = UpdateFatherRepository();
+  String? _shikshaApplicantId;
 
   final TextEditingController firstNameCtrl = TextEditingController();
   final TextEditingController middleNameCtrl = TextEditingController();
@@ -73,7 +87,9 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
 
     final address = controller.getUserData.value.address;
 
-    if (address != null && address.stateId != null) {
+    final loadedFromCache = await _loadSavedApplicant();
+
+    if (!loadedFromCache && address != null && address.stateId != null) {
       regiController.setSelectedState(address.stateId.toString());
 
       // load cities for that state
@@ -84,7 +100,9 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
       }
     }
 
-    _prefillFatherFromUser();
+    if (!loadedFromCache) {
+      _prefillFatherFromUser();
+    }
 
     if (!hasApplicant) {
       _showAddApplicantModalSheet(context);
@@ -111,7 +129,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     if (maritalStatus.isEmpty) return false;
 
     if (fatherNameCtrl.text.trim().isEmpty) return false;
-    if (motherNameCtrl.text.trim().isEmpty) return false;
     if (fatherMobileCtrl.text.trim().isEmpty) return false;
     if (regiController.city_id.value.isEmpty) return false;
     if (regiController.state_id.value.isEmpty) return false;
@@ -120,6 +137,248 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     if (fatherPanFile == null) return false;
 
     return true;
+  }
+
+  String _getMaritalStatusId() {
+    if (maritalStatus == "Married") return "1";
+    if (maritalStatus == "Unmarried") return "2";
+    return maritalStatus;
+  }
+
+  String _safeAddress() {
+    return controller.getUserData.value.address?.address?.toString() ?? '';
+  }
+
+  String _safeApplicantCityId() {
+    return controller.getUserData.value.address?.city_id?.toString() ??
+        regiController.city_id.value;
+  }
+
+  String _safeApplicantStateId() {
+    return controller.getUserData.value.address?.stateId?.toString() ??
+        regiController.state_id.value;
+  }
+
+  Future<void> _submitApplicantAndFather() async {
+    if (!_canSubmitApplicant) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please fill all required fields."),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_isSubmitting) return;
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final applicantData = CreateApplicantDetailData(
+        applicantFirstName: firstNameCtrl.text.trim(),
+        applicantMiddleName: middleNameCtrl.text.trim(),
+        applicantLastName: lastNameCtrl.text.trim(),
+        mobile: mobileCtrl.text.trim(),
+        email: emailCtrl.text.trim(),
+        landline: landlineCtrl.text.trim(),
+        dateOfBirth: _formatDobForApi(dobCtrl.text.trim()),
+        age: ageCtrl.text.trim(),
+        maritalStatusId: _getMaritalStatusId(),
+        applicantAddress: _safeAddress(),
+        applicantCityId: _safeApplicantCityId(),
+        applicantStateId: _safeApplicantStateId(),
+        appliedBy: controller.memberId.value,
+        createdBy: controller.memberId.value,
+      );
+
+      final createResponse =
+          await _createRepo.createShikshaApplication(
+        _stripCreateApplicantIds(applicantData.toJson()),
+      );
+
+      if (createResponse.status != true) {
+        throw Exception(createResponse.message ?? "Failed to create application");
+      }
+
+      final shikshaId = createResponse.data?.shikshaApplicantId ??
+          createResponse.data?.id;
+
+      if (shikshaId == null || shikshaId.isEmpty) {
+        throw Exception("Shiksha application ID not returned");
+      }
+
+      _shikshaApplicantId = shikshaId;
+      await _saveApplicantCache(shikshaId);
+
+      final fatherData = UpdateFatherData(
+        shikshaApplicantId: shikshaId,
+        applicantFatherName: fatherNameCtrl.text.trim(),
+        applicantMotherName: motherNameCtrl.text.trim(),
+        fatherEmail: fatherEmailCtrl.text.trim(),
+        fatherMobile: fatherMobileCtrl.text.trim(),
+        fatherAddress: _safeAddress(),
+        fatherCityId: regiController.city_id.value.isNotEmpty
+            ? regiController.city_id.value
+            : _safeApplicantCityId(),
+        fatherStateId: regiController.state_id.value.isNotEmpty
+            ? regiController.state_id.value
+            : _safeApplicantStateId(),
+        updatedBy: controller.memberId.value,
+      );
+
+      final updateResponse =
+          await _updateFatherRepo.updateFatherData(fatherData.toJson());
+
+      if (updateResponse.status != true) {
+        throw Exception(updateResponse.message ?? "Failed to update father data");
+      }
+
+      await _saveApplicantCache(shikshaId);
+
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => FamilyDetail()),
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Successfully submitted your applicant detail"),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+      });
+    }
+  }
+
+  Future<void> _saveApplicantCache(String shikshaId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final cache = <String, dynamic>{
+      'shiksha_applicant_id': shikshaId,
+      'applicant_first_name': firstNameCtrl.text.trim(),
+      'applicant_middle_name': middleNameCtrl.text.trim(),
+      'applicant_last_name': lastNameCtrl.text.trim(),
+      'mobile': mobileCtrl.text.trim(),
+      'email': emailCtrl.text.trim(),
+      'landline': landlineCtrl.text.trim(),
+      'date_of_birth': _formatDobForApi(dobCtrl.text.trim()),
+      'age': ageCtrl.text.trim(),
+      'marital_status_id': _getMaritalStatusId(),
+      'applicant_address': _safeAddress(),
+      'applicant_city_id': _safeApplicantCityId(),
+      'applicant_state_id': _safeApplicantStateId(),
+      'applicant_father_name': fatherNameCtrl.text.trim(),
+      'applicant_mother_name': motherNameCtrl.text.trim(),
+      'father_email': fatherEmailCtrl.text.trim(),
+      'father_mobile': fatherMobileCtrl.text.trim(),
+      'father_city_id': regiController.city_id.value,
+      'father_state_id': regiController.state_id.value,
+    };
+
+    await prefs.setString(_prefsApplicantKey, jsonEncode(cache));
+    await prefs.setString(_prefsApplicantIdKey, shikshaId);
+  }
+
+  Future<bool> _loadSavedApplicant() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_prefsApplicantKey);
+    if (raw == null || raw.isEmpty) return false;
+
+    try {
+      final Map<String, dynamic> map = jsonDecode(raw);
+      final data = CreateApplicantDetailData.fromJson(map);
+
+      _shikshaApplicantId =
+          map['shiksha_applicant_id']?.toString();
+
+      firstNameCtrl.text = data.applicantFirstName ?? '';
+      middleNameCtrl.text = data.applicantMiddleName ?? '';
+      lastNameCtrl.text = data.applicantLastName ?? '';
+      emailCtrl.text = data.email ?? '';
+      mobileCtrl.text = data.mobile ?? '';
+      landlineCtrl.text = data.landline ?? '';
+      dobCtrl.text = _formatDobForUi(data.dateOfBirth ?? '');
+      ageCtrl.text = data.age ?? '';
+      maritalStatus = _mapMaritalStatusLabel(data.maritalStatusId ?? '');
+
+      fatherNameCtrl.text = map['applicant_father_name']?.toString() ?? '';
+      motherNameCtrl.text = map['applicant_mother_name']?.toString() ?? '';
+      fatherEmailCtrl.text = map['father_email']?.toString() ?? '';
+      fatherMobileCtrl.text = map['father_mobile']?.toString() ?? '';
+
+      final cachedStateId = map['father_state_id']?.toString();
+      final cachedCityId = map['father_city_id']?.toString();
+
+      if (cachedStateId != null && cachedStateId.isNotEmpty) {
+        regiController.setSelectedState(cachedStateId);
+        await regiController.getCityByState(cachedStateId);
+      }
+      if (cachedCityId != null && cachedCityId.isNotEmpty) {
+        regiController.setSelectedCity(cachedCityId);
+      }
+
+      setState(() {
+        fullName =
+            "${firstNameCtrl.text} ${middleNameCtrl.text} ${lastNameCtrl.text}"
+                .trim();
+        email = emailCtrl.text;
+        mobile = mobileCtrl.text;
+        dob = dobCtrl.text;
+        age = ageCtrl.text;
+        hasApplicant = true;
+      });
+
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  String _formatDobForApi(String raw) {
+    if (raw.isEmpty) return raw;
+    try {
+      final parsed = DateFormat('dd/MM/yyyy').parseStrict(raw);
+      return DateFormat('yyyy-MM-dd').format(parsed);
+    } catch (_) {
+      return raw;
+    }
+  }
+
+  String _formatDobForUi(String raw) {
+    if (raw.isEmpty) return raw;
+    try {
+      final parsed = DateFormat('yyyy-MM-dd').parseStrict(raw);
+      return DateFormat('dd/MM/yyyy').format(parsed);
+    } catch (_) {
+      return raw;
+    }
+  }
+
+  String _mapMaritalStatusLabel(String value) {
+    if (value == "1") return "Married";
+    if (value == "2") return "Unmarried";
+    return value;
+  }
+
+  Map<String, dynamic> _stripCreateApplicantIds(
+      Map<String, dynamic> body) {
+    body.remove('shiksha_applicant_id');
+    body.remove('id');
+    return body;
   }
 
   @override
@@ -179,12 +438,9 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
               _infoRow("Full Name", fullName),
               _infoRow("Email", email),
               _infoRow("Mobile", mobile),
-              _infoRow("Gender", selectedGender),
               _infoRow("Date of Birth", dob),
               _infoRow("Age", age),
               _infoRow("Marital Status", maritalStatus),
-              if (maritalStatus == "Married")
-                _infoRow("Anniversary", anniversary),
               const SizedBox(height: 10),
               // Row(
               //   crossAxisAlignment: CrossAxisAlignment.start,
@@ -263,18 +519,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
             const SizedBox(width: 12),
 
             ElevatedButton(
-              onPressed: () {
-                Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => FamilyDetail()),
-                );
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Successfully sumbited your applicant detail"),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              },
+              onPressed: _isSubmitting ? null : _submitApplicantAndFather,
               style: ElevatedButton.styleFrom(
                 backgroundColor:
                 ColorHelperClass.getColorFromHex(ColorResources.red_color),
@@ -285,7 +530,16 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: const Text("Submit"),
+              child: _isSubmitting
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text("Submit"),
             ),
           ],
         ),
@@ -444,19 +698,23 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                               const SizedBox(height: 30),
 
                               _buildTextField("First Name *",
-                                  controller: firstNameCtrl),
+                                  controller: firstNameCtrl,
+                                  onChanged: (_) => setModalState(() {})),
                               const SizedBox(height: 20),
 
                               _buildTextField("Middle Name",
-                                  controller: middleNameCtrl),
+                                  controller: middleNameCtrl,
+                                  onChanged: (_) => setModalState(() {})),
                               const SizedBox(height: 20),
 
                               _buildTextField("Surname *",
-                                  controller: lastNameCtrl),
+                                  controller: lastNameCtrl,
+                                  onChanged: (_) => setModalState(() {})),
                               const SizedBox(height: 20),
 
                               _buildTextField("Email *",
-                                  controller: emailCtrl),
+                                  controller: emailCtrl,
+                                  onChanged: (_) => setModalState(() {})),
                               const SizedBox(height: 20),
 
                               _buildTextField(
@@ -464,6 +722,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 controller: mobileCtrl,
                                 keyboard: TextInputType.number,
                                 inputFormatters: number10DigitFormatter,
+                                onChanged: (_) => setModalState(() {}),
                               ),
                               const SizedBox(height: 20),
 
@@ -471,21 +730,25 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 "Landline Number",
                                 controller: landlineCtrl,
                                 keyboard: TextInputType.number,
+                                onChanged: (_) => setModalState(() {}),
                               ),
                               const SizedBox(height: 20),
 
                               _buildTextField(
                                 "Father's Name *",
                                 controller: fatherNameCtrl,
+                                onChanged: (_) => setModalState(() {}),
                               ),
                               const SizedBox(height: 20),
 
                               _buildTextField("Mother's Name",
-                                  controller: motherNameCtrl),
+                                  controller: motherNameCtrl,
+                                  onChanged: (_) => setModalState(() {})),
                               const SizedBox(height: 20),
 
                               _buildTextField("Father's Email *",
-                                  controller: fatherEmailCtrl),
+                                  controller: fatherEmailCtrl,
+                                  onChanged: (_) => setModalState(() {})),
                               const SizedBox(height: 20),
 
                               _buildTextField(
@@ -493,6 +756,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 controller: fatherMobileCtrl,
                                 keyboard: TextInputType.number,
                                 inputFormatters: number10DigitFormatter,
+                                onChanged: (_) => setModalState(() {}),
                               ),
                               const SizedBox(height: 20),
 
@@ -502,6 +766,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 hint: "Select DOB",
                                 controller: dobCtrl,
                                 calculateAge: true,
+                                onChanged: () => setModalState(() {}),
                               ),
                               const SizedBox(height: 20),
 
@@ -509,6 +774,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 "Age",
                                 controller: ageCtrl,
                                 readOnly: true,
+                                onChanged: (_) => setModalState(() {}),
                               ),
                               const SizedBox(height: 20),
 
@@ -578,6 +844,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                               onChanged: (val) {
                                                 if (val != null) {
                                                   regiController.setSelectedCity(val);
+                                                  setModalState(() {});
                                                 }
                                               },
                                             ),
@@ -643,6 +910,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                               onChanged: (val) {
                                                 if (val != null) {
                                                   regiController.setSelectedState(val);
+                                                  setModalState(() {});
                                                 }
                                               },
                                             ),
@@ -662,7 +930,14 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 onPick: () {
                                   _showImagePicker(
                                     context,
-                                        (file) => applicantAadharFile = file,
+                                        (file) {
+                                      setModalState(() {
+                                        applicantAadharFile = file;
+                                      });
+                                      setState(() {
+                                        applicantAadharFile = file;
+                                      });
+                                    },
                                   );
                                 },
                               ),
@@ -676,7 +951,14 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 onPick: () {
                                   _showImagePicker(
                                     context,
-                                        (file) => fatherPanFile = file,
+                                        (file) {
+                                      setModalState(() {
+                                        fatherPanFile = file;
+                                      });
+                                      setState(() {
+                                        fatherPanFile = file;
+                                      });
+                                    },
                                   );
                                 },
                               ),
@@ -687,11 +969,18 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 context: context,
                                 imageFile: addressProofFile,
                                 buttonText:
-                                "Address Proof (If Aadhaar address is not same)",
+                                "Address Proof (If Aadhaar and current address is not same)",
                                 onPick: () {
                                   _showImagePicker(
                                     context,
-                                        (file) => addressProofFile = file,
+                                        (file) {
+                                      setModalState(() {
+                                        addressProofFile = file;
+                                      });
+                                      setState(() {
+                                        addressProofFile = file;
+                                      });
+                                    },
                                   );
                                 },
                               ),
@@ -716,13 +1005,15 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     required TextEditingController controller,
     TextInputType keyboard = TextInputType.text,
     bool readOnly = false,
-        List<TextInputFormatter>? inputFormatters,
-      }) {
+    List<TextInputFormatter>? inputFormatters,
+    ValueChanged<String>? onChanged,
+  }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboard,
       readOnly: readOnly,
       inputFormatters: inputFormatters,
+      onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
         border:
@@ -827,6 +1118,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     required String hint,
     required TextEditingController controller,
     bool calculateAge = false,
+    VoidCallback? onChanged,
   }) {
     return SizedBox(
       width: double.infinity,
@@ -883,6 +1175,9 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
 
             if (calculateAge) {
               _calculateAgeFromDob(picked);
+            }
+            if (onChanged != null) {
+              onChanged();
             }
           }
         },
@@ -957,7 +1252,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                 final picked =
                 await _picker.pickImage(source: ImageSource.camera);
                 if (picked != null) {
-                  setState(() => onImagePicked(File(picked.path)));
+                  onImagePicked(File(picked.path));
                 }
               },
             ),
@@ -969,7 +1264,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                 final picked =
                 await _picker.pickImage(source: ImageSource.gallery);
                 if (picked != null) {
-                  setState(() => onImagePicked(File(picked.path)));
+                  onImagePicked(File(picked.path));
                 }
               },
             ),

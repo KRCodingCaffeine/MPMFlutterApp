@@ -1,4 +1,6 @@
 class CreateApplicantDetailData {
+  String? shikshaApplicantId;
+  String? id;
   String? applicantFirstName;
   String? applicantMiddleName;
   String? applicantLastName;
@@ -15,6 +17,8 @@ class CreateApplicantDetailData {
   String? createdBy;
 
   CreateApplicantDetailData({
+    this.shikshaApplicantId,
+    this.id,
     this.applicantFirstName,
     this.applicantMiddleName,
     this.applicantLastName,
@@ -32,6 +36,8 @@ class CreateApplicantDetailData {
   });
 
   CreateApplicantDetailData.fromJson(Map<String, dynamic> json) {
+    shikshaApplicantId = json['shiksha_applicant_id']?.toString();
+    id = json['id']?.toString();
     applicantFirstName = json['applicant_first_name'];
     applicantMiddleName = json['applicant_middle_name'];
     applicantLastName = json['applicant_last_name'];
@@ -50,6 +56,8 @@ class CreateApplicantDetailData {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = {};
+    data['shiksha_applicant_id'] = shikshaApplicantId;
+    data['id'] = id;
     data['applicant_first_name'] = applicantFirstName;
     data['applicant_middle_name'] = applicantMiddleName;
     data['applicant_last_name'] = applicantLastName;

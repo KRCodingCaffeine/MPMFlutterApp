@@ -8,6 +8,7 @@ import 'package:mpm/view/ShikshaSahayata/education_detail.dart';
 import 'package:mpm/view/ShikshaSahayata/family_detail.dart';
 import 'package:mpm/view/ShikshaSahayata/mpm.dart';
 import 'package:mpm/view/ShikshaSahayata/other_charity_fund.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ShikshaSahayataByParentingView extends StatefulWidget {
   const ShikshaSahayataByParentingView({super.key});
@@ -19,6 +20,7 @@ class ShikshaSahayataByParentingView extends StatefulWidget {
 
 class _ShikshaSahayataByParentingViewState
     extends State<ShikshaSahayataByParentingView> {
+  static const String _prefsApplicantIdKey = 'shiksha_applicant_id';
 
   bool applicantCompleted = false;
   bool familyCompleted = false;
@@ -33,9 +35,12 @@ class _ShikshaSahayataByParentingViewState
     loadProgress();
   }
 
-  void loadProgress() {
+  Future<void> loadProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    final applicantId = prefs.getString(_prefsApplicantIdKey);
+
     setState(() {
-      applicantCompleted = false;
+      applicantCompleted = applicantId != null && applicantId.isNotEmpty;
       familyCompleted = false;
       educationCompleted = false;
       currentYearCompleted = false;
@@ -89,7 +94,7 @@ class _ShikshaSahayataByParentingViewState
             ),
 
             buildStepButton(
-              title: "Education Detail",
+              title: "Education History (Other Than Current Year)",
               icon: Icons.menu_book,
               isEnabled: familyCompleted,
               onTap: () async {
@@ -102,7 +107,7 @@ class _ShikshaSahayataByParentingViewState
             ),
 
             buildStepButton(
-              title: "Current Year Education",
+              title: "Current Year Education & Loan Requested From MPM",
               icon: Icons.school,
               isEnabled: educationCompleted,
               onTap: () async {
@@ -116,21 +121,7 @@ class _ShikshaSahayataByParentingViewState
             ),
 
             buildStepButton(
-              title: "Previous Years: Loan Availed",
-              icon: Icons.volunteer_activism,
-              isEnabled: currentYearCompleted,
-              onTap: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const OtherCharityFundView()),
-                );
-                setState(() => previousLoanCompleted = true);
-              },
-            ),
-
-            buildStepButton(
-              title: "Current Year: Any Other Applied Loan",
+              title: "Current Year Loan Applied / Received Elsewhere",
               icon: Icons.handshake,
               isEnabled: previousLoanCompleted,
               onTap: () async {
@@ -144,7 +135,21 @@ class _ShikshaSahayataByParentingViewState
             ),
 
             buildStepButton(
-              title: "MPM Verification",
+              title: "Received Loan in Past",
+              icon: Icons.volunteer_activism,
+              isEnabled: currentYearCompleted,
+              onTap: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const OtherCharityFundView()),
+                );
+                setState(() => previousLoanCompleted = true);
+              },
+            ),
+
+            buildStepButton(
+              title: "References",
               icon: Icons.verified,
               isEnabled: otherLoanCompleted,
               onTap: () {
