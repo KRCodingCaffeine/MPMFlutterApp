@@ -36,6 +36,8 @@ class BusinessOccupationProfile {
   String? businessLandline;
   String? businessEmail;
   String? businessWebsite;
+  String? businessProfileDocument;
+  String? businessProfileDocumentUrl;
   String? createdAt;
   String? updatedAt;
   List<BusinessAddressData>? addresses;
@@ -49,6 +51,8 @@ class BusinessOccupationProfile {
     this.businessLandline,
     this.businessEmail,
     this.businessWebsite,
+    this.businessProfileDocument,
+    this.businessProfileDocumentUrl,
     this.createdAt,
     this.updatedAt,
     this.addresses,
@@ -63,6 +67,8 @@ class BusinessOccupationProfile {
     businessLandline = json['business_landline'];
     businessEmail = json['business_email'];
     businessWebsite = json['business_website'];
+    businessProfileDocument = json['business_profile_document'];
+    businessProfileDocumentUrl = json['business_profile_document_url'];
     createdAt = json['created_at'];
     updatedAt = json['updated_at'];
 

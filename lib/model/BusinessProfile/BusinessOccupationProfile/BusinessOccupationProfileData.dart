@@ -9,6 +9,8 @@ class BusinessOccupationProfileData {
   String? businessLandline;
   String? businessEmail;
   String? businessWebsite;
+  String? businessProfileDocument;
+  String? businessProfileDocumentUrl;
   String? createdBy;
   String? createdAt;
   String? updatedBy;
@@ -24,6 +26,8 @@ class BusinessOccupationProfileData {
     this.businessLandline,
     this.businessEmail,
     this.businessWebsite,
+    this.businessProfileDocument,
+    this.businessProfileDocumentUrl,
     this.createdBy,
     this.createdAt,
     this.updatedBy,
@@ -41,6 +45,8 @@ class BusinessOccupationProfileData {
     businessLandline = json['business_landline'];
     businessEmail = json['business_email'];
     businessWebsite = json['business_website'];
+    businessProfileDocument = json['business_profile_document'];
+    businessProfileDocumentUrl = json['business_profile_document_url'];
     createdBy = json['created_by'];
     createdAt = json['created_at'];
     updatedBy = json['updated_by'];
@@ -66,6 +72,8 @@ class BusinessOccupationProfileData {
     json['business_landline'] = businessLandline;
     json['business_email'] = businessEmail;
     json['business_website'] = businessWebsite;
+    json['business_profile_document'] = businessProfileDocument;
+    json['business_profile_document_url'] = businessProfileDocumentUrl;
     json['created_by'] = createdBy;
     json['created_at'] = createdAt;
     json['updated_by'] = updatedBy;

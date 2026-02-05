@@ -7,6 +7,7 @@ class NetworkFilters {
   final List<String> subSubcategories;
   final List<String> productCategories;
   final List<String> productSubcategories;
+  final List<String> zones;
 
   const NetworkFilters({
     this.occupations = const [],
@@ -16,6 +17,7 @@ class NetworkFilters {
     this.subSubcategories = const [],
     this.productCategories = const [],
     this.productSubcategories = const [],
+    this.zones = const [],
   });
 
   factory NetworkFilters.empty() => const NetworkFilters();
@@ -28,6 +30,7 @@ class NetworkFilters {
     List<String>? subSubcategories,
     List<String>? productCategories,
     List<String>? productSubcategories,
+    List<String>? zones,
   }) {
     return NetworkFilters(
       occupations: occupations ?? this.occupations,
@@ -37,6 +40,7 @@ class NetworkFilters {
       subSubcategories: subSubcategories ?? this.subSubcategories,
       productCategories: productCategories ?? this.productCategories,
       productSubcategories: productSubcategories ?? this.productSubcategories,
+      zones: zones ?? this.zones,
     );
   }
 
@@ -47,7 +51,8 @@ class NetworkFilters {
           subcategories.isNotEmpty ||
           subSubcategories.isNotEmpty ||
           productCategories.isNotEmpty ||
-          productSubcategories.isNotEmpty;
+          productSubcategories.isNotEmpty ||
+          zones.isNotEmpty;
 
   // Convert to query string for GET requests
   String toQueryString() {
@@ -88,6 +93,11 @@ class NetworkFilters {
         params.add('product_subcategories[]=${Uri.encodeComponent(subcategory)}');
       }
     }
+    if (zones.isNotEmpty) {
+      for (var zone in zones) {
+        params.add('zones[]=${Uri.encodeComponent(zone)}');
+      }
+    }
 
     return params.join('&');
   }
@@ -116,6 +126,9 @@ class NetworkFilters {
     }
     if (productSubcategories.isNotEmpty) {
       json['product_subcategories'] = productSubcategories;
+    }
+    if (zones.isNotEmpty) {
+      json['zones'] = zones;
     }
 
     return json;

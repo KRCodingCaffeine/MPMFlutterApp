@@ -296,29 +296,39 @@ class NewMemberController extends GetxController {
   }
 
   Future<void> getState() async {
-    setRxRequestState(Status.LOADING);
-
     try {
+      setRxRequestState(Status.LOADING);
+
       final response = await api.StateApi();
-      setState(response.data!);
+      List<StateData> states = response.data ?? [];
+
+      final List<StateData> reorderedStates = [
+        ...states.where((s) => s.id == '2'),
+        ...states.where((s) => s.id == '22'),
+        ...states.where((s) => s.id != '2' && s.id != '22'),
+      ];
+
       setRxRequestState(Status.COMPLETE);
+      setState(reorderedStates);
     } catch (e) {
       setRxRequestState(Status.ERROR);
     }
   }
 
-  void getCity() {
-    setRxRequestCity(Status.LOADING);
-    api.CityApi().then((_value) {
+  Future<void> getCity() async {
+    try {
+      setRxRequestCity(Status.LOADING);
+      final _value = await api.CityApi();
       setRxRequestCity(Status.COMPLETE);
       setCity(_value.data!);
+
       final ids = cityList.map((e) => e.id.toString()).toList();
       final duplicates =
-          ids.toSet().where((id) => ids.where((x) => x == id).length > 1);
+      ids.toSet().where((id) => ids.where((x) => x == id).length > 1);
       print('Duplicate IDs: $duplicates');
-    }).onError((error, strack) {
+    } catch (e) {
       setRxRequestCity(Status.ERROR);
-    });
+    }
   }
 
   Future<void> getCityByState(String stateId) async {

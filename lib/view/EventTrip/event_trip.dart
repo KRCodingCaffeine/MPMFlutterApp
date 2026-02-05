@@ -11,6 +11,8 @@ import 'package:mpm/view/EventTrip/event_trip_detail.dart';
 import 'package:mpm/view/EventTrip/member_registered_trip.dart';
 import 'package:mpm/view/EventTrip/member_registered_trip_detail.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
+import 'package:mpm/view_model/controller/notification/NotificationApiController.dart';
+import 'dart:math' as math;
 
 class EventTripPage extends StatefulWidget {
   const EventTripPage({Key? key}) : super(key: key);
@@ -19,9 +21,11 @@ class EventTripPage extends StatefulWidget {
   _EventTripPageState createState() => _EventTripPageState();
 }
 
-class _EventTripPageState extends State<EventTripPage> {
+class _EventTripPageState extends State<EventTripPage> with SingleTickerProviderStateMixin {
   final EventTripRepository _tripRepo = EventTripRepository();
   final ZoneRepository _zoneRepo = ZoneRepository();
+  late NotificationApiController notificationController;
+  late AnimationController _pulseController;
 
   List<GetEventTripData> _upcomingTrips = [];
   List<GetEventTripData> _pastTrips = [];
@@ -45,8 +49,29 @@ class _EventTripPageState extends State<EventTripPage> {
   @override
   void initState() {
     super.initState();
+    // Initialize notification controller
+    if (Get.isRegistered<NotificationApiController>()) {
+      notificationController = Get.find<NotificationApiController>();
+    } else {
+      notificationController = Get.put(NotificationApiController());
+    }
+    // Initialize pulse animation controller
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+    
+    // Note: We no longer mark all trips notifications as read when entering the view
+    // Instead, we mark specific notifications when clicking individual trips
+    
     _fetchZones();
     _fetchTrips();
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchZones() async {
@@ -203,7 +228,12 @@ class _EventTripPageState extends State<EventTripPage> {
     }
 
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
+        // Mark notifications as read for this specific trip
+        if (trip.tripId != null) {
+          await notificationController.markNotificationsAsReadByEventOfferId(trip.tripId!);
+        }
+        
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -211,161 +241,191 @@ class _EventTripPageState extends State<EventTripPage> {
           ),
         );
       },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.2),
-                spreadRadius: 1,
-                blurRadius: 3,
-                offset: const Offset(0, 1),
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // 📅 Date Section
-              Container(
-                width: 60,
-                padding: const EdgeInsets.only(top: 4),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      day,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+      child: FutureBuilder<bool>(
+        future: trip.tripId != null 
+            ? notificationController.hasUnreadNotificationsByEventOfferId(trip.tripId!)
+            : Future.value(false),
+        builder: (context, snapshot) {
+          final hasUnread = snapshot.data ?? false;
+          return AnimatedBuilder(
+            animation: _pulseController,
+            builder: (context, _) {
+            final pulseValue = hasUnread ? _pulseController.value : 0.0;
+            final borderWidth = hasUnread ? 2.0 + (pulseValue * 1.5) : 0.0;
+            final glowOpacity = hasUnread ? 0.4 + (pulseValue * 0.3) : 0.0;
+            final shadowBlur = hasUnread ? 8.0 + (pulseValue * 4.0) : 2.0;
+            
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: hasUnread 
+                      ? Border.all(
+                          color: ColorHelperClass.getColorFromHex(ColorResources.logo_color).withOpacity(0.8 + pulseValue * 0.2),
+                          width: borderWidth,
+                        )
+                      : null,
+                  boxShadow: [
+                    if (hasUnread)
+                      BoxShadow(
+                        color: ColorHelperClass.getColorFromHex(ColorResources.logo_color).withOpacity(glowOpacity),
+                        spreadRadius: 0,
+                        blurRadius: shadowBlur,
+                        offset: const Offset(0, 0),
                       ),
-                    ),
-                    Text(
-                      month,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 1,
+                      blurRadius: 3,
+                      offset: const Offset(0, 1),
                     ),
                   ],
                 ),
-              ),
-
-              const SizedBox(width: 8),
-              Container(
-                height: 100,
-                width: 1,
-                color: Colors.grey[400],
-              ),
-              const SizedBox(width: 12),
-
-              // 📋 Trip Details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Trip Name
-                    Text(
-                      trip.tripName ?? '',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                        fontSize: 18,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-
-                    // Samiti Organisers
-                    if (trip.samitiOrganisers != null &&
-                        trip.samitiOrganisers!.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: RichText(
-                          text: TextSpan(
-                            style: const TextStyle(fontSize: 12),
-                            children: [
-                              const TextSpan(
-                                text: "By: ",
-                                style: TextStyle(
-                                  color: Colors.black54,
-                                  fontWeight: FontWeight.normal,
-                                ),
-                              ),
-                              TextSpan(
-                                text: trip.samitiOrganisers!
-                                    .map((organiser) => organiser
-                                    .subCategory
-                                    ?.samitiSubCategoryName ??
-                                    'Unknown')
-                                    .join(', '),
-                                style: const TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                    // Coordinator
-                    Text.rich(
-                      TextSpan(
+                    // 📅 Date Section
+                    Container(
+                      width: 60,
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const TextSpan(
-                            text: 'Coordinator: ',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 14,
+                          Text(
+                            day,
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          TextSpan(
-                            text: trip.tripOrganiserName
-                                ?.split(',')
-                                .join(', ') ??
-                                'Unknown',
-                            style: TextStyle(
-                              color: Colors.grey[700],
+                          Text(
+                            month,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+                    Container(
+                      height: 100,
+                      width: 1,
+                      color: Colors.grey[400],
+                    ),
+                    const SizedBox(width: 12),
+
+                    // 📋 Trip Details
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Trip Name
+                          Text(
+                            trip.tripName ?? '',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                              fontSize: 18,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+
+                          // Samiti Organisers
+                          if (trip.samitiOrganisers != null &&
+                              trip.samitiOrganisers!.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 4),
+                              child: RichText(
+                                text: TextSpan(
+                                  style: const TextStyle(fontSize: 12),
+                                  children: [
+                                    const TextSpan(
+                                      text: "By: ",
+                                      style: TextStyle(
+                                        color: Colors.black54,
+                                        fontWeight: FontWeight.normal,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: trip.samitiOrganisers!
+                                          .map((organiser) => organiser
+                                          .subCategory
+                                          ?.samitiSubCategoryName ??
+                                          'Unknown')
+                                          .join(', '),
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                          // Coordinator
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                const TextSpan(
+                                  text: 'Coordinator: ',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: trip.tripOrganiserName
+                                      ?.split(',')
+                                      .join(', ') ??
+                                      'Unknown',
+                                  style: TextStyle(
+                                    color: Colors.grey[700],
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+
+                          // Description
+                          SizedBox(
+                            width: double.infinity,
+                            child: Text(
+                              trip.tripDescription ?? '',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+
+                          // Registration Last Date
+                          Text(
+                            "Registration Last Date: $formattedLastDate",
+                            style: const TextStyle(
+                              color: Colors.black54,
                               fontSize: 14,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 4),
-
-                    // Description
-                    SizedBox(
-                      width: double.infinity,
-                      child: Text(
-                        trip.tripDescription ?? '',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-
-                    // Registration Last Date
-                    Text(
-                      "Registration Last Date: $formattedLastDate",
-                      style: const TextStyle(
-                        color: Colors.black54,
-                        fontSize: 14,
-                      ),
-                    ),
                   ],
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
+            );
+          },
+        );
+      }),
     );
   }
 

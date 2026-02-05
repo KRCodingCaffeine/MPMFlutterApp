@@ -34,6 +34,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
   NewMemberController regiController = Get.put(NewMemberController());
   UdateProfileController controller = Get.put(UdateProfileController());
   final updateOccupationRepo = UpdateOccupationRepository();
+  final GlobalKey<FormState> _occupationFormKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -102,6 +103,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
     // print('Level 3: ${occupation.specializationName}');
     // print('Level 4: ${occupation.specializationSubCategoryName}');
     // print('Level 5: ${occupation.specializationSubSubCategoryName}');
+    final bool isStudent = occupation.occupationId == 6 ||
+        occupation.occupationId?.toString() == "6";
     return Column(
       children: [
         Card(
@@ -136,7 +139,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                         backgroundColor: const Color(0xFFDC3545),
                         foregroundColor: Colors.white,
                         elevation: 4,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -150,7 +154,6 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                         ),
                       ),
                     )
-
                   ],
                 ),
 
@@ -162,24 +165,26 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                   'Level 1',
                   subtitle: occupation.occupation ?? 'Other',
                 ),
-                _buildInfoBox(
-                  'Level 2',
-                  subtitle: occupation.occupationProfessionName ?? 'Other',
-                ),
-                _buildInfoBox(
-                  'Level 3',
-                  subtitle: occupation.specializationName ?? 'Other',
-                ),
-                _buildInfoBox(
-                  'Level 4',
-                  // Use the correct property name for sub-category
-                  subtitle: occupation.specializationSubCategoryName ?? 'Other',
-                ),
-                _buildInfoBox(
-                  'Level 5',
-                  // Use the correct property name for sub-sub-category
-                  subtitle: occupation.specializationSubSubCategoryName ?? 'Other',
-                ),
+                // LEVEL 2 & 3 (HIDDEN for Student)
+                if (!isStudent) ...[
+                  _buildInfoBox(
+                    'Level 2',
+                    subtitle: occupation.occupationProfessionName ?? 'Other',
+                  ),
+                  _buildInfoBox(
+                    'Level 3',
+                    subtitle: occupation.specializationName ?? 'Other',
+                  ),
+                ],
+
+                // _buildInfoBox(
+                //   'Level 4',
+                //   subtitle: occupation.specializationSubCategoryName ?? 'Other',
+                // ),
+                // _buildInfoBox(
+                //   'Level 5',
+                //   subtitle: occupation.specializationSubSubCategoryName ?? 'Other',
+                // ),
 
                 // OTHER DETAILS (If exists)
                 if (occupation.occupationOtherName != null &&
@@ -293,6 +298,10 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                   ),
                   ElevatedButton(
                     onPressed: () async {
+                      if (!_occupationFormKey.currentState!.validate()) {
+                        return;
+                      }
+
                       await controller.addOccupation();
                       if (mounted) Navigator.pop(context);
                     },
@@ -313,12 +322,15 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                               strokeWidth: 2,
                             ),
                           )
-                        : const Text("Save"),
+                        : const Text("Submit"),
                   ),
                 ],
               ),
               const SizedBox(height: 20),
-              _buildOccupationForm(),
+              Form(
+                key: _occupationFormKey,
+                child: _buildOccupationForm(),
+              ),
             ],
           ),
         );
@@ -367,6 +379,10 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                         ),
                         ElevatedButton(
                           onPressed: () async {
+                            if (!_occupationFormKey.currentState!.validate()) {
+                              return;
+                            }
+
                             await _updateOccupation(occupation);
                             if (mounted) Navigator.pop(context);
                           },
@@ -392,7 +408,10 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                       ],
                     ),
                     const SizedBox(height: 20),
-                    _buildOccupationForm(),
+                    Form(
+                      key: _occupationFormKey,
+                      child: _buildOccupationForm(),
+                    ),
                   ],
                 ),
               ),
@@ -411,33 +430,61 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
     });
   }
 
-  void _initOccupationDataForEdit(Occupation occupation) {
-    // Initialize form fields with existing occupation data
+  void _initOccupationDataForEdit(Occupation occupation) async {
     controller.selectedOccupation.value =
         occupation.occupationId?.toString() ?? "";
+
     controller.selectedProfession.value =
         occupation.occupationProfessionId?.toString() ?? "";
+
     controller.selectedSpecialization.value =
         occupation.occupationSpecializationId?.toString() ?? "";
+
     controller.selectedSubCategory.value =
         occupation.occupationSpecializationSubCategoryId?.toString() ?? "";
+
+    controller.selectedSubSubCategory.value =
+        occupation.occupationSpecializationSubSubCategoryId?.toString() ?? "";
+
     controller.detailsController.value.text =
         occupation.occupationOtherName ?? "";
 
-    // Set the current occupation for update
     controller.currentOccupation.value = occupation;
 
-    // Load dependent data based on the selected values
     if (controller.selectedOccupation.value.isNotEmpty &&
         controller.selectedOccupation.value != "0") {
-      controller.getOccupationProData(controller.selectedOccupation.value);
+      await controller
+          .getOccupationProData(controller.selectedOccupation.value);
+    }
+
+    if (controller.selectedProfession.value.isNotEmpty &&
+        controller.selectedProfession.value != "Other") {
+      await controller
+          .getOccupationSpectData(controller.selectedProfession.value);
+    }
+
+    if (controller.selectedSpecialization.value.isNotEmpty &&
+        controller.selectedSpecialization.value != "Other") {
+      // await controller.getOccupationSpecializationSubCategoryData(
+      //     controller.selectedSpecialization.value);
+    }
+
+    if (controller.selectedSubCategory.value.isNotEmpty &&
+        controller.selectedSubCategory.value != "Other") {
+      // await controller.getOccupationSubSubCategoryData(
+      //     controller.selectedSubCategory.value);
     }
   }
 
   Future<void> _updateOccupation(Occupation oldData) async {
-    // Validate
     if (controller.selectedOccupation.value.isEmpty) {
-      Get.snackbar("Error", "Please select Level 1");
+      Get.snackbar(
+        "Error",
+        "Please select Level 1",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
       return;
     }
 
@@ -449,19 +496,26 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
         "member_id": oldData.memberId ?? "",
         "occupation_id": controller.selectedOccupation.value,
         "occupation_profession_id": controller.selectedProfession.value,
-        "occupation_specialization_id": controller.selectedSpecialization.value,
-        "occupation_specialization_sub_category_id":
-        controller.selectedSubCategory.value,
-        "occupation_specialization_sub_sub_category_id":
-        controller.selectedSubSubCategory.value,
+        "occupation_specialization_id":
+            controller.selectedSpecialization.value == "Other"
+                ? ""
+                : controller.selectedSpecialization.value,
+        // "occupation_specialization_sub_category_id":
+        // controller.selectedSubCategory.value,
+        // "occupation_specialization_sub_sub_category_id":
+        // controller.selectedSubSubCategory.value,
         "occupation_other_name": controller.detailsController.value.text,
         "updated_by": oldData.memberId ?? "",
       };
 
       print("📤 UPDATE PAYLOAD: $payload");
+
       final res = await updateOccupationRepo.updateOccupation(payload);
 
       if (res == true) {
+        final updateCtrl = Get.find<UdateProfileController>();
+        await updateCtrl.getUserProfile();
+
         Get.snackbar(
           "Success",
           "Occupation updated successfully!",
@@ -470,7 +524,9 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
           colorText: Colors.white,
         );
 
-        Navigator.of(context!).pop();
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
       } else {
         Get.snackbar(
           "Error",
@@ -493,9 +549,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
     controller.isOccupationLoading.value = false;
   }
 
-
-  Widget
-  _buildOccupationForm() {
+  Widget _buildOccupationForm() {
     return Column(
       children: [
         // Occupation Dropdown
@@ -543,10 +597,12 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                       controller.selectedOccupation.value = newValue;
                       controller.selectedProfession.value = "";
                       controller.selectedSpecialization.value = "";
-                      controller.selectedSubCategory.value = "";
                       controller.detailsController.value.text = "";
 
-                      if (newValue == "0") {
+                      const detailOnlyOccupationIds = ["6"];
+
+                      if (newValue == "0" ||
+                          detailOnlyOccupationIds.contains(newValue)) {
                         controller.showDetailsField.value = true;
                       } else {
                         controller.showDetailsField.value = false;
@@ -563,292 +619,355 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
 
         // Profession Dropdown
         Obx(() {
-          if (controller.selectedOccupation.value.isEmpty ||
-              controller.selectedOccupation.value == "0") {
+          final occId = controller.selectedOccupation.value;
+          const detailOnlyOccupationIds = ["6"];
+
+          if (occId.isEmpty ||
+              occId == "0" ||
+              detailOnlyOccupationIds.contains(occId)) {
             return const SizedBox();
           }
-          return Container(
-            margin: const EdgeInsets.only(left: 5, right: 5, top: 8),
-            child: Obx(() {
-              if (controller.rxStatusOccupationData.value == Status.LOADING) {
-                return _buildLoadingIndicator();
-              } else if (controller.rxStatusOccupationData.value ==
-                  Status.ERROR) {
-                return const Center(child: Text('Failed to load profession'));
-              } else {
-                return InputDecorator(
-                  decoration: InputDecoration(
-                    labelText: 'Level 2',
-                    border: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black26),
-                    ),
-                    enabledBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black26),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black26, width: 1.5),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                    labelStyle: const TextStyle(color: Colors.black45),
-                  ),
-                  isEmpty: controller.selectedProfession.value.isEmpty,
-                  child: DropdownButton<String>(
-                    dropdownColor: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    isExpanded: true,
-                    underline: Container(),
-                    value: controller.selectedProfession.value.isEmpty
-                        ? null
-                        : controller.selectedProfession.value,
-                    items: [
-                      ...controller.occuptionProfessionList
-                          .map((OccuptionProfessionData profession) {
-                        return DropdownMenuItem<String>(
-                          value: profession.id.toString(),
-                          child: Text(profession.name ?? 'Unknown'),
-                        );
-                      }).toList(),
-                    ],
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        controller.selectedProfession.value = newValue;
-                        controller.selectedSpecialization.value = "";
-                        controller.selectedSubCategory.value = "";
-                        controller.detailsController.value.text = "";
 
-                        if (newValue == "Other") {
-                          controller.showDetailsField.value = true;
-                        } else if (newValue.isNotEmpty) {
-                          controller.showDetailsField.value = false;
-                          controller.getOccupationSpectData(newValue);
-                        }
-                      }
-                    },
-                  ),
-                );
-              }
-            }),
+          return Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.only(left: 5, right: 5, top: 8),
+                child: Obx(() {
+                  if (controller.rxStatusOccupationData.value ==
+                      Status.LOADING) {
+                    return _buildLoadingIndicator();
+                  } else if (controller.rxStatusOccupationData.value ==
+                      Status.ERROR) {
+                    return InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: 'Level 2',
+                        border: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black26),
+                        ),
+                        enabledBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black26),
+                        ),
+                        focusedBorder: const OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: Colors.black26, width: 1.5),
+                        ),
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 20),
+                        labelStyle: const TextStyle(color: Colors.black45),
+                      ),
+                      child: const Text(
+                        "Other",
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold),
+                      ),
+                    );
+                  } else {
+                    return InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: 'Level 2',
+                        border: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black26),
+                        ),
+                        enabledBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black26),
+                        ),
+                        focusedBorder: const OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: Colors.black26, width: 1.5),
+                        ),
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 20),
+                        labelStyle: const TextStyle(color: Colors.black45),
+                      ),
+                      isEmpty: controller.selectedProfession.value.isEmpty,
+                      child: DropdownButton<String>(
+                        dropdownColor: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        isExpanded: true,
+                        underline: Container(),
+                        value: controller.selectedProfession.value.isEmpty
+                            ? null
+                            : controller.selectedProfession.value,
+                        items: controller.occuptionProfessionList
+                            .map((OccuptionProfessionData profession) {
+                          return DropdownMenuItem<String>(
+                            value: profession.id.toString(),
+                            child: Text(profession.name ?? 'Unknown'),
+                          );
+                        }).toList(),
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            controller.selectedProfession.value = newValue;
+                            controller.selectedSpecialization.value = "";
+                            controller.selectedSubCategory.value = "";
+                            controller.detailsController.value.text = "";
+
+                            if (newValue == "Other") {
+                              controller.showDetailsField.value = true;
+                            } else {
+                              controller.showDetailsField.value = false;
+                              controller.getOccupationSpectData(newValue);
+                            }
+                          }
+                        },
+                      ),
+                    );
+                  }
+                }),
+              ),
+              const SizedBox(height: 20),
+            ],
           );
         }),
-        const SizedBox(height: 20),
 
         // Specialization Dropdown
         Obx(() {
+          // Hide Level 3 if profession is empty or "Other"
           if (controller.selectedProfession.value.isEmpty ||
               controller.selectedProfession.value == "Other") {
             return const SizedBox();
           }
-          return Container(
-            margin: const EdgeInsets.only(left: 5, right: 5, top: 8),
-            child: Obx(() {
-              if (controller.rxStatusOccupationSpec.value == Status.LOADING) {
-                return _buildLoadingIndicator();
-              } else if (controller.rxStatusOccupationSpec.value ==
-                  Status.ERROR) {
-                return const Center(
-                    child: Text('Failed to load specialization'));
-              } else {
-                return InputDecorator(
-                  decoration: InputDecoration(
-                    labelText: 'Level 3',
-                    border: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black26),
-                    ),
-                    enabledBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black26),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black26, width: 1.5),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                    labelStyle: const TextStyle(color: Colors.black45),
-                  ),
-                  isEmpty: controller.selectedSpecialization.value.isEmpty,
-                  child: DropdownButton<String>(
-                    dropdownColor: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    isExpanded: true,
-                    underline: Container(),
-                    value: controller.selectedSpecialization.value.isEmpty
-                        ? null
-                        : controller.selectedSpecialization.value,
-                    items: [
-                      ...controller.occuptionSpeList
-                          .map((OccuptionSpecData specialization) {
-                        return DropdownMenuItem<String>(
-                          value: specialization.id?.toString(),
-                          child: Text(specialization.name ?? 'Unknown'),
-                        );
-                      }).toList(),
-                    ],
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        controller.selectedSpecialization.value = newValue;
-                        controller.selectedSubCategory.value = "";
-                        controller.detailsController.value.text = "";
 
-                        if (newValue == "Other") {
-                          controller.showDetailsField.value = true;
-                        } else if (newValue.isNotEmpty) {
-                          controller.showDetailsField.value = false;
-                          controller.getOccupationSpecializationSubCategoryData(
-                              newValue);
-                        }
-                      }
-                    },
-                  ),
-                );
-              }
-            }),
+          return Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.only(left: 5, right: 5, top: 8),
+                child: Obx(() {
+                  if (controller.rxStatusOccupationSpec.value ==
+                      Status.LOADING) {
+                    return _buildLoadingIndicator();
+                  } else if (controller.rxStatusOccupationSpec.value ==
+                      Status.ERROR) {
+                    return InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: 'Level 3',
+                        border: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black26),
+                        ),
+                        enabledBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black26),
+                        ),
+                        focusedBorder: const OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: Colors.black26, width: 1.5),
+                        ),
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 20),
+                        labelStyle: const TextStyle(color: Colors.black45),
+                      ),
+                      child: const Text(
+                        "Other",
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold),
+                      ),
+                    );
+                  } else {
+                    return InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: 'Level 3',
+                        border: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black26),
+                        ),
+                        enabledBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black26),
+                        ),
+                        focusedBorder: const OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: Colors.black26, width: 1.5),
+                        ),
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 20),
+                        labelStyle: const TextStyle(color: Colors.black45),
+                      ),
+                      isEmpty: controller.selectedSpecialization.value.isEmpty,
+                      child: DropdownButton<String>(
+                        dropdownColor: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        isExpanded: true,
+                        underline: Container(),
+                        value: controller.selectedSpecialization.value.isEmpty
+                            ? null
+                            : controller.selectedSpecialization.value,
+                        items: controller.occuptionSpeList
+                            .map((OccuptionSpecData specialization) {
+                          return DropdownMenuItem<String>(
+                            value: specialization.id?.toString(),
+                            child: Text(specialization.name ?? 'Unknown'),
+                          );
+                        }).toList(),
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            controller.selectedSpecialization.value = newValue;
+                            controller.detailsController.value.text = "";
+
+                            if (newValue == "Other") {
+                              controller.showDetailsField.value = true;
+                            } else {
+                              controller.showDetailsField.value = false;
+                            }
+                          }
+                        },
+                      ),
+                    );
+                  }
+                }),
+              ),
+              const SizedBox(height: 20),
+            ],
           );
         }),
-        const SizedBox(height: 20),
 
         // Sub Category Dropdown
-        Obx(() {
-          if (controller.selectedSpecialization.value.isEmpty ||
-              controller.selectedSpecialization.value == "Other") {
-            return const SizedBox();
-          }
-          return Container(
-            margin: const EdgeInsets.only(left: 5, right: 5, top: 8),
-            child: Obx(() {
-              if (controller.rxStatusOccupationSpec.value == Status.LOADING) {
-                return _buildLoadingIndicator();
-              } else if (controller.rxStatusOccupationSpec.value ==
-                  Status.ERROR) {
-                return const Center(child: Text('Failed to load subcategory'));
-              } else if (controller.occuptionSubCategoryList.isEmpty) {
-                return const SizedBox();
-              } else {
-                return InputDecorator(
-                  decoration: InputDecoration(
-                    labelText: 'Level 4',
-                    border: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black26),
-                    ),
-                    enabledBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black26),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black26, width: 1.5),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                    labelStyle: const TextStyle(color: Colors.black45),
-                  ),
-                  isEmpty: controller.selectedSubCategory.value.isEmpty,
-                  child: DropdownButton<String>(
-                    dropdownColor: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    isExpanded: true,
-                    underline: Container(),
-                    value: controller.selectedSubCategory.value.isEmpty
-                        ? null
-                        : controller.selectedSubCategory.value,
-                    items: [
-                      ...controller.occuptionSubCategoryList
-                          .map((OccuptionSpecSubCategoryData sub) {
-                        return DropdownMenuItem<String>(
-                          value: sub.specializationSubCategoryId.toString(),
-                          child: Text(
-                              sub.specializationSubCategoryName ?? 'Unknown'),
-                        );
-                      }).toList(),
-                    ],
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        controller.selectedSubCategory.value = newValue;
-                        controller.selectedSubSubCategory.value = "";
-
-                        if (newValue == "Other") {
-                          controller.showDetailsField.value = true;
-                        } else {
-                          controller.showDetailsField.value = false;
-                          controller.getOccupationSubSubCategoryData(newValue);
-                        }
-                      }
-                    },
-                  ),
-                );
-              }
-            }),
-          );
-        }),
-        const SizedBox(height: 20),
+        // Obx(() {
+        //   if (controller.selectedSpecialization.value.isEmpty ||
+        //       controller.selectedSpecialization.value == "Other") {
+        //     return const SizedBox();
+        //   }
+        //   return Container(
+        //     margin: const EdgeInsets.only(left: 5, right: 5, top: 8),
+        //     child: Obx(() {
+        //       if (controller.rxStatusOccupationSpec.value == Status.LOADING) {
+        //         return _buildLoadingIndicator();
+        //       } else if (controller.rxStatusOccupationSpec.value ==
+        //           Status.ERROR) {
+        //         return const Center(child: Text('Failed to load subcategory'));
+        //       } else if (controller.occuptionSubCategoryList.isEmpty) {
+        //         return const SizedBox();
+        //       } else {
+        //         return InputDecorator(
+        //           decoration: InputDecoration(
+        //             labelText: 'Level 4',
+        //             border: const OutlineInputBorder(
+        //               borderSide: BorderSide(color: Colors.black26),
+        //             ),
+        //             enabledBorder: const OutlineInputBorder(
+        //               borderSide: BorderSide(color: Colors.black26),
+        //             ),
+        //             focusedBorder: const OutlineInputBorder(
+        //               borderSide: BorderSide(color: Colors.black26, width: 1.5),
+        //             ),
+        //             contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+        //             labelStyle: const TextStyle(color: Colors.black45),
+        //           ),
+        //           isEmpty: controller.selectedSubCategory.value.isEmpty,
+        //           child: DropdownButton<String>(
+        //             dropdownColor: Colors.white,
+        //             borderRadius: BorderRadius.circular(10),
+        //             isExpanded: true,
+        //             underline: Container(),
+        //             value: controller.selectedSubCategory.value.isEmpty
+        //                 ? null
+        //                 : controller.selectedSubCategory.value,
+        //             items: [
+        //               ...controller.occuptionSubCategoryList
+        //                   .map((OccuptionSpecSubCategoryData sub) {
+        //                 return DropdownMenuItem<String>(
+        //                   value: sub.specializationSubCategoryId.toString(),
+        //                   child: Text(
+        //                       sub.specializationSubCategoryName ?? 'Unknown'),
+        //                 );
+        //               }).toList(),
+        //             ],
+        //             onChanged: (String? newValue) {
+        //               if (newValue != null) {
+        //                 controller.selectedSubCategory.value = newValue;
+        //                 controller.selectedSubSubCategory.value = "";
+        //
+        //                 if (newValue == "Other") {
+        //                   controller.showDetailsField.value = true;
+        //                 } else {
+        //                   controller.showDetailsField.value = false;
+        //                   controller.getOccupationSubSubCategoryData(newValue);
+        //                 }
+        //               }
+        //             },
+        //           ),
+        //         );
+        //       }
+        //     }),
+        //   );
+        // }),
+        // const SizedBox(height: 20),
 
         // Level 5 – Sub-Sub-Category
-        Obx(() {
-          if (controller.selectedSubCategory.value.isEmpty ||
-              controller.selectedSubCategory.value == "Other") {
-            return const SizedBox();
-          }
-
-          return Container(
-            margin: const EdgeInsets.only(left: 5, right: 5, top: 8),
-            child: Obx(() {
-              if (controller.rxStatusOccupationSpec.value == Status.LOADING) {
-                return _buildLoadingIndicator();
-              } else if (controller.rxStatusOccupationSpec.value ==
-                  Status.ERROR) {
-                return const Center(child: Text('Failed to load level 5'));
-              } else if (controller.occuptionSubSubCategoryList.isEmpty) {
-                return const SizedBox();
-              } else {
-                return InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Level 5',
-                    border: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black26)),
-                    enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black26)),
-                    focusedBorder: OutlineInputBorder(
-                        borderSide:
-                            BorderSide(color: Colors.black26, width: 1.5)),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 20),
-                  ),
-                  isEmpty: controller.selectedSubSubCategory.value.isEmpty,
-                  child: DropdownButton<String>(
-                    dropdownColor: Colors.white,
-                    isExpanded: true,
-                    underline: Container(),
-                    value: controller.selectedSubSubCategory.value.isEmpty
-                        ? null
-                        : controller.selectedSubSubCategory.value,
-                    items: controller.occuptionSubSubCategoryList
-                        .map((OccuptionSpecSubSubCategoryData item) {
-                      return DropdownMenuItem<String>(
-                        value: item.subSubCategoryId.toString(),
-                        child: Text(item.subSubCategoryName ?? 'Unknown'),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        controller.selectedSubSubCategory.value = newValue;
-
-                        if (newValue == "Other") {
-                          controller.showDetailsField.value = true;
-                        } else {
-                          controller.showDetailsField.value = false;
-                        }
-                      }
-                    },
-                  ),
-                );
-              }
-            }),
-          );
-        }),
-        const SizedBox(height: 20),
+        // Obx(() {
+        //   if (controller.selectedSubCategory.value.isEmpty ||
+        //       controller.selectedSubCategory.value == "Other") {
+        //     return const SizedBox();
+        //   }
+        //
+        //   return Container(
+        //     margin: const EdgeInsets.only(left: 5, right: 5, top: 8),
+        //     child: Obx(() {
+        //       if (controller.rxStatusOccupationSpec.value == Status.LOADING) {
+        //         return _buildLoadingIndicator();
+        //       } else if (controller.rxStatusOccupationSpec.value ==
+        //           Status.ERROR) {
+        //         return const Center(child: Text('Failed to load level 5'));
+        //       } else if (controller.occuptionSubSubCategoryList.isEmpty) {
+        //         return const SizedBox();
+        //       } else {
+        //         return InputDecorator(
+        //           decoration: const InputDecoration(
+        //             labelText: 'Level 5',
+        //             border: OutlineInputBorder(
+        //                 borderSide: BorderSide(color: Colors.black26)),
+        //             enabledBorder: OutlineInputBorder(
+        //                 borderSide: BorderSide(color: Colors.black26)),
+        //             focusedBorder: OutlineInputBorder(
+        //                 borderSide:
+        //                     BorderSide(color: Colors.black26, width: 1.5)),
+        //             contentPadding: EdgeInsets.symmetric(horizontal: 20),
+        //           ),
+        //           isEmpty: controller.selectedSubSubCategory.value.isEmpty,
+        //           child: DropdownButton<String>(
+        //             dropdownColor: Colors.white,
+        //             isExpanded: true,
+        //             underline: Container(),
+        //             value: controller.selectedSubSubCategory.value.isEmpty
+        //                 ? null
+        //                 : controller.selectedSubSubCategory.value,
+        //             items: controller.occuptionSubSubCategoryList
+        //                 .map((OccuptionSpecSubSubCategoryData item) {
+        //               return DropdownMenuItem<String>(
+        //                 value: item.subSubCategoryId.toString(),
+        //                 child: Text(item.subSubCategoryName ?? 'Unknown'),
+        //               );
+        //             }).toList(),
+        //             onChanged: (String? newValue) {
+        //               if (newValue != null) {
+        //                 controller.selectedSubSubCategory.value = newValue;
+        //
+        //                 if (newValue == "Other") {
+        //                   controller.showDetailsField.value = true;
+        //                 } else {
+        //                   controller.showDetailsField.value = false;
+        //                 }
+        //               }
+        //             },
+        //           ),
+        //         );
+        //       }
+        //     }),
+        //   );
+        // }),
+        // const SizedBox(height: 20),
 
         // Details Field
         Obx(() {
-          final showDetails = controller.selectedOccupation.value == "0" ||
+          const studentOccupationId = "6";
+
+          final selectedOccId = controller.selectedOccupation.value;
+
+          final showDetails = selectedOccId == "0" ||
+              selectedOccId == studentOccupationId ||
               controller.selectedProfession.value == "Other" ||
               controller.selectedSpecialization.value == "Other" ||
-              controller.selectedSubCategory.value == "Other" ||
               controller.showDetailsField.value;
 
           if (!showDetails) return const SizedBox();
+
+          final isStudent = selectedOccId == studentOccupationId;
 
           return Container(
             margin: const EdgeInsets.only(left: 5, right: 5, top: 8),
@@ -856,7 +975,10 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
               keyboardType: TextInputType.text,
               controller: controller.detailsController.value,
               decoration: InputDecoration(
-                labelText: "Occupation Details",
+                // 🎯 Dynamic label
+                labelText: isStudent
+                    ? "Enter your standard or course details"
+                    : "Occupation Details",
                 border: const OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.black26),
                 ),
@@ -871,8 +993,8 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                 labelStyle: const TextStyle(color: Colors.black45),
               ),
               validator: (value) {
-                if (showDetails && (value == null || value.isEmpty)) {
-                  return 'Please enter occupation details';
+                if (isStudent && (value == null || value.trim().isEmpty)) {
+                  return "Please enter your standard or course details";
                 }
                 return null;
               },

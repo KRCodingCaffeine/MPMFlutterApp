@@ -49,13 +49,23 @@ class _NotificationListViewState extends State<NotificationListView> {
           return _buildEmptyState();
         }
 
+        // Filter to show only default type notifications
+        final defaultNotifications = controller.notificationList
+            .where((notification) => notification.type == 'default' || notification.type == null)
+            .toList();
+        
+        // Show empty state if no default notifications
+        if (defaultNotifications.isEmpty) {
+          return _buildEmptyState();
+        }
+
         return RefreshIndicator(
           onRefresh: controller.forceSyncWithServer,
           child: ListView.builder(
             padding: const EdgeInsets.all(8),
-            itemCount: controller.notificationList.length,
+            itemCount: defaultNotifications.length,
             itemBuilder: (context, index) {
-              final notification = controller.notificationList[index];
+              final notification = defaultNotifications[index];
               return _buildNotificationCard(notification);
             },
           ),

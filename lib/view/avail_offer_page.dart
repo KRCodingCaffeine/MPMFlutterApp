@@ -719,32 +719,48 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
             ...offerList.asMap().entries.map((entry) {
               final index = entry.key;
               final offer = entry.value;
+
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '${index + 1}. Medicine Name: ${offer['medicine_name']}',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '     Container Type Name: ${offer['medicine_container_name']}',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '     Quantity: ${offer['quantity'].toString()}',
-                    style: const TextStyle(fontSize: 16),
+                  RichText(
+                    text: TextSpan(
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.black,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: '${index + 1}. ',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        TextSpan(
+                          text: offer['medicine_name'],
+                        ),
+                        const TextSpan(text: '  -  '),
+                        const TextSpan(
+                          text: 'Qty ',
+                        ),
+                        TextSpan(
+                          text: '${offer['quantity']} ',
+
+                        ),
+                        TextSpan(
+                          text: offer['medicine_container_name'],
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 12),
-                  const Divider(
-                    color: Colors.grey,
-                    thickness: 0.5,
-                    height: 20,
-                  ),
+
                 ],
               );
             }),
+          const Divider(
+            color: Colors.grey,
+            thickness: 0.5,
+            height: 20,
+          ),
           const SizedBox(height: 80),
         ],
       ),

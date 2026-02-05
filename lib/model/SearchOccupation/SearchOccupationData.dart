@@ -58,6 +58,8 @@ class SearchOccupationData {
   String? specializationName;
   String? subCategoryName;
   String? subSubCategoryName;
+  String? zoneId;
+  String? zoneName;
 
   SearchOccupationData({
     this.memberId,
@@ -75,6 +77,8 @@ class SearchOccupationData {
     this.specializationName,
     this.subCategoryName,
     this.subSubCategoryName,
+    this.zoneId,
+    this.zoneName,
   });
 
   factory SearchOccupationData.fromJson(Map<String, dynamic> json) {
@@ -85,8 +89,21 @@ class SearchOccupationData {
       occupationInfo = OccupationInfo.fromJson(json['occupation']);
     }
 
+    // 🔥 FIX: Handle nested member object OR direct member_id
+    String? parsedMemberId;
+
+    if (json['member_id'] != null) {
+      parsedMemberId = json['member_id'].toString();
+    } else if (json['member'] != null &&
+        json['member'] is Map &&
+        json['member']['member_id'] != null) {
+      parsedMemberId = json['member']['member_id'].toString();
+    } else {
+      parsedMemberId = null;
+    }
+
     return SearchOccupationData(
-      memberId: json['member_id']?.toString(),
+      memberId: parsedMemberId,
       memberCode: json['member_code']?.toString(),
       firstName: json['first_name']?.toString(),
       middleName: json['middle_name']?.toString(),
@@ -113,6 +130,8 @@ class SearchOccupationData {
       subSubCategoryName: json['occupation'] is Map
           ? json['occupation']['specialization_sub_sub_category_name']?.toString()
           : (json['sub_sub_category_name']?.toString() ?? occupationInfo?.specializationSubSubCategoryName),
+      zoneId: json['zone_id']?.toString(),
+      zoneName: json['zone_name']?.toString(),
     );
   }
 
@@ -122,4 +141,7 @@ class SearchOccupationData {
   String? get specializationNameValue => specializationName ?? occupation?.specializationName;
   String? get subCategoryNameValue => subCategoryName ?? occupation?.specializationSubCategoryName;
   String? get subSubCategoryNameValue => subSubCategoryName ?? occupation?.specializationSubSubCategoryName;
+
+  String? get occupationIdValue =>
+      occupation?.occupationId;
 }
