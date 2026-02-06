@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
-import 'package:mpm/view/ShikshaSahayata/any_other_charity_fund.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/any_other_charity_fund.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/mpm.dart';
 
 class OtherCharityFundView extends StatefulWidget {
-  const OtherCharityFundView({super.key});
+  final String shikshaApplicantId;
+
+  const OtherCharityFundView({
+    Key? key,
+    required this.shikshaApplicantId,
+  }) : super(key: key);
 
   @override
   State<OtherCharityFundView> createState() => _OtherCharityFundViewState();
@@ -151,8 +157,11 @@ class _OtherCharityFundViewState extends State<OtherCharityFundView> {
             ElevatedButton(
               onPressed: () {
                 Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => AnyOtherCharityFundView()),
-                );
+                  MaterialPageRoute(
+                    builder: (_) => MPMView(
+                      shikshaApplicantId: widget.shikshaApplicantId,
+                    ),
+                  ),                );
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text("Past Year Loans Avail details submitted successfully"),
@@ -228,7 +237,9 @@ class _OtherCharityFundViewState extends State<OtherCharityFundView> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => AnyOtherCharityFundView(),
+                                    builder: (_) => AnyOtherCharityFundView(
+                                      shikshaApplicantId: widget.shikshaApplicantId,
+                                    ),
                                   ),
                                 );
                                 return;

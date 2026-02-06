@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
-import 'package:mpm/view/ShikshaSahayata/any_other_charity_fund.dart';
-import 'package:mpm/view/ShikshaSahayata/current_year_education.dart';
-import 'package:mpm/view/ShikshaSahayata/education_detail.dart';
-import 'package:mpm/view/ShikshaSahayata/family_detail.dart';
-import 'package:mpm/view/ShikshaSahayata/mpm.dart';
-import 'package:mpm/view/ShikshaSahayata/other_charity_fund.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/any_other_charity_fund.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/current_year_education.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/education_detail.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/family_detail.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/mpm.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/other_charity_fund.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByYourself/applicant_detail_yourself.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -77,10 +77,10 @@ class _ShikshaSahayataByYourselfState
               icon: Icons.family_restroom,
               isEnabled: applicantCompleted,
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const FamilyDetail()),
-                );
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(builder: (_) => const FamilyDetail()),
+                // );
               },
             ),
 
@@ -89,11 +89,11 @@ class _ShikshaSahayataByYourselfState
               icon: Icons.menu_book,
               isEnabled: applicantCompleted,
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const EducationDetailView()),
-                );
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(
+                //       builder: (_) => const EducationDetailView()),
+                // );
               },
             ),
 
@@ -102,11 +102,11 @@ class _ShikshaSahayataByYourselfState
               icon: Icons.school,
               isEnabled: applicantCompleted,
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const CurrentYearEducationView()),
-                );
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(
+                //       builder: (_) => const CurrentYearEducationView()),
+                // );
               },
             ),
 
@@ -115,11 +115,11 @@ class _ShikshaSahayataByYourselfState
               icon: Icons.handshake,
               isEnabled: applicantCompleted,
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const AnyOtherCharityFundView()),
-                );
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(
+                //       builder: (_) => const AnyOtherCharityFundView()),
+                // );
               },
             ),
 
@@ -128,11 +128,11 @@ class _ShikshaSahayataByYourselfState
               icon: Icons.volunteer_activism,
               isEnabled: applicantCompleted,
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const OtherCharityFundView()),
-                );
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(
+                //       builder: (_) => const OtherCharityFundView()),
+                // );
               },
             ),
 
@@ -141,10 +141,10 @@ class _ShikshaSahayataByYourselfState
               icon: Icons.verified,
               isEnabled: applicantCompleted,
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const MPMView()),
-                );
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(builder: (_) => const MPMView()),
+                // );
               },
             ),
 

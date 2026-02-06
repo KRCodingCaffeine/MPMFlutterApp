@@ -7,7 +7,12 @@ import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 
 class EducationDetailView extends StatefulWidget {
-  const EducationDetailView({super.key});
+  final String shikshaApplicantId;
+
+  const EducationDetailView({
+    Key? key,
+    required this.shikshaApplicantId,
+  }) : super(key: key);
 
   @override
   State<EducationDetailView> createState() => _EducationDetailViewState();

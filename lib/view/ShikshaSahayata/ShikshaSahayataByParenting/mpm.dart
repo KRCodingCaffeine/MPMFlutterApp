@@ -5,7 +5,12 @@ import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 
 class MPMView extends StatefulWidget {
-  const MPMView({super.key});
+  final String shikshaApplicantId;
+
+  const MPMView({
+    Key? key,
+    required this.shikshaApplicantId,
+  }) : super(key: key);
 
   @override
   State<MPMView> createState() => _MPMViewState();

@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
-import 'package:mpm/view/ShikshaSahayata/mpm.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/mpm.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/other_charity_fund.dart';
 
 class AnyOtherCharityFundView extends StatefulWidget {
-  const AnyOtherCharityFundView({super.key});
+  final String shikshaApplicantId;
+
+  const AnyOtherCharityFundView({
+    Key? key,
+    required this.shikshaApplicantId,
+  }) : super(key: key);
 
   @override
   State<AnyOtherCharityFundView> createState() =>
@@ -247,7 +253,11 @@ class _AnyOtherCharityFundViewState extends State<AnyOtherCharityFundView> {
             ElevatedButton(
               onPressed: () {
                 Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => MPMView()),
+                  MaterialPageRoute(
+                    builder: (_) => OtherCharityFundView(
+                      shikshaApplicantId: widget.shikshaApplicantId,
+                    ),
+                  ),
                 );
 
                 ScaffoldMessenger.of(context).showSnackBar(

@@ -4,10 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
-import 'package:mpm/view/ShikshaSahayata/other_charity_fund.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/any_other_charity_fund.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/other_charity_fund.dart';
 
 class CurrentYearEducationView extends StatefulWidget {
-  const CurrentYearEducationView({super.key});
+  final String shikshaApplicantId;
+
+  const CurrentYearEducationView({
+    Key? key,
+    required this.shikshaApplicantId,
+  }) : super(key: key);
 
   @override
   State<CurrentYearEducationView> createState() =>
@@ -165,8 +171,11 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
                 // 👉 Navigate to next screen / step
                 // Example:
                 Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => OtherCharityFundView()),
-                );
+                  MaterialPageRoute(
+                    builder: (_) => AnyOtherCharityFundView(
+                      shikshaApplicantId: widget.shikshaApplicantId,
+                    ),
+                  ),                );
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(

@@ -8,15 +8,20 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:mpm/data/response/status.dart';
+import 'package:mpm/model/ShikshaSahayata/ApplicantDetail/UpdateApplicantDetail/UpdateApplicantDetailData.dart';
+import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/ShikshaApplicationData.dart';
 import 'package:mpm/model/State/StateData.dart';
 import 'package:mpm/model/city/CityData.dart';
 import 'package:mpm/model/ShikshaSahayata/ApplicantDetail/CreateApplicantDetail/CreateApplicantDetailData.dart';
 import 'package:mpm/model/ShikshaSahayata/UpdateFatherDetail/UpdateFatherData.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/ApplicantDetailRepo/create_shiksha_application_repository/create_shiksha_application_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/ApplicantDetailRepo/update_shiksha_application_repository/update_shiksha_application_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/ShikshaApplicationRepo/shiksha_application_repository/shiksha_application_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/UpdateFatherRepo/update_father_repository/update_father_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
-import 'package:mpm/view/ShikshaSahayata/family_detail.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/shiksha_sahayata_by_parenting_view.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/family_detail.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -29,8 +34,6 @@ class ApplicantDetail extends StatefulWidget {
 }
 
 class _ApplicantDetailState extends State<ApplicantDetail> {
-  static const String _prefsApplicantKey = 'shiksha_applicant_data';
-  static const String _prefsApplicantIdKey = 'shiksha_applicant_id';
 
   bool hasApplicant = false;
   bool _isSubmitting = false;
@@ -42,8 +45,15 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
   NewMemberController regiController = Get.find<NewMemberController>();
   final CreateShikshaApplicationRepository _createRepo =
       CreateShikshaApplicationRepository();
+  final UpdateShikshaApplicationRepository _updateRepo =
+  UpdateShikshaApplicationRepository();
   final UpdateFatherRepository _updateFatherRepo = UpdateFatherRepository();
   String? _shikshaApplicantId;
+  final ShikshaApplicationRepository _shikshaRepo =
+  ShikshaApplicationRepository();
+
+  ShikshaApplicationData? _applicationData;
+
 
   final TextEditingController firstNameCtrl = TextEditingController();
   final TextEditingController middleNameCtrl = TextEditingController();
@@ -90,18 +100,12 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
 
   Future<void> _initializeData() async {
     await controller.getUserProfile();
-
-    // 🔥 IMPORTANT — LOAD STATES FIRST
     await regiController.getState();
 
     final address = controller.getUserData.value.address;
 
-    final loadedFromCache = await _loadSavedApplicant();
-
-    if (!loadedFromCache && address != null && address.stateId != null) {
+    if (address != null && address.stateId != null) {
       regiController.setSelectedState(address.stateId.toString());
-
-      // load cities for that state
       await regiController.getCityByState(address.stateId.toString());
 
       if (address.city_id != null) {
@@ -109,12 +113,42 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
       }
     }
 
-    if (!loadedFromCache) {
-      _prefillFatherFromUser();
-    }
+    _prefillFatherFromUser();
 
-    if (!hasApplicant) {
+    /// 🔥 ADD THIS PART
+    final prefs = await SharedPreferences.getInstance();
+    final savedId = prefs.getString('shiksha_applicant_id');
+
+    if (savedId != null && savedId.isNotEmpty) {
+      _shikshaApplicantId = savedId;
+      await _fetchShikshaApplication(savedId);
+    } else {
       _showAddApplicantModalSheet(context);
+    }
+  }
+
+  Future<void> _fetchShikshaApplication(String applicantId) async {
+    try {
+      final response =
+      await _shikshaRepo.fetchShikshaApplicationById(
+        applicantId: applicantId,
+      );
+
+      if (response.status == true && response.data != null) {
+        setState(() {
+          _applicationData = response.data;
+          hasApplicant = true;
+        });
+      } else {
+        throw Exception(response.message ?? "Failed to fetch application");
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -141,9 +175,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     if (fatherMobileCtrl.text.trim().isEmpty) return false;
     if (regiController.city_id.value.isEmpty) return false;
     if (regiController.state_id.value.isEmpty) return false;
-
-    if (applicantAadharFile == null) return false;
-    if (fatherPanFile == null) return false;
 
     return true;
   }
@@ -204,7 +235,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
       );
 
       final createResponse =
-          await _createRepo.createShikshaApplication(
+      await _createRepo.createShikshaApplication(
         _stripCreateApplicantIds(applicantData.toJson()),
       );
 
@@ -212,15 +243,15 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
         throw Exception(createResponse.message ?? "Failed to create application");
       }
 
-      final shikshaId = createResponse.data?.shikshaApplicantId ??
-          createResponse.data?.id;
+      final shikshaId =
+          createResponse.data?.shikshaApplicantId ??
+              createResponse.data?.id;
 
       if (shikshaId == null || shikshaId.isEmpty) {
         throw Exception("Shiksha application ID not returned");
       }
 
       _shikshaApplicantId = shikshaId;
-      await _saveApplicantCache(shikshaId);
 
       final fatherData = UpdateFatherData(
         shikshaApplicantId: shikshaId,
@@ -229,36 +260,36 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
         fatherEmail: fatherEmailCtrl.text.trim(),
         fatherMobile: fatherMobileCtrl.text.trim(),
         fatherAddress: _safeAddress(),
-        fatherCityId: regiController.city_id.value.isNotEmpty
-            ? regiController.city_id.value
-            : _safeApplicantCityId(),
-        fatherStateId: regiController.state_id.value.isNotEmpty
-            ? regiController.state_id.value
-            : _safeApplicantStateId(),
+        fatherCityId: regiController.city_id.value,
+        fatherStateId: regiController.state_id.value,
         updatedBy: controller.memberId.value,
       );
 
       final updateResponse =
-          await _updateFatherRepo.updateFatherData(fatherData.toJson());
+      await _updateFatherRepo.updateFatherData(fatherData.toJson());
 
       if (updateResponse.status != true) {
         throw Exception(updateResponse.message ?? "Failed to update father data");
       }
 
-      await _saveApplicantCache(shikshaId);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('shiksha_applicant_id', shikshaId);
 
-      if (!mounted) return;
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => FamilyDetail()),
-      );
+      // 🔥 IMPORTANT PART
+      await _fetchShikshaApplication(shikshaId);
+
+      setState(() {
+        hasApplicant = true;
+      });
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Successfully submitted your applicant detail"),
+          content: Text("Applicant created successfully."),
           backgroundColor: Colors.green,
         ),
       );
+      _shikshaApplicantId = shikshaId;
+
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -274,86 +305,80 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     }
   }
 
-  Future<void> _saveApplicantCache(String shikshaId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final cache = <String, dynamic>{
-      'shiksha_applicant_id': shikshaId,
-      'applicant_first_name': firstNameCtrl.text.trim(),
-      'applicant_middle_name': middleNameCtrl.text.trim(),
-      'applicant_last_name': lastNameCtrl.text.trim(),
-      'mobile': mobileCtrl.text.trim(),
-      'email': emailCtrl.text.trim(),
-      'landline': landlineCtrl.text.trim(),
-      'date_of_birth': _formatDobForApi(dobCtrl.text.trim()),
-      'age': ageCtrl.text.trim(),
-      'marital_status_id': _getMaritalStatusId(),
-      'applicant_address': _safeAddress(),
-      'applicant_city_id': _safeApplicantCityId(),
-      'applicant_state_id': _safeApplicantStateId(),
-      'applicant_father_name': fatherNameCtrl.text.trim(),
-      'applicant_mother_name': motherNameCtrl.text.trim(),
-      'father_email': fatherEmailCtrl.text.trim(),
-      'father_mobile': fatherMobileCtrl.text.trim(),
-      'father_city_id': regiController.city_id.value,
-      'father_state_id': regiController.state_id.value,
-    };
-
-    await prefs.setString(_prefsApplicantKey, jsonEncode(cache));
-    await prefs.setString(_prefsApplicantIdKey, shikshaId);
-  }
-
-  Future<bool> _loadSavedApplicant() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_prefsApplicantKey);
-    if (raw == null || raw.isEmpty) return false;
+  Future<void> _updateApplicant() async {
+    if (_shikshaApplicantId == null) return;
 
     try {
-      final Map<String, dynamic> map = jsonDecode(raw);
-      final data = CreateApplicantDetailData.fromJson(map);
-
-      _shikshaApplicantId =
-          map['shiksha_applicant_id']?.toString();
-
-      firstNameCtrl.text = data.applicantFirstName ?? '';
-      middleNameCtrl.text = data.applicantMiddleName ?? '';
-      lastNameCtrl.text = data.applicantLastName ?? '';
-      emailCtrl.text = data.email ?? '';
-      mobileCtrl.text = data.mobile ?? '';
-      landlineCtrl.text = data.landline ?? '';
-      dobCtrl.text = _formatDobForUi(data.dateOfBirth ?? '');
-      ageCtrl.text = data.age ?? '';
-      maritalStatus = _mapMaritalStatusLabel(data.maritalStatusId ?? '');
-
-      fatherNameCtrl.text = map['applicant_father_name']?.toString() ?? '';
-      motherNameCtrl.text = map['applicant_mother_name']?.toString() ?? '';
-      fatherEmailCtrl.text = map['father_email']?.toString() ?? '';
-      fatherMobileCtrl.text = map['father_mobile']?.toString() ?? '';
-
-      final cachedStateId = map['father_state_id']?.toString();
-      final cachedCityId = map['father_city_id']?.toString();
-
-      if (cachedStateId != null && cachedStateId.isNotEmpty) {
-        regiController.setSelectedState(cachedStateId);
-        await regiController.getCityByState(cachedStateId);
-      }
-      if (cachedCityId != null && cachedCityId.isNotEmpty) {
-        regiController.setSelectedCity(cachedCityId);
-      }
-
       setState(() {
-        fullName =
-            "${firstNameCtrl.text} ${middleNameCtrl.text} ${lastNameCtrl.text}"
-                .trim();
-        email = emailCtrl.text;
-        mobile = mobileCtrl.text;
-        dob = dobCtrl.text;
-        age = ageCtrl.text;
-        hasApplicant = true;
+        _isSubmitting = true;
       });
 
-      return true;
-    } catch (_) {
-      return false;
+      final updateData = UpdateApplicantDetailData(
+        shikshaApplicantId: _shikshaApplicantId,
+        applicantFirstName: firstNameCtrl.text.trim(),
+        applicantMiddleName: middleNameCtrl.text.trim(),
+        applicantLastName: lastNameCtrl.text.trim(),
+        mobile: mobileCtrl.text.trim(),
+        email: emailCtrl.text.trim(),
+        landline: landlineCtrl.text.trim(),
+        dateOfBirth: _formatDobForApi(dobCtrl.text.trim()),
+        age: ageCtrl.text.trim(),
+        maritalStatusId: _getMaritalStatusId(),
+        applicantAddress: _safeAddress(),
+        applicantCityId: regiController.city_id.value,
+        applicantStateId: regiController.state_id.value,
+        appliedBy: controller.memberId.value,
+        updatedBy: controller.memberId.value,
+      );
+
+      final response = await _updateRepo.updateShikshaApplication(
+        updateData.toJson(),
+      );
+
+      if (response.status != true) {
+        throw Exception(response.message ?? "Applicant update failed");
+      }
+
+      final fatherData = UpdateFatherData(
+        shikshaApplicantId: _shikshaApplicantId,
+        applicantFatherName: fatherNameCtrl.text.trim(),
+        applicantMotherName: motherNameCtrl.text.trim(),
+        fatherEmail: fatherEmailCtrl.text.trim(),
+        fatherMobile: fatherMobileCtrl.text.trim(),
+        fatherAddress: _safeAddress(),
+        fatherCityId: regiController.city_id.value,
+        fatherStateId: regiController.state_id.value,
+        updatedBy: controller.memberId.value,
+      );
+
+      final fatherResponse =
+      await _updateFatherRepo.updateFatherData(fatherData.toJson());
+
+      if (fatherResponse.status != true) {
+        throw Exception(
+            fatherResponse.message ?? "Father update failed");
+      }
+
+      await _fetchShikshaApplication(_shikshaApplicantId!);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Applicant updated successfully"),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+      });
     }
   }
 
@@ -434,6 +459,12 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
   }
 
   Widget _buildApplicantCard() {
+    final data = _applicationData;
+
+    if (data == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Card(
@@ -446,26 +477,50 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
-              const Text(
-                "Applicant Details",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Applicant Details",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: _openEditApplicant,
+                    icon: const Icon(
+                      Icons.edit,
+                      size: 16,
+                    ),
+                    label: const Text(
+                      "Edit",
+                      style: TextStyle(fontSize: 13),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                      ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                      foregroundColor: Colors.white,
+                      padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ],
               ),
+              const Divider(),
               const SizedBox(height: 12),
 
-              _infoRow("Full Name", fullName),
-              _infoRow("Email", email),
-              _infoRow("Mobile", mobile),
-              _infoRow("Landline", landline),
-              _infoRow("Date of Birth", dob),
-              _infoRow("Age", age),
-              _infoRow("Marital Status", maritalStatus),
-
-              const SizedBox(height: 20),
-              const Divider(),
+              _infoRow("Full Name", data.fullName ?? ''),
+              _infoRow("Email", data.email ?? ''),
+              _infoRow("Mobile", data.mobile ?? ''),
+              _infoRow("Date of Birth",
+                  _formatDobForUi(data.dateOfBirth ?? '')),
+              _infoRow("Age", data.age ?? ''),
+              _infoRow("Marital Status",
+                  data.maritalStatusName ?? ''),
               const SizedBox(height: 10),
 
               const Text(
@@ -477,14 +532,16 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
               ),
               const SizedBox(height: 12),
 
-              _infoRow("Father Name", fatherName),
-              _infoRow("Mother Name", motherName),
-              _infoRow("Father Mobile", fatherMobile),
-              _infoRow("Father Email", fatherEmail),
-              _infoRow("Father Address", fatherAddress),
-              _infoRow("City", fatherCityName),
-              _infoRow("State", fatherStateName),
-
+              _infoRow("Father Name",
+                  data.applicantFatherName ?? ''),
+              _infoRow("Father Mobile",
+                  data.fatherMobile ?? ''),
+              _infoRow("Father Email",
+                  data.fatherEmail ?? ''),
+              _infoRow("City",
+                  data.applicantCityName ?? ''),
+              _infoRow("State",
+                  data.applicantStateName ?? ''),
             ],
           ),
         ),
@@ -511,7 +568,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
           children: [
             Expanded(
               child: Text(
-                "Once you complete this detail, click Submit to proceed.",
+                "Once you complete this detail, click Next Step to proceed.",
                 style: const TextStyle(
                   fontSize: 13,
                   color: Colors.black87,
@@ -522,7 +579,24 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
             const SizedBox(width: 12),
 
             ElevatedButton(
-              onPressed: _isSubmitting ? null : _submitApplicantAndFather,
+              onPressed: () async {
+                if (_shikshaApplicantId == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Please complete applicant details first."),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ShikshaSahayataByParentingView(),
+                  ),
+                );
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
                 ColorHelperClass.getColorFromHex(ColorResources.red_color),
@@ -533,17 +607,9 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: _isSubmitting
-                  ? const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Text("Submit"),
+              child: const Text("Next Step"),
             ),
+
           ],
         ),
       ),
@@ -643,66 +709,47 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
                     children: [
-
                       const SizedBox(height: 30),
-
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           OutlinedButton(
                             onPressed: () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor:
+                              ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                              side: const BorderSide(color: Colors.red),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
                             child: const Text("Cancel"),
                           ),
                           ElevatedButton(
                             onPressed: _canSubmitApplicant
-                                ? () {
-                              setState(() {
-                                fullName =
-                                    "${firstNameCtrl.text} ${middleNameCtrl.text} ${lastNameCtrl.text}"
-                                        .trim();
-                                email = emailCtrl.text;
-                                mobile = mobileCtrl.text;
-                                landline = landlineCtrl.text;
-                                dob = dobCtrl.text;
-                                age = ageCtrl.text;
-                                hasApplicant = true;
-
-                                fatherName = fatherNameCtrl.text;
-                                motherName = motherNameCtrl.text;
-                                fatherEmail = fatherEmailCtrl.text;
-                                fatherMobile = fatherMobileCtrl.text;
-
-                                fatherAddress = _safeAddress();
-
-                                fatherCityName = regiController.cityList
-                                    .firstWhereOrNull(
-                                        (e) => e.id.toString() == regiController.city_id.value)
-                                    ?.cityName ??
-                                    '';
-
-                                fatherStateName = regiController.stateList
-                                    .firstWhereOrNull(
-                                        (e) => e.id.toString() == regiController.state_id.value)
-                                    ?.stateName ??
-                                    '';
-                              });
-
+                                ? () async {
                               Navigator.pop(context);
-
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                      "Applicant details added successfully"),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
+                              if (_shikshaApplicantId == null) {
+                                await _submitApplicantAndFather();
+                              } else {
+                                await _updateApplicant();
+                              }
                             }
                                 : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                              ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                              foregroundColor: Colors.white,
+                              padding:
+                              const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
                             child: const Text("Submit"),
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 10),
 
                       Expanded(
@@ -718,7 +765,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-
                               const SizedBox(height: 30),
 
                               _buildTextField("First Name *",
@@ -952,20 +998,24 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 imageFile: applicantAadharFile,
                                 buttonText: "Applicant Aadhaar *",
                                 onPick: () {
-                                  _showImagePicker(
-                                    context,
-                                        (file) {
-                                      setModalState(() {
-                                        applicantAadharFile = file;
-                                      });
-                                      setState(() {
-                                        applicantAadharFile = file;
-                                      });
-                                    },
-                                  );
+                                  _showImagePicker(context, (file) {
+                                    setModalState(() {
+                                      applicantAadharFile = file;
+                                    });
+                                    setState(() {
+                                      applicantAadharFile = file;
+                                    });
+                                  });
+                                },
+                                onRemove: () {
+                                  setModalState(() {
+                                    applicantAadharFile = null;
+                                  });
+                                  setState(() {
+                                    applicantAadharFile = null;
+                                  });
                                 },
                               ),
-
                               const SizedBox(height: 20),
 
                               buildImageUploadField(
@@ -973,20 +1023,24 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 imageFile: fatherPanFile,
                                 buttonText: "Father PAN Card *",
                                 onPick: () {
-                                  _showImagePicker(
-                                    context,
-                                        (file) {
-                                      setModalState(() {
-                                        fatherPanFile = file;
-                                      });
-                                      setState(() {
-                                        fatherPanFile = file;
-                                      });
-                                    },
-                                  );
+                                  _showImagePicker(context, (file) {
+                                    setModalState(() {
+                                      fatherPanFile = file;
+                                    });
+                                    setState(() {
+                                      fatherPanFile = file;
+                                    });
+                                  });
+                                },
+                                onRemove: () {
+                                  setModalState(() {
+                                    fatherPanFile = null;
+                                  });
+                                  setState(() {
+                                    fatherPanFile = null;
+                                  });
                                 },
                               ),
-
                               const SizedBox(height: 20),
 
                               buildImageUploadField(
@@ -995,17 +1049,22 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 buttonText:
                                 "Address Proof (If Aadhaar and current address is not same)",
                                 onPick: () {
-                                  _showImagePicker(
-                                    context,
-                                        (file) {
-                                      setModalState(() {
-                                        addressProofFile = file;
-                                      });
-                                      setState(() {
-                                        addressProofFile = file;
-                                      });
-                                    },
-                                  );
+                                  _showImagePicker(context, (file) {
+                                    setModalState(() {
+                                      addressProofFile = file;
+                                    });
+                                    setState(() {
+                                      addressProofFile = file;
+                                    });
+                                  });
+                                },
+                                onRemove: () {
+                                  setModalState(() {
+                                    addressProofFile = null;
+                                  });
+                                  setState(() {
+                                    addressProofFile = null;
+                                  });
                                 },
                               ),
                               const SizedBox(height: 40),
@@ -1023,6 +1082,29 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
       },
     );
   }
+
+  void _openEditApplicant() {
+    if (_applicationData == null) return;
+
+    final data = _applicationData!;
+
+    // Prefill controllers
+    firstNameCtrl.text = data.applicantFirstName ?? '';
+    middleNameCtrl.text = data.applicantMiddleName ?? '';
+    lastNameCtrl.text = data.applicantLastName ?? '';
+    emailCtrl.text = data.email ?? '';
+    mobileCtrl.text = data.mobile ?? '';
+    ageCtrl.text = data.age ?? '';
+    dobCtrl.text = _formatDobForUi(data.dateOfBirth ?? '');
+    maritalStatus = _mapMaritalStatusLabel(data.maritalStatusId ?? '');
+
+    fatherNameCtrl.text = data.applicantFatherName ?? '';
+    fatherEmailCtrl.text = data.fatherEmail ?? '';
+    fatherMobileCtrl.text = data.fatherMobile ?? '';
+
+    _showAddApplicantModalSheet(context);
+  }
+
 
   Widget _buildTextField(
     String label, {
@@ -1214,35 +1296,70 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     required File? imageFile,
     required String buttonText,
     required VoidCallback onPick,
+    required VoidCallback onRemove,
   }) {
+    final isUploaded = imageFile != null;
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (imageFile != null)
-          Container(
-            height: 200,
-            width: double.infinity,
-            margin: const EdgeInsets.only(bottom: 10),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.file(
-                imageFile,
-                fit: BoxFit.cover,
+        if (isUploaded)
+          Stack(
+            children: [
+              Container(
+                height: 180,
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.grey.shade400),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.file(
+                    imageFile,
+                    fit: BoxFit.cover,
+                  ),
+                ),
               ),
-            ),
+
+              /// ❌ REMOVE BUTTON
+              Positioned(
+                right: 8,
+                top: 8,
+                child: GestureDetector(
+                  onTap: onRemove,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
+
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
             onPressed: onPick,
-            icon: const Icon(Icons.image),
+            icon: Icon(
+              isUploaded ? Icons.check_circle : Icons.upload,
+            ),
             label: Text(buttonText),
             style: ElevatedButton.styleFrom(
-              backgroundColor:
-              ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              backgroundColor: isUploaded
+                  ? Colors.green   // ✅ Change color after upload
+                  : ColorHelperClass.getColorFromHex(
+                ColorResources.red_color,
+              ),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),

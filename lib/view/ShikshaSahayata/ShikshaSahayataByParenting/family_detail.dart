@@ -1,21 +1,23 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/model/GetProfile/FamilyHeadMemberData.dart';
 import 'package:mpm/model/GetProfile/FamilyMembersData.dart';
-import 'package:mpm/model/relation/RelationData.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/urls.dart';
+import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
-import '../../view_model/controller/dashboard/NewMemberController.dart';
 
 class FamilyDetail extends StatefulWidget {
-  const FamilyDetail({Key? key}) : super(key: key);
+  final String shikshaApplicantId;
+
+  const FamilyDetail({
+    Key? key,
+    required this.shikshaApplicantId,
+  }) : super(key: key);
 
   @override
   State<FamilyDetail> createState() => _FamilyDetailState();
@@ -24,8 +26,8 @@ class FamilyDetail extends StatefulWidget {
 class _FamilyDetailState extends State<FamilyDetail> {
   String? currentMemberId;
 
-  final UdateProfileController controller = Get.put(UdateProfileController());
-  final NewMemberController regiController = Get.put(NewMemberController());
+  final UdateProfileController controller = Get.find<UdateProfileController>();
+  final NewMemberController regiController = Get.find<NewMemberController>();
 
   @override
   void initState() {
@@ -119,8 +121,6 @@ class _FamilyDetailState extends State<FamilyDetail> {
     );
   }
 
-  // ===================== UNIFIED FAMILY CARD =====================
-
   Widget _buildUnifiedFamilyCard({
     required BuildContext context,
     required String name,
@@ -128,7 +128,6 @@ class _FamilyDetailState extends State<FamilyDetail> {
     String? profileImage,
     required bool isHead,
 
-    // 🔹 OPTIONAL DETAILS
     String? relationName,
     String? status,
     String? jobTitle,
@@ -178,13 +177,11 @@ class _FamilyDetailState extends State<FamilyDetail> {
           children: [
             const SizedBox(height: 4),
 
-            /// 🔹 MEMBER CODE
             Text(
               "Member Code: $memberCode",
               style: TextStyle(fontSize: 13, color: Colors.grey[600]),
             ),
 
-            /// 🔹 SHOW DETAILS ONLY IF EXISTS
             if (hasDetails) ...[
               const SizedBox(height: 8),
               const Divider(height: 1),
@@ -225,11 +222,11 @@ class _FamilyDetailState extends State<FamilyDetail> {
             backgroundColor:
             ColorHelperClass.getColorFromHex(ColorResources.red_color),
             foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
-            elevation: 2,
           ),
           child: const Text(
             "Add",
@@ -296,7 +293,6 @@ class _FamilyDetailState extends State<FamilyDetail> {
                   padding: MediaQuery.of(context).viewInsets,
                   child: Column(
                     children: [
-                      /// 🔹 TOP ACTION ROW (FIXED)
                       Padding(
                         padding: const EdgeInsets.all(16),
                         child: Row(
@@ -311,6 +307,11 @@ class _FamilyDetailState extends State<FamilyDetail> {
                                 side: BorderSide(
                                   color: ColorHelperClass.getColorFromHex(
                                       ColorResources.red_color),
+                                ),
+                                padding:
+                                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
                               child: const Text("Cancel"),
@@ -333,9 +334,13 @@ class _FamilyDetailState extends State<FamilyDetail> {
                                     },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
-                                    ColorHelperClass.getColorFromHex(
-                                        ColorResources.red_color),
+                                ColorHelperClass.getColorFromHex(ColorResources.red_color),
                                 foregroundColor: Colors.white,
+                                padding:
+                                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                               ),
                               child: const Text("Add Family Details"),
                             ),
@@ -343,7 +348,6 @@ class _FamilyDetailState extends State<FamilyDetail> {
                         ),
                       ),
 
-                      /// 🔹 SCROLLABLE CONTENT
                       Expanded(
                         child: SingleChildScrollView(
                           padding: const EdgeInsets.all(16),
@@ -359,10 +363,8 @@ class _FamilyDetailState extends State<FamilyDetail> {
                                   ),
                                 ),
                               ),
-
                               const SizedBox(height: 30),
 
-                              /// 🔹 RELATIONSHIP DROPDOWN
                               Obx(() {
                                 if (controller.rxStatusRelationType.value ==
                                     Status.LOADING) {
@@ -426,10 +428,8 @@ class _FamilyDetailState extends State<FamilyDetail> {
                                   ),
                                 );
                               }),
-
                               const SizedBox(height: 20),
 
-                              /// 🔹 STATUS DROPDOWN
                               InputDecorator(
                                 decoration: InputDecoration(
                                   labelText: 'Select Status *',
@@ -487,10 +487,8 @@ class _FamilyDetailState extends State<FamilyDetail> {
                                   },
                                 ),
                               ),
-
                               const SizedBox(height: 20),
 
-                              /// 🔹 EARNING
                               if (selectedStatus == "Earning") ...[
                                 TextFormField(
                                   controller: jobTitleCtrl,
@@ -510,7 +508,6 @@ class _FamilyDetailState extends State<FamilyDetail> {
                                 ),
                               ],
 
-                              /// 🔹 NON EARNING
                               if (selectedStatus == "Non Earning") ...[
                                 InputDecorator(
                                   decoration: InputDecoration(
@@ -567,10 +564,8 @@ class _FamilyDetailState extends State<FamilyDetail> {
                                     },
                                   ),
                                 ),
-
                                 const SizedBox(height: 20),
 
-                                /// 🔹 STUDENT
                                 if (selectedNonEarningReason == "Student") ...[
                                   TextFormField(
                                     controller: standardCtrl,
@@ -590,7 +585,6 @@ class _FamilyDetailState extends State<FamilyDetail> {
                                   ),
                                 ],
 
-                                /// 🔹 OTHER
                                 if (selectedNonEarningReason == "Other") ...[
                                   TextFormField(
                                     controller: otherDetailCtrl,
@@ -602,7 +596,6 @@ class _FamilyDetailState extends State<FamilyDetail> {
                                   ),
                                 ],
                               ],
-
                               const SizedBox(height: 30),
                             ],
                           ),

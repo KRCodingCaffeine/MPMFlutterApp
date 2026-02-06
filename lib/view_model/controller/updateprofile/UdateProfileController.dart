@@ -305,6 +305,7 @@ class UdateProfileController extends GetxController {
   void onInit() {
     // TODO: implement onInit
     super.onInit();
+    getRelation();
   }
 
   void setSelectRelationShip(String value) {
@@ -1426,15 +1427,16 @@ class UdateProfileController extends GetxController {
   void setRxRelationType(Status _value) => rxStatusRelationType.value = _value;
 
   void getRelation() {
+    if (relationShipTypeList.isNotEmpty) return;
+
     Map datas = {"attribute_id": "1"};
     setRxRelationType(Status.LOADING);
+
     api.userFamilyRelation(datas).then((_value) {
       setRxRelationType(Status.COMPLETE);
       setRelationShipType(_value.data!);
-      print("relationdata" + _value.data!.toString());
     }).onError((error, strack) {
       setRxRelationType(Status.ERROR);
-      print("relationdata" + error.toString());
     });
   }
 

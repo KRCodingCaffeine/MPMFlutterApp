@@ -203,8 +203,7 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorHelperClass.getColorFromHex(
-                        ColorResources.red_color),
+                    backgroundColor: Colors.redAccent,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 14),
