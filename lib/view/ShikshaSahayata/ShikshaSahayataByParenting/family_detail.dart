@@ -4,6 +4,11 @@ import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/model/GetProfile/FamilyHeadMemberData.dart';
 import 'package:mpm/model/GetProfile/FamilyMembersData.dart';
+import 'package:mpm/model/ShikshaSahayata/FamilyDetail/AddUpdateFamilyData.dart';
+import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/FamilyMember.dart';
+import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/ShikshaApplicationData.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/FamilyDetailRepo/add_update_family_data_repository/add_update_family_data_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/ShikshaApplicationRepo/shiksha_application_repository/shiksha_application_repo.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
@@ -28,11 +33,21 @@ class _FamilyDetailState extends State<FamilyDetail> {
 
   final UdateProfileController controller = Get.find<UdateProfileController>();
   final NewMemberController regiController = Get.find<NewMemberController>();
+  final AddUpdateFamilyDataRepository _familyRepo =
+  AddUpdateFamilyDataRepository();
+
+  /// Store saved data per member
+  final ShikshaApplicationRepository _shikshaRepo =
+  ShikshaApplicationRepository();
+
+  ShikshaApplicationData? _applicationData;
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _loadSessionData();
+    _fetchShikshaApplication();
   }
 
   void _loadSessionData() async {
@@ -40,6 +55,37 @@ class _FamilyDetailState extends State<FamilyDetail> {
     setState(() {
       currentMemberId = userData?.memberId?.toString();
     });
+  }
+
+  Future<void> _fetchShikshaApplication() async {
+    try {
+      final response =
+      await _shikshaRepo.fetchShikshaApplicationById(
+        applicantId: widget.shikshaApplicantId,
+      );
+
+      if (response.status == true && response.data != null) {
+        setState(() {
+          _applicationData = response.data;
+          isLoading = false;
+        });
+      } else {
+        throw Exception(response.message ?? "Failed to fetch data");
+      }
+    } catch (e) {
+      setState(() => isLoading = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _refreshShikshaApplication() async {
+    await _fetchShikshaApplication();
   }
 
   @override
@@ -93,23 +139,88 @@ class _FamilyDetailState extends State<FamilyDetail> {
             itemBuilder: (context, index) {
               final item = unifiedList[index];
 
+              FamilyMember? familyDetail;
+
+              if (_applicationData?.familyMembers != null) {
+                final list = _applicationData!.familyMembers!;
+                final memberId = (item is FamilyHeadMemberData)
+                    ? item.memberId
+                    : (item is FamilyMembersData)
+                    ? item.memberId
+                    : null;
+
+                if (memberId != null &&
+                    list.any((f) => f.familyMemberId == memberId)) {
+                  familyDetail = list.firstWhere(
+                        (f) => f.familyMemberId == memberId,
+                  );
+                }
+              }
+
+              // 🔵 FAMILY HEAD
               if (item is FamilyHeadMemberData) {
                 return _buildUnifiedFamilyCard(
                   context: context,
-                  name: "${item.firstName ?? ''} ${item.lastName ?? ''}".trim(),
-                  memberCode: item.memberCode ?? item.memberId ?? '',
+                  name:
+                  "${item.firstName ?? ''} ${item.lastName ?? ''}".trim(),
+                  memberId: item.memberId ?? '',
+                  displayCode:
+                  item.memberCode ?? item.memberId ?? '',
                   profileImage: item.profileImage,
                   isHead: true,
+
+                  relationName: familyDetail?.relationshipName,
+                  status: familyDetail?.familyMemberOccupationType ==
+                      "working"
+                      ? "Earning"
+                      : familyDetail?.familyMemberOccupationType ==
+                      "studying"
+                      ? "Non Earning"
+                      : null,
+                  jobTitle: familyDetail?.familyMemberOccupationName,
+                  yearlyIncome:
+                  familyDetail?.familyMemberAnnualIncome,
+                  standard: familyDetail?.familyMemberStandard,
+                  schoolAddress:
+                  familyDetail?.familyMemberInstitute,
+                  nonEarningReason:
+                  familyDetail?.familyMemberOccupationType ==
+                      "studying"
+                      ? "Student"
+                      : null,
                 );
               }
 
               if (item is FamilyMembersData) {
                 return _buildUnifiedFamilyCard(
                   context: context,
-                  name: "${item.firstName ?? ''} ${item.lastName ?? ''}".trim(),
-                  memberCode: item.memberCode ?? item.memberId ?? '',
+                  name:
+                  "${item.firstName ?? ''} ${item.lastName ?? ''}".trim(),
+                  memberId: item.memberId ?? '',
+                  displayCode:
+                  item.memberCode ?? item.memberId ?? '',
                   profileImage: item.profileImage,
                   isHead: false,
+
+                  relationName: familyDetail?.relationshipName,
+                  status: familyDetail?.familyMemberOccupationType ==
+                      "working"
+                      ? "Earning"
+                      : familyDetail?.familyMemberOccupationType ==
+                      "studying"
+                      ? "Non Earning"
+                      : null,
+                  jobTitle: familyDetail?.familyMemberOccupationName,
+                  yearlyIncome:
+                  familyDetail?.familyMemberAnnualIncome,
+                  standard: familyDetail?.familyMemberStandard,
+                  schoolAddress:
+                  familyDetail?.familyMemberInstitute,
+                  nonEarningReason:
+                  familyDetail?.familyMemberOccupationType ==
+                      "studying"
+                      ? "Student"
+                      : null,
                 );
               }
 
@@ -124,7 +235,8 @@ class _FamilyDetailState extends State<FamilyDetail> {
   Widget _buildUnifiedFamilyCard({
     required BuildContext context,
     required String name,
-    required String memberCode,
+    required String memberId,
+    required String displayCode,
     String? profileImage,
     required bool isHead,
 
@@ -178,45 +290,67 @@ class _FamilyDetailState extends State<FamilyDetail> {
             const SizedBox(height: 4),
 
             Text(
-              "Member Code: $memberCode",
+              "Member Code: $displayCode",
               style: TextStyle(fontSize: 13, color: Colors.grey[600]),
             ),
+            const SizedBox(height: 4),
 
             if (hasDetails) ...[
-              const SizedBox(height: 8),
-              const Divider(height: 1),
-
               if (relationName != null)
                 _detailRow("Relation", relationName),
+              const SizedBox(height: 4),
 
               if (status != null)
                 _detailRow("Status", status),
+              const SizedBox(height: 4),
 
               if (status == "Earning" && jobTitle != null)
                 _detailRow("Job", jobTitle),
+              const SizedBox(height: 4),
 
               if (status == "Earning" && yearlyIncome != null)
                 _detailRow("Income", yearlyIncome),
+              const SizedBox(height: 4),
 
               if (status == "Non Earning" && nonEarningReason != null)
                 _detailRow("Reason", nonEarningReason),
+              const SizedBox(height: 4),
 
               if (nonEarningReason == "Student" && standard != null)
                 _detailRow("Standard", standard),
+              const SizedBox(height: 4),
 
               if (nonEarningReason == "Student" &&
                   schoolAddress != null)
                 _detailRow("School", schoolAddress),
+              const SizedBox(height: 4),
 
               if (nonEarningReason == "Other" && otherDetail != null)
                 _detailRow("Detail", otherDetail),
+              const SizedBox(height: 4),
+
             ],
           ],
         ),
 
         trailing: ElevatedButton(
           onPressed: () {
-            _showAddRelationSheet(context, name);
+            FamilyMember? existing;
+
+            if (_applicationData?.familyMembers != null) {
+              final list = _applicationData!.familyMembers!;
+              if (list.any((f) => f.familyMemberId == memberId)) {
+                existing =
+                    list.firstWhere((f) => f.familyMemberId == memberId);
+              }
+            }
+
+            _showAddRelationSheet(
+              context,
+              name,
+              memberId,
+              existingData: existing,
+            );
           },
           style: ElevatedButton.styleFrom(
             backgroundColor:
@@ -228,9 +362,13 @@ class _FamilyDetailState extends State<FamilyDetail> {
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          child: const Text(
-            "Add",
-            style: TextStyle(fontSize: 12),
+          child: Text(
+            _applicationData?.familyMembers
+                ?.any((f) => f.familyMemberId == memberId) ==
+                true
+                ? "Edit"
+                : "Add",
+            style: const TextStyle(fontSize: 12),
           ),
         ),
       ),
@@ -258,7 +396,9 @@ class _FamilyDetailState extends State<FamilyDetail> {
   }
 
 
-  void _showAddRelationSheet(BuildContext context, String memberName) {
+  void _showAddRelationSheet(BuildContext context, String memberName, String memberId, {
+    FamilyMember? existingData,
+  }) {
     String selectedStatus = '';
     String selectedNonEarningReason = '';
 
@@ -267,6 +407,28 @@ class _FamilyDetailState extends State<FamilyDetail> {
     final TextEditingController standardCtrl = TextEditingController();
     final TextEditingController schoolAddressCtrl = TextEditingController();
     final TextEditingController otherDetailCtrl = TextEditingController();
+
+    // 🔥 PREFILL DATA IF EDITING
+    if (existingData != null) {
+      if (existingData.familyMemberOccupationType == "working") {
+        selectedStatus = "Earning";
+        jobTitleCtrl.text =
+            existingData.familyMemberOccupationName ?? '';
+        yearlyIncomeCtrl.text =
+            existingData.familyMemberAnnualIncome ?? '';
+      } else {
+        selectedStatus = "Non Earning";
+        selectedNonEarningReason = "Student";
+        standardCtrl.text =
+            existingData.familyMemberStandard ?? '';
+        schoolAddressCtrl.text =
+            existingData.familyMemberInstitute ?? '';
+      }
+
+      controller.setSelectRelationShip(
+          existingData.relationshipWithApplicantId ?? '');
+    }
+
 
     final List<String> statusOptions = ["Earning", "Non Earning"];
     final List<String> nonEarningOptions = [
@@ -317,21 +479,72 @@ class _FamilyDetailState extends State<FamilyDetail> {
                               child: const Text("Cancel"),
                             ),
                             ElevatedButton(
-                              onPressed: controller.selectRelationShipType.value
-                                          .isEmpty ||
-                                      selectedStatus.isEmpty
+                              onPressed: controller.selectRelationShipType.value.isEmpty ||
+                                  selectedStatus.isEmpty
                                   ? null
-                                  : () {
-                                      Navigator.pop(context);
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                              "$memberName added successfully"),
-                                          backgroundColor: Colors.green,
-                                        ),
-                                      );
-                                    },
+                                  : () async {
+                                try {
+                                  String occupationType =
+                                  selectedStatus == "Earning"
+                                      ? "working"
+                                      : "studying";
+
+                                  final body = {
+                                    "shiksha_applicant_id": widget.shikshaApplicantId,
+                                    "family_member_id": memberId,
+                                    "relationship_with_applicant_id":
+                                    controller.selectRelationShipType.value,
+                                    "family_member_occupation_type":
+                                    occupationType,
+                                    "family_member_occupation_name":
+                                    selectedStatus == "Earning"
+                                        ? jobTitleCtrl.text
+                                        : "",
+                                    "family_member_standard":
+                                    selectedStatus == "Non Earning"
+                                        ? standardCtrl.text
+                                        : "",
+                                    "family_member_institute":
+                                    selectedStatus == "Non Earning"
+                                        ? schoolAddressCtrl.text
+                                        : "",
+                                    "family_member_annual_income":
+                                    selectedStatus == "Earning"
+                                        ? yearlyIncomeCtrl.text
+                                        : "",
+                                    "created_by": currentMemberId,
+                                    "updated_by": currentMemberId,
+                                  };
+
+                                  final response =
+                                  await _familyRepo.addOrUpdateFamilyData(body);
+
+                                  if (response.status == true &&
+                                      response.data != null) {
+                                    await _refreshShikshaApplication();
+                                    Navigator.pop(context);
+
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(
+                                      const SnackBar(
+                                        content:
+                                        Text("Family details saved successfully"),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  } else {
+                                    throw Exception(response.message);
+                                  }
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(
+                                    SnackBar(
+                                      content: Text(e.toString()),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
                                 ColorHelperClass.getColorFromHex(ColorResources.red_color),
@@ -342,7 +555,11 @@ class _FamilyDetailState extends State<FamilyDetail> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
-                              child: const Text("Add Family Details"),
+                              child: Text(
+                                existingData != null
+                                    ? "Update Family Details"
+                                    : "Add Family Details",
+                              ),
                             ),
                           ],
                         ),
