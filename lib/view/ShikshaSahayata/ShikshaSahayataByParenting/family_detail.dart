@@ -13,6 +13,7 @@ import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/urls.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/shiksha_sahayata_by_parenting_view.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
@@ -88,6 +89,11 @@ class _FamilyDetailState extends State<FamilyDetail> {
     await _fetchShikshaApplication();
   }
 
+  bool get _isFamilyCompleted {
+    return _applicationData?.familyMembers != null &&
+        _applicationData!.familyMembers!.isNotEmpty;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -112,125 +118,136 @@ class _FamilyDetailState extends State<FamilyDetail> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Obx(() {
-          final List<dynamic> unifiedList = [];
-
-          if (controller.familyHeadData.value != null) {
-            unifiedList.add(controller.familyHeadData.value);
-          }
-
-          unifiedList.addAll(
-            controller.familyDataList.value.where(
-              (m) => m.memberId != controller.familyHeadData.value?.memberId,
-            ),
-          );
-
-          if (unifiedList.isEmpty) {
-            return const Center(
-              child: Text(
-                "No family members found",
-                style: TextStyle(color: Colors.grey),
-              ),
-            );
-          }
-
-          return ListView.builder(
-            itemCount: unifiedList.length,
-            itemBuilder: (context, index) {
-              final item = unifiedList[index];
-
-              FamilyMember? familyDetail;
-
-              if (_applicationData?.familyMembers != null) {
-                final list = _applicationData!.familyMembers!;
-                final memberId = (item is FamilyHeadMemberData)
-                    ? item.memberId
-                    : (item is FamilyMembersData)
-                    ? item.memberId
-                    : null;
-
-                if (memberId != null &&
-                    list.any((f) => f.familyMemberId == memberId)) {
-                  familyDetail = list.firstWhere(
-                        (f) => f.familyMemberId == memberId,
-                  );
-                }
-              }
-
-              // 🔵 FAMILY HEAD
-              if (item is FamilyHeadMemberData) {
-                return _buildUnifiedFamilyCard(
-                  context: context,
-                  name:
-                  "${item.firstName ?? ''} ${item.lastName ?? ''}".trim(),
-                  memberId: item.memberId ?? '',
-                  displayCode:
-                  item.memberCode ?? item.memberId ?? '',
-                  profileImage: item.profileImage,
-                  isHead: true,
-
-                  relationName: familyDetail?.relationshipName,
-                  status: familyDetail?.familyMemberOccupationType ==
-                      "working"
-                      ? "Earning"
-                      : familyDetail?.familyMemberOccupationType ==
-                      "studying"
-                      ? "Non Earning"
-                      : null,
-                  jobTitle: familyDetail?.familyMemberOccupationName,
-                  yearlyIncome:
-                  familyDetail?.familyMemberAnnualIncome,
-                  standard: familyDetail?.familyMemberStandard,
-                  schoolAddress:
-                  familyDetail?.familyMemberInstitute,
-                  nonEarningReason:
-                  familyDetail?.familyMemberOccupationType ==
-                      "studying"
-                      ? "Student"
-                      : null,
-                );
-              }
-
-              if (item is FamilyMembersData) {
-                return _buildUnifiedFamilyCard(
-                  context: context,
-                  name:
-                  "${item.firstName ?? ''} ${item.lastName ?? ''}".trim(),
-                  memberId: item.memberId ?? '',
-                  displayCode:
-                  item.memberCode ?? item.memberId ?? '',
-                  profileImage: item.profileImage,
-                  isHead: false,
-
-                  relationName: familyDetail?.relationshipName,
-                  status: familyDetail?.familyMemberOccupationType ==
-                      "working"
-                      ? "Earning"
-                      : familyDetail?.familyMemberOccupationType ==
-                      "studying"
-                      ? "Non Earning"
-                      : null,
-                  jobTitle: familyDetail?.familyMemberOccupationName,
-                  yearlyIncome:
-                  familyDetail?.familyMemberAnnualIncome,
-                  standard: familyDetail?.familyMemberStandard,
-                  schoolAddress:
-                  familyDetail?.familyMemberInstitute,
-                  nonEarningReason:
-                  familyDetail?.familyMemberOccupationType ==
-                      "studying"
-                      ? "Student"
-                      : null,
-                );
-              }
-
-              return const SizedBox.shrink();
-            },
-          );
-        }),
+        child: isLoading
+            ? const Center(
+          child: CircularProgressIndicator(),
+        )
+            : _buildFamilyList(),
       ),
+
+      // 🔥 ADD THIS
+      bottomNavigationBar:
+      _isFamilyCompleted ? _buildBottomNextBar() : null,
     );
   }
+
+  Widget _buildFamilyList() {
+    final List<dynamic> unifiedList = [];
+
+    if (controller.familyHeadData.value != null) {
+      unifiedList.add(controller.familyHeadData.value);
+    }
+
+    unifiedList.addAll(
+      controller.familyDataList.value.where(
+            (m) => m.memberId != controller.familyHeadData.value?.memberId,
+      ),
+    );
+
+    if (unifiedList.isEmpty) {
+      return const Center(
+        child: Text(
+          "No family members found",
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: unifiedList.length,
+      itemBuilder: (context, index) {
+        final item = unifiedList[index];
+
+        FamilyMember? familyDetail;
+
+        if (_applicationData?.familyMembers != null) {
+          final list = _applicationData!.familyMembers!;
+          final memberId = (item is FamilyHeadMemberData)
+              ? item.memberId
+              : (item is FamilyMembersData)
+              ? item.memberId
+              : null;
+
+          if (memberId != null &&
+              list.any((f) => f.familyMemberId == memberId)) {
+            familyDetail =
+                list.firstWhere((f) => f.familyMemberId == memberId);
+          }
+        }
+
+        if (item is FamilyHeadMemberData) {
+          return _buildUnifiedFamilyCard(
+            context: context,
+            name:
+            "${item.firstName ?? ''} ${item.lastName ?? ''}".trim(),
+            memberId: item.memberId ?? '',
+            displayCode:
+            item.memberCode ?? item.memberId ?? '',
+            profileImage: item.profileImage,
+            isHead: true,
+            relationName: familyDetail?.relationshipName,
+            status: familyDetail?.familyMemberOccupationType ==
+                "working"
+                ? "Earning"
+                : familyDetail?.familyMemberOccupationType ==
+                "studying"
+                ? "Non Earning"
+                : null,
+            jobTitle:
+            familyDetail?.familyMemberOccupationName,
+            yearlyIncome:
+            familyDetail?.familyMemberAnnualIncome,
+            standard:
+            familyDetail?.familyMemberStandard,
+            schoolAddress:
+            familyDetail?.familyMemberInstitute,
+            nonEarningReason:
+            familyDetail?.familyMemberOccupationType ==
+                "studying"
+                ? "Student"
+                : null,
+          );
+        }
+
+        if (item is FamilyMembersData) {
+          return _buildUnifiedFamilyCard(
+            context: context,
+            name:
+            "${item.firstName ?? ''} ${item.lastName ?? ''}".trim(),
+            memberId: item.memberId ?? '',
+            displayCode:
+            item.memberCode ?? item.memberId ?? '',
+            profileImage: item.profileImage,
+            isHead: false,
+            relationName: familyDetail?.relationshipName,
+            status: familyDetail?.familyMemberOccupationType ==
+                "working"
+                ? "Earning"
+                : familyDetail?.familyMemberOccupationType ==
+                "studying"
+                ? "Non Earning"
+                : null,
+            jobTitle:
+            familyDetail?.familyMemberOccupationName,
+            yearlyIncome:
+            familyDetail?.familyMemberAnnualIncome,
+            standard:
+            familyDetail?.familyMemberStandard,
+            schoolAddress:
+            familyDetail?.familyMemberInstitute,
+            nonEarningReason:
+            familyDetail?.familyMemberOccupationType ==
+                "studying"
+                ? "Student"
+                : null,
+          );
+        }
+
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
 
   Widget _buildUnifiedFamilyCard({
     required BuildContext context,
@@ -395,6 +412,61 @@ class _FamilyDetailState extends State<FamilyDetail> {
     );
   }
 
+  Widget _buildBottomNextBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                "Once you complete this detail, click Next Step to proceed.",
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ShikshaSahayataByParentingView(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                ColorHelperClass.getColorFromHex(
+                    ColorResources.red_color),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text("Next Step"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   void _showAddRelationSheet(BuildContext context, String memberName, String memberId, {
     FamilyMember? existingData,

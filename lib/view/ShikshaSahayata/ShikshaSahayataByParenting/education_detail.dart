@@ -48,7 +48,8 @@ class _EducationDetailViewState extends State<EducationDetailView> {
           builder: (context) {
             double fontSize = MediaQuery.of(context).size.width * 0.045;
             return Text(
-              "Education Detail",
+              "Education History (Other Than Current Year)",
+              maxLines: 2,
               style: TextStyle(
                 color: Colors.white,
                 fontSize: fontSize,
@@ -68,13 +69,13 @@ class _EducationDetailViewState extends State<EducationDetailView> {
       body: educationList.isEmpty
           ? const Center(
         child: Text(
-          "No Education Details Added Yet",
+          "No Education Education History Added Yet",
           style: TextStyle(color: Colors.grey),
         ),
       )
           : ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: educationList.length + 1, // 👈 important
+        itemCount: educationList.length + 1,
         itemBuilder: (context, index) {
           if (index == 0) {
             /// 🔹 INFO MESSAGE CARD AT TOP
@@ -141,6 +142,12 @@ class _EducationDetailViewState extends State<EducationDetailView> {
             _infoRow("Education", edu["class"]),
             const SizedBox(height: 8),
 
+            _infoRow("School", edu["school"]),
+            const SizedBox(height: 8),
+
+            _infoRow("Board", edu["board"]),
+            const SizedBox(height: 8),
+
             /// 🔹 PASSED
             _infoRow("Passed", edu["passed"]),
             const SizedBox(height: 8),
@@ -183,6 +190,8 @@ class _EducationDetailViewState extends State<EducationDetailView> {
     final TextEditingController passedCtrl = TextEditingController();
     final TextEditingController marksCtrl = TextEditingController();
     final TextEditingController otherClassCtrl = TextEditingController();
+    final TextEditingController schoolCtrl = TextEditingController();       // 🔹 NEW
+    final TextEditingController boardCtrl = TextEditingController();        // 🔹 NEW
 
     final List<String> classOptions = [
       "10th Std",
@@ -203,7 +212,7 @@ class _EducationDetailViewState extends State<EducationDetailView> {
           builder: (context, setModalState) {
             return SafeArea(
               child: FractionallySizedBox(
-                heightFactor: 0.65,
+                heightFactor: 0.75,
                 child: Column(
                   children: [
                     /// 🔹 TOP ACTION BAR
@@ -215,17 +224,27 @@ class _EducationDetailViewState extends State<EducationDetailView> {
                           OutlinedButton(
                             onPressed: () => Navigator.pop(context),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: ColorHelperClass.getColorFromHex(
+                              foregroundColor:
+                              ColorHelperClass.getColorFromHex(
                                   ColorResources.red_color),
                               side: BorderSide(
                                 color: ColorHelperClass.getColorFromHex(
                                     ColorResources.red_color),
                               ),
+                              padding:
+                              const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
                             child: const Text("Cancel"),
                           ),
                           ElevatedButton(
-                            onPressed: selectedClass.isEmpty
+                            onPressed: selectedClass.isEmpty ||
+                                schoolCtrl.text.isEmpty ||
+                                boardCtrl.text.isEmpty ||
+                                passedCtrl.text.isEmpty ||
+                                marksCtrl.text.isEmpty
                                 ? null
                                 : () {
                               final String educationClass =
@@ -238,12 +257,13 @@ class _EducationDetailViewState extends State<EducationDetailView> {
 
                                 educationList.add({
                                   "class": educationClass,
+                                  "school": schoolCtrl.text,
+                                  "board": boardCtrl.text,
                                   "passed": passedCtrl.text,
                                   "marks": marksCtrl.text,
                                   "file": _educationDocument,
                                 });
 
-                                // clear for next entry
                                 _educationDocument = null;
                               });
 
@@ -251,18 +271,24 @@ class _EducationDetailViewState extends State<EducationDetailView> {
 
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text("Education details added successfully"),
+                                  content: Text(
+                                      "Education details added successfully"),
                                   backgroundColor: Colors.green,
                                 ),
                               );
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
-                              ColorHelperClass.getColorFromHex(
-                                  ColorResources.red_color),
+                              ColorHelperClass.getColorFromHex(ColorResources.red_color),
                               foregroundColor: Colors.white,
+                              padding:
+                              const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
-                            child: const Text("Add Education Details"),
+                            child:
+                            const Text("Add Education Details"),
                           ),
                         ],
                       ),
@@ -273,7 +299,8 @@ class _EducationDetailViewState extends State<EducationDetailView> {
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.all(16),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          crossAxisAlignment:
+                          CrossAxisAlignment.stretch,
                           children: [
                             const Center(
                               child: Text(
@@ -284,55 +311,24 @@ class _EducationDetailViewState extends State<EducationDetailView> {
                                 ),
                               ),
                             ),
-
                             const SizedBox(height: 30),
 
-                            /// 🔹 CLASS DROPDOWN
+                            /// 🔹 CLASS
                             InputDecorator(
-                              decoration: InputDecoration(
-                                labelText: 'CLass *',
-                                border:
-                                const OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      color: Colors.black),
-                                ),
-                                enabledBorder:
-                                const OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      color: Colors.black),
-                                ),
-                                focusedBorder:
-                                const OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      color: Colors.black38,
-                                      width: 1),
-                                ),
-                                contentPadding:
-                                const EdgeInsets.symmetric(
-                                    horizontal: 20),
-                                labelStyle: const TextStyle(
-                                    color: Colors.black),
-                              ),
+                              decoration: _inputDecoration('Class *'),
                               child: DropdownButton<String>(
-                                dropdownColor: Colors.white,
-                                borderRadius: BorderRadius.circular(10),
                                 isExpanded: true,
                                 underline: Container(),
                                 value: selectedClass.isEmpty
                                     ? null
                                     : selectedClass,
-                                hint: const Text(
-                                  "Select Class",
-                                  style:
-                                  TextStyle(fontWeight: FontWeight.bold),
-                                ),
+                                hint: const Text("Select Class"),
                                 items: classOptions
-                                    .map(
-                                      (c) => DropdownMenuItem<String>(
-                                    value: c,
-                                    child: Text(c),
-                                  ),
-                                )
+                                    .map((c) =>
+                                    DropdownMenuItem<String>(
+                                      value: c,
+                                      child: Text(c),
+                                    ))
                                     .toList(),
                                 onChanged: (val) {
                                   setModalState(() {
@@ -347,25 +343,29 @@ class _EducationDetailViewState extends State<EducationDetailView> {
                             if (selectedClass == "Other") ...[
                               TextFormField(
                                 controller: otherClassCtrl,
-                                decoration: InputDecoration(
-                                  labelText: 'Other Education Detail *',
-                                  border: const OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.black),
-                                  ),
-                                  enabledBorder: const OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.black),
-                                  ),
-                                  focusedBorder: const OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.black38, width: 1),
-                                  ),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                                  labelStyle: const TextStyle(color: Colors.black),
-                                ),
+                                decoration: _inputDecoration(
+                                    'Other Education Detail *'),
                               ),
                               const SizedBox(height: 20),
                             ],
 
-                            /// 🔹 PASSED MONTH / YEAR
+                            /// 🔹 NEW FIELD - SCHOOL / COLLEGE
+                            TextFormField(
+                              controller: schoolCtrl,
+                              decoration: _inputDecoration(
+                                  'School / College Name *'),
+                            ),
+                            const SizedBox(height: 20),
+
+                            /// 🔹 NEW FIELD - BOARD / UNIVERSITY
+                            TextFormField(
+                              controller: boardCtrl,
+                              decoration: _inputDecoration(
+                                  'Board / University *'),
+                            ),
+                            const SizedBox(height: 20),
+
+                            /// 🔹 PASSED
                             themedDatePickerField(
                               context: context,
                               label: "Passed Month / Year *",
@@ -374,42 +374,15 @@ class _EducationDetailViewState extends State<EducationDetailView> {
                             ),
                             const SizedBox(height: 20),
 
-                            /// 🔹 MARKS
+                            /// 🔹 UPDATED LABEL
                             TextFormField(
                               controller: marksCtrl,
-                              keyboardType: TextInputType.text,
-                              decoration: InputDecoration(
-                                labelText: 'Marks Obtained / Total Marks *',
-                                border:
-                                const OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      color: Colors.black),
-                                ),
-                                enabledBorder:
-                                const OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      color: Colors.black),
-                                ),
-                                focusedBorder:
-                                const OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      color: Colors.black38,
-                                      width: 1),
-                                ),
-                                contentPadding:
-                                const EdgeInsets.symmetric(
-                                    horizontal: 20),
-                                labelStyle: const TextStyle(
-                                    color: Colors.black),
-                              ),
+                              decoration: _inputDecoration(
+                                  'Marks Obtained / Total Marks *'),
                             ),
-
                             const SizedBox(height: 25),
 
-                            /// 🔹 UPLOAD DOCUMENT
                             _buildEducationUploadField(context),
-                            const SizedBox(height: 20),
-
                           ],
                         ),
                       ),
@@ -512,6 +485,24 @@ class _EducationDetailViewState extends State<EducationDetailView> {
           controller.text = DateFormat('MM/yyyy').format(picked);
         }
       },
+    );
+  }
+
+  InputDecoration _inputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      border: const OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.black),
+      ),
+      enabledBorder: const OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.black),
+      ),
+      focusedBorder: const OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.black38, width: 1),
+      ),
+      contentPadding:
+      const EdgeInsets.symmetric(horizontal: 20),
+      labelStyle: const TextStyle(color: Colors.black),
     );
   }
 

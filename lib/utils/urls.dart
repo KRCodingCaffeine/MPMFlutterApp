@@ -119,6 +119,9 @@ class Urls {
   static const String update_shiksha_application_url = base_url+"api/update_shiksha_application";
   static const String update_father_data_url = base_url+"api/update_father_data";
   static const String add_or_update_family_data_url = base_url+"api/add_or_update_family_data";
+  static const String add_shiksha_applicant_education_url = base_url+"api/add_shiksha_applicant_education";
+  static const String update_shiksha_applicant_education_url = base_url+"api/update_shiksha_applicant_education";
+  static const String delete_shiksha_applicant_education_url = base_url+"api/delete_shiksha_applicant_education";
 
   // Notification API URLs - Following same pattern as device_mapping
   static const String get_all_notifications_url = base_url+"api/notifications/get_all";
