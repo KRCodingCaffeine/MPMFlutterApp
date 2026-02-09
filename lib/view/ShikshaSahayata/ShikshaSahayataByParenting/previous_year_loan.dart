@@ -1,42 +1,98 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:month_year_picker/month_year_picker.dart';
+import 'package:mpm/model/ShikshaSahayata/ReceivedLoan/AddReceivedLoan/AddReceivedLoanData.dart';
+import 'package:mpm/model/ShikshaSahayata/ReceivedLoan/UpdateReceivedLoan/UpdateReceivedLoanData.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/ReceivedLoanRepo/add_received_loan_repository/add_received_loan_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/ReceivedLoanRepo/delete_received_loan_repository/delete_received_loan_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/ReceivedLoanRepo/update_received_loan_repository/update_received_loan_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/ShikshaApplicationRepo/shiksha_application_repository/shiksha_application_repo.dart';
+import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/current_year_any_other_loan.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/reference.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/shiksha_sahayata_by_parenting_view.dart';
 
-class OtherCharityFundView extends StatefulWidget {
+class PreviousYearLoanView extends StatefulWidget {
   final String shikshaApplicantId;
 
-  const OtherCharityFundView({
+  const PreviousYearLoanView({
     Key? key,
     required this.shikshaApplicantId,
   }) : super(key: key);
 
   @override
-  State<OtherCharityFundView> createState() => _OtherCharityFundViewState();
+  State<PreviousYearLoanView> createState() => _PreviousYearLoanViewState();
 }
 
-class _OtherCharityFundViewState extends State<OtherCharityFundView> {
+class _PreviousYearLoanViewState extends State<PreviousYearLoanView> {
   String hasOtherCharity = '';
   final List<Map<String, dynamic>> charityList = [];
 
-  final TextEditingController charityNameCtrl = TextEditingController();
-  final TextEditingController amountCtrl = TextEditingController();
-  final TextEditingController dateCtrl = TextEditingController();
+  final AddReceivedLoanRepository _addRepo = AddReceivedLoanRepository();
+  final UpdateReceivedLoanRepository _updateRepo = UpdateReceivedLoanRepository();
+  final DeleteReceivedLoanRepository _deleteRepo = DeleteReceivedLoanRepository();
+  final ShikshaApplicationRepository _shikshaRepo =
+  ShikshaApplicationRepository();
 
-  bool get isYesFormValid {
-    return charityNameCtrl.text.trim().isNotEmpty &&
-        amountCtrl.text.trim().isNotEmpty &&
-        dateCtrl.text.trim().isNotEmpty;
-  }
+  bool isLoading = true;
+  bool isSubmitting = false;
+  String? currentMemberId;
 
   @override
   void initState() {
     super.initState();
+    _loadSessionData();
+    _fetchReceivedLoanData();
+  }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _showOtherCharitySheet(context);
+  void _loadSessionData() async {
+    final userData = await SessionManager.getSession();
+    setState(() {
+      currentMemberId = userData?.memberId?.toString();
     });
+  }
+
+  Future<void> _fetchReceivedLoanData() async {
+    try {
+      setState(() => isLoading = true);
+
+      final response = await _shikshaRepo.fetchShikshaApplicationById(
+        applicantId: widget.shikshaApplicantId,
+      );
+
+      charityList.clear();
+
+      final loans = response.data?.receivedLoans ?? [];
+
+      for (var loan in loans) {
+        if (loan.appliedYearOn == "previous") {
+          charityList.add({
+            "loanId": loan.shikshaApplicantReceivedLoanId?.toString(),
+            "loanFrom": loan.receivedFrom ?? "",
+            "school": loan.schoolCollegeName ?? "",
+            "course": loan.courseName ?? "",
+            "whichYear": loan.yearOfEducation ?? "",
+            "amount": loan.amountReceived ?? "",
+            "receivedOn": loan.amountReceivedOn ?? "",
+            "otherCharity": loan.otherCharityName ?? "",
+          });
+        }
+      }
+
+      setState(() => isLoading = false);
+
+      if (charityList.isEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _showOtherCharitySheet(context);
+          }
+        });
+      }
+    } catch (e) {
+      setState(() => isLoading = false);
+    }
   }
 
   @override
@@ -64,135 +120,334 @@ class _OtherCharityFundViewState extends State<OtherCharityFundView> {
       body: charityList.isEmpty
           ? const Center(
               child: Text(
-                "No Received Loan in Past added yet",
+                "No loan received in the past has been added yet",
                 style: TextStyle(color: Colors.grey),
               ),
             )
           : ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: charityList.length,
-              itemBuilder: (context, index) {
-                final item = charityList[index];
+          itemBuilder: (context, index) {
+            final item = charityList[index];
 
-                return Card(
-                  color: Colors.white,
-                  elevation: 4,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+            return Card(
+              color: Colors.white,
+              elevation: 4,
+              margin: const EdgeInsets.only(bottom: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+
+                    /// 🔥 HEADER (Loan From + Popup Menu)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _infoRow("Charity Name", item["name"]),
-                        _infoRow("Amount", "₹ ${item["amount"]}"),
-                        _infoRow("Date", item["date"]),
-                        const SizedBox(height: 12),
+                        Expanded(
+                          child: Text(
+                            item["loanFrom"] == "mpm"
+                                ? "Maheshwari Pragati Mandal (MPM)"
+                                : item["loanFrom"] == "other"
+                                ? (item["otherCharity"] ?? "")
+                                : "",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+
+                        PopupMenuButton<String>(
+                          color: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          onSelected: (value) {
+                            if (value == "edit") {
+                              _showOtherCharitySheet(
+                                context,
+                                existingData: item,
+                              );
+                            } else if (value == "delete") {
+                              _showDeleteDialog(item["loanId"]);
+                            }
+                          },
+                          itemBuilder: (context) => const [
+                            PopupMenuItem(
+                              value: "edit",
+                              child: Text(
+                                "Edit Loan Detail",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            PopupMenuItem(
+                              value: "delete",
+                              child: Text(
+                                "Delete Loan Detail",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ),
+                          ],
+                          child: ElevatedButton(
+                            onPressed: null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: const Color(0xFFDC3545),
+                              elevation: 2,
+                              shadowColor: Colors.black26,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                            ),
+                            child: const Text(
+                              "Edit / Delete",
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.red,
+                              ),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                  ),
-                );
-              },
-            ),
+
+                    const Divider(height: 20),
+
+                    _infoRow("School", item["school"] ?? ""),
+                    const SizedBox(height: 8),
+
+                    _infoRow("Course", item["course"] ?? ""),
+                    const SizedBox(height: 8),
+
+                    _infoRow("Year", item["whichYear"] ?? ""),
+                    const SizedBox(height: 8),
+
+                    _infoRow("Amount", "₹ ${item["amount"] ?? ""}"),
+                    const SizedBox(height: 8),
+
+                    _infoRow("Received On", item["receivedOn"] ?? ""),
+                  ],
+                ),
+              ),
+            );
+          }
+      ),
+
+      floatingActionButton: FloatingActionButton(
+        backgroundColor:
+        ColorHelperClass.getColorFromHex(ColorResources.red_color),
+        onPressed: () {
+          _showOtherCharitySheet(context);
+        },
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
+
       bottomNavigationBar:
-          hasOtherCharity.isNotEmpty ? _buildBottomNextBar() : null,
+      charityList.isNotEmpty ? _buildBottomNextBar() : null,
     );
   }
 
-  Widget _infoRow(String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              title,
-              style: const TextStyle(fontSize: 14),
-            ),
+  void _showDeleteDialog(String loanId) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Delete Loan Detail"),
+        content: const Text("Are you sure you want to delete this loan detail?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
           ),
-          const Text(": "),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+          TextButton(
+            onPressed: () async {
+              try {
+                final response =
+                await _deleteRepo.deleteReceivedLoan({
+                  "shiksha_applicant_received_loan_id": loanId,
+                });
 
-  Widget _buildBottomNextBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                "Once you complete this detail, click Submit to proceed.",
-                style: const TextStyle(fontSize: 13),
-              ),
-            ),
-            const SizedBox(width: 12),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => MPMView(
-                      shikshaApplicantId: widget.shikshaApplicantId,
-                    ),
-                  ),
-                );
+                if (response.status != true) {
+                  throw Exception(response.message);
+                }
+
+                Navigator.pop(context);
+                await _fetchReceivedLoanData();
+
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text(
-                        "Received Loan in Past details submitted successfully"),
+                    content: Text("Previous Year Loan deleted successfully"),
                     backgroundColor: Colors.green,
                   ),
                 );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                foregroundColor: Colors.white,
-              ),
-              child: const Text("Submit"),
-            ),
-          ],
-        ),
+
+              } catch (e) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(e.toString())),
+                );
+              }
+            },
+            child: const Text("Delete", style: TextStyle(color: Colors.red)),
+          ),
+        ],
       ),
     );
   }
 
-  void _showOtherCharitySheet(BuildContext context) {
+  Future<void> _submitReceivedLoan({
+    required String receivedFrom,
+    required String school,
+    required String course,
+    required String year,
+    required String amount,
+    required String receivedOn,
+    required String otherCharity,
+  }) async {
+
+    if (isSubmitting) return;
+
+    setState(() => isSubmitting = true);
+
+    try {
+      final model = AddReceivedLoanData(
+        shikshaApplicantId: widget.shikshaApplicantId,
+        schoolCollegeName: school,
+        courseName: course,
+        yearOfEducation: year,
+        amountReceived: amount,
+        receivedFrom: receivedFrom,
+        amountReceivedOn: receivedOn,
+        appliedYearOn: "previous", // 🔥 ONLY CHANGE
+        otherCharityName: otherCharity,
+        createdBy: currentMemberId,
+      );
+
+      final response = await _addRepo.addReceivedLoan(model.toJson());
+
+      if (response.status != true) {
+        throw Exception(response.message);
+      }
+
+      Navigator.pop(context);
+      await _fetchReceivedLoanData();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Previous Year Loan Added successfully"),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    } finally {
+      setState(() => isSubmitting = false);
+    }
+  }
+
+  Future<void> _updateReceivedLoan({
+    required String loanId,
+    required String receivedFrom,
+    required String school,
+    required String course,
+    required String year,
+    required String amount,
+    required String receivedOn,
+    required String otherCharity,
+  }) async {
+
+    if (isSubmitting) return;
+
+    setState(() => isSubmitting = true);
+
+    try {
+      final model = UpdateReceivedLoanData(
+        shikshaApplicantReceivedLoanId: loanId,
+        shikshaApplicantId: widget.shikshaApplicantId,
+        schoolCollegeName: school,
+        courseName: course,
+        yearOfEducation: year,
+        amountReceived: amount,
+        receivedFrom: receivedFrom,
+        amountReceivedOn: receivedOn,
+        appliedYearOn: "previous",
+        otherCharityName: otherCharity,
+        updatedBy: currentMemberId,
+      );
+
+      final response = await _updateRepo.updateReceivedLoan(model.toJson());
+
+      if (response.status != true) {
+        throw Exception(response.message);
+      }
+
+      Navigator.pop(context);
+      await _fetchReceivedLoanData();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Previous Year Loan updated successfully"),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+      );
+    } finally {
+      setState(() => isSubmitting = false);
+    }
+  }
+
+  void _showOtherCharitySheet(BuildContext context,
+      {Map<String, dynamic>? existingData}) {
     String selectedLoanFrom = '';
 
+    final TextEditingController loanFromCtrl = TextEditingController();
     final TextEditingController otherCharityCtrl = TextEditingController();
     final TextEditingController schoolCtrl = TextEditingController();
     final TextEditingController courseCtrl = TextEditingController();
     final TextEditingController whichYearCtrl = TextEditingController();
     final TextEditingController amountCtrl = TextEditingController();
     final TextEditingController receivedOnCtrl = TextEditingController();
+
+    bool isEditMode = existingData != null;
+
+    if (isEditMode) {
+      final loanFromText = existingData["loanFrom"] ?? "";
+
+      if (loanFromText == "mpm") {
+        selectedLoanFrom = "MPM";
+      } else if (loanFromText == "other") {
+        selectedLoanFrom = "OTHER";
+        otherCharityCtrl.text = existingData["otherCharity"] ?? "";
+      }
+
+      schoolCtrl.text = existingData["school"] ?? "";
+      courseCtrl.text = existingData["course"] ?? "";
+      whichYearCtrl.text = existingData["whichYear"] ?? "";
+      amountCtrl.text = existingData["amount"] ?? "";
+      receivedOnCtrl.text = existingData["receivedOn"] ?? "";
+    }
 
     showModalBottomSheet(
       context: context,
@@ -218,64 +473,100 @@ class _OtherCharityFundViewState extends State<OtherCharityFundView> {
                           OutlinedButton(
                             onPressed: () => Navigator.pop(context),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: ColorHelperClass.getColorFromHex(
+                              foregroundColor:
+                              ColorHelperClass.getColorFromHex(
                                   ColorResources.red_color),
                               side: BorderSide(
                                 color: ColorHelperClass.getColorFromHex(
                                     ColorResources.red_color),
+                              ),
+                              padding:
+                              const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
                               ),
                             ),
                             child: const Text("Cancel"),
                           ),
                           ElevatedButton(
                             onPressed: selectedLoanFrom.isEmpty ||
-                                    schoolCtrl.text.isEmpty ||
-                                    courseCtrl.text.isEmpty ||
-                                    whichYearCtrl.text.isEmpty ||
-                                    amountCtrl.text.isEmpty ||
-                                    receivedOnCtrl.text.isEmpty ||
-                                    (selectedLoanFrom == "OTHER" &&
-                                        otherCharityCtrl.text.isEmpty)
+                                schoolCtrl.text.isEmpty ||
+                                courseCtrl.text.isEmpty ||
+                                whichYearCtrl.text.isEmpty ||
+                                amountCtrl.text.isEmpty ||
+                                receivedOnCtrl.text.isEmpty ||
+                                (selectedLoanFrom == "OTHER" &&
+                                    otherCharityCtrl.text.isEmpty) ||
+                                isSubmitting
                                 ? null
-                                : () {
-                                    final loanFromValue =
-                                        selectedLoanFrom == "MPM"
-                                            ? "Maheshwari Pragati Mandal (MPM)"
-                                            : otherCharityCtrl.text;
+                                : () async {
+                              final receivedFromValue =
+                              selectedLoanFrom == "MPM" ? "mpm" : "other";
 
-                                    setState(() {
-                                      charityList.add({
-                                        "loanFrom": loanFromValue,
-                                        "school": schoolCtrl.text,
-                                        "course": courseCtrl.text,
-                                        "whichYear": whichYearCtrl.text,
-                                        "amount": amountCtrl.text,
-                                        "receivedOn": receivedOnCtrl.text,
-                                      });
-                                    });
+                              final otherCharityValue =
+                              selectedLoanFrom == "OTHER"
+                                  ? otherCharityCtrl.text.trim()
+                                  : "";
 
-                                    Navigator.pop(context);
-
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                            "Previous Year Loan Details Saved Successfully"),
-                                        backgroundColor: Colors.green,
-                                      ),
-                                    );
-                                  },
+                              if (isEditMode) {
+                                await _updateReceivedLoan(
+                                  loanId: existingData!["loanId"],
+                                  receivedFrom: receivedFromValue,
+                                  school: schoolCtrl.text.trim(),
+                                  course: courseCtrl.text.trim(),
+                                  year: whichYearCtrl.text.trim(),
+                                  amount: amountCtrl.text.trim(),
+                                  receivedOn: receivedOnCtrl.text.trim(),
+                                  otherCharity:
+                                  selectedLoanFrom == "OTHER"
+                                      ? otherCharityCtrl.text.trim()
+                                      : "",
+                                );
+                              } else {
+                                await _submitReceivedLoan(
+                                  receivedFrom: receivedFromValue,
+                                  school: schoolCtrl.text.trim(),
+                                  course: courseCtrl.text.trim(),
+                                  year: whichYearCtrl.text.trim(),
+                                  amount: amountCtrl.text.trim(),
+                                  receivedOn: receivedOnCtrl.text.trim(),
+                                  otherCharity:
+                                  selectedLoanFrom == "OTHER"
+                                      ? otherCharityCtrl.text.trim()
+                                      : "",
+                                );
+                              }
+                            },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: ColorHelperClass.getColorFromHex(
-                                  ColorResources.red_color),
+                              backgroundColor:
+                              ColorHelperClass.getColorFromHex(ColorResources.red_color),
                               foregroundColor: Colors.white,
+                              padding:
+                              const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
-                            child: const Text("Submit"),
+                            child: isSubmitting
+                                ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                                : Text(
+                              isEditMode
+                                  ? "Update Loan Detail"
+                                  : "Add Loan Detail",
+                            ),
                           ),
                         ],
                       ),
                     ),
 
-                    /// 🔹 FORM
+                    /// 🔹 FORM CONTENT
                     Expanded(
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.all(16),
@@ -291,25 +582,48 @@ class _OtherCharityFundViewState extends State<OtherCharityFundView> {
                                 ),
                               ),
                             ),
-
                             const SizedBox(height: 30),
 
-                            /// 🔹 LOAN RECEIVED FROM
+                            /// 🔹 LOAN RECEIVED FROM DROPDOWN
                             InputDecorator(
-                              decoration:
-                                  _inputDecoration("Loan Received From *"),
+                              decoration: InputDecoration(
+                                labelText: "Loan Received From *",
+                                border:
+                                const OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      color: Colors.black),
+                                ),
+                                enabledBorder:
+                                const OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      color: Colors.black),
+                                ),
+                                focusedBorder:
+                                const OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      color: Colors.black38,
+                                      width: 1),
+                                ),
+                                contentPadding:
+                                const EdgeInsets.symmetric(
+                                    horizontal: 20),
+                                labelStyle: const TextStyle(
+                                    color: Colors.black),
+                              ),
                               child: DropdownButton<String>(
+                                dropdownColor: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
                                 isExpanded: true,
                                 underline: const SizedBox(),
                                 value: selectedLoanFrom.isEmpty
                                     ? null
                                     : selectedLoanFrom,
-                                hint: const Text("Select"),
+                                hint: const Text("Select Option"),
                                 items: const [
                                   DropdownMenuItem(
                                     value: "MPM",
                                     child:
-                                        Text("Maheshwari Pragati Mandal (MPM)"),
+                                    Text("Maheshwari Pragati Mandal (MPM)"),
                                   ),
                                   DropdownMenuItem(
                                     value: "OTHER",
@@ -327,6 +641,7 @@ class _OtherCharityFundViewState extends State<OtherCharityFundView> {
 
                             const SizedBox(height: 20),
 
+                            /// 🔹 SHOW TEXT FIELD IF OTHER SELECTED
                             if (selectedLoanFrom == "OTHER") ...[
                               TextFormField(
                                 controller: otherCharityCtrl,
@@ -336,46 +651,39 @@ class _OtherCharityFundViewState extends State<OtherCharityFundView> {
                               const SizedBox(height: 20),
                             ],
 
-                            /// 🔹 SCHOOL
-                            TextFormField(
+                            _buildTextField(
+                              label: "School / College *",
                               controller: schoolCtrl,
-                              decoration:
-                                  _inputDecoration("School / College Name *"),
                             ),
                             const SizedBox(height: 20),
 
-                            /// 🔹 COURSE
-                            TextFormField(
+                            _buildTextField(
+                              label: "Course Name *",
                               controller: courseCtrl,
-                              decoration: _inputDecoration("Course Name *"),
                             ),
                             const SizedBox(height: 20),
 
-                            /// 🔹 WHICH YEAR
+                            /// 🔥 MONTH / YEAR FIELD
                             themedMonthYearPickerField(
                               context: context,
-                              label: "Which Year *",
+                              label: "Which Year (Month / Year) *",
                               controller: whichYearCtrl,
                             ),
                             const SizedBox(height: 20),
 
-                            /// 🔹 AMOUNT
-                            TextFormField(
+                            _buildTextField(
+                              label: "Amount Received (₹) *",
                               controller: amountCtrl,
-                              keyboardType: TextInputType.number,
-                              decoration:
-                                  _inputDecoration("Amount Received (₹) *"),
+                              keyboard: TextInputType.number,
                             ),
                             const SizedBox(height: 20),
 
-                            /// 🔹 DATE PICKER
+                            /// 🔥 DATE PICKER
                             themedDatePickerField(
                               context: context,
                               label: "Amount Received On *",
                               controller: receivedOnCtrl,
                             ),
-
-                            const SizedBox(height: 30),
                           ],
                         ),
                       ),
@@ -387,6 +695,79 @@ class _OtherCharityFundViewState extends State<OtherCharityFundView> {
           },
         );
       },
+    );
+  }
+
+  // ===================== HELPERS =====================
+
+  Widget _buildBottomNextBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            const Expanded(
+              child: Text(
+                "Once you complete the above details, click Next Step to proceed.",
+                style: TextStyle(fontSize: 13),
+              ),
+            ),
+            const SizedBox(width: 12),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ShikshaSahayataByParentingView(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text("Next Step"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(label, style: const TextStyle(fontSize: 14)),
+          ),
+          const Text(": "),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -424,14 +805,27 @@ class _OtherCharityFundViewState extends State<OtherCharityFundView> {
     return TextFormField(
       readOnly: true,
       controller: controller,
-      decoration: _inputDecoration(label),
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black),
+        ),
+        enabledBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black),
+        ),
+        focusedBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black38, width: 1),
+        ),
+        contentPadding:
+        const EdgeInsets.symmetric(horizontal: 20),
+        labelStyle: const TextStyle(color: Colors.black),
+      ),
       onTap: () async {
-        DateTime? picked = await showDatePicker(
+        final selected = await showMonthYearPicker(
           context: context,
           initialDate: DateTime.now(),
-          firstDate: DateTime(2000),
+          firstDate: DateTime(1900),
           lastDate: DateTime.now(),
-          helpText: "Select Month & Year",
           builder: (context, child) {
             return Theme(
               data: Theme.of(context).copyWith(
@@ -445,9 +839,9 @@ class _OtherCharityFundViewState extends State<OtherCharityFundView> {
           },
         );
 
-        if (picked != null) {
+        if (selected != null) {
           controller.text =
-              "${picked.month.toString().padLeft(2, '0')}/${picked.year}";
+              DateFormat('MM/yyyy').format(selected);
         }
       },
     );
@@ -482,7 +876,8 @@ class _OtherCharityFundViewState extends State<OtherCharityFundView> {
         );
 
         if (picked != null) {
-          controller.text = "${picked.day}/${picked.month}/${picked.year}";
+          controller.text =
+              DateFormat('yyyy-MM-dd').format(picked);
         }
       },
     );

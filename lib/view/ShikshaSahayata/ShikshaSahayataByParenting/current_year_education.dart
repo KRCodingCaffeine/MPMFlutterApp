@@ -400,51 +400,36 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
         top: false,
         child: Row(
           children: [
-            /// 🔹 MESSAGE
-            Expanded(
+            const Expanded(
               child: Text(
-                "Once you complete this detail, click Submit to proceed.",
-                style: const TextStyle(
+                "Once you complete this above detail, click Next Step to proceed.",
+                style: TextStyle(
                   fontSize: 13,
                   color: Colors.black87,
                 ),
               ),
             ),
-
             const SizedBox(width: 12),
-
-            /// 🔹 NEXT BUTTON
             ElevatedButton(
               onPressed: () {
-                // 👉 Navigate to next screen / step
-                // Example:
-                Navigator.push(
+                Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => ShikshaSahayataByParentingView(
-                    ),
-                  ),
-                );
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                        "Successfully sumbited your current year edication detail"),
-                    backgroundColor: Colors.green,
+                    builder: (_) => const ShikshaSahayataByParentingView(),
                   ),
                 );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: const Text("Submit"),
+              child: const Text("Next Step"),
             ),
           ],
         ),
@@ -486,18 +471,9 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
         throw Exception(response.message);
       }
 
-      setState(() {
-        currentYearData = {
-          "educationId":
-              response.data?.shikshaApplicantRequestedLoanEducationId,
-          "standard": standard,
-          "school": school,
-          "duration": courseDuration,
-          "total": totalExpenses,
-        };
-      });
-
       Navigator.pop(context);
+
+      await _fetchCurrentYearEducation();
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -541,11 +517,9 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
         throw Exception(response.message);
       }
 
-      setState(() {
-        currentYearData!["total"] = totalExpenses;
-      });
-
       Navigator.pop(context);
+
+      await _fetchCurrentYearEducation();
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -599,7 +573,6 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
       totalExpensesCtrl.text = existingData["total"] ?? "";
     }
 
-// Attach listeners
     admissionFeesCtrl.addListener(calculateTotal);
     yearlyFeesCtrl.addListener(calculateTotal);
     examFeesCtrl.addListener(calculateTotal);
@@ -629,11 +602,17 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
                           OutlinedButton(
                             onPressed: () => Navigator.pop(context),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: ColorHelperClass.getColorFromHex(
+                              foregroundColor:
+                              ColorHelperClass.getColorFromHex(
                                   ColorResources.red_color),
                               side: BorderSide(
                                 color: ColorHelperClass.getColorFromHex(
                                     ColorResources.red_color),
+                              ),
+                              padding:
+                              const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
                               ),
                             ),
                             child: const Text("Cancel"),
@@ -681,9 +660,14 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
                                     }
                                   },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: ColorHelperClass.getColorFromHex(
-                                  ColorResources.red_color),
+                              backgroundColor:
+                              ColorHelperClass.getColorFromHex(ColorResources.red_color),
                               foregroundColor: Colors.white,
+                              padding:
+                              const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
                             child: isSubmitting
                                 ? const SizedBox(
@@ -790,12 +774,8 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
                             ),
                             const SizedBox(height: 20),
 
-                            /// 🔹 UPLOAD BONAFIDE CERTIFICATE
-                            const SizedBox(height: 25),
-
-                            /// 🔹 ADMISSION CONFIRMATION LETTER
                             _buildAdmissionUploadField(context),
-                            const SizedBox(height: 25),
+                            const SizedBox(height: 20),
                             _buildBonafideUploadField(context),
                             const SizedBox(height: 40),
                           ],

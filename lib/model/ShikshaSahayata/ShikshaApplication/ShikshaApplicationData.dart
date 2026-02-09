@@ -1,6 +1,7 @@
 import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/Education.dart';
 import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/FamilyMember.dart';
 import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/ReceivedLoan.dart';
+import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/ReferredMember.dart';
 import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/RequestedLoanEducation.dart';
 
 class ShikshaApplicationData {
@@ -19,6 +20,7 @@ class ShikshaApplicationData {
   final String? applicantCityName;
   final String? applicantStateName;
   final String? applicantFatherName;
+  final String? applicantMotherName;
   final String? fatherEmail;
   final String? fatherMobile;
 
@@ -26,6 +28,7 @@ class ShikshaApplicationData {
   final List<Education>? education;
   final List<RequestedLoanEducation>? requestedLoanEducation;
   final List<ReceivedLoan>? receivedLoans;
+  final List<ReferredMember>? referredMembers;
 
   ShikshaApplicationData({
     this.shikshaApplicantId,
@@ -43,12 +46,14 @@ class ShikshaApplicationData {
     this.applicantCityName,
     this.applicantStateName,
     this.applicantFatherName,
+    this.applicantMotherName,
     this.fatherEmail,
     this.fatherMobile,
     this.familyMembers,
     this.education,
     this.requestedLoanEducation,
     this.receivedLoans,
+    this.referredMembers,
   });
 
   factory ShikshaApplicationData.fromJson(Map<String, dynamic> json) {
@@ -68,6 +73,7 @@ class ShikshaApplicationData {
       applicantCityName: json['applicant_city_name']?.toString(),
       applicantStateName: json['applicant_state_name']?.toString(),
       applicantFatherName: json['applicant_father_name']?.toString(),
+      applicantMotherName: json['applicant_mother_name']?.toString(),
       fatherEmail: json['father_email']?.toString(),
       fatherMobile: json['father_mobile']?.toString(),
 
@@ -92,6 +98,13 @@ class ShikshaApplicationData {
           json['received_loans']
               .map((x) => ReceivedLoan.fromJson(x)))
           : [],
+
+      referredMembers: json['referred_members'] != null
+          ? List<ReferredMember>.from(
+          json['referred_members']
+              .map((x) => ReferredMember.fromJson(x)))
+          : [],
+
     );
   }
 
@@ -112,6 +125,7 @@ class ShikshaApplicationData {
       'applicant_city_name': applicantCityName,
       'applicant_state_name': applicantStateName,
       'applicant_father_name': applicantFatherName,
+      'applicant_mother_name': applicantMotherName,
       'father_email': fatherEmail,
       'father_mobile': fatherMobile,
       'family_members': familyMembers?.map((x) => x.toJson()).toList(),
@@ -119,6 +133,9 @@ class ShikshaApplicationData {
       'requested_loan_education':
       requestedLoanEducation?.map((x) => x.toJson()).toList(),
       'received_loans': receivedLoans?.map((x) => x.toJson()).toList(),
+      'referred_members':
+      referredMembers?.map((x) => x.toJson()).toList(),
+
     };
   }
 }

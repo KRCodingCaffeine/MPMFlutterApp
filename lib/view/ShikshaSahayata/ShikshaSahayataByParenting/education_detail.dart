@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:month_year_picker/month_year_picker.dart';
 import 'package:mpm/model/ShikshaSahayata/EducationDetail/AddEducationDetail/AddEducationDetailData.dart';
 import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/GetShikshaApplicationModelClass.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/EducationDetailRepo/add_education_detail_repository/add_education_detail_repo.dart';
@@ -171,16 +172,14 @@ class _EducationDetailViewState extends State<EducationDetailView> {
         },
       ),
 
-      floatingActionButton: educationList.isNotEmpty
-          ? FloatingActionButton(
+      floatingActionButton: FloatingActionButton(
         backgroundColor:
         ColorHelperClass.getColorFromHex(ColorResources.red_color),
         onPressed: () {
           _showEducationForm(context);
         },
         child: const Icon(Icons.add, color: Colors.white),
-      )
-          : null,
+      ),
 
       // ✅ THIS MUST BE HERE
       bottomNavigationBar:
@@ -437,7 +436,7 @@ class _EducationDetailViewState extends State<EducationDetailView> {
           children: [
             const Expanded(
               child: Text(
-                "Once you complete this detail, click Next Step to proceed.",
+                "Once you complete the above details, click Next Step to proceed.",
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.black87,
@@ -458,7 +457,8 @@ class _EducationDetailViewState extends State<EducationDetailView> {
                 backgroundColor:
                 ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -757,8 +757,33 @@ class _EducationDetailViewState extends State<EducationDetailView> {
 
                             /// 🔹 CLASS
                             InputDecorator(
-                              decoration: _inputDecoration('Class *'),
+                              decoration: InputDecoration(
+                                labelText: "Class *",
+                                border:
+                                const OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      color: Colors.black),
+                                ),
+                                enabledBorder:
+                                const OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      color: Colors.black),
+                                ),
+                                focusedBorder:
+                                const OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      color: Colors.black38,
+                                      width: 1),
+                                ),
+                                contentPadding:
+                                const EdgeInsets.symmetric(
+                                    horizontal: 20),
+                                labelStyle: const TextStyle(
+                                    color: Colors.black),
+                              ),
                               child: DropdownButton<String>(
+                                dropdownColor: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
                                 isExpanded: true,
                                 underline: Container(),
                                 value: selectedClass.isEmpty
@@ -808,10 +833,9 @@ class _EducationDetailViewState extends State<EducationDetailView> {
                             const SizedBox(height: 20),
 
                             /// 🔹 PASSED
-                            themedDatePickerField(
+                            themedMonthYearPickerField(
                               context: context,
                               label: "Passed Month / Year *",
-                              hint: "Select date",
                               controller: passedCtrl,
                             ),
                             const SizedBox(height: 20),
@@ -870,10 +894,9 @@ class _EducationDetailViewState extends State<EducationDetailView> {
     );
   }
 
-  Widget themedDatePickerField({
+  Widget themedMonthYearPickerField({
     required BuildContext context,
     required String label,
-    required String hint,
     required TextEditingController controller,
   }) {
     return TextFormField(
@@ -881,31 +904,21 @@ class _EducationDetailViewState extends State<EducationDetailView> {
       controller: controller,
       decoration: InputDecoration(
         labelText: label,
-        hintText: hint,
-        border:
-        const OutlineInputBorder(
-          borderSide: BorderSide(
-              color: Colors.black),
+        border: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black),
         ),
-        enabledBorder:
-        const OutlineInputBorder(
-          borderSide: BorderSide(
-              color: Colors.black),
+        enabledBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black),
         ),
-        focusedBorder:
-        const OutlineInputBorder(
-          borderSide: BorderSide(
-              color: Colors.black38,
-              width: 1),
+        focusedBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black38, width: 1),
         ),
         contentPadding:
-        const EdgeInsets.symmetric(
-            horizontal: 20),
-        labelStyle: const TextStyle(
-            color: Colors.black),
+        const EdgeInsets.symmetric(horizontal: 20),
+        labelStyle: const TextStyle(color: Colors.black),
       ),
       onTap: () async {
-        DateTime? picked = await showDatePicker(
+        final selected = await showMonthYearPicker(
           context: context,
           initialDate: DateTime.now(),
           firstDate: DateTime(1900),
@@ -923,8 +936,9 @@ class _EducationDetailViewState extends State<EducationDetailView> {
           },
         );
 
-        if (picked != null) {
-          controller.text = DateFormat('MM/yyyy').format(picked);
+        if (selected != null) {
+          controller.text =
+              DateFormat('MM/yyyy').format(selected);
         }
       },
     );

@@ -534,6 +534,8 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
 
               _infoRow("Father Name",
                   data.applicantFatherName ?? ''),
+              _infoRow("Mother Name",
+                  data.applicantMotherName ?? ''),
               _infoRow("Father Mobile",
                   data.fatherMobile ?? ''),
               _infoRow("Father Email",
@@ -568,7 +570,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
           children: [
             Expanded(
               child: Text(
-                "Once you complete this detail, click Next Step to proceed.",
+                "Once you complete the above details, click Next Step to proceed.",
                 style: const TextStyle(
                   fontSize: 13,
                   color: Colors.black87,
