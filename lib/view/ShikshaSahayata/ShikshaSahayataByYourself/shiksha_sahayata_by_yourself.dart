@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
-import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/any_other_charity_fund.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/current_year_any_other_loan.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/current_year_education.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/education_detail.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/family_detail.dart';
-import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/mpm.dart';
-import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/other_charity_fund.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/reference.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/previous_year_loan.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByYourself/applicant_detail_yourself.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
-import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/any_other_charity_fund.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/current_year_any_other_loan.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/applicant_detail.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/current_year_education.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/education_detail.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/family_detail.dart';
-import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/mpm.dart';
-import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/other_charity_fund.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/reference.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/previous_year_loan.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ShikshaSahayataByParentingView extends StatefulWidget {
@@ -159,7 +159,7 @@ class _ShikshaSahayataByParentingViewState
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => AnyOtherCharityFundView(
+                    builder: (_) => CurrentYearAnyOtherLoan(
                       shikshaApplicantId: id,
                     ),
                   ),
@@ -188,26 +188,26 @@ class _ShikshaSahayataByParentingViewState
               },
             ),
 
-            buildStepButton(
-              title: "References",
-              icon: Icons.verified,
-              isEnabled: applicantCompleted,
-              onTap: () async {
-                final prefs = await SharedPreferences.getInstance();
-                final id = prefs.getString(_prefsApplicantIdKey);
-
-                if (id == null || id.isEmpty) return;
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => MPMView(
-                      shikshaApplicantId: id,
-                    ),
-                  ),
-                );
-              },
-            ),
+            // buildStepButton(
+            //   title: "References",
+            //   icon: Icons.verified,
+            //   isEnabled: applicantCompleted,
+            //   onTap: () async {
+            //     final prefs = await SharedPreferences.getInstance();
+            //     final id = prefs.getString(_prefsApplicantIdKey);
+            //
+            //     if (id == null || id.isEmpty) return;
+            //
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(
+            //         builder: (_) => MPMView(
+            //           shikshaApplicantId: id,
+            //         ),
+            //       ),
+            //     );
+            //   },
+            // ),
             const SizedBox(height: 30),
           ],
         ),

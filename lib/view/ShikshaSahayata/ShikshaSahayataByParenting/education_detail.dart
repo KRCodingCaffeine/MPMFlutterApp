@@ -3,8 +3,16 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:mpm/model/ShikshaSahayata/EducationDetail/AddEducationDetail/AddEducationDetailData.dart';
+import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/GetShikshaApplicationModelClass.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/EducationDetailRepo/add_education_detail_repository/add_education_detail_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/EducationDetailRepo/delete_education_detail_repo/delete_education_detail_repository.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/EducationDetailRepo/update_education_detail_repository/update_education_detail_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/ShikshaApplicationRepo/shiksha_application_repository/shiksha_application_repo.dart';
+import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/shiksha_sahayata_by_parenting_view.dart';
 
 class EducationDetailView extends StatefulWidget {
   final String shikshaApplicantId;
@@ -23,19 +31,94 @@ class _EducationDetailViewState extends State<EducationDetailView> {
   final List<Map<String, dynamic>> educationList = [];
   File? _educationDocument;
   final ImagePicker _picker = ImagePicker();
+  final AddEducationRepository _educationRepo = AddEducationRepository();
+  final UpdateEducationRepository _updateRepo = UpdateEducationRepository();
+  final DeleteEducationRepository _deleteRepo = DeleteEducationRepository();
+  final ShikshaApplicationRepository _shikshaRepo =
+  ShikshaApplicationRepository();
+
+  GetShikshaApplicationModelClass? _applicationData;
+
+  bool isLoading = true;
+
+  String? currentMemberId;
+  bool isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
+    _loadSessionData();
+    _fetchEducationData();
+  }
 
-    /// 🔹 Auto open form if no data
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!hasEducationData) {
-        _showEducationForm(context);
-      }
+  void _loadSessionData() async {
+    final userData = await SessionManager.getSession();
+    setState(() {
+      currentMemberId = userData?.memberId?.toString();
     });
   }
 
+  bool get _isEducationCompleted {
+    return educationList.isNotEmpty;
+  }
+
+  Future<void> _fetchEducationData() async {
+    try {
+      setState(() {
+        isLoading = true;
+      });
+
+      final response =
+      await _shikshaRepo.fetchShikshaApplicationById(
+        applicantId: widget.shikshaApplicantId,
+      );
+
+      if (response.status == true && response.data != null) {
+        educationList.clear();
+
+        final educationFromApi =
+            response.data?.education ?? [];
+
+        for (var edu in educationFromApi) {
+          educationList.add({
+            "educationId": edu.shikshaApplicantEducationId?.toString(),
+            "class": edu.standard ?? '',
+            "school": edu.schoolCollegeName ?? '',
+            "board": edu.boardOrUniversity ?? '',
+            "passed": edu.yearOfPassing ?? '',
+            "marks": edu.marksInPercentage ?? '',
+            "file": null,
+          });
+        }
+
+        setState(() {
+          _applicationData = response;
+          hasEducationData = educationList.isNotEmpty;
+          isLoading = false;
+        });
+        if (educationList.isEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _showEducationForm(context);
+            }
+          });
+        }
+      } else {
+        throw Exception(response.message);
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,17 +142,14 @@ class _EducationDetailViewState extends State<EducationDetailView> {
           },
         ),
         iconTheme: const IconThemeData(color: Colors.white),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add, color: Colors.white),
-            onPressed: () => _showEducationForm(context),
-          )
-        ],
       ),
-      body: educationList.isEmpty
+
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : educationList.isEmpty
           ? const Center(
         child: Text(
-          "No Education Education History Added Yet",
+          "No Education History Added Yet",
           style: TextStyle(color: Colors.grey),
         ),
       )
@@ -78,7 +158,6 @@ class _EducationDetailViewState extends State<EducationDetailView> {
         itemCount: educationList.length + 1,
         itemBuilder: (context, index) {
           if (index == 0) {
-            /// 🔹 INFO MESSAGE CARD AT TOP
             return Column(
               children: [
                 _educationInfoCard(),
@@ -91,6 +170,21 @@ class _EducationDetailViewState extends State<EducationDetailView> {
           return _educationCard(edu, index - 1);
         },
       ),
+
+      floatingActionButton: educationList.isNotEmpty
+          ? FloatingActionButton(
+        backgroundColor:
+        ColorHelperClass.getColorFromHex(ColorResources.red_color),
+        onPressed: () {
+          _showEducationForm(context);
+        },
+        child: const Icon(Icons.add, color: Colors.white),
+      )
+          : null,
+
+      // ✅ THIS MUST BE HERE
+      bottomNavigationBar:
+      _isEducationCompleted ? _buildBottomNextBar() : null,
     );
   }
 
@@ -138,9 +232,89 @@ class _EducationDetailViewState extends State<EducationDetailView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// 🔹 EDUCATION
-            _infoRow("Education", edu["class"]),
-            const SizedBox(height: 8),
+
+            /// 🔥 HEADER (Title + Popup Menu)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    edu["class"] ?? "",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+
+                PopupMenuButton<String>(
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  onSelected: (value) {
+                    if (value == 'edit') {
+                      _showEducationForm(
+                        context,
+                        existingData: edu,
+                        index: index,
+                      );
+                    } else if (value == 'delete') {
+                      _showDeleteEducationDialog(index);
+                    }
+                  },
+                  itemBuilder: (context) => const [
+                    PopupMenuItem(
+                      value: 'edit',
+                      child: Text(
+                        'Edit Education Detail',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Text(
+                        'Delete Education Detail',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ),
+                  ],
+                  child: ElevatedButton(
+                    onPressed: null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFFDC3545),
+                      elevation: 2,
+                      shadowColor: Colors.black26,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                    ),
+                    child: const Text(
+                      "Edit / Delete",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.red,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const Divider(height: 20),
 
             _infoRow("School", edu["school"]),
             const SizedBox(height: 8),
@@ -148,15 +322,12 @@ class _EducationDetailViewState extends State<EducationDetailView> {
             _infoRow("Board", edu["board"]),
             const SizedBox(height: 8),
 
-            /// 🔹 PASSED
             _infoRow("Passed", edu["passed"]),
             const SizedBox(height: 8),
 
-            /// 🔹 MARKS
             _infoRow("Marks", edu["marks"]),
             const SizedBox(height: 12),
 
-            /// 🔹 VIEW DOCUMENT BUTTON
             if (file != null)
               SizedBox(
                 width: double.infinity,
@@ -182,16 +353,258 @@ class _EducationDetailViewState extends State<EducationDetailView> {
     );
   }
 
+  void _showDeleteEducationDialog(int index) {
+    final edu = educationList[index];
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Delete Education Detail"),
+          content: const Text(
+              "Are you sure you want to delete this education detail?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () async {
+                try {
+                  final body = {
+                    "shiksha_applicant_education_id":
+                    edu["educationId"],
+                  };
+
+                  final response =
+                  await _deleteRepo.deleteEducation(body);
+
+                  if (response.status != true) {
+                    throw Exception(response.message);
+                  }
+
+                  setState(() {
+                    educationList.removeAt(index);
+                  });
+
+                  Navigator.pop(context);
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content:
+                      Text("Education detail deleted successfully"),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                  await _fetchEducationData();
+                } catch (e) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(e.toString()),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              child: const Text(
+                "Delete",
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildBottomNextBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            const Expanded(
+              child: Text(
+                "Once you complete this detail, click Next Step to proceed.",
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ShikshaSahayataByParentingView(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text("Next Step"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submitEducation({
+    required String standard,
+    required String yearOfPassing,
+    required String marks,
+    required String school,
+    required String board,
+  }) async {
+    if (isSubmitting) return;
+
+    setState(() {
+      isSubmitting = true;
+    });
+
+    try {
+      final educationData = AddEducationDetailData(
+        shikshaApplicantId: widget.shikshaApplicantId,
+        standard: standard,
+        yearOfPassing: yearOfPassing,
+        marksInPercentage: marks,
+        schoolCollegeName: school,
+        boardOrUniversity: board,
+        createdBy: currentMemberId,
+      );
+
+      final response = await _educationRepo.addEducation(
+        educationData.toJson(),
+      );
+
+      if (response.status != true) {
+        throw Exception(response.message ?? "Failed to add education");
+      }
+
+      // ✅ Close bottom sheet first
+      Navigator.pop(context);
+
+      // ✅ Clear temporary document
+      _educationDocument = null;
+
+      // ✅ Refresh from API (SOURCE OF TRUTH)
+      await _fetchEducationData();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Education details added successfully"),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        isSubmitting = false;
+      });
+    }
+  }
+
+  Future<void> _updateEducation({
+    required String educationId,
+    required String standard,
+    required String yearOfPassing,
+    required String marks,
+    required String school,
+    required String board,
+    required int index,
+  }) async {
+    if (isSubmitting) return;
+
+    setState(() {
+      isSubmitting = true;
+    });
+
+    try {
+      final body = {
+        "shiksha_applicant_education_id": educationId,
+        "standard": standard,
+        "year_of_passing": yearOfPassing,
+        "marks_in_percentage": marks,
+        "updated_by": currentMemberId,
+      };
+
+      final response = await _updateRepo.updateEducation(body);
+
+      if (response.status != true) {
+        throw Exception(response.message);
+      }
+
+      setState(() {
+        educationList[index]["class"] = standard;
+        educationList[index]["school"] = school;
+        educationList[index]["board"] = board;
+        educationList[index]["passed"] = yearOfPassing;
+        educationList[index]["marks"] = marks;
+      });
+
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Education detail updated successfully"),
+          backgroundColor: Colors.green,
+        ),
+      );
+      await _fetchEducationData();
+
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        isSubmitting = false;
+      });
+    }
+  }
+
   // ====================== EDUCATION FORM ======================
 
-  void _showEducationForm(BuildContext context) {
+  void _showEducationForm(BuildContext context, {Map<String, dynamic>? existingData, int? index}) {
     String selectedClass = '';
 
     final TextEditingController passedCtrl = TextEditingController();
     final TextEditingController marksCtrl = TextEditingController();
     final TextEditingController otherClassCtrl = TextEditingController();
-    final TextEditingController schoolCtrl = TextEditingController();       // 🔹 NEW
-    final TextEditingController boardCtrl = TextEditingController();        // 🔹 NEW
+    final TextEditingController schoolCtrl = TextEditingController();
+    final TextEditingController boardCtrl = TextEditingController();
 
     final List<String> classOptions = [
       "10th Std",
@@ -200,6 +613,16 @@ class _EducationDetailViewState extends State<EducationDetailView> {
       "Other",
     ];
 
+    bool isEditMode = existingData != null;
+
+    if (isEditMode) {
+      selectedClass = existingData["class"] ?? '';
+      schoolCtrl.text = existingData["school"] ?? '';
+      boardCtrl.text = existingData["board"] ?? '';
+      passedCtrl.text = existingData["passed"] ?? '';
+      marksCtrl.text = existingData["marks"] ?? '';
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -207,7 +630,7 @@ class _EducationDetailViewState extends State<EducationDetailView> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (_) {
+    builder: (_) {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return SafeArea(
@@ -244,38 +667,46 @@ class _EducationDetailViewState extends State<EducationDetailView> {
                                 schoolCtrl.text.isEmpty ||
                                 boardCtrl.text.isEmpty ||
                                 passedCtrl.text.isEmpty ||
-                                marksCtrl.text.isEmpty
+                                marksCtrl.text.isEmpty ||
+                                isSubmitting
                                 ? null
-                                : () {
+                                : () async {
                               final String educationClass =
                               selectedClass == "Other"
                                   ? otherClassCtrl.text
                                   : selectedClass;
 
-                              setState(() {
-                                hasEducationData = true;
+                              if (isEditMode) {
+                                final educationId = existingData?["educationId"];
 
-                                educationList.add({
-                                  "class": educationClass,
-                                  "school": schoolCtrl.text,
-                                  "board": boardCtrl.text,
-                                  "passed": passedCtrl.text,
-                                  "marks": marksCtrl.text,
-                                  "file": _educationDocument,
-                                });
+                                if (educationId == null || educationId.toString().isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text("Education ID missing"),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                  return;
+                                }
 
-                                _educationDocument = null;
-                              });
-
-                              Navigator.pop(context);
-
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                      "Education details added successfully"),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
+                                await _updateEducation(
+                                  educationId: educationId.toString(),
+                                  standard: educationClass,
+                                  yearOfPassing: passedCtrl.text,
+                                  marks: marksCtrl.text,
+                                  school: schoolCtrl.text,
+                                  board: boardCtrl.text,
+                                  index: index!,
+                                );
+                              } else {
+                                await _submitEducation(
+                                  standard: educationClass,
+                                  yearOfPassing: passedCtrl.text,
+                                  marks: marksCtrl.text,
+                                  school: schoolCtrl.text,
+                                  board: boardCtrl.text,
+                                );
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
@@ -287,8 +718,19 @@ class _EducationDetailViewState extends State<EducationDetailView> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                             ),
-                            child:
-                            const Text("Add Education Details"),
+                            child: isSubmitting
+                                ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                                : Text(isEditMode
+                                ? "Update Education Details"
+                                : "Add Education Details"),
+
                           ),
                         ],
                       ),

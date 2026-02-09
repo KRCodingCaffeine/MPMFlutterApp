@@ -2,10 +2,18 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mpm/model/ShikshaSahayata/CurrentYearEducationDetail/AddRequestedLoanEducation/AddRequestedLoanEducationData.dart';
+import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/RequestedLoanEducation.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/CurrentYearEducationalDetailRepo/add_requested_loan_education_repository/add_requested_loan_education_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/CurrentYearEducationalDetailRepo/delete_requested_loan_education_repository/delete_requested_loan_education_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/CurrentYearEducationalDetailRepo/update_requested_loan_education_repository/update_requested_loan_education_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/ShikshaApplicationRepo/shiksha_application_repository/shiksha_application_repo.dart';
+import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
-import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/any_other_charity_fund.dart';
-import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/other_charity_fund.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/current_year_any_other_loan.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/previous_year_loan.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/shiksha_sahayata_by_parenting_view.dart';
 
 class CurrentYearEducationView extends StatefulWidget {
   final String shikshaApplicantId;
@@ -21,24 +29,102 @@ class CurrentYearEducationView extends StatefulWidget {
 }
 
 class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
-  File? _bonafideDocument;
   final ImagePicker _picker = ImagePicker();
-  bool hasCurrentYearEducation = false;
+  Map<String, dynamic>? currentYearData;
+  bool isLoading = false;
+  bool isSubmitting = false;
+  String? currentMemberId;
 
   String appliedYear = '';
   String schoolName = '';
-  String schoolAddress = '';
-  String feesAmount = '';
-  File? bonafideFile;
+  String courseDuration = '';
+  String admissionFees = '';
+  String yearlyFees = '';
+  String examinationFees = '';
+  String otherExpenses = '';
+  String totalExpenses = '';
+  File? _admissionDocument;
+  File? _bonafideDocument;
+
+  final AddRequestedLoanEducationRepository _addRepo =
+      AddRequestedLoanEducationRepository();
+
+  final UpdateRequestedLoanEducationRepository _updateRepo =
+      UpdateRequestedLoanEducationRepository();
+
+  final DeleteRequestedLoanEducationRepository _deleteRepo =
+      DeleteRequestedLoanEducationRepository();
+
+  final ShikshaApplicationRepository _shikshaRepo =
+      ShikshaApplicationRepository();
 
   @override
   void initState() {
     super.initState();
+    _loadSessionData();
+    _fetchCurrentYearEducation();
+  }
 
-    /// 🔹 Auto open bottom sheet
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _showCurrentYearEducationSheet(context);
+  void _loadSessionData() async {
+    final userData = await SessionManager.getSession();
+
+    setState(() {
+      currentMemberId = userData?.memberId?.toString();
     });
+  }
+
+  Future<void> _fetchCurrentYearEducation() async {
+    try {
+      setState(() {
+        isLoading = true;
+      });
+
+      final response = await _shikshaRepo.fetchShikshaApplicationById(
+        applicantId: widget.shikshaApplicantId,
+      );
+
+      if (response.status == true && response.data != null) {
+        final List<RequestedLoanEducation>? eduList =
+            response.data?.requestedLoanEducation;
+
+        if (eduList != null && eduList.isNotEmpty) {
+          final edu = eduList.first;
+
+          setState(() {
+            currentYearData = {
+              "educationId": edu.shikshaApplicantRequestedLoanEducationId,
+              "standard": edu.standard,
+              "school": edu.schoolCollegeName,
+              "duration": edu.courseDuration,
+              "admissionFees": edu.admissionFees,
+              "yearlyFees": edu.yearlyFees,
+              "examFees": edu.examinationFees,
+              "otherExpenses": edu.otherExpenses,
+              "total": edu.totalExpenses,
+              "admissionDoc": edu.admissionConfirmationLetterDoc,
+              "bonafideDoc": edu.bonafideFeesDocument,
+            };
+          });
+        }
+
+        setState(() {
+          isLoading = false;
+        });
+
+        /// 🔥 AUTO OPEN ONLY IF NO DATA
+        if (currentYearData == null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _showCurrentYearEducationSheet(context);
+          });
+        }
+      } else {
+        throw Exception(response.message);
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   @override
@@ -47,7 +133,7 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Builder(
           builder: (context) {
             double fontSize = MediaQuery.of(context).size.width * 0.045;
@@ -62,23 +148,27 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
           },
         ),
         iconTheme: const IconThemeData(color: Colors.white),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add, color: Colors.white),
-            onPressed: () => _showCurrentYearEducationSheet(context),
-          )
-        ],
       ),
-      body: hasCurrentYearEducation
-          ? _buildCurrentYearEducationCard()
-          : const Center(
-        child: Text(
-          "No current year education details added",
-          style: TextStyle(color: Colors.grey),
-        ),
-      ),
+      body: currentYearData == null
+          ? const Center(
+              child: Text(
+                "No current year education details added",
+                style: TextStyle(color: Colors.grey),
+              ),
+            )
+          : _buildCurrentYearEducationCard(),
+      floatingActionButton: currentYearData == null
+          ? FloatingActionButton(
+              backgroundColor:
+                  ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              onPressed: () {
+                _showCurrentYearEducationSheet(context);
+              },
+              child: const Icon(Icons.add, color: Colors.white),
+            )
+          : null,
       bottomNavigationBar:
-      hasCurrentYearEducation ? _buildBottomNextBar() : null,
+          currentYearData != null ? _buildBottomNextBar() : null,
     );
   }
 
@@ -96,41 +186,199 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _infoRow("Applied For", appliedYear),
-              _infoRow("College / School", schoolName),
-              _infoRow("Address", schoolAddress),
-              _infoRow("Fees Amount", feesAmount),
-
-              const SizedBox(height: 12),
-
-              /// 🔹 BONAFIDE DOCUMENT
+              /// 🔥 HEADER WITH EDIT / DELETE
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
-                    child: bonafideFile == null
-                        ? const Text(
-                      "Bonafide Document Not Uploaded",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    )
-                        : ElevatedButton.icon(
-                      onPressed: () =>
-                          _showBonafidePreview(context, bonafideFile!),
-                      icon: const Icon(Icons.visibility),
-                      label: const Text("View Bonafide Document"),
+                    child: Text(
+                      currentYearData?["standard"] ?? "",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  PopupMenuButton<String>(
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    onSelected: (value) {
+                      if (value == 'edit') {
+                        _showCurrentYearEducationSheet(
+                          context,
+                          existingData: currentYearData,
+                        );
+                      } else if (value == 'delete') {
+                        _showDeleteDialog(
+                          currentYearData!["educationId"],
+                        );
+                      }
+                    },
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(
+                        value: 'edit',
+                        child: Text(
+                          'Edit Education Detail',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Text(
+                          'Delete Education Detail',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ),
+                    ],
+                    child: ElevatedButton(
+                      onPressed: null, // Important
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                        ColorHelperClass.getColorFromHex(
-                            ColorResources.red_color),
-                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFFDC3545),
+                        elevation: 2,
+                        shadowColor: Colors.black26,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                      ),
+                      child: const Text(
+                        "Edit / Delete",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.red,
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
+
+              const Divider(height: 20),
+
+              _infoRow("Applied For", currentYearData?["standard"] ?? ""),
+              _infoRow("College", currentYearData?["school"] ?? ""),
+              _infoRow("Course Duration", currentYearData?["duration"] ?? ""),
+
+              _infoRow("Admission Fees",
+                  "₹ ${currentYearData?["admissionFees"] ?? "0"}"),
+              _infoRow(
+                  "Yearly Fees", "₹ ${currentYearData?["yearlyFees"] ?? "0"}"),
+              _infoRow("Examination Fees",
+                  "₹ ${currentYearData?["examFees"] ?? "0"}"),
+              _infoRow("Other Expenses",
+                  "₹ ${currentYearData?["otherExpenses"] ?? "0"}"),
+              _infoRow("Total Fees", "₹ ${currentYearData?["total"] ?? "0"}"),
+
+              /// 🔥 Admission Confirmation File Button
+              if (_admissionDocument != null ||
+                  (currentYearData?["admissionDoc"] ?? "")
+                      .toString()
+                      .isNotEmpty)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      if (_admissionDocument != null) {
+                        _showEducationPreview(context, _admissionDocument!);
+                      } else {
+                        final url = currentYearData?["admissionDoc"];
+                        // Open using url launcher or PDF viewer
+                      }
+                    },
+                    icon: const Icon(Icons.visibility),
+                    label: const Text("View Admission Confirmation"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+
+              const SizedBox(height: 20),
+
+              /// 🔥 Bonafide File Button
+              if (_bonafideDocument != null ||
+                  (currentYearData?["bonafideDoc"] ?? "").toString().isNotEmpty)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      if (_bonafideDocument != null) {
+                        _showEducationPreview(context, _bonafideDocument!);
+                      } else {
+                        final url = currentYearData?["bonafideDoc"];
+
+                        if (url != null && url.toString().isNotEmpty) {}
+                      }
+                    },
+                    icon: const Icon(Icons.visibility),
+                    label: const Text("View Bonafide / Fees Proof"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _showDeleteDialog(String educationId) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Delete Detail"),
+        content: const Text("Are you sure you want to delete this detail?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () async {
+              await _deleteRepo.deleteRequestedLoanEducation({
+                "shiksha_applicant_requested_loan_education_id": educationId,
+              });
+
+              setState(() {
+                currentYearData = null;
+              });
+
+              Navigator.pop(context);
+            },
+            child: const Text(
+              "Delete",
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -170,26 +418,28 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
               onPressed: () {
                 // 👉 Navigate to next screen / step
                 // Example:
-                Navigator.push(context,
+                Navigator.push(
+                  context,
                   MaterialPageRoute(
-                    builder: (_) => AnyOtherCharityFundView(
-                      shikshaApplicantId: widget.shikshaApplicantId,
+                    builder: (_) => ShikshaSahayataByParentingView(
                     ),
-                  ),                );
+                  ),
+                );
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text("Successfully sumbited your current year edication detail"),
+                    content: Text(
+                        "Successfully sumbited your current year edication detail"),
                     backgroundColor: Colors.green,
                   ),
                 );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -202,13 +452,158 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
     );
   }
 
+  Future<void> _submitRequestedLoanEducation({
+    required String standard,
+    required String school,
+    required String courseDuration,
+    required String admissionFees,
+    required String yearlyFees,
+    required String examFees,
+    required String otherExpenses,
+    required String totalExpenses,
+  }) async {
+    if (isSubmitting) return;
+
+    setState(() => isSubmitting = true);
+
+    try {
+      final model = AddRequestedLoanEducationData(
+        shikshaApplicantId: widget.shikshaApplicantId,
+        standard: standard,
+        schoolCollegeName: school,
+        courseDuration: courseDuration,
+        admissionFees: admissionFees,
+        yearlyFees: yearlyFees,
+        examinationFees: examFees,
+        otherExpenses: otherExpenses,
+        totalExpenses: totalExpenses,
+        createdBy: currentMemberId,
+      );
+
+      final response = await _addRepo.addRequestedLoanEducation(model.toJson());
+
+      if (response.status != true) {
+        throw Exception(response.message);
+      }
+
+      setState(() {
+        currentYearData = {
+          "educationId":
+              response.data?.shikshaApplicantRequestedLoanEducationId,
+          "standard": standard,
+          "school": school,
+          "duration": courseDuration,
+          "total": totalExpenses,
+        };
+      });
+
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Added successfully"),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    } finally {
+      setState(() => isSubmitting = false);
+    }
+  }
+
+  Future<void> _updateRequestedLoanEducation({
+    required String educationId,
+    required String admissionFees,
+    required String yearlyFees,
+    required String examFees,
+    required String otherExpenses,
+    required String totalExpenses,
+  }) async {
+    if (isSubmitting) return;
+
+    setState(() => isSubmitting = true);
+
+    try {
+      final response = await _updateRepo.updateRequestedLoanEducation({
+        "shiksha_applicant_requested_loan_education_id": educationId,
+        "admission_fees": admissionFees,
+        "yearly_fees": yearlyFees,
+        "examination_fees": examFees,
+        "other_expenses": otherExpenses,
+        "total_expenses": totalExpenses,
+        "updated_by": currentMemberId,
+      });
+
+      if (response.status != true) {
+        throw Exception(response.message);
+      }
+
+      setState(() {
+        currentYearData!["total"] = totalExpenses;
+      });
+
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Updated successfully"),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    } finally {
+      setState(() => isSubmitting = false);
+    }
+  }
+
   // ===================== BOTTOM SHEET =====================
 
-  void _showCurrentYearEducationSheet(BuildContext context) {
+  void _showCurrentYearEducationSheet(BuildContext context,
+      {Map<String, dynamic>? existingData}) {
+    bool isEditMode = existingData != null;
+
     final TextEditingController yearCtrl = TextEditingController();
     final TextEditingController schoolCtrl = TextEditingController();
-    final TextEditingController addressCtrl = TextEditingController();
-    final TextEditingController feesCtrl = TextEditingController();
+    final TextEditingController courseDurationCtrl = TextEditingController();
+    final TextEditingController admissionFeesCtrl = TextEditingController();
+    final TextEditingController yearlyFeesCtrl = TextEditingController();
+    final TextEditingController examFeesCtrl = TextEditingController();
+    final TextEditingController otherExpensesCtrl = TextEditingController();
+    final TextEditingController totalExpensesCtrl = TextEditingController();
+
+    void calculateTotal() {
+      double admission = double.tryParse(admissionFeesCtrl.text) ?? 0;
+      double yearly = double.tryParse(yearlyFeesCtrl.text) ?? 0;
+      double exam = double.tryParse(examFeesCtrl.text) ?? 0;
+      double other = double.tryParse(otherExpensesCtrl.text) ?? 0;
+
+      double total = admission + yearly + exam + other;
+
+      totalExpensesCtrl.text = total.toStringAsFixed(0);
+    }
+
+    if (isEditMode) {
+      yearCtrl.text = existingData["standard"] ?? "";
+      schoolCtrl.text = existingData["school"] ?? "";
+      courseDurationCtrl.text = existingData["duration"] ?? "";
+      admissionFeesCtrl.text = existingData["admissionFees"] ?? "";
+      yearlyFeesCtrl.text = existingData["yearlyFees"] ?? "";
+      examFeesCtrl.text = existingData["examFees"] ?? "";
+      otherExpensesCtrl.text = existingData["otherExpenses"] ?? "";
+      totalExpensesCtrl.text = existingData["total"] ?? "";
+    }
+
+// Attach listeners
+    admissionFeesCtrl.addListener(calculateTotal);
+    yearlyFeesCtrl.addListener(calculateTotal);
+    examFeesCtrl.addListener(calculateTotal);
+    otherExpensesCtrl.addListener(calculateTotal);
 
     showModalBottomSheet(
       context: context,
@@ -234,8 +629,7 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
                           OutlinedButton(
                             onPressed: () => Navigator.pop(context),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor:
-                              ColorHelperClass.getColorFromHex(
+                              foregroundColor: ColorHelperClass.getColorFromHex(
                                   ColorResources.red_color),
                               side: BorderSide(
                                 color: ColorHelperClass.getColorFromHex(
@@ -245,32 +639,64 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
                             child: const Text("Cancel"),
                           ),
                           ElevatedButton(
-                            onPressed: () {
-                              setState(() {
-                                appliedYear = yearCtrl.text;
-                                schoolName = schoolCtrl.text;
-                                schoolAddress = addressCtrl.text;
-                                feesAmount = feesCtrl.text;
-                                bonafideFile = _bonafideDocument;
-                                hasCurrentYearEducation = true;
-                              });
+                            onPressed: isSubmitting
+                                ? null
+                                : () async {
+                                    if (yearCtrl.text.isEmpty ||
+                                        schoolCtrl.text.isEmpty ||
+                                        courseDurationCtrl.text.isEmpty) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                              "Please fill all required fields"),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                      return;
+                                    }
 
-                              Navigator.pop(context);
-
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("Current year education saved successfully"),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
-                            },
+                                    if (isEditMode) {
+                                      await _updateRequestedLoanEducation(
+                                        educationId:
+                                            existingData!["educationId"]
+                                                .toString(),
+                                        admissionFees: admissionFeesCtrl.text,
+                                        yearlyFees: yearlyFeesCtrl.text,
+                                        examFees: examFeesCtrl.text,
+                                        otherExpenses: otherExpensesCtrl.text,
+                                        totalExpenses: totalExpensesCtrl.text,
+                                      );
+                                    } else {
+                                      await _submitRequestedLoanEducation(
+                                        standard: yearCtrl.text,
+                                        school: schoolCtrl.text,
+                                        courseDuration: courseDurationCtrl.text,
+                                        admissionFees: admissionFeesCtrl.text,
+                                        yearlyFees: yearlyFeesCtrl.text,
+                                        examFees: examFeesCtrl.text,
+                                        otherExpenses: otherExpensesCtrl.text,
+                                        totalExpenses: totalExpensesCtrl.text,
+                                      );
+                                    }
+                                  },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                              ColorHelperClass.getColorFromHex(
+                              backgroundColor: ColorHelperClass.getColorFromHex(
                                   ColorResources.red_color),
                               foregroundColor: Colors.white,
                             ),
-                            child: const Text("Add Details"),
+                            child: isSubmitting
+                                ? const SizedBox(
+                                    height: 18,
+                                    width: 18,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(isEditMode
+                                    ? "Update Details"
+                                    : "Add Details"),
                           ),
                         ],
                       ),
@@ -301,7 +727,6 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
                               controller: yearCtrl,
                               hint: "Eg: FY BSc / 1st Year / Class 10",
                             ),
-
                             const SizedBox(height: 20),
 
                             /// 🔹 COLLEGE / SCHOOL NAME
@@ -309,30 +734,69 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
                               label: "College / School Name *",
                               controller: schoolCtrl,
                             ),
-
                             const SizedBox(height: 20),
 
-                            /// 🔹 COLLEGE / SCHOOL ADDRESS
+                            /// 🔹 COURSE DURATION
                             _buildTextField(
-                              label: "College / School Address *",
-                              controller: addressCtrl,
-                              maxLines: 2,
+                              label: "Course Duration *",
+                              controller: courseDurationCtrl,
+                              hint: "Eg: 3 Years",
                             ),
 
                             const SizedBox(height: 20),
 
-                            /// 🔹 FEES AMOUNT
+                            /// 🔹 ADMISSION FEES
                             _buildTextField(
-                              label: "Fees Amount *",
-                              controller: feesCtrl,
+                              label: "Admission Fees (₹)",
+                              controller: admissionFeesCtrl,
                               keyboard: TextInputType.number,
-                              hint: "Enter total fees",
                             ),
-                            const SizedBox(height: 25),
+
+                            const SizedBox(height: 20),
+
+                            /// 🔹 YEARLY FEES
+                            _buildTextField(
+                              label: "Yearly Fees (₹)",
+                              controller: yearlyFeesCtrl,
+                              keyboard: TextInputType.number,
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            /// 🔹 EXAMINATION FEES
+                            _buildTextField(
+                              label: "Examination Fees (₹)",
+                              controller: examFeesCtrl,
+                              keyboard: TextInputType.number,
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            /// 🔹 OTHER EXPENSES
+                            _buildTextField(
+                              label: "Other Expenses (₹)",
+                              controller: otherExpensesCtrl,
+                              keyboard: TextInputType.number,
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            /// 🔹 TOTAL EXPENSES
+                            _buildTextField(
+                              label: "Total Expenses (₹)",
+                              controller: totalExpensesCtrl,
+                              keyboard: TextInputType.number,
+                              readOnly: true,
+                            ),
+                            const SizedBox(height: 20),
 
                             /// 🔹 UPLOAD BONAFIDE CERTIFICATE
-                            _buildBonafideUploadField(context),
+                            const SizedBox(height: 25),
 
+                            /// 🔹 ADMISSION CONFIRMATION LETTER
+                            _buildAdmissionUploadField(context),
+                            const SizedBox(height: 25),
+                            _buildBonafideUploadField(context),
                             const SizedBox(height: 40),
                           ],
                         ),
@@ -354,35 +818,27 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
     String? hint,
     TextInputType keyboard = TextInputType.text,
     int maxLines = 1,
+    bool readOnly = false,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboard,
       maxLines: maxLines,
+      readOnly: readOnly,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        border:
-        const OutlineInputBorder(
-          borderSide: BorderSide(
-              color: Colors.black),
+        border: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black),
         ),
-        enabledBorder:
-        const OutlineInputBorder(
-          borderSide: BorderSide(
-              color: Colors.black),
+        enabledBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black),
         ),
-        focusedBorder:
-        const OutlineInputBorder(
-          borderSide: BorderSide(
-              color: Colors.black38,
-              width: 1),
+        focusedBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black38, width: 1),
         ),
-        contentPadding:
-        const EdgeInsets.symmetric(
-            horizontal: 20),
-        labelStyle: const TextStyle(
-            color: Colors.black),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+        labelStyle: const TextStyle(color: Colors.black),
       ),
     );
   }
@@ -415,32 +871,57 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
     );
   }
 
-  void _showBonafidePreview(BuildContext context, File file) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          insetPadding: const EdgeInsets.all(16),
-          child: Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8),
-                child: file.path.endsWith(".pdf")
-                    ? const Center(
-                  child: Icon(
-                    Icons.picture_as_pdf,
-                    size: 100,
-                    color: Colors.red,
-                  ),
-                )
-                    : InteractiveViewer(
-                  child: Image.file(file, fit: BoxFit.contain),
-                ),
-              ),
-            ],
+  Widget _buildAdmissionUploadField(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_admissionDocument != null)
+          Container(
+            height: 200,
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.black26),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: _admissionDocument!.path.endsWith(".pdf")
+                  ? const Center(
+                      child: Icon(
+                        Icons.picture_as_pdf,
+                        size: 70,
+                        color: Colors.redAccent,
+                      ),
+                    )
+                  : Image.file(
+                      _admissionDocument!,
+                      fit: BoxFit.cover,
+                    ),
+            ),
           ),
-        );
-      },
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () => _showAdmissionImagePicker(context),
+            icon: const Icon(Icons.upload_file),
+            label: Text(
+              _admissionDocument == null
+                  ? "Upload Admission Confirmation Letter"
+                  : "Change Admission Letter",
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor:
+                  ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -461,32 +942,31 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
               borderRadius: BorderRadius.circular(10),
               child: _bonafideDocument!.path.endsWith(".pdf")
                   ? const Center(
-                child: Icon(
-                  Icons.picture_as_pdf,
-                  size: 70,
-                  color: Colors.redAccent,
-                ),
-              )
+                      child: Icon(
+                        Icons.picture_as_pdf,
+                        size: 70,
+                        color: Colors.redAccent,
+                      ),
+                    )
                   : Image.file(
-                _bonafideDocument!,
-                fit: BoxFit.cover,
-              ),
+                      _bonafideDocument!,
+                      fit: BoxFit.cover,
+                    ),
             ),
           ),
-
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            onPressed: () => _showBonafidePicker(context),
+            onPressed: () => _showBonafideImagePicker(context),
             icon: const Icon(Icons.upload_file),
             label: Text(
               _bonafideDocument == null
-                  ? "Upload Bonafide Certificate"
-                  : "Change Bonafide Certificate",
+                  ? "Upload Bonafide / Fees Proof"
+                  : "Change Bonafide / Fees Proof",
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor:
-              ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                  ColorHelperClass.getColorFromHex(ColorResources.red_color),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -499,14 +979,38 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
     );
   }
 
-  void _showBonafidePicker(BuildContext context) {
+  void _showAdmissionImagePicker(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
-      ),
-      builder: (BuildContext context) {
+      builder: (_) {
+        return Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
+              title: const Text("Take a Picture"),
+              onTap: () {
+                Navigator.pop(context);
+                _pickAdmissionFromCamera();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.image, color: Colors.redAccent),
+              title: const Text("Choose from Gallery"),
+              onTap: () {
+                Navigator.pop(context);
+                _pickAdmissionFromGallery();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showBonafideImagePicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) {
         return Wrap(
           children: [
             ListTile(
@@ -531,23 +1035,65 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
     );
   }
 
-  Future<void> _pickBonafideFromCamera() async {
-    final pickedFile =
-    await _picker.pickImage(source: ImageSource.camera);
-    if (pickedFile != null) {
+  Future<void> _pickAdmissionFromCamera() async {
+    final picked = await _picker.pickImage(source: ImageSource.camera);
+    if (picked != null) {
       setState(() {
-        _bonafideDocument = File(pickedFile.path);
+        _admissionDocument = File(picked.path);
+      });
+    }
+  }
+
+  Future<void> _pickAdmissionFromGallery() async {
+    final picked = await _picker.pickImage(source: ImageSource.gallery);
+    if (picked != null) {
+      setState(() {
+        _admissionDocument = File(picked.path);
+      });
+    }
+  }
+
+  Future<void> _pickBonafideFromCamera() async {
+    final picked = await _picker.pickImage(source: ImageSource.camera);
+    if (picked != null) {
+      setState(() {
+        _bonafideDocument = File(picked.path);
       });
     }
   }
 
   Future<void> _pickBonafideFromGallery() async {
-    final pickedFile =
-    await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
+    final picked = await _picker.pickImage(source: ImageSource.gallery);
+    if (picked != null) {
       setState(() {
-        _bonafideDocument = File(pickedFile.path);
+        _bonafideDocument = File(picked.path);
       });
     }
+  }
+
+  void _showEducationPreview(BuildContext context, File file) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        insetPadding: const EdgeInsets.all(16),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: file.path.endsWith(".pdf")
+              ? const Center(
+                  child: Icon(
+                    Icons.picture_as_pdf,
+                    size: 100,
+                    color: Colors.red,
+                  ),
+                )
+              : InteractiveViewer(
+                  child: Image.file(
+                    file,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+        ),
+      ),
+    );
   }
 }
