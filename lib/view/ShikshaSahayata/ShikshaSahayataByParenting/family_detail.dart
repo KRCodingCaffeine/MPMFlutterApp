@@ -13,9 +13,11 @@ import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/urls.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/education_detail.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/shiksha_sahayata_by_parenting_view.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FamilyDetail extends StatefulWidget {
   final String shikshaApplicantId;
@@ -441,11 +443,16 @@ class _FamilyDetailState extends State<FamilyDetail> {
             ),
             const SizedBox(width: 12),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('family_completed', true);
+
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => ShikshaSahayataByParentingView(),
+                    builder: (_) => EducationDetailView(
+                      shikshaApplicantId: widget.shikshaApplicantId,
+                    ),
                   ),
                 );
               },

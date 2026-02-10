@@ -2,6 +2,7 @@ class AddEducationDetailData {
   String? shikshaApplicantEducationId;
   String? shikshaApplicantId;
   String? standard;
+  String? otherEducationDetails;
   String? yearOfPassing;
   String? marksInPercentage;
   String? schoolCollegeName;
@@ -12,6 +13,7 @@ class AddEducationDetailData {
     this.shikshaApplicantEducationId,
     this.shikshaApplicantId,
     this.standard,
+    this.otherEducationDetails,   // ✅ NEW
     this.yearOfPassing,
     this.marksInPercentage,
     this.schoolCollegeName,
@@ -25,6 +27,7 @@ class AddEducationDetailData {
     shikshaApplicantId =
         json['shiksha_applicant_id']?.toString();
     standard = json['standard']?.toString();
+    otherEducationDetails = json['other_education_details']?.toString();
     yearOfPassing = json['year_of_passing']?.toString();
     marksInPercentage =
         json['marks_in_percentage']?.toString();
@@ -39,6 +42,7 @@ class AddEducationDetailData {
     final Map<String, dynamic> data = {};
     data['shiksha_applicant_id'] = shikshaApplicantId;
     data['standard'] = standard;
+    data['other_education_details'] = otherEducationDetails; // ✅ NEW
     data['year_of_passing'] = yearOfPassing;
     data['marks_in_percentage'] = marksInPercentage;
     data['school_college_name'] = schoolCollegeName;

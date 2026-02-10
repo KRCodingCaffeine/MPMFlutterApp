@@ -14,6 +14,7 @@ import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/current_year_any_other_loan.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/previous_year_loan.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/shiksha_sahayata_by_parenting_view.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CurrentYearEducationView extends StatefulWidget {
   final String shikshaApplicantId;
@@ -353,33 +354,100 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
   void _showDeleteDialog(String educationId) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Delete Detail"),
-        content: const Text("Are you sure you want to delete this detail?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
           ),
-          TextButton(
-            onPressed: () async {
-              await _deleteRepo.deleteRequestedLoanEducation({
-                "shiksha_applicant_requested_loan_education_id": educationId,
-              });
-
-              setState(() {
-                currentYearData = null;
-              });
-
-              Navigator.pop(context);
-            },
-            child: const Text(
-              "Delete",
-              style: TextStyle(color: Colors.red),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Delete Education Detail",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(thickness: 1, color: Colors.grey),
+            ],
+          ),
+          content: const Text(
+            "Are you sure you want to delete this education detail?",
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
             ),
           ),
-        ],
-      ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: ColorHelperClass.getColorFromHex(
+                    ColorResources.red_color),
+                side: BorderSide(
+                  color: ColorHelperClass.getColorFromHex(
+                      ColorResources.red_color),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                try {
+                  final response =
+                  await _deleteRepo.deleteRequestedLoanEducation({
+                    "shiksha_applicant_requested_loan_education_id":
+                    educationId,
+                  });
+
+                  if (response.status != true) {
+                    throw Exception(response.message);
+                  }
+
+                  Navigator.pop(dialogContext);
+
+                  await _fetchCurrentYearEducation();
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                          "Education detail deleted successfully"),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } catch (e) {
+                  Navigator.pop(dialogContext);
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(e.toString()),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorHelperClass.getColorFromHex(
+                    ColorResources.red_color),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Delete"),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -411,11 +479,16 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
             ),
             const SizedBox(width: 12),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('current_year_completed', true);
+
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const ShikshaSahayataByParentingView(),
+                    builder: (_) => CurrentYearAnyOtherLoan(
+                      shikshaApplicantId: widget.shikshaApplicantId,
+                    ),
                   ),
                 );
               },
@@ -578,6 +651,12 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
     examFeesCtrl.addListener(calculateTotal);
     otherExpensesCtrl.addListener(calculateTotal);
 
+    bool isFormValid() {
+      return yearCtrl.text.trim().isNotEmpty &&
+          schoolCtrl.text.trim().isNotEmpty &&
+          courseDurationCtrl.text.trim().isNotEmpty;
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -618,47 +697,31 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
                             child: const Text("Cancel"),
                           ),
                           ElevatedButton(
-                            onPressed: isSubmitting
+                            onPressed: !isFormValid() || isSubmitting
                                 ? null
                                 : () async {
-                                    if (yearCtrl.text.isEmpty ||
-                                        schoolCtrl.text.isEmpty ||
-                                        courseDurationCtrl.text.isEmpty) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                              "Please fill all required fields"),
-                                          backgroundColor: Colors.red,
-                                        ),
-                                      );
-                                      return;
-                                    }
-
-                                    if (isEditMode) {
-                                      await _updateRequestedLoanEducation(
-                                        educationId:
-                                            existingData!["educationId"]
-                                                .toString(),
-                                        admissionFees: admissionFeesCtrl.text,
-                                        yearlyFees: yearlyFeesCtrl.text,
-                                        examFees: examFeesCtrl.text,
-                                        otherExpenses: otherExpensesCtrl.text,
-                                        totalExpenses: totalExpensesCtrl.text,
-                                      );
-                                    } else {
-                                      await _submitRequestedLoanEducation(
-                                        standard: yearCtrl.text,
-                                        school: schoolCtrl.text,
-                                        courseDuration: courseDurationCtrl.text,
-                                        admissionFees: admissionFeesCtrl.text,
-                                        yearlyFees: yearlyFeesCtrl.text,
-                                        examFees: examFeesCtrl.text,
-                                        otherExpenses: otherExpensesCtrl.text,
-                                        totalExpenses: totalExpensesCtrl.text,
-                                      );
-                                    }
-                                  },
+                              if (isEditMode) {
+                                await _updateRequestedLoanEducation(
+                                  educationId: existingData!["educationId"].toString(),
+                                  admissionFees: admissionFeesCtrl.text,
+                                  yearlyFees: yearlyFeesCtrl.text,
+                                  examFees: examFeesCtrl.text,
+                                  otherExpenses: otherExpensesCtrl.text,
+                                  totalExpenses: totalExpensesCtrl.text,
+                                );
+                              } else {
+                                await _submitRequestedLoanEducation(
+                                  standard: yearCtrl.text.trim(),
+                                  school: schoolCtrl.text.trim(),
+                                  courseDuration: courseDurationCtrl.text.trim(),
+                                  admissionFees: admissionFeesCtrl.text,
+                                  yearlyFees: yearlyFeesCtrl.text,
+                                  examFees: examFeesCtrl.text,
+                                  otherExpenses: otherExpensesCtrl.text,
+                                  totalExpenses: totalExpensesCtrl.text,
+                                );
+                              }
+                            },
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
                               ColorHelperClass.getColorFromHex(ColorResources.red_color),
@@ -710,6 +773,7 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
                               label: "Current Year Applied For *",
                               controller: yearCtrl,
                               hint: "Eg: FY BSc / 1st Year / Class 10",
+                              setModalState: setModalState,
                             ),
                             const SizedBox(height: 20),
 
@@ -717,6 +781,7 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
                             _buildTextField(
                               label: "College / School Name *",
                               controller: schoolCtrl,
+                              setModalState: setModalState,
                             ),
                             const SizedBox(height: 20),
 
@@ -725,6 +790,7 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
                               label: "Course Duration *",
                               controller: courseDurationCtrl,
                               hint: "Eg: 3 Years",
+                              setModalState: setModalState,
                             ),
 
                             const SizedBox(height: 20),
@@ -734,6 +800,7 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
                               label: "Admission Fees (₹)",
                               controller: admissionFeesCtrl,
                               keyboard: TextInputType.number,
+                              setModalState: setModalState,
                             ),
 
                             const SizedBox(height: 20),
@@ -743,6 +810,7 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
                               label: "Yearly Fees (₹)",
                               controller: yearlyFeesCtrl,
                               keyboard: TextInputType.number,
+                              setModalState: setModalState,
                             ),
 
                             const SizedBox(height: 20),
@@ -752,6 +820,7 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
                               label: "Examination Fees (₹)",
                               controller: examFeesCtrl,
                               keyboard: TextInputType.number,
+                              setModalState: setModalState,
                             ),
 
                             const SizedBox(height: 20),
@@ -761,6 +830,7 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
                               label: "Other Expenses (₹)",
                               controller: otherExpensesCtrl,
                               keyboard: TextInputType.number,
+                              setModalState: setModalState,
                             ),
 
                             const SizedBox(height: 20),
@@ -771,6 +841,7 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
                               controller: totalExpensesCtrl,
                               keyboard: TextInputType.number,
                               readOnly: true,
+                              setModalState: setModalState,
                             ),
                             const SizedBox(height: 20),
 
@@ -795,6 +866,7 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
   Widget _buildTextField({
     required String label,
     required TextEditingController controller,
+    required Function(VoidCallback) setModalState,
     String? hint,
     TextInputType keyboard = TextInputType.text,
     int maxLines = 1,
@@ -805,6 +877,7 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
       keyboardType: keyboard,
       maxLines: maxLines,
       readOnly: readOnly,
+      onChanged: (_) => setModalState(() {}),
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,

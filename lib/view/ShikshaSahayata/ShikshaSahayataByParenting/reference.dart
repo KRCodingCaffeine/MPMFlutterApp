@@ -1,15 +1,22 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:month_year_picker/month_year_picker.dart';
 import 'package:mpm/model/ShikshaSahayata/ReferredMember/AddReferredMember/AddReferredMemberData.dart';
 import 'package:mpm/model/ShikshaSahayata/ReferredMember/UpdateReferredMember/UpdateReferredMemberData.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/ReferredMemberRepo/aadhaar_upload_repository/aadhaar_upload_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/ReferredMemberRepo/add_referred_member_repository/add_referred_member_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/ReferredMemberRepo/update_referred_member_repository/update_referred_member_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/ShikshaApplicationRepo/shiksha_application_repository/shiksha_application_repo.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/utils/urls.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/shiksha_sahayata_by_parenting_view.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ReferenceView extends StatefulWidget {
   final String shikshaApplicantId;
@@ -24,12 +31,18 @@ class ReferenceView extends StatefulWidget {
 }
 
 class _ReferenceViewState extends State<ReferenceView> {
+  File? referenceAadharFile;
+  final ImagePicker _picker = ImagePicker();
+  final _formKey = GlobalKey<FormState>();
+
   String hasOtherCharity = '';
   final List<Map<String, dynamic>> charityList = [];
 
   final AddReferredMemberRepository _addRepo = AddReferredMemberRepository();
   final UpdateReferredMemberRepository _updateRepo =
       UpdateReferredMemberRepository();
+  final AadhaarUploadRepository _aadhaarRepo =
+  AadhaarUploadRepository();
   final ShikshaApplicationRepository _shikshaRepo =
       ShikshaApplicationRepository();
 
@@ -71,10 +84,20 @@ class _ReferenceViewState extends State<ReferenceView> {
           "mobile": ref.referedMemberMobile ?? "",
           "email": ref.referedMemberEmail ?? "",
           "memberCode": ref.referedMemberMemberCode ?? "",
+          "aadhaarDocument": ref.referedMemberMemberAadharCardDocument ?? "",
         });
       }
 
       setState(() => isLoading = false);
+
+      // ✅ AUTO OPEN FORM IF EMPTY
+      if (charityList.isEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _showReferenceSheet(context);
+          }
+        });
+      }
     } catch (e) {
       setState(() => isLoading = false);
     }
@@ -140,31 +163,29 @@ class _ReferenceViewState extends State<ReferenceView> {
                                 ),
                               ),
                             ),
-                            ElevatedButton(
+                            ElevatedButton.icon(
                               onPressed: () {
                                 _showReferenceSheet(
                                   context,
                                   existingData: item,
                                 );
                               },
+                              icon: const Icon(
+                                Icons.edit,
+                                size: 16,
+                              ),
+                              label: const Text(
+                                "Edit",
+                                style: TextStyle(fontSize: 13),
+                              ),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: const Color(0xFFDC3545),
-                                elevation: 2,
+                                backgroundColor:
+                                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                                foregroundColor: Colors.white,
+                                padding:
+                                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                              ),
-                              child: const Text(
-                                "Edit",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.red,
                                 ),
                               ),
                             ),
@@ -173,7 +194,7 @@ class _ReferenceViewState extends State<ReferenceView> {
 
                         const Divider(height: 20),
 
-                        _infoRow("Address", item["address"] ?? ""),
+                        _infoRow("Member Code", item["memberCode"] ?? ""),
                         const SizedBox(height: 8),
 
                         _infoRow("Mobile", item["mobile"] ?? ""),
@@ -182,7 +203,39 @@ class _ReferenceViewState extends State<ReferenceView> {
                         _infoRow("Email", item["email"] ?? ""),
                         const SizedBox(height: 8),
 
-                        _infoRow("Member Code", item["memberCode"] ?? ""),
+                        _infoRow("Address", item["address"] ?? ""),
+                        const SizedBox(height: 12),
+
+                        if (item["aadhaarDocument"] != null &&
+                            item["aadhaarDocument"].toString().isNotEmpty)
+                          Builder(
+                            builder: (context) {
+                              final String imagePath =
+                                  "${Urls.base_url}/${item["aadhaarDocument"]}";
+
+                              return SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    _showAadhaarPreviewDialog(context, imagePath);
+                                  },
+                                  icon: const Icon(Icons.visibility),
+                                  label: const Text("View Aadhaar"),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                    ColorHelperClass.getColorFromHex(
+                                        ColorResources.red_color),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                       ],
                     ),
                   ),
@@ -198,6 +251,66 @@ class _ReferenceViewState extends State<ReferenceView> {
       ),
       bottomNavigationBar:
           charityList.isNotEmpty ? _buildBottomNextBar() : null,
+    );
+  }
+
+  void _showAadhaarPreviewDialog(
+      BuildContext context,
+      String imageUrl,
+      ) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 16),
+            const Text(
+              "Aadhaar Document",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                imageUrl,
+                height: 300,
+                width: double.infinity,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) =>
+                const Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Text(
+                    "Unable to load document",
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () =>
+                  Navigator.pop(context),
+              style: TextButton.styleFrom(
+                backgroundColor:
+                ColorHelperClass.getColorFromHex(
+                    ColorResources.red_color),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),              child: const Text("Close"),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -229,18 +342,42 @@ class _ReferenceViewState extends State<ReferenceView> {
         throw Exception(response.message);
       }
 
+      final String referenceId =
+          response.data?.shikshaApplicantReferredMemberId?.toString() ?? '';
+
+      if (referenceId.isEmpty) {
+        throw Exception("Reference ID not returned from server");
+      }
+
+      if (referenceAadharFile != null) {
+        final aadhaarResponse = await _aadhaarRepo.uploadAadhaar(
+          shikshaApplicantId: widget.shikshaApplicantId,
+          referenceId: referenceId,
+          filePath: referenceAadharFile!.path,
+        );
+
+        if (aadhaarResponse.status != true) {
+          throw Exception(aadhaarResponse.message);
+        }
+      } else {
+        throw Exception("Please upload Aadhaar before submitting");
+      }
+
       Navigator.pop(context);
       await _fetchReferredMembers();
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Reference added successfully"),
+          content: Text("Reference and Aadhaar uploaded successfully"),
           backgroundColor: Colors.green,
         ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       setState(() => isSubmitting = false);
@@ -277,6 +414,19 @@ class _ReferenceViewState extends State<ReferenceView> {
         throw Exception(response.message);
       }
 
+      // 🔥 NEW: Upload Aadhaar if selected during edit
+      if (referenceAadharFile != null) {
+        final aadhaarResponse = await _aadhaarRepo.uploadAadhaar(
+          shikshaApplicantId: widget.shikshaApplicantId,
+          referenceId: referenceId,
+          filePath: referenceAadharFile!.path,
+        );
+
+        if (aadhaarResponse.status != true) {
+          throw Exception(aadhaarResponse.message);
+        }
+      }
+
       Navigator.pop(context);
       await _fetchReferredMembers();
 
@@ -288,7 +438,10 @@ class _ReferenceViewState extends State<ReferenceView> {
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       setState(() => isSubmitting = false);
@@ -326,137 +479,195 @@ class _ReferenceViewState extends State<ReferenceView> {
             return SafeArea(
               child: FractionallySizedBox(
                 heightFactor: 0.8,
-                child: Column(
-                  children: [
-                    /// 🔹 TOP BAR
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          OutlinedButton(
-                            onPressed: () => Navigator.pop(context),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: ColorHelperClass.getColorFromHex(
-                                  ColorResources.red_color),
-                              side: BorderSide(
-                                color: ColorHelperClass.getColorFromHex(
-                                    ColorResources.red_color),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: const Text("Cancel"),
-                          ),
-                          ElevatedButton(
-                            onPressed: nameCtrl.text.isEmpty ||
-                                    addressCtrl.text.isEmpty ||
-                                    mobileCtrl.text.isEmpty ||
-                                    emailCtrl.text.isEmpty ||
-                                    isSubmitting
-                                ? null
-                                : () async {
-                                    if (isEditMode) {
-                                      await _updateReference(
-                                        referenceId:
-                                            existingData!["referenceId"],
-                                        name: nameCtrl.text.trim(),
-                                        address: addressCtrl.text.trim(),
-                                        mobile: mobileCtrl.text.trim(),
-                                        email: emailCtrl.text.trim(),
-                                        memberCode: memberCodeCtrl.text.trim(),
-                                      );
-                                    } else {
-                                      await _submitReference(
-                                        name: nameCtrl.text.trim(),
-                                        address: addressCtrl.text.trim(),
-                                        mobile: mobileCtrl.text.trim(),
-                                        email: emailCtrl.text.trim(),
-                                        memberCode: memberCodeCtrl.text.trim(),
-                                      );
-                                    }
-                                  },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: ColorHelperClass.getColorFromHex(
-                                  ColorResources.red_color),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: isSubmitting
-                                ? const SizedBox(
-                                    height: 18,
-                                    width: 18,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : Text(
-                                    isEditMode
-                                        ? "Update Reference"
-                                        : "Add Reference",
-                                  ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    /// 🔹 FORM CONTENT
-                    Expanded(
-                      child: SingleChildScrollView(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      Padding(
                         padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Center(
-                              child: Text(
-                                "Reference Details",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                            OutlinedButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor:
+                                    ColorHelperClass.getColorFromHex(
+                                        ColorResources.red_color),
+                                side: BorderSide(
+                                  color: ColorHelperClass.getColorFromHex(
+                                      ColorResources.red_color),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
+                              child: const Text("Cancel"),
                             ),
-                            const SizedBox(height: 30),
-                            _buildTextField(
-                              label: "Reference Name *",
-                              controller: nameCtrl,
+                            ElevatedButton(
+                              onPressed: isSubmitting
+                                  ? null
+                                  : () async {
+                                      if (!_formKey.currentState!.validate()) {
+                                        return;
+                                      }
+
+                                      if (isEditMode) {
+                                        await _updateReference(
+                                          referenceId:
+                                              existingData!["referenceId"],
+                                          name: nameCtrl.text.trim(),
+                                          address: addressCtrl.text.trim(),
+                                          mobile: mobileCtrl.text.trim(),
+                                          email: emailCtrl.text.trim(),
+                                          memberCode:
+                                              memberCodeCtrl.text.trim(),
+                                        );
+                                      } else {
+                                        await _submitReference(
+                                          name: nameCtrl.text.trim(),
+                                          address: addressCtrl.text.trim(),
+                                          mobile: mobileCtrl.text.trim(),
+                                          email: emailCtrl.text.trim(),
+                                          memberCode:
+                                              memberCodeCtrl.text.trim(),
+                                        );
+                                      }
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    ColorHelperClass.getColorFromHex(
+                                        ColorResources.red_color),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: isSubmitting
+                                  ? const SizedBox(
+                                      height: 18,
+                                      width: 18,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Text(
+                                      isEditMode
+                                          ? "Update Reference"
+                                          : "Add Reference",
+                                    ),
                             ),
-                            const SizedBox(height: 20),
-                            _buildTextField(
-                              label: "Member Code",
-                              controller: memberCodeCtrl,
-                            ),
-                            const SizedBox(height: 20),
-                            _buildTextField(
-                              label: "Mobile Number *",
-                              controller: mobileCtrl,
-                              keyboard: TextInputType.phone,
-                            ),
-                            const SizedBox(height: 20),
-                            _buildTextField(
-                              label: "Email Address *",
-                              controller: emailCtrl,
-                              keyboard: TextInputType.emailAddress,
-                            ),
-                            const SizedBox(height: 20),
-                            _buildTextField(
-                              label: "Address *",
-                              controller: addressCtrl,
-                            ),
-                            const SizedBox(height: 40),
                           ],
                         ),
                       ),
-                    ),
-                  ],
+
+                      /// 🔹 FORM CONTENT
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const Center(
+                                child: Text(
+                                  "Reference Details",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 30),
+                              _buildTextField(
+                                label: "Reference Name *",
+                                controller: nameCtrl,
+                              ),
+                              const SizedBox(height: 20),
+                              _buildTextField(
+                                label: "Member Code",
+                                controller: memberCodeCtrl,
+                              ),
+                              const SizedBox(height: 20),
+                              _buildTextField(
+                                label: "Mobile Number *",
+                                controller: mobileCtrl,
+                                keyboard: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(10),
+                                ],
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return "Mobile number is required";
+                                  }
+                                  if (value.length != 10) {
+                                    return "Mobile number must be 10 digits";
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 20),
+                              _buildTextField(
+                                label: "Email Address *",
+                                controller: emailCtrl,
+                                keyboard: TextInputType.emailAddress,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return "Email address is required";
+                                  }
+
+                                  final emailRegex = RegExp(
+                                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                                  );
+
+                                  if (!emailRegex.hasMatch(value)) {
+                                    return "Enter a valid email address";
+                                  }
+
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 20),
+                              _buildTextField(
+                                label: "Address *",
+                                controller: addressCtrl,
+                              ),
+                              const SizedBox(height: 20),
+                              _buildImageUploadField(
+                                context: context,
+                                imageFile: referenceAadharFile,
+                                buttonText: "Upload Aadhaar",
+                                onPick: () {
+                                  _showImagePicker(context, (file) {
+                                    setModalState(() {
+                                      referenceAadharFile = file;
+                                    });
+                                    setState(() {
+                                      referenceAadharFile = file;
+                                    });
+                                  });
+                                },
+                                onRemove: () {
+                                  setModalState(() {
+                                    referenceAadharFile = null;
+                                  });
+                                  setState(() {
+                                    referenceAadharFile = null;
+                                  });
+                                },
+                              ),
+                              const SizedBox(height: 40),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -493,11 +704,14 @@ class _ReferenceViewState extends State<ReferenceView> {
             ),
             const SizedBox(width: 12),
             ElevatedButton(
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('reference_completed', true);
+
+                Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => ShikshaSahayataByParentingView(),
+                    builder: (_) => const ShikshaSahayataByParentingView(),
                   ),
                 );
               },
@@ -505,6 +719,11 @@ class _ReferenceViewState extends State<ReferenceView> {
                 backgroundColor:
                     ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: const Text("Next Step"),
             ),
@@ -543,10 +762,14 @@ class _ReferenceViewState extends State<ReferenceView> {
     required String label,
     required TextEditingController controller,
     TextInputType keyboard = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboard,
+      inputFormatters: inputFormatters,
+      validator: validator,
       decoration: InputDecoration(
         labelText: label,
         border: const OutlineInputBorder(
@@ -561,107 +784,129 @@ class _ReferenceViewState extends State<ReferenceView> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 20),
         labelStyle: const TextStyle(color: Colors.black),
       ),
-      onChanged: (_) => setState(() {}),
     );
   }
 
-  Widget themedMonthYearPickerField({
+  Widget _buildImageUploadField({
     required BuildContext context,
-    required String label,
-    required TextEditingController controller,
+    required File? imageFile,
+    required String buttonText,
+    required VoidCallback onPick,
+    required VoidCallback onRemove,
   }) {
-    return TextFormField(
-      readOnly: true,
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.black),
-        ),
-        enabledBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.black),
-        ),
-        focusedBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.black38, width: 1),
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-        labelStyle: const TextStyle(color: Colors.black),
-      ),
-      onTap: () async {
-        final selected = await showMonthYearPicker(
-          context: context,
-          initialDate: DateTime.now(),
-          firstDate: DateTime(1900),
-          lastDate: DateTime.now(),
-          builder: (context, child) {
-            return Theme(
-              data: Theme.of(context).copyWith(
-                colorScheme: ColorScheme.light(
-                  primary: ColorHelperClass.getColorFromHex(
-                      ColorResources.red_color),
+    final isUploaded = imageFile != null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (isUploaded)
+          Stack(
+            children: [
+              Container(
+                height: 180,
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.grey.shade400),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.file(
+                    imageFile,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
-              child: child!,
-            );
-          },
-        );
-
-        if (selected != null) {
-          controller.text = DateFormat('MM/yyyy').format(selected);
-        }
-      },
-    );
-  }
-
-  Widget themedDatePickerField({
-    required BuildContext context,
-    required String label,
-    required TextEditingController controller,
-  }) {
-    return TextFormField(
-      readOnly: true,
-      controller: controller,
-      decoration: _inputDecoration(label),
-      onTap: () async {
-        DateTime? picked = await showDatePicker(
-          context: context,
-          initialDate: DateTime.now(),
-          firstDate: DateTime(1900),
-          lastDate: DateTime.now(),
-          builder: (context, child) {
-            return Theme(
-              data: Theme.of(context).copyWith(
-                colorScheme: ColorScheme.light(
-                  primary: ColorHelperClass.getColorFromHex(
-                      ColorResources.red_color),
+              Positioned(
+                right: 8,
+                top: 8,
+                child: GestureDetector(
+                  onTap: onRemove,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
                 ),
               ),
-              child: child!,
-            );
-          },
-        );
-
-        if (picked != null) {
-          controller.text = DateFormat('yyyy-MM-dd').format(picked);
-        }
-      },
+            ],
+          ),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: onPick,
+            icon: Icon(
+              isUploaded ? Icons.check_circle : Icons.upload_file,
+            ),
+            label: Text(
+              isUploaded ? "Aadhaar Uploaded" : buttonText,
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isUploaded
+                  ? Colors.green
+                  : ColorHelperClass.getColorFromHex(
+                      ColorResources.red_color,
+                    ),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  InputDecoration _inputDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      border: const OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.black),
+  void _showImagePicker(
+    BuildContext context,
+    Function(File) onImagePicked,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
       ),
-      enabledBorder: const OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.black),
-      ),
-      focusedBorder: const OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.black38, width: 1),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-      labelStyle: const TextStyle(color: Colors.black),
+      builder: (_) {
+        return Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
+              title: const Text("Take a Picture"),
+              onTap: () async {
+                Navigator.pop(context);
+                final picked =
+                    await _picker.pickImage(source: ImageSource.camera);
+                if (picked != null) {
+                  onImagePicked(File(picked.path));
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.image, color: Colors.redAccent),
+              title: const Text("Choose from Gallery"),
+              onTap: () async {
+                Navigator.pop(context);
+                final picked =
+                    await _picker.pickImage(source: ImageSource.gallery);
+                if (picked != null) {
+                  onImagePicked(File(picked.path));
+                }
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

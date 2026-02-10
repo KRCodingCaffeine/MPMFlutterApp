@@ -29,6 +29,7 @@ class _ShikshaSahayataByParentingViewState
   bool currentYearCompleted = false;
   bool previousLoanCompleted = false;
   bool otherLoanCompleted = false;
+  bool referenceCompleted = false;
 
   bool isAllCompleted = false;
 
@@ -45,20 +46,20 @@ class _ShikshaSahayataByParentingViewState
     setState(() {
       applicantCompleted = applicantId != null && applicantId.isNotEmpty;
 
-      // 🔥 For now we assume all enabled once applicant exists
-      familyCompleted = applicantCompleted;
-      educationCompleted = applicantCompleted;
-      currentYearCompleted = applicantCompleted;
-      previousLoanCompleted = applicantCompleted;
-      otherLoanCompleted = applicantCompleted;
+      familyCompleted = prefs.getBool('family_completed') ?? false;
+      educationCompleted = prefs.getBool('education_completed') ?? false;
+      currentYearCompleted = prefs.getBool('current_year_completed') ?? false;
+      previousLoanCompleted = prefs.getBool('previous_loan_completed') ?? false;
+      otherLoanCompleted = prefs.getBool('other_loan_completed') ?? false;
+      referenceCompleted = prefs.getBool('reference_completed') ?? false;
 
-      isAllCompleted =
-          applicantCompleted &&
-              familyCompleted &&
-              educationCompleted &&
-              currentYearCompleted &&
-              previousLoanCompleted &&
-              otherLoanCompleted;
+      isAllCompleted = applicantCompleted &&
+          familyCompleted &&
+          educationCompleted &&
+          currentYearCompleted &&
+          previousLoanCompleted &&
+          otherLoanCompleted &&
+          referenceCompleted;
     });
   }
 
@@ -68,7 +69,7 @@ class _ShikshaSahayataByParentingViewState
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Text(
           "Shiksha Sahayata For Children",
           style: TextStyle(
@@ -83,11 +84,11 @@ class _ShikshaSahayataByParentingViewState
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
-
             buildStepButton(
               title: "Applicant Detail",
               icon: Icons.person,
               isEnabled: true,
+              isCompleted: applicantCompleted,
               onTap: () async {
                 await Navigator.push(
                   context,
@@ -96,11 +97,11 @@ class _ShikshaSahayataByParentingViewState
                 await loadProgress();
               },
             ),
-
             buildStepButton(
               title: "Family Detail",
               icon: Icons.family_restroom,
               isEnabled: applicantCompleted,
+              isCompleted: familyCompleted,
               onTap: () async {
                 final prefs = await SharedPreferences.getInstance();
                 final id = prefs.getString(_prefsApplicantIdKey);
@@ -111,14 +112,14 @@ class _ShikshaSahayataByParentingViewState
                   MaterialPageRoute(
                     builder: (_) => FamilyDetail(shikshaApplicantId: id),
                   ),
-                );
+                ).then((_) => loadProgress());
               },
             ),
-
             buildStepButton(
               title: "Education History (Other Than Current Year)",
               icon: Icons.menu_book,
               isEnabled: applicantCompleted,
+              isCompleted: educationCompleted,
               onTap: () async {
                 final prefs = await SharedPreferences.getInstance();
                 final id = prefs.getString(_prefsApplicantIdKey);
@@ -127,17 +128,16 @@ class _ShikshaSahayataByParentingViewState
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>
-                        EducationDetailView(shikshaApplicantId: id),
+                    builder: (_) => EducationDetailView(shikshaApplicantId: id),
                   ),
-                );
+                ).then((_) => loadProgress());
               },
             ),
-
             buildStepButton(
               title: "Current Year Education & Loan Requested From MPM",
               icon: Icons.school,
               isEnabled: applicantCompleted,
+              isCompleted: currentYearCompleted,
               onTap: () async {
                 final prefs = await SharedPreferences.getInstance();
                 final id = prefs.getString(_prefsApplicantIdKey);
@@ -149,14 +149,14 @@ class _ShikshaSahayataByParentingViewState
                     builder: (_) =>
                         CurrentYearEducationView(shikshaApplicantId: id),
                   ),
-                );
+                ).then((_) => loadProgress());
               },
             ),
-
             buildStepButton(
               title: "Current Year Loan Applied / Received Elsewhere",
               icon: Icons.handshake,
               isEnabled: applicantCompleted,
+              isCompleted: otherLoanCompleted,
               onTap: () async {
                 final prefs = await SharedPreferences.getInstance();
                 final id = prefs.getString(_prefsApplicantIdKey);
@@ -168,14 +168,14 @@ class _ShikshaSahayataByParentingViewState
                     builder: (_) =>
                         CurrentYearAnyOtherLoan(shikshaApplicantId: id),
                   ),
-                );
+                ).then((_) => loadProgress());
               },
             ),
-
             buildStepButton(
               title: "Received Loan in Past",
               icon: Icons.volunteer_activism,
               isEnabled: applicantCompleted,
+              isCompleted: previousLoanCompleted,
               onTap: () async {
                 final prefs = await SharedPreferences.getInstance();
                 final id = prefs.getString(_prefsApplicantIdKey);
@@ -187,14 +187,14 @@ class _ShikshaSahayataByParentingViewState
                     builder: (_) =>
                         PreviousYearLoanView(shikshaApplicantId: id),
                   ),
-                );
+                ).then((_) => loadProgress());
               },
             ),
-
             buildStepButton(
               title: "References",
               icon: Icons.verified,
               isEnabled: applicantCompleted,
+              isCompleted: referenceCompleted,
               onTap: () async {
                 final prefs = await SharedPreferences.getInstance();
                 final id = prefs.getString(_prefsApplicantIdKey);
@@ -203,19 +203,15 @@ class _ShikshaSahayataByParentingViewState
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>
-                        ReferenceView(shikshaApplicantId: id),
+                    builder: (_) => ReferenceView(shikshaApplicantId: id),
                   ),
-                );
+                ).then((_) => loadProgress());
               },
             ),
-
             const SizedBox(height: 40),
           ],
         ),
       ),
-
-      /// 🔥 SHOW SUBMIT BUTTON ONLY IF ALL COMPLETED
       bottomNavigationBar: isAllCompleted ? _buildSubmitBar() : null,
     );
   }
@@ -224,6 +220,7 @@ class _ShikshaSahayataByParentingViewState
     required String title,
     required IconData icon,
     required bool isEnabled,
+    required bool isCompleted,
     required VoidCallback onTap,
   }) {
     final color = isEnabled ? Colors.black : Colors.black45;
@@ -236,11 +233,16 @@ class _ShikshaSahayataByParentingViewState
             title,
             style: TextStyle(fontSize: 16, color: color),
           ),
-          trailing: Icon(
-            Icons.arrow_forward_ios,
-            size: 16,
-            color: color,
-          ),
+          trailing: isCompleted
+              ? const Icon(
+                  Icons.check_circle,
+                  color: Colors.green,
+                )
+              : Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: color,
+                ),
           onTap: isEnabled ? onTap : null,
         ),
         const Divider(thickness: 0.5),
@@ -248,7 +250,6 @@ class _ShikshaSahayataByParentingViewState
     );
   }
 
-  /// 🔥 FINAL SUBMIT BAR
   Widget _buildSubmitBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -275,65 +276,14 @@ class _ShikshaSahayataByParentingViewState
             const SizedBox(width: 12),
             ElevatedButton(
               onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    title: const Text("Confirm Submission"),
-                    content: const Text(
-                      "Before submitting, please verify that all the details entered are correct. Once submitted, the application will be forwarded for review.",
-                      style: TextStyle(fontSize: 14),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text("Cancel"),
-                      ),
-                      ElevatedButton(
-                        onPressed: () async {
-                          Navigator.pop(context); // close dialog
-
-                          // 🔥 REMOVE STORED SESSION ID
-                          final prefs = await SharedPreferences.getInstance();
-                          await prefs.remove(_prefsApplicantIdKey);
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                  "Shiksha Application Submitted Successfully"),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const ShikshaSahayataView(),
-                            ),
-                                (route) => false,
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                          ColorHelperClass.getColorFromHex(
-                              ColorResources.red_color),
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Text("Confirm"),
-                      ),
-                    ],
-                  ),
-                );
+                _showFinalConfirmationSheet();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(
-                    ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -343,6 +293,120 @@ class _ShikshaSahayataByParentingViewState
           ],
         ),
       ),
+    );
+  }
+
+  void _showFinalConfirmationSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                height: 5,
+                width: 60,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Icon(
+                Icons.verified,
+                size: 60,
+                color: Colors.green,
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                "Confirm Submission",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                "Please verify that all details entered are correct.\nOnce submitted, the application will be forwarded for review.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 30),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: ColorHelperClass.getColorFromHex(
+                            ColorResources.red_color),
+                        side: BorderSide(
+                          color: ColorHelperClass.getColorFromHex(
+                              ColorResources.red_color),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text("Cancel"),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+
+                        final prefs = await SharedPreferences.getInstance();
+
+                        await prefs.clear();
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                                "Shiksha Application Submitted Successfully"),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ShikshaSahayataView(),
+                          ),
+                          (route) => false,
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColorHelperClass.getColorFromHex(
+                            ColorResources.red_color),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text("Confirm"),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        );
+      },
     );
   }
 }

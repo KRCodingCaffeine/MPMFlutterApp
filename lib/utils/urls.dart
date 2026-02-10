@@ -128,9 +128,11 @@ class Urls {
   static const String add_shiksha_applicant_received_loan = base_url+"api/add_shiksha_applicant_received_loan";
   static const String update_shiksha_applicant_received_loan = base_url+"api/update_shiksha_applicant_received_loan";
   static const String delete_shiksha_applicant_received_loan = base_url+"api/delete_shiksha_applicant_received_loan";
-
   static const String add_referred_member_url = base_url+"api/add_referred_member_data";
   static const String update_referred_member_url = base_url+"api/update_referred_member_data";
+  static const String upload_reference_aadhaar_url = base_url+"api/upload_shiksha_applicant_refered_member_aadhar_card_document";
+  static const String upload_admission_letter_url = base_url+"api/upload_shiksha_applicant_admission_confirmation_letter_doc";
+  static const String upload_bonafide_document_url = base_url+"api/upload_shiksha_applicant_bonafide_fees_document";
 
   // Notification API URLs - Following same pattern as device_mapping
   static const String get_all_notifications_url = base_url+"api/notifications/get_all";

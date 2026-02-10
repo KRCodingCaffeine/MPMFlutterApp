@@ -13,6 +13,7 @@ import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/reference.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/previous_year_loan.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/shiksha_sahayata_by_parenting_view.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CurrentYearAnyOtherLoan extends StatefulWidget {
   final String shikshaApplicantId;
@@ -129,7 +130,7 @@ class _CurrentYearAnyOtherLoanState extends State<CurrentYearAnyOtherLoan> {
       body: charityList.isEmpty
           ? const Center(
               child: Text(
-                " No Current Year Loan Applied / Received Elsewhere added Yet",
+                "No current year loan applied / received elsewhere has been added yet",
                 style: TextStyle(color: Colors.grey),
               ),
             )
@@ -276,47 +277,102 @@ class _CurrentYearAnyOtherLoanState extends State<CurrentYearAnyOtherLoan> {
   void _showDeleteDialog(String loanId) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Delete Loan Detail"),
-        content: const Text("Are you sure you want to delete this loan detail?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
           ),
-          TextButton(
-            onPressed: () async {
-              try {
-                final response =
-                await _deleteRepo.deleteReceivedLoan({
-                  "shiksha_applicant_received_loan_id": loanId,
-                });
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Delete Loan Details",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+          content: const Text(
+            "Are you sure you want to delete this loan detail?",
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: BorderSide(
+                  color: ColorHelperClass.getColorFromHex(
+                      ColorResources.red_color),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                try {
+                  final response =
+                  await _deleteRepo.deleteReceivedLoan({
+                    "shiksha_applicant_received_loan_id": loanId,
+                  });
 
-                if (response.status != true) {
-                  throw Exception(response.message);
+                  if (response.status != true) {
+                    throw Exception(response.message);
+                  }
+
+                  Navigator.pop(context);
+                  await _fetchReceivedLoanData();
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Loan deleted successfully"),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } catch (e) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(e.toString()),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
                 }
-
-                Navigator.pop(context);
-                await _fetchReceivedLoanData();
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Loan deleted successfully"),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-
-              } catch (e) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(e.toString())),
-                );
-              }
-            },
-            child: const Text("Delete", style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                ColorHelperClass.getColorFromHex(
+                    ColorResources.red_color),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Delete"),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -359,7 +415,7 @@ class _CurrentYearAnyOtherLoanState extends State<CurrentYearAnyOtherLoan> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Loan added successfully"),
+          content: Text("Current Year Loan detail added successfully"),
           backgroundColor: Colors.green,
         ),
       );
@@ -414,7 +470,7 @@ class _CurrentYearAnyOtherLoanState extends State<CurrentYearAnyOtherLoan> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Loan updated successfully"),
+          content: Text("Current Year Loan detail updated successfully"),
           backgroundColor: Colors.green,
         ),
       );
@@ -445,27 +501,31 @@ class _CurrentYearAnyOtherLoanState extends State<CurrentYearAnyOtherLoan> {
     bool isEditMode = existingData != null;
 
     if (isEditMode) {
-      if (isEditMode) {
-        final loanFromText = existingData["loanFrom"] ?? "";
+      final loanFromText = existingData["loanFrom"] ?? "";
 
-        if (loanFromText == "Maheshwari Pragati Mandal (MPM)") {
-          selectedLoanFrom = "MPM";
-        } else {
-          selectedLoanFrom = "OTHER";
-          otherCharityCtrl.text = existingData["otherCharity"] ?? loanFromText;
-        }
-
-        schoolCtrl.text = existingData["school"] ?? "";
-        courseCtrl.text = existingData["course"] ?? "";
-        whichYearCtrl.text = existingData["whichYear"] ?? "";
-        amountCtrl.text = existingData["amount"] ?? "";
-        receivedOnCtrl.text = existingData["receivedOn"] ?? "";
+      if (loanFromText == "mpm") {
+        selectedLoanFrom = "MPM";
+      } else {
+        selectedLoanFrom = "OTHER";
+        otherCharityCtrl.text = existingData["otherCharity"] ?? "";
       }
+
       schoolCtrl.text = existingData["school"] ?? "";
       courseCtrl.text = existingData["course"] ?? "";
       whichYearCtrl.text = existingData["whichYear"] ?? "";
       amountCtrl.text = existingData["amount"] ?? "";
       receivedOnCtrl.text = existingData["receivedOn"] ?? "";
+    }
+
+    bool isFormValid() {
+      return selectedLoanFrom.isNotEmpty &&
+          schoolCtrl.text.trim().isNotEmpty &&
+          courseCtrl.text.trim().isNotEmpty &&
+          whichYearCtrl.text.trim().isNotEmpty &&
+          amountCtrl.text.trim().isNotEmpty &&
+          receivedOnCtrl.text.trim().isNotEmpty &&
+          !(selectedLoanFrom == "OTHER" &&
+              otherCharityCtrl.text.trim().isEmpty);
     }
 
     showModalBottomSheet(
@@ -508,15 +568,7 @@ class _CurrentYearAnyOtherLoanState extends State<CurrentYearAnyOtherLoan> {
                             child: const Text("Cancel"),
                           ),
                           ElevatedButton(
-                            onPressed: selectedLoanFrom.isEmpty ||
-                                schoolCtrl.text.isEmpty ||
-                                courseCtrl.text.isEmpty ||
-                                whichYearCtrl.text.isEmpty ||
-                                amountCtrl.text.isEmpty ||
-                                receivedOnCtrl.text.isEmpty ||
-                                (selectedLoanFrom == "OTHER" &&
-                                    otherCharityCtrl.text.isEmpty) ||
-                                isSubmitting
+                            onPressed: !isFormValid() || isSubmitting
                                 ? null
                                 : () async {
                               final receivedFromValue =
@@ -594,7 +646,7 @@ class _CurrentYearAnyOtherLoanState extends State<CurrentYearAnyOtherLoan> {
                           children: [
                             const Center(
                               child: Text(
-                                "Current Year Applied Loan Detail",
+                                "Current Year Loan Details",
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -606,7 +658,7 @@ class _CurrentYearAnyOtherLoanState extends State<CurrentYearAnyOtherLoan> {
                             /// 🔹 LOAN RECEIVED FROM DROPDOWN
                             InputDecorator(
                               decoration: InputDecoration(
-                                labelText: "Loan Applied To *",
+                                labelText: "Loan Applied / Received From *",
                                 border:
                                 const OutlineInputBorder(
                                   borderSide: BorderSide(
@@ -673,12 +725,14 @@ class _CurrentYearAnyOtherLoanState extends State<CurrentYearAnyOtherLoan> {
                             _buildTextField(
                               label: "School / College *",
                               controller: schoolCtrl,
+                              setModalState: setModalState,
                             ),
                             const SizedBox(height: 20),
 
                             _buildTextField(
                               label: "Course Name *",
                               controller: courseCtrl,
+                              setModalState: setModalState,
                             ),
                             const SizedBox(height: 20),
 
@@ -691,16 +745,17 @@ class _CurrentYearAnyOtherLoanState extends State<CurrentYearAnyOtherLoan> {
                             const SizedBox(height: 20),
 
                             _buildTextField(
-                              label: "Amount Applied (₹) *",
+                              label: "Amount Applied / Received (₹) *",
                               controller: amountCtrl,
                               keyboard: TextInputType.number,
+                              setModalState: setModalState,
                             ),
                             const SizedBox(height: 20),
 
                             /// 🔥 DATE PICKER
                             themedDatePickerField(
                               context: context,
-                              label: "Amount Applied On *",
+                              label: "Amount Applied / Received On *",
                               controller: receivedOnCtrl,
                             ),
                           ],
@@ -744,18 +799,28 @@ class _CurrentYearAnyOtherLoanState extends State<CurrentYearAnyOtherLoan> {
             ),
             const SizedBox(width: 12),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('other_loan_completed', true);
+
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => ShikshaSahayataByParentingView(),
+                    builder: (_) => PreviousYearLoanView(
+                      shikshaApplicantId: widget.shikshaApplicantId,
+                    ),
                   ),
                 );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
+                padding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: const Text("Next Step"),
             ),
@@ -793,6 +858,7 @@ class _CurrentYearAnyOtherLoanState extends State<CurrentYearAnyOtherLoan> {
   Widget _buildTextField({
     required String label,
     required TextEditingController controller,
+    required Function(VoidCallback) setModalState,
     TextInputType keyboard = TextInputType.text,
   }) {
     return TextFormField(
@@ -812,9 +878,10 @@ class _CurrentYearAnyOtherLoanState extends State<CurrentYearAnyOtherLoan> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 20),
         labelStyle: const TextStyle(color: Colors.black),
       ),
-      onChanged: (_) => setState(() {}),
+      onChanged: (_) => setModalState(() {}),
     );
   }
+
 
   Widget themedMonthYearPickerField({
     required BuildContext context,

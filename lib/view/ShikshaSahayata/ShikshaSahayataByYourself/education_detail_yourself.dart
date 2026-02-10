@@ -84,6 +84,7 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
           educationList.add({
             "educationId": edu.shikshaApplicantEducationId?.toString(),
             "class": edu.standard ?? '',
+            "otherEducationDetails": edu.otherEducationDetails ?? '',
             "school": edu.schoolCollegeName ?? '',
             "board": edu.boardOrUniversity ?? '',
             "passed": edu.yearOfPassing ?? '',
@@ -219,6 +220,12 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
   Widget _educationCard(Map<String, dynamic> edu, int index) {
     final File? file = edu["file"];
 
+    final String displayTitle =
+    edu["class"] == "Other" &&
+        (edu["otherEducationDetails"] ?? '').toString().isNotEmpty
+        ? edu["otherEducationDetails"]
+        : edu["class"];
+
     return Card(
       color: Colors.white,
       elevation: 4,
@@ -238,7 +245,7 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
               children: [
                 Expanded(
                   child: Text(
-                    edu["class"] ?? "",
+                    displayTitle,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -473,6 +480,7 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
 
   Future<void> _submitEducation({
     required String standard,
+    required String? otherEducationDetails,
     required String yearOfPassing,
     required String marks,
     required String school,
@@ -488,6 +496,7 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
       final educationData = AddEducationDetailData(
         shikshaApplicantId: widget.shikshaApplicantId,
         standard: standard,
+        otherEducationDetails: otherEducationDetails,
         yearOfPassing: yearOfPassing,
         marksInPercentage: marks,
         schoolCollegeName: school,
@@ -536,6 +545,7 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
   Future<void> _updateEducation({
     required String educationId,
     required String standard,
+    required String? otherEducationDetails,
     required String yearOfPassing,
     required String marks,
     required String school,
@@ -552,6 +562,7 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
       final body = {
         "shiksha_applicant_education_id": educationId,
         "standard": standard,
+        "other_education_details": otherEducationDetails,
         "year_of_passing": yearOfPassing,
         "marks_in_percentage": marks,
         "updated_by": currentMemberId,
@@ -668,18 +679,15 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
                                 boardCtrl.text.isEmpty ||
                                 passedCtrl.text.isEmpty ||
                                 marksCtrl.text.isEmpty ||
+                                (selectedClass == "Other" && otherClassCtrl.text.isEmpty) ||
                                 isSubmitting
                                 ? null
                                 : () async {
-                              final String educationClass =
-                              selectedClass == "Other"
-                                  ? otherClassCtrl.text
-                                  : selectedClass;
-
                               if (isEditMode) {
                                 final educationId = existingData?["educationId"];
 
-                                if (educationId == null || educationId.toString().isEmpty) {
+                                if (educationId == null ||
+                                    educationId.toString().isEmpty) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text("Education ID missing"),
@@ -691,29 +699,47 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
 
                                 await _updateEducation(
                                   educationId: educationId.toString(),
-                                  standard: educationClass,
-                                  yearOfPassing: passedCtrl.text,
-                                  marks: marksCtrl.text,
-                                  school: schoolCtrl.text,
-                                  board: boardCtrl.text,
+
+                                  // ✅ IMPORTANT: Always store dropdown value
+                                  standard: selectedClass,
+
+                                  // ✅ Only send other detail when needed
+                                  otherEducationDetails:
+                                  selectedClass == "Other"
+                                      ? otherClassCtrl.text.trim()
+                                      : null,
+
+                                  yearOfPassing: passedCtrl.text.trim(),
+                                  marks: marksCtrl.text.trim(),
+                                  school: schoolCtrl.text.trim(),
+                                  board: boardCtrl.text.trim(),
                                   index: index!,
                                 );
                               } else {
                                 await _submitEducation(
-                                  standard: educationClass,
-                                  yearOfPassing: passedCtrl.text,
-                                  marks: marksCtrl.text,
-                                  school: schoolCtrl.text,
-                                  board: boardCtrl.text,
+                                  // ✅ Always send dropdown value
+                                  standard: selectedClass,
+
+                                  // ✅ Only send other detail if selected
+                                  otherEducationDetails:
+                                  selectedClass == "Other"
+                                      ? otherClassCtrl.text.trim()
+                                      : null,
+
+                                  yearOfPassing: passedCtrl.text.trim(),
+                                  marks: marksCtrl.text.trim(),
+                                  school: schoolCtrl.text.trim(),
+                                  board: boardCtrl.text.trim(),
                                 );
                               }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
-                              ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                              ColorHelperClass.getColorFromHex(
+                                  ColorResources.red_color),
                               foregroundColor: Colors.white,
-                              padding:
-                              const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -730,7 +756,6 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
                                 : Text(isEditMode
                                 ? "Update Education Details"
                                 : "Add Education Details"),
-
                           ),
                         ],
                       ),

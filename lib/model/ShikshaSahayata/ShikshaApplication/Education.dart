@@ -1,6 +1,7 @@
 class Education {
   final String? shikshaApplicantEducationId;
   final String? standard;
+  final String? otherEducationDetails;
   final String? yearOfPassing;
   final String? marksInPercentage;
   final String? schoolCollegeName;
@@ -9,6 +10,7 @@ class Education {
   Education({
     this.shikshaApplicantEducationId,
     this.standard,
+    this.otherEducationDetails,
     this.yearOfPassing,
     this.marksInPercentage,
     this.schoolCollegeName,
@@ -20,6 +22,7 @@ class Education {
       shikshaApplicantEducationId:
           json['shiksha_applicant_education_id']?.toString(),
       standard: json['standard']?.toString(),
+        otherEducationDetails: json['other_education_details']?.toString(),
       yearOfPassing: json['year_of_passing']?.toString(),
       marksInPercentage: json['marks_in_percentage']?.toString(),
       schoolCollegeName: json['school_college_name']?.toString(),
@@ -31,6 +34,7 @@ class Education {
     return {
       'shiksha_applicant_education_id': shikshaApplicantEducationId,
       'standard': standard,
+      'other_education_details': otherEducationDetails,
       'year_of_passing': yearOfPassing,
       'marks_in_percentage': marksInPercentage,
       'school_college_name': schoolCollegeName,
