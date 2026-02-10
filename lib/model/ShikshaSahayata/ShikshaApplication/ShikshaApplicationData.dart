@@ -17,6 +17,8 @@ class ShikshaApplicationData {
   final String? maritalStatusId;
   final String? maritalStatusName;
   final String? applicantAddress;
+  final String? applicantCityId;
+  final String? applicantStateId;
   final String? applicantCityName;
   final String? applicantStateName;
   final String? applicantFatherName;
@@ -43,6 +45,8 @@ class ShikshaApplicationData {
     this.maritalStatusId,
     this.maritalStatusName,
     this.applicantAddress,
+    this.applicantCityId,
+    this.applicantStateId,
     this.applicantCityName,
     this.applicantStateName,
     this.applicantFatherName,
@@ -70,6 +74,8 @@ class ShikshaApplicationData {
       maritalStatusId: json['marital_status_id']?.toString(),
       maritalStatusName: json['marital_status_name']?.toString(),
       applicantAddress: json['applicant_address']?.toString(),
+      applicantCityId: json['applicant_city_id']?.toString(),
+      applicantStateId: json['applicant_state_id']?.toString(),
       applicantCityName: json['applicant_city_name']?.toString(),
       applicantStateName: json['applicant_state_name']?.toString(),
       applicantFatherName: json['applicant_father_name']?.toString(),
@@ -122,6 +128,8 @@ class ShikshaApplicationData {
       'marital_status_id': maritalStatusId,
       'marital_status_name': maritalStatusName,
       'applicant_address': applicantAddress,
+      'applicant_city_id': applicantCityId,
+      'applicant_state_id': applicantStateId,
       'applicant_city_name': applicantCityName,
       'applicant_state_name': applicantStateName,
       'applicant_father_name': applicantFatherName,

@@ -284,7 +284,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Applicant created successfully."),
+          content: Text("Applicant details saved successfully."),
           backgroundColor: Colors.green,
         ),
       );
@@ -363,7 +363,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Applicant updated successfully"),
+          content: Text("Applicant details updated successfully."),
           backgroundColor: Colors.green,
         ),
       );
@@ -438,7 +438,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
           ? _buildApplicantCard()
           : const Center(
         child: Text(
-          "No applicant details added",
+          "No applicant details have been added yet.",
           style: TextStyle(color: Colors.grey),
         ),
       ),
@@ -570,7 +570,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
           children: [
             Expanded(
               child: Text(
-                "Once you complete the above details, click Next Step to proceed.",
+                "Once you have completed the above details, click Next Step to proceed.",
                 style: const TextStyle(
                   fontSize: 13,
                   color: Colors.black87,
@@ -1023,7 +1023,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                               buildImageUploadField(
                                 context: context,
                                 imageFile: fatherPanFile,
-                                buttonText: "Father PAN Card *",
+                                buttonText: "Father's PAN Card *",
                                 onPick: () {
                                   _showImagePicker(context, (file) {
                                     setModalState(() {
@@ -1049,7 +1049,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 context: context,
                                 imageFile: addressProofFile,
                                 buttonText:
-                                "Address Proof (If Aadhaar and current address is not same)",
+                                "Address Proof (if Aadhaar and current address are not the same)",
                                 onPick: () {
                                   _showImagePicker(context, (file) {
                                     setModalState(() {
