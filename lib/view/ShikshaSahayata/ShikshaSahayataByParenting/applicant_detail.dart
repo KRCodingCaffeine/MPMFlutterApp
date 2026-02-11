@@ -161,20 +161,28 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
 
   }
 
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email);
+  }
 
   bool get _canSubmitApplicant {
     if (firstNameCtrl.text.trim().isEmpty) return false;
     if (lastNameCtrl.text.trim().isEmpty) return false;
-    if (emailCtrl.text.trim().isEmpty) return false;
-    if (mobileCtrl.text.trim().isEmpty) return false;
+    if (!_isValidEmail(emailCtrl.text.trim())) return false;
+    if (mobileCtrl.text.trim().length != 10) return false;
     if (dobCtrl.text.trim().isEmpty) return false;
     if (ageCtrl.text.trim().isEmpty) return false;
     if (maritalStatus.isEmpty) return false;
 
     if (fatherNameCtrl.text.trim().isEmpty) return false;
-    if (fatherMobileCtrl.text.trim().isEmpty) return false;
+    if (!_isValidEmail(fatherEmailCtrl.text.trim())) return false;
+    if (fatherMobileCtrl.text.trim().length != 10) return false;
+
     if (regiController.city_id.value.isEmpty) return false;
     if (regiController.state_id.value.isEmpty) return false;
+
+    if (applicantAadharFile == null) return false;
+    if (fatherPanFile == null) return false;
 
     return true;
   }
@@ -786,7 +794,8 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
 
                               _buildTextField("Email *",
                                   controller: emailCtrl,
-                                  onChanged: (_) => setModalState(() {})),
+                                onChanged: (_) => setModalState(() {}),
+                              ),
                               const SizedBox(height: 20),
 
                               _buildTextField(
@@ -887,7 +896,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                         return Expanded(
                                           child: InputDecorator(
                                             decoration: const InputDecoration(
-                                              labelText: 'Father City *',
+                                              labelText: "Father's City *",
                                               border: OutlineInputBorder(
                                                 borderSide: BorderSide(color: Colors.black),
                                               ),
@@ -905,7 +914,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                               borderRadius: BorderRadius.circular(10),
                                               isExpanded: true,
                                               underline: Container(),
-                                              hint: const Text('Select Father City *'),
+                                              hint: const Text("Select Father's City *"),
                                               value: selectedCity.isNotEmpty ? selectedCity : null,
                                               items: regiController.cityList.map((CityData city) {
                                                 return DropdownMenuItem<String>(
@@ -953,7 +962,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                         return Expanded(
                                           child: InputDecorator(
                                             decoration: const InputDecoration(
-                                              labelText: 'Father State *',
+                                              labelText: "Father's State *",
                                               border: OutlineInputBorder(
                                                 borderSide: BorderSide(color: Colors.black),
                                               ),
@@ -971,7 +980,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                               borderRadius: BorderRadius.circular(10),
                                               isExpanded: true,
                                               underline: Container(),
-                                              hint: const Text('Select Father State *'),
+                                              hint: const Text("Select Father's State *"),
                                               value: selectedState.isNotEmpty ? selectedState : null,
                                               items: regiController.stateList.map((StateData state) {
                                                 return DropdownMenuItem<String>(
@@ -998,7 +1007,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                               buildImageUploadField(
                                 context: context,
                                 imageFile: applicantAadharFile,
-                                buttonText: "Applicant Aadhaar *",
+                                buttonText: "Applicant Aadhaar Card",
                                 onPick: () {
                                   _showImagePicker(context, (file) {
                                     setModalState(() {
@@ -1023,7 +1032,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                               buildImageUploadField(
                                 context: context,
                                 imageFile: fatherPanFile,
-                                buttonText: "Father's PAN Card *",
+                                buttonText: "Father's PAN Card",
                                 onPick: () {
                                   _showImagePicker(context, (file) {
                                     setModalState(() {
@@ -1355,10 +1364,14 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
             icon: Icon(
               isUploaded ? Icons.check_circle : Icons.upload,
             ),
-            label: Text(buttonText),
+            label: Text(
+              isUploaded
+                  ? "$buttonText Uploaded"
+                  : "$buttonText *",
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: isUploaded
-                  ? Colors.green   // ✅ Change color after upload
+                  ? Colors.green
                   : ColorHelperClass.getColorFromHex(
                 ColorResources.red_color,
               ),

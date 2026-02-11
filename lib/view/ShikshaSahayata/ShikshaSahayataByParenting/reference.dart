@@ -211,7 +211,7 @@ class _ReferenceViewState extends State<ReferenceView> {
                           Builder(
                             builder: (context) {
                               final String imagePath =
-                                  "${Urls.base_url}/${item["aadhaarDocument"]}";
+                              _getFullImageUrl(item["aadhaarDocument"]);
 
                               return SizedBox(
                                 width: double.infinity,
@@ -254,6 +254,16 @@ class _ReferenceViewState extends State<ReferenceView> {
     );
   }
 
+  String _getFullImageUrl(String? path) {
+    if (path == null || path.isEmpty) return '';
+
+    if (path.startsWith('http')) {
+      return path; // already full URL
+    }
+
+    return "${Urls.base_url.replaceAll(RegExp(r'/$'), '')}/${path.replaceAll(RegExp(r'^/'), '')}";
+  }
+
   void _showAadhaarPreviewDialog(
       BuildContext context,
       String imageUrl,
@@ -268,6 +278,7 @@ class _ReferenceViewState extends State<ReferenceView> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 16),
+
             const Text(
               "Aadhaar Document",
               style: TextStyle(
@@ -275,27 +286,40 @@ class _ReferenceViewState extends State<ReferenceView> {
                 fontWeight: FontWeight.bold,
               ),
             ),
+
             const SizedBox(height: 16),
+
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                imageUrl,
+              child: SizedBox(
                 height: 300,
                 width: double.infinity,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) =>
-                const Padding(
-                  padding: EdgeInsets.all(20),
-                  child: Text(
-                    "Unable to load document",
+                child: imageUrl.toLowerCase().endsWith(".pdf")
+                    ? const Center(
+                  child: Icon(
+                    Icons.picture_as_pdf,
+                    size: 80,
+                    color: Colors.red,
+                  ),
+                )
+                    : Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) =>
+                  const Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Text(
+                      "Unable to load document",
+                    ),
                   ),
                 ),
               ),
             ),
+
             const SizedBox(height: 16),
+
             TextButton(
-              onPressed: () =>
-                  Navigator.pop(context),
+              onPressed: () => Navigator.pop(context),
               style: TextButton.styleFrom(
                 backgroundColor:
                 ColorHelperClass.getColorFromHex(
@@ -306,8 +330,11 @@ class _ReferenceViewState extends State<ReferenceView> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
-              ),              child: const Text("Close"),
+              ),
+              child: const Text("Close"),
             ),
+
+            const SizedBox(height: 16),
           ],
         ),
       ),

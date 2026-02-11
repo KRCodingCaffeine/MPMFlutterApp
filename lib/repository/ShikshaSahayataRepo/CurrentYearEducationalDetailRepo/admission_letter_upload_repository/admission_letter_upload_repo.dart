@@ -22,7 +22,7 @@ class AdmissionUploadRepository {
       final formData = FormData.fromMap({
         'shiksha_applicant_id': shikshaApplicantId,
         'shiksha_applicant_requested_loan_education_id': educationId,
-        'admission_confirmation_letter_doc':
+        'admision_confirmation_letter_doc':
         await MultipartFile.fromFile(
           filePath,
           filename: filePath.split('/').last,

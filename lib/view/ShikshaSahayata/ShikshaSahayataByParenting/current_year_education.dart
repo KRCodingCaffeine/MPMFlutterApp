@@ -5,12 +5,15 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mpm/model/ShikshaSahayata/CurrentYearEducationDetail/AddRequestedLoanEducation/AddRequestedLoanEducationData.dart';
 import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/RequestedLoanEducation.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/CurrentYearEducationalDetailRepo/add_requested_loan_education_repository/add_requested_loan_education_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/CurrentYearEducationalDetailRepo/admission_letter_upload_repository/admission_letter_upload_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/CurrentYearEducationalDetailRepo/bonafide_letter_upload_repository/bonafide_letter_upload_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/CurrentYearEducationalDetailRepo/delete_requested_loan_education_repository/delete_requested_loan_education_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/CurrentYearEducationalDetailRepo/update_requested_loan_education_repository/update_requested_loan_education_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/ShikshaApplicationRepo/shiksha_application_repository/shiksha_application_repo.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/utils/urls.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/current_year_any_other_loan.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/previous_year_loan.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/shiksha_sahayata_by_parenting_view.dart';
@@ -49,12 +52,14 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
 
   final AddRequestedLoanEducationRepository _addRepo =
       AddRequestedLoanEducationRepository();
-
   final UpdateRequestedLoanEducationRepository _updateRepo =
       UpdateRequestedLoanEducationRepository();
-
   final DeleteRequestedLoanEducationRepository _deleteRepo =
       DeleteRequestedLoanEducationRepository();
+  final AdmissionUploadRepository _admissionRepo =
+  AdmissionUploadRepository();
+  final BonafideUploadRepository _bonafideRepo =
+  BonafideUploadRepository();
 
   final ShikshaApplicationRepository _shikshaRepo =
       ShikshaApplicationRepository();
@@ -284,21 +289,19 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
                   "₹ ${currentYearData?["otherExpenses"] ?? "0"}"),
               _infoRow("Total Fees", "₹ ${currentYearData?["total"] ?? "0"}"),
 
-              /// 🔥 Admission Confirmation File Button
-              if (_admissionDocument != null ||
-                  (currentYearData?["admissionDoc"] ?? "")
-                      .toString()
-                      .isNotEmpty)
+              if ((currentYearData?["admissionDoc"] ?? "").toString().isNotEmpty)
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      if (_admissionDocument != null) {
-                        _showEducationPreview(context, _admissionDocument!);
-                      } else {
-                        final url = currentYearData?["admissionDoc"];
-                        // Open using url launcher or PDF viewer
-                      }
+                      final url = currentYearData?["admissionDoc"];
+                      final fullUrl = _getFullImageUrl(url);
+
+                      _showDocumentPreviewDialog(
+                        context,
+                        title: "Admission Confirmation Letter",
+                        networkUrl: fullUrl,
+                      );
                     },
                     icon: const Icon(Icons.visibility),
                     label: const Text("View Admission Confirmation"),
@@ -313,23 +316,21 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
                     ),
                   ),
                 ),
-
               const SizedBox(height: 20),
 
-              /// 🔥 Bonafide File Button
-              if (_bonafideDocument != null ||
-                  (currentYearData?["bonafideDoc"] ?? "").toString().isNotEmpty)
+              if ((currentYearData?["bonafideDoc"] ?? "").toString().isNotEmpty)
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      if (_bonafideDocument != null) {
-                        _showEducationPreview(context, _bonafideDocument!);
-                      } else {
-                        final url = currentYearData?["bonafideDoc"];
+                      final url = currentYearData?["bonafideDoc"];
+                      final fullUrl = _getFullImageUrl(url);
 
-                        if (url != null && url.toString().isNotEmpty) {}
-                      }
+                      _showDocumentPreviewDialog(
+                        context,
+                        title: "Bonafide / Fees Proof",
+                        networkUrl: fullUrl,
+                      );
                     },
                     icon: const Icon(Icons.visibility),
                     label: const Text("View Bonafide / Fees Proof"),
@@ -420,7 +421,7 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text(
-                          "Education detail deleted successfully"),
+                          " Current Year Education detail deleted successfully"),
                       backgroundColor: Colors.green,
                     ),
                   );
@@ -510,6 +511,16 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
     );
   }
 
+  String _getFullImageUrl(String? path) {
+    if (path == null || path.isEmpty) return '';
+
+    if (path.startsWith('http')) {
+      return path;
+    }
+
+    return "${Urls.base_url}/$path";
+  }
+
   Future<void> _submitRequestedLoanEducation({
     required String standard,
     required String school,
@@ -520,8 +531,8 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
     required String otherExpenses,
     required String totalExpenses,
   }) async {
-    if (isSubmitting) return;
 
+    if (isSubmitting) return;
     setState(() => isSubmitting = true);
 
     try {
@@ -538,25 +549,62 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
         createdBy: currentMemberId,
       );
 
-      final response = await _addRepo.addRequestedLoanEducation(model.toJson());
+      final response =
+      await _addRepo.addRequestedLoanEducation(model.toJson());
 
       if (response.status != true) {
         throw Exception(response.message);
       }
 
-      Navigator.pop(context);
+      final String educationId =
+          response.data?.shikshaApplicantRequestedLoanEducationId?.toString() ?? '';
 
+      if (educationId.isEmpty) {
+        throw Exception("Education ID not returned from server");
+      }
+
+      if (_admissionDocument != null) {
+        final uploadResponse =
+        await _admissionRepo.uploadAdmissionLetter(
+          shikshaApplicantId: widget.shikshaApplicantId,
+          educationId: educationId,
+          filePath: _admissionDocument!.path,
+        );
+
+        if (uploadResponse.status != true) {
+          throw Exception(uploadResponse.message);
+        }
+      }
+
+      if (_bonafideDocument != null) {
+        final bonafideResponse =
+        await _bonafideRepo.uploadBonafideDocument(
+          shikshaApplicantId: widget.shikshaApplicantId,
+          educationId: educationId,
+          filePath: _bonafideDocument!.path,
+        );
+
+        if (bonafideResponse.status != true) {
+          throw Exception(bonafideResponse.message);
+        }
+      }
+
+      Navigator.pop(context);
       await _fetchCurrentYearEducation();
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Added successfully"),
+          content: Text("Education and documents uploaded successfully"),
           backgroundColor: Colors.green,
         ),
       );
+
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       setState(() => isSubmitting = false);
@@ -590,19 +638,49 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
         throw Exception(response.message);
       }
 
+      if (_admissionDocument != null) {
+        final uploadResponse =
+        await _admissionRepo.uploadAdmissionLetter(
+          shikshaApplicantId: widget.shikshaApplicantId,
+          educationId: educationId,
+          filePath: _admissionDocument!.path,
+        );
+
+        if (uploadResponse.status != true) {
+          throw Exception(uploadResponse.message);
+        }
+      }
+
+      if (_bonafideDocument != null) {
+        final bonafideResponse =
+        await _bonafideRepo.uploadBonafideDocument(
+          shikshaApplicantId: widget.shikshaApplicantId,
+          educationId: educationId,
+          filePath: _bonafideDocument!.path,
+        );
+
+        if (bonafideResponse.status != true) {
+          throw Exception(bonafideResponse.message);
+        }
+      }
+
       Navigator.pop(context);
 
       await _fetchCurrentYearEducation();
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Updated successfully"),
+          content: Text("Education details updated successfully"),
           backgroundColor: Colors.green,
         ),
       );
+
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       setState(() => isSubmitting = false);
@@ -925,47 +1003,48 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
   }
 
   Widget _buildAdmissionUploadField(BuildContext context) {
+    final bool isUploaded =
+        _admissionDocument != null ||
+            (currentYearData?["admissionDoc"] ?? "").toString().isNotEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (_admissionDocument != null)
           Container(
-            height: 200,
+            height: 180,
             width: double.infinity,
-            margin: const EdgeInsets.only(bottom: 12),
+            margin: const EdgeInsets.only(bottom: 10),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.black26),
               borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.grey.shade400),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: _admissionDocument!.path.endsWith(".pdf")
-                  ? const Center(
-                      child: Icon(
-                        Icons.picture_as_pdf,
-                        size: 70,
-                        color: Colors.redAccent,
-                      ),
-                    )
-                  : Image.file(
-                      _admissionDocument!,
-                      fit: BoxFit.cover,
-                    ),
+              child: Image.file(
+                _admissionDocument!,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
             onPressed: () => _showAdmissionImagePicker(context),
-            icon: const Icon(Icons.upload_file),
+            icon: Icon(
+              isUploaded ? Icons.check_circle : Icons.upload_file,
+            ),
             label: Text(
-              _admissionDocument == null
-                  ? "Upload Admission Confirmation Letter"
-                  : "Change Admission Letter",
+              isUploaded
+                  ? "Admission Letter Uploaded"
+                  : "Upload Admission Confirmation Letter",
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              backgroundColor: isUploaded
+                  ? Colors.green
+                  : ColorHelperClass.getColorFromHex(
+                ColorResources.red_color,
+              ),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -979,47 +1058,48 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
   }
 
   Widget _buildBonafideUploadField(BuildContext context) {
+    final bool isUploaded =
+        _bonafideDocument != null ||
+            (currentYearData?["bonafideDoc"] ?? "").toString().isNotEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (_bonafideDocument != null)
           Container(
-            height: 200,
+            height: 180,
             width: double.infinity,
-            margin: const EdgeInsets.only(bottom: 12),
+            margin: const EdgeInsets.only(bottom: 10),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.black26),
               borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.grey.shade400),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: _bonafideDocument!.path.endsWith(".pdf")
-                  ? const Center(
-                      child: Icon(
-                        Icons.picture_as_pdf,
-                        size: 70,
-                        color: Colors.redAccent,
-                      ),
-                    )
-                  : Image.file(
-                      _bonafideDocument!,
-                      fit: BoxFit.cover,
-                    ),
+              child: Image.file(
+                _bonafideDocument!,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
             onPressed: () => _showBonafideImagePicker(context),
-            icon: const Icon(Icons.upload_file),
+            icon: Icon(
+              isUploaded ? Icons.check_circle : Icons.upload_file,
+            ),
             label: Text(
-              _bonafideDocument == null
-                  ? "Upload Bonafide / Fees Proof"
-                  : "Change Bonafide / Fees Proof",
+              isUploaded
+                  ? "Bonafide Uploaded"
+                  : "Upload Bonafide / Fees Proof",
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              backgroundColor: isUploaded
+                  ? Colors.green
+                  : ColorHelperClass.getColorFromHex(
+                ColorResources.red_color,
+              ),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -1124,27 +1204,80 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
     }
   }
 
-  void _showEducationPreview(BuildContext context, File file) {
+  void _showDocumentPreviewDialog(
+      BuildContext context, {
+        required String title,
+        File? localFile,
+        String? networkUrl,
+      }) {
     showDialog(
       context: context,
       builder: (_) => Dialog(
-        insetPadding: const EdgeInsets.all(16),
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: file.path.endsWith(".pdf")
-              ? const Center(
-                  child: Icon(
-                    Icons.picture_as_pdf,
-                    size: 100,
-                    color: Colors.red,
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            /// 🔥 Preview Area
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                height: 300,
+                width: double.infinity,
+                child: localFile != null
+                    ? Image.file(
+                  localFile,
+                  fit: BoxFit.contain,
+                )
+                    : (networkUrl != null && networkUrl.isNotEmpty)
+                    ? Image.network(
+                  networkUrl,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Text("Unable to load document"),
                   ),
                 )
-              : InteractiveViewer(
-                  child: Image.file(
-                    file,
-                    fit: BoxFit.contain,
-                  ),
+                    : const Center(
+                  child: Text("No document available"),
                 ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                backgroundColor: ColorHelperClass.getColorFromHex(
+                  ColorResources.red_color,
+                ),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text("Close"),
+            ),
+
+            const SizedBox(height: 16),
+          ],
         ),
       ),
     );

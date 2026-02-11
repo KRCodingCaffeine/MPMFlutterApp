@@ -6,6 +6,7 @@ class Education {
   final String? marksInPercentage;
   final String? schoolCollegeName;
   final String? boardOrUniversity;
+  final String? markSheetAttachment;
 
   Education({
     this.shikshaApplicantEducationId,
@@ -15,6 +16,7 @@ class Education {
     this.marksInPercentage,
     this.schoolCollegeName,
     this.boardOrUniversity,
+    this.markSheetAttachment,
   });
 
   factory Education.fromJson(Map<String, dynamic> json) {
@@ -27,6 +29,7 @@ class Education {
       marksInPercentage: json['marks_in_percentage']?.toString(),
       schoolCollegeName: json['school_college_name']?.toString(),
       boardOrUniversity: json['board_or_university']?.toString(),
+      markSheetAttachment: json['mark_sheet_attachment']?.toString(),
     );
   }
 
@@ -39,6 +42,7 @@ class Education {
       'marks_in_percentage': marksInPercentage,
       'school_college_name': schoolCollegeName,
       'board_or_university': boardOrUniversity,
+      'mark_sheet_attachment': markSheetAttachment,
     };
   }
 }

@@ -133,6 +133,7 @@ class Urls {
   static const String upload_reference_aadhaar_url = base_url+"api/upload_shiksha_applicant_refered_member_aadhar_card_document";
   static const String upload_admission_letter_url = base_url+"api/upload_shiksha_applicant_admission_confirmation_letter_doc";
   static const String upload_bonafide_document_url = base_url+"api/upload_shiksha_applicant_bonafide_fees_document";
+  static const String upload_mark_sheet_attachment_url = base_url+"api/upload_shiksha_applicant_mark_sheet_attachment";
 
   // Notification API URLs - Following same pattern as device_mapping
   static const String get_all_notifications_url = base_url+"api/notifications/get_all";

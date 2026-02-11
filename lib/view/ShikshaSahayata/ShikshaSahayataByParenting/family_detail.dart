@@ -92,8 +92,15 @@ class _FamilyDetailState extends State<FamilyDetail> {
   }
 
   bool get _isFamilyCompleted {
-    return _applicationData?.familyMembers != null &&
-        _applicationData!.familyMembers!.isNotEmpty;
+    if (_applicationData?.familyMembers == null) return false;
+
+    final totalMembers = controller.familyDataList.length +
+        (controller.familyHeadData.value != null ? 1 : 0);
+
+    final completedMembers =
+        _applicationData!.familyMembers!.length;
+
+    return completedMembers == totalMembers;
   }
 
   @override
@@ -127,7 +134,6 @@ class _FamilyDetailState extends State<FamilyDetail> {
             : _buildFamilyList(),
       ),
 
-      // 🔥 ADD THIS
       bottomNavigationBar:
       _isFamilyCompleted ? _buildBottomNextBar() : null,
     );
@@ -487,7 +493,6 @@ class _FamilyDetailState extends State<FamilyDetail> {
     final TextEditingController schoolAddressCtrl = TextEditingController();
     final TextEditingController otherDetailCtrl = TextEditingController();
 
-    // 🔥 PREFILL DATA IF EDITING
     if (existingData != null) {
       if (existingData.familyMemberOccupationType == "working") {
         selectedStatus = "Earning";
@@ -508,7 +513,6 @@ class _FamilyDetailState extends State<FamilyDetail> {
           existingData.relationshipWithApplicantId ?? '');
     }
 
-
     final List<String> statusOptions = ["Earning", "Non Earning"];
     final List<String> nonEarningOptions = [
       "Homemaker",
@@ -516,6 +520,31 @@ class _FamilyDetailState extends State<FamilyDetail> {
       "Student",
       "Other",
     ];
+
+    bool _isFormValid() {
+      if (controller.selectRelationShipType.value.isEmpty) return false;
+      if (selectedStatus.isEmpty) return false;
+
+      if (selectedStatus == "Earning") {
+        if (jobTitleCtrl.text.trim().isEmpty) return false;
+        if (yearlyIncomeCtrl.text.trim().isEmpty) return false;
+      }
+
+      if (selectedStatus == "Non Earning") {
+        if (selectedNonEarningReason.isEmpty) return false;
+
+        if (selectedNonEarningReason == "Student") {
+          if (standardCtrl.text.trim().isEmpty) return false;
+          if (schoolAddressCtrl.text.trim().isEmpty) return false;
+        }
+
+        if (selectedNonEarningReason == "Other") {
+          if (otherDetailCtrl.text.trim().isEmpty) return false;
+        }
+      }
+
+      return true;
+    }
 
     showModalBottomSheet(
       context: context,
@@ -558,10 +587,8 @@ class _FamilyDetailState extends State<FamilyDetail> {
                               child: const Text("Cancel"),
                             ),
                             ElevatedButton(
-                              onPressed: controller.selectRelationShipType.value.isEmpty ||
-                                  selectedStatus.isEmpty
-                                  ? null
-                                  : () async {
+                              onPressed: _isFormValid()
+                                  ? () async {
                                 try {
                                   String occupationType =
                                   selectedStatus == "Earning"
@@ -573,23 +600,22 @@ class _FamilyDetailState extends State<FamilyDetail> {
                                     "family_member_id": memberId,
                                     "relationship_with_applicant_id":
                                     controller.selectRelationShipType.value,
-                                    "family_member_occupation_type":
-                                    occupationType,
+                                    "family_member_occupation_type": occupationType,
                                     "family_member_occupation_name":
                                     selectedStatus == "Earning"
-                                        ? jobTitleCtrl.text
+                                        ? jobTitleCtrl.text.trim()
                                         : "",
                                     "family_member_standard":
                                     selectedStatus == "Non Earning"
-                                        ? standardCtrl.text
+                                        ? standardCtrl.text.trim()
                                         : "",
                                     "family_member_institute":
                                     selectedStatus == "Non Earning"
-                                        ? schoolAddressCtrl.text
+                                        ? schoolAddressCtrl.text.trim()
                                         : "",
                                     "family_member_annual_income":
                                     selectedStatus == "Earning"
-                                        ? yearlyIncomeCtrl.text
+                                        ? yearlyIncomeCtrl.text.trim()
                                         : "",
                                     "created_by": currentMemberId,
                                     "updated_by": currentMemberId,
@@ -606,8 +632,8 @@ class _FamilyDetailState extends State<FamilyDetail> {
                                     ScaffoldMessenger.of(context)
                                         .showSnackBar(
                                       const SnackBar(
-                                        content:
-                                        Text("Family details saved successfully"),
+                                        content: Text(
+                                            "Family details saved successfully"),
                                         backgroundColor: Colors.green,
                                       ),
                                     );
@@ -623,13 +649,15 @@ class _FamilyDetailState extends State<FamilyDetail> {
                                     ),
                                   );
                                 }
-                              },
+                              }
+                                  : null,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
-                                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                                ColorHelperClass.getColorFromHex(
+                                    ColorResources.red_color),
                                 foregroundColor: Colors.white,
-                                padding:
-                                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 12),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -639,7 +667,7 @@ class _FamilyDetailState extends State<FamilyDetail> {
                                     ? "Update Family Details"
                                     : "Add Family Details",
                               ),
-                            ),
+                            )
                           ],
                         ),
                       ),
@@ -788,19 +816,17 @@ class _FamilyDetailState extends State<FamilyDetail> {
                               if (selectedStatus == "Earning") ...[
                                 TextFormField(
                                   controller: jobTitleCtrl,
-                                  decoration: const InputDecoration(
-                                    labelText: "Job Title *",
-                                    border: OutlineInputBorder(),
-                                  ),
+                                  onChanged: (_) => setModalState(() {}),
+                                  decoration:
+                                  _inputDecoration('Job Title *'),
                                 ),
                                 const SizedBox(height: 16),
                                 TextFormField(
                                   controller: yearlyIncomeCtrl,
+                                  onChanged: (_) => setModalState(() {}),
                                   keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(
-                                    labelText: "Yearly Income *",
-                                    border: OutlineInputBorder(),
-                                  ),
+                                  decoration:
+                                  _inputDecoration('Yearly Income *'),
                                 ),
                               ],
 
@@ -865,30 +891,27 @@ class _FamilyDetailState extends State<FamilyDetail> {
                                 if (selectedNonEarningReason == "Student") ...[
                                   TextFormField(
                                     controller: standardCtrl,
-                                    decoration: const InputDecoration(
-                                      labelText: "Standard *",
-                                      border: OutlineInputBorder(),
-                                    ),
+                                    onChanged: (_) => setModalState(() {}),
+                                    decoration:
+                                    _inputDecoration('Standard *'),
                                   ),
                                   const SizedBox(height: 16),
                                   TextFormField(
                                     controller: schoolAddressCtrl,
+                                    onChanged: (_) => setModalState(() {}),
                                     maxLines: 2,
-                                    decoration: const InputDecoration(
-                                      labelText: "School Address *",
-                                      border: OutlineInputBorder(),
-                                    ),
+                                    decoration:
+                                    _inputDecoration('School Address *'),
                                   ),
                                 ],
 
                                 if (selectedNonEarningReason == "Other") ...[
                                   TextFormField(
                                     controller: otherDetailCtrl,
+                                    onChanged: (_) => setModalState(() {}),
                                     maxLines: 2,
-                                    decoration: const InputDecoration(
-                                      labelText: "Other Detail *",
-                                      border: OutlineInputBorder(),
-                                    ),
+                                    decoration:
+                                    _inputDecoration('Other Detail *'),
                                   ),
                                 ],
                               ],
@@ -905,6 +928,23 @@ class _FamilyDetailState extends State<FamilyDetail> {
           },
         );
       },
+    );
+  }
+
+  InputDecoration _inputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      border: const OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.black),
+      ),
+      enabledBorder: const OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.black),
+      ),
+      focusedBorder: const OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.black38, width: 1),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+      labelStyle: const TextStyle(color: Colors.black),
     );
   }
 }
