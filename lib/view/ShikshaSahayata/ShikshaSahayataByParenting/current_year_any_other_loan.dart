@@ -718,6 +718,7 @@ class _CurrentYearAnyOtherLoanState extends State<CurrentYearAnyOtherLoan> {
                                 controller: otherCharityCtrl,
                                 decoration: _inputDecoration(
                                     "Enter Other Charity Name *"),
+                                onChanged: (_) => setModalState(() {}),
                               ),
                               const SizedBox(height: 20),
                             ],
@@ -741,6 +742,7 @@ class _CurrentYearAnyOtherLoanState extends State<CurrentYearAnyOtherLoan> {
                               context: context,
                               label: "Which Year (Month / Year) *",
                               controller: whichYearCtrl,
+                              setModalState: setModalState,
                             ),
                             const SizedBox(height: 20),
 
@@ -757,6 +759,7 @@ class _CurrentYearAnyOtherLoanState extends State<CurrentYearAnyOtherLoan> {
                               context: context,
                               label: "Amount Applied / Received On *",
                               controller: receivedOnCtrl,
+                              setModalState: setModalState,
                             ),
                           ],
                         ),
@@ -887,6 +890,7 @@ class _CurrentYearAnyOtherLoanState extends State<CurrentYearAnyOtherLoan> {
     required BuildContext context,
     required String label,
     required TextEditingController controller,
+    required Function(VoidCallback) setModalState,
   }) {
     return TextFormField(
       readOnly: true,
@@ -928,6 +932,7 @@ class _CurrentYearAnyOtherLoanState extends State<CurrentYearAnyOtherLoan> {
         if (selected != null) {
           controller.text =
               DateFormat('MM/yyyy').format(selected);
+          setState(() {});
         }
       },
     );
@@ -937,6 +942,7 @@ class _CurrentYearAnyOtherLoanState extends State<CurrentYearAnyOtherLoan> {
     required BuildContext context,
     required String label,
     required TextEditingController controller,
+    required Function(VoidCallback) setModalState,
   }) {
     return TextFormField(
       readOnly: true,
@@ -962,9 +968,11 @@ class _CurrentYearAnyOtherLoanState extends State<CurrentYearAnyOtherLoan> {
         );
 
         if (picked != null) {
-          controller.text =
-              DateFormat('yyyy-MM-dd').format(picked);
-        }
+          setModalState(() {
+            controller.text =
+                DateFormat('yyyy-MM-dd').format(picked);
+          });
+      }
       },
     );
   }

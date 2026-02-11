@@ -2,9 +2,9 @@ import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/Education.dart';
 import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/FamilyMember.dart';
 import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/ReceivedLoan.dart';
 import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/ReferredMember.dart';
-import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/RequestedLoanEducation.dart';
+import 'package:mpm/model/ShikshaSahayata/ShikshaApplicationsByAppliedBy/RequestedLoanEducationAppliedBy.dart';
 
-class ShikshaApplicationData {
+class ShikshaApplicationsByAppliedByData {
   final String? shikshaApplicantId;
   final String? applicantFirstName;
   final String? applicantMiddleName;
@@ -31,11 +31,11 @@ class ShikshaApplicationData {
 
   final List<FamilyMember>? familyMembers;
   final List<Education>? education;
-  final List<RequestedLoanEducation>? requestedLoanEducation;
+  final List<RequestedLoanEducationAppliedBy>? requestedLoanEducationAppliedBy;
   final List<ReceivedLoan>? receivedLoans;
   final List<ReferredMember>? referredMembers;
 
-  ShikshaApplicationData({
+  ShikshaApplicationsByAppliedByData({
     this.shikshaApplicantId,
     this.applicantFirstName,
     this.applicantMiddleName,
@@ -61,13 +61,13 @@ class ShikshaApplicationData {
     this.applicantRationCardDocument,
     this.familyMembers,
     this.education,
-    this.requestedLoanEducation,
+    this.requestedLoanEducationAppliedBy,
     this.receivedLoans,
     this.referredMembers,
   });
 
-  factory ShikshaApplicationData.fromJson(Map<String, dynamic> json) {
-    return ShikshaApplicationData(
+  factory ShikshaApplicationsByAppliedByData.fromJson(Map<String, dynamic> json) {
+    return ShikshaApplicationsByAppliedByData(
       shikshaApplicantId: json['shiksha_applicant_id']?.toString(),
       applicantFirstName: json['applicant_first_name']?.toString(),
       applicantMiddleName: json['applicant_middle_name']?.toString(),
@@ -89,30 +89,30 @@ class ShikshaApplicationData {
       fatherEmail: json['father_email']?.toString(),
       fatherMobile: json['father_mobile']?.toString(),
       applicantAadharCardDocument:
-          json['applicant_aadhar_card_document']?.toString(),
+      json['applicant_aadhar_card_document']?.toString(),
       applicantFatherPanCardDocument:
-          json['applicant_father_pan_card_document']?.toString(),
+      json['applicant_father_pan_card_document']?.toString(),
       applicantRationCardDocument:
-          json['applicant_ration_card_document']?.toString(),
+      json['applicant_ration_card_document']?.toString(),
       familyMembers: json['family_members'] != null
           ? List<FamilyMember>.from(
-              json['family_members'].map((x) => FamilyMember.fromJson(x)))
+          json['family_members'].map((x) => FamilyMember.fromJson(x)))
           : [],
       education: json['education'] != null
           ? List<Education>.from(
-              json['education'].map((x) => Education.fromJson(x)))
+          json['education'].map((x) => Education.fromJson(x)))
           : [],
-      requestedLoanEducation: json['requested_loan_education'] != null
-          ? List<RequestedLoanEducation>.from(json['requested_loan_education']
-              .map((x) => RequestedLoanEducation.fromJson(x)))
+      requestedLoanEducationAppliedBy: json['requested_loan_education'] != null
+          ? List<RequestedLoanEducationAppliedBy>.from(json['requested_loan_education']
+          .map((x) => RequestedLoanEducationAppliedBy.fromJson(x)))
           : [],
       receivedLoans: json['received_loans'] != null
           ? List<ReceivedLoan>.from(
-              json['received_loans'].map((x) => ReceivedLoan.fromJson(x)))
+          json['received_loans'].map((x) => ReceivedLoan.fromJson(x)))
           : [],
       referredMembers: json['referred_members'] != null
           ? List<ReferredMember>.from(
-              json['referred_members'].map((x) => ReferredMember.fromJson(x)))
+          json['referred_members'].map((x) => ReferredMember.fromJson(x)))
           : [],
     );
   }
@@ -145,7 +145,7 @@ class ShikshaApplicationData {
       'family_members': familyMembers?.map((x) => x.toJson()).toList(),
       'education': education?.map((x) => x.toJson()).toList(),
       'requested_loan_education':
-          requestedLoanEducation?.map((x) => x.toJson()).toList(),
+      requestedLoanEducationAppliedBy?.map((x) => x.toJson()).toList(),
       'received_loans': receivedLoans?.map((x) => x.toJson()).toList(),
       'referred_members': referredMembers?.map((x) => x.toJson()).toList(),
     };

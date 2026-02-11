@@ -41,8 +41,7 @@ class _ReferenceViewState extends State<ReferenceView> {
   final AddReferredMemberRepository _addRepo = AddReferredMemberRepository();
   final UpdateReferredMemberRepository _updateRepo =
       UpdateReferredMemberRepository();
-  final AadhaarUploadRepository _aadhaarRepo =
-  AadhaarUploadRepository();
+  final AadhaarUploadRepository _aadhaarRepo = AadhaarUploadRepository();
   final ShikshaApplicationRepository _shikshaRepo =
       ShikshaApplicationRepository();
 
@@ -180,10 +179,11 @@ class _ReferenceViewState extends State<ReferenceView> {
                               ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
-                                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                                    ColorHelperClass.getColorFromHex(
+                                        ColorResources.red_color),
                                 foregroundColor: Colors.white,
-                                padding:
-                                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 12),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -211,26 +211,27 @@ class _ReferenceViewState extends State<ReferenceView> {
                           Builder(
                             builder: (context) {
                               final String imagePath =
-                              _getFullImageUrl(item["aadhaarDocument"]);
+                                  _getFullImageUrl(item["aadhaarDocument"]);
 
                               return SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton.icon(
                                   onPressed: () {
-                                    _showAadhaarPreviewDialog(context, imagePath);
+                                    _showAadhaarPreviewDialog(
+                                        context, imagePath);
                                   },
                                   icon: const Icon(Icons.visibility),
                                   label: const Text("View Aadhaar"),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor:
-                                    ColorHelperClass.getColorFromHex(
-                                        ColorResources.red_color),
+                                        ColorHelperClass.getColorFromHex(
+                                            ColorResources.red_color),
                                     foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8),
                                     ),
-                                    padding:
-                                    const EdgeInsets.symmetric(vertical: 12),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12),
                                   ),
                                 ),
                               );
@@ -265,9 +266,9 @@ class _ReferenceViewState extends State<ReferenceView> {
   }
 
   void _showAadhaarPreviewDialog(
-      BuildContext context,
-      String imageUrl,
-      ) {
+    BuildContext context,
+    String imageUrl,
+  ) {
     showDialog(
       context: context,
       builder: (_) => Dialog(
@@ -278,7 +279,6 @@ class _ReferenceViewState extends State<ReferenceView> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 16),
-
             const Text(
               "Aadhaar Document",
               style: TextStyle(
@@ -286,9 +286,7 @@ class _ReferenceViewState extends State<ReferenceView> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 16),
-
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: SizedBox(
@@ -296,44 +294,39 @@ class _ReferenceViewState extends State<ReferenceView> {
                 width: double.infinity,
                 child: imageUrl.toLowerCase().endsWith(".pdf")
                     ? const Center(
-                  child: Icon(
-                    Icons.picture_as_pdf,
-                    size: 80,
-                    color: Colors.red,
-                  ),
-                )
+                        child: Icon(
+                          Icons.picture_as_pdf,
+                          size: 80,
+                          color: Colors.red,
+                        ),
+                      )
                     : Image.network(
-                  imageUrl,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) =>
-                  const Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Text(
-                      "Unable to load document",
-                    ),
-                  ),
-                ),
+                        imageUrl,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const Padding(
+                          padding: EdgeInsets.all(20),
+                          child: Text(
+                            "Unable to load document",
+                          ),
+                        ),
+                      ),
               ),
             ),
-
             const SizedBox(height: 16),
-
             TextButton(
               onPressed: () => Navigator.pop(context),
               style: TextButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(
-                    ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
               child: const Text("Close"),
             ),
-
             const SizedBox(height: 16),
           ],
         ),
@@ -386,8 +379,6 @@ class _ReferenceViewState extends State<ReferenceView> {
         if (aadhaarResponse.status != true) {
           throw Exception(aadhaarResponse.message);
         }
-      } else {
-        throw Exception("Please upload Aadhaar before submitting");
       }
 
       Navigator.pop(context);
@@ -493,6 +484,17 @@ class _ReferenceViewState extends State<ReferenceView> {
       memberCodeCtrl.text = existingData["memberCode"] ?? "";
     }
 
+    bool isFormValid() {
+      final emailRegex = RegExp(
+        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+      );
+
+      return nameCtrl.text.trim().isNotEmpty &&
+          addressCtrl.text.trim().isNotEmpty &&
+          mobileCtrl.text.trim().length == 10 &&
+          emailRegex.hasMatch(emailCtrl.text.trim());
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -534,10 +536,10 @@ class _ReferenceViewState extends State<ReferenceView> {
                               child: const Text("Cancel"),
                             ),
                             ElevatedButton(
-                              onPressed: isSubmitting
+                              onPressed: (!isFormValid() || isSubmitting)
                                   ? null
                                   : () async {
-                                      if (!_formKey.currentState!.validate()) {
+                                if (!_formKey.currentState!.validate()) {
                                         return;
                                       }
 
@@ -613,6 +615,13 @@ class _ReferenceViewState extends State<ReferenceView> {
                               _buildTextField(
                                 label: "Reference Name *",
                                 controller: nameCtrl,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return "Reference name is required";
+                                  }
+                                  return null;
+                                },
+                                onChanged: (_) => setModalState(() {}),
                               ),
                               const SizedBox(height: 20),
                               _buildTextField(
@@ -637,6 +646,7 @@ class _ReferenceViewState extends State<ReferenceView> {
                                   }
                                   return null;
                                 },
+                                onChanged: (_) => setModalState(() {}),
                               ),
                               const SizedBox(height: 20),
                               _buildTextField(
@@ -658,6 +668,7 @@ class _ReferenceViewState extends State<ReferenceView> {
 
                                   return null;
                                 },
+                                onChanged: (_) => setModalState(() {}),
                               ),
                               const SizedBox(height: 20),
                               _buildTextField(
@@ -791,12 +802,14 @@ class _ReferenceViewState extends State<ReferenceView> {
     TextInputType keyboard = TextInputType.text,
     List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
+    ValueChanged<String>? onChanged,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboard,
       inputFormatters: inputFormatters,
       validator: validator,
+      onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
         border: const OutlineInputBorder(

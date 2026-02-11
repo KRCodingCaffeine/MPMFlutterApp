@@ -14,12 +14,16 @@ import 'package:mpm/model/State/StateData.dart';
 import 'package:mpm/model/city/CityData.dart';
 import 'package:mpm/model/ShikshaSahayata/ApplicantDetail/CreateApplicantDetail/CreateApplicantDetailData.dart';
 import 'package:mpm/model/ShikshaSahayata/UpdateFatherDetail/UpdateFatherData.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/ApplicantDetailRepo/applicant_aadhaar_upload_repository/applicant_aadhaar_upload_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/ApplicantDetailRepo/applicant_ration_upload_repository/applicant_ration_upload_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/ApplicantDetailRepo/create_shiksha_application_repository/create_shiksha_application_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/ApplicantDetailRepo/father_pan_upload_repository/father_pan_upload_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/ApplicantDetailRepo/update_shiksha_application_repository/update_shiksha_application_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/ShikshaApplicationRepo/shiksha_application_repository/shiksha_application_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/UpdateFatherRepo/update_father_repository/update_father_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/utils/urls.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/shiksha_sahayata_by_parenting_view.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/family_detail.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
@@ -49,6 +53,13 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
   UpdateShikshaApplicationRepository();
   final UpdateFatherRepository _updateFatherRepo = UpdateFatherRepository();
   String? _shikshaApplicantId;
+  final ApplicantAadhaarUploadRepository _aadhaarRepo =
+  ApplicantAadhaarUploadRepository();
+  final ApplicantRationUploadRepository _rationRepo =
+  ApplicantRationUploadRepository();
+  final FatherPanUploadRepository _fatherPanRepo =
+  FatherPanUploadRepository();
+
   final ShikshaApplicationRepository _shikshaRepo =
   ShikshaApplicationRepository();
 
@@ -220,11 +231,10 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
 
     if (_isSubmitting) return;
 
-    setState(() {
-      _isSubmitting = true;
-    });
+    setState(() => _isSubmitting = true);
 
     try {
+      /// 🔥 STEP 1 — CREATE APPLICANT
       final applicantData = CreateApplicantDetailData(
         applicantFirstName: firstNameCtrl.text.trim(),
         applicantMiddleName: middleNameCtrl.text.trim(),
@@ -248,7 +258,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
       );
 
       if (createResponse.status != true) {
-        throw Exception(createResponse.message ?? "Failed to create application");
+        throw Exception(createResponse.message);
       }
 
       final shikshaId =
@@ -261,6 +271,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
 
       _shikshaApplicantId = shikshaId;
 
+      /// 🔥 STEP 2 — UPDATE FATHER
       final fatherData = UpdateFatherData(
         shikshaApplicantId: shikshaId,
         applicantFatherName: fatherNameCtrl.text.trim(),
@@ -273,30 +284,70 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
         updatedBy: controller.memberId.value,
       );
 
-      final updateResponse =
-      await _updateFatherRepo.updateFatherData(fatherData.toJson());
+      final fatherResponse =
+      await _updateFatherRepo.updateFatherData(
+        fatherData.toJson(),
+      );
 
-      if (updateResponse.status != true) {
-        throw Exception(updateResponse.message ?? "Failed to update father data");
+      if (fatherResponse.status != true) {
+        throw Exception(fatherResponse.message);
       }
 
+      /// 🔥 STEP 3 — UPLOAD DOCUMENTS
+
+      // 1️⃣ Applicant Aadhaar
+      if (applicantAadharFile != null) {
+        final aadhaarResponse =
+        await _aadhaarRepo.uploadApplicantAadhaar(
+          shikshaApplicantId: shikshaId,
+          filePath: applicantAadharFile!.path,
+        );
+
+        if (aadhaarResponse.status != true) {
+          throw Exception(aadhaarResponse.message);
+        }
+      }
+
+      // 2️⃣ Applicant Ration Card
+      if (addressProofFile != null) {
+        final rationResponse =
+        await _rationRepo.uploadApplicantRationCard(
+          shikshaApplicantId: shikshaId,
+          filePath: addressProofFile!.path,
+        );
+
+        if (rationResponse.status != true) {
+          throw Exception(rationResponse.message);
+        }
+      }
+
+      // 3️⃣ Father PAN
+      if (fatherPanFile != null) {
+        final panResponse =
+        await _fatherPanRepo.uploadFatherPanCard(
+          shikshaApplicantId: shikshaId,
+          filePath: fatherPanFile!.path,
+        );
+
+        if (panResponse.status != true) {
+          throw Exception(panResponse.message);
+        }
+      }
+
+      /// SAVE ID
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('shiksha_applicant_id', shikshaId);
 
-      // 🔥 IMPORTANT PART
       await _fetchShikshaApplication(shikshaId);
 
-      setState(() {
-        hasApplicant = true;
-      });
+      setState(() => hasApplicant = true);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Applicant details saved successfully."),
+          content: Text("Applicant & documents uploaded successfully"),
           backgroundColor: Colors.green,
         ),
       );
-      _shikshaApplicantId = shikshaId;
 
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -307,19 +358,19 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
       );
     } finally {
       if (!mounted) return;
-      setState(() {
-        _isSubmitting = false;
-      });
+      setState(() => _isSubmitting = false);
     }
   }
 
   Future<void> _updateApplicant() async {
     if (_shikshaApplicantId == null) return;
 
+    if (_isSubmitting) return;
+
+    setState(() => _isSubmitting = true);
+
     try {
-      setState(() {
-        _isSubmitting = true;
-      });
+      debugPrint("🔄 Updating applicant ID: $_shikshaApplicantId");
 
       final updateData = UpdateApplicantDetailData(
         shikshaApplicantId: _shikshaApplicantId,
@@ -339,14 +390,16 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
         updatedBy: controller.memberId.value,
       );
 
-      final response = await _updateRepo.updateShikshaApplication(
-        updateData.toJson(),
-      );
+      final response =
+      await _updateRepo.updateShikshaApplication(updateData.toJson());
+
+      debugPrint("📦 Update Applicant Response: ${response.toJson()}");
 
       if (response.status != true) {
-        throw Exception(response.message ?? "Applicant update failed");
+        throw Exception(response.message);
       }
 
+      /// 🔥 UPDATE FATHER
       final fatherData = UpdateFatherData(
         shikshaApplicantId: _shikshaApplicantId,
         applicantFatherName: fatherNameCtrl.text.trim(),
@@ -362,20 +415,76 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
       final fatherResponse =
       await _updateFatherRepo.updateFatherData(fatherData.toJson());
 
+      debugPrint("👨 Father Update Response: ${fatherResponse.toJson()}");
+
       if (fatherResponse.status != true) {
-        throw Exception(
-            fatherResponse.message ?? "Father update failed");
+        throw Exception(fatherResponse.message);
+      }
+
+      /// 🔥 UPLOAD DOCUMENTS AGAIN IF SELECTED
+
+      // Aadhaar
+      if (applicantAadharFile != null) {
+        debugPrint("📤 Uploading Aadhaar: ${applicantAadharFile!.path}");
+
+        final aadhaarResponse =
+        await _aadhaarRepo.uploadApplicantAadhaar(
+          shikshaApplicantId: _shikshaApplicantId!,
+          filePath: applicantAadharFile!.path,
+        );
+
+        debugPrint("🆔 Aadhaar Upload Response: ${aadhaarResponse.toJson()}");
+
+        if (aadhaarResponse.status != true) {
+          throw Exception(aadhaarResponse.message);
+        }
+      }
+
+      // Ration
+      if (addressProofFile != null) {
+        debugPrint("📤 Uploading Ration: ${addressProofFile!.path}");
+
+        final rationResponse =
+        await _rationRepo.uploadApplicantRationCard(
+          shikshaApplicantId: _shikshaApplicantId!,
+          filePath: addressProofFile!.path,
+        );
+
+        debugPrint("🏠 Ration Upload Response: ${rationResponse.toJson()}");
+
+        if (rationResponse.status != true) {
+          throw Exception(rationResponse.message);
+        }
+      }
+
+      // Father PAN
+      if (fatherPanFile != null) {
+        debugPrint("📤 Uploading Father PAN: ${fatherPanFile!.path}");
+
+        final panResponse =
+        await _fatherPanRepo.uploadFatherPanCard(
+          shikshaApplicantId: _shikshaApplicantId!,
+          filePath: fatherPanFile!.path,
+        );
+
+        debugPrint("🧾 PAN Upload Response: ${panResponse.toJson()}");
+
+        if (panResponse.status != true) {
+          throw Exception(panResponse.message);
+        }
       }
 
       await _fetchShikshaApplication(_shikshaApplicantId!);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Applicant details updated successfully."),
+          content: Text("Applicant updated successfully."),
           backgroundColor: Colors.green,
         ),
       );
     } catch (e) {
+      debugPrint("❌ UPDATE ERROR: $e");
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.toString()),
@@ -384,9 +493,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
       );
     } finally {
       if (!mounted) return;
-      setState(() {
-        _isSubmitting = false;
-      });
+      setState(() => _isSubmitting = false);
     }
   }
 
@@ -552,6 +659,79 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                   data.applicantCityName ?? ''),
               _infoRow("State",
                   data.applicantStateName ?? ''),
+
+              const Text(
+                "Documents",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              if (data.applicantAadharCardDocument != null &&
+                  data.applicantAadharCardDocument!.isNotEmpty)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      final imageUrl = _getFullImageUrl(
+                          data.applicantAadharCardDocument);
+                      _showDocumentPreviewDialog(context, imageUrl, "Applicant Aadhaar");
+                    },
+                    icon: const Icon(Icons.visibility),
+                    label: const Text("View Applicant Aadhaar"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                      ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+
+              if (data.applicantFatherPanCardDocument != null &&
+                  data.applicantFatherPanCardDocument!.isNotEmpty)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      final imageUrl = _getFullImageUrl(
+                          data.applicantFatherPanCardDocument);
+                      _showDocumentPreviewDialog(context, imageUrl, "Father's PAN");
+                    },
+                    icon: const Icon(Icons.visibility),
+                    label: const Text("View Father's PAN"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                      ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+
+              if (data.applicantRationCardDocument != null &&
+                  data.applicantRationCardDocument!.isNotEmpty)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      final imageUrl =
+                      _getFullImageUrl(data.applicantRationCardDocument);
+                      _showDocumentPreviewDialog(
+                        context,
+                        imageUrl,
+                        "Address Proof",
+                      );
+                    },
+                    icon: const Icon(Icons.visibility),
+                    label: const Text("View Address Proof"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                      ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -670,33 +850,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                 : const SizedBox.shrink(),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildAadhaarPreview({
-    required String title,
-    required File? image,
-  }) {
-    return Row(
-      children: [
-        SizedBox(width: 60, child: Text("$title:")),
-        image == null
-            ? const Text("Not Uploaded")
-            : GestureDetector(
-          onTap: () => _showImagePreview(image),
-          child: Image.file(image, height: 60, width: 90),
-        ),
-      ],
-    );
-  }
-
-
-  void _showImagePreview(File image) {
-    showDialog(
-      context: context,
-      builder: (_) => Dialog(
-        child: Image.file(image),
       ),
     );
   }
@@ -1430,5 +1583,89 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     );
   }
 
+  String _getFullImageUrl(String? path) {
+    if (path == null || path.isEmpty) return '';
+
+    if (path.startsWith('http')) {
+      return path;
+    }
+
+    return "${Urls.base_url.replaceAll(RegExp(r'/$'), '')}/${path.replaceAll(RegExp(r'^/'), '')}";
+  }
+
+  void _showDocumentPreviewDialog(
+      BuildContext context,
+      String imageUrl,
+      String title,
+      ) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 16),
+
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                height: 300,
+                width: double.infinity,
+                child: imageUrl.toLowerCase().endsWith(".pdf")
+                    ? const Center(
+                  child: Icon(
+                    Icons.picture_as_pdf,
+                    size: 80,
+                    color: Colors.red,
+                  ),
+                )
+                    : Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) =>
+                  const Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Text("Unable to load document"),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                backgroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text("Close"),
+            ),
+
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
 
 }

@@ -134,6 +134,10 @@ class Urls {
   static const String upload_admission_letter_url = base_url+"api/upload_shiksha_applicant_admission_confirmation_letter_doc";
   static const String upload_bonafide_document_url = base_url+"api/upload_shiksha_applicant_bonafide_fees_document";
   static const String upload_mark_sheet_attachment_url = base_url+"api/upload_shiksha_applicant_mark_sheet_attachment";
+  static const String get_shiksha_applications_by_applied_by = base_url+"api/get_shiksha_applications_by_applied_by";
+  static const String upload_shiksha_applicant_aadhar_card_document = base_url+"api/upload_shiksha_applicant_aadhar_card_document";
+  static const String upload_shiksha_applicant_ration_card_document = base_url+"api/upload_shiksha_applicant_ration_card_document";
+  static const String upload_shiksha_applicant_father_pan_card_document = base_url+"api/upload_shiksha_applicant_father_pan_card_document";
 
   // Notification API URLs - Following same pattern as device_mapping
   static const String get_all_notifications_url = base_url+"api/notifications/get_all";

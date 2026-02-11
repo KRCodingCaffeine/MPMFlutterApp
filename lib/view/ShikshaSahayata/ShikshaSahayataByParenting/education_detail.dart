@@ -973,7 +973,10 @@ class _EducationDetailViewState extends State<EducationDetailView> {
                             ),
                             const SizedBox(height: 25),
 
-                            _buildEducationUploadField(context),
+                            _buildEducationUploadField(
+                              context,
+                              setModalState,
+                            )
                           ],
                         ),
                       ),
@@ -1116,7 +1119,10 @@ class _EducationDetailViewState extends State<EducationDetailView> {
     );
   }
 
-  Widget _buildEducationUploadField(BuildContext context) {
+  Widget _buildEducationUploadField(
+      BuildContext context,
+      StateSetter setModalState,
+      ) {
     final bool isUploaded = _educationDocument != null;
 
     return Column(
@@ -1135,18 +1141,10 @@ class _EducationDetailViewState extends State<EducationDetailView> {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
-                  child: _educationDocument!.path.endsWith(".pdf")
-                      ? const Center(
-                          child: Icon(
-                            Icons.picture_as_pdf,
-                            size: 70,
-                            color: Colors.redAccent,
-                          ),
-                        )
-                      : Image.file(
-                          _educationDocument!,
-                          fit: BoxFit.cover,
-                        ),
+                  child: Image.file(
+                    _educationDocument!,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
               Positioned(
@@ -1154,7 +1152,7 @@ class _EducationDetailViewState extends State<EducationDetailView> {
                 top: 8,
                 child: GestureDetector(
                   onTap: () {
-                    setState(() {
+                    setModalState(() {
                       _educationDocument = null;
                     });
                   },
@@ -1174,10 +1172,13 @@ class _EducationDetailViewState extends State<EducationDetailView> {
               ),
             ],
           ),
+
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            onPressed: () => _showEducationImagePicker(context),
+            onPressed: () {
+              _showEducationImagePicker(context, setModalState);
+            },
             icon: Icon(
               isUploaded ? Icons.check_circle : Icons.upload_file,
             ),
@@ -1190,12 +1191,8 @@ class _EducationDetailViewState extends State<EducationDetailView> {
               backgroundColor: isUploaded
                   ? Colors.green
                   : ColorHelperClass.getColorFromHex(
-                      ColorResources.red_color,
-                    ),
+                  ColorResources.red_color),
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
           ),
@@ -1279,53 +1276,50 @@ class _EducationDetailViewState extends State<EducationDetailView> {
     );
   }
 
-  void _showEducationImagePicker(BuildContext context) {
+  void _showEducationImagePicker(
+      BuildContext context,
+      StateSetter setModalState,
+      ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
       ),
-      builder: (BuildContext context) {
+      builder: (_) {
         return Wrap(
           children: [
             ListTile(
               leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
               title: const Text("Take a Picture"),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(context);
-                _pickEducationFromCamera();
+                final picked =
+                await _picker.pickImage(source: ImageSource.camera);
+                if (picked != null) {
+                  setModalState(() {
+                    _educationDocument = File(picked.path);
+                  });
+                }
               },
             ),
             ListTile(
               leading: const Icon(Icons.image, color: Colors.redAccent),
               title: const Text("Choose from Gallery"),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(context);
-                _pickEducationFromGallery();
+                final picked =
+                await _picker.pickImage(source: ImageSource.gallery);
+                if (picked != null) {
+                  setModalState(() {
+                    _educationDocument = File(picked.path);
+                  });
+                }
               },
             ),
           ],
         );
       },
     );
-  }
-
-  Future<void> _pickEducationFromCamera() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.camera);
-    if (pickedFile != null) {
-      setState(() {
-        _educationDocument = File(pickedFile.path);
-      });
-    }
-  }
-
-  Future<void> _pickEducationFromGallery() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _educationDocument = File(pickedFile.path);
-      });
-    }
   }
 }
