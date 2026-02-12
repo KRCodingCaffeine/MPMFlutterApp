@@ -5,6 +5,7 @@ import 'package:mpm/route/route_name.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataDetail/shiksha_sahayata_detail_view.dart';
 
 class ShikshaSahayataView extends StatefulWidget {
   const ShikshaSahayataView({super.key});
@@ -87,6 +88,27 @@ class _ShikshaSahayataViewState
           },
         ),
         iconTheme: const IconThemeData(color: Colors.white),
+
+        // ✅ SHOW APPLY BUTTON ONLY IF ALREADY APPLIED
+        actions: hasApplied
+            ? [
+          TextButton.icon(
+            onPressed: _showInstructionDialog,
+            icon: const Icon(
+              Icons.add_circle_outline,
+              color: Colors.white,
+              size: 18,
+            ),
+            label: const Text(
+              "Apply",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ]
+            : null,
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -101,89 +123,101 @@ class _ShikshaSahayataViewState
   Widget _buildAppliedView() {
     final data = applicationData!;
 
-    // Get first requested education
     final loan = data.requestedLoanEducationAppliedBy != null &&
         data.requestedLoanEducationAppliedBy!.isNotEmpty
         ? data.requestedLoanEducationAppliedBy!.first
         : null;
+    final isDisbursed = loan?.loanStatus?.toLowerCase() == "disbursed";
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          Card(
-            color: Colors.white,
-            elevation: 6,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16)),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment:
-                CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        "Application Summary",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+          // ✅ SHOW INFO CARD ONLY IF NOT DISBURSED
+          if (!isDisbursed) _applicationInfoCard(false),
+          if (!isDisbursed) const SizedBox(height: 12),
+
+          InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ShikshaSahayataDetailView(
+                    shikshaApplicantId: data.shikshaApplicantId ?? "",
+                    applicationData: data,
+                  ),
+                ),
+              );
+            },
+            child: Card(
+              color: Colors.white,
+              elevation: 6,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment:
+                      MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Application Summary",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
+                        if (loan != null)
+                          _buildLoanStatusBadge(loan.loanStatus),
+                      ],
+                    ),
+                    const Divider(height: 20),
+
+                    _infoRow("Applicant ID",
+                        data.shikshaApplicantId ?? "-"),
+                    _infoRow("Applicant Name",
+                        data.fullName ?? "-"),
+                    _infoRow("Applicant Mobile",
+                        data.mobile ?? "-"),
+                    _infoRow("Applicant Town",
+                        data.applicantCityName ?? "-"),
+                    _infoRow("Applicant State",
+                        data.applicantStateName ?? "-"),
+                    _infoRow("Applied Education",
+                        loan?.standard ?? "-"),
+
+                    if (loan?.sanctionedAmount != null &&
+                        loan!.sanctionedAmount!.isNotEmpty &&
+                        loan.sanctionedAmount != "0")
+                      _infoRow(
+                        "Sanctioned Amount",
+                        "₹ ${loan.sanctionedAmount}",
                       ),
 
-                      // 🔥 Animated Status Badge
-                      if (loan != null)
-                        _buildLoanStatusBadge(loan.loanStatus),
-                    ],
-                  ),
-                  const Divider(height: 20),
+                    if (loan?.disbursedAmount != null &&
+                        loan!.disbursedAmount!.isNotEmpty &&
+                        loan.disbursedAmount != "0")
+                      _infoRow(
+                        "Disbursed Amount",
+                        "₹ ${loan.disbursedAmount}",
+                      ),
 
-                  _infoRow("Applicant ID",
-                      data.shikshaApplicantId ?? "-"),
-                  _infoRow("Applicant Name",
-                      data.fullName ?? "-"),
-                  _infoRow("Applicant Mobile",
-                      data.mobile ?? "-"),
-                  _infoRow("Applicant Town",
-                      data.applicantCityName ?? "-"),
-                  _infoRow("Applicant State",
-                      data.applicantStateName ?? "-"),
-                  _infoRow("Applied Education",
-                      loan?.standard ?? "-"),
-                  // ✅ Sanctioned Amount (only if exists)
-                  if (loan?.sanctionedAmount != null &&
-                      loan!.sanctionedAmount!.isNotEmpty &&
-                      loan.sanctionedAmount != "0")
-                    _infoRow(
-                      "Sanctioned Amount",
-                      "₹ ${loan.sanctionedAmount}",
-                    ),
-
-                  if (loan?.disbursedAmount != null &&
-                      loan!.disbursedAmount!.isNotEmpty &&
-                      loan.disbursedAmount != "0")
-                    _infoRow(
-                      "Disbursed Amount",
-                      "₹ ${loan.disbursedAmount}",
-                    ),
-
-                  if (loan?.disbursedOn != null &&
-                      loan!.disbursedOn!.isNotEmpty)
-                    _infoRow(
-                      "Dispersal Date",
-                      loan.disbursedOn!,
-                    ),
-                ],
+                    if (loan?.disbursedOn != null &&
+                        loan!.disbursedOn!.isNotEmpty)
+                      _infoRow(
+                        "Dispersal Date",
+                        loan.disbursedOn!,
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
-
-          const SizedBox(height: 20),
-
-          /// Show apply card below summary
-          _buildApplyCard(),
         ],
       ),
     );
@@ -264,6 +298,55 @@ class _ShikshaSahayataViewState
                 color: textColor,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 0.3,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _applicationInfoCard(bool isDisbursed) {
+    return Card(
+      color: isDisbursed
+          ? Colors.red.shade50
+          : Colors.orange.shade50,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isDisbursed
+              ? Colors.red.shade200
+              : Colors.orange.shade200,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              isDisbursed
+                  ? Icons.lock
+                  : Icons.edit_note,
+              size: 18,
+              color: isDisbursed
+                  ? Colors.red
+                  : Colors.orange,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                isDisbursed
+                    ? "This application has been disbursed. You can no longer edit or upload documents."
+                    : "If you want to edit or upload your details, please complete it before disbursal. Once disbursed, editing will not be allowed.",
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDisbursed
+                      ? Colors.red
+                      : Colors.orange.shade800,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ],
