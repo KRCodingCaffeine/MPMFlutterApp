@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mpm/model/ShikshaSahayata/CurrentYearEducationDetail/AddRequestedLoanEducation/AddRequestedLoanEducationData.dart';
 import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/RequestedLoanEducation.dart';
+import 'package:mpm/model/ShikshaSahayata/ShikshaApplicationsByAppliedBy/ShikshaApplicationsByAppliedByData.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/CurrentYearEducationalDetailRepo/add_requested_loan_education_repository/add_requested_loan_education_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/CurrentYearEducationalDetailRepo/admission_letter_upload_repository/admission_letter_upload_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/CurrentYearEducationalDetailRepo/bonafide_letter_upload_repository/bonafide_letter_upload_repo.dart';
@@ -19,20 +20,20 @@ import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/previous_yea
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/shiksha_sahayata_by_parenting_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class CurrentYearEducationView extends StatefulWidget {
-  final String shikshaApplicantId;
+class EditCurrentYearEducationView extends StatefulWidget {
+  final ShikshaApplicationsByAppliedByData applicationData;
 
-  const CurrentYearEducationView({
+  const EditCurrentYearEducationView({
     Key? key,
-    required this.shikshaApplicantId,
+    required this.applicationData,
   }) : super(key: key);
 
   @override
-  State<CurrentYearEducationView> createState() =>
-      _CurrentYearEducationViewState();
+  State<EditCurrentYearEducationView> createState() =>
+      _EditCurrentYearEducationViewState();
 }
 
-class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
+class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationView> {
   final ImagePicker _picker = ImagePicker();
   Map<String, dynamic>? currentYearData;
   bool isLoading = false;
@@ -84,7 +85,7 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
       });
 
       final response = await _shikshaRepo.fetchShikshaApplicationById(
-        applicantId: widget.shikshaApplicantId,
+        applicantId: widget.applicationData.shikshaApplicantId!,
       );
 
       if (response.status == true && response.data != null) {
@@ -171,8 +172,6 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
               child: const Icon(Icons.add, color: Colors.white),
             )
           : null,
-      bottomNavigationBar:
-          currentYearData != null ? _buildBottomNextBar() : null,
     );
   }
 
@@ -452,65 +451,6 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
     );
   }
 
-  Widget _buildBottomNextBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          children: [
-            const Expanded(
-              child: Text(
-                "Once you complete this above detail, click Next Step to proceed.",
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.black87,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            ElevatedButton(
-              onPressed: () async {
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setBool('current_year_completed', true);
-
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => CurrentYearAnyOtherLoan(
-                      shikshaApplicantId: widget.shikshaApplicantId,
-                    ),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text("Next Step"),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   String _getFullImageUrl(String? path) {
     if (path == null || path.isEmpty) return '';
 
@@ -536,7 +476,7 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
 
     try {
       final model = AddRequestedLoanEducationData(
-        shikshaApplicantId: widget.shikshaApplicantId,
+        shikshaApplicantId: widget.applicationData.shikshaApplicantId,
         standard: standard,
         schoolCollegeName: school,
         courseDuration: courseDuration,
@@ -564,7 +504,7 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
 
       if (_admissionDocument != null) {
         final uploadResponse = await _admissionRepo.uploadAdmissionLetter(
-          shikshaApplicantId: widget.shikshaApplicantId,
+          shikshaApplicantId: widget.applicationData.shikshaApplicantId!,
           educationId: educationId,
           filePath: _admissionDocument!.path,
         );
@@ -576,7 +516,7 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
 
       if (_bonafideDocument != null) {
         final bonafideResponse = await _bonafideRepo.uploadBonafideDocument(
-          shikshaApplicantId: widget.shikshaApplicantId,
+          shikshaApplicantId: widget.applicationData.shikshaApplicantId!,
           educationId: educationId,
           filePath: _bonafideDocument!.path,
         );
@@ -642,7 +582,7 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
 
       if (_admissionDocument != null) {
         final uploadResponse = await _admissionRepo.uploadAdmissionLetter(
-          shikshaApplicantId: widget.shikshaApplicantId!,
+          shikshaApplicantId: widget.applicationData.shikshaApplicantId!,
           educationId: educationId,
           filePath: _admissionDocument!.path,
         );
@@ -654,7 +594,7 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
 
       if (_bonafideDocument != null) {
         final bonafideResponse = await _bonafideRepo.uploadBonafideDocument(
-          shikshaApplicantId: widget.shikshaApplicantId!,
+          shikshaApplicantId: widget.applicationData.shikshaApplicantId!,
           educationId: educationId,
           filePath: _bonafideDocument!.path,
         );

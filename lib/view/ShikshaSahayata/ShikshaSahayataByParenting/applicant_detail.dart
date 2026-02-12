@@ -59,7 +59,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
   ApplicantRationUploadRepository();
   final FatherPanUploadRepository _fatherPanRepo =
   FatherPanUploadRepository();
-
   final ShikshaApplicationRepository _shikshaRepo =
   ShikshaApplicationRepository();
 

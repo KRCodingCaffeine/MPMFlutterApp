@@ -408,10 +408,9 @@ class _EditApplicantDetailViewState
           throw Exception(panResponse.message);
         }
       }
-
       if (!mounted) return;
 
-      Navigator.pop(context);
+      Navigator.pop(context, true); // 🔥 return true to previous screen
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -842,10 +841,10 @@ class _EditApplicantDetailViewState
     );
   }
 
-  void _openEditApplicant() {
+  void _openEditApplicant() async {
     final data = widget.applicationData;
 
-    // Prefill controllers from widget data
+    // Prefill text fields
     firstNameCtrl.text = data.applicantFirstName ?? '';
     middleNameCtrl.text = data.applicantMiddleName ?? '';
     lastNameCtrl.text = data.applicantLastName ?? '';
@@ -859,6 +858,22 @@ class _EditApplicantDetailViewState
     motherNameCtrl.text = data.applicantMotherName ?? '';
     fatherEmailCtrl.text = data.fatherEmail ?? '';
     fatherMobileCtrl.text = data.fatherMobile ?? '';
+
+    await regiController.getState();
+
+    await regiController.getCity();
+
+    if (data.applicantStateId != null) {
+      regiController.setSelectedState(data.applicantStateId.toString());
+
+      await regiController.getCityByState(
+          data.applicantStateId.toString());
+    }
+
+    if (data.applicantCityId != null) {
+      regiController.setSelectedCity(
+          data.applicantCityId.toString());
+    }
 
     _showEditBottomSheet(context);
   }

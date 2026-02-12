@@ -9,6 +9,12 @@ import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/family_detai
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/reference.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/previous_year_loan.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataDetail/edit_applicant_detail.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataDetail/edit_current_year_any_other_loan.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataDetail/edit_current_year_education.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataDetail/edit_education_detail.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataDetail/edit_family_detail.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataDetail/edit_previous_year_loan.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataDetail/edit_reference.dart';
 
 class ShikshaSahayataDetailView extends StatefulWidget {
   final String shikshaApplicantId;
@@ -73,7 +79,9 @@ class _ShikshaSahayataDetailViewState
                   context,
                   MaterialPageRoute(
                     builder: (_) =>
-                    const FamilyDetail(shikshaApplicantId: ""),
+                        EditFamilyDetailView(
+                          applicationData: widget.applicationData,
+                        ),
                   ),
                 );
               },
@@ -87,7 +95,9 @@ class _ShikshaSahayataDetailViewState
                   context,
                   MaterialPageRoute(
                     builder: (_) =>
-                    const EducationDetailView(shikshaApplicantId: ""),
+                    EditEducationDetailView(
+                      applicationData: widget.applicationData,
+                    ),
                   ),
                 );
               },
@@ -102,8 +112,9 @@ class _ShikshaSahayataDetailViewState
                   context,
                   MaterialPageRoute(
                     builder: (_) =>
-                    const CurrentYearEducationView(
-                        shikshaApplicantId: ""),
+                        EditCurrentYearEducationView(
+                      applicationData: widget.applicationData,
+                    ),
                   ),
                 );
               },
@@ -118,8 +129,9 @@ class _ShikshaSahayataDetailViewState
                   context,
                   MaterialPageRoute(
                     builder: (_) =>
-                    const CurrentYearAnyOtherLoan(
-                        shikshaApplicantId: ""),
+                     EditCurrentYearAnyOtherLoanView(
+                      applicationData: widget.applicationData,
+                    ),
                   ),
                 );
               },
@@ -132,9 +144,9 @@ class _ShikshaSahayataDetailViewState
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>
-                    const PreviousYearLoanView(
-                        shikshaApplicantId: ""),
+                    builder: (_) => EditPreviousYearLoanView(
+                      applicationData: widget.applicationData,
+                    ),
                   ),
                 );
               },
@@ -148,7 +160,9 @@ class _ShikshaSahayataDetailViewState
                   context,
                   MaterialPageRoute(
                     builder: (_) =>
-                    const ReferenceView(shikshaApplicantId: ""),
+                    EditReferenceView(
+                      applicationData: widget.applicationData,
+                    ),
                   ),
                 );
               },
