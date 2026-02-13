@@ -47,6 +47,20 @@ class _EditFamilyDetailViewState extends State<EditFamilyDetailView> {
   ShikshaApplicationData? _applicationData;
   bool isLoading = true;
 
+  bool get _isLoanLocked {
+    final loanList =
+        widget.applicationData.requestedLoanEducationAppliedBy;
+
+    if (loanList == null || loanList.isEmpty) return false;
+
+    return loanList.any((loan) {
+      final status = (loan.loanStatus ?? "").toLowerCase();
+      return status == "disbursed" ||
+          status == "partially_repaid" ||
+          status == "fully_repaid";
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -356,7 +370,9 @@ class _EditFamilyDetailViewState extends State<EditFamilyDetailView> {
           ],
         ),
 
-        trailing: ElevatedButton(
+        trailing: _isLoanLocked
+            ? null
+            : ElevatedButton(
           onPressed: () {
             FamilyMember? existing;
 

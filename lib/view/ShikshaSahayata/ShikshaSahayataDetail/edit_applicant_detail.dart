@@ -102,6 +102,20 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
   @override
   Widget build(BuildContext context) {
     final data = widget.applicationData;
+    final loanList =
+        widget.applicationData.requestedLoanEducationAppliedBy;
+
+    final String loanStatus =
+        (loanList != null && loanList.isNotEmpty
+            ? loanList.first.loanStatus
+            : "")
+            ?.toLowerCase() ??
+            "";
+
+    final bool isLoanLocked =
+        loanStatus == "disbursed" ||
+            loanStatus == "partially_repaid" ||
+            loanStatus == "fully_repaid";
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -126,7 +140,6 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                /// HEADER WITH EDIT BUTTON
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -137,26 +150,27 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        _openEditApplicant();
-                      },
-                      icon: const Icon(Icons.edit, size: 16),
-                      label: const Text(
-                        "Edit",
-                        style: TextStyle(fontSize: 13),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: ColorHelperClass.getColorFromHex(
-                            ColorResources.red_color),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                    if (!isLoanLocked)
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          _openEditApplicant();
+                        },
+                        icon: const Icon(Icons.edit, size: 16),
+                        label: const Text(
+                          "Edit",
+                          style: TextStyle(fontSize: 13),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorHelperClass.getColorFromHex(
+                              ColorResources.red_color),
+                          foregroundColor: Colors.white,
+                          padding:
+                          const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
 

@@ -1,13 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
-import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/current_year_any_other_loan.dart';
-import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/applicant_detail.dart';
-import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/current_year_education.dart';
-import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/education_detail.dart';
-import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/family_detail.dart';
-import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/reference.dart';
-import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/previous_year_loan.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByYourself/applicant_detail_yourself.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByYourself/current_year_any_other_loan_yourself.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByYourself/current_year_education_yourself.dart';
@@ -26,8 +19,7 @@ class ShikshaSahayataByYourself extends StatefulWidget {
       _ShikshaSahayataByYourselfState();
 }
 
-class _ShikshaSahayataByYourselfState
-    extends State<ShikshaSahayataByYourself> {
+class _ShikshaSahayataByYourselfState extends State<ShikshaSahayataByYourself> {
   static const String _prefsApplicantIdKey = 'shiksha_applicant_id';
 
   bool applicantCompleted = false;
@@ -36,6 +28,7 @@ class _ShikshaSahayataByYourselfState
   bool currentYearCompleted = false;
   bool previousLoanCompleted = false;
   bool otherLoanCompleted = false;
+  bool referenceCompleted = false;
 
   bool isAllCompleted = false;
 
@@ -52,20 +45,25 @@ class _ShikshaSahayataByYourselfState
     setState(() {
       applicantCompleted = applicantId != null && applicantId.isNotEmpty;
 
-      // 🔥 For now we assume all enabled once applicant exists
-      familyCompleted = applicantCompleted;
-      educationCompleted = applicantCompleted;
-      currentYearCompleted = applicantCompleted;
-      previousLoanCompleted = applicantCompleted;
-      otherLoanCompleted = applicantCompleted;
+      familyCompleted = prefs.getBool('family_completed_yourself') ?? false;
+      educationCompleted =
+          prefs.getBool('education_completed_yourself') ?? false;
+      currentYearCompleted =
+          prefs.getBool('current_year_completed_yourself') ?? false;
+      previousLoanCompleted =
+          prefs.getBool('previous_loan_completed_yourself') ?? false;
+      otherLoanCompleted =
+          prefs.getBool('other_loan_completed_yourself') ?? false;
+      referenceCompleted =
+          prefs.getBool('reference_completed_yourself') ?? false;
 
-      isAllCompleted =
-          applicantCompleted &&
-              familyCompleted &&
-              educationCompleted &&
-              currentYearCompleted &&
-              previousLoanCompleted &&
-              otherLoanCompleted;
+      isAllCompleted = applicantCompleted &&
+          familyCompleted &&
+          educationCompleted &&
+          currentYearCompleted &&
+          previousLoanCompleted &&
+          otherLoanCompleted &&
+          referenceCompleted;
     });
   }
 
@@ -75,7 +73,7 @@ class _ShikshaSahayataByYourselfState
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Text(
           "Shiksha Sahayata For Yourself",
           style: TextStyle(
@@ -90,24 +88,25 @@ class _ShikshaSahayataByYourselfState
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
-
             buildStepButton(
               title: "Applicant Detail",
               icon: Icons.person,
               isEnabled: true,
+              isCompleted: applicantCompleted,
               onTap: () async {
                 await Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const ApplicantDetailYourself()),
+                  MaterialPageRoute(
+                      builder: (_) => const ApplicantDetailYourself()),
                 );
                 await loadProgress();
               },
             ),
-
             buildStepButton(
               title: "Family Detail",
               icon: Icons.family_restroom,
               isEnabled: applicantCompleted,
+              isCompleted: familyCompleted,
               onTap: () async {
                 final prefs = await SharedPreferences.getInstance();
                 final id = prefs.getString(_prefsApplicantIdKey);
@@ -116,16 +115,17 @@ class _ShikshaSahayataByYourselfState
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => FamilyDetailYourself(shikshaApplicantId: id),
+                    builder: (_) =>
+                        FamilyDetailYourself(shikshaApplicantId: id),
                   ),
-                );
+                ).then((_) => loadProgress());
               },
             ),
-
             buildStepButton(
               title: "Education History (Other Than Current Year)",
               icon: Icons.menu_book,
               isEnabled: applicantCompleted,
+              isCompleted: educationCompleted,
               onTap: () async {
                 final prefs = await SharedPreferences.getInstance();
                 final id = prefs.getString(_prefsApplicantIdKey);
@@ -137,14 +137,14 @@ class _ShikshaSahayataByYourselfState
                     builder: (_) =>
                         EducationDetailYourselfView(shikshaApplicantId: id),
                   ),
-                );
+                ).then((_) => loadProgress());
               },
             ),
-
             buildStepButton(
               title: "Current Year Education & Loan Requested From MPM",
               icon: Icons.school,
               isEnabled: applicantCompleted,
+              isCompleted: currentYearCompleted,
               onTap: () async {
                 final prefs = await SharedPreferences.getInstance();
                 final id = prefs.getString(_prefsApplicantIdKey);
@@ -153,17 +153,17 @@ class _ShikshaSahayataByYourselfState
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>
-                        CurrentYearEducationYourselfView(shikshaApplicantId: id),
+                    builder: (_) => CurrentYearEducationYourselfView(
+                        shikshaApplicantId: id),
                   ),
-                );
+                ).then((_) => loadProgress());
               },
             ),
-
             buildStepButton(
               title: "Current Year Loan Applied / Received Elsewhere",
               icon: Icons.handshake,
               isEnabled: applicantCompleted,
+              isCompleted: otherLoanCompleted,
               onTap: () async {
                 final prefs = await SharedPreferences.getInstance();
                 final id = prefs.getString(_prefsApplicantIdKey);
@@ -172,17 +172,17 @@ class _ShikshaSahayataByYourselfState
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>
-                        CurrentYearAnyOtherLoanYourselfView(shikshaApplicantId: id),
+                    builder: (_) => CurrentYearAnyOtherLoanYourselfView(
+                        shikshaApplicantId: id),
                   ),
-                );
+                ).then((_) => loadProgress());
               },
             ),
-
             buildStepButton(
               title: "Received Loan in Past",
               icon: Icons.volunteer_activism,
               isEnabled: applicantCompleted,
+              isCompleted: previousLoanCompleted,
               onTap: () async {
                 final prefs = await SharedPreferences.getInstance();
                 final id = prefs.getString(_prefsApplicantIdKey);
@@ -194,14 +194,14 @@ class _ShikshaSahayataByYourselfState
                     builder: (_) =>
                         PreviousYearLoanYourselfView(shikshaApplicantId: id),
                   ),
-                );
+                ).then((_) => loadProgress());
               },
             ),
-
             buildStepButton(
               title: "References",
               icon: Icons.verified,
               isEnabled: applicantCompleted,
+              isCompleted: referenceCompleted,
               onTap: () async {
                 final prefs = await SharedPreferences.getInstance();
                 final id = prefs.getString(_prefsApplicantIdKey);
@@ -213,16 +213,13 @@ class _ShikshaSahayataByYourselfState
                     builder: (_) =>
                         ReferenceYourselfView(shikshaApplicantId: id),
                   ),
-                );
+                ).then((_) => loadProgress());
               },
             ),
-
             const SizedBox(height: 40),
           ],
         ),
       ),
-
-      /// 🔥 SHOW SUBMIT BUTTON ONLY IF ALL COMPLETED
       bottomNavigationBar: isAllCompleted ? _buildSubmitBar() : null,
     );
   }
@@ -231,6 +228,7 @@ class _ShikshaSahayataByYourselfState
     required String title,
     required IconData icon,
     required bool isEnabled,
+    required bool isCompleted,
     required VoidCallback onTap,
   }) {
     final color = isEnabled ? Colors.black : Colors.black45;
@@ -243,11 +241,9 @@ class _ShikshaSahayataByYourselfState
             title,
             style: TextStyle(fontSize: 16, color: color),
           ),
-          trailing: Icon(
-            Icons.arrow_forward_ios,
-            size: 16,
-            color: color,
-          ),
+          trailing: isCompleted
+              ? const Icon(Icons.check_circle, color: Colors.green)
+              : Icon(Icons.arrow_forward_ios, size: 16, color: color),
           onTap: isEnabled ? onTap : null,
         ),
         const Divider(thickness: 0.5),
@@ -255,7 +251,6 @@ class _ShikshaSahayataByYourselfState
     );
   }
 
-  /// 🔥 FINAL SUBMIT BAR
   Widget _buildSubmitBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -281,66 +276,13 @@ class _ShikshaSahayataByYourselfState
             ),
             const SizedBox(width: 12),
             ElevatedButton(
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    title: const Text("Confirm Submission"),
-                    content: const Text(
-                      "Before submitting, please verify that all the details entered are correct. Once submitted, the application will be forwarded for review.",
-                      style: TextStyle(fontSize: 14),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text("Cancel"),
-                      ),
-                      ElevatedButton(
-                        onPressed: () async {
-                          Navigator.pop(context); // close dialog
-
-                          // 🔥 REMOVE STORED SESSION ID
-                          final prefs = await SharedPreferences.getInstance();
-                          await prefs.remove(_prefsApplicantIdKey);
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                  "Shiksha Application Submitted Successfully"),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const ShikshaSahayataView(),
-                            ),
-                                (route) => false,
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                          ColorHelperClass.getColorFromHex(
-                              ColorResources.red_color),
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Text("Confirm"),
-                      ),
-                    ],
-                  ),
-                );
-              },
+              onPressed: _showFinalConfirmationSheet,
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(
-                    ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -350,6 +292,72 @@ class _ShikshaSahayataByYourselfState
           ],
         ),
       ),
+    );
+  }
+
+  void _showFinalConfirmationSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 20),
+              const Icon(Icons.verified, size: 60, color: Colors.green),
+              const SizedBox(height: 20),
+              const Text(
+                "Confirm Submission",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                "Please verify that all details entered are correct.\nOnce submitted, the application will be forwarded for review.",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 30),
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+
+                  final prefs = await SharedPreferences.getInstance();
+
+                  // ✅ Remove ONLY shiksha applicant id
+                  await prefs.remove('shiksha_applicant_id');
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content:
+                          Text("Shiksha Application Submitted Successfully"),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ShikshaSahayataView(),
+                    ),
+                    (route) => false,
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColorHelperClass.getColorFromHex(
+                      ColorResources.red_color),
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text("Confirm"),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

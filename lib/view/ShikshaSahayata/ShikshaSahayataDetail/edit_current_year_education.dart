@@ -65,6 +65,20 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
   final ShikshaApplicationRepository _shikshaRepo =
       ShikshaApplicationRepository();
 
+  bool get _isLoanLocked {
+    final loanList =
+        widget.applicationData.requestedLoanEducationAppliedBy;
+
+    if (loanList == null || loanList.isEmpty) return false;
+
+    return loanList.any((loan) {
+      final status = (loan.loanStatus ?? "").toLowerCase();
+      return status == "disbursed" ||
+          status == "partially_repaid" ||
+          status == "fully_repaid";
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -164,16 +178,16 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
               ),
             )
           : _buildCurrentYearEducationCard(),
-      floatingActionButton: currentYearData == null
-          ? FloatingActionButton(
+        floatingActionButton: (_isLoanLocked || currentYearData != null)
+            ? null
+            : FloatingActionButton(
               backgroundColor:
                   ColorHelperClass.getColorFromHex(ColorResources.red_color),
               onPressed: () {
                 _showCurrentYearEducationSheet(context);
               },
               child: const Icon(Icons.add, color: Colors.white),
-            )
-          : null,
+            ),
     );
   }
 
@@ -204,7 +218,8 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
                       ),
                     ),
                   ),
-                  PopupMenuButton<String>(
+                  if (!_isLoanLocked)
+                    PopupMenuButton<String>(
                     color: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),

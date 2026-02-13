@@ -23,7 +23,7 @@ class _ShikshaSahayataViewState
   bool isLoading = true;
   bool hasApplied = false;
 
-  ShikshaApplicationsByAppliedByData? applicationData;
+  List<ShikshaApplicationsByAppliedByData> applicationList = [];
 
   @override
   void initState() {
@@ -51,7 +51,7 @@ class _ShikshaSahayataViewState
           response.data!.isNotEmpty) {
         setState(() {
           hasApplied = true;
-          applicationData = response.data!.first;
+          applicationList = response.data!;
           isLoading = false;
         });
         print("Full Response Data: ${response.data}");
@@ -121,46 +121,78 @@ class _ShikshaSahayataViewState
   // ================= APPLICATION SUMMARY =================
 
   Widget _buildAppliedView() {
-    final data = applicationData!;
+    if (applicationList.isEmpty) {
+      return const Center(
+        child: Text("No applications found"),
+      );
+    }
 
-    final loan = data.requestedLoanEducationAppliedBy != null &&
-        data.requestedLoanEducationAppliedBy!.isNotEmpty
-        ? data.requestedLoanEducationAppliedBy!.first
+    // Check first application's loan status
+    final firstLoan = applicationList.first
+        .requestedLoanEducationAppliedBy !=
+        null &&
+        applicationList.first
+            .requestedLoanEducationAppliedBy!
+            .isNotEmpty
+        ? applicationList.first
+        .requestedLoanEducationAppliedBy!
+        .first
         : null;
-    final isDisbursed = loan?.loanStatus?.toLowerCase() == "disbursed";
 
-    return SingleChildScrollView(
+    final isDisbursed =
+        firstLoan?.loanStatus?.toLowerCase() == "disbursed";
+
+    return ListView(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          // ✅ SHOW INFO CARD ONLY IF NOT DISBURSED
-          if (!isDisbursed) _applicationInfoCard(false),
-          if (!isDisbursed) const SizedBox(height: 12),
+      children: [
 
-          InkWell(
+        /// ✅ SHOW INFO CARD ONLY ONCE (TOP)
+        if (!isDisbursed)
+          _applicationInfoCard(false),
+
+        if (!isDisbursed)
+          const SizedBox(height: 16),
+
+        /// ✅ LOOP THROUGH APPLICATIONS
+        ...applicationList.map((data) {
+          final loan =
+          data.requestedLoanEducationAppliedBy != null &&
+              data.requestedLoanEducationAppliedBy!
+                  .isNotEmpty
+              ? data.requestedLoanEducationAppliedBy!
+              .first
+              : null;
+
+          return InkWell(
             borderRadius: BorderRadius.circular(16),
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => ShikshaSahayataDetailView(
-                    shikshaApplicantId: data.shikshaApplicantId ?? "",
-                    applicationData: data,
-                  ),
+                  builder: (_) =>
+                      ShikshaSahayataDetailView(
+                        shikshaApplicantId:
+                        data.shikshaApplicantId ?? "",
+                        applicationData: data,
+                      ),
                 ),
               );
             },
             child: Card(
               color: Colors.white,
               elevation: 6,
+              margin: const EdgeInsets.only(bottom: 20),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
                   children: [
+
+                    /// 🔹 HEADER
                     Row(
                       mainAxisAlignment:
                       MainAxisAlignment.spaceBetween,
@@ -173,9 +205,11 @@ class _ShikshaSahayataViewState
                           ),
                         ),
                         if (loan != null)
-                          _buildLoanStatusBadge(loan.loanStatus),
+                          _buildLoanStatusBadge(
+                              loan.loanStatus),
                       ],
                     ),
+
                     const Divider(height: 20),
 
                     _infoRow("Applicant ID",
@@ -192,7 +226,8 @@ class _ShikshaSahayataViewState
                         loan?.standard ?? "-"),
 
                     if (loan?.sanctionedAmount != null &&
-                        loan!.sanctionedAmount!.isNotEmpty &&
+                        loan!.sanctionedAmount!
+                            .isNotEmpty &&
                         loan.sanctionedAmount != "0")
                       _infoRow(
                         "Loan Sanctioned",
@@ -200,7 +235,8 @@ class _ShikshaSahayataViewState
                       ),
 
                     if (loan?.disbursedAmount != null &&
-                        loan!.disbursedAmount!.isNotEmpty &&
+                        loan!.disbursedAmount!
+                            .isNotEmpty &&
                         loan.disbursedAmount != "0")
                       _infoRow(
                         "Loan Disbursed",
@@ -208,7 +244,8 @@ class _ShikshaSahayataViewState
                       ),
 
                     if (loan?.disbursedOn != null &&
-                        loan!.disbursedOn!.isNotEmpty)
+                        loan!.disbursedOn!
+                            .isNotEmpty)
                       _infoRow(
                         "Dispersal Date",
                         loan.disbursedOn!,
@@ -217,9 +254,9 @@ class _ShikshaSahayataViewState
                 ),
               ),
             ),
-          ),
-        ],
-      ),
+          );
+        }).toList(),
+      ],
     );
   }
 

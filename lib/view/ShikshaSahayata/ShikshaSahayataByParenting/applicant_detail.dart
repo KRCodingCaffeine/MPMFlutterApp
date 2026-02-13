@@ -38,7 +38,6 @@ class ApplicantDetail extends StatefulWidget {
 }
 
 class _ApplicantDetailState extends State<ApplicantDetail> {
-
   bool hasApplicant = false;
   bool _isSubmitting = false;
   bool isExistingAadhaarRemoved = false;
@@ -54,20 +53,18 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
   final CreateShikshaApplicationRepository _createRepo =
       CreateShikshaApplicationRepository();
   final UpdateShikshaApplicationRepository _updateRepo =
-  UpdateShikshaApplicationRepository();
+      UpdateShikshaApplicationRepository();
   final UpdateFatherRepository _updateFatherRepo = UpdateFatherRepository();
   String? _shikshaApplicantId;
   final ApplicantAadhaarUploadRepository _aadhaarRepo =
-  ApplicantAadhaarUploadRepository();
+      ApplicantAadhaarUploadRepository();
   final ApplicantRationUploadRepository _rationRepo =
-  ApplicantRationUploadRepository();
-  final FatherPanUploadRepository _fatherPanRepo =
-  FatherPanUploadRepository();
+      ApplicantRationUploadRepository();
+  final FatherPanUploadRepository _fatherPanRepo = FatherPanUploadRepository();
   final ShikshaApplicationRepository _shikshaRepo =
-  ShikshaApplicationRepository();
+      ShikshaApplicationRepository();
 
   ShikshaApplicationData? _applicationData;
-
 
   final TextEditingController firstNameCtrl = TextEditingController();
   final TextEditingController middleNameCtrl = TextEditingController();
@@ -104,7 +101,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
   String fatherAddress = '';
   String fatherCityName = '';
   String fatherStateName = '';
-
 
   @override
   void initState() {
@@ -143,8 +139,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
 
   Future<void> _fetchShikshaApplication(String applicantId) async {
     try {
-      final response =
-      await _shikshaRepo.fetchShikshaApplicationById(
+      final response = await _shikshaRepo.fetchShikshaApplicationById(
         applicantId: applicantId,
       );
 
@@ -172,7 +167,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     fatherEmailCtrl.text = controller.email.value;
 
     fatherMobileCtrl.text = controller.mobileNumber.value;
-
   }
 
   bool _isValidEmail(String email) {
@@ -255,8 +249,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
         createdBy: controller.memberId.value,
       );
 
-      final createResponse =
-      await _createRepo.createShikshaApplication(
+      final createResponse = await _createRepo.createShikshaApplication(
         _stripCreateApplicantIds(applicantData.toJson()),
       );
 
@@ -265,8 +258,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
       }
 
       final shikshaId =
-          createResponse.data?.shikshaApplicantId ??
-              createResponse.data?.id;
+          createResponse.data?.shikshaApplicantId ?? createResponse.data?.id;
 
       if (shikshaId == null || shikshaId.isEmpty) {
         throw Exception("Shiksha application ID not returned");
@@ -287,8 +279,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
         updatedBy: controller.memberId.value,
       );
 
-      final fatherResponse =
-      await _updateFatherRepo.updateFatherData(
+      final fatherResponse = await _updateFatherRepo.updateFatherData(
         fatherData.toJson(),
       );
 
@@ -300,8 +291,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
 
       // 1️⃣ Applicant Aadhaar
       if (applicantAadharFile != null) {
-        final aadhaarResponse =
-        await _aadhaarRepo.uploadApplicantAadhaar(
+        final aadhaarResponse = await _aadhaarRepo.uploadApplicantAadhaar(
           shikshaApplicantId: shikshaId,
           filePath: applicantAadharFile!.path,
         );
@@ -313,8 +303,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
 
       // 2️⃣ Applicant Ration Card
       if (addressProofFile != null) {
-        final rationResponse =
-        await _rationRepo.uploadApplicantRationCard(
+        final rationResponse = await _rationRepo.uploadApplicantRationCard(
           shikshaApplicantId: shikshaId,
           filePath: addressProofFile!.path,
         );
@@ -326,8 +315,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
 
       // 3️⃣ Father PAN
       if (fatherPanFile != null) {
-        final panResponse =
-        await _fatherPanRepo.uploadFatherPanCard(
+        final panResponse = await _fatherPanRepo.uploadFatherPanCard(
           shikshaApplicantId: shikshaId,
           filePath: fatherPanFile!.path,
         );
@@ -351,7 +339,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
           backgroundColor: Colors.green,
         ),
       );
-
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -394,7 +381,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
       );
 
       final response =
-      await _updateRepo.updateShikshaApplication(updateData.toJson());
+          await _updateRepo.updateShikshaApplication(updateData.toJson());
 
       debugPrint("📦 Update Applicant Response: ${response.toJson()}");
 
@@ -416,7 +403,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
       );
 
       final fatherResponse =
-      await _updateFatherRepo.updateFatherData(fatherData.toJson());
+          await _updateFatherRepo.updateFatherData(fatherData.toJson());
 
       debugPrint("👨 Father Update Response: ${fatherResponse.toJson()}");
 
@@ -430,8 +417,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
       if (applicantAadharFile != null) {
         debugPrint("📤 Uploading Aadhaar: ${applicantAadharFile!.path}");
 
-        final aadhaarResponse =
-        await _aadhaarRepo.uploadApplicantAadhaar(
+        final aadhaarResponse = await _aadhaarRepo.uploadApplicantAadhaar(
           shikshaApplicantId: _shikshaApplicantId!,
           filePath: applicantAadharFile!.path,
         );
@@ -447,8 +433,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
       if (addressProofFile != null) {
         debugPrint("📤 Uploading Ration: ${addressProofFile!.path}");
 
-        final rationResponse =
-        await _rationRepo.uploadApplicantRationCard(
+        final rationResponse = await _rationRepo.uploadApplicantRationCard(
           shikshaApplicantId: _shikshaApplicantId!,
           filePath: addressProofFile!.path,
         );
@@ -464,8 +449,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
       if (fatherPanFile != null) {
         debugPrint("📤 Uploading Father PAN: ${fatherPanFile!.path}");
 
-        final panResponse =
-        await _fatherPanRepo.uploadFatherPanCard(
+        final panResponse = await _fatherPanRepo.uploadFatherPanCard(
           shikshaApplicantId: _shikshaApplicantId!,
           filePath: fatherPanFile!.path,
         );
@@ -526,8 +510,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     return value;
   }
 
-  Map<String, dynamic> _stripCreateApplicantIds(
-      Map<String, dynamic> body) {
+  Map<String, dynamic> _stripCreateApplicantIds(Map<String, dynamic> body) {
     body.remove('shiksha_applicant_id');
     body.remove('id');
     return body;
@@ -537,10 +520,9 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-
       appBar: AppBar(
         backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Text(
           "Applicant Detail",
           style: TextStyle(
@@ -551,27 +533,24 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-
       body: hasApplicant
           ? _buildApplicantCard()
           : const Center(
-        child: Text(
-          "No applicant details have been added yet.",
-          style: TextStyle(color: Colors.grey),
-        ),
-      ),
-
+              child: Text(
+                "No applicant details have been added yet.",
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
       floatingActionButton: !hasApplicant
           ? FloatingActionButton(
-        backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.red_color),
-        onPressed: () {
-          _showAddApplicantModalSheet(context);
-        },
-        child: const Icon(Icons.add, color: Colors.white),
-      )
+              backgroundColor:
+                  ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              onPressed: () {
+                _showAddApplicantModalSheet(context);
+              },
+              child: const Icon(Icons.add, color: Colors.white),
+            )
           : null,
-
       bottomNavigationBar: hasApplicant ? _buildBottomNextBar() : null,
     );
   }
@@ -588,8 +567,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
       child: Card(
         color: Colors.white,
         elevation: 4,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -616,11 +594,11 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                       style: TextStyle(fontSize: 13),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                      ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                      backgroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
                       foregroundColor: Colors.white,
-                      padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -630,17 +608,14 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
               ),
               const Divider(),
               const SizedBox(height: 12),
-
               _infoRow("Full Name", data.fullName ?? ''),
               _infoRow("Email", data.email ?? ''),
               _infoRow("Mobile", data.mobile ?? ''),
-              _infoRow("Date of Birth",
-                  _formatDobForUi(data.dateOfBirth ?? '')),
+              _infoRow(
+                  "Date of Birth", _formatDobForUi(data.dateOfBirth ?? '')),
               _infoRow("Age", data.age ?? ''),
-              _infoRow("Marital Status",
-                  data.maritalStatusName ?? ''),
+              _infoRow("Marital Status", data.maritalStatusName ?? ''),
               const SizedBox(height: 10),
-
               const Text(
                 "Father / Mother Details",
                 style: TextStyle(
@@ -649,20 +624,12 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                 ),
               ),
               const SizedBox(height: 12),
-
-              _infoRow("Father Name",
-                  data.applicantFatherName ?? ''),
-              _infoRow("Mother Name",
-                  data.applicantMotherName ?? ''),
-              _infoRow("Father Mobile",
-                  data.fatherMobile ?? ''),
-              _infoRow("Father Email",
-                  data.fatherEmail ?? ''),
-              _infoRow("City",
-                  data.applicantCityName ?? ''),
-              _infoRow("State",
-                  data.applicantStateName ?? ''),
-
+              _infoRow("Father Name", data.applicantFatherName ?? ''),
+              _infoRow("Mother Name", data.applicantMotherName ?? ''),
+              _infoRow("Father Mobile", data.fatherMobile ?? ''),
+              _infoRow("Father Email", data.fatherEmail ?? ''),
+              _infoRow("City", data.applicantCityName ?? ''),
+              _infoRow("State", data.applicantStateName ?? ''),
               const Text(
                 "Documents",
                 style: TextStyle(
@@ -671,47 +638,46 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                 ),
               ),
               const SizedBox(height: 12),
-
               if (data.applicantAadharCardDocument != null &&
                   data.applicantAadharCardDocument!.isNotEmpty)
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      final imageUrl = _getFullImageUrl(
-                          data.applicantAadharCardDocument);
-                      _showDocumentPreviewDialog(context, imageUrl, "Applicant Aadhaar");
+                      final imageUrl =
+                          _getFullImageUrl(data.applicantAadharCardDocument);
+                      _showDocumentPreviewDialog(
+                          context, imageUrl, "Applicant Aadhaar");
                     },
                     icon: const Icon(Icons.visibility),
                     label: const Text("View Applicant Aadhaar"),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                      ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                      backgroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
                       foregroundColor: Colors.white,
                     ),
                   ),
                 ),
-
               if (data.applicantFatherPanCardDocument != null &&
                   data.applicantFatherPanCardDocument!.isNotEmpty)
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      final imageUrl = _getFullImageUrl(
-                          data.applicantFatherPanCardDocument);
-                      _showDocumentPreviewDialog(context, imageUrl, "Father's PAN");
+                      final imageUrl =
+                          _getFullImageUrl(data.applicantFatherPanCardDocument);
+                      _showDocumentPreviewDialog(
+                          context, imageUrl, "Father's PAN");
                     },
                     icon: const Icon(Icons.visibility),
                     label: const Text("View Father's PAN"),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                      ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                      backgroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
                       foregroundColor: Colors.white,
                     ),
                   ),
                 ),
-
               if (data.applicantRationCardDocument != null &&
                   data.applicantRationCardDocument!.isNotEmpty)
                 SizedBox(
@@ -719,7 +685,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                   child: ElevatedButton.icon(
                     onPressed: () {
                       final imageUrl =
-                      _getFullImageUrl(data.applicantRationCardDocument);
+                          _getFullImageUrl(data.applicantRationCardDocument);
                       _showDocumentPreviewDialog(
                         context,
                         imageUrl,
@@ -729,8 +695,8 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                     icon: const Icon(Icons.visibility),
                     label: const Text("View Address Proof"),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                      ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                      backgroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
                       foregroundColor: Colors.white,
                     ),
                   ),
@@ -768,9 +734,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                 ),
               ),
             ),
-
             const SizedBox(width: 12),
-
             ElevatedButton(
               onPressed: () async {
                 if (_shikshaApplicantId == null) {
@@ -792,17 +756,16 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
               child: const Text("Next Step"),
             ),
-
           ],
         ),
       ),
@@ -882,8 +845,8 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                           OutlinedButton(
                             onPressed: () => Navigator.pop(context),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor:
-                              ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                              foregroundColor: ColorHelperClass.getColorFromHex(
+                                  ColorResources.red_color),
                               side: const BorderSide(color: Colors.red),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
@@ -894,20 +857,20 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                           ElevatedButton(
                             onPressed: _canSubmitApplicant
                                 ? () async {
-                              Navigator.pop(context);
-                              if (_shikshaApplicantId == null) {
-                                await _submitApplicantAndFather();
-                              } else {
-                                await _updateApplicant();
-                              }
-                            }
+                                    Navigator.pop(context);
+                                    if (_shikshaApplicantId == null) {
+                                      await _submitApplicantAndFather();
+                                    } else {
+                                      await _updateApplicant();
+                                    }
+                                  }
                                 : null,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                              ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                              backgroundColor: ColorHelperClass.getColorFromHex(
+                                  ColorResources.red_color),
                               foregroundColor: Colors.white,
-                              padding:
-                              const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -917,13 +880,11 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                         ],
                       ),
                       const SizedBox(height: 10),
-
                       Expanded(
                         child: SingleChildScrollView(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           child: Column(
                             children: [
-
                               const Text(
                                 "Applicant Details",
                                 style: TextStyle(
@@ -932,28 +893,24 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 ),
                               ),
                               const SizedBox(height: 30),
-
                               _buildTextField("First Name *",
                                   controller: firstNameCtrl,
                                   onChanged: (_) => setModalState(() {})),
                               const SizedBox(height: 20),
-
                               _buildTextField("Middle Name",
                                   controller: middleNameCtrl,
                                   onChanged: (_) => setModalState(() {})),
                               const SizedBox(height: 20),
-
                               _buildTextField("Surname *",
                                   controller: lastNameCtrl,
                                   onChanged: (_) => setModalState(() {})),
                               const SizedBox(height: 20),
-
-                              _buildTextField("Email *",
-                                  controller: emailCtrl,
+                              _buildTextField(
+                                "Email *",
+                                controller: emailCtrl,
                                 onChanged: (_) => setModalState(() {}),
                               ),
                               const SizedBox(height: 20),
-
                               _buildTextField(
                                 "Mobile Number *",
                                 controller: mobileCtrl,
@@ -962,7 +919,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 onChanged: (_) => setModalState(() {}),
                               ),
                               const SizedBox(height: 20),
-
                               _buildTextField(
                                 "Landline Number",
                                 controller: landlineCtrl,
@@ -970,24 +926,20 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 onChanged: (_) => setModalState(() {}),
                               ),
                               const SizedBox(height: 20),
-
                               _buildTextField(
                                 "Father's Name *",
                                 controller: fatherNameCtrl,
                                 onChanged: (_) => setModalState(() {}),
                               ),
                               const SizedBox(height: 20),
-
                               _buildTextField("Mother's Name",
                                   controller: motherNameCtrl,
                                   onChanged: (_) => setModalState(() {})),
                               const SizedBox(height: 20),
-
                               _buildTextField("Father's Email *",
                                   controller: fatherEmailCtrl,
                                   onChanged: (_) => setModalState(() {})),
                               const SizedBox(height: 20),
-
                               _buildTextField(
                                 "Father's Mobile *",
                                 controller: fatherMobileCtrl,
@@ -996,7 +948,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 onChanged: (_) => setModalState(() {}),
                               ),
                               const SizedBox(height: 20),
-
                               themedDatePickerField(
                                 context: context,
                                 label: "Date of Birth *",
@@ -1006,7 +957,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 onChanged: () => setModalState(() {}),
                               ),
                               const SizedBox(height: 20),
-
                               _buildTextField(
                                 "Age",
                                 controller: ageCtrl,
@@ -1014,7 +964,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 onChanged: (_) => setModalState(() {}),
                               ),
                               const SizedBox(height: 20),
-
                               _buildDropdown(
                                 label: "Marital Status *",
                                 items: ["Married", "Unmarried"],
@@ -1025,62 +974,84 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                   });
                                 },
                               ),
-
                               const SizedBox(height: 20),
-
                               Container(
                                 width: double.infinity,
-                                margin: const EdgeInsets.only(left: 5, right: 5),
+                                margin:
+                                    const EdgeInsets.only(left: 5, right: 5),
                                 child: Row(
                                   children: [
                                     Obx(() {
-                                      if (regiController.rxStatusCityLoading.value == Status.LOADING) {
+                                      if (regiController
+                                              .rxStatusCityLoading.value ==
+                                          Status.LOADING) {
                                         return const Padding(
-                                          padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                                          padding: EdgeInsets.symmetric(
+                                              vertical: 10, horizontal: 22),
                                           child: SizedBox(
                                             height: 24,
                                             width: 24,
-                                            child: CircularProgressIndicator(color: Colors.redAccent),
+                                            child: CircularProgressIndicator(
+                                                color: Colors.redAccent),
                                           ),
                                         );
-                                      } else if (regiController.rxStatusCityLoading.value == Status.ERROR) {
-                                        return const Center(child: Text('Failed to load city'));
-                                      } else if (regiController.cityList.isEmpty) {
-                                        return const Center(child: Text('No City available'));
+                                      } else if (regiController
+                                              .rxStatusCityLoading.value ==
+                                          Status.ERROR) {
+                                        return const Center(
+                                            child: Text('Failed to load city'));
+                                      } else if (regiController
+                                          .cityList.isEmpty) {
+                                        return const Center(
+                                            child: Text('No City available'));
                                       } else {
-                                        final selectedCity = regiController.city_id.value;
+                                        final selectedCity =
+                                            regiController.city_id.value;
                                         return Expanded(
                                           child: InputDecorator(
                                             decoration: const InputDecoration(
                                               labelText: "Father's City *",
                                               border: OutlineInputBorder(
-                                                borderSide: BorderSide(color: Colors.black),
+                                                borderSide: BorderSide(
+                                                    color: Colors.black),
                                               ),
                                               enabledBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(color: Colors.black),
+                                                borderSide: BorderSide(
+                                                    color: Colors.black),
                                               ),
                                               focusedBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(color: Colors.black38, width: 1),
+                                                borderSide: BorderSide(
+                                                    color: Colors.black38,
+                                                    width: 1),
                                               ),
                                               contentPadding:
-                                              EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                                                  EdgeInsets.symmetric(
+                                                      horizontal: 20,
+                                                      vertical: 0),
                                             ),
                                             child: DropdownButton<String>(
                                               dropdownColor: Colors.white,
-                                              borderRadius: BorderRadius.circular(10),
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
                                               isExpanded: true,
                                               underline: Container(),
-                                              hint: const Text("Select Father's City *"),
-                                              value: selectedCity.isNotEmpty ? selectedCity : null,
-                                              items: regiController.cityList.map((CityData city) {
+                                              hint: const Text(
+                                                  "Select Father's City *"),
+                                              value: selectedCity.isNotEmpty
+                                                  ? selectedCity
+                                                  : null,
+                                              items: regiController.cityList
+                                                  .map((CityData city) {
                                                 return DropdownMenuItem<String>(
                                                   value: city.id.toString(),
-                                                  child: Text(city.cityName ?? 'Unknown'),
+                                                  child: Text(city.cityName ??
+                                                      'Unknown'),
                                                 );
                                               }).toList(),
                                               onChanged: (val) {
                                                 if (val != null) {
-                                                  regiController.setSelectedCity(val);
+                                                  regiController
+                                                      .setSelectedCity(val);
                                                   setModalState(() {});
                                                 }
                                               },
@@ -1093,60 +1064,84 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 ),
                               ),
                               const SizedBox(height: 20),
-
                               Container(
                                 width: double.infinity,
-                                margin: const EdgeInsets.only(left: 5, right: 5),
+                                margin:
+                                    const EdgeInsets.only(left: 5, right: 5),
                                 child: Row(
                                   children: [
                                     Obx(() {
-                                      if (regiController.rxStatusStateLoading.value == Status.LOADING) {
+                                      if (regiController
+                                              .rxStatusStateLoading.value ==
+                                          Status.LOADING) {
                                         return const Padding(
-                                          padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                                          padding: EdgeInsets.symmetric(
+                                              vertical: 10, horizontal: 22),
                                           child: SizedBox(
                                             height: 24,
                                             width: 24,
-                                            child: CircularProgressIndicator(color: Colors.redAccent),
+                                            child: CircularProgressIndicator(
+                                                color: Colors.redAccent),
                                           ),
                                         );
-                                      } else if (regiController.rxStatusStateLoading.value == Status.ERROR) {
-                                        return const Center(child: Text('Failed to load state'));
-                                      } else if (regiController.stateList.isEmpty) {
-                                        return const Center(child: Text('No State available'));
+                                      } else if (regiController
+                                              .rxStatusStateLoading.value ==
+                                          Status.ERROR) {
+                                        return const Center(
+                                            child:
+                                                Text('Failed to load state'));
+                                      } else if (regiController
+                                          .stateList.isEmpty) {
+                                        return const Center(
+                                            child: Text('No State available'));
                                       } else {
-                                        final selectedState = regiController.state_id.value;
+                                        final selectedState =
+                                            regiController.state_id.value;
                                         return Expanded(
                                           child: InputDecorator(
                                             decoration: const InputDecoration(
                                               labelText: "Father's State *",
                                               border: OutlineInputBorder(
-                                                borderSide: BorderSide(color: Colors.black),
+                                                borderSide: BorderSide(
+                                                    color: Colors.black),
                                               ),
                                               enabledBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(color: Colors.black),
+                                                borderSide: BorderSide(
+                                                    color: Colors.black),
                                               ),
                                               focusedBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(color: Colors.black38, width: 1),
+                                                borderSide: BorderSide(
+                                                    color: Colors.black38,
+                                                    width: 1),
                                               ),
                                               contentPadding:
-                                              EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                                                  EdgeInsets.symmetric(
+                                                      horizontal: 20,
+                                                      vertical: 0),
                                             ),
                                             child: DropdownButton<String>(
                                               dropdownColor: Colors.white,
-                                              borderRadius: BorderRadius.circular(10),
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
                                               isExpanded: true,
                                               underline: Container(),
-                                              hint: const Text("Select Father's State *"),
-                                              value: selectedState.isNotEmpty ? selectedState : null,
-                                              items: regiController.stateList.map((StateData state) {
+                                              hint: const Text(
+                                                  "Select Father's State *"),
+                                              value: selectedState.isNotEmpty
+                                                  ? selectedState
+                                                  : null,
+                                              items: regiController.stateList
+                                                  .map((StateData state) {
                                                 return DropdownMenuItem<String>(
                                                   value: state.id.toString(),
-                                                  child: Text(state.stateName ?? 'Unknown'),
+                                                  child: Text(state.stateName ??
+                                                      'Unknown'),
                                                 );
                                               }).toList(),
                                               onChanged: (val) {
                                                 if (val != null) {
-                                                  regiController.setSelectedState(val);
+                                                  regiController
+                                                      .setSelectedState(val);
                                                   setModalState(() {});
                                                 }
                                               },
@@ -1159,15 +1154,13 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 ),
                               ),
                               const SizedBox(height: 20),
-
                               buildImageUploadField(
                                 context: context,
                                 imageFile: applicantAadharFile,
                                 buttonText: "Applicant Aadhaar Card",
-                                existingDocumentPath:
-                                _applicationData?.applicantAadharCardDocument,
+                                existingDocumentPath: _applicationData
+                                    ?.applicantAadharCardDocument,
                                 isExistingRemoved: isExistingAadhaarRemoved,
-
                                 onPick: () {
                                   _showImagePicker(context, (file) {
                                     setModalState(() {
@@ -1178,7 +1171,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                     });
                                   });
                                 },
-
                                 onRemoveExisting: () {
                                   setModalState(() {
                                     isExistingAadhaarRemoved = true;
@@ -1187,7 +1179,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                     isExistingAadhaarRemoved = true;
                                   });
                                 },
-
                                 onRemoveNew: () {
                                   setModalState(() {
                                     applicantAadharFile = null;
@@ -1198,15 +1189,13 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 },
                               ),
                               const SizedBox(height: 20),
-
                               buildImageUploadField(
                                 context: context,
                                 imageFile: fatherPanFile,
                                 buttonText: "Father's PAN Card",
-                                existingDocumentPath:
-                                _applicationData?.applicantFatherPanCardDocument,
+                                existingDocumentPath: _applicationData
+                                    ?.applicantFatherPanCardDocument,
                                 isExistingRemoved: isExistingPanRemoved,
-
                                 onPick: () {
                                   _showImagePicker(context, (file) {
                                     setModalState(() {
@@ -1217,7 +1206,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                     });
                                   });
                                 },
-
                                 onRemoveExisting: () {
                                   setModalState(() {
                                     isExistingPanRemoved = true;
@@ -1226,7 +1214,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                     isExistingPanRemoved = true;
                                   });
                                 },
-
                                 onRemoveNew: () {
                                   setModalState(() {
                                     fatherPanFile = null;
@@ -1237,16 +1224,14 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 },
                               ),
                               const SizedBox(height: 20),
-
                               buildImageUploadField(
                                 context: context,
                                 imageFile: addressProofFile,
                                 buttonText:
-                                "Address Proof (if Aadhaar and current address are not the same)",
-                                existingDocumentPath:
-                                _applicationData?.applicantRationCardDocument,
+                                    "Address Proof (if Aadhaar and current address are not the same)",
+                                existingDocumentPath: _applicationData
+                                    ?.applicantRationCardDocument,
                                 isExistingRemoved: isExistingRationRemoved,
-
                                 onPick: () {
                                   _showImagePicker(context, (file) {
                                     setModalState(() {
@@ -1257,7 +1242,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                     });
                                   });
                                 },
-
                                 onRemoveExisting: () {
                                   setModalState(() {
                                     isExistingRationRemoved = true;
@@ -1266,7 +1250,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                     isExistingRationRemoved = true;
                                   });
                                 },
-
                                 onRemoveNew: () {
                                   setModalState(() {
                                     addressProofFile = null;
@@ -1314,7 +1297,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     _showAddApplicantModalSheet(context);
   }
 
-
   Widget _buildTextField(
     String label, {
     required TextEditingController controller,
@@ -1331,27 +1313,17 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
-        border:
-        const OutlineInputBorder(
-          borderSide: BorderSide(
-              color: Colors.black),
+        border: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black),
         ),
-        enabledBorder:
-        const OutlineInputBorder(
-          borderSide: BorderSide(
-              color: Colors.black),
+        enabledBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black),
         ),
-        focusedBorder:
-        const OutlineInputBorder(
-          borderSide: BorderSide(
-              color: Colors.black38,
-              width: 1),
+        focusedBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black38, width: 1),
         ),
-        contentPadding:
-        const EdgeInsets.symmetric(
-            horizontal: 20),
-        labelStyle: const TextStyle(
-            color: Colors.black),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+        labelStyle: const TextStyle(color: Colors.black),
       ),
     );
   }
@@ -1370,27 +1342,17 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     return InputDecorator(
       decoration: InputDecoration(
         labelText: label,
-        border:
-        const OutlineInputBorder(
-          borderSide: BorderSide(
-              color: Colors.black),
+        border: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black),
         ),
-        enabledBorder:
-        const OutlineInputBorder(
-          borderSide: BorderSide(
-              color: Colors.black),
+        enabledBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black),
         ),
-        focusedBorder:
-        const OutlineInputBorder(
-          borderSide: BorderSide(
-              color: Colors.black38,
-              width: 1),
+        focusedBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black38, width: 1),
         ),
-        contentPadding:
-        const EdgeInsets.symmetric(
-            horizontal: 20),
-        labelStyle: const TextStyle(
-            color: Colors.black),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+        labelStyle: const TextStyle(color: Colors.black),
       ),
       isEmpty: selectedValue.isEmpty,
       child: DropdownButton<String>(
@@ -1443,27 +1405,17 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
-          border:
-          const OutlineInputBorder(
-            borderSide: BorderSide(
-                color: Colors.black),
+          border: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black),
           ),
-          enabledBorder:
-          const OutlineInputBorder(
-            borderSide: BorderSide(
-                color: Colors.black),
+          enabledBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black),
           ),
-          focusedBorder:
-          const OutlineInputBorder(
-            borderSide: BorderSide(
-                color: Colors.black38,
-                width: 1),
+          focusedBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black38, width: 1),
           ),
-          contentPadding:
-          const EdgeInsets.symmetric(
-              horizontal: 20),
-          labelStyle: const TextStyle(
-              color: Colors.black),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+          labelStyle: const TextStyle(color: Colors.black),
         ),
         onTap: () async {
           DateTime? picked = await showDatePicker(
@@ -1511,18 +1463,15 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     required VoidCallback onRemoveNew,
   }) {
     final bool hasExisting =
-        !isExistingRemoved &&
-            (existingDocumentPath ?? "").isNotEmpty;
+        !isExistingRemoved && (existingDocumentPath ?? "").isNotEmpty;
 
     final bool isUploaded = imageFile != null || hasExisting;
 
-    bool isPdf(String path) =>
-        path.toLowerCase().endsWith(".pdf");
+    bool isPdf(String path) => path.toLowerCase().endsWith(".pdf");
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         /// 🔥 NEW FILE PREVIEW
         if (imageFile != null)
           Stack(
@@ -1535,9 +1484,9 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                   borderRadius: BorderRadius.circular(10),
                   child: imageFile.path.endsWith(".pdf")
                       ? const Center(
-                    child: Icon(Icons.picture_as_pdf,
-                        size: 80, color: Colors.red),
-                  )
+                          child: Icon(Icons.picture_as_pdf,
+                              size: 80, color: Colors.red),
+                        )
                       : Image.file(imageFile, fit: BoxFit.cover),
                 ),
               ),
@@ -1549,8 +1498,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                   child: const CircleAvatar(
                     radius: 14,
                     backgroundColor: Colors.red,
-                    child: Icon(Icons.close,
-                        size: 16, color: Colors.white),
+                    child: Icon(Icons.close, size: 16, color: Colors.white),
                   ),
                 ),
               ),
@@ -1569,13 +1517,13 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                   borderRadius: BorderRadius.circular(10),
                   child: isPdf(existingDocumentPath!)
                       ? const Center(
-                    child: Icon(Icons.picture_as_pdf,
-                        size: 80, color: Colors.red),
-                  )
+                          child: Icon(Icons.picture_as_pdf,
+                              size: 80, color: Colors.red),
+                        )
                       : Image.network(
-                    _getFullImageUrl(existingDocumentPath),
-                    fit: BoxFit.cover,
-                  ),
+                          _getFullImageUrl(existingDocumentPath),
+                          fit: BoxFit.cover,
+                        ),
                 ),
               ),
               Positioned(
@@ -1586,8 +1534,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                   child: const CircleAvatar(
                     radius: 14,
                     backgroundColor: Colors.red,
-                    child: Icon(Icons.close,
-                        size: 16, color: Colors.white),
+                    child: Icon(Icons.close, size: 16, color: Colors.white),
                   ),
                 ),
               ),
@@ -1595,9 +1542,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
           ),
 
         /// 🔥 VIEW BUTTON (For PDF)
-        if (imageFile == null &&
-            hasExisting &&
-            isPdf(existingDocumentPath!))
+        if (imageFile == null && hasExisting && isPdf(existingDocumentPath!))
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -1626,16 +1571,14 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
               isUploaded ? Icons.check_circle : Icons.upload_file,
             ),
             label: Text(
-              isUploaded
-                  ? "$buttonText Uploaded"
-                  : "$buttonText *",
+              isUploaded ? "$buttonText Uploaded" : "$buttonText *",
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: isUploaded
                   ? Colors.green
                   : ColorHelperClass.getColorFromHex(
-                ColorResources.red_color,
-              ),
+                      ColorResources.red_color,
+                    ),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
@@ -1649,9 +1592,9 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
   }
 
   void _showImagePicker(
-      BuildContext context,
-      Function(File) onImagePicked,
-      ) {
+    BuildContext context,
+    Function(File) onImagePicked,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -1667,7 +1610,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
               onTap: () async {
                 Navigator.pop(context);
                 final picked =
-                await _picker.pickImage(source: ImageSource.camera);
+                    await _picker.pickImage(source: ImageSource.camera);
                 if (picked != null) {
                   onImagePicked(File(picked.path));
                 }
@@ -1679,7 +1622,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
               onTap: () async {
                 Navigator.pop(context);
                 final picked =
-                await _picker.pickImage(source: ImageSource.gallery);
+                    await _picker.pickImage(source: ImageSource.gallery);
                 if (picked != null) {
                   onImagePicked(File(picked.path));
                 }
@@ -1702,10 +1645,10 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
   }
 
   void _showDocumentPreviewDialog(
-      BuildContext context,
-      String imageUrl,
-      String title,
-      ) {
+    BuildContext context,
+    String imageUrl,
+    String title,
+  ) {
     showDialog(
       context: context,
       builder: (_) => Dialog(
@@ -1716,7 +1659,6 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 16),
-
             Text(
               title,
               style: const TextStyle(
@@ -1724,9 +1666,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 16),
-
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: SizedBox(
@@ -1734,46 +1674,41 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                 width: double.infinity,
                 child: imageUrl.toLowerCase().endsWith(".pdf")
                     ? const Center(
-                  child: Icon(
-                    Icons.picture_as_pdf,
-                    size: 80,
-                    color: Colors.red,
-                  ),
-                )
+                        child: Icon(
+                          Icons.picture_as_pdf,
+                          size: 80,
+                          color: Colors.red,
+                        ),
+                      )
                     : Image.network(
-                  imageUrl,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) =>
-                  const Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Text("Unable to load document"),
-                  ),
-                ),
+                        imageUrl,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const Padding(
+                          padding: EdgeInsets.all(20),
+                          child: Text("Unable to load document"),
+                        ),
+                      ),
               ),
             ),
-
             const SizedBox(height: 16),
-
             TextButton(
               onPressed: () => Navigator.pop(context),
               style: TextButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
               child: const Text("Close"),
             ),
-
             const SizedBox(height: 16),
           ],
         ),
       ),
     );
   }
-
 }

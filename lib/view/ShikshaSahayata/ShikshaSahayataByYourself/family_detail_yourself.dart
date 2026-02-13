@@ -13,9 +13,12 @@ import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/urls.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/education_detail.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/shiksha_sahayata_by_parenting_view.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByYourself/shiksha_sahayata_by_yourself.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FamilyDetailYourself extends StatefulWidget {
   final String shikshaApplicantId;
@@ -35,11 +38,11 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
   final UdateProfileController controller = Get.find<UdateProfileController>();
   final NewMemberController regiController = Get.find<NewMemberController>();
   final AddUpdateFamilyDataRepository _familyRepo =
-  AddUpdateFamilyDataRepository();
+      AddUpdateFamilyDataRepository();
 
   /// Store saved data per member
   final ShikshaApplicationRepository _shikshaRepo =
-  ShikshaApplicationRepository();
+      ShikshaApplicationRepository();
 
   ShikshaApplicationData? _applicationData;
   bool isLoading = true;
@@ -60,8 +63,7 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
 
   Future<void> _fetchShikshaApplication() async {
     try {
-      final response =
-      await _shikshaRepo.fetchShikshaApplicationById(
+      final response = await _shikshaRepo.fetchShikshaApplicationById(
         applicantId: widget.shikshaApplicantId,
       );
 
@@ -90,8 +92,15 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
   }
 
   bool get _isFamilyCompleted {
-    return _applicationData?.familyMembers != null &&
-        _applicationData!.familyMembers!.isNotEmpty;
+    if (_applicationData?.familyMembers == null) return false;
+
+    final totalMembers = controller.familyDataList.length +
+        (controller.familyHeadData.value != null ? 1 : 0) -
+        1; // 🔥 subtract logged-in member
+
+    final completedMembers = _applicationData!.familyMembers!.length;
+
+    return completedMembers == totalMembers;
   }
 
   @override
@@ -120,14 +129,13 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
         padding: const EdgeInsets.all(16),
         child: isLoading
             ? const Center(
-          child: CircularProgressIndicator(),
-        )
+                child: CircularProgressIndicator(),
+              )
             : _buildFamilyList(),
       ),
 
       // 🔥 ADD THIS
-      bottomNavigationBar:
-      _isFamilyCompleted ? _buildBottomNextBar() : null,
+      bottomNavigationBar: _isFamilyCompleted ? _buildBottomNextBar() : null,
     );
   }
 
@@ -140,11 +148,13 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
       unifiedList.add(controller.familyHeadData.value);
     }
 
-    // ✅ Add other family members except logged-in member
+    // ✅ Add other members except:
+    // 1. Logged-in member
+    // 2. Family head (already added)
     unifiedList.addAll(
       controller.familyDataList.value.where(
-            (m) =>
-        m.memberId != currentMemberId &&
+        (m) =>
+            m.memberId != currentMemberId &&
             m.memberId != controller.familyHeadData.value?.memberId,
       ),
     );
@@ -162,6 +172,7 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
       itemCount: unifiedList.length,
       itemBuilder: (context, index) {
         final item = unifiedList[index];
+
         FamilyMember? familyDetail;
 
         if (_applicationData?.familyMembers != null) {
@@ -169,81 +180,62 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
           final memberId = (item is FamilyHeadMemberData)
               ? item.memberId
               : (item is FamilyMembersData)
-              ? item.memberId
-              : null;
+                  ? item.memberId
+                  : null;
 
           if (memberId != null &&
               list.any((f) => f.familyMemberId == memberId)) {
-            familyDetail =
-                list.firstWhere((f) => f.familyMemberId == memberId);
+            familyDetail = list.firstWhere((f) => f.familyMemberId == memberId);
           }
         }
 
         if (item is FamilyHeadMemberData) {
           return _buildUnifiedFamilyCard(
             context: context,
-            name:
-            "${item.firstName ?? ''} ${item.lastName ?? ''}".trim(),
+            name: "${item.firstName ?? ''} ${item.lastName ?? ''}".trim(),
             memberId: item.memberId ?? '',
-            displayCode:
-            item.memberCode ?? item.memberId ?? '',
+            displayCode: item.memberCode ?? item.memberId ?? '',
             profileImage: item.profileImage,
             isHead: true,
             relationName: familyDetail?.relationshipName,
-            status: familyDetail?.familyMemberOccupationType ==
-                "working"
+            status: familyDetail?.familyMemberOccupationType == "working"
                 ? "Earning"
-                : familyDetail?.familyMemberOccupationType ==
-                "studying"
-                ? "Non Earning"
-                : null,
-            jobTitle:
-            familyDetail?.familyMemberOccupationName,
-            yearlyIncome:
-            familyDetail?.familyMemberAnnualIncome,
-            standard:
-            familyDetail?.familyMemberStandard,
-            schoolAddress:
-            familyDetail?.familyMemberInstitute,
+                : familyDetail?.familyMemberOccupationType == "studying"
+                    ? "Non Earning"
+                    : null,
+            jobTitle: familyDetail?.familyMemberOccupationName,
+            yearlyIncome: familyDetail?.familyMemberAnnualIncome,
+            standard: familyDetail?.familyMemberStandard,
+            schoolAddress: familyDetail?.familyMemberInstitute,
             nonEarningReason:
-            familyDetail?.familyMemberOccupationType ==
-                "studying"
-                ? "Student"
-                : null,
+                familyDetail?.familyMemberOccupationType == "studying"
+                    ? "Student"
+                    : null,
           );
         }
 
         if (item is FamilyMembersData) {
           return _buildUnifiedFamilyCard(
             context: context,
-            name:
-            "${item.firstName ?? ''} ${item.lastName ?? ''}".trim(),
+            name: "${item.firstName ?? ''} ${item.lastName ?? ''}".trim(),
             memberId: item.memberId ?? '',
-            displayCode:
-            item.memberCode ?? item.memberId ?? '',
+            displayCode: item.memberCode ?? item.memberId ?? '',
             profileImage: item.profileImage,
             isHead: false,
             relationName: familyDetail?.relationshipName,
-            status: familyDetail?.familyMemberOccupationType ==
-                "working"
+            status: familyDetail?.familyMemberOccupationType == "working"
                 ? "Earning"
-                : familyDetail?.familyMemberOccupationType ==
-                "studying"
-                ? "Non Earning"
-                : null,
-            jobTitle:
-            familyDetail?.familyMemberOccupationName,
-            yearlyIncome:
-            familyDetail?.familyMemberAnnualIncome,
-            standard:
-            familyDetail?.familyMemberStandard,
-            schoolAddress:
-            familyDetail?.familyMemberInstitute,
+                : familyDetail?.familyMemberOccupationType == "studying"
+                    ? "Non Earning"
+                    : null,
+            jobTitle: familyDetail?.familyMemberOccupationName,
+            yearlyIncome: familyDetail?.familyMemberAnnualIncome,
+            standard: familyDetail?.familyMemberStandard,
+            schoolAddress: familyDetail?.familyMemberInstitute,
             nonEarningReason:
-            familyDetail?.familyMemberOccupationType ==
-                "studying"
-                ? "Student"
-                : null,
+                familyDetail?.familyMemberOccupationType == "studying"
+                    ? "Student"
+                    : null,
           );
         }
 
@@ -252,7 +244,6 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
     );
   }
 
-
   Widget _buildUnifiedFamilyCard({
     required BuildContext context,
     required String name,
@@ -260,7 +251,6 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
     required String displayCode,
     String? profileImage,
     required bool isHead,
-
     String? relationName,
     String? status,
     String? jobTitle,
@@ -296,7 +286,6 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
               : const AssetImage("assets/images/user3.png") as ImageProvider,
           backgroundColor: Colors.grey[300],
         ),
-
         title: Text(
           name,
           style: const TextStyle(
@@ -304,56 +293,41 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
             fontWeight: FontWeight.bold,
           ),
         ),
-
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 4),
-
             Text(
               "Member Code: $displayCode",
               style: TextStyle(fontSize: 13, color: Colors.grey[600]),
             ),
             const SizedBox(height: 4),
-
             if (hasDetails) ...[
-              if (relationName != null)
-                _detailRow("Relation", relationName),
+              if (relationName != null) _detailRow("Relation", relationName),
               const SizedBox(height: 4),
-
-              if (status != null)
-                _detailRow("Status", status),
+              if (status != null) _detailRow("Status", status),
               const SizedBox(height: 4),
-
               if (status == "Earning" && jobTitle != null)
                 _detailRow("Job", jobTitle),
               const SizedBox(height: 4),
-
               if (status == "Earning" && yearlyIncome != null)
                 _detailRow("Income", yearlyIncome),
               const SizedBox(height: 4),
-
               if (status == "Non Earning" && nonEarningReason != null)
                 _detailRow("Reason", nonEarningReason),
               const SizedBox(height: 4),
-
               if (nonEarningReason == "Student" && standard != null)
                 _detailRow("Standard", standard),
               const SizedBox(height: 4),
-
-              if (nonEarningReason == "Student" &&
-                  schoolAddress != null)
+              if (nonEarningReason == "Student" && schoolAddress != null)
                 _detailRow("School", schoolAddress),
               const SizedBox(height: 4),
-
               if (nonEarningReason == "Other" && otherDetail != null)
                 _detailRow("Detail", otherDetail),
               const SizedBox(height: 4),
-
             ],
           ],
         ),
-
         trailing: ElevatedButton(
           onPressed: () {
             FamilyMember? existing;
@@ -361,8 +335,7 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
             if (_applicationData?.familyMembers != null) {
               final list = _applicationData!.familyMembers!;
               if (list.any((f) => f.familyMemberId == memberId)) {
-                existing =
-                    list.firstWhere((f) => f.familyMemberId == memberId);
+                existing = list.firstWhere((f) => f.familyMemberId == memberId);
               }
             }
 
@@ -375,18 +348,17 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
           },
           style: ElevatedButton.styleFrom(
             backgroundColor:
-            ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
             foregroundColor: Colors.white,
-            padding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
           ),
           child: Text(
             _applicationData?.familyMembers
-                ?.any((f) => f.familyMemberId == memberId) ==
-                true
+                        ?.any((f) => f.familyMemberId == memberId) ==
+                    true
                 ? "Edit"
                 : "Add",
             style: const TextStyle(fontSize: 12),
@@ -418,8 +390,7 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
 
   Widget _buildBottomNextBar() {
     return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -445,21 +416,25 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
             ),
             const SizedBox(width: 12),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('family_completed_yourself', true);
+
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => ShikshaSahayataByParentingView(),
+                    builder: (_) => EducationDetailView(
+                      shikshaApplicantId: widget.shikshaApplicantId,
+                    ),
                   ),
                 );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(
-                    ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -472,7 +447,10 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
     );
   }
 
-  void _showAddRelationSheet(BuildContext context, String memberName, String memberId, {
+  void _showAddRelationSheet(
+    BuildContext context,
+    String memberName,
+    String memberId, {
     FamilyMember? existingData,
   }) {
     String selectedStatus = '';
@@ -488,23 +466,18 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
     if (existingData != null) {
       if (existingData.familyMemberOccupationType == "working") {
         selectedStatus = "Earning";
-        jobTitleCtrl.text =
-            existingData.familyMemberOccupationName ?? '';
-        yearlyIncomeCtrl.text =
-            existingData.familyMemberAnnualIncome ?? '';
+        jobTitleCtrl.text = existingData.familyMemberOccupationName ?? '';
+        yearlyIncomeCtrl.text = existingData.familyMemberAnnualIncome ?? '';
       } else {
         selectedStatus = "Non Earning";
         selectedNonEarningReason = "Student";
-        standardCtrl.text =
-            existingData.familyMemberStandard ?? '';
-        schoolAddressCtrl.text =
-            existingData.familyMemberInstitute ?? '';
+        standardCtrl.text = existingData.familyMemberStandard ?? '';
+        schoolAddressCtrl.text = existingData.familyMemberInstitute ?? '';
       }
 
       controller.setSelectRelationShip(
           existingData.relationshipWithApplicantId ?? '');
     }
-
 
     final List<String> statusOptions = ["Earning", "Non Earning"];
     final List<String> nonEarningOptions = [
@@ -513,6 +486,31 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
       "Student",
       "Other",
     ];
+
+    bool _isFormValid() {
+      if (controller.selectRelationShipType.value.isEmpty) return false;
+      if (selectedStatus.isEmpty) return false;
+
+      if (selectedStatus == "Earning") {
+        if (jobTitleCtrl.text.trim().isEmpty) return false;
+        if (yearlyIncomeCtrl.text.trim().isEmpty) return false;
+      }
+
+      if (selectedStatus == "Non Earning") {
+        if (selectedNonEarningReason.isEmpty) return false;
+
+        if (selectedNonEarningReason == "Student") {
+          if (standardCtrl.text.trim().isEmpty) return false;
+          if (schoolAddressCtrl.text.trim().isEmpty) return false;
+        }
+
+        if (selectedNonEarningReason == "Other") {
+          if (otherDetailCtrl.text.trim().isEmpty) return false;
+        }
+      }
+
+      return true;
+    }
 
     showModalBottomSheet(
       context: context,
@@ -546,8 +544,8 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
                                   color: ColorHelperClass.getColorFromHex(
                                       ColorResources.red_color),
                                 ),
-                                padding:
-                                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 12),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -555,78 +553,81 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
                               child: const Text("Cancel"),
                             ),
                             ElevatedButton(
-                              onPressed: controller.selectRelationShipType.value.isEmpty ||
-                                  selectedStatus.isEmpty
-                                  ? null
-                                  : () async {
-                                try {
-                                  String occupationType =
-                                  selectedStatus == "Earning"
-                                      ? "working"
-                                      : "studying";
+                              onPressed: _isFormValid()
+                                  ? () async {
+                                      try {
+                                        String occupationType =
+                                            selectedStatus == "Earning"
+                                                ? "working"
+                                                : "studying";
 
-                                  final body = {
-                                    "shiksha_applicant_id": widget.shikshaApplicantId,
-                                    "family_member_id": memberId,
-                                    "relationship_with_applicant_id":
-                                    controller.selectRelationShipType.value,
-                                    "family_member_occupation_type":
-                                    occupationType,
-                                    "family_member_occupation_name":
-                                    selectedStatus == "Earning"
-                                        ? jobTitleCtrl.text
-                                        : "",
-                                    "family_member_standard":
-                                    selectedStatus == "Non Earning"
-                                        ? standardCtrl.text
-                                        : "",
-                                    "family_member_institute":
-                                    selectedStatus == "Non Earning"
-                                        ? schoolAddressCtrl.text
-                                        : "",
-                                    "family_member_annual_income":
-                                    selectedStatus == "Earning"
-                                        ? yearlyIncomeCtrl.text
-                                        : "",
-                                    "created_by": currentMemberId,
-                                    "updated_by": currentMemberId,
-                                  };
+                                        final body = {
+                                          "shiksha_applicant_id":
+                                              widget.shikshaApplicantId,
+                                          "family_member_id": memberId,
+                                          "relationship_with_applicant_id":
+                                              controller
+                                                  .selectRelationShipType.value,
+                                          "family_member_occupation_type":
+                                              occupationType,
+                                          "family_member_occupation_name":
+                                              selectedStatus == "Earning"
+                                                  ? jobTitleCtrl.text.trim()
+                                                  : "",
+                                          "family_member_standard":
+                                              selectedStatus == "Non Earning"
+                                                  ? standardCtrl.text.trim()
+                                                  : "",
+                                          "family_member_institute":
+                                              selectedStatus == "Non Earning"
+                                                  ? schoolAddressCtrl.text
+                                                      .trim()
+                                                  : "",
+                                          "family_member_annual_income":
+                                              selectedStatus == "Earning"
+                                                  ? yearlyIncomeCtrl.text.trim()
+                                                  : "",
+                                          "created_by": currentMemberId,
+                                          "updated_by": currentMemberId,
+                                        };
 
-                                  final response =
-                                  await _familyRepo.addOrUpdateFamilyData(body);
+                                        final response = await _familyRepo
+                                            .addOrUpdateFamilyData(body);
 
-                                  if (response.status == true &&
-                                      response.data != null) {
-                                    await _refreshShikshaApplication();
-                                    Navigator.pop(context);
+                                        if (response.status == true &&
+                                            response.data != null) {
+                                          await _refreshShikshaApplication();
+                                          Navigator.pop(context);
 
-                                    ScaffoldMessenger.of(context)
-                                        .showSnackBar(
-                                      const SnackBar(
-                                        content:
-                                        Text("Family details saved successfully"),
-                                        backgroundColor: Colors.green,
-                                      ),
-                                    );
-                                  } else {
-                                    throw Exception(response.message);
-                                  }
-                                } catch (e) {
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(
-                                    SnackBar(
-                                      content: Text(e.toString()),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
-                              },
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                  "Family details saved successfully"),
+                                              backgroundColor: Colors.green,
+                                            ),
+                                          );
+                                        } else {
+                                          throw Exception(response.message);
+                                        }
+                                      } catch (e) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content: Text(e.toString()),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  : null,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
-                                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                                    ColorHelperClass.getColorFromHex(
+                                        ColorResources.red_color),
                                 foregroundColor: Colors.white,
-                                padding:
-                                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 12),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -636,11 +637,10 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
                                     ? "Update Family Details"
                                     : "Add Family Details",
                               ),
-                            ),
+                            )
                           ],
                         ),
                       ),
-
                       Expanded(
                         child: SingleChildScrollView(
                           padding: const EdgeInsets.all(16),
@@ -657,7 +657,6 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
                                 ),
                               ),
                               const SizedBox(height: 30),
-
                               Obx(() {
                                 if (controller.rxStatusRelationType.value ==
                                     Status.LOADING) {
@@ -668,27 +667,22 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
                                 return InputDecorator(
                                   decoration: InputDecoration(
                                     labelText: 'Select Relation *',
-                                    border:
-                                    const OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          color: Colors.black),
+                                    border: const OutlineInputBorder(
+                                      borderSide:
+                                          BorderSide(color: Colors.black),
                                     ),
-                                    enabledBorder:
-                                    const OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          color: Colors.black),
+                                    enabledBorder: const OutlineInputBorder(
+                                      borderSide:
+                                          BorderSide(color: Colors.black),
                                     ),
-                                    focusedBorder:
-                                    const OutlineInputBorder(
+                                    focusedBorder: const OutlineInputBorder(
                                       borderSide: BorderSide(
-                                          color: Colors.black38,
-                                          width: 1),
+                                          color: Colors.black38, width: 1),
                                     ),
-                                    contentPadding:
-                                    const EdgeInsets.symmetric(
+                                    contentPadding: const EdgeInsets.symmetric(
                                         horizontal: 20),
-                                    labelStyle: const TextStyle(
-                                        color: Colors.black),
+                                    labelStyle:
+                                        const TextStyle(color: Colors.black),
                                   ),
                                   child: DropdownButton<String>(
                                     dropdownColor: Colors.white,
@@ -722,31 +716,23 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
                                 );
                               }),
                               const SizedBox(height: 20),
-
                               InputDecorator(
                                 decoration: InputDecoration(
                                   labelText: 'Select Status *',
-                                  border:
-                                  const OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: Colors.black),
+                                  border: const OutlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.black),
                                   ),
-                                  enabledBorder:
-                                  const OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: Colors.black),
+                                  enabledBorder: const OutlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.black),
                                   ),
-                                  focusedBorder:
-                                  const OutlineInputBorder(
+                                  focusedBorder: const OutlineInputBorder(
                                     borderSide: BorderSide(
-                                        color: Colors.black38,
-                                        width: 1),
+                                        color: Colors.black38, width: 1),
                                   ),
-                                  contentPadding:
-                                  const EdgeInsets.symmetric(
+                                  contentPadding: const EdgeInsets.symmetric(
                                       horizontal: 20),
-                                  labelStyle: const TextStyle(
-                                      color: Colors.black),
+                                  labelStyle:
+                                      const TextStyle(color: Colors.black),
                                 ),
                                 child: DropdownButton<String>(
                                   dropdownColor: Colors.white,
@@ -755,8 +741,8 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
                                   underline: Container(),
                                   hint: const Text(
                                     'Select Status',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold),
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold),
                                   ),
                                   value: selectedStatus.isEmpty
                                       ? null
@@ -781,7 +767,6 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
                                 ),
                               ),
                               const SizedBox(height: 20),
-
                               if (selectedStatus == "Earning") ...[
                                 TextFormField(
                                   controller: jobTitleCtrl,
@@ -800,32 +785,26 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
                                   ),
                                 ),
                               ],
-
                               if (selectedStatus == "Non Earning") ...[
                                 InputDecorator(
                                   decoration: InputDecoration(
                                     labelText: 'Select Reason *',
-                                    border:
-                                    const OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          color: Colors.black),
+                                    border: const OutlineInputBorder(
+                                      borderSide:
+                                          BorderSide(color: Colors.black),
                                     ),
-                                    enabledBorder:
-                                    const OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          color: Colors.black),
+                                    enabledBorder: const OutlineInputBorder(
+                                      borderSide:
+                                          BorderSide(color: Colors.black),
                                     ),
-                                    focusedBorder:
-                                    const OutlineInputBorder(
+                                    focusedBorder: const OutlineInputBorder(
                                       borderSide: BorderSide(
-                                          color: Colors.black38,
-                                          width: 1),
+                                          color: Colors.black38, width: 1),
                                     ),
-                                    contentPadding:
-                                    const EdgeInsets.symmetric(
+                                    contentPadding: const EdgeInsets.symmetric(
                                         horizontal: 20),
-                                    labelStyle: const TextStyle(
-                                        color: Colors.black),
+                                    labelStyle:
+                                        const TextStyle(color: Colors.black),
                                   ),
                                   child: DropdownButton<String>(
                                     dropdownColor: Colors.white,
@@ -858,7 +837,6 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
                                   ),
                                 ),
                                 const SizedBox(height: 20),
-
                                 if (selectedNonEarningReason == "Student") ...[
                                   TextFormField(
                                     controller: standardCtrl,
@@ -877,7 +855,6 @@ class _FamilyDetailYourselfState extends State<FamilyDetailYourself> {
                                     ),
                                   ),
                                 ],
-
                                 if (selectedNonEarningReason == "Other") ...[
                                   TextFormField(
                                     controller: otherDetailCtrl,

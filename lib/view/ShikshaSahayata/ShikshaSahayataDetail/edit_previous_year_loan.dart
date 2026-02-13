@@ -42,6 +42,20 @@ class _EditPreviousYearLoanViewState extends State<EditPreviousYearLoanView> {
   bool isSubmitting = false;
   String? currentMemberId;
 
+  bool get _isLoanLocked {
+    final loanList =
+        widget.applicationData.requestedLoanEducationAppliedBy;
+
+    if (loanList == null || loanList.isEmpty) return false;
+
+    return loanList.any((loan) {
+      final status = (loan.loanStatus ?? "").toLowerCase();
+      return status == "disbursed" ||
+          status == "partially_repaid" ||
+          status == "fully_repaid";
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -163,7 +177,8 @@ class _EditPreviousYearLoanViewState extends State<EditPreviousYearLoanView> {
                           ),
                         ),
 
-                        PopupMenuButton<String>(
+                        if (!_isLoanLocked)
+                          PopupMenuButton<String>(
                           color: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -251,7 +266,9 @@ class _EditPreviousYearLoanViewState extends State<EditPreviousYearLoanView> {
           }
       ),
 
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: _isLoanLocked
+          ? null
+          : FloatingActionButton(
         backgroundColor:
         ColorHelperClass.getColorFromHex(ColorResources.red_color),
         onPressed: () {

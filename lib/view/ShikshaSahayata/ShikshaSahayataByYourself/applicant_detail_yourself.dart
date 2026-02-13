@@ -14,12 +14,16 @@ import 'package:mpm/model/State/StateData.dart';
 import 'package:mpm/model/city/CityData.dart';
 import 'package:mpm/model/ShikshaSahayata/ApplicantDetail/CreateApplicantDetail/CreateApplicantDetailData.dart';
 import 'package:mpm/model/ShikshaSahayata/UpdateFatherDetail/UpdateFatherData.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/ApplicantDetailRepo/applicant_aadhaar_upload_repository/applicant_aadhaar_upload_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/ApplicantDetailRepo/applicant_ration_upload_repository/applicant_ration_upload_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/ApplicantDetailRepo/create_shiksha_application_repository/create_shiksha_application_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/ApplicantDetailRepo/father_pan_upload_repository/father_pan_upload_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/ApplicantDetailRepo/update_shiksha_application_repository/update_shiksha_application_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/ShikshaApplicationRepo/shiksha_application_repository/shiksha_application_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/UpdateFatherRepo/update_father_repository/update_father_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/utils/urls.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/shiksha_sahayata_by_parenting_view.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/family_detail.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
@@ -35,6 +39,9 @@ class ApplicantDetailYourself extends StatefulWidget {
 }
 
 class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
+  bool isExistingAadhaarRemoved = false;
+  bool isExistingPanRemoved = false;
+  bool isExistingRationRemoved = false;
   bool hasApplicant = false;
   bool _isSubmitting = false;
   File? applicantAadharFile;
@@ -51,6 +58,12 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
   String? _shikshaApplicantId;
   final ShikshaApplicationRepository _shikshaRepo =
       ShikshaApplicationRepository();
+
+  final ApplicantAadhaarUploadRepository _aadhaarRepo =
+      ApplicantAadhaarUploadRepository();
+  final ApplicantRationUploadRepository _rationRepo =
+      ApplicantRationUploadRepository();
+  final FatherPanUploadRepository _fatherPanRepo = FatherPanUploadRepository();
 
   ShikshaApplicationData? _applicationData;
 
@@ -179,19 +192,48 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
     setState(() {});
   }
 
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email);
+  }
+
   bool get _canSubmitApplicant {
     if (firstNameCtrl.text.trim().isEmpty) return false;
+
     if (lastNameCtrl.text.trim().isEmpty) return false;
-    if (emailCtrl.text.trim().isEmpty) return false;
-    if (mobileCtrl.text.trim().isEmpty) return false;
+
+    if (!_isValidEmail(emailCtrl.text.trim())) return false;
+
+    if (mobileCtrl.text.trim().length != 10) return false;
+
     if (dobCtrl.text.trim().isEmpty) return false;
+
     if (ageCtrl.text.trim().isEmpty) return false;
+
     if (maritalStatus.isEmpty) return false;
 
     if (fatherNameCtrl.text.trim().isEmpty) return false;
-    if (fatherMobileCtrl.text.trim().isEmpty) return false;
+
+    if (!_isValidEmail(fatherEmailCtrl.text.trim())) return false;
+
+    if (fatherMobileCtrl.text.trim().length != 10) return false;
+
     if (regiController.city_id.value.isEmpty) return false;
+
     if (regiController.state_id.value.isEmpty) return false;
+
+    // 🔥 Aadhaar Mandatory (new OR existing)
+    if (applicantAadharFile == null &&
+        (_applicationData?.applicantAadharCardDocument ?? "").isEmpty &&
+        !isExistingAadhaarRemoved) {
+      return false;
+    }
+
+    // 🔥 PAN Mandatory (new OR existing)
+    if (fatherPanFile == null &&
+        (_applicationData?.applicantFatherPanCardDocument ?? "").isEmpty &&
+        !isExistingPanRemoved) {
+      return false;
+    }
 
     return true;
   }
@@ -289,6 +331,40 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
             updateResponse.message ?? "Failed to update father data");
       }
 
+      /// 🔥 STEP 3 — UPLOAD DOCUMENTS
+      if (applicantAadharFile != null) {
+        final aadhaarResponse = await _aadhaarRepo.uploadApplicantAadhaar(
+          shikshaApplicantId: shikshaId,
+          filePath: applicantAadharFile!.path,
+        );
+
+        if (aadhaarResponse.status != true) {
+          throw Exception(aadhaarResponse.message);
+        }
+      }
+
+      if (addressProofFile != null) {
+        final rationResponse = await _rationRepo.uploadApplicantRationCard(
+          shikshaApplicantId: shikshaId,
+          filePath: addressProofFile!.path,
+        );
+
+        if (rationResponse.status != true) {
+          throw Exception(rationResponse.message);
+        }
+      }
+
+      if (fatherPanFile != null) {
+        final panResponse = await _fatherPanRepo.uploadFatherPanCard(
+          shikshaApplicantId: shikshaId,
+          filePath: fatherPanFile!.path,
+        );
+
+        if (panResponse.status != true) {
+          throw Exception(panResponse.message);
+        }
+      }
+
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('shiksha_applicant_id', shikshaId);
 
@@ -372,6 +448,42 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
 
       if (fatherResponse.status != true) {
         throw Exception(fatherResponse.message ?? "Father update failed");
+      }
+
+      // Aadhaar
+      if (applicantAadharFile != null) {
+        final aadhaarResponse = await _aadhaarRepo.uploadApplicantAadhaar(
+          shikshaApplicantId: _shikshaApplicantId!,
+          filePath: applicantAadharFile!.path,
+        );
+
+        if (aadhaarResponse.status != true) {
+          throw Exception(aadhaarResponse.message);
+        }
+      }
+
+      // Ration
+      if (addressProofFile != null) {
+        final rationResponse = await _rationRepo.uploadApplicantRationCard(
+          shikshaApplicantId: _shikshaApplicantId!,
+          filePath: addressProofFile!.path,
+        );
+
+        if (rationResponse.status != true) {
+          throw Exception(rationResponse.message);
+        }
+      }
+
+      // PAN
+      if (fatherPanFile != null) {
+        final panResponse = await _fatherPanRepo.uploadFatherPanCard(
+          shikshaApplicantId: _shikshaApplicantId!,
+          filePath: fatherPanFile!.path,
+        );
+
+        if (panResponse.status != true) {
+          throw Exception(panResponse.message);
+        }
       }
 
       await _fetchShikshaApplication(_shikshaApplicantId!);
@@ -543,6 +655,77 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
               _infoRow("Father Email", data.fatherEmail ?? ''),
               _infoRow("City", data.applicantCityName ?? ''),
               _infoRow("State", data.applicantStateName ?? ''),
+              const Text(
+                "Documents",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (data.applicantAadharCardDocument != null &&
+                  data.applicantAadharCardDocument!.isNotEmpty)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      final imageUrl =
+                          _getFullImageUrl(data.applicantAadharCardDocument);
+                      _showDocumentPreviewDialog(
+                          context, imageUrl, "Applicant Aadhaar");
+                    },
+                    icon: const Icon(Icons.visibility),
+                    label: const Text("View Applicant Aadhaar"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+              if (data.applicantFatherPanCardDocument != null &&
+                  data.applicantFatherPanCardDocument!.isNotEmpty)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      final imageUrl =
+                          _getFullImageUrl(data.applicantFatherPanCardDocument);
+                      _showDocumentPreviewDialog(
+                          context, imageUrl, "Father's PAN");
+                    },
+                    icon: const Icon(Icons.visibility),
+                    label: const Text("View Father's PAN"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+              if (data.applicantRationCardDocument != null &&
+                  data.applicantRationCardDocument!.isNotEmpty)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      final imageUrl =
+                          _getFullImageUrl(data.applicantRationCardDocument);
+                      _showDocumentPreviewDialog(
+                        context,
+                        imageUrl,
+                        "Address Proof",
+                      );
+                    },
+                    icon: const Icon(Icons.visibility),
+                    label: const Text("View Address Proof"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -1023,7 +1206,10 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                               buildImageUploadField(
                                 context: context,
                                 imageFile: applicantAadharFile,
-                                buttonText: "Applicant Aadhaar *",
+                                buttonText: "Applicant Aadhaar",
+                                existingDocumentPath: _applicationData
+                                    ?.applicantAadharCardDocument,
+                                isExistingRemoved: isExistingAadhaarRemoved,
                                 onPick: () {
                                   _showImagePicker(context, (file) {
                                     setModalState(() {
@@ -1034,7 +1220,15 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                                     });
                                   });
                                 },
-                                onRemove: () {
+                                onRemoveExisting: () {
+                                  setModalState(() {
+                                    isExistingAadhaarRemoved = true;
+                                  });
+                                  setState(() {
+                                    isExistingAadhaarRemoved = true;
+                                  });
+                                },
+                                onRemoveNew: () {
                                   setModalState(() {
                                     applicantAadharFile = null;
                                   });
@@ -1047,7 +1241,10 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                               buildImageUploadField(
                                 context: context,
                                 imageFile: fatherPanFile,
-                                buttonText: "Father's PAN Card *",
+                                buttonText: "Father's PAN Card",
+                                existingDocumentPath: _applicationData
+                                    ?.applicantFatherPanCardDocument,
+                                isExistingRemoved: isExistingPanRemoved,
                                 onPick: () {
                                   _showImagePicker(context, (file) {
                                     setModalState(() {
@@ -1058,7 +1255,15 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                                     });
                                   });
                                 },
-                                onRemove: () {
+                                onRemoveExisting: () {
+                                  setModalState(() {
+                                    isExistingPanRemoved = true;
+                                  });
+                                  setState(() {
+                                    isExistingPanRemoved = true;
+                                  });
+                                },
+                                onRemoveNew: () {
                                   setModalState(() {
                                     fatherPanFile = null;
                                   });
@@ -1073,6 +1278,9 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                                 imageFile: addressProofFile,
                                 buttonText:
                                     "Address Proof (if Aadhaar and current address are not the same)",
+                                existingDocumentPath: _applicationData
+                                    ?.applicantRationCardDocument,
+                                isExistingRemoved: isExistingRationRemoved,
                                 onPick: () {
                                   _showImagePicker(context, (file) {
                                     setModalState(() {
@@ -1083,7 +1291,15 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                                     });
                                   });
                                 },
-                                onRemove: () {
+                                onRemoveExisting: () {
+                                  setModalState(() {
+                                    isExistingRationRemoved = true;
+                                  });
+                                  setState(() {
+                                    isExistingRationRemoved = true;
+                                  });
+                                },
+                                onRemoveNew: () {
                                   setModalState(() {
                                     addressProofFile = null;
                                   });
@@ -1296,79 +1512,194 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
     required BuildContext context,
     required File? imageFile,
     required String buttonText,
+    required String? existingDocumentPath,
+    required bool isExistingRemoved,
     required VoidCallback onPick,
-    required VoidCallback onRemove,
+    required VoidCallback onRemoveExisting,
+    required VoidCallback onRemoveNew,
   }) {
-    final isUploaded = imageFile != null;
+    final bool hasExisting =
+        !isExistingRemoved && (existingDocumentPath ?? "").isNotEmpty;
+
+    final bool isUploaded = imageFile != null || hasExisting;
+
+    bool isPdf(String path) => path.toLowerCase().endsWith(".pdf");
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (isUploaded)
+        /// NEW FILE PREVIEW
+        if (imageFile != null)
           Stack(
             children: [
               Container(
                 height: 180,
                 width: double.infinity,
                 margin: const EdgeInsets.only(bottom: 10),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey.shade400),
-                ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
-                  child: Image.file(
-                    imageFile,
-                    fit: BoxFit.cover,
-                  ),
+                  child: imageFile.path.endsWith(".pdf")
+                      ? const Center(
+                          child: Icon(Icons.picture_as_pdf,
+                              size: 80, color: Colors.red),
+                        )
+                      : Image.file(imageFile, fit: BoxFit.cover),
                 ),
               ),
-
-              /// ❌ REMOVE BUTTON
               Positioned(
                 right: 8,
                 top: 8,
                 child: GestureDetector(
-                  onTap: onRemove,
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 18,
-                    ),
+                  onTap: onRemoveNew,
+                  child: const CircleAvatar(
+                    radius: 14,
+                    backgroundColor: Colors.red,
+                    child: Icon(Icons.close, size: 16, color: Colors.white),
                   ),
                 ),
               ),
             ],
           ),
+
+        /// EXISTING FILE PREVIEW
+        if (imageFile == null && hasExisting)
+          Stack(
+            children: [
+              Container(
+                height: 180,
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 10),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: isPdf(existingDocumentPath!)
+                      ? const Center(
+                          child: Icon(Icons.picture_as_pdf,
+                              size: 80, color: Colors.red),
+                        )
+                      : Image.network(
+                          _getFullImageUrl(existingDocumentPath),
+                          fit: BoxFit.cover,
+                        ),
+                ),
+              ),
+              Positioned(
+                right: 8,
+                top: 8,
+                child: GestureDetector(
+                  onTap: onRemoveExisting,
+                  child: const CircleAvatar(
+                    radius: 14,
+                    backgroundColor: Colors.red,
+                    child: Icon(Icons.close, size: 16, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
             onPressed: onPick,
             icon: Icon(
-              isUploaded ? Icons.check_circle : Icons.upload,
+              isUploaded ? Icons.check_circle : Icons.upload_file,
             ),
-            label: Text(buttonText),
+            label: Text(
+              isUploaded ? "$buttonText Uploaded" : "$buttonText *",
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: isUploaded
-                  ? Colors.green // ✅ Change color after upload
+                  ? Colors.green
                   : ColorHelperClass.getColorFromHex(
                       ColorResources.red_color,
                     ),
               foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
-              padding: const EdgeInsets.symmetric(vertical: 12),
             ),
           ),
         ),
       ],
+    );
+  }
+
+  String _getFullImageUrl(String? path) {
+    if (path == null || path.isEmpty) return '';
+
+    if (path.startsWith('http')) {
+      return path;
+    }
+
+    return "${Urls.base_url.replaceAll(RegExp(r'/$'), '')}/${path.replaceAll(RegExp(r'^/'), '')}";
+  }
+
+  void _showDocumentPreviewDialog(
+    BuildContext context,
+    String imageUrl,
+    String title,
+  ) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                height: 300,
+                width: double.infinity,
+                child: imageUrl.toLowerCase().endsWith(".pdf")
+                    ? const Center(
+                        child: Icon(
+                          Icons.picture_as_pdf,
+                          size: 80,
+                          color: Colors.red,
+                        ),
+                      )
+                    : Image.network(
+                        imageUrl,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const Padding(
+                          padding: EdgeInsets.all(20),
+                          child: Text("Unable to load document"),
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text("Close"),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
     );
   }
 

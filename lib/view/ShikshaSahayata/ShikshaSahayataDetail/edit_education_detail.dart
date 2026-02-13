@@ -26,7 +26,8 @@ class EditEducationDetailView extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<EditEducationDetailView> createState() => _EditEducationDetailViewState();
+  State<EditEducationDetailView> createState() =>
+      _EditEducationDetailViewState();
 }
 
 class _EditEducationDetailViewState extends State<EditEducationDetailView> {
@@ -48,6 +49,19 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
 
   String? currentMemberId;
   bool isSubmitting = false;
+
+  bool get _isLoanLocked {
+    final loanList = widget.applicationData.requestedLoanEducationAppliedBy;
+
+    if (loanList == null || loanList.isEmpty) return false;
+
+    return loanList.any((loan) {
+      final status = (loan.loanStatus ?? "").toLowerCase();
+      return status == "disbursed" ||
+          status == "partially_repaid" ||
+          status == "fully_repaid";
+    });
+  }
 
   @override
   void initState() {
@@ -143,7 +157,6 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : educationList.isEmpty
@@ -170,15 +183,16 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
                     return _educationCard(edu, index - 1);
                   },
                 ),
-
-      floatingActionButton: FloatingActionButton(
-        backgroundColor:
-            ColorHelperClass.getColorFromHex(ColorResources.red_color),
-        onPressed: () {
-          _showEducationForm(context);
-        },
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
+      floatingActionButton: _isLoanLocked
+          ? null
+          : FloatingActionButton(
+              backgroundColor:
+                  ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              onPressed: () {
+                _showEducationForm(context);
+              },
+              child: const Icon(Icons.add, color: Colors.white),
+            ),
     );
   }
 
@@ -244,70 +258,71 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
                     ),
                   ),
                 ),
-                PopupMenuButton<String>(
-                  color: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  onSelected: (value) {
-                    if (value == 'edit') {
-                      _showEducationForm(
-                        context,
-                        existingData: edu,
-                        index: index,
-                      );
-                    } else if (value == 'delete') {
-                      _showDeleteEducationDialog(index);
-                    }
-                  },
-                  itemBuilder: (context) => const [
-                    PopupMenuItem(
-                      value: 'edit',
-                      child: Text(
-                        'Edit Education Detail',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                if (!_isLoanLocked)
+                  PopupMenuButton<String>(
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    onSelected: (value) {
+                      if (value == 'edit') {
+                        _showEducationForm(
+                          context,
+                          existingData: edu,
+                          index: index,
+                        );
+                      } else if (value == 'delete') {
+                        _showDeleteEducationDialog(index);
+                      }
+                    },
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(
+                        value: 'edit',
+                        child: Text(
+                          'Edit Education Detail',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
-                    ),
-                    PopupMenuItem(
-                      value: 'delete',
-                      child: Text(
-                        'Delete Education Detail',
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Text(
+                          'Delete Education Detail',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ),
+                    ],
+                    child: ElevatedButton(
+                      onPressed: null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFFDC3545),
+                        elevation: 2,
+                        shadowColor: Colors.black26,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                      ),
+                      child: const Text(
+                        "Edit / Delete",
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 12,
                           fontWeight: FontWeight.w500,
                           color: Colors.red,
                         ),
                       ),
                     ),
-                  ],
-                  child: ElevatedButton(
-                    onPressed: null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFFDC3545),
-                      elevation: 2,
-                      shadowColor: Colors.black26,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                    ),
-                    child: const Text(
-                      "Edit / Delete",
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.red,
-                      ),
-                    ),
                   ),
-                ),
               ],
             ),
 
@@ -372,7 +387,6 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
           titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
           contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
           actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: const [
@@ -387,7 +401,6 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
               Divider(thickness: 1, color: Colors.grey),
             ],
           ),
-
           content: const Text(
             "Are you sure you want to delete this education detail?",
             style: TextStyle(
@@ -395,13 +408,12 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
               color: Colors.black87,
             ),
           ),
-
           actions: [
             OutlinedButton(
               onPressed: () => Navigator.pop(dialogContext),
               style: OutlinedButton.styleFrom(
-                foregroundColor: ColorHelperClass.getColorFromHex(
-                    ColorResources.red_color),
+                foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: BorderSide(
                   color: ColorHelperClass.getColorFromHex(
                       ColorResources.red_color),
@@ -412,12 +424,10 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
               ),
               child: const Text("Cancel"),
             ),
-
             ElevatedButton(
               onPressed: () async {
                 try {
-                  final response =
-                  await _deleteRepo.deleteEducation({
+                  final response = await _deleteRepo.deleteEducation({
                     "shiksha_applicant_education_id": educationId,
                   });
 
@@ -435,8 +445,7 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
 
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content:
-                      Text("Education detail deleted successfully"),
+                      content: Text("Education detail deleted successfully"),
                       backgroundColor: Colors.green,
                     ),
                   );
@@ -452,8 +461,8 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: ColorHelperClass.getColorFromHex(
-                    ColorResources.red_color),
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -910,7 +919,7 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
                               context,
                               setModalState,
                               existingDocumentPath:
-                              existingData?["markSheetAttachment"],
+                                  existingData?["markSheetAttachment"],
                             )
                           ],
                         ),
@@ -1055,13 +1064,12 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
   }
 
   Widget _buildEducationUploadField(
-      BuildContext context,
-      StateSetter setModalState, {
-        String? existingDocumentPath,
-      }) {
+    BuildContext context,
+    StateSetter setModalState, {
+    String? existingDocumentPath,
+  }) {
     final bool hasExisting =
-        !isExistingMarksheetRemoved &&
-            (existingDocumentPath ?? "").isNotEmpty;
+        !isExistingMarksheetRemoved && (existingDocumentPath ?? "").isNotEmpty;
 
     final bool isUploaded = _educationDocument != null || hasExisting;
 
@@ -1072,7 +1080,6 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         if (_educationDocument != null)
           Stack(
             children: [
@@ -1084,13 +1091,13 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
                   borderRadius: BorderRadius.circular(10),
                   child: _educationDocument!.path.endsWith(".pdf")
                       ? const Center(
-                    child: Icon(Icons.picture_as_pdf,
-                        size: 80, color: Colors.red),
-                  )
+                          child: Icon(Icons.picture_as_pdf,
+                              size: 80, color: Colors.red),
+                        )
                       : Image.file(
-                    _educationDocument!,
-                    fit: BoxFit.cover,
-                  ),
+                          _educationDocument!,
+                          fit: BoxFit.cover,
+                        ),
                 ),
               ),
               Positioned(
@@ -1105,14 +1112,12 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
                   child: const CircleAvatar(
                     radius: 14,
                     backgroundColor: Colors.red,
-                    child: Icon(Icons.close,
-                        size: 16, color: Colors.white),
+                    child: Icon(Icons.close, size: 16, color: Colors.white),
                   ),
                 ),
               ),
             ],
           ),
-
         if (_educationDocument == null && hasExisting)
           Stack(
             children: [
@@ -1124,13 +1129,13 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
                   borderRadius: BorderRadius.circular(10),
                   child: isPdf(existingDocumentPath!)
                       ? const Center(
-                    child: Icon(Icons.picture_as_pdf,
-                        size: 80, color: Colors.red),
-                  )
+                          child: Icon(Icons.picture_as_pdf,
+                              size: 80, color: Colors.red),
+                        )
                       : Image.network(
-                    _getFullImageUrl(existingDocumentPath),
-                    fit: BoxFit.cover,
-                  ),
+                          _getFullImageUrl(existingDocumentPath),
+                          fit: BoxFit.cover,
+                        ),
                 ),
               ),
               Positioned(
@@ -1145,14 +1150,12 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
                   child: const CircleAvatar(
                     radius: 14,
                     backgroundColor: Colors.red,
-                    child: Icon(Icons.close,
-                        size: 16, color: Colors.white),
+                    child: Icon(Icons.close, size: 16, color: Colors.white),
                   ),
                 ),
               ),
             ],
           ),
-
         if (_educationDocument == null &&
             hasExisting &&
             isPdf(existingDocumentPath!))
@@ -1173,7 +1176,6 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
               ),
             ),
           ),
-
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
@@ -1191,8 +1193,7 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
             style: ElevatedButton.styleFrom(
               backgroundColor: isUploaded
                   ? Colors.green
-                  : ColorHelperClass.getColorFromHex(
-                  ColorResources.red_color),
+                  : ColorHelperClass.getColorFromHex(ColorResources.red_color),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
@@ -1278,9 +1279,9 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
   }
 
   void _showEducationImagePicker(
-      BuildContext context,
-      StateSetter setModalState,
-      ) {
+    BuildContext context,
+    StateSetter setModalState,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -1296,7 +1297,7 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
               onTap: () async {
                 Navigator.pop(context);
                 final picked =
-                await _picker.pickImage(source: ImageSource.camera);
+                    await _picker.pickImage(source: ImageSource.camera);
                 if (picked != null) {
                   setModalState(() {
                     _educationDocument = File(picked.path);
@@ -1310,7 +1311,7 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
               onTap: () async {
                 Navigator.pop(context);
                 final picked =
-                await _picker.pickImage(source: ImageSource.gallery);
+                    await _picker.pickImage(source: ImageSource.gallery);
                 if (picked != null) {
                   setModalState(() {
                     _educationDocument = File(picked.path);

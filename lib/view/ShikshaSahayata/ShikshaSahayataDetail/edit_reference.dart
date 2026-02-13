@@ -51,6 +51,20 @@ class _EditReferenceViewState extends State<EditReferenceView> {
   bool isExistingAadhaarRemoved = false;
   String? currentMemberId;
 
+  bool get _isLoanLocked {
+    final loanList =
+        widget.applicationData.requestedLoanEducationAppliedBy;
+
+    if (loanList == null || loanList.isEmpty) return false;
+
+    return loanList.any((loan) {
+      final status = (loan.loanStatus ?? "").toLowerCase();
+      return status == "disbursed" ||
+          status == "partially_repaid" ||
+          status == "fully_repaid";
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -164,13 +178,14 @@ class _EditReferenceViewState extends State<EditReferenceView> {
                                 ),
                               ),
                             ),
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                _showReferenceSheet(
-                                  context,
-                                  existingData: item,
-                                );
-                              },
+                            if (!_isLoanLocked)
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  _showReferenceSheet(
+                                    context,
+                                    existingData: item,
+                                  );
+                                },
                               icon: const Icon(
                                 Icons.edit,
                                 size: 16,
@@ -244,7 +259,9 @@ class _EditReferenceViewState extends State<EditReferenceView> {
                   ),
                 );
               }),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: _isLoanLocked
+          ? null
+          : FloatingActionButton(
         backgroundColor:
             ColorHelperClass.getColorFromHex(ColorResources.red_color),
         onPressed: () {
@@ -259,7 +276,7 @@ class _EditReferenceViewState extends State<EditReferenceView> {
     if (path == null || path.isEmpty) return '';
 
     if (path.startsWith('http')) {
-      return path; // already full URL
+      return path;
     }
 
     return "${Urls.base_url.replaceAll(RegExp(r'/$'), '')}/${path.replaceAll(RegExp(r'^/'), '')}";

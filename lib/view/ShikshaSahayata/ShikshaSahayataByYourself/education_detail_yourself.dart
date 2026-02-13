@@ -8,12 +8,16 @@ import 'package:mpm/model/ShikshaSahayata/EducationDetail/AddEducationDetail/Add
 import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/GetShikshaApplicationModelClass.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/EducationDetailRepo/add_education_detail_repository/add_education_detail_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/EducationDetailRepo/delete_education_detail_repo/delete_education_detail_repository.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/EducationDetailRepo/mark_sheet_upload_repository/mark_sheet_upload_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/EducationDetailRepo/update_education_detail_repository/update_education_detail_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/ShikshaApplicationRepo/shiksha_application_repository/shiksha_application_repo.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/utils/urls.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/shiksha_sahayata_by_parenting_view.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByYourself/current_year_education_yourself.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class EducationDetailYourselfView extends StatefulWidget {
   final String shikshaApplicantId;
@@ -35,15 +39,18 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
   final AddEducationRepository _educationRepo = AddEducationRepository();
   final UpdateEducationRepository _updateRepo = UpdateEducationRepository();
   final DeleteEducationRepository _deleteRepo = DeleteEducationRepository();
+  final MarkSheetUploadRepository _markSheetRepo = MarkSheetUploadRepository();
   final ShikshaApplicationRepository _shikshaRepo =
   ShikshaApplicationRepository();
 
   GetShikshaApplicationModelClass? _applicationData;
 
   bool isLoading = true;
-
-  String? currentMemberId;
   bool isSubmitting = false;
+
+  bool isExistingMarksheetRemoved = false;
+  String? _existingMarksheetPath;
+  String? currentMemberId;
 
   @override
   void initState() {
@@ -89,7 +96,7 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
             "board": edu.boardOrUniversity ?? '',
             "passed": edu.yearOfPassing ?? '',
             "marks": edu.marksInPercentage ?? '',
-            "file": null,
+            "markSheetAttachment": edu.markSheetAttachment ?? '',
           });
         }
 
@@ -219,6 +226,7 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
 
   Widget _educationCard(Map<String, dynamic> edu, int index) {
     final File? file = edu["file"];
+    final String serverDocument = edu["markSheetAttachment"] ?? "";
 
     final String displayTitle =
     edu["class"] == "Other" &&
@@ -334,22 +342,22 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
             _infoRow("Marks", edu["marks"]),
             const SizedBox(height: 12),
 
-            if (file != null)
+            if (serverDocument.toString().isNotEmpty)
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () => _showEducationPreview(context, file),
+                  onPressed: () {
+                    _showServerMarksheetPreview(
+                      context,
+                      _getFullImageUrl(serverDocument),
+                    );
+                  },
                   icon: const Icon(Icons.visibility),
-                  label: const Text("View Document"),
+                  label: const Text("View Marksheet"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor:
-                    ColorHelperClass.getColorFromHex(
-                        ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
               ),
@@ -444,19 +452,22 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
             const Expanded(
               child: Text(
                 "Once you complete the above details, click Next Step to proceed.",
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.black87,
-                ),
+                style: TextStyle(fontSize: 13),
               ),
             ),
             const SizedBox(width: 12),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('education_completed_yourself', true);
+
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => ShikshaSahayataByParentingView(),
+                    builder: (_) =>
+                        CurrentYearEducationYourselfView(
+                          shikshaApplicantId: widget.shikshaApplicantId,
+                        ),
                   ),
                 );
               },
@@ -464,11 +475,6 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
                 backgroundColor:
                 ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
-                padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
               ),
               child: const Text("Next Step"),
             ),
@@ -488,9 +494,7 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
   }) async {
     if (isSubmitting) return;
 
-    setState(() {
-      isSubmitting = true;
-    });
+    setState(() => isSubmitting = true);
 
     try {
       final educationData = AddEducationDetailData(
@@ -504,30 +508,42 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
         createdBy: currentMemberId,
       );
 
-      final response = await _educationRepo.addEducation(
-        educationData.toJson(),
-      );
+      final response =
+      await _educationRepo.addEducation(educationData.toJson());
 
       if (response.status != true) {
-        throw Exception(response.message ?? "Failed to add education");
+        throw Exception(response.message);
       }
 
-      // ✅ Close bottom sheet first
-      Navigator.pop(context);
+      final String educationId =
+          response.data?.shikshaApplicantEducationId?.toString() ?? '';
 
-      // ✅ Clear temporary document
+      if (educationId.isEmpty) {
+        throw Exception("Education ID not returned");
+      }
+
+      final uploadResponse =
+      await _markSheetRepo.uploadMarkSheet(
+        shikshaApplicantId: widget.shikshaApplicantId,
+        educationId: educationId,
+        filePath: _educationDocument!.path,
+      );
+
+      if (uploadResponse.status != true) {
+        throw Exception(uploadResponse.message);
+      }
+
+      Navigator.pop(context);
       _educationDocument = null;
 
-      // ✅ Refresh from API (SOURCE OF TRUTH)
       await _fetchEducationData();
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Education details added successfully"),
+          content: Text("Education and Marksheet uploaded successfully"),
           backgroundColor: Colors.green,
         ),
       );
-
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -536,9 +552,7 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
         ),
       );
     } finally {
-      setState(() {
-        isSubmitting = false;
-      });
+      setState(() => isSubmitting = false);
     }
   }
 
@@ -608,8 +622,12 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
 
   // ====================== EDUCATION FORM ======================
 
-  void _showEducationForm(BuildContext context, {Map<String, dynamic>? existingData, int? index}) {
+  void _showEducationForm(BuildContext context,
+      {Map<String, dynamic>? existingData, int? index}) {
     String selectedClass = '';
+    isExistingMarksheetRemoved = false;
+    _educationDocument = null;
+
 
     final TextEditingController passedCtrl = TextEditingController();
     final TextEditingController marksCtrl = TextEditingController();
@@ -627,11 +645,31 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
     bool isEditMode = existingData != null;
 
     if (isEditMode) {
-      selectedClass = existingData["class"] ?? '';
+      final existingStandard = existingData["class"] ?? '';
+      final existingOther = existingData["otherEducationDetails"] ?? '';
+
+      if (existingStandard == "Other") {
+        selectedClass = "Other";
+        otherClassCtrl.text = existingOther;
+      } else {
+        selectedClass = existingStandard;
+      }
       schoolCtrl.text = existingData["school"] ?? '';
       boardCtrl.text = existingData["board"] ?? '';
       passedCtrl.text = existingData["passed"] ?? '';
       marksCtrl.text = existingData["marks"] ?? '';
+    }
+
+    bool isFormValid() {
+      if (selectedClass.isEmpty) return false;
+      if (schoolCtrl.text.trim().isEmpty) return false;
+      if (boardCtrl.text.trim().isEmpty) return false;
+      if (passedCtrl.text.trim().isEmpty) return false;
+      if (marksCtrl.text.trim().isEmpty) return false;
+      if (selectedClass == "Other" && otherClassCtrl.text.trim().isEmpty) {
+        return false;
+      }
+      return true;
     }
 
     showModalBottomSheet(
@@ -641,7 +679,7 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-    builder: (_) {
+      builder: (_) {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return SafeArea(
@@ -658,15 +696,14 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
                           OutlinedButton(
                             onPressed: () => Navigator.pop(context),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor:
-                              ColorHelperClass.getColorFromHex(
+                              foregroundColor: ColorHelperClass.getColorFromHex(
                                   ColorResources.red_color),
                               side: BorderSide(
                                 color: ColorHelperClass.getColorFromHex(
                                     ColorResources.red_color),
                               ),
-                              padding:
-                              const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -674,23 +711,20 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
                             child: const Text("Cancel"),
                           ),
                           ElevatedButton(
-                            onPressed: selectedClass.isEmpty ||
-                                schoolCtrl.text.isEmpty ||
-                                boardCtrl.text.isEmpty ||
-                                passedCtrl.text.isEmpty ||
-                                marksCtrl.text.isEmpty ||
-                                (selectedClass == "Other" && otherClassCtrl.text.isEmpty) ||
-                                isSubmitting
+                            onPressed: !isFormValid() || isSubmitting
                                 ? null
                                 : () async {
                               if (isEditMode) {
-                                final educationId = existingData?["educationId"];
+                                final educationId =
+                                existingData?["educationId"];
 
                                 if (educationId == null ||
                                     educationId.toString().isEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(
                                     const SnackBar(
-                                      content: Text("Education ID missing"),
+                                      content:
+                                      Text("Education ID missing"),
                                       backgroundColor: Colors.red,
                                     ),
                                   );
@@ -734,8 +768,7 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
                               }
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                              ColorHelperClass.getColorFromHex(
+                              backgroundColor: ColorHelperClass.getColorFromHex(
                                   ColorResources.red_color),
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(
@@ -766,8 +799,7 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.all(16),
                         child: Column(
-                          crossAxisAlignment:
-                          CrossAxisAlignment.stretch,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             const Center(
                               child: Text(
@@ -784,27 +816,20 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
                             InputDecorator(
                               decoration: InputDecoration(
                                 labelText: "Class *",
-                                border:
-                                const OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      color: Colors.black),
+                                border: const OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.black),
                                 ),
-                                enabledBorder:
-                                const OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      color: Colors.black),
+                                enabledBorder: const OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.black),
                                 ),
-                                focusedBorder:
-                                const OutlineInputBorder(
+                                focusedBorder: const OutlineInputBorder(
                                   borderSide: BorderSide(
-                                      color: Colors.black38,
-                                      width: 1),
+                                      color: Colors.black38, width: 1),
                                 ),
                                 contentPadding:
-                                const EdgeInsets.symmetric(
-                                    horizontal: 20),
-                                labelStyle: const TextStyle(
-                                    color: Colors.black),
+                                const EdgeInsets.symmetric(horizontal: 20),
+                                labelStyle:
+                                const TextStyle(color: Colors.black),
                               ),
                               child: DropdownButton<String>(
                                 dropdownColor: Colors.white,
@@ -816,11 +841,10 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
                                     : selectedClass,
                                 hint: const Text("Select Class"),
                                 items: classOptions
-                                    .map((c) =>
-                                    DropdownMenuItem<String>(
-                                      value: c,
-                                      child: Text(c),
-                                    ))
+                                    .map((c) => DropdownMenuItem<String>(
+                                  value: c,
+                                  child: Text(c),
+                                ))
                                     .toList(),
                                 onChanged: (val) {
                                   setModalState(() {
@@ -844,16 +868,18 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
                             /// 🔹 NEW FIELD - SCHOOL / COLLEGE
                             TextFormField(
                               controller: schoolCtrl,
-                              decoration: _inputDecoration(
-                                  'School / College Name *'),
+                              onChanged: (_) => setModalState(() {}),
+                              decoration:
+                              _inputDecoration('School / College Name *'),
                             ),
                             const SizedBox(height: 20),
 
                             /// 🔹 NEW FIELD - BOARD / UNIVERSITY
                             TextFormField(
                               controller: boardCtrl,
-                              decoration: _inputDecoration(
-                                  'Board / University *'),
+                              onChanged: (_) => setModalState(() {}),
+                              decoration:
+                              _inputDecoration('Board / University *'),
                             ),
                             const SizedBox(height: 20),
 
@@ -868,12 +894,17 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
                             /// 🔹 UPDATED LABEL
                             TextFormField(
                               controller: marksCtrl,
+                              onChanged: (_) => setModalState(() {}),
                               decoration: _inputDecoration(
                                   'Marks Obtained / Total Marks *'),
                             ),
                             const SizedBox(height: 25),
 
-                            _buildEducationUploadField(context),
+                            _buildEducationUploadField(
+                              context,
+                              setModalState,
+                              existingDocumentPath: _existingMarksheetPath,
+                            )
                           ],
                         ),
                       ),
@@ -987,85 +1018,149 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
     );
   }
 
-  void _showEducationPreview(BuildContext context, File file) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          insetPadding: const EdgeInsets.all(16),
-          child: Stack(
+  Widget _buildEducationUploadField(
+      BuildContext context,
+      StateSetter setModalState,  {
+        String? existingDocumentPath,
+      }) {
+    final bool hasExisting =
+        !isExistingMarksheetRemoved &&
+            (existingDocumentPath ?? "").isNotEmpty;
+
+    final bool isUploaded =
+        _educationDocument != null || hasExisting;
+
+    bool isPdf(String path) =>
+        path.toLowerCase().endsWith(".pdf");
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+
+        if (_educationDocument != null)
+          Stack(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
-                child: file.path.endsWith(".pdf")
-                    ? const Center(
-                  child: Icon(
-                    Icons.picture_as_pdf,
-                    size: 100,
-                    color: Colors.red,
+                height: 180,
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 10),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: _educationDocument!.path.endsWith(".pdf")
+                      ? const Center(
+                    child: Icon(Icons.picture_as_pdf,
+                        size: 80, color: Colors.red),
+                  )
+                      : Image.file(
+                    _educationDocument!,
+                    fit: BoxFit.cover,
                   ),
-                )
-                    : InteractiveViewer(
-                  child: Image.file(
-                    file,
-                    fit: BoxFit.contain,
+                ),
+              ),
+              Positioned(
+                right: 8,
+                top: 8,
+                child: GestureDetector(
+                  onTap: () {
+                    setModalState(() {
+                      _educationDocument = null;
+                    });
+                  },
+                  child: const CircleAvatar(
+                    radius: 14,
+                    backgroundColor: Colors.red,
+                    child: Icon(Icons.close,
+                        size: 16, color: Colors.white),
                   ),
                 ),
               ),
             ],
           ),
-        );
-      },
-    );
-  }
 
-  Widget _buildEducationUploadField(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (_educationDocument != null)
-          Container(
-            height: 200,
-            width: double.infinity,
-            margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.black26),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: _educationDocument!.path.endsWith(".pdf")
-                  ? const Center(
-                child: Icon(
-                  Icons.picture_as_pdf,
-                  size: 70,
-                  color: Colors.redAccent,
+        /// 🔥 EXISTING NETWORK PREVIEW
+        if (_educationDocument == null && hasExisting)
+          Stack(
+            children: [
+              Container(
+                height: 180,
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 10),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: isPdf(existingDocumentPath!)
+                      ? const Center(
+                    child: Icon(Icons.picture_as_pdf,
+                        size: 80, color: Colors.red),
+                  )
+                      : Image.network(
+                    _getFullImageUrl(existingDocumentPath),
+                    fit: BoxFit.cover,
+                  ),
                 ),
-              )
-                  : Image.file(
-                _educationDocument!,
-                fit: BoxFit.cover,
+              ),
+              Positioned(
+                right: 8,
+                top: 8,
+                child: GestureDetector(
+                  onTap: () {
+                    setModalState(() {
+                      isExistingMarksheetRemoved = true;
+                    });
+                  },
+                  child: const CircleAvatar(
+                    radius: 14,
+                    backgroundColor: Colors.red,
+                    child: Icon(Icons.close,
+                        size: 16, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+        /// 🔥 VIEW BUTTON (FOR PDF)
+        if (_educationDocument == null &&
+            hasExisting &&
+            isPdf(existingDocumentPath!))
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                _showServerMarksheetPreview(
+                  context,
+                  _getFullImageUrl(existingDocumentPath),
+                );
+              },
+              icon: const Icon(Icons.visibility),
+              label: const Text("View Existing Document"),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.green,
+                side: const BorderSide(color: Colors.green),
               ),
             ),
           ),
 
+        /// 🔥 UPLOAD BUTTON
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            onPressed: () => _showEducationImagePicker(context),
-            icon: const Icon(Icons.upload_file),
+            onPressed: () {
+              _showEducationImagePicker(context, setModalState);
+            },
+            icon: Icon(
+              isUploaded ? Icons.check_circle : Icons.upload_file,
+            ),
             label: Text(
-              _educationDocument == null
-                  ? "Upload Marksheet / Certificate"
-                  : "Change Document",
+              isUploaded
+                  ? "Marksheet Uploaded"
+                  : "Upload Marksheet / Certificate *",
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor:
-              ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              backgroundColor: isUploaded
+                  ? Colors.green
+                  : ColorHelperClass.getColorFromHex(
+                  ColorResources.red_color),
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
           ),
@@ -1074,56 +1169,126 @@ class _EducationDetailYourselfViewState extends State<EducationDetailYourselfVie
     );
   }
 
-  void _showEducationImagePicker(BuildContext context) {
+  String _getFullImageUrl(String? path) {
+    if (path == null || path.isEmpty) return '';
+
+    if (path.startsWith('http')) {
+      return path;
+    }
+
+    return "${Urls.base_url.replaceAll(RegExp(r'/$'), '')}/${path.replaceAll(RegExp(r'^/'), '')}";
+  }
+
+  void _showServerMarksheetPreview(
+      BuildContext context,
+      String imageUrl,
+      ) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 16),
+            const Text(
+              "Marksheet Document",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                height: 300,
+                width: double.infinity,
+                child: imageUrl.toLowerCase().endsWith(".pdf")
+                    ? const Center(
+                  child: Icon(
+                    Icons.picture_as_pdf,
+                    size: 80,
+                    color: Colors.red,
+                  ),
+                )
+                    : Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Text("Unable to load document"),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                backgroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                padding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              ),
+              child: const Text("Close"),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEducationImagePicker(
+      BuildContext context,
+      StateSetter setModalState,
+      ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
       ),
-      builder: (BuildContext context) {
+      builder: (_) {
         return Wrap(
           children: [
             ListTile(
               leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
               title: const Text("Take a Picture"),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(context);
-                _pickEducationFromCamera();
+                final picked =
+                await _picker.pickImage(source: ImageSource.camera);
+                if (picked != null) {
+                  setModalState(() {
+                    _educationDocument = File(picked.path);
+                  });
+                }
               },
             ),
             ListTile(
               leading: const Icon(Icons.image, color: Colors.redAccent),
               title: const Text("Choose from Gallery"),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(context);
-                _pickEducationFromGallery();
+                final picked =
+                await _picker.pickImage(source: ImageSource.gallery);
+                if (picked != null) {
+                  setModalState(() {
+                    _educationDocument = File(picked.path);
+                  });
+                }
               },
             ),
           ],
         );
       },
     );
-  }
-
-  Future<void> _pickEducationFromCamera() async {
-    final pickedFile =
-    await _picker.pickImage(source: ImageSource.camera);
-    if (pickedFile != null) {
-      setState(() {
-        _educationDocument = File(pickedFile.path);
-      });
-    }
-  }
-
-  Future<void> _pickEducationFromGallery() async {
-    final pickedFile =
-    await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _educationDocument = File(pickedFile.path);
-      });
-    }
   }
 
 }
