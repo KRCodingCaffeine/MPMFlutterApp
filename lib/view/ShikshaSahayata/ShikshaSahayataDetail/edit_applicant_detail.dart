@@ -37,28 +37,27 @@ class EditApplicantDetailView extends StatefulWidget {
       _EditApplicantDetailViewState();
 }
 
-class _EditApplicantDetailViewState
-    extends State<EditApplicantDetailView> {
+class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
   final ImagePicker _picker = ImagePicker();
   File? applicantAadharFile;
   File? fatherPanFile;
   File? addressProofFile;
 
   final UpdateShikshaApplicationRepository _updateRepo =
-  UpdateShikshaApplicationRepository();
-  final UpdateFatherRepository _updateFatherRepo =
-  UpdateFatherRepository();
-  final UdateProfileController controller =
-  Get.put(UdateProfileController());
+      UpdateShikshaApplicationRepository();
+  final UpdateFatherRepository _updateFatherRepo = UpdateFatherRepository();
+  final UdateProfileController controller = Get.put(UdateProfileController());
   NewMemberController regiController = Get.find<NewMemberController>();
   final ApplicantAadhaarUploadRepository _aadhaarRepo =
-  ApplicantAadhaarUploadRepository();
+      ApplicantAadhaarUploadRepository();
   final ApplicantRationUploadRepository _rationRepo =
-  ApplicantRationUploadRepository();
-  final FatherPanUploadRepository _fatherPanRepo =
-  FatherPanUploadRepository();
+      ApplicantRationUploadRepository();
+  final FatherPanUploadRepository _fatherPanRepo = FatherPanUploadRepository();
 
   bool _isSubmitting = false;
+  bool isExistingAadhaarRemoved = false;
+  bool isExistingPanRemoved = false;
+  bool isExistingRationRemoved = false;
 
   final TextEditingController firstNameCtrl = TextEditingController();
   final TextEditingController middleNameCtrl = TextEditingController();
@@ -108,7 +107,7 @@ class _EditApplicantDetailViewState
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: const Text(
           "Applicant Detail",
           style: TextStyle(color: Colors.white),
@@ -120,18 +119,16 @@ class _EditApplicantDetailViewState
         child: Card(
           color: Colors.white,
           elevation: 4,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 /// HEADER WITH EDIT BUTTON
                 Row(
-                  mainAxisAlignment:
-                  MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
                       "Applicant Details",
@@ -140,7 +137,6 @@ class _EditApplicantDetailViewState
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-
                     ElevatedButton.icon(
                       onPressed: () {
                         _openEditApplicant();
@@ -151,15 +147,13 @@ class _EditApplicantDetailViewState
                         style: TextStyle(fontSize: 13),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                        ColorHelperClass.getColorFromHex(
+                        backgroundColor: ColorHelperClass.getColorFromHex(
                             ColorResources.red_color),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 10),
                         shape: RoundedRectangleBorder(
-                          borderRadius:
-                          BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
                     ),
@@ -175,8 +169,7 @@ class _EditApplicantDetailViewState
                 _infoRow("Mobile", data.mobile ?? ''),
                 _infoRow("Date of Birth", data.dateOfBirth ?? ''),
                 _infoRow("Age", data.age ?? ''),
-                _infoRow("Marital Status",
-                    data.maritalStatusName ?? ''),
+                _infoRow("Marital Status", data.maritalStatusName ?? ''),
 
                 const SizedBox(height: 20),
 
@@ -190,18 +183,12 @@ class _EditApplicantDetailViewState
 
                 const SizedBox(height: 12),
 
-                _infoRow("Father Name",
-                    data.applicantFatherName ?? ''),
-                _infoRow("Mother Name",
-                    data.applicantMotherName ?? ''),
-                _infoRow("Father Mobile",
-                    data.fatherMobile ?? ''),
-                _infoRow("Father Email",
-                    data.fatherEmail ?? ''),
-                _infoRow("City",
-                    data.applicantCityName ?? ''),
-                _infoRow("State",
-                    data.applicantStateName ?? ''),
+                _infoRow("Father Name", data.applicantFatherName ?? ''),
+                _infoRow("Mother Name", data.applicantMotherName ?? ''),
+                _infoRow("Father Mobile", data.fatherMobile ?? ''),
+                _infoRow("Father Email", data.fatherEmail ?? ''),
+                _infoRow("City", data.applicantCityName ?? ''),
+                _infoRow("State", data.applicantStateName ?? ''),
 
                 const Text(
                   "Documents",
@@ -218,15 +205,16 @@ class _EditApplicantDetailViewState
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        final imageUrl = _getFullImageUrl(
-                            data.applicantAadharCardDocument);
-                        _showDocumentPreviewDialog(context, imageUrl, "Applicant Aadhaar");
+                        final imageUrl =
+                            _getFullImageUrl(data.applicantAadharCardDocument);
+                        _showDocumentPreviewDialog(
+                            context, imageUrl, "Applicant Aadhaar");
                       },
                       icon: const Icon(Icons.visibility),
                       label: const Text("View Applicant Aadhaar"),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                        ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                        backgroundColor: ColorHelperClass.getColorFromHex(
+                            ColorResources.red_color),
                         foregroundColor: Colors.white,
                       ),
                     ),
@@ -240,13 +228,14 @@ class _EditApplicantDetailViewState
                       onPressed: () {
                         final imageUrl = _getFullImageUrl(
                             data.applicantFatherPanCardDocument);
-                        _showDocumentPreviewDialog(context, imageUrl, "Father's PAN");
+                        _showDocumentPreviewDialog(
+                            context, imageUrl, "Father's PAN");
                       },
                       icon: const Icon(Icons.visibility),
                       label: const Text("View Father's PAN"),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                        ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                        backgroundColor: ColorHelperClass.getColorFromHex(
+                            ColorResources.red_color),
                         foregroundColor: Colors.white,
                       ),
                     ),
@@ -259,7 +248,7 @@ class _EditApplicantDetailViewState
                     child: ElevatedButton.icon(
                       onPressed: () {
                         final imageUrl =
-                        _getFullImageUrl(data.applicantRationCardDocument);
+                            _getFullImageUrl(data.applicantRationCardDocument);
                         _showDocumentPreviewDialog(
                           context,
                           imageUrl,
@@ -269,13 +258,12 @@ class _EditApplicantDetailViewState
                       icon: const Icon(Icons.visibility),
                       label: const Text("View Address Proof"),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                        ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                        backgroundColor: ColorHelperClass.getColorFromHex(
+                            ColorResources.red_color),
                         foregroundColor: Colors.white,
                       ),
                     ),
                   ),
-
               ],
             ),
           ),
@@ -287,6 +275,7 @@ class _EditApplicantDetailViewState
   bool _isValidEmail(String email) {
     return RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email);
   }
+
   bool get _canSubmitApplicant {
     if (firstNameCtrl.text.trim().isEmpty) return false;
     if (lastNameCtrl.text.trim().isEmpty) return false;
@@ -334,7 +323,7 @@ class _EditApplicantDetailViewState
       );
 
       final response =
-      await _updateRepo.updateShikshaApplication(updateData.toJson());
+          await _updateRepo.updateShikshaApplication(updateData.toJson());
 
       if (response.status != true) {
         throw Exception(response.message);
@@ -353,7 +342,7 @@ class _EditApplicantDetailViewState
       );
 
       final fatherResponse =
-      await _updateFatherRepo.updateFatherData(fatherData.toJson());
+          await _updateFatherRepo.updateFatherData(fatherData.toJson());
 
       if (fatherResponse.status != true) {
         throw Exception(fatherResponse.message);
@@ -362,8 +351,7 @@ class _EditApplicantDetailViewState
       if (applicantAadharFile != null) {
         debugPrint("📤 Uploading Aadhaar: ${applicantAadharFile!.path}");
 
-        final aadhaarResponse =
-        await _aadhaarRepo.uploadApplicantAadhaar(
+        final aadhaarResponse = await _aadhaarRepo.uploadApplicantAadhaar(
           shikshaApplicantId: widget.applicationData.shikshaApplicantId!,
           filePath: applicantAadharFile!.path,
         );
@@ -379,8 +367,7 @@ class _EditApplicantDetailViewState
       if (addressProofFile != null) {
         debugPrint("📤 Uploading Ration: ${addressProofFile!.path}");
 
-        final rationResponse =
-        await _rationRepo.uploadApplicantRationCard(
+        final rationResponse = await _rationRepo.uploadApplicantRationCard(
           shikshaApplicantId: widget.applicationData.shikshaApplicantId!,
           filePath: addressProofFile!.path,
         );
@@ -396,8 +383,7 @@ class _EditApplicantDetailViewState
       if (fatherPanFile != null) {
         debugPrint("📤 Uploading Father PAN: ${fatherPanFile!.path}");
 
-        final panResponse =
-        await _fatherPanRepo.uploadFatherPanCard(
+        final panResponse = await _fatherPanRepo.uploadFatherPanCard(
           shikshaApplicantId: widget.applicationData.shikshaApplicantId!,
           filePath: fatherPanFile!.path,
         );
@@ -477,8 +463,8 @@ class _EditApplicantDetailViewState
                           OutlinedButton(
                             onPressed: () => Navigator.pop(context),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor:
-                              ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                              foregroundColor: ColorHelperClass.getColorFromHex(
+                                  ColorResources.red_color),
                               side: const BorderSide(color: Colors.red),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
@@ -489,16 +475,16 @@ class _EditApplicantDetailViewState
                           ElevatedButton(
                             onPressed: _canSubmitApplicant
                                 ? () async {
-                              Navigator.pop(context);
-                                await _updateApplicant();
-                            }
+                                    Navigator.pop(context);
+                                    await _updateApplicant();
+                                  }
                                 : null,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                              ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                              backgroundColor: ColorHelperClass.getColorFromHex(
+                                  ColorResources.red_color),
                               foregroundColor: Colors.white,
-                              padding:
-                              const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -508,13 +494,11 @@ class _EditApplicantDetailViewState
                         ],
                       ),
                       const SizedBox(height: 10),
-
                       Expanded(
                         child: SingleChildScrollView(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           child: Column(
                             children: [
-
                               const Text(
                                 "Applicant Details",
                                 style: TextStyle(
@@ -523,28 +507,24 @@ class _EditApplicantDetailViewState
                                 ),
                               ),
                               const SizedBox(height: 30),
-
                               _buildTextField("First Name *",
                                   controller: firstNameCtrl,
                                   onChanged: (_) => setModalState(() {})),
                               const SizedBox(height: 20),
-
                               _buildTextField("Middle Name",
                                   controller: middleNameCtrl,
                                   onChanged: (_) => setModalState(() {})),
                               const SizedBox(height: 20),
-
                               _buildTextField("Surname *",
                                   controller: lastNameCtrl,
                                   onChanged: (_) => setModalState(() {})),
                               const SizedBox(height: 20),
-
-                              _buildTextField("Email *",
+                              _buildTextField(
+                                "Email *",
                                 controller: emailCtrl,
                                 onChanged: (_) => setModalState(() {}),
                               ),
                               const SizedBox(height: 20),
-
                               _buildTextField(
                                 "Mobile Number *",
                                 controller: mobileCtrl,
@@ -553,7 +533,6 @@ class _EditApplicantDetailViewState
                                 onChanged: (_) => setModalState(() {}),
                               ),
                               const SizedBox(height: 20),
-
                               _buildTextField(
                                 "Landline Number",
                                 controller: landlineCtrl,
@@ -561,24 +540,20 @@ class _EditApplicantDetailViewState
                                 onChanged: (_) => setModalState(() {}),
                               ),
                               const SizedBox(height: 20),
-
                               _buildTextField(
                                 "Father's Name *",
                                 controller: fatherNameCtrl,
                                 onChanged: (_) => setModalState(() {}),
                               ),
                               const SizedBox(height: 20),
-
                               _buildTextField("Mother's Name",
                                   controller: motherNameCtrl,
                                   onChanged: (_) => setModalState(() {})),
                               const SizedBox(height: 20),
-
                               _buildTextField("Father's Email *",
                                   controller: fatherEmailCtrl,
                                   onChanged: (_) => setModalState(() {})),
                               const SizedBox(height: 20),
-
                               _buildTextField(
                                 "Father's Mobile *",
                                 controller: fatherMobileCtrl,
@@ -587,7 +562,6 @@ class _EditApplicantDetailViewState
                                 onChanged: (_) => setModalState(() {}),
                               ),
                               const SizedBox(height: 20),
-
                               themedDatePickerField(
                                 context: context,
                                 label: "Date of Birth *",
@@ -597,7 +571,6 @@ class _EditApplicantDetailViewState
                                 onChanged: () => setModalState(() {}),
                               ),
                               const SizedBox(height: 20),
-
                               _buildTextField(
                                 "Age",
                                 controller: ageCtrl,
@@ -605,7 +578,6 @@ class _EditApplicantDetailViewState
                                 onChanged: (_) => setModalState(() {}),
                               ),
                               const SizedBox(height: 20),
-
                               _buildDropdown(
                                 label: "Marital Status *",
                                 items: ["Married", "Unmarried"],
@@ -616,62 +588,84 @@ class _EditApplicantDetailViewState
                                   });
                                 },
                               ),
-
                               const SizedBox(height: 20),
-
                               Container(
                                 width: double.infinity,
-                                margin: const EdgeInsets.only(left: 5, right: 5),
+                                margin:
+                                    const EdgeInsets.only(left: 5, right: 5),
                                 child: Row(
                                   children: [
                                     Obx(() {
-                                      if (regiController.rxStatusCityLoading.value == Status.LOADING) {
+                                      if (regiController
+                                              .rxStatusCityLoading.value ==
+                                          Status.LOADING) {
                                         return const Padding(
-                                          padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                                          padding: EdgeInsets.symmetric(
+                                              vertical: 10, horizontal: 22),
                                           child: SizedBox(
                                             height: 24,
                                             width: 24,
-                                            child: CircularProgressIndicator(color: Colors.redAccent),
+                                            child: CircularProgressIndicator(
+                                                color: Colors.redAccent),
                                           ),
                                         );
-                                      } else if (regiController.rxStatusCityLoading.value == Status.ERROR) {
-                                        return const Center(child: Text('Failed to load city'));
-                                      } else if (regiController.cityList.isEmpty) {
-                                        return const Center(child: Text('No City available'));
+                                      } else if (regiController
+                                              .rxStatusCityLoading.value ==
+                                          Status.ERROR) {
+                                        return const Center(
+                                            child: Text('Failed to load city'));
+                                      } else if (regiController
+                                          .cityList.isEmpty) {
+                                        return const Center(
+                                            child: Text('No City available'));
                                       } else {
-                                        final selectedCity = regiController.city_id.value;
+                                        final selectedCity =
+                                            regiController.city_id.value;
                                         return Expanded(
                                           child: InputDecorator(
                                             decoration: const InputDecoration(
                                               labelText: "Father's City *",
                                               border: OutlineInputBorder(
-                                                borderSide: BorderSide(color: Colors.black),
+                                                borderSide: BorderSide(
+                                                    color: Colors.black),
                                               ),
                                               enabledBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(color: Colors.black),
+                                                borderSide: BorderSide(
+                                                    color: Colors.black),
                                               ),
                                               focusedBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(color: Colors.black38, width: 1),
+                                                borderSide: BorderSide(
+                                                    color: Colors.black38,
+                                                    width: 1),
                                               ),
                                               contentPadding:
-                                              EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                                                  EdgeInsets.symmetric(
+                                                      horizontal: 20,
+                                                      vertical: 0),
                                             ),
                                             child: DropdownButton<String>(
                                               dropdownColor: Colors.white,
-                                              borderRadius: BorderRadius.circular(10),
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
                                               isExpanded: true,
                                               underline: Container(),
-                                              hint: const Text("Select Father's City *"),
-                                              value: selectedCity.isNotEmpty ? selectedCity : null,
-                                              items: regiController.cityList.map((CityData city) {
+                                              hint: const Text(
+                                                  "Select Father's City *"),
+                                              value: selectedCity.isNotEmpty
+                                                  ? selectedCity
+                                                  : null,
+                                              items: regiController.cityList
+                                                  .map((CityData city) {
                                                 return DropdownMenuItem<String>(
                                                   value: city.id.toString(),
-                                                  child: Text(city.cityName ?? 'Unknown'),
+                                                  child: Text(city.cityName ??
+                                                      'Unknown'),
                                                 );
                                               }).toList(),
                                               onChanged: (val) {
                                                 if (val != null) {
-                                                  regiController.setSelectedCity(val);
+                                                  regiController
+                                                      .setSelectedCity(val);
                                                   setModalState(() {});
                                                 }
                                               },
@@ -684,60 +678,84 @@ class _EditApplicantDetailViewState
                                 ),
                               ),
                               const SizedBox(height: 20),
-
                               Container(
                                 width: double.infinity,
-                                margin: const EdgeInsets.only(left: 5, right: 5),
+                                margin:
+                                    const EdgeInsets.only(left: 5, right: 5),
                                 child: Row(
                                   children: [
                                     Obx(() {
-                                      if (regiController.rxStatusStateLoading.value == Status.LOADING) {
+                                      if (regiController
+                                              .rxStatusStateLoading.value ==
+                                          Status.LOADING) {
                                         return const Padding(
-                                          padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                                          padding: EdgeInsets.symmetric(
+                                              vertical: 10, horizontal: 22),
                                           child: SizedBox(
                                             height: 24,
                                             width: 24,
-                                            child: CircularProgressIndicator(color: Colors.redAccent),
+                                            child: CircularProgressIndicator(
+                                                color: Colors.redAccent),
                                           ),
                                         );
-                                      } else if (regiController.rxStatusStateLoading.value == Status.ERROR) {
-                                        return const Center(child: Text('Failed to load state'));
-                                      } else if (regiController.stateList.isEmpty) {
-                                        return const Center(child: Text('No State available'));
+                                      } else if (regiController
+                                              .rxStatusStateLoading.value ==
+                                          Status.ERROR) {
+                                        return const Center(
+                                            child:
+                                                Text('Failed to load state'));
+                                      } else if (regiController
+                                          .stateList.isEmpty) {
+                                        return const Center(
+                                            child: Text('No State available'));
                                       } else {
-                                        final selectedState = regiController.state_id.value;
+                                        final selectedState =
+                                            regiController.state_id.value;
                                         return Expanded(
                                           child: InputDecorator(
                                             decoration: const InputDecoration(
                                               labelText: "Father's State *",
                                               border: OutlineInputBorder(
-                                                borderSide: BorderSide(color: Colors.black),
+                                                borderSide: BorderSide(
+                                                    color: Colors.black),
                                               ),
                                               enabledBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(color: Colors.black),
+                                                borderSide: BorderSide(
+                                                    color: Colors.black),
                                               ),
                                               focusedBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(color: Colors.black38, width: 1),
+                                                borderSide: BorderSide(
+                                                    color: Colors.black38,
+                                                    width: 1),
                                               ),
                                               contentPadding:
-                                              EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                                                  EdgeInsets.symmetric(
+                                                      horizontal: 20,
+                                                      vertical: 0),
                                             ),
                                             child: DropdownButton<String>(
                                               dropdownColor: Colors.white,
-                                              borderRadius: BorderRadius.circular(10),
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
                                               isExpanded: true,
                                               underline: Container(),
-                                              hint: const Text("Select Father's State *"),
-                                              value: selectedState.isNotEmpty ? selectedState : null,
-                                              items: regiController.stateList.map((StateData state) {
+                                              hint: const Text(
+                                                  "Select Father's State *"),
+                                              value: selectedState.isNotEmpty
+                                                  ? selectedState
+                                                  : null,
+                                              items: regiController.stateList
+                                                  .map((StateData state) {
                                                 return DropdownMenuItem<String>(
                                                   value: state.id.toString(),
-                                                  child: Text(state.stateName ?? 'Unknown'),
+                                                  child: Text(state.stateName ??
+                                                      'Unknown'),
                                                 );
                                               }).toList(),
                                               onChanged: (val) {
                                                 if (val != null) {
-                                                  regiController.setSelectedState(val);
+                                                  regiController
+                                                      .setSelectedState(val);
                                                   setModalState(() {});
                                                 }
                                               },
@@ -750,11 +768,14 @@ class _EditApplicantDetailViewState
                                 ),
                               ),
                               const SizedBox(height: 20),
-
                               buildImageUploadField(
                                 context: context,
                                 imageFile: applicantAadharFile,
+                                existingDocumentPath: widget.applicationData
+                                    .applicantAadharCardDocument,
+                                isExistingRemoved: isExistingAadhaarRemoved,
                                 buttonText: "Applicant Aadhaar Card",
+
                                 onPick: () {
                                   _showImagePicker(context, (file) {
                                     setModalState(() {
@@ -765,7 +786,19 @@ class _EditApplicantDetailViewState
                                     });
                                   });
                                 },
-                                onRemove: () {
+
+                                /// ❌ REMOVE EXISTING NETWORK FILE
+                                onRemoveExisting: () {
+                                  setModalState(() {
+                                    isExistingAadhaarRemoved = true;
+                                  });
+                                  setState(() {
+                                    isExistingAadhaarRemoved = true;
+                                  });
+                                },
+
+                                /// ❌ REMOVE NEWLY SELECTED FILE
+                                onRemoveNew: () {
                                   setModalState(() {
                                     applicantAadharFile = null;
                                   });
@@ -775,10 +808,12 @@ class _EditApplicantDetailViewState
                                 },
                               ),
                               const SizedBox(height: 20),
-
                               buildImageUploadField(
                                 context: context,
                                 imageFile: fatherPanFile,
+                                existingDocumentPath: widget.applicationData
+                                    .applicantFatherPanCardDocument,
+                                isExistingRemoved: isExistingPanRemoved,
                                 buttonText: "Father's PAN Card",
                                 onPick: () {
                                   _showImagePicker(context, (file) {
@@ -790,7 +825,15 @@ class _EditApplicantDetailViewState
                                     });
                                   });
                                 },
-                                onRemove: () {
+                                onRemoveExisting: () {
+                                  setModalState(() {
+                                    isExistingPanRemoved = true;
+                                  });
+                                  setState(() {
+                                    isExistingPanRemoved = true;
+                                  });
+                                },
+                                onRemoveNew: () {
                                   setModalState(() {
                                     fatherPanFile = null;
                                   });
@@ -800,12 +843,14 @@ class _EditApplicantDetailViewState
                                 },
                               ),
                               const SizedBox(height: 20),
-
                               buildImageUploadField(
                                 context: context,
                                 imageFile: addressProofFile,
+                                existingDocumentPath: widget.applicationData
+                                    .applicantRationCardDocument,
+                                isExistingRemoved: isExistingRationRemoved,
                                 buttonText:
-                                "Address Proof (if Aadhaar and current address are not the same)",
+                                    "Address Proof (if Aadhaar and current address are not the same)",
                                 onPick: () {
                                   _showImagePicker(context, (file) {
                                     setModalState(() {
@@ -816,7 +861,15 @@ class _EditApplicantDetailViewState
                                     });
                                   });
                                 },
-                                onRemove: () {
+                                onRemoveExisting: () {
+                                  setModalState(() {
+                                    isExistingRationRemoved = true;
+                                  });
+                                  setState(() {
+                                    isExistingRationRemoved = true;
+                                  });
+                                },
+                                onRemoveNew: () {
                                   setModalState(() {
                                     addressProofFile = null;
                                   });
@@ -866,26 +919,24 @@ class _EditApplicantDetailViewState
     if (data.applicantStateId != null) {
       regiController.setSelectedState(data.applicantStateId.toString());
 
-      await regiController.getCityByState(
-          data.applicantStateId.toString());
+      await regiController.getCityByState(data.applicantStateId.toString());
     }
 
     if (data.applicantCityId != null) {
-      regiController.setSelectedCity(
-          data.applicantCityId.toString());
+      regiController.setSelectedCity(data.applicantCityId.toString());
     }
 
     _showEditBottomSheet(context);
   }
 
   Widget _buildTextField(
-      String label, {
-        required TextEditingController controller,
-        TextInputType keyboard = TextInputType.text,
-        bool readOnly = false,
-        List<TextInputFormatter>? inputFormatters,
-        ValueChanged<String>? onChanged,
-      }) {
+    String label, {
+    required TextEditingController controller,
+    TextInputType keyboard = TextInputType.text,
+    bool readOnly = false,
+    List<TextInputFormatter>? inputFormatters,
+    ValueChanged<String>? onChanged,
+  }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboard,
@@ -894,27 +945,17 @@ class _EditApplicantDetailViewState
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
-        border:
-        const OutlineInputBorder(
-          borderSide: BorderSide(
-              color: Colors.black),
+        border: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black),
         ),
-        enabledBorder:
-        const OutlineInputBorder(
-          borderSide: BorderSide(
-              color: Colors.black),
+        enabledBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black),
         ),
-        focusedBorder:
-        const OutlineInputBorder(
-          borderSide: BorderSide(
-              color: Colors.black38,
-              width: 1),
+        focusedBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black38, width: 1),
         ),
-        contentPadding:
-        const EdgeInsets.symmetric(
-            horizontal: 20),
-        labelStyle: const TextStyle(
-            color: Colors.black),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+        labelStyle: const TextStyle(color: Colors.black),
       ),
     );
   }
@@ -933,27 +974,17 @@ class _EditApplicantDetailViewState
     return InputDecorator(
       decoration: InputDecoration(
         labelText: label,
-        border:
-        const OutlineInputBorder(
-          borderSide: BorderSide(
-              color: Colors.black),
+        border: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black),
         ),
-        enabledBorder:
-        const OutlineInputBorder(
-          borderSide: BorderSide(
-              color: Colors.black),
+        enabledBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black),
         ),
-        focusedBorder:
-        const OutlineInputBorder(
-          borderSide: BorderSide(
-              color: Colors.black38,
-              width: 1),
+        focusedBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black38, width: 1),
         ),
-        contentPadding:
-        const EdgeInsets.symmetric(
-            horizontal: 20),
-        labelStyle: const TextStyle(
-            color: Colors.black),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+        labelStyle: const TextStyle(color: Colors.black),
       ),
       isEmpty: selectedValue.isEmpty,
       child: DropdownButton<String>(
@@ -1006,27 +1037,17 @@ class _EditApplicantDetailViewState
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
-          border:
-          const OutlineInputBorder(
-            borderSide: BorderSide(
-                color: Colors.black),
+          border: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black),
           ),
-          enabledBorder:
-          const OutlineInputBorder(
-            borderSide: BorderSide(
-                color: Colors.black),
+          enabledBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black),
           ),
-          focusedBorder:
-          const OutlineInputBorder(
-            borderSide: BorderSide(
-                color: Colors.black38,
-                width: 1),
+          focusedBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black38, width: 1),
           ),
-          contentPadding:
-          const EdgeInsets.symmetric(
-              horizontal: 20),
-          labelStyle: const TextStyle(
-              color: Colors.black),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+          labelStyle: const TextStyle(color: Colors.black),
         ),
         onTap: () async {
           DateTime? picked = await showDatePicker(
@@ -1067,55 +1088,100 @@ class _EditApplicantDetailViewState
     required BuildContext context,
     required File? imageFile,
     required String buttonText,
+    required String? existingDocumentPath,
+    required bool isExistingRemoved,
     required VoidCallback onPick,
-    required VoidCallback onRemove,
+    required VoidCallback onRemoveExisting,
+    required VoidCallback onRemoveNew,
   }) {
-    final isUploaded = imageFile != null;
+    final bool hasExisting =
+        !isExistingRemoved &&
+            (existingDocumentPath ?? "").toString().isNotEmpty;
+
+    final bool isUploaded = imageFile != null || hasExisting;
+
+    bool isPdf(String path) {
+      return path.toLowerCase().endsWith(".pdf");
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (isUploaded)
+        if (imageFile != null)
           Stack(
             children: [
               Container(
                 height: 180,
                 width: double.infinity,
                 margin: const EdgeInsets.only(bottom: 10),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey.shade400),
-                ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
-                  child: Image.file(
-                    imageFile,
-                    fit: BoxFit.cover,
-                  ),
+                  child: Image.file(imageFile, fit: BoxFit.cover),
                 ),
               ),
-
-              /// ❌ REMOVE BUTTON
               Positioned(
                 right: 8,
                 top: 8,
                 child: GestureDetector(
-                  onTap: onRemove,
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 18,
-                    ),
+                  onTap: onRemoveNew,
+                  child: const CircleAvatar(
+                    radius: 14,
+                    backgroundColor: Colors.red,
+                    child: Icon(Icons.close, size: 16, color: Colors.white),
                   ),
                 ),
               ),
             ],
+          ),
+
+        if (imageFile == null && hasExisting)
+          Stack(
+            children: [
+              Container(
+                height: 180,
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 10),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.network(
+                    _getFullImageUrl(existingDocumentPath),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 8,
+                top: 8,
+                child: GestureDetector(
+                  onTap: onRemoveExisting,
+                  child: const CircleAvatar(
+                    radius: 14,
+                    backgroundColor: Colors.red,
+                    child: Icon(Icons.close, size: 16, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+        if (imageFile == null && hasExisting && isPdf(existingDocumentPath!))
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                _showDocumentPreviewDialog(
+                  context,
+                  _getFullImageUrl(existingDocumentPath),
+                  buttonText,
+                );
+              },
+              icon: const Icon(Icons.visibility),
+              label: const Text("View Document"),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.green,
+                side: const BorderSide(color: Colors.green),
+              ),
+            ),
           ),
 
         SizedBox(
@@ -1126,21 +1192,17 @@ class _EditApplicantDetailViewState
               isUploaded ? Icons.check_circle : Icons.upload,
             ),
             label: Text(
-              isUploaded
-                  ? "$buttonText Uploaded"
-                  : "$buttonText *",
+              isUploaded ? "$buttonText Uploaded" : "$buttonText *",
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: isUploaded
                   ? Colors.green
-                  : ColorHelperClass.getColorFromHex(
-                ColorResources.red_color,
-              ),
+                  : ColorHelperClass.getColorFromHex(ColorResources.red_color),
               foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
-              padding: const EdgeInsets.symmetric(vertical: 12),
             ),
           ),
         ),
@@ -1149,9 +1211,9 @@ class _EditApplicantDetailViewState
   }
 
   void _showImagePicker(
-      BuildContext context,
-      Function(File) onImagePicked,
-      ) {
+    BuildContext context,
+    Function(File) onImagePicked,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -1167,7 +1229,7 @@ class _EditApplicantDetailViewState
               onTap: () async {
                 Navigator.pop(context);
                 final picked =
-                await _picker.pickImage(source: ImageSource.camera);
+                    await _picker.pickImage(source: ImageSource.camera);
                 if (picked != null) {
                   onImagePicked(File(picked.path));
                 }
@@ -1179,7 +1241,7 @@ class _EditApplicantDetailViewState
               onTap: () async {
                 Navigator.pop(context);
                 final picked =
-                await _picker.pickImage(source: ImageSource.gallery);
+                    await _picker.pickImage(source: ImageSource.gallery);
                 if (picked != null) {
                   onImagePicked(File(picked.path));
                 }
@@ -1202,10 +1264,10 @@ class _EditApplicantDetailViewState
   }
 
   void _showDocumentPreviewDialog(
-      BuildContext context,
-      String imageUrl,
-      String title,
-      ) {
+    BuildContext context,
+    String imageUrl,
+    String title,
+  ) {
     showDialog(
       context: context,
       builder: (_) => Dialog(
@@ -1216,7 +1278,6 @@ class _EditApplicantDetailViewState
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 16),
-
             Text(
               title,
               style: const TextStyle(
@@ -1224,9 +1285,7 @@ class _EditApplicantDetailViewState
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 16),
-
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: SizedBox(
@@ -1234,41 +1293,37 @@ class _EditApplicantDetailViewState
                 width: double.infinity,
                 child: imageUrl.toLowerCase().endsWith(".pdf")
                     ? const Center(
-                  child: Icon(
-                    Icons.picture_as_pdf,
-                    size: 80,
-                    color: Colors.red,
-                  ),
-                )
+                        child: Icon(
+                          Icons.picture_as_pdf,
+                          size: 80,
+                          color: Colors.red,
+                        ),
+                      )
                     : Image.network(
-                  imageUrl,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) =>
-                  const Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Text("Unable to load document"),
-                  ),
-                ),
+                        imageUrl,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const Padding(
+                          padding: EdgeInsets.all(20),
+                          child: Text("Unable to load document"),
+                        ),
+                      ),
               ),
             ),
-
             const SizedBox(height: 16),
-
             TextButton(
               onPressed: () => Navigator.pop(context),
               style: TextButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
               child: const Text("Close"),
             ),
-
             const SizedBox(height: 16),
           ],
         ),
@@ -1280,8 +1335,7 @@ class _EditApplicantDetailViewState
     return Padding(
       padding: const EdgeInsets.only(bottom: 10.0),
       child: Row(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
             width: 110,

@@ -46,6 +46,8 @@ class _EducationDetailViewState extends State<EducationDetailView> {
   GetShikshaApplicationModelClass? _applicationData;
 
   bool isLoading = true;
+  String? _existingMarksheetPath;
+  bool isExistingMarksheetRemoved = false;
 
   String? currentMemberId;
   bool isSubmitting = false;
@@ -544,7 +546,13 @@ class _EducationDetailViewState extends State<EducationDetailView> {
   }) async {
     if (isSubmitting) return;
 
-    if (_educationDocument == null) {
+    final bool hasExisting =
+        _existingMarksheetPath != null &&
+            _existingMarksheetPath!.isNotEmpty &&
+            !isExistingMarksheetRemoved;
+
+    if (_educationDocument == null && !hasExisting) {
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Please upload Marksheet / Certificate"),
@@ -701,6 +709,9 @@ class _EducationDetailViewState extends State<EducationDetailView> {
   void _showEducationForm(BuildContext context,
       {Map<String, dynamic>? existingData, int? index}) {
     String selectedClass = '';
+    isExistingMarksheetRemoved = false;
+    _educationDocument = null;
+
 
     final TextEditingController passedCtrl = TextEditingController();
     final TextEditingController marksCtrl = TextEditingController();
@@ -976,6 +987,7 @@ class _EducationDetailViewState extends State<EducationDetailView> {
                             _buildEducationUploadField(
                               context,
                               setModalState,
+                              existingDocumentPath: _existingMarksheetPath,
                             )
                           ],
                         ),
@@ -1121,27 +1133,39 @@ class _EducationDetailViewState extends State<EducationDetailView> {
 
   Widget _buildEducationUploadField(
       BuildContext context,
-      StateSetter setModalState,
-      ) {
-    final bool isUploaded = _educationDocument != null;
+      StateSetter setModalState, {
+        String? existingDocumentPath,
+      }) {
+    final bool hasExisting =
+        !isExistingMarksheetRemoved &&
+            (existingDocumentPath ?? "").isNotEmpty;
+
+    final bool isUploaded =
+        _educationDocument != null || hasExisting;
+
+    bool isPdf(String path) =>
+        path.toLowerCase().endsWith(".pdf");
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (isUploaded)
+
+        /// 🔥 NEW FILE PREVIEW
+        if (_educationDocument != null)
           Stack(
             children: [
               Container(
                 height: 180,
                 width: double.infinity,
                 margin: const EdgeInsets.only(bottom: 10),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey.shade400),
-                ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
-                  child: Image.file(
+                  child: _educationDocument!.path.endsWith(".pdf")
+                      ? const Center(
+                    child: Icon(Icons.picture_as_pdf,
+                        size: 80, color: Colors.red),
+                  )
+                      : Image.file(
                     _educationDocument!,
                     fit: BoxFit.cover,
                   ),
@@ -1156,23 +1180,81 @@ class _EducationDetailViewState extends State<EducationDetailView> {
                       _educationDocument = null;
                     });
                   },
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 18,
-                    ),
+                  child: const CircleAvatar(
+                    radius: 14,
+                    backgroundColor: Colors.red,
+                    child: Icon(Icons.close,
+                        size: 16, color: Colors.white),
                   ),
                 ),
               ),
             ],
           ),
 
+        /// 🔥 EXISTING NETWORK PREVIEW
+        if (_educationDocument == null && hasExisting)
+          Stack(
+            children: [
+              Container(
+                height: 180,
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 10),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: isPdf(existingDocumentPath!)
+                      ? const Center(
+                    child: Icon(Icons.picture_as_pdf,
+                        size: 80, color: Colors.red),
+                  )
+                      : Image.network(
+                    _getFullImageUrl(existingDocumentPath),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 8,
+                top: 8,
+                child: GestureDetector(
+                  onTap: () {
+                    setModalState(() {
+                      isExistingMarksheetRemoved = true;
+                    });
+                  },
+                  child: const CircleAvatar(
+                    radius: 14,
+                    backgroundColor: Colors.red,
+                    child: Icon(Icons.close,
+                        size: 16, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+        /// 🔥 VIEW BUTTON (FOR PDF)
+        if (_educationDocument == null &&
+            hasExisting &&
+            isPdf(existingDocumentPath!))
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                _showServerMarksheetPreview(
+                  context,
+                  _getFullImageUrl(existingDocumentPath),
+                );
+              },
+              icon: const Icon(Icons.visibility),
+              label: const Text("View Existing Document"),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.green,
+                side: const BorderSide(color: Colors.green),
+              ),
+            ),
+          ),
+
+        /// 🔥 UPLOAD BUTTON
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
@@ -1185,7 +1267,7 @@ class _EducationDetailViewState extends State<EducationDetailView> {
             label: Text(
               isUploaded
                   ? "Marksheet Uploaded"
-                  : "Upload Marksheet / Certificate",
+                  : "Upload Marksheet / Certificate *",
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: isUploaded

@@ -38,8 +38,10 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
   Map<String, dynamic>? currentYearData;
   bool isLoading = false;
   bool isSubmitting = false;
-  String? currentMemberId;
+  bool isExistingAdmissionRemoved = false;
+  bool isExistingBonafideRemoved = false;
 
+  String? currentMemberId;
   String appliedYear = '';
   String schoolName = '';
   String courseDuration = '';
@@ -868,9 +870,17 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
                             ),
                             const SizedBox(height: 20),
 
-                            _buildAdmissionUploadField(context, setModalState),
+                            _buildAdmissionUploadField(
+                              context,
+                              setModalState,
+                              existingDocumentPath: existingData?["admissionDoc"],
+                            ),
                             const SizedBox(height: 20),
-                            _buildBonafideUploadField(context, setModalState),
+                            _buildBonafideUploadField(
+                              context,
+                              setModalState,
+                              existingDocumentPath: existingData?["bonafideDoc"],
+                            ),
                             const SizedBox(height: 40),
                           ],
                         ),
@@ -948,15 +958,23 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
   }
 
   Widget _buildAdmissionUploadField(
-    BuildContext context,
-    StateSetter setModalState,
-  ) {
-    final bool isUploaded = _admissionDocument != null ||
-        (currentYearData?["admissionDoc"] ?? "").toString().isNotEmpty;
+      BuildContext context,
+      StateSetter setModalState,
+      {String? existingDocumentPath}
+      ) {
+    final bool hasExisting =
+        !isExistingAdmissionRemoved &&
+            (existingDocumentPath ?? "").isNotEmpty;
+
+    final bool isUploaded = _admissionDocument != null || hasExisting;
+
+    bool isPdf(String path) => path.toLowerCase().endsWith(".pdf");
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+
+        /// 🔥 NEW FILE PREVIEW
         if (_admissionDocument != null)
           Stack(
             children: [
@@ -964,16 +982,14 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
                 height: 180,
                 width: double.infinity,
                 margin: const EdgeInsets.only(bottom: 10),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey.shade400),
-                ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
-                  child: Image.file(
-                    _admissionDocument!,
-                    fit: BoxFit.cover,
-                  ),
+                  child: _admissionDocument!.path.endsWith(".pdf")
+                      ? const Center(
+                    child: Icon(Icons.picture_as_pdf,
+                        size: 80, color: Colors.red),
+                  )
+                      : Image.file(_admissionDocument!, fit: BoxFit.cover),
                 ),
               ),
               Positioned(
@@ -985,38 +1001,99 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
                       _admissionDocument = null;
                     });
                   },
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 18,
-                    ),
+                  child: const CircleAvatar(
+                    radius: 14,
+                    backgroundColor: Colors.red,
+                    child: Icon(Icons.close,
+                        size: 16, color: Colors.white),
                   ),
                 ),
               ),
             ],
           ),
+
+        /// 🔥 EXISTING NETWORK FILE
+        if (_admissionDocument == null && hasExisting)
+          Stack(
+            children: [
+              Container(
+                height: 180,
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 10),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: isPdf(existingDocumentPath!)
+                      ? const Center(
+                    child: Icon(Icons.picture_as_pdf,
+                        size: 80, color: Colors.red),
+                  )
+                      : Image.network(
+                    _getFullImageUrl(existingDocumentPath),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 8,
+                top: 8,
+                child: GestureDetector(
+                  onTap: () {
+                    setModalState(() {
+                      isExistingAdmissionRemoved = true;
+                    });
+                  },
+                  child: const CircleAvatar(
+                    radius: 14,
+                    backgroundColor: Colors.red,
+                    child: Icon(Icons.close,
+                        size: 16, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+        if (_admissionDocument == null &&
+            hasExisting &&
+            isPdf(existingDocumentPath!))
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                _showDocumentPreviewDialog(
+                  context,
+                  title: "Admission Confirmation Letter",
+                  networkUrl: _getFullImageUrl(existingDocumentPath),
+                );
+              },
+              icon: const Icon(Icons.visibility),
+              label: const Text("View Document"),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.green,
+                side: const BorderSide(color: Colors.green),
+              ),
+            ),
+          ),
+
+        /// 🔥 UPLOAD BUTTON
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            onPressed: () => _showAdmissionImagePicker(context, setModalState),
+            onPressed: () =>
+                _showAdmissionImagePicker(context, setModalState),
             icon: Icon(
               isUploaded ? Icons.check_circle : Icons.upload_file,
             ),
             label: Text(
               isUploaded
                   ? "Admission Letter Uploaded"
-                  : "Upload Admission Confirmation Letter",
+                  : "Upload Admission Confirmation Letter *",
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: isUploaded
                   ? Colors.green
-                  : ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                  : ColorHelperClass.getColorFromHex(
+                  ColorResources.red_color),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
@@ -1027,15 +1104,22 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
   }
 
   Widget _buildBonafideUploadField(
-    BuildContext context,
-    StateSetter setModalState,
-  ) {
-    final bool isUploaded = _bonafideDocument != null ||
-        (currentYearData?["bonafideDoc"] ?? "").toString().isNotEmpty;
+      BuildContext context,
+      StateSetter setModalState,
+      {String? existingDocumentPath}
+      ) {
+    final bool hasExisting =
+        !isExistingBonafideRemoved &&
+            (existingDocumentPath ?? "").isNotEmpty;
+
+    final bool isUploaded = _bonafideDocument != null || hasExisting;
+
+    bool isPdf(String path) => path.toLowerCase().endsWith(".pdf");
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+
         if (_bonafideDocument != null)
           Stack(
             children: [
@@ -1043,16 +1127,14 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
                 height: 180,
                 width: double.infinity,
                 margin: const EdgeInsets.only(bottom: 10),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey.shade400),
-                ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
-                  child: Image.file(
-                    _bonafideDocument!,
-                    fit: BoxFit.cover,
-                  ),
+                  child: _bonafideDocument!.path.endsWith(".pdf")
+                      ? const Center(
+                    child: Icon(Icons.picture_as_pdf,
+                        size: 80, color: Colors.red),
+                  )
+                      : Image.file(_bonafideDocument!, fit: BoxFit.cover),
                 ),
               ),
               Positioned(
@@ -1064,36 +1146,97 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
                       _bonafideDocument = null;
                     });
                   },
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 18,
-                    ),
+                  child: const CircleAvatar(
+                    radius: 14,
+                    backgroundColor: Colors.red,
+                    child: Icon(Icons.close,
+                        size: 16, color: Colors.white),
                   ),
                 ),
               ),
             ],
           ),
+
+        if (_bonafideDocument == null && hasExisting)
+          Stack(
+            children: [
+              Container(
+                height: 180,
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 10),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: isPdf(existingDocumentPath!)
+                      ? const Center(
+                    child: Icon(Icons.picture_as_pdf,
+                        size: 80, color: Colors.red),
+                  )
+                      : Image.network(
+                    _getFullImageUrl(existingDocumentPath),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 8,
+                top: 8,
+                child: GestureDetector(
+                  onTap: () {
+                    setModalState(() {
+                      isExistingBonafideRemoved = true;
+                    });
+                  },
+                  child: const CircleAvatar(
+                    radius: 14,
+                    backgroundColor: Colors.red,
+                    child: Icon(Icons.close,
+                        size: 16, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+        if (_bonafideDocument == null &&
+            hasExisting &&
+            isPdf(existingDocumentPath!))
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                _showDocumentPreviewDialog(
+                  context,
+                  title: "Bonafide / Fees Proof",
+                  networkUrl: _getFullImageUrl(existingDocumentPath),
+                );
+              },
+              icon: const Icon(Icons.visibility),
+              label: const Text("View Document"),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.green,
+                side: const BorderSide(color: Colors.green),
+              ),
+            ),
+          ),
+
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            onPressed: () => _showBonafideImagePicker(context, setModalState),
+            onPressed: () =>
+                _showBonafideImagePicker(context, setModalState),
             icon: Icon(
               isUploaded ? Icons.check_circle : Icons.upload_file,
             ),
             label: Text(
-              isUploaded ? "Bonafide Uploaded" : "Upload Bonafide / Fees Proof",
+              isUploaded
+                  ? "Bonafide Uploaded"
+                  : "Upload Bonafide / Fees Proof *",
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: isUploaded
                   ? Colors.green
-                  : ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                  : ColorHelperClass.getColorFromHex(
+                  ColorResources.red_color),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),

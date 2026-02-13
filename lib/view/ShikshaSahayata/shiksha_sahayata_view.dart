@@ -166,7 +166,7 @@ class _ShikshaSahayataViewState
                       MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
-                          "Application Summary",
+                          "Loan Summary",
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -195,7 +195,7 @@ class _ShikshaSahayataViewState
                         loan!.sanctionedAmount!.isNotEmpty &&
                         loan.sanctionedAmount != "0")
                       _infoRow(
-                        "Sanctioned Amount",
+                        "Loan Sanctioned",
                         "₹ ${loan.sanctionedAmount}",
                       ),
 
@@ -203,7 +203,7 @@ class _ShikshaSahayataViewState
                         loan!.disbursedAmount!.isNotEmpty &&
                         loan.disbursedAmount != "0")
                       _infoRow(
-                        "Disbursed Amount",
+                        "Loan Disbursed",
                         "₹ ${loan.disbursedAmount}",
                       ),
 

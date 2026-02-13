@@ -48,6 +48,7 @@ class _EditReferenceViewState extends State<EditReferenceView> {
 
   bool isLoading = true;
   bool isSubmitting = false;
+  bool isExistingAadhaarRemoved = false;
   String? currentMemberId;
 
   @override
@@ -679,6 +680,9 @@ class _EditReferenceViewState extends State<EditReferenceView> {
                                 context: context,
                                 imageFile: referenceAadharFile,
                                 buttonText: "Upload Aadhaar",
+                                existingDocumentPath: existingData?["aadhaarDocument"],
+                                isExistingRemoved: isExistingAadhaarRemoved,
+
                                 onPick: () {
                                   _showImagePicker(context, (file) {
                                     setModalState(() {
@@ -689,7 +693,17 @@ class _EditReferenceViewState extends State<EditReferenceView> {
                                     });
                                   });
                                 },
-                                onRemove: () {
+
+                                onRemoveExisting: () {
+                                  setModalState(() {
+                                    isExistingAadhaarRemoved = true;
+                                  });
+                                  setState(() {
+                                    isExistingAadhaarRemoved = true;
+                                  });
+                                },
+
+                                onRemoveNew: () {
                                   setModalState(() {
                                     referenceAadharFile = null;
                                   });
@@ -775,29 +789,76 @@ class _EditReferenceViewState extends State<EditReferenceView> {
     required BuildContext context,
     required File? imageFile,
     required String buttonText,
+    required String? existingDocumentPath,
+    required bool isExistingRemoved,
     required VoidCallback onPick,
-    required VoidCallback onRemove,
+    required VoidCallback onRemoveExisting,
+    required VoidCallback onRemoveNew,
   }) {
-    final isUploaded = imageFile != null;
+    final bool hasExisting =
+        !isExistingRemoved &&
+            (existingDocumentPath ?? "").isNotEmpty;
+
+    final bool isUploaded = imageFile != null || hasExisting;
+
+    bool isPdf(String path) =>
+        path.toLowerCase().endsWith(".pdf");
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (isUploaded)
+
+        /// 🔥 NEW FILE PREVIEW
+        if (imageFile != null)
           Stack(
             children: [
               Container(
                 height: 180,
                 width: double.infinity,
                 margin: const EdgeInsets.only(bottom: 10),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey.shade400),
-                ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
-                  child: Image.file(
-                    imageFile,
+                  child: imageFile.path.endsWith(".pdf")
+                      ? const Center(
+                    child: Icon(Icons.picture_as_pdf,
+                        size: 80, color: Colors.red),
+                  )
+                      : Image.file(imageFile, fit: BoxFit.cover),
+                ),
+              ),
+              Positioned(
+                right: 8,
+                top: 8,
+                child: GestureDetector(
+                  onTap: onRemoveNew,
+                  child: const CircleAvatar(
+                    radius: 14,
+                    backgroundColor: Colors.red,
+                    child: Icon(Icons.close,
+                        size: 16, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+        /// 🔥 EXISTING NETWORK FILE
+        if (imageFile == null && hasExisting)
+          Stack(
+            children: [
+              Container(
+                height: 180,
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 10),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: isPdf(existingDocumentPath!)
+                      ? const Center(
+                    child: Icon(Icons.picture_as_pdf,
+                        size: 80, color: Colors.red),
+                  )
+                      : Image.network(
+                    _getFullImageUrl(existingDocumentPath),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -806,23 +867,41 @@ class _EditReferenceViewState extends State<EditReferenceView> {
                 right: 8,
                 top: 8,
                 child: GestureDetector(
-                  onTap: onRemove,
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 18,
-                    ),
+                  onTap: onRemoveExisting,
+                  child: const CircleAvatar(
+                    radius: 14,
+                    backgroundColor: Colors.red,
+                    child: Icon(Icons.close,
+                        size: 16, color: Colors.white),
                   ),
                 ),
               ),
             ],
           ),
+
+        /// 🔥 VIEW BUTTON IF PDF
+        if (imageFile == null &&
+            hasExisting &&
+            isPdf(existingDocumentPath!))
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                _showAadhaarPreviewDialog(
+                  context,
+                  _getFullImageUrl(existingDocumentPath),
+                );
+              },
+              icon: const Icon(Icons.visibility),
+              label: const Text("View Document"),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.green,
+                side: const BorderSide(color: Colors.green),
+              ),
+            ),
+          ),
+
+        /// 🔥 UPLOAD BUTTON
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
@@ -831,19 +910,21 @@ class _EditReferenceViewState extends State<EditReferenceView> {
               isUploaded ? Icons.check_circle : Icons.upload_file,
             ),
             label: Text(
-              isUploaded ? "Aadhaar Uploaded" : buttonText,
+              isUploaded
+                  ? "Aadhaar Uploaded"
+                  : "$buttonText *",
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: isUploaded
                   ? Colors.green
                   : ColorHelperClass.getColorFromHex(
-                      ColorResources.red_color,
-                    ),
+                ColorResources.red_color,
+              ),
               foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
-              padding: const EdgeInsets.symmetric(vertical: 12),
             ),
           ),
         ),
