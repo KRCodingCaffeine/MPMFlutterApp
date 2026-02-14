@@ -306,8 +306,17 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
     if (regiController.city_id.value.isEmpty) return false;
     if (regiController.state_id.value.isEmpty) return false;
 
-    if (applicantAadharFile == null) return false;
-    if (fatherPanFile == null) return false;
+    if (applicantAadharFile == null &&
+        (widget.applicationData.applicantAadharCardDocument ?? "").isEmpty &&
+        !isExistingAadhaarRemoved) {
+      return false;
+    }
+
+    if (fatherPanFile == null &&
+        (widget.applicationData.applicantFatherPanCardDocument ?? "").isEmpty &&
+        !isExistingPanRemoved) {
+      return false;
+    }
 
     return true;
   }
@@ -329,9 +338,15 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
         applicantLastName: lastNameCtrl.text.trim(),
         mobile: mobileCtrl.text.trim(),
         email: emailCtrl.text.trim(),
+        landline: landlineCtrl.text.trim(),
         dateOfBirth: _formatDobForApi(dobCtrl.text.trim()),
         age: ageCtrl.text.trim(),
         maritalStatusId: maritalStatus == "Married" ? "1" : "2",
+
+        applicantAddress: _safeAddress(),
+        applicantCityId: regiController.city_id.value,
+        applicantStateId: regiController.state_id.value,
+
         appliedBy: controller.memberId.value,
         updatedBy: controller.memberId.value,
       );

@@ -370,12 +370,13 @@ class _ShikshaSahayataByParentingViewState
 
                         final prefs = await SharedPreferences.getInstance();
 
-                        await prefs.clear();
+                        // ✅ Remove ONLY shiksha applicant id
+                        await prefs.remove('shiksha_applicant_id');
 
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text(
-                                "Shiksha Application Submitted Successfully"),
+                            content:
+                            Text("Shiksha Application Submitted Successfully"),
                             backgroundColor: Colors.green,
                           ),
                         );
@@ -385,7 +386,7 @@ class _ShikshaSahayataByParentingViewState
                           MaterialPageRoute(
                             builder: (_) => const ShikshaSahayataView(),
                           ),
-                          (route) => false,
+                              (route) => false,
                         );
                       },
                       style: ElevatedButton.styleFrom(
