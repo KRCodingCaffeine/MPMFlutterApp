@@ -38,6 +38,13 @@ class _HomeViewState extends State<HomeView>
   late AnimationController _tagController;
   late Animation<double> _fadeAnimation;
   final ScrollController _scrollController = ScrollController();
+  final ScrollController _gridScrollController = ScrollController();
+  bool _isUserScrolling = false;
+  bool _showLeftArrow = false;
+  bool _showRightArrow = false;
+
+  late Timer _scrollStopTimer;
+
   final double _cardWidth = 360.0;
   final double _cardSpacing = 16.0;
   late Timer _timer;
@@ -84,12 +91,40 @@ class _HomeViewState extends State<HomeView>
   @override
   void initState() {
     super.initState();
+    _scrollStopTimer = Timer(const Duration(milliseconds: 1), () {});
+
     // Initialize notification controller safely
     if (Get.isRegistered<NotificationApiController>()) {
       notificationController = Get.find<NotificationApiController>();
     } else {
       notificationController = Get.put(NotificationApiController());
     }
+
+    _gridScrollController.addListener(() {
+      if (!_gridScrollController.hasClients) return;
+
+      final maxScroll = _gridScrollController.position.maxScrollExtent;
+      final current = _gridScrollController.offset;
+
+      // While scrolling → hide arrows
+      setState(() {
+        _isUserScrolling = true;
+        _showLeftArrow = false;
+        _showRightArrow = false;
+      });
+
+      // Reset timer
+      _scrollStopTimer.cancel();
+      _scrollStopTimer = Timer(const Duration(milliseconds: 400), () {
+        if (!_gridScrollController.hasClients) return;
+
+        setState(() {
+          _isUserScrolling = false;
+          _showLeftArrow = current > 10;
+          _showRightArrow = current < maxScroll - 10;
+        });
+      });
+    });
 
     controller.getUserProfile().then((_) {
       memberId = int.tryParse(controller.memberId.value);
@@ -168,6 +203,9 @@ class _HomeViewState extends State<HomeView>
     _scrollController.dispose();
     _tagController.dispose();
     super.dispose();
+    _scrollStopTimer.cancel();
+    _gridScrollController.dispose();
+
   }
 
   @override
@@ -239,63 +277,156 @@ class _HomeViewState extends State<HomeView>
 
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: SizedBox(
-                          height: 175,
-                          child: GridView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: gridItems.length,
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              mainAxisSpacing: 12,
-                              crossAxisSpacing: 12,
-                              mainAxisExtent: 95,
-                            ),
-                            itemBuilder: (context, index) {
-                              final item = gridItems[index];
-                              final screenWidth = MediaQuery.of(context).size.width;
+                        child: Column(
+                          children: [
 
-                              return GestureDetector(
-                                onTap: () => _handleGridItemClick(item['label']),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(12),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.08),
-                                        blurRadius: 6,
-                                        offset: const Offset(0, 3),
+                            /// 🔥 GRID
+                            SizedBox(
+                              height: 175,
+                              child: Stack(
+                                children: [
+
+                                  NotificationListener<ScrollEndNotification>(
+                                    onNotification: (notification) {
+                                      final double itemWidth = 95 + 12; // mainAxisExtent + spacing
+                                      final double currentOffset = _gridScrollController.offset;
+
+                                      final double page = (currentOffset / itemWidth).roundToDouble();
+                                      final double target = page * itemWidth;
+
+                                      _gridScrollController.animateTo(
+                                        target,
+                                        duration: const Duration(milliseconds: 300),
+                                        curve: Curves.easeOut,
+                                      );
+
+                                      return true;
+                                    },
+                                    child: GridView.builder(
+                                      controller: _gridScrollController,
+                                      physics: const BouncingScrollPhysics(),
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount: gridItems.length,
+                                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                                      gridDelegate:
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 2,
+                                        mainAxisSpacing: 12,
+                                        crossAxisSpacing: 12,
+                                        mainAxisExtent: 95,
                                       ),
-                                    ],
+                                      itemBuilder: (context, index) {
+                                        final item = gridItems[index];
+                                        final screenWidth = MediaQuery.of(context).size.width;
+
+                                        return GestureDetector(
+                                          onTap: () => _handleGridItemClick(item['label']),
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius: BorderRadius.circular(12),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black.withOpacity(0.08),
+                                                  blurRadius: 6,
+                                                  offset: const Offset(0, 3),
+                                                ),
+                                              ],
+                                            ),
+                                            child: Column(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                SvgPicture.asset(
+                                                  item['icon'],
+                                                  height: screenWidth * 0.06,
+                                                  width: screenWidth * 0.06,
+                                                ),
+                                                const SizedBox(height: 6),
+                                                Text(
+                                                  item['label'],
+                                                  textAlign: TextAlign.center,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
                                   ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      SvgPicture.asset(
-                                        item['icon'],
-                                        height: screenWidth * 0.06,
-                                        width: screenWidth * 0.06,
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        item['label'],
-                                        style: TextStyle(
-                                          fontSize: screenWidth * 0.03,
-                                          fontWeight: FontWeight.w600,
-                                          color: ColorHelperClass.getColorFromHex(
-                                              ColorResources.red_color),
-                                        ),
-                                        textAlign: TextAlign.center,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
+
+                                  /// 🔥 LEFT ARROW (shows only when stopped)
+                                  // if (_showLeftArrow)
+                                  //   Positioned(
+                                  //     left: 4,
+                                  //     top: 0,
+                                  //     bottom: 0,
+                                  //     child: _buildArrowButton(
+                                  //       icon: Icons.keyboard_double_arrow_left,
+                                  //       onTap: () {
+                                  //         _gridScrollController.animateTo(
+                                  //           _gridScrollController.offset - 200,
+                                  //           duration: const Duration(milliseconds: 400),
+                                  //           curve: Curves.easeInOut,
+                                  //         );
+                                  //       },
+                                  //     ),
+                                  //   ),
+                                  //
+                                  // /// 🔥 RIGHT ARROW
+                                  // if (_showRightArrow)
+                                  //   Positioned(
+                                  //     right: 4,
+                                  //     top: 0,
+                                  //     bottom: 0,
+                                  //     child: _buildArrowButton(
+                                  //       icon: Icons.keyboard_double_arrow_right,
+                                  //       onTap: () {
+                                  //         _gridScrollController.animateTo(
+                                  //           _gridScrollController.offset + 200,
+                                  //           duration: const Duration(milliseconds: 400),
+                                  //           curve: Curves.easeInOut,
+                                  //         );
+                                  //       },
+                                  //     ),
+                                  //   ),
+                                ],
+                              ),
+                            ),
+
+                            /// 🔥 TOP ARROW ROW
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 14),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+
+                                  /// LEFT ARROW
+                                  IconButton(
+                                    icon: const Icon(Icons.keyboard_double_arrow_left, color: Colors.red),
+                                    onPressed: () {
+                                      _gridScrollController.animateTo(
+                                        _gridScrollController.offset - 200,
+                                        duration: const Duration(milliseconds: 400),
+                                        curve: Curves.easeInOut,
+                                      );
+                                    },
                                   ),
-                                ),
-                              );
-                            },
-                          ),
+
+                                  /// RIGHT ARROW
+                                  IconButton(
+                                    icon: const Icon(Icons.keyboard_double_arrow_right, color: Colors.red),
+                                    onPressed: () {
+                                      _gridScrollController.animateTo(
+                                        _gridScrollController.offset + 200,
+                                        duration: const Duration(milliseconds: 400),
+                                        curve: Curves.easeInOut,
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
 
@@ -365,6 +496,39 @@ class _HomeViewState extends State<HomeView>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildArrowButton({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Center(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(30),
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: ColorHelperClass.getColorFromHex(
+              ColorResources.red_color,
+            ),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 6,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Icon(
+            icon,
+            color: Colors.white,
+            size: 22,
+          ),
+        ),
       ),
     );
   }
