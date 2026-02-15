@@ -113,6 +113,32 @@ class Urls {
   static const String product_categories_url = base_url+"api/product_category";
   static const String product_subcategories_url = base_url+"api/product_subcategory";
 
+  //Shiksha Sahayata
+  static const String get_shiksha_application_by_id_url = base_url+"api/get_shiksha_application_by_id";
+  static const String create_shiksha_application_url = base_url+"api/create_shiksha_application";
+  static const String update_shiksha_application_url = base_url+"api/update_shiksha_application";
+  static const String update_father_data_url = base_url+"api/update_father_data";
+  static const String add_or_update_family_data_url = base_url+"api/add_or_update_family_data";
+  static const String add_shiksha_applicant_education_url = base_url+"api/add_shiksha_applicant_education";
+  static const String update_shiksha_applicant_education_url = base_url+"api/update_shiksha_applicant_education";
+  static const String delete_shiksha_applicant_education_url = base_url+"api/delete_shiksha_applicant_education";
+  static const String add_shiksha_applicant_requested_loan_education_url = base_url+"api/add_shiksha_applicant_requested_loan_education";
+  static const String update_shiksha_applicant_requested_loan_education_url = base_url+"api/update_shiksha_applicant_requested_loan_education";
+  static const String delete_shiksha_applicant_requested_loan_education_url = base_url+"api/delete_shiksha_applicant_requested_loan_education";
+  static const String add_shiksha_applicant_received_loan = base_url+"api/add_shiksha_applicant_received_loan";
+  static const String update_shiksha_applicant_received_loan = base_url+"api/update_shiksha_applicant_received_loan";
+  static const String delete_shiksha_applicant_received_loan = base_url+"api/delete_shiksha_applicant_received_loan";
+  static const String add_referred_member_url = base_url+"api/add_referred_member_data";
+  static const String update_referred_member_url = base_url+"api/update_referred_member_data";
+  static const String upload_reference_aadhaar_url = base_url+"api/upload_shiksha_applicant_refered_member_aadhar_card_document";
+  static const String upload_admission_letter_url = base_url+"api/upload_shiksha_applicant_admission_confirmation_letter_doc";
+  static const String upload_bonafide_document_url = base_url+"api/upload_shiksha_applicant_bonafide_fees_document";
+  static const String upload_mark_sheet_attachment_url = base_url+"api/upload_shiksha_applicant_mark_sheet_attachment";
+  static const String get_shiksha_applications_by_applied_by = base_url+"api/get_shiksha_applications_by_applied_by";
+  static const String upload_shiksha_applicant_aadhar_card_document = base_url+"api/upload_shiksha_applicant_aadhar_card_document";
+  static const String upload_shiksha_applicant_ration_card_document = base_url+"api/upload_shiksha_applicant_ration_card_document";
+  static const String upload_shiksha_applicant_father_pan_card_document = base_url+"api/upload_shiksha_applicant_father_pan_card_document";
+
   // Notification API URLs - Following same pattern as device_mapping
   static const String get_all_notifications_url = base_url+"api/notifications/get_all";
   static const String mark_notification_read_url = base_url+"api/notifications/mark_read";

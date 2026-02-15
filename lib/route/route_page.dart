@@ -8,6 +8,9 @@ import 'package:mpm/view/Networking/network_view.dart';
 import 'package:mpm/view/OutsideMumbaiLogin/outside_mumbai_login.dart';
 import 'package:mpm/view/QRCodeScanner/qr_code.dart';
 import 'package:mpm/view/Saraswanilabel/saraswani_label.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/shiksha_sahayata_by_parenting_view.dart';
+import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByYourself/shiksha_sahayata_by_yourself.dart';
+import 'package:mpm/view/ShikshaSahayata/shiksha_sahayata_view.dart';
 import 'package:mpm/view/addmember/add_member_first.dart';
 import 'package:mpm/view/addmember/add_member_second.dart';
 import 'package:mpm/view/condition_about/about_view.dart';
@@ -102,11 +105,13 @@ class RoutePages {
         return _buildRoute(const NotificationListView(), settings);
       case RouteNames.notification_detail:
         final notification = settings.arguments as NotificationDataModel;
-        return _buildRoute(NotificationDetailPage(
-          title: notification.title,
-          body: notification.body,
-          image: notification.image,
-        ), settings);
+        return _buildRoute(
+            NotificationDetailPage(
+              title: notification.title,
+              body: notification.body,
+              image: notification.image,
+            ),
+            settings);
 
       // Networking
       case RouteNames.networking:
@@ -115,6 +120,18 @@ class RoutePages {
       // Job
       case RouteNames.job:
         return _buildRoute(JobView(), settings);
+
+        // Shiksha Sahayata
+      case RouteNames.shiksha_sahayata:
+        return _buildRoute(ShikshaSahayataView(), settings);
+
+      // Shiksha Sahayata By Parenting
+      case RouteNames.shiksha_sahayata_by_parenting:
+        return _buildRoute(ShikshaSahayataByParentingView(), settings);
+
+      // Shiksha Sahayata By Yourself
+      case RouteNames.shiksha_sahayata_by_yourself:
+        return _buildRoute(ShikshaSahayataByYourself(), settings);
 
       // OutSide Mumbai Login
       case RouteNames.outside_mumbai_login:
@@ -193,4 +210,3 @@ class EnquiryFormLoader extends StatelessWidget {
     );
   }
 }
-

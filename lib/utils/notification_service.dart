@@ -258,6 +258,10 @@ class NotificationService {
         channelKey: channelKey,
         title: title,
         body: body,
+        // 👇 ADD THIS (your logo inside notification)
+        largeIcon: 'resource://drawable/mpm_logo.png',
+
+        // 👇 Keep existing big picture logic
         bigPicture: (image.isNotEmpty) ? image : null,
         notificationLayout: (image.isNotEmpty)
             ? NotificationLayout.BigPicture

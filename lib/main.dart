@@ -10,6 +10,7 @@ import 'package:mpm/route/route_name.dart';
 import 'package:mpm/route/route_page.dart';
 import 'package:mpm/utils/DefaultFirebaseOptions.dart';
 import 'package:mpm/view_model/controller/notification/NotificationApiController.dart';
+import 'package:month_year_picker/month_year_picker.dart';
 
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
@@ -55,6 +56,16 @@ class MyApp extends StatelessWidget {
       locale: DevicePreview.locale(context), // ✅ Sync locale with DevicePreview
       builder: DevicePreview.appBuilder, //
       debugShowCheckedModeBanner: false,
+      // ✅ ADD THIS
+      localizationsDelegates: const [
+        MonthYearPickerLocalizations.delegate,
+      ],
+
+      supportedLocales: const [
+        Locale('en'),
+      ],
+
+
       theme: ThemeData(
         fontFamily: 'Ubuntu-Regular.ttf',
         colorScheme: ColorScheme.fromSeed(
