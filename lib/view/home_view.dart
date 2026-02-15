@@ -43,8 +43,6 @@ class _HomeViewState extends State<HomeView>
   bool _showLeftArrow = false;
   bool _showRightArrow = false;
 
-  late Timer _scrollStopTimer;
-
   final double _cardWidth = 360.0;
   final double _cardSpacing = 16.0;
   late Timer _timer;
@@ -91,7 +89,6 @@ class _HomeViewState extends State<HomeView>
   @override
   void initState() {
     super.initState();
-    _scrollStopTimer = Timer(const Duration(milliseconds: 1), () {});
 
     // Initialize notification controller safely
     if (Get.isRegistered<NotificationApiController>()) {
@@ -99,32 +96,6 @@ class _HomeViewState extends State<HomeView>
     } else {
       notificationController = Get.put(NotificationApiController());
     }
-
-    _gridScrollController.addListener(() {
-      if (!_gridScrollController.hasClients) return;
-
-      final maxScroll = _gridScrollController.position.maxScrollExtent;
-      final current = _gridScrollController.offset;
-
-      // While scrolling → hide arrows
-      setState(() {
-        _isUserScrolling = true;
-        _showLeftArrow = false;
-        _showRightArrow = false;
-      });
-
-      // Reset timer
-      _scrollStopTimer.cancel();
-      _scrollStopTimer = Timer(const Duration(milliseconds: 400), () {
-        if (!_gridScrollController.hasClients) return;
-
-        setState(() {
-          _isUserScrolling = false;
-          _showLeftArrow = current > 10;
-          _showRightArrow = current < maxScroll - 10;
-        });
-      });
-    });
 
     controller.getUserProfile().then((_) {
       memberId = int.tryParse(controller.memberId.value);
@@ -203,7 +174,6 @@ class _HomeViewState extends State<HomeView>
     _scrollController.dispose();
     _tagController.dispose();
     super.dispose();
-    _scrollStopTimer.cancel();
     _gridScrollController.dispose();
   }
 
@@ -349,75 +319,91 @@ class _HomeViewState extends State<HomeView>
 
                                         return true;
                                       },
-                                      child: GridView.builder(
-                                        controller: _gridScrollController,
-                                        physics: const BouncingScrollPhysics(),
-                                        scrollDirection: Axis.horizontal,
-                                        itemCount: gridItems.length,
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 14),
-                                        gridDelegate:
-                                            const SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 2,
-                                          mainAxisSpacing: 12,
-                                          crossAxisSpacing: 12,
-                                          mainAxisExtent: 95,
-                                        ),
-                                        itemBuilder: (context, index) {
-                                          final item = gridItems[index];
-                                          final screenWidth =
-                                              MediaQuery.of(context).size.width;
+                                      child: NotificationListener<ScrollNotification>(
+                                        onNotification: (notification) {
+                                          if (!_gridScrollController.hasClients) return false;
 
-                                          return GestureDetector(
-                                            onTap: () => _handleGridItemClick(
-                                                item['label']),
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: Colors.black
-                                                        .withOpacity(0.08),
-                                                    blurRadius: 6,
-                                                    offset: const Offset(0, 3),
-                                                  ),
-                                                ],
-                                              ),
-                                              child: Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  SvgPicture.asset(
-                                                    item['icon'],
-                                                    height: screenWidth * 0.06,
-                                                    width: screenWidth * 0.06,
-                                                  ),
-                                                  const SizedBox(height: 6),
-                                                  Text(
-                                                    item['label'],
-                                                    style: TextStyle(
-                                                      fontSize:
-                                                          screenWidth * 0.03,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      color: ColorHelperClass
-                                                          .getColorFromHex(
-                                                        ColorResources
-                                                            .red_color,
-                                                      ),
-                                                    ),
-                                                    textAlign: TextAlign.center,
-                                                    maxLines: 2,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          );
+                                          final maxScroll =
+                                              _gridScrollController.position.maxScrollExtent;
+                                          final current = _gridScrollController.offset;
+
+                                          if (notification is ScrollStartNotification) {
+                                            setState(() {
+                                              _showLeftArrow = false;
+                                              _showRightArrow = false;
+                                            });
+                                          }
+
+                                          if (notification is ScrollEndNotification) {
+                                            setState(() {
+                                              _showLeftArrow = current > 10;
+                                              _showRightArrow = current < maxScroll - 10;
+                                            });
+                                          }
+
+                                          return false;
                                         },
+                                        child: GridView.builder(
+                                          controller: _gridScrollController,
+                                          physics: const BouncingScrollPhysics(),
+                                          scrollDirection: Axis.horizontal,
+                                          itemCount: gridItems.length,
+                                          padding: const EdgeInsets.symmetric(horizontal: 14),
+
+                                          // 🔥 THIS WAS MISSING
+                                          gridDelegate:
+                                          const SliverGridDelegateWithFixedCrossAxisCount(
+                                            crossAxisCount: 2,
+                                            mainAxisSpacing: 12,
+                                            crossAxisSpacing: 12,
+                                            mainAxisExtent: 95,
+                                          ),
+
+                                          itemBuilder: (context, index) {
+                                            final item = gridItems[index];
+                                            final screenWidth = MediaQuery.of(context).size.width;
+
+                                            return GestureDetector(
+                                              onTap: () => _handleGridItemClick(item['label']),
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius: BorderRadius.circular(12),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.black.withOpacity(0.08),
+                                                      blurRadius: 6,
+                                                      offset: const Offset(0, 3),
+                                                    ),
+                                                  ],
+                                                ),
+                                                child: Column(
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    SvgPicture.asset(
+                                                      item['icon'],
+                                                      height: screenWidth * 0.06,
+                                                      width: screenWidth * 0.06,
+                                                    ),
+                                                    const SizedBox(height: 6),
+                                                    Text(
+                                                      item['label'],
+                                                      style: TextStyle(
+                                                        fontSize: screenWidth * 0.03,
+                                                        fontWeight: FontWeight.w600,
+                                                        color: ColorHelperClass.getColorFromHex(
+                                                            ColorResources.red_color),
+                                                      ),
+                                                      textAlign: TextAlign.center,
+                                                      maxLines: 2,
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
                                       ),
                                     ),
                                   ),
