@@ -67,6 +67,8 @@ class UdateProfileController extends GetxController {
   final ChangeFamilyHeadRepository _changeHeadRepo =
       ChangeFamilyHeadRepository();
   final addOccupationRepo = AddOccupationRepository();
+  NewMemberController regiController = Get.put(NewMemberController());
+
 
   var isPay = false.obs;
   RxBool showEmailVerifyBanner = false.obs;
@@ -97,7 +99,6 @@ class UdateProfileController extends GetxController {
       TextEditingController().obs;
   Rx<TextEditingController> upaddressbusinessinfoNameController =
       TextEditingController().obs;
-
   Rx<TextEditingController> addressController = TextEditingController().obs;
   Rx<TextEditingController> areaNameController = TextEditingController().obs;
   Rx<TextEditingController> udareaNameController = TextEditingController().obs;
@@ -304,6 +305,7 @@ class UdateProfileController extends GetxController {
   void onInit() {
     // TODO: implement onInit
     super.onInit();
+    getRelation();
   }
 
   void setSelectRelationShip(String value) {
@@ -355,6 +357,21 @@ class UdateProfileController extends GetxController {
       }
 
       getUserData.value = _value.data!;
+      final address = getUserData.value.address;
+
+      if (address != null &&
+          address.stateId != null &&
+          address.stateId.toString().isNotEmpty) {
+
+        regiController.state_id.value = address.stateId.toString();
+      }
+
+      if (address != null &&
+          address.city_id != null &&
+          address.city_id.toString().isNotEmpty) {
+
+        regiController.city_id.value = address.city_id.toString();
+      }
       memberId.value = id.toString();
       fathersName.value = getUserData.value.fatherName.toString();
       firstName.value = getUserData.value.firstName.toString();
@@ -1410,15 +1427,16 @@ class UdateProfileController extends GetxController {
   void setRxRelationType(Status _value) => rxStatusRelationType.value = _value;
 
   void getRelation() {
+    if (relationShipTypeList.isNotEmpty) return;
+
     Map datas = {"attribute_id": "1"};
     setRxRelationType(Status.LOADING);
+
     api.userFamilyRelation(datas).then((_value) {
       setRxRelationType(Status.COMPLETE);
       setRelationShipType(_value.data!);
-      print("relationdata" + _value.data!.toString());
     }).onError((error, strack) {
       setRxRelationType(Status.ERROR);
-      print("relationdata" + error.toString());
     });
   }
 
