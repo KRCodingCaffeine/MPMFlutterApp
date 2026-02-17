@@ -19,44 +19,47 @@ class BhavanBookingView extends StatefulWidget {
 }
 
 class _BhavanBookingViewState extends State<BhavanBookingView> {
-  final Dio dio = Dio();
+  bool _isDownloading = false;
+  int _downloadProgress = 0;
 
+  final Dio _dio = Dio();
   final List<Map<String, dynamic>> forms = [
     {
-      'title': 'Karyakarta form 2022-24',
-      'fileName' : 'karyakarta_form',
-      'icon': Icons.picture_as_pdf,
-      'color': const Color(0xFFd6d6d6),
-      'url': 'https://members.mumbaimaheshwari.com/api/public/assets/forms/karyakartha_form.pdf',
-    },
-    {
-      'title': 'Scholarship Application Form',
-      'fileName' : 'scholarship_form',
-      'icon': Icons.picture_as_pdf,
+      'title': 'Girgoan Bhavan',
+      'fileName': 'girgoan_bhavan',
+      'icon': Icons.account_balance,
       'color': const Color(0xFFd6d6d6),
       'url':
-      'https://members.mumbaimaheshwari.com/api/public/assets/forms/application_for_loan_scholarship.pdf',
+      'https://members.mumbaimaheshwari.com/api/public/assets/forms/girgoan_offline.pdf',
     },
     {
-      'title': 'Radhakrishna Lahoti Sahayata Kosh Form',
-      'fileName' : 'radhakrishna_lahoti_form',
-      'icon': Icons.picture_as_pdf,
+      'title': 'Andheri Bhavan',
+      'fileName': 'andheri_bhavan',
+      'icon': Icons.account_balance,
       'color': const Color(0xFFd6d6d6),
       'url':
-      'https://members.mumbaimaheshwari.com/api/public/assets/forms/radhakrishna_lahoti_sahayata_kosh_form.pdf',
+      'https://members.mumbaimaheshwari.com/api/public/assets/forms/andheri_bhavan.pdf',
     },
     {
-      'title': 'Membership Form',
-      'fileName' : 'membership_form',
-      'icon': Icons.picture_as_pdf,
+      'title': 'Ghatkopar Bhavan',
+      'fileName': 'ghatkopar_bhavan',
+      'icon': Icons.account_balance,
       'color': const Color(0xFFd6d6d6),
       'url':
-      'https://members.mumbaimaheshwari.com/api/public/assets/forms/membership_form.pdf',
+      'https://members.mumbaimaheshwari.com/api/public/assets/forms/ghatkopar_bhavan.pdf',
+    },
+    {
+      'title': 'Borivali Bhavan',
+      'fileName': 'borivali_bhavan',
+      'icon': Icons.account_balance,
+      'color': const Color(0xFFd6d6d6),
+      'url':
+      'https://members.mumbaimaheshwari.com/api/public/assets/forms/borivali_plot.pdf',
     },
     {
       'title': 'Shiksha Form',
       'fileName' : 'shiksha_form',
-      'icon': Icons.picture_as_pdf,
+      'icon': Icons.account_balance,
       'color': const Color(0xFFd6d6d6),
       'url':
       'https://members.mumbaimaheshwari.com/api/public/assets/forms/shiksha_form.pdf',
@@ -81,81 +84,6 @@ class _BhavanBookingViewState extends State<BhavanBookingView> {
     super.dispose();
   }
 
-  Future<void> _downloadFile(String? url, String? fileName) async {
-    if (url == null || fileName == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid file URL or file name')),
-      );
-      return;
-    }
-
-    final permissionStatus = await _requestPermission();
-    if (!permissionStatus) return;
-
-    try {
-      // ✅ Use app-specific external storage
-      Directory directory = Platform.isAndroid
-          ? (await getExternalStorageDirectory())!
-          : await getApplicationDocumentsDirectory();
-
-      String filePath = "${directory!.path}/$fileName";
-      Dio dio = Dio();
-      int progress = 0;
-
-      final scaffoldMessenger = ScaffoldMessenger.of(context);
-      StateSetter? setSnackbarState;
-
-      final snackBarController = scaffoldMessenger.showSnackBar(
-        SnackBar(
-          content: StatefulBuilder(
-            builder: (context, setState) {
-              setSnackbarState = setState;
-              return Text("Downloading $fileName ... $progress%");
-            },
-          ),
-          duration: const Duration(days: 1),
-        ),
-      );
-
-      await dio.download(
-        url,
-        filePath,
-        onReceiveProgress: (received, total) {
-          if (total > 0) {
-            int newProgress = ((received / total) * 100).toInt();
-            if (newProgress != progress) {
-              progress = newProgress;
-              if (setSnackbarState != null) {
-                setSnackbarState!(() {});
-              }
-            }
-          }
-        },
-      );
-
-      snackBarController.close();
-
-      scaffoldMessenger.showSnackBar(
-        SnackBar(
-          content: Text("$fileName - Downloaded successfully."),
-          action: SnackBarAction(
-            label: "View",
-            onPressed: () {
-              OpenFilex.open(filePath);
-            },
-          ),
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Download failed: $e")),
-      );
-    }
-  }
-
-
-
-
 
   Future<bool> _requestPermission() async {
     if (Platform.isAndroid) {
@@ -163,35 +91,184 @@ class _BhavanBookingViewState extends State<BhavanBookingView> {
       final sdkInt = androidInfo.version.sdkInt;
 
       if (sdkInt >= 33) {
-        // Android 13+ (use READ_MEDIA_* permissions if needed)
-        return true; // No need to ask if downloading to app-private or using DownloadManager
-      } else if (sdkInt >= 30) {
-        // Android 11 or 12
-        var status = await Permission.storage.request();
-        if (status.isGranted) return true;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Storage permission is needed to download the file.')),
-        );
-        return false;
-      } else {
-        // Android 10 or below
-        var status = await Permission.storage.request();
-        if (status.isGranted) return true;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Storage permission is needed to download the file.')),
-        );
-        return false;
+        // Android 13+ doesn't require storage permission for app-specific files
+        return true;
       }
+
+      if (await Permission.storage.request().isGranted) {
+        return true;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Storage permission is required to download the file.'),
+        ),
+      );
+
+      return false;
     }
     return true;
+  }
+
+  Future<void> _downloadAndOpenPdf(String url, String fileName) async {
+    final permissionStatus = await _requestPermission();
+    if (!permissionStatus || !mounted) return;
+
+    try {
+      Directory directory;
+
+      if (Platform.isAndroid) {
+        directory = Directory('/storage/emulated/0/Download');
+      } else {
+        directory = await getApplicationDocumentsDirectory();
+      }
+
+      if (!await directory.exists()) {
+        await directory.create(recursive: true);
+      }
+
+      String filePath = "${directory.path}/$fileName";
+
+      int progress = 0;
+      late StateSetter setStateDialog;
+
+      // 🔹 SHOW PROGRESS DIALOG
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return StatefulBuilder(
+            builder: (context, setState) {
+              setStateDialog = setState;
+
+              return AlertDialog(
+                backgroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                title: const Text(
+                  "Downloading...",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    LinearProgressIndicator(
+                      value: progress / 100,
+                      minHeight: 8,
+                      color: Colors.redAccent,
+                    ),
+                    const SizedBox(height: 12),
+                    Text("$progress%"),
+                  ],
+                ),
+              );
+            },
+          );
+        },
+      );
+
+      await _dio.download(
+        url,
+        filePath,
+        onReceiveProgress: (received, total) {
+          if (total > 0 && mounted) {
+            progress = ((received / total) * 100).toInt();
+            setStateDialog(() {});
+          }
+        },
+      );
+
+      if (!mounted) return;
+
+      Navigator.of(context, rootNavigator: true).pop(); // close progress
+
+      _showDownloadDialog(context, fileName, filePath);
+
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).maybePop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Download failed: $e")),
+        );
+      }
+    }
+  }
+  void _showDownloadDialog(
+      BuildContext context, String fileName, String filePath) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Download Complete",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+          content: Text(
+            "$fileName has been downloaded successfully.",
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.redAccent,
+                side: const BorderSide(color: Colors.redAccent),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Close"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                OpenFilex.open(filePath);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("View"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget buildCard(String title, IconData icon, Color color, String url, String fileName) {
     return GestureDetector(
       onTap: () {
-        _downloadFile(url, "$fileName.pdf");
+        _downloadAndOpenPdf(url, "$fileName.pdf");
       },
       child: Card(
         color: Colors.white,
@@ -210,7 +287,24 @@ class _BhavanBookingViewState extends State<BhavanBookingView> {
                 Text(
                   title,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 16, color: Colors.black),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+                ),
+
+                const SizedBox(height: 6),
+
+                // 🔹 Subtitle
+                const Text(
+                  "Offline Booking",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w400,
+                  ),
                 ),
               ],
             ),
