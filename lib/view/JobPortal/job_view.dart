@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/JobPortal/job_detail.dart';
+import 'package:share_plus/share_plus.dart';
 
 class JobView extends StatefulWidget {
   const JobView({super.key});
@@ -21,18 +22,87 @@ class _JobViewState extends State<JobView> {
   final TextEditingController locationController = TextEditingController();
   final TextEditingController salaryController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
-  List<Map<String, String>> appliedMembers = [
+
+  List<Map<String, dynamic>> appliedMembers = [
     {
       "name": "Rahul Sharma",
-      "job": "Flutter Developer",
+      "email": "rahul.sharma@gmail.com",
+      "mobile": "9876543210",
+      "whatsapp": "9876543210",
+      "father_name": "Ramesh Sharma",
+      "mother_name": "Sunita Sharma",
+      "building": "Shanti Residency",
+      "flat": "A-302",
+      "area": "Andheri East",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "country": "India",
+      "pincode": "400069",
+      "education": "B.Tech Computer Engineering",
       "experience": "3 Years",
-      "status": "Pending"
+      "occupation": "Flutter Developer",
+      "job": "Flutter Developer",
+      "isShortlisted": false,
     },
     {
       "name": "Priya Mehta",
-      "job": "UI Designer",
+      "email": "priya.mehta@gmail.com",
+      "mobile": "9823456789",
+      "whatsapp": "9823456789",
+      "father_name": "Mahesh Mehta",
+      "mother_name": "Kavita Mehta",
+      "building": "Green Park Apartments",
+      "flat": "B-104",
+      "area": "Satellite",
+      "city": "Ahmedabad",
+      "state": "Gujarat",
+      "country": "India",
+      "pincode": "380015",
+      "education": "MBA Marketing",
       "experience": "2 Years",
-      "status": "Pending"
+      "occupation": "UI/UX Designer",
+      "job": "UI Designer",
+      "isShortlisted": false,
+    },
+    {
+      "name": "Amit Verma",
+      "email": "amit.verma@gmail.com",
+      "mobile": "9811122233",
+      "whatsapp": "9811122233",
+      "father_name": "Suresh Verma",
+      "mother_name": "Anita Verma",
+      "building": "Lake View Towers",
+      "flat": "C-504",
+      "area": "Dwarka",
+      "city": "Delhi",
+      "state": "Delhi",
+      "country": "India",
+      "pincode": "110075",
+      "education": "B.Com",
+      "experience": "1 Year",
+      "occupation": "Account Executive",
+      "job": "Senior Accountant",
+      "isShortlisted": false,
+    },
+    {
+      "name": "Neha Kapoor",
+      "email": "neha.kapoor@gmail.com",
+      "mobile": "9898989898",
+      "whatsapp": "9898989898",
+      "father_name": "Raj Kapoor",
+      "mother_name": "Meena Kapoor",
+      "building": "Sky Heights",
+      "flat": "D-210",
+      "area": "Powai",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "country": "India",
+      "pincode": "400076",
+      "education": "MCA",
+      "experience": "5 Years",
+      "occupation": "Senior Software Engineer",
+      "job": "Flutter Developer",
+      "isShortlisted": false,
     },
   ];
 
@@ -50,8 +120,6 @@ class _JobViewState extends State<JobView> {
   ];
 
   final List<Map<String, dynamic>> jobs = [
-
-    // ================= IT =================
     {
       "title": "Flutter Developer",
       "company": "Tech Solutions Pvt Ltd",
@@ -59,11 +127,10 @@ class _JobViewState extends State<JobView> {
       "salary": "₹5 - 8 LPA",
       "experience": "2-4 Years",
       "category": "IT",
-      "description": "We are looking for a skilled Flutter Developer to build cross-platform mobile apps.",
+      "description":
+          "We are looking for a skilled Flutter Developer to build cross-platform mobile apps.",
       "isBookmarked": false
     },
-
-    // ================= FINANCE =================
     {
       "title": "Senior Accountant",
       "company": "Maheshwari Finance Group",
@@ -71,11 +138,10 @@ class _JobViewState extends State<JobView> {
       "salary": "₹4 - 7 LPA",
       "experience": "3-5 Years",
       "category": "Finance",
-      "description": "Manage financial records, GST filing, and accounting operations.",
+      "description":
+          "Manage financial records, GST filing, and accounting operations.",
       "isBookmarked": false
     },
-
-    // ================= MARKETING =================
     {
       "title": "Digital Marketing Executive",
       "company": "GrowthX Media",
@@ -83,11 +149,10 @@ class _JobViewState extends State<JobView> {
       "salary": "₹3 - 5 LPA",
       "experience": "1-3 Years",
       "category": "Marketing",
-      "description": "Handle SEO, Google Ads, and social media marketing campaigns.",
+      "description":
+          "Handle SEO, Google Ads, and social media marketing campaigns.",
       "isBookmarked": false
     },
-
-    // ================= DESIGN =================
     {
       "title": "UI/UX Designer",
       "company": "Creative Studio",
@@ -95,10 +160,10 @@ class _JobViewState extends State<JobView> {
       "salary": "₹4 - 6 LPA",
       "experience": "2-4 Years",
       "category": "Design",
-      "description": "Design user-friendly mobile and web interfaces with modern design tools.",
+      "description":
+          "Design user-friendly mobile and web interfaces with modern design tools.",
       "isBookmarked": false
     },
-
   ];
 
   @override
@@ -124,8 +189,14 @@ class _JobViewState extends State<JobView> {
             ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Text(
           isRecruiter
-              ? "Recruiter Panel"
-              : "Job",
+              ? "Offer Jobs (Employer)"
+              : showJobs
+                  ? selectedTab == 0
+                      ? "Job"
+                      : selectedTab == 1
+                          ? "Saved Jobs"
+                          : "Applied Jobs"
+                  : "Job",
           style: TextStyle(
             color: Colors.white,
             fontSize: MediaQuery.of(context).size.width * 0.045,
@@ -144,19 +215,7 @@ class _JobViewState extends State<JobView> {
                 },
               )
             : null,
-        actions: isRecruiter && recruiterTab == 1
-            ? [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              _openPostJobBottomSheet();
-            },
-          )
-        ]
-            : null,
       ),
-
-      // ================= BODY =================
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: showJobs
@@ -166,6 +225,18 @@ class _JobViewState extends State<JobView> {
                 : _buildSelectionCard(),
       ),
 
+      floatingActionButton: (isRecruiter &&
+          recruiterTab == 1 &&
+          postedJobs.isNotEmpty)
+          ? FloatingActionButton(
+        backgroundColor:
+        ColorHelperClass.getColorFromHex(ColorResources.red_color),
+        onPressed: () {
+          _openPostJobBottomSheet();
+        },
+        child: const Icon(Icons.add, color: Colors.white),
+      )
+          : null,
       bottomNavigationBar: showJobs
           ? BottomNavigationBar(
               currentIndex: selectedTab,
@@ -213,8 +284,6 @@ class _JobViewState extends State<JobView> {
     );
   }
 
-  // ================= TAB SWITCH =================
-
   Widget _buildCurrentTab(List<Map<String, dynamic>> filteredJobs,
       List<Map<String, dynamic>> savedJobs) {
     if (selectedTab == 0) {
@@ -241,130 +310,116 @@ class _JobViewState extends State<JobView> {
 
     return Column(
       children: [
-        /// 🔍 Search (OLD STYLE RESTORED)
-        TextField(
-          controller: searchController,
-          decoration: InputDecoration(
-            hintText: "Search jobs...",
-            prefixIcon: const Icon(Icons.search),
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide.none,
+        if (selectedTab == 0) ...[
+          TextField(
+            controller: searchController,
+            decoration: InputDecoration(
+              hintText: "Search jobs...",
+              prefixIcon: const Icon(Icons.search),
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 45,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: categories.length,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: ChoiceChip(
+                    label: Text(categories[index]),
+                    selected: selectedCategory == categories[index],
+                    onSelected: (_) {
+                      setState(() {
+                        selectedCategory = categories[index];
+                      });
+                    },
+                  ),
+                );
+              },
             ),
           ),
-          onChanged: (_) => setState(() {}),
-        ),
-
-        const SizedBox(height: 12),
-
-        /// 📂 Category Chips (OLD STYLE RESTORED)
-        SizedBox(
-          height: 45,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: categories.length,
-            itemBuilder: (context, index) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: ChoiceChip(
-                  label: Text(categories[index]),
-                  selected: selectedCategory == categories[index],
-                  onSelected: (_) {
-                    setState(() {
-                      selectedCategory = categories[index];
-                    });
-                  },
-                ),
-              );
-            },
-          ),
-        ),
-
-        const SizedBox(height: 15),
-
-        /// 💼 JOB LIST (OLD CARD UI RESTORED)
+          const SizedBox(height: 15),
+        ],
         Expanded(
           child: ListView.builder(
             itemCount: list.length,
             itemBuilder: (context, index) {
               final job = list[index];
 
-              return GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => JobDetailView(job: job),
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.shade200,
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    )
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            job["title"],
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(
+                            (job["isBookmarked"] ?? false)
+                                ? Icons.bookmark
+                                : Icons.bookmark_border,
+                            color: (job["isBookmarked"] ?? false)
+                                ? Colors.orange
+                                : Colors.grey,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              job["isBookmarked"] =
+                                  !(job["isBookmarked"] ?? false);
+                            });
+                          },
+                        ),
+                      ],
                     ),
-                  );
-                },
-                child: Container(
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.shade200,
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      )
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              job["title"],
-                              style: const TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              (job["isBookmarked"] ?? false)
-                                  ? Icons.bookmark
-                                  : Icons.bookmark_border,
-                              color: (job["isBookmarked"] ?? false)
-                                  ? Colors.orange
-                                  : Colors.grey,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                job["isBookmarked"] =
-                                    !(job["isBookmarked"] ?? false);
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(job["company"],
-                          style: const TextStyle(fontWeight: FontWeight.w500)),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          const Icon(Icons.location_on,
-                              size: 16, color: Colors.grey),
-                          const SizedBox(width: 4),
-                          Text(job["location"]),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(job["salary"],
-                          style: const TextStyle(
-                              color: Colors.green,
-                              fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 6),
-                      Text("Experience: ${job["experience"]}"),
+                    const SizedBox(height: 6),
+                    Text(job["company"],
+                        style: const TextStyle(fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on,
+                            size: 16, color: Colors.grey),
+                        const SizedBox(width: 4),
+                        Text(job["location"]),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(job["salary"],
+                        style: const TextStyle(
+                            color: Colors.green, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 6),
+                    Text("Experience: ${job["experience"]}"),
+                    const SizedBox(height: 12),
+                    if (selectedTab != 2)
                       Align(
                         alignment: Alignment.centerRight,
                         child: ElevatedButton(
@@ -375,24 +430,40 @@ class _JobViewState extends State<JobView> {
                               });
                             }
 
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text("Applied Successfully")),
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => JobDetailView(job: job),
+                              ),
                             );
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.red,
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
                           ),
                           child: const Text("Apply"),
                         ),
-                      )
-                    ],
-                  ),
+                      ),
+                    if (selectedTab == 2)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            "Applied",
+                            style: TextStyle(
+                              color: Colors.green,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               );
             },
@@ -415,7 +486,6 @@ class _JobViewState extends State<JobView> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              /// 🔴 Top Icon
               Container(
                 height: 70,
                 width: 70,
@@ -429,20 +499,7 @@ class _JobViewState extends State<JobView> {
                   color: Colors.redAccent,
                 ),
               ),
-
-              const SizedBox(height: 20),
-
-              const Text(
-                "Are you looking for?",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
               const SizedBox(height: 30),
-
-              /// 🔵 Looking for Job
               SizedBox(
                 width: double.infinity,
                 height: 55,
@@ -466,10 +523,7 @@ class _JobViewState extends State<JobView> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 18),
-
-              /// 🟢 Recruiter Button
               SizedBox(
                 width: double.infinity,
                 height: 55,
@@ -481,7 +535,7 @@ class _JobViewState extends State<JobView> {
                   },
                   icon: const Icon(Icons.work, color: Colors.redAccent),
                   label: const Text(
-                    "Recruiter (Post Job)",
+                    "Offer Jobs (Employer)",
                     style: TextStyle(
                       color: Colors.redAccent,
                       fontSize: 16,
@@ -508,89 +562,328 @@ class _JobViewState extends State<JobView> {
       return const Center(child: Text("No applications yet"));
     }
 
-    return ListView.builder(
-      itemCount: appliedMembers.length,
-      itemBuilder: (context, index) {
-        final member = appliedMembers[index];
+    // 🔹 Check if any member is shortlisted
+    bool hasShortlisted = appliedMembers.any(
+      (member) => member["isShortlisted"] == true,
+    );
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(color: Colors.grey.shade200, blurRadius: 6)
-            ],
+    return Column(
+      children: [
+        /// 🔹 SHARE BUTTON (ONLY IF ATLEAST ONE SHORTLISTED)
+        if (hasShortlisted)
+          Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton.icon(
+              onPressed: () => _shareShortlistedMembers(context),
+              icon: const Icon(Icons.share),
+              label: const Text("Share Shortlisted"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(member["name"] ?? "",
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 6),
-              Text("Applied For: ${member["job"]}"),
-              Text("Experience: ${member["experience"]}"),
-              const SizedBox(height: 10),
 
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
+        const SizedBox(height: 10),
 
-                  // STATUS BADGE
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: member["status"] == "Accepted"
-                          ? Colors.green.withOpacity(0.1)
-                          : member["status"] == "Rejected"
-                          ? Colors.red.withOpacity(0.1)
-                          : Colors.orange.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      member["status"] ?? "",
-                      style: TextStyle(
-                        color: member["status"] == "Accepted"
-                            ? Colors.green
-                            : member["status"] == "Rejected"
-                            ? Colors.red
-                            : Colors.orange,
-                      ),
-                    ),
-                  ),
+        /// 🔹 MEMBER LIST
+        Expanded(
+          child: ListView.builder(
+            itemCount: appliedMembers.length,
+            itemBuilder: (context, index) {
+              final member = appliedMembers[index];
+              bool isShortlisted = member["isShortlisted"] ?? false;
 
-                  if (member["status"] == "Pending")
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(color: Colors.grey.shade200, blurRadius: 6)
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(member["name"] ?? "",
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 6),
+                    Text("Applied For: ${member["job"]}"),
+                    Text("Experience: ${member["experience"]}"),
+                    const SizedBox(height: 16),
                     Row(
                       children: [
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              member["status"] = "Accepted";
-                            });
-                          },
-                          child: const Text("Accept",
-                              style: TextStyle(color: Colors.green)),
+                        /// 🔍 VIEW PROFILE
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: TextButton.icon(
+                              onPressed: () {
+                                _showProfileBottomSheet(member);
+                              },
+                              icon: const Icon(Icons.visibility),
+                              label: const Text("View Profile"),
+                              style: TextButton.styleFrom(
+                                foregroundColor:
+                                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              member["status"] = "Rejected";
-                            });
-                          },
-                          child: const Text("Reject",
-                              style: TextStyle(color: Colors.red)),
+
+                        const SizedBox(width: 12),
+
+                        /// ⭐ SHORTLIST BUTTON
+                        Expanded(
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            decoration: BoxDecoration(
+                              color: isShortlisted
+                                  ? Colors.green.withOpacity(0.15)
+                                  : Colors.red.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: TextButton(
+                              onPressed: isShortlisted
+                                  ? null
+                                  : () {
+                                setState(() {
+                                  member["isShortlisted"] = true;
+                                });
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("Member short listed"),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              },
+                              style: TextButton.styleFrom(
+                                foregroundColor:
+                                isShortlisted ? Colors.green : Colors.red,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    isShortlisted
+                                        ? Icons.check_circle
+                                        : Icons.star_border,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    isShortlisted ? "Shortlisted" : "Short List",
+                                    style: const TextStyle(fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     )
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showProfileBottomSheet(Map<String, dynamic> member) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        int experienceYears = int.tryParse(
+              member["experience"]
+                      ?.toString()
+                      .replaceAll(RegExp(r'[^0-9]'), '') ??
+                  "0",
+            ) ??
+            0;
+
+        return SafeArea(
+          child: FractionallySizedBox(
+            heightFactor: 0.85,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Member Profile",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close),
+                      )
+                    ],
+                  ),
+                  const Divider(),
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _sectionTitle("Personal Details"),
+                          const SizedBox(height: 12),
+                          _profileRow("Name", member["name"]),
+                          _profileRow("Email", member["email"]),
+                          _profileRow("Mobile", member["mobile"]),
+                          _profileRow("WhatsApp", member["whatsapp"]),
+                          const SizedBox(height: 20),
+                          _sectionTitle("Family Details"),
+                          const SizedBox(height: 12),
+                          _profileRow("Father's Name", member["father_name"]),
+                          _profileRow("Mother's Name", member["mother_name"]),
+                          const SizedBox(height: 20),
+                          _sectionTitle("Residential Address"),
+                          const SizedBox(height: 12),
+                          _profileRow("Building Name", member["building"]),
+                          _profileRow("Flat Number", member["flat"]),
+                          _profileRow("Area", member["area"]),
+                          _profileRow("City", member["city"]),
+                          _profileRow("State", member["state"]),
+                          _profileRow("Country", member["country"]),
+                          _profileRow("Pincode", member["pincode"]),
+                          const SizedBox(height: 20),
+                          const Divider(),
+                          const SizedBox(height: 15),
+                          _sectionTitle("Education"),
+                          const SizedBox(height: 12),
+                          _profileRow(
+                              "Highest Qualification", member["education"]),
+                          const SizedBox(height: 20),
+                          if (experienceYears > 1) ...[
+                            const Divider(),
+                            const SizedBox(height: 15),
+                            _sectionTitle("Occupation"),
+                            const SizedBox(height: 12),
+                            _profileRow(
+                                "Experience",
+                                member["experience"] ??
+                                    "$experienceYears Years"),
+                            _profileRow(
+                                "Current Occupation", member["occupation"]),
+                          ],
+                          const SizedBox(height: 20),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
-              )
-            ],
+              ),
+            ),
           ),
         );
       },
+    );
+  }
+
+  void _shareShortlistedMembers(BuildContext context) async {
+    final box = context.findRenderObject() as RenderBox?;
+
+    // 🔹 Get only shortlisted members
+    final shortlisted = appliedMembers
+        .where((member) => member["isShortlisted"] == true)
+        .toList();
+
+    if (shortlisted.isEmpty) return;
+
+    String shareText = "🌟 Shortlisted Members Details\n\n";
+
+    for (var member in shortlisted) {
+      shareText += '''
+      👤 Name: ${member["name"]}
+      📧 Email: ${member["email"]}
+      📱 Mobile: ${member["mobile"]}
+      💬 WhatsApp: ${member["whatsapp"]}
+      
+      🎓 Education: ${member["education"]}
+      💼 Occupation: ${member["occupation"]}
+      
+      🏠 Address:
+      ${member["building"]}, ${member["flat"]}
+      ${member["area"]}, ${member["city"]}
+      ${member["state"]}, ${member["country"]} - ${member["pincode"]}
+      
+      ----------------------------------
+      ''';
+    }
+
+    await Share.share(
+      shareText,
+      subject: "Shortlisted Members",
+      sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
+    );
+  }
+
+  Widget _profileRow(String label, dynamic value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 110,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.w500,
+              color: Colors.grey,
+            ),
+          ),
+        ),
+        const Text(": "),
+        Expanded(
+          child: Text(
+            value?.toString() ?? "",
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _sectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+      ),
     );
   }
 
@@ -600,15 +893,12 @@ class _JobViewState extends State<JobView> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-
             const Icon(
               Icons.work_outline,
               size: 60,
               color: Colors.grey,
             ),
-
             const SizedBox(height: 15),
-
             const Text(
               "No Jobs Posted Yet",
               style: TextStyle(
@@ -616,28 +906,22 @@ class _JobViewState extends State<JobView> {
                 fontWeight: FontWeight.w500,
               ),
             ),
-
             const SizedBox(height: 10),
-
             const Text(
               "Start by posting your first job",
               style: TextStyle(color: Colors.grey),
             ),
-
             const SizedBox(height: 25),
-
-            /// ✅ POST JOB BUTTON
             ElevatedButton(
               onPressed: () {
                 _openPostJobBottomSheet();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(
-                    ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 30, vertical: 14),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -663,64 +947,99 @@ class _JobViewState extends State<JobView> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(color: Colors.grey.shade200, blurRadius: 6)
-            ],
+            boxShadow: [BoxShadow(color: Colors.grey.shade200, blurRadius: 6)],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
-                    child: Text(job["title"] ?? "",
-                        style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold)),
+                    child: Text(
+                      job["title"] ?? "",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
 
-                  Row(
-                    children: [
-
-                      /// ✏ EDIT
-                      IconButton(
-                        icon: const Icon(Icons.edit,
-                            color: Colors.blue),
-                        onPressed: () {
-                          _openPostJobBottomSheet(
-                            editIndex: index,
-                          );
-                        },
+                  /// 🔹 POPUP MENU BUTTON
+                  PopupMenuButton<String>(
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    onSelected: (value) {
+                      if (value == "edit") {
+                        _openPostJobBottomSheet(editIndex: index);
+                      } else if (value == "delete") {
+                        setState(() {
+                          postedJobs.removeAt(index);
+                        });
+                      }
+                    },
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(
+                        value: "edit",
+                        child: Text(
+                          "Edit Job",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ),
-
-                      /// 🗑 DELETE
-                      IconButton(
-                        icon: const Icon(Icons.delete,
-                            color: Colors.red),
-                        onPressed: () {
-                          setState(() {
-                            postedJobs.removeAt(index);
-                          });
-                        },
+                      PopupMenuItem(
+                        value: "delete",
+                        child: Text(
+                          "Delete Job",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.red,
+                          ),
+                        ),
                       ),
                     ],
-                  )
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.red.withOpacity(0.08),
+                      ),
+                      child: const Text(
+                        "Edit / Delete",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
 
+              const Divider(),
               const SizedBox(height: 6),
-              Text("Company: ${job["company"] ?? ""}"),
-              Text("Location: ${job["location"] ?? ""}"),
-              Text("Salary: ${job["salary"] ?? ""}",
-                  style: const TextStyle(
-                      color: Colors.green,
-                      fontWeight: FontWeight.w600)),
+
+              const SizedBox(height: 8),
+              _infoRow("Company", job["company"] ?? ""),
+              const SizedBox(height: 8),
+
+              _infoRow("Location", job["location"] ?? ""),
+              const SizedBox(height: 8),
+
+              _infoRow("Salary", job["salary"] ?? ""),
             ],
           ),
         );
-      },
+        },
     );
   }
 
@@ -756,22 +1075,16 @@ class _JobViewState extends State<JobView> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
-
                   const SizedBox(height: 12),
-
-                  /// 🔹 TOP BUTTON ROW (LIKE YOUR EDIT SHEET)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-
-                      /// ❌ CANCEL
                       OutlinedButton(
                         onPressed: () {
                           Navigator.pop(context);
                         },
                         style: OutlinedButton.styleFrom(
-                          foregroundColor:
-                          ColorHelperClass.getColorFromHex(
+                          foregroundColor: ColorHelperClass.getColorFromHex(
                               ColorResources.red_color),
                           side: BorderSide(
                             color: ColorHelperClass.getColorFromHex(
@@ -783,19 +1096,8 @@ class _JobViewState extends State<JobView> {
                         ),
                         child: const Text("Cancel"),
                       ),
-
-                      /// ✅ POST / UPDATE
                       ElevatedButton(
                         onPressed: () {
-                          if (titleController.text.isEmpty ||
-                              companyController.text.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text("Please fill required fields")),
-                            );
-                            return;
-                          }
-
                           setState(() {
                             if (editIndex != null) {
                               postedJobs[editIndex] = {
@@ -806,36 +1108,30 @@ class _JobViewState extends State<JobView> {
                                 "description": descriptionController.text,
                               };
                             } else {
-                              postedJobs.add({
+                              final newJob = {
                                 "title": titleController.text,
                                 "company": companyController.text,
                                 "location": locationController.text,
                                 "salary": salaryController.text,
                                 "description": descriptionController.text,
-                              });
+                              };
+
+                              postedJobs.add(newJob);
+
+                              print("✅ Job Added");
+                              print("Posted Jobs Count: ${postedJobs.length}");
                             }
+
+                            recruiterTab = 1;
                           });
 
                           Navigator.pop(context);
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                          ColorHelperClass.getColorFromHex(
-                              ColorResources.red_color),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: Text(
-                            editIndex != null ? "Update" : "Post Job"),
+                        child: Text(editIndex != null ? "Update" : "Post Job"),
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 30),
-
-                  /// 🔹 FORM SECTION
                   Expanded(
                     child: SingleChildScrollView(
                       child: Column(
@@ -849,8 +1145,7 @@ class _JobViewState extends State<JobView> {
                           _buildTextField("Salary",
                               controller: salaryController),
                           _buildTextField("Description",
-                              controller: descriptionController,
-                              maxLines: 4),
+                              controller: descriptionController, maxLines: 4),
                         ],
                       ),
                     ),
@@ -864,10 +1159,12 @@ class _JobViewState extends State<JobView> {
     );
   }
 
-  Widget _buildTextField(String label, {int maxLines = 1, TextEditingController? controller}) {
+  Widget _buildTextField(String label,
+      {int maxLines = 1, TextEditingController? controller}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: TextField(
+        controller: controller,
         maxLines: maxLines,
         decoration: InputDecoration(
           labelText: label,
@@ -882,6 +1179,41 @@ class _JobViewState extends State<JobView> {
             borderSide: BorderSide(color: Colors.black26, width: 1.0),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+          const Text(
+            ": ",
+            style: TextStyle(color: Colors.grey),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: label == "Salary" ? Colors.green : Colors.black,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
