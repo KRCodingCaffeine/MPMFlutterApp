@@ -4,11 +4,13 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:mpm/utils/AppDrawer.dart';
+import 'package:mpm/utils/color_resources.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:mpm/utils/color_helper.dart';
-import 'package:mpm/utils/color_resources.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 
 class BhavanBookingView extends StatefulWidget {
@@ -26,6 +28,13 @@ class _BhavanBookingViewState extends State<BhavanBookingView> {
   final List<Map<String, dynamic>> forms = [
     {
       'title': 'Girgoan Bhavan',
+      'fileName' : 'girgoan_bhavan',
+      'icon': Icons.account_balance,
+      'color': const Color(0xFFd6d6d6),
+      'url': 'https://booking.mpmmumbai.in/',
+    },
+    {
+      'title': 'Girgaon Booking Form',
       'fileName': 'girgoan_bhavan',
       'icon': Icons.account_balance,
       'color': const Color(0xFFd6d6d6),
@@ -34,6 +43,13 @@ class _BhavanBookingViewState extends State<BhavanBookingView> {
     },
     {
       'title': 'Andheri Bhavan',
+      'fileName' : 'andheri_bhavan',
+      'icon': Icons.account_balance,
+      'color': const Color(0xFFd6d6d6),
+      'url': 'https://bookingandheri.mpmmumbai.in/',
+    },
+    {
+      'title': 'Andheri Booking Form',
       'fileName': 'andheri_bhavan',
       'icon': Icons.account_balance,
       'color': const Color(0xFFd6d6d6),
@@ -41,7 +57,7 @@ class _BhavanBookingViewState extends State<BhavanBookingView> {
       'https://members.mumbaimaheshwari.com/api/public/assets/forms/andheri_bhavan.pdf',
     },
     {
-      'title': 'Ghatkopar Bhavan',
+      'title': 'Ghatkopar Booking Form',
       'fileName': 'ghatkopar_bhavan',
       'icon': Icons.account_balance,
       'color': const Color(0xFFd6d6d6),
@@ -49,27 +65,12 @@ class _BhavanBookingViewState extends State<BhavanBookingView> {
       'https://members.mumbaimaheshwari.com/api/public/assets/forms/ghatkopar_bhavan.pdf',
     },
     {
-      'title': 'Borivali Bhavan',
+      'title': 'Borivali Booking Form',
       'fileName': 'borivali_bhavan',
       'icon': Icons.account_balance,
       'color': const Color(0xFFd6d6d6),
       'url':
       'https://members.mumbaimaheshwari.com/api/public/assets/forms/borivali_plot.pdf',
-    },
-    {
-      'title': 'Shiksha Form',
-      'fileName' : 'shiksha_form',
-      'icon': Icons.account_balance,
-      'color': const Color(0xFFd6d6d6),
-      'url':
-      'https://members.mumbaimaheshwari.com/api/public/assets/forms/shiksha_form.pdf',
-    },
-    {
-      'title': 'Student Prize Application',
-      'fileName' : 'student_prize_form',
-      'icon': Icons.picture_as_pdf,
-      'color': const Color(0xFFd6d6d6),
-      'url': 'https://members.mumbaimaheshwari.com/api/public/assets/forms/student_price_application_form.pdf',
     },
   ];
 
@@ -91,7 +92,6 @@ class _BhavanBookingViewState extends State<BhavanBookingView> {
       final sdkInt = androidInfo.version.sdkInt;
 
       if (sdkInt >= 33) {
-        // Android 13+ doesn't require storage permission for app-specific files
         return true;
       }
 
@@ -132,7 +132,6 @@ class _BhavanBookingViewState extends State<BhavanBookingView> {
       int progress = 0;
       late StateSetter setStateDialog;
 
-      // 🔹 SHOW PROGRESS DIALOG
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -181,7 +180,7 @@ class _BhavanBookingViewState extends State<BhavanBookingView> {
 
       if (!mounted) return;
 
-      Navigator.of(context, rootNavigator: true).pop(); // close progress
+      Navigator.of(context, rootNavigator: true).pop();
 
       _showDownloadDialog(context, fileName, filePath);
 
@@ -265,30 +264,73 @@ class _BhavanBookingViewState extends State<BhavanBookingView> {
     );
   }
 
-  Widget buildCard(String title, IconData icon, Color color, String url, String fileName) {
+  Future<void> _openWebsite(String url) async {
+    final Uri uri = Uri.parse(url);
+
+    if (!await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    )) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Could not open website")),
+        );
+      }
+    }
+  }
+
+  Widget buildCard(
+      String title,
+      IconData icon,
+      Color color,
+      String url,
+      String fileName,
+      ) {
+    final bool isPdf = url.toLowerCase().endsWith(".pdf");
+
     return GestureDetector(
       onTap: () {
-        _downloadAndOpenPdf(url, "$fileName.pdf");
+        if (isPdf) {
+          _downloadAndOpenPdf(url, "$fileName.pdf");
+        } else {
+          _openWebsite(url);
+        }
       },
       child: Card(
         color: Colors.white,
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        elevation: 6,
+        shadowColor: Colors.black12,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
         child: AspectRatio(
           aspectRatio: 1,
           child: Padding(
-            padding: const EdgeInsets.all(12.0),
+            padding: const EdgeInsets.all(14.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, size: 50, color: color),
-                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent.withOpacity(0.08),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 30,
+                    color: Colors.redAccent,
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
                 Text(
                   title,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: Colors.black,
                   ),
@@ -296,14 +338,12 @@ class _BhavanBookingViewState extends State<BhavanBookingView> {
 
                 const SizedBox(height: 6),
 
-                // 🔹 Subtitle
-                const Text(
-                  "Offline Booking",
-                  textAlign: TextAlign.center,
+                Text(
+                  isPdf ? "Offline Booking" : "Online Booking",
                   style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey,
-                    fontWeight: FontWeight.w400,
+                    fontSize: 11,
+                    color: isPdf ? Colors.grey : Colors.green,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
