@@ -1158,6 +1158,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 context: context,
                                 imageFile: applicantAadharFile,
                                 buttonText: "Applicant Aadhaar Card",
+                                isMandatory: true,
                                 existingDocumentPath: _applicationData
                                     ?.applicantAadharCardDocument,
                                 isExistingRemoved: isExistingAadhaarRemoved,
@@ -1193,6 +1194,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 context: context,
                                 imageFile: fatherPanFile,
                                 buttonText: "Father's PAN Card",
+                                isMandatory: true,
                                 existingDocumentPath: _applicationData
                                     ?.applicantFatherPanCardDocument,
                                 isExistingRemoved: isExistingPanRemoved,
@@ -1229,6 +1231,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
                                 imageFile: addressProofFile,
                                 buttonText:
                                     "Address Proof (if Aadhaar and current address are not the same)",
+                                isMandatory: false,
                                 existingDocumentPath: _applicationData
                                     ?.applicantRationCardDocument,
                                 isExistingRemoved: isExistingRationRemoved,
@@ -1456,6 +1459,7 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
     required BuildContext context,
     required File? imageFile,
     required String buttonText,
+    bool isMandatory = false,
     required String? existingDocumentPath,
     required bool isExistingRemoved,
     required VoidCallback onPick,
@@ -1571,7 +1575,11 @@ class _ApplicantDetailState extends State<ApplicantDetail> {
               isUploaded ? Icons.check_circle : Icons.upload_file,
             ),
             label: Text(
-              isUploaded ? "$buttonText Uploaded" : "$buttonText *",
+              isUploaded
+                  ? "$buttonText Uploaded"
+                  : isMandatory
+                  ? "$buttonText *"
+                  : buttonText,
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: isUploaded
