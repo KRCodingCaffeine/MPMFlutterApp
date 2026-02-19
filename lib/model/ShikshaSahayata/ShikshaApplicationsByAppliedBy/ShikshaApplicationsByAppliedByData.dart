@@ -28,6 +28,18 @@ class ShikshaApplicationsByAppliedByData {
   final String? applicantAadharCardDocument;
   final String? applicantFatherPanCardDocument;
   final String? applicantRationCardDocument;
+  final String? appliedBy;
+  final String? appliedByMemberCode;
+  final String? appliedByFirstName;
+  final String? appliedByMiddleName;
+  final String? appliedByLastName;
+  final String? appliedByFullName;
+  final String? appliedByEmail;
+  final String? appliedByMobile;
+  final String? createdBy;
+  final String? updatedBy;
+  final String? createdAt;
+  final String? updatedAt;
 
   final List<FamilyMember>? familyMembers;
   final List<Education>? education;
@@ -59,6 +71,18 @@ class ShikshaApplicationsByAppliedByData {
     this.applicantAadharCardDocument,
     this.applicantFatherPanCardDocument,
     this.applicantRationCardDocument,
+    this.appliedBy,
+    this.appliedByMemberCode,
+    this.appliedByFirstName,
+    this.appliedByMiddleName,
+    this.appliedByLastName,
+    this.appliedByFullName,
+    this.appliedByEmail,
+    this.appliedByMobile,
+    this.createdBy,
+    this.updatedBy,
+    this.createdAt,
+    this.updatedAt,
     this.familyMembers,
     this.education,
     this.requestedLoanEducationAppliedBy,
@@ -94,6 +118,18 @@ class ShikshaApplicationsByAppliedByData {
       json['applicant_father_pan_card_document']?.toString(),
       applicantRationCardDocument:
       json['applicant_ration_card_document']?.toString(),
+      appliedBy: json['applied_by']?.toString(),
+      appliedByMemberCode: json['applied_by_member_code']?.toString(),
+      appliedByFirstName: json['applied_by_first_name']?.toString(),
+      appliedByMiddleName: json['applied_by_middle_name']?.toString(),
+      appliedByLastName: json['applied_by_last_name']?.toString(),
+      appliedByFullName: json['applied_by_full_name']?.toString(),
+      appliedByEmail: json['applied_by_email']?.toString(),
+      appliedByMobile: json['applied_by_mobile']?.toString(),
+      createdBy: json['created_by']?.toString(),
+      updatedBy: json['updated_by']?.toString(),
+      createdAt: json['created_at']?.toString(),
+      updatedAt: json['updated_at']?.toString(),
       familyMembers: json['family_members'] != null
           ? List<FamilyMember>.from(
           json['family_members'].map((x) => FamilyMember.fromJson(x)))
@@ -142,6 +178,18 @@ class ShikshaApplicationsByAppliedByData {
       'applicant_aadhar_card_document': applicantAadharCardDocument,
       'applicant_father_pan_card_document': applicantFatherPanCardDocument,
       'applicant_ration_card_document': applicantRationCardDocument,
+      'applied_by': appliedBy,
+      'applied_by_member_code': appliedByMemberCode,
+      'applied_by_first_name': appliedByFirstName,
+      'applied_by_middle_name': appliedByMiddleName,
+      'applied_by_last_name': appliedByLastName,
+      'applied_by_full_name': appliedByFullName,
+      'applied_by_email': appliedByEmail,
+      'applied_by_mobile': appliedByMobile,
+      'created_by': createdBy,
+      'updated_by': updatedBy,
+      'created_at': createdAt,
+      'updated_at': updatedAt,
       'family_members': familyMembers?.map((x) => x.toJson()).toList(),
       'education': education?.map((x) => x.toJson()).toList(),
       'requested_loan_education':

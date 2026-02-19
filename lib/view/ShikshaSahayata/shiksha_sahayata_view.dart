@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:mpm/model/ShikshaSahayata/ShikshaApplicationsByAppliedBy/ShikshaApplicationsByAppliedByData.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/ShikshaApplicationsAppliedByRepo/shiksha_applications_applied_by_repository/shiksha_application_applied_by_repository.dart';
 import 'package:mpm/route/route_name.dart';
@@ -118,8 +119,6 @@ class _ShikshaSahayataViewState
     );
   }
 
-  // ================= APPLICATION SUMMARY =================
-
   Widget _buildAppliedView() {
     if (applicationList.isEmpty) {
       return const Center(
@@ -127,7 +126,6 @@ class _ShikshaSahayataViewState
       );
     }
 
-    // Check first application's loan status
     final firstLoan = applicationList.first
         .requestedLoanEducationAppliedBy !=
         null &&
@@ -146,14 +144,12 @@ class _ShikshaSahayataViewState
       padding: const EdgeInsets.all(16),
       children: [
 
-        /// ✅ SHOW INFO CARD ONLY ONCE (TOP)
         if (!isDisbursed)
           _applicationInfoCard(false),
 
         if (!isDisbursed)
           const SizedBox(height: 16),
 
-        /// ✅ LOOP THROUGH APPLICATIONS
         ...applicationList.map((data) {
           final loan =
           data.requestedLoanEducationAppliedBy != null &&
@@ -192,7 +188,6 @@ class _ShikshaSahayataViewState
                   CrossAxisAlignment.start,
                   children: [
 
-                    /// 🔹 HEADER
                     Row(
                       mainAxisAlignment:
                       MainAxisAlignment.spaceBetween,
@@ -224,6 +219,16 @@ class _ShikshaSahayataViewState
                         data.applicantStateName ?? "-"),
                     _infoRow("Applied Education",
                         loan?.standard ?? "-"),
+                    _infoRow(
+                      "Applied By",
+                      data.appliedByFullName ?? "-",
+                    ),
+                    _infoRow(
+                      "Applied On",
+                      data.createdAt != null && data.createdAt!.isNotEmpty
+                          ? _formatDateTime(data.createdAt!)
+                          : "-",
+                    ),
 
                     if (loan?.sanctionedAmount != null &&
                         loan!.sanctionedAmount!
@@ -258,6 +263,16 @@ class _ShikshaSahayataViewState
         }).toList(),
       ],
     );
+  }
+
+  String _formatDateTime(String rawDate) {
+    try {
+      final parsed = DateTime.parse(rawDate);
+      // return DateFormat("dd MMM yyyy, hh:mm a").format(parsed);
+      return DateFormat("dd MMM yyyy").format(parsed);
+    } catch (e) {
+      return rawDate;
+    }
   }
 
   Widget _buildLoanStatusBadge(String? status) {
@@ -512,42 +527,19 @@ class _ShikshaSahayataViewState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                "Please ensure the following documents are available with you before submit with the application.",
+                "Please ensure that soft copies of following documents are ready before proceeding further:-",
                 style:
                 TextStyle(fontSize: 16, color: Colors.black87, height: 1.4),
               ),
               const SizedBox(height: 12),
-              _bulletRichText(
-                prefix: "Copy of ",
-                bold: "Aadhar card",
-              ),
-              _bulletRichText(
-                prefix: "Copy of ",
-                bold:
-                "Address proof (If Aadhar and current address are not the same)",
-              ),
-              _bulletRichText(
-                prefix: "Copy of ",
-                bold: "Father's PAN card",
-              ),
+              _bulletRichText(text: "Aadhar card"),
+              _bulletRichText(text: "Address proof (If Aadhar and current address are not the same)"),
+              _bulletRichText(text: "Father's PAN card"),
               const SizedBox(height: 8),
-              _bulletRichText(
-                prefix:
-                "Copy of ",
-                bold: "Bonafide Certificate & Fees Structure by authority from college",
-              ),
-              _bulletRichText(
-                prefix: "Copy of ",
-                bold: "Marksheet starting from Class X",
-              ),
-              _bulletRichText(
-                prefix: "Copy of ",
-                bold: "Annual Income Proof",
-              ),
-              _bulletRichText(
-                prefix: "Copy of ",
-                bold: "Admission Letter",
-              ),
+              _bulletRichText(text: "Bonafide Certificate & Fees Structure by authority from college"),
+              _bulletRichText(text: "Marksheet starting from Class X"),
+              _bulletRichText(text: "Annual Income Proof"),
+              _bulletRichText(text: "Admission Letter"),
             ],
           ),
           actions: [
@@ -666,7 +658,7 @@ class _ShikshaSahayataViewState
     );
   }
 
-  Widget _bulletRichText({required String prefix, String? bold}) {
+  Widget _bulletRichText({required String text}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
@@ -674,21 +666,13 @@ class _ShikshaSahayataViewState
         children: [
           const Text("• ", style: TextStyle(fontSize: 16, height: 1.4)),
           Expanded(
-            child: RichText(
-              text: TextSpan(
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.black87,
-                  height: 1.4,
-                ),
-                children: [
-                  TextSpan(text: prefix),
-                  if (bold != null)
-                    TextSpan(
-                      text: bold,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                ],
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.black87,
+                height: 1.4,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),

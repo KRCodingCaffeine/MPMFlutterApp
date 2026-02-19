@@ -800,6 +800,7 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
                               buildImageUploadField(
                                 context: context,
                                 imageFile: applicantAadharFile,
+                                isMandatory: true,
                                 existingDocumentPath: widget.applicationData
                                     .applicantAadharCardDocument,
                                 isExistingRemoved: isExistingAadhaarRemoved,
@@ -840,6 +841,7 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
                               buildImageUploadField(
                                 context: context,
                                 imageFile: fatherPanFile,
+                                isMandatory: true,
                                 existingDocumentPath: widget.applicationData
                                     .applicantFatherPanCardDocument,
                                 isExistingRemoved: isExistingPanRemoved,
@@ -875,6 +877,7 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
                               buildImageUploadField(
                                 context: context,
                                 imageFile: addressProofFile,
+                                isMandatory: false,
                                 existingDocumentPath: widget.applicationData
                                     .applicantRationCardDocument,
                                 isExistingRemoved: isExistingRationRemoved,
@@ -1117,6 +1120,7 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
     required BuildContext context,
     required File? imageFile,
     required String buttonText,
+    bool isMandatory = false,
     required String? existingDocumentPath,
     required bool isExistingRemoved,
     required VoidCallback onPick,
@@ -1221,7 +1225,11 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
               isUploaded ? Icons.check_circle : Icons.upload,
             ),
             label: Text(
-              isUploaded ? "$buttonText Uploaded" : "$buttonText *",
+              isUploaded
+                  ? "$buttonText Uploaded"
+                  : isMandatory
+                  ? "$buttonText *"
+                  : buttonText,
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: isUploaded
