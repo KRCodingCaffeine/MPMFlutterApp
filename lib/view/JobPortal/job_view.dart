@@ -975,9 +975,7 @@ class _JobViewState extends State<JobView> {
                       if (value == "edit") {
                         _openPostJobBottomSheet(editIndex: index);
                       } else if (value == "delete") {
-                        setState(() {
-                          postedJobs.removeAt(index);
-                        });
+                        _showDeleteDialog(index);
                       }
                     },
                     itemBuilder: (context) => const [
@@ -1036,6 +1034,9 @@ class _JobViewState extends State<JobView> {
               const SizedBox(height: 8),
 
               _infoRow("Salary", job["salary"] ?? ""),
+              const SizedBox(height: 8),
+
+              _infoRow("Description", job["description"] ?? ""),
             ],
           ),
         );
@@ -1098,8 +1099,10 @@ class _JobViewState extends State<JobView> {
                       ),
                       ElevatedButton(
                         onPressed: () {
+                          bool isUpdate = editIndex != null;
+
                           setState(() {
-                            if (editIndex != null) {
+                            if (isUpdate) {
                               postedJobs[editIndex] = {
                                 "title": titleController.text,
                                 "company": companyController.text,
@@ -1126,7 +1129,31 @@ class _JobViewState extends State<JobView> {
                           });
 
                           Navigator.pop(context);
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                isUpdate
+                                    ? "Job updated successfully"
+                                    : "Job added successfully",
+                              ),
+                              backgroundColor: Colors.green,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              margin: const EdgeInsets.all(16),
+                            ),
+                          );
                         },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorHelperClass.getColorFromHex(
+                              ColorResources.red_color),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
                         child: Text(editIndex != null ? "Update" : "Post Job"),
                       ),
                     ],
@@ -1146,6 +1173,7 @@ class _JobViewState extends State<JobView> {
                               controller: salaryController),
                           _buildTextField("Description",
                               controller: descriptionController, maxLines: 4),
+                          const SizedBox(height: 30),
                         ],
                       ),
                     ),
@@ -1215,6 +1243,95 @@ class _JobViewState extends State<JobView> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showDeleteDialog(int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Delete Job",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+
+          content: const Text(
+            "Are you sure you want to delete this job?",
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+
+          actions: [
+            OutlinedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: BorderSide(
+                  color: ColorHelperClass.getColorFromHex(
+                      ColorResources.red_color),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("No"),
+            ),
+
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  postedJobs.removeAt(index);
+                });
+
+                Navigator.pop(context);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Job deleted successfully"),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Delete"),
+            ),
+          ],
+        );
+      },
     );
   }
 }
