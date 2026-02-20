@@ -16,7 +16,31 @@ class _JobViewState extends State<JobView> {
   int selectedTab = 0;
   bool isRecruiter = false;
   int recruiterTab = 0;
-  List<Map<String, dynamic>> postedJobs = [];
+  String? selectedJobTitleForMembers;
+  List<Map<String, dynamic>> postedJobs = [
+    {
+      "title": "Flutter Developer",
+      "company": "Tech Solutions Pvt Ltd",
+      "location": "Mumbai",
+      "salary": "₹5 - 8 LPA",
+      "description": "Build cross platform mobile apps."
+    },
+    {
+      "title": "UI Designer",
+      "company": "Creative Studio",
+      "location": "Ahmedabad",
+      "salary": "₹4 - 6 LPA",
+      "description": "Design modern UI/UX screens."
+    },
+    {
+      "title": "Senior Accountant",
+      "company": "Maheshwari Finance Group",
+      "location": "Delhi",
+      "salary": "₹6 - 9 LPA",
+      "description": "Manage accounting and GST."
+    },
+  ];
+
   final TextEditingController titleController = TextEditingController();
   final TextEditingController companyController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
@@ -189,7 +213,9 @@ class _JobViewState extends State<JobView> {
             ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Text(
           isRecruiter
-              ? "Offer Jobs (Employer)"
+              ? recruiterTab == 0
+                  ? selectedJobTitleForMembers ?? "Posted Jobs"
+                  : "Post Job"
               : showJobs
                   ? selectedTab == 0
                       ? "Job"
@@ -224,18 +250,17 @@ class _JobViewState extends State<JobView> {
                 ? _buildRecruiterSection()
                 : _buildSelectionCard(),
       ),
-
       floatingActionButton: (isRecruiter &&
-          recruiterTab == 1 &&
-          postedJobs.isNotEmpty)
+              recruiterTab == 1 &&
+              postedJobs.isNotEmpty)
           ? FloatingActionButton(
-        backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.red_color),
-        onPressed: () {
-          _openPostJobBottomSheet();
-        },
-        child: const Icon(Icons.add, color: Colors.white),
-      )
+              backgroundColor:
+                  ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              onPressed: () {
+                _openPostJobBottomSheet();
+              },
+              child: const Icon(Icons.add, color: Colors.white),
+            )
           : null,
       bottomNavigationBar: showJobs
           ? BottomNavigationBar(
@@ -297,7 +322,11 @@ class _JobViewState extends State<JobView> {
 
   Widget _buildRecruiterSection() {
     if (recruiterTab == 0) {
-      return _buildAppliedMembers();
+      if (selectedJobTitleForMembers == null) {
+        return _buildPostedJobsForMembers();
+      } else {
+        return _buildAppliedMembersForJob(selectedJobTitleForMembers!);
+      }
     } else {
       return _buildPostJobForm();
     }
@@ -557,10 +586,113 @@ class _JobViewState extends State<JobView> {
     );
   }
 
-  Widget _buildAppliedMembers() {
-    if (appliedMembers.isEmpty) {
-      return const Center(child: Text("No applications yet"));
+  Widget _buildPostedJobsForMembers() {
+    if (postedJobs.isEmpty) {
+      return const Center(child: Text("No jobs posted yet"));
     }
+
+    return ListView.builder(
+      itemCount: postedJobs.length,
+      itemBuilder: (context, index) {
+        final job = postedJobs[index];
+
+        // ✅ DEFINE COUNTS HERE
+        int applicantCount = appliedMembers
+            .where((member) => member["job"] == job["title"])
+            .length;
+
+        int shortlistedCount = appliedMembers
+            .where((member) =>
+                member["job"] == job["title"] &&
+                member["isShortlisted"] == true)
+            .length;
+
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              selectedJobTitleForMembers = job["title"];
+            });
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(color: Colors.grey.shade200, blurRadius: 6)
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        job["title"] ?? "",
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+
+                    // ✅ RIGHT SIDE BADGES
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            "$applicantCount Applicants",
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.red,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        if (shortlistedCount > 0)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              "$shortlistedCount Shortlisted",
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Colors.green,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                      ],
+                    )
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(job["company"] ?? ""),
+                const SizedBox(height: 6),
+                Text(
+                  job["location"] ?? "",
+                  style: const TextStyle(color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAppliedMembersForJob(String jobTitle) {
+    final filteredMembers =
+        appliedMembers.where((member) => member["job"] == jobTitle).toList();
 
     // 🔹 Check if any member is shortlisted
     bool hasShortlisted = appliedMembers.any(
@@ -569,7 +701,6 @@ class _JobViewState extends State<JobView> {
 
     return Column(
       children: [
-        /// 🔹 SHARE BUTTON (ONLY IF ATLEAST ONE SHORTLISTED)
         if (hasShortlisted)
           Align(
             alignment: Alignment.centerRight,
@@ -586,125 +717,103 @@ class _JobViewState extends State<JobView> {
               ),
             ),
           ),
-
         const SizedBox(height: 10),
+        if (filteredMembers.isEmpty)
+          const Expanded(
+            child: Center(child: Text("No applicants for this job")),
+          )
+        else
+          Expanded(
+            child: ListView.builder(
+              itemCount: appliedMembers.length,
+              itemBuilder: (context, index) {
+                final member = appliedMembers[index];
+                bool isShortlisted = member["isShortlisted"] ?? false;
 
-        /// 🔹 MEMBER LIST
-        Expanded(
-          child: ListView.builder(
-            itemCount: appliedMembers.length,
-            itemBuilder: (context, index) {
-              final member = appliedMembers[index];
-              bool isShortlisted = member["isShortlisted"] ?? false;
-
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(color: Colors.grey.shade200, blurRadius: 6)
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(member["name"] ?? "",
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 6),
-                    Text("Applied For: ${member["job"]}"),
-                    Text("Experience: ${member["experience"]}"),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        /// 🔍 VIEW PROFILE
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(0.08),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: TextButton.icon(
-                              onPressed: () {
-                                _showProfileBottomSheet(member);
-                              },
-                              icon: const Icon(Icons.visibility),
-                              label: const Text("View Profile"),
-                              style: TextButton.styleFrom(
-                                foregroundColor:
-                                ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.shade200,
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      )
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      /// 🔹 Top Row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    member["name"] ?? "",
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                if (isShortlisted)
+                                  Container(
+                                    margin: const EdgeInsets.only(left: 8),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: Colors.green.withOpacity(0.12),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: const Text(
+                                      "Shortlisted",
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.green,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 6),
+                      Text("Experience: ${member["experience"]}"),
+
+                      const SizedBox(height: 12),
+
+                      /// 🔍 View Profile Button
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () {
+                            _showProfileBottomSheet(member);
+                          },
+                          child: const Text(
+                            "View Profile",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.redAccent
                             ),
                           ),
                         ),
-
-                        const SizedBox(width: 12),
-
-                        /// ⭐ SHORTLIST BUTTON
-                        Expanded(
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            decoration: BoxDecoration(
-                              color: isShortlisted
-                                  ? Colors.green.withOpacity(0.15)
-                                  : Colors.red.withOpacity(0.08),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: TextButton(
-                              onPressed: isShortlisted
-                                  ? null
-                                  : () {
-                                setState(() {
-                                  member["isShortlisted"] = true;
-                                });
-
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text("Member short listed"),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
-                              },
-                              style: TextButton.styleFrom(
-                                foregroundColor:
-                                isShortlisted ? Colors.green : Colors.red,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    isShortlisted
-                                        ? Icons.check_circle
-                                        : Icons.star_border,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    isShortlisted ? "Shortlisted" : "Short List",
-                                    style: const TextStyle(fontWeight: FontWeight.w600),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                  ],
-                ),
-              );
-            },
+                      )
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
-        ),
       ],
     );
   }
@@ -719,12 +828,14 @@ class _JobViewState extends State<JobView> {
       ),
       builder: (context) {
         int experienceYears = int.tryParse(
-              member["experience"]
-                      ?.toString()
-                      .replaceAll(RegExp(r'[^0-9]'), '') ??
-                  "0",
-            ) ??
+          member["experience"]
+              ?.toString()
+              .replaceAll(RegExp(r'[^0-9]'), '') ??
+              "0",
+        ) ??
             0;
+
+        bool isShortlisted = member["isShortlisted"] ?? false;
 
         return SafeArea(
           child: FractionallySizedBox(
@@ -734,9 +845,12 @@ class _JobViewState extends State<JobView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+
+                  /// 🔹 HEADER
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+
+                      /// LEFT — Title
                       const Text(
                         "Member Profile",
                         style: TextStyle(
@@ -744,14 +858,73 @@ class _JobViewState extends State<JobView> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+
+                      const Spacer(),
+
+                      /// CENTER — Shortlist Button
+                      GestureDetector(
+                        onTap: isShortlisted
+                            ? null
+                            : () {
+                          setState(() {
+                            member["isShortlisted"] = true;
+                          });
+
+                          Navigator.pop(context); // optional
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: isShortlisted
+                                ? Colors.green.withOpacity(0.15)
+                                : Colors.grey.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                isShortlisted
+                                    ? Icons.check_circle
+                                    : Icons.star_border,
+                                size: 16,
+                                color: isShortlisted
+                                    ? Colors.green
+                                    : Colors.grey,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                isShortlisted
+                                    ? "Shortlisted"
+                                    : "Shortlist",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: isShortlisted
+                                      ? Colors.green
+                                      : Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const Spacer(),
+
+                      /// RIGHT — Close Button
                       IconButton(
                         onPressed: () => Navigator.pop(context),
                         icon: const Icon(Icons.close),
-                      )
+                      ),
                     ],
                   ),
+
                   const Divider(),
                   const SizedBox(height: 10),
+
+                  /// 🔹 CONTENT
                   Expanded(
                     child: SingleChildScrollView(
                       child: Column(
@@ -764,40 +937,52 @@ class _JobViewState extends State<JobView> {
                           _profileRow("Mobile", member["mobile"]),
                           _profileRow("WhatsApp", member["whatsapp"]),
                           const SizedBox(height: 20),
+
                           _sectionTitle("Family Details"),
                           const SizedBox(height: 12),
                           _profileRow("Father's Name", member["father_name"]),
                           _profileRow("Mother's Name", member["mother_name"]),
                           const SizedBox(height: 20),
+
                           _sectionTitle("Residential Address"),
                           const SizedBox(height: 12),
-                          _profileRow("Building Name", member["building"]),
-                          _profileRow("Flat Number", member["flat"]),
-                          _profileRow("Area", member["area"]),
-                          _profileRow("City", member["city"]),
-                          _profileRow("State", member["state"]),
-                          _profileRow("Country", member["country"]),
-                          _profileRow("Pincode", member["pincode"]),
+
+                          Text(
+                            "${member["flat"] ?? ""}, "
+                                "${member["building"] ?? ""}, "
+                                "${member["area"] ?? ""},\n"
+                                "${member["city"] ?? ""}, "
+                                "${member["state"] ?? ""}, "
+                                "${member["country"] ?? ""} - "
+                                "${member["pincode"] ?? ""}",
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              height: 1.5,
+                            ),
+                          ),
                           const SizedBox(height: 20),
+
                           const Divider(),
                           const SizedBox(height: 15),
+
                           _sectionTitle("Education"),
                           const SizedBox(height: 12),
                           _profileRow(
                               "Highest Qualification", member["education"]),
                           const SizedBox(height: 20),
+
                           if (experienceYears > 1) ...[
                             const Divider(),
                             const SizedBox(height: 15),
                             _sectionTitle("Occupation"),
                             const SizedBox(height: 12),
-                            _profileRow(
-                                "Experience",
-                                member["experience"] ??
-                                    "$experienceYears Years"),
+                            _profileRow("Experience",
+                                member["experience"] ?? "$experienceYears Years"),
                             _profileRow(
                                 "Current Occupation", member["occupation"]),
                           ],
+
                           const SizedBox(height: 20),
                         ],
                       ),
@@ -1022,25 +1207,20 @@ class _JobViewState extends State<JobView> {
                   ),
                 ],
               ),
-
               const Divider(),
               const SizedBox(height: 6),
-
               const SizedBox(height: 8),
               _infoRow("Company", job["company"] ?? ""),
               const SizedBox(height: 8),
-
               _infoRow("Location", job["location"] ?? ""),
               const SizedBox(height: 8),
-
               _infoRow("Salary", job["salary"] ?? ""),
               const SizedBox(height: 8),
-
               _infoRow("Description", job["description"] ?? ""),
             ],
           ),
         );
-        },
+      },
     );
   }
 
@@ -1258,7 +1438,6 @@ class _JobViewState extends State<JobView> {
           titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
           contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
           actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: const [
@@ -1276,7 +1455,6 @@ class _JobViewState extends State<JobView> {
               ),
             ],
           ),
-
           content: const Text(
             "Are you sure you want to delete this job?",
             style: TextStyle(
@@ -1284,7 +1462,6 @@ class _JobViewState extends State<JobView> {
               color: Colors.black87,
             ),
           ),
-
           actions: [
             OutlinedButton(
               onPressed: () {
@@ -1292,7 +1469,7 @@ class _JobViewState extends State<JobView> {
               },
               style: OutlinedButton.styleFrom(
                 foregroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: BorderSide(
                   color: ColorHelperClass.getColorFromHex(
                       ColorResources.red_color),
@@ -1303,7 +1480,6 @@ class _JobViewState extends State<JobView> {
               ),
               child: const Text("No"),
             ),
-
             ElevatedButton(
               onPressed: () {
                 setState(() {
@@ -1321,7 +1497,7 @@ class _JobViewState extends State<JobView> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
