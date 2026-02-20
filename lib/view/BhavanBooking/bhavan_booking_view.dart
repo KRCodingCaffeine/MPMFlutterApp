@@ -21,54 +21,51 @@ class BhavanBookingView extends StatefulWidget {
 }
 
 class _BhavanBookingViewState extends State<BhavanBookingView> {
-  bool _isDownloading = false;
-  int _downloadProgress = 0;
 
   final Dio _dio = Dio();
-  final List<Map<String, dynamic>> forms = [
+  int _selectedTabIndex = 0;
+
+  final List<Map<String, dynamic>> onlineForms = [
     {
-      'title': 'Girgoan Bhavan',
-      'fileName' : 'girgoan_bhavan',
+      'title': 'Girgaon Bhavan',
+      'fileName': 'girgoan_bhavan',
       'icon': Icons.account_balance,
-      'color': const Color(0xFFd6d6d6),
       'url': 'https://booking.mpmmumbai.in/',
     },
     {
+      'title': 'Andheri Bhavan',
+      'fileName': 'andheri_bhavan',
+      'icon': Icons.account_balance,
+      'url': 'https://bookingandheri.mpmmumbai.in/',
+    },
+  ];
+
+  final List<Map<String, dynamic>> offlineForms = [
+    {
       'title': 'Girgaon Booking Form',
       'fileName': 'girgoan_bhavan',
-      'icon': Icons.account_balance,
-      'color': const Color(0xFFd6d6d6),
+      'icon': Icons.picture_as_pdf,
       'url':
       'https://members.mumbaimaheshwari.com/api/public/assets/forms/girgoan_offline.pdf',
     },
     {
-      'title': 'Andheri Bhavan',
-      'fileName' : 'andheri_bhavan',
-      'icon': Icons.account_balance,
-      'color': const Color(0xFFd6d6d6),
-      'url': 'https://bookingandheri.mpmmumbai.in/',
-    },
-    {
       'title': 'Andheri Booking Form',
       'fileName': 'andheri_bhavan',
-      'icon': Icons.account_balance,
-      'color': const Color(0xFFd6d6d6),
+      'icon': Icons.picture_as_pdf,
       'url':
       'https://members.mumbaimaheshwari.com/api/public/assets/forms/andheri_bhavan.pdf',
     },
     {
       'title': 'Ghatkopar Booking Form',
       'fileName': 'ghatkopar_bhavan',
-      'icon': Icons.account_balance,
-      'color': const Color(0xFFd6d6d6),
+      'icon': Icons.picture_as_pdf,
       'url':
       'https://members.mumbaimaheshwari.com/api/public/assets/forms/ghatkopar_bhavan.pdf',
     },
     {
       'title': 'Borivali Booking Form',
       'fileName': 'borivali_bhavan',
-      'icon': Icons.account_balance,
-      'color': const Color(0xFFd6d6d6),
+      'icon': Icons.picture_as_pdf,
       'url':
       'https://members.mumbaimaheshwari.com/api/public/assets/forms/borivali_plot.pdf',
     },
@@ -354,6 +351,57 @@ class _BhavanBookingViewState extends State<BhavanBookingView> {
     );
   }
 
+  Widget _buildBookingFilterTabs() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: Colors.white,
+          border: Border.all(color: Colors.grey.shade400),
+        ),
+        child: Row(
+          children: [
+            _buildTabButton("Online Booking", 0),
+            const SizedBox(width: 8),
+            _buildTabButton("Offline Booking", 1),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabButton(String title, int index) {
+    bool isSelected = _selectedTabIndex == index;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedTabIndex = index;
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.redAccent : Colors.transparent,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            title,
+            style: TextStyle(
+              color: isSelected ? Colors.white : Colors.black,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -373,29 +421,40 @@ class _BhavanBookingViewState extends State<BhavanBookingView> {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       drawer: AppDrawer(),
-      body: Padding(
-        padding: const EdgeInsets.all(14.0),
-        child: GridView.builder(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: 1,
-          ),
-          itemCount: forms.length,
-          itemBuilder: (context, index) {
-            final form = forms[index];
-            return Center(
-              child: buildCard(
-                  form['title'],
-                  form['icon'],
-                  form['color'],
-                  form['url'],
-                  form['fileName']
+      body: Column(
+        children: [
+          _buildBookingFilterTabs(),
+
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(14.0),
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: 1,
+                ),
+                itemCount: _selectedTabIndex == 0
+                    ? onlineForms.length
+                    : offlineForms.length,
+                itemBuilder: (context, index) {
+                  final form = _selectedTabIndex == 0
+                      ? onlineForms[index]
+                      : offlineForms[index];
+
+                  return buildCard(
+                    form['title'],
+                    form['icon'],
+                    Colors.redAccent,
+                    form['url'],
+                    form['fileName'],
+                  );
+                },
               ),
-            );
-          },
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }
