@@ -46,6 +46,18 @@ class _JobViewState extends State<JobView> {
   final TextEditingController locationController = TextEditingController();
   final TextEditingController salaryController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
+  final TextEditingController qualificationController = TextEditingController();
+  final TextEditingController experienceController = TextEditingController();
+  final TextEditingController skillsController = TextEditingController();
+  final TextEditingController vacancyController = TextEditingController();
+  final TextEditingController lastDateController = TextEditingController();
+
+  String selectedJobType = "Full-time";
+  String selectedWorkMode = "On-site";
+  String selectedCategoryForPost = "IT";
+
+  final List<String> jobTypes = ["Full-time", "Part-time", "Internship"];
+  final List<String> workModes = ["On-site", "Remote", "Hybrid"];
 
   List<Map<String, dynamic>> appliedMembers = [
     {
@@ -596,7 +608,6 @@ class _JobViewState extends State<JobView> {
       itemBuilder: (context, index) {
         final job = postedJobs[index];
 
-        // ✅ DEFINE COUNTS HERE
         int applicantCount = appliedMembers
             .where((member) => member["job"] == job["title"])
             .length;
@@ -638,8 +649,6 @@ class _JobViewState extends State<JobView> {
                         ),
                       ),
                     ),
-
-                    // ✅ RIGHT SIDE BADGES
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -694,10 +703,8 @@ class _JobViewState extends State<JobView> {
     final filteredMembers =
         appliedMembers.where((member) => member["job"] == jobTitle).toList();
 
-    // 🔹 Check if any member is shortlisted
-    bool hasShortlisted = appliedMembers.any(
-      (member) => member["isShortlisted"] == true,
-    );
+    bool hasShortlisted =
+        filteredMembers.any((member) => member["isShortlisted"] == true);
 
     return Column(
       children: [
@@ -725,9 +732,9 @@ class _JobViewState extends State<JobView> {
         else
           Expanded(
             child: ListView.builder(
-              itemCount: appliedMembers.length,
+              itemCount: filteredMembers.length,
               itemBuilder: (context, index) {
-                final member = appliedMembers[index];
+                final member = filteredMembers[index];
                 bool isShortlisted = member["isShortlisted"] ?? false;
 
                 return Container(
@@ -747,52 +754,39 @@ class _JobViewState extends State<JobView> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      /// 🔹 Top Row
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Expanded(
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    member["name"] ?? "",
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                if (isShortlisted)
-                                  Container(
-                                    margin: const EdgeInsets.only(left: 8),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: Colors.green.withOpacity(0.12),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: const Text(
-                                      "Shortlisted",
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.green,
-                                      ),
-                                    ),
-                                  ),
-                              ],
+                            child: Text(
+                              member["name"] ?? "",
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
+                          if (isShortlisted)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: const Text(
+                                "Shortlisted",
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.green,
+                                ),
+                              ),
+                            ),
                         ],
                       ),
-
                       const SizedBox(height: 6),
                       Text("Experience: ${member["experience"]}"),
-
                       const SizedBox(height: 12),
-
-                      /// 🔍 View Profile Button
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
@@ -803,11 +797,11 @@ class _JobViewState extends State<JobView> {
                             "View Profile",
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
-                              color: Colors.redAccent
+                              color: Colors.redAccent,
                             ),
                           ),
                         ),
-                      )
+                      ),
                     ],
                   ),
                 );
@@ -828,11 +822,11 @@ class _JobViewState extends State<JobView> {
       ),
       builder: (context) {
         int experienceYears = int.tryParse(
-          member["experience"]
-              ?.toString()
-              .replaceAll(RegExp(r'[^0-9]'), '') ??
-              "0",
-        ) ??
+              member["experience"]
+                      ?.toString()
+                      .replaceAll(RegExp(r'[^0-9]'), '') ??
+                  "0",
+            ) ??
             0;
 
         bool isShortlisted = member["isShortlisted"] ?? false;
@@ -845,12 +839,8 @@ class _JobViewState extends State<JobView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
-                  /// 🔹 HEADER
                   Row(
                     children: [
-
-                      /// LEFT — Title
                       const Text(
                         "Member Profile",
                         style: TextStyle(
@@ -858,20 +848,34 @@ class _JobViewState extends State<JobView> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-
                       const Spacer(),
-
-                      /// CENTER — Shortlist Button
                       GestureDetector(
                         onTap: isShortlisted
                             ? null
                             : () {
-                          setState(() {
-                            member["isShortlisted"] = true;
-                          });
+                                setState(() {
+                                  member["isShortlisted"] = true;
+                                });
 
-                          Navigator.pop(context); // optional
-                        },
+                                Navigator.pop(context);
+
+                                Future.delayed(
+                                    const Duration(milliseconds: 300), () {
+                                  ScaffoldMessenger.of(this.context)
+                                      .showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                          "${member["name"]} has been shortlisted"),
+                                      backgroundColor: Colors.green,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      margin: const EdgeInsets.all(16),
+                                    ),
+                                  );
+                                });
+                              },
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 6),
@@ -889,15 +893,12 @@ class _JobViewState extends State<JobView> {
                                     ? Icons.check_circle
                                     : Icons.star_border,
                                 size: 16,
-                                color: isShortlisted
-                                    ? Colors.green
-                                    : Colors.grey,
+                                color:
+                                    isShortlisted ? Colors.green : Colors.grey,
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                isShortlisted
-                                    ? "Shortlisted"
-                                    : "Shortlist",
+                                isShortlisted ? "Shortlisted" : "Shortlist",
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
@@ -910,21 +911,15 @@ class _JobViewState extends State<JobView> {
                           ),
                         ),
                       ),
-
                       const Spacer(),
-
-                      /// RIGHT — Close Button
                       IconButton(
                         onPressed: () => Navigator.pop(context),
                         icon: const Icon(Icons.close),
                       ),
                     ],
                   ),
-
                   const Divider(),
                   const SizedBox(height: 10),
-
-                  /// 🔹 CONTENT
                   Expanded(
                     child: SingleChildScrollView(
                       child: Column(
@@ -937,24 +932,21 @@ class _JobViewState extends State<JobView> {
                           _profileRow("Mobile", member["mobile"]),
                           _profileRow("WhatsApp", member["whatsapp"]),
                           const SizedBox(height: 20),
-
                           _sectionTitle("Family Details"),
                           const SizedBox(height: 12),
                           _profileRow("Father's Name", member["father_name"]),
                           _profileRow("Mother's Name", member["mother_name"]),
                           const SizedBox(height: 20),
-
                           _sectionTitle("Residential Address"),
                           const SizedBox(height: 12),
-
                           Text(
                             "${member["flat"] ?? ""}, "
-                                "${member["building"] ?? ""}, "
-                                "${member["area"] ?? ""},\n"
-                                "${member["city"] ?? ""}, "
-                                "${member["state"] ?? ""}, "
-                                "${member["country"] ?? ""} - "
-                                "${member["pincode"] ?? ""}",
+                            "${member["building"] ?? ""}, "
+                            "${member["area"] ?? ""},\n"
+                            "${member["city"] ?? ""}, "
+                            "${member["state"] ?? ""}, "
+                            "${member["country"] ?? ""} - "
+                            "${member["pincode"] ?? ""}",
                             style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
@@ -962,27 +954,25 @@ class _JobViewState extends State<JobView> {
                             ),
                           ),
                           const SizedBox(height: 20),
-
                           const Divider(),
                           const SizedBox(height: 15),
-
                           _sectionTitle("Education"),
                           const SizedBox(height: 12),
                           _profileRow(
                               "Highest Qualification", member["education"]),
                           const SizedBox(height: 20),
-
                           if (experienceYears > 1) ...[
                             const Divider(),
                             const SizedBox(height: 15),
                             _sectionTitle("Occupation"),
                             const SizedBox(height: 12),
-                            _profileRow("Experience",
-                                member["experience"] ?? "$experienceYears Years"),
+                            _profileRow(
+                                "Experience",
+                                member["experience"] ??
+                                    "$experienceYears Years"),
                             _profileRow(
                                 "Current Occupation", member["occupation"]),
                           ],
-
                           const SizedBox(height: 20),
                         ],
                       ),
@@ -1000,7 +990,6 @@ class _JobViewState extends State<JobView> {
   void _shareShortlistedMembers(BuildContext context) async {
     final box = context.findRenderObject() as RenderBox?;
 
-    // 🔹 Get only shortlisted members
     final shortlisted = appliedMembers
         .where((member) => member["isShortlisted"] == true)
         .toList();
@@ -1149,8 +1138,6 @@ class _JobViewState extends State<JobView> {
                       ),
                     ),
                   ),
-
-                  /// 🔹 POPUP MENU BUTTON
                   PopupMenuButton<String>(
                     color: Colors.white,
                     shape: RoundedRectangleBorder(
@@ -1227,18 +1214,33 @@ class _JobViewState extends State<JobView> {
   void _openPostJobBottomSheet({int? editIndex}) {
     if (editIndex != null) {
       final job = postedJobs[editIndex];
-
       titleController.text = job["title"] ?? "";
       companyController.text = job["company"] ?? "";
       locationController.text = job["location"] ?? "";
       salaryController.text = job["salary"] ?? "";
       descriptionController.text = job["description"] ?? "";
+      qualificationController.text = job["qualification"] ?? "";
+      experienceController.text = job["experience"] ?? "";
+      skillsController.text = job["skills"] ?? "";
+      vacancyController.text = job["vacancy"] ?? "";
+      lastDateController.text = job["lastDate"] ?? "";
+      selectedJobType = job["jobType"] ?? "Full-time";
+      selectedWorkMode = job["workMode"] ?? "On-site";
+      selectedCategoryForPost = job["category"] ?? "IT";
     } else {
       titleController.clear();
       companyController.clear();
       locationController.clear();
       salaryController.clear();
       descriptionController.clear();
+      qualificationController.clear();
+      experienceController.clear();
+      skillsController.clear();
+      vacancyController.clear();
+      lastDateController.clear();
+      selectedJobType = "Full-time";
+      selectedWorkMode = "On-site";
+      selectedCategoryForPost = "IT";
     }
 
     showModalBottomSheet(
@@ -1251,7 +1253,7 @@ class _JobViewState extends State<JobView> {
       builder: (context) {
         return SafeArea(
           child: FractionallySizedBox(
-            heightFactor: 0.65,
+            heightFactor: 0.85,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
@@ -1261,9 +1263,7 @@ class _JobViewState extends State<JobView> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       OutlinedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
+                        onPressed: () => Navigator.pop(context),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: ColorHelperClass.getColorFromHex(
                               ColorResources.red_color),
@@ -1271,38 +1271,33 @@ class _JobViewState extends State<JobView> {
                             color: ColorHelperClass.getColorFromHex(
                                 ColorResources.red_color),
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
                         ),
                         child: const Text("Cancel"),
                       ),
                       ElevatedButton(
                         onPressed: () {
                           bool isUpdate = editIndex != null;
-
                           setState(() {
+                            final jobData = {
+                              "title": titleController.text,
+                              "company": companyController.text,
+                              "location": locationController.text,
+                              "salary": salaryController.text,
+                              "description": descriptionController.text,
+                              "qualification": qualificationController.text,
+                              "experience": experienceController.text,
+                              "skills": skillsController.text,
+                              "vacancy": vacancyController.text,
+                              "lastDate": lastDateController.text,
+                              "jobType": selectedJobType,
+                              "workMode": selectedWorkMode,
+                              "category": selectedCategoryForPost,
+                            };
+
                             if (isUpdate) {
-                              postedJobs[editIndex] = {
-                                "title": titleController.text,
-                                "company": companyController.text,
-                                "location": locationController.text,
-                                "salary": salaryController.text,
-                                "description": descriptionController.text,
-                              };
+                              postedJobs[editIndex] = jobData;
                             } else {
-                              final newJob = {
-                                "title": titleController.text,
-                                "company": companyController.text,
-                                "location": locationController.text,
-                                "salary": salaryController.text,
-                                "description": descriptionController.text,
-                              };
-
-                              postedJobs.add(newJob);
-
-                              print("✅ Job Added");
-                              print("Posted Jobs Count: ${postedJobs.length}");
+                              postedJobs.add(jobData);
                             }
 
                             recruiterTab = 1;
@@ -1319,10 +1314,6 @@ class _JobViewState extends State<JobView> {
                               ),
                               backgroundColor: Colors.green,
                               behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              margin: const EdgeInsets.all(16),
                             ),
                           );
                         },
@@ -1330,15 +1321,12 @@ class _JobViewState extends State<JobView> {
                           backgroundColor: ColorHelperClass.getColorFromHex(
                               ColorResources.red_color),
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
                         ),
                         child: Text(editIndex != null ? "Update" : "Post Job"),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 20),
                   Expanded(
                     child: SingleChildScrollView(
                       child: Column(
@@ -1349,9 +1337,50 @@ class _JobViewState extends State<JobView> {
                               controller: companyController),
                           _buildTextField("Location",
                               controller: locationController),
-                          _buildTextField("Salary",
+                          _buildTextField("Salary (e.g ₹5-8 LPA)",
                               controller: salaryController),
-                          _buildTextField("Description",
+                          _buildTextField("Minimum Qualification",
+                              controller: qualificationController),
+                          _buildTextField("Experience Required (e.g 2-4 Years)",
+                              controller: experienceController),
+                          _buildTextField("Required Skills (Comma separated)",
+                              controller: skillsController),
+                          _buildTextField("Number of Vacancies",
+                              controller: vacancyController),
+                          _buildTextField("Last Date to Apply",
+                              controller: lastDateController),
+                          const SizedBox(height: 10),
+                          _buildDropdown(
+                            label: "Job Type",
+                            items: jobTypes,
+                            selectedValue: selectedJobType,
+                            onChanged: (val) {
+                              setState(() {
+                                selectedJobType = val;
+                              });
+                            },
+                          ),
+                          _buildDropdown(
+                            label: "Work Mode",
+                            items: workModes,
+                            selectedValue: selectedWorkMode,
+                            onChanged: (val) {
+                              setState(() {
+                                selectedWorkMode = val;
+                              });
+                            },
+                          ),
+                          _buildDropdown(
+                            label: "Category",
+                            items: categories,
+                            selectedValue: selectedCategoryForPost,
+                            onChanged: (val) {
+                              setState(() {
+                                selectedCategoryForPost = val;
+                              });
+                            },
+                          ),
+                          _buildTextField("Job Description",
                               controller: descriptionController, maxLines: 4),
                           const SizedBox(height: 30),
                         ],
@@ -1376,15 +1405,66 @@ class _JobViewState extends State<JobView> {
         maxLines: maxLines,
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(color: Colors.black26),
           border: const OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.black26),
+            borderSide: BorderSide(color: Colors.black),
           ),
           enabledBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.black26),
+            borderSide: BorderSide(color: Colors.black),
           ),
           focusedBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.black26, width: 1.0),
+            borderSide: BorderSide(color: Colors.black38, width: 1),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          labelStyle: const TextStyle(color: Colors.black),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdown({
+    required String label,
+    required List<String> items,
+    required String selectedValue,
+    required Function(String) onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black),
+          ),
+          enabledBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black),
+          ),
+          focusedBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black38, width: 1),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          labelStyle: const TextStyle(color: Colors.black),
+        ),
+        isEmpty: selectedValue.isEmpty,
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            dropdownColor: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            isExpanded: true,
+            value: selectedValue.isEmpty ? null : selectedValue,
+            items: items.map((item) {
+              return DropdownMenuItem<String>(
+                value: item,
+                child: Text(
+                  item,
+                  style: const TextStyle(fontSize: 14),
+                ),
+              );
+            }).toList(),
+            onChanged: (val) {
+              if (val != null) {
+                onChanged(val);
+              }
+            },
           ),
         ),
       ),

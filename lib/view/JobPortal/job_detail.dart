@@ -16,9 +16,9 @@ class JobDetailView extends StatefulWidget {
 
 class _JobDetailViewState extends State<JobDetailView> {
   File? cvFile;
-  String? existingCvUrl; // if coming from backend
+  String? existingCvUrl;
   bool isApplied = false;
-  bool cvUploaded = false; // simulate CV uploaded
+  bool cvUploaded = false;
   String uploadedCvName = "Manoj_CV.pdf";
 
   TextEditingController descriptionController = TextEditingController();
@@ -27,9 +27,8 @@ class _JobDetailViewState extends State<JobDetailView> {
   void initState() {
     super.initState();
 
-    // Simulate already uploaded CV from backend
     existingCvUrl =
-    "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
+        "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
   }
 
   void _openApplyModal() {
@@ -49,12 +48,9 @@ class _JobDetailViewState extends State<JobDetailView> {
               child: Column(
                 children: [
                   const SizedBox(height: 12),
-
-                  /// 🔹 TOP BUTTON ROW
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      /// ❌ CANCEL
                       OutlinedButton(
                         onPressed: () {
                           Navigator.pop(context);
@@ -72,8 +68,6 @@ class _JobDetailViewState extends State<JobDetailView> {
                         ),
                         child: const Text("Cancel"),
                       ),
-
-                      /// ✅ SUBMIT
                       ElevatedButton(
                         onPressed: () {
                           setState(() {
@@ -86,7 +80,7 @@ class _JobDetailViewState extends State<JobDetailView> {
                             const SnackBar(
                                 content:
                                     Text("Application Applied Successfully"),
-                              backgroundColor: Colors.green),
+                                backgroundColor: Colors.green),
                           );
                         },
                         style: ElevatedButton.styleFrom(
@@ -101,25 +95,17 @@ class _JobDetailViewState extends State<JobDetailView> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 30),
-
-                  /// 🔹 FORM SECTION
                   Expanded(
                     child: SingleChildScrollView(
                       child: Column(
                         children: [
-                          /// Description
                           _buildTextField(
-                            "Enter your description",
+                            "Enter your profile summary",
                             controller: descriptionController,
                             maxLines: 4,
                           ),
-
                           const SizedBox(height: 20),
-
-                          /// Upload CV Section
-                          /// 🔹 Upload CV Section
                           Align(
                             alignment: Alignment.centerLeft,
                             child: const Text(
@@ -127,9 +113,7 @@ class _JobDetailViewState extends State<JobDetailView> {
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
-
                           const SizedBox(height: 10),
-
                           if (cvFile != null)
                             _buildCvPreview(
                               fileName: cvFile!.path.split('/').last,
@@ -210,29 +194,25 @@ class _JobDetailViewState extends State<JobDetailView> {
       builder: (_) {
         return Wrap(
           children: [
-
-            /// 📷 Take Photo
             ListTile(
               leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
               title: const Text("Take a Photo"),
               onTap: () async {
                 Navigator.pop(context);
-                final picked = await ImagePicker()
-                    .pickImage(source: ImageSource.camera);
+                final picked =
+                    await ImagePicker().pickImage(source: ImageSource.camera);
                 if (picked != null) {
                   onPicked(File(picked.path));
                 }
               },
             ),
-
-            /// 🖼 Choose from Gallery
             ListTile(
               leading: const Icon(Icons.image, color: Colors.redAccent),
               title: const Text("Choose from Gallery"),
               onTap: () async {
                 Navigator.pop(context);
-                final picked = await ImagePicker()
-                    .pickImage(source: ImageSource.gallery);
+                final picked =
+                    await ImagePicker().pickImage(source: ImageSource.gallery);
                 if (picked != null) {
                   onPicked(File(picked.path));
                 }
@@ -271,9 +251,7 @@ class _JobDetailViewState extends State<JobDetailView> {
               ),
             ],
           ),
-
           const SizedBox(height: 10),
-
           Row(
             children: [
               Expanded(
@@ -294,8 +272,7 @@ class _JobDetailViewState extends State<JobDetailView> {
                   icon: const Icon(Icons.refresh),
                   label: const Text("Replace"),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                    ColorHelperClass.getColorFromHex(
+                    backgroundColor: ColorHelperClass.getColorFromHex(
                         ColorResources.red_color),
                     foregroundColor: Colors.white,
                   ),
@@ -309,10 +286,10 @@ class _JobDetailViewState extends State<JobDetailView> {
   }
 
   void _showCvPreviewDialog(
-      BuildContext context,
-      String filePath,
-      String title,
-      ) {
+    BuildContext context,
+    String filePath,
+    String title,
+  ) {
     bool isPdf = filePath.toLowerCase().endsWith(".pdf");
 
     showDialog(
@@ -334,44 +311,37 @@ class _JobDetailViewState extends State<JobDetailView> {
               ),
             ),
             const SizedBox(height: 16),
-
             SizedBox(
               height: 300,
               width: double.infinity,
               child: isPdf
                   ? const Center(
-                child: Icon(
-                  Icons.picture_as_pdf,
-                  size: 80,
-                  color: Colors.red,
-                ),
-              )
+                      child: Icon(
+                        Icons.picture_as_pdf,
+                        size: 80,
+                        color: Colors.red,
+                      ),
+                    )
                   : filePath.startsWith("http")
-                  ? Image.network(filePath, fit: BoxFit.contain)
-                  : Image.file(File(filePath),
-                  fit: BoxFit.contain),
+                      ? Image.network(filePath, fit: BoxFit.contain)
+                      : Image.file(File(filePath), fit: BoxFit.contain),
             ),
-
             const SizedBox(height: 16),
-
             TextButton(
               onPressed: () => Navigator.pop(context),
               style: TextButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(
-                    ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
               ),
               child: const Text("Close"),
             ),
-
             const SizedBox(height: 16),
           ],
         ),
       ),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -382,7 +352,15 @@ class _JobDetailViewState extends State<JobDetailView> {
       appBar: AppBar(
         backgroundColor:
             ColorHelperClass.getColorFromHex(ColorResources.logo_color),
-        title: const Text("Job Details", style: TextStyle(color: Colors.white)),
+        title: Text(
+          widget.job["title"] ?? "Job Details",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: MediaQuery.of(context).size.width * 0.045,
+            fontWeight: FontWeight.w500,
+          ),
+          overflow: TextOverflow.ellipsis,
+        ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
@@ -394,16 +372,12 @@ class _JobDetailViewState extends State<JobDetailView> {
               job["title"],
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
-
             const SizedBox(height: 8),
-
             Text(
               job["company"],
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
-
             const SizedBox(height: 20),
-
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -420,21 +394,14 @@ class _JobDetailViewState extends State<JobDetailView> {
                 ],
               ),
             ),
-
             const SizedBox(height: 20),
-
             const Text(
-              "Job Description",
+              "Profile Summary",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-
             const SizedBox(height: 10),
-
             Text(job["description"]),
-
             const SizedBox(height: 40),
-
-            /// Apply Button (Dynamic)
             SizedBox(
               width: double.infinity,
               height: 55,
