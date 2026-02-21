@@ -68,7 +68,8 @@ class _HomeViewState extends State<HomeView>
       {'icon': Images.events, 'label': 'Events'},
       {'icon': Images.saraswani, 'label': 'Saraswani'},
       {'icon': Images.event_trip, 'label': 'Trips'},
-      {'icon': Images.network, 'label': 'Networking'}
+      {'icon': Images.network, 'label': 'Networking'},
+      {'icon': Images.job_portal, 'label': 'Job'}
     ];
 
     /* if (memberId == 1 || memberId == 2 || memberId == 2040) {
@@ -966,6 +967,8 @@ class _HomeViewState extends State<HomeView>
       case "Networking":
         Navigator.pushNamed(context, RouteNames.networking);
         break;
+      case "Job":
+        Navigator.pushNamed(context, RouteNames.job);
       case "Shiksha Sahayata":
         Navigator.pushNamed(context, RouteNames.shiksha_sahayata);
         break;
