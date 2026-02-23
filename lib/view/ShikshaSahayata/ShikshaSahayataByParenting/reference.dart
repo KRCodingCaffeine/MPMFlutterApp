@@ -272,6 +272,7 @@ class _ReferenceViewState extends State<ReferenceView> {
     showDialog(
       context: context,
       builder: (_) => Dialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -539,7 +540,7 @@ class _ReferenceViewState extends State<ReferenceView> {
                               onPressed: (!isFormValid() || isSubmitting)
                                   ? null
                                   : () async {
-                                if (!_formKey.currentState!.validate()) {
+                                      if (!_formKey.currentState!.validate()) {
                                         return;
                                       }
 
@@ -918,33 +919,42 @@ class _ReferenceViewState extends State<ReferenceView> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
       ),
       builder: (_) {
-        return Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
-              title: const Text("Take a Picture"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                    await _picker.pickImage(source: ImageSource.camera);
-                if (picked != null) {
-                  onImagePicked(File(picked.path));
-                }
-              },
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewPadding.bottom + 20,
             ),
-            ListTile(
-              leading: const Icon(Icons.image, color: Colors.redAccent),
-              title: const Text("Choose from Gallery"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                    await _picker.pickImage(source: ImageSource.gallery);
-                if (picked != null) {
-                  onImagePicked(File(picked.path));
-                }
-              },
+            child: Wrap(
+              children: [
+                ListTile(
+                  leading:
+                      const Icon(Icons.camera_alt, color: Colors.redAccent),
+                  title: const Text("Take a Picture"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.camera);
+                    if (picked != null) {
+                      onImagePicked(File(picked.path));
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.image, color: Colors.redAccent),
+                  title: const Text("Choose from Gallery"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.gallery);
+                    if (picked != null) {
+                      onImagePicked(File(picked.path));
+                    }
+                  },
+                ),
+                const SizedBox(height: 30),
+              ],
             ),
-          ],
+          ),
         );
       },
     );

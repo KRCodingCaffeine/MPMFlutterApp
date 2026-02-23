@@ -33,7 +33,8 @@ class CurrentYearEducationYourselfView extends StatefulWidget {
       _CurrentYearEducationYourselfViewState();
 }
 
-class _CurrentYearEducationYourselfViewState extends State<CurrentYearEducationYourselfView> {
+class _CurrentYearEducationYourselfViewState
+    extends State<CurrentYearEducationYourselfView> {
   final ImagePicker _picker = ImagePicker();
   Map<String, dynamic>? currentYearData;
   bool isLoading = false;
@@ -52,16 +53,16 @@ class _CurrentYearEducationYourselfViewState extends State<CurrentYearEducationY
   File? _bonafideDocument;
 
   final AddRequestedLoanEducationRepository _addRepo =
-  AddRequestedLoanEducationRepository();
+      AddRequestedLoanEducationRepository();
   final UpdateRequestedLoanEducationRepository _updateRepo =
-  UpdateRequestedLoanEducationRepository();
+      UpdateRequestedLoanEducationRepository();
   final DeleteRequestedLoanEducationRepository _deleteRepo =
-  DeleteRequestedLoanEducationRepository();
+      DeleteRequestedLoanEducationRepository();
   final AdmissionUploadRepository _admissionRepo = AdmissionUploadRepository();
   final BonafideUploadRepository _bonafideRepo = BonafideUploadRepository();
 
   final ShikshaApplicationRepository _shikshaRepo =
-  ShikshaApplicationRepository();
+      ShikshaApplicationRepository();
 
   @override
   void initState() {
@@ -138,7 +139,7 @@ class _CurrentYearEducationYourselfViewState extends State<CurrentYearEducationY
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Builder(
           builder: (context) {
             double fontSize = MediaQuery.of(context).size.width * 0.045;
@@ -156,24 +157,24 @@ class _CurrentYearEducationYourselfViewState extends State<CurrentYearEducationY
       ),
       body: currentYearData == null
           ? const Center(
-        child: Text(
-          "No current year education details added",
-          style: TextStyle(color: Colors.grey),
-        ),
-      )
+              child: Text(
+                "No current year education details added",
+                style: TextStyle(color: Colors.grey),
+              ),
+            )
           : _buildCurrentYearEducationCard(),
       floatingActionButton: currentYearData == null
           ? FloatingActionButton(
-        backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.red_color),
-        onPressed: () {
-          _showCurrentYearEducationSheet(context);
-        },
-        child: const Icon(Icons.add, color: Colors.white),
-      )
+              backgroundColor:
+                  ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              onPressed: () {
+                _showCurrentYearEducationSheet(context);
+              },
+              child: const Icon(Icons.add, color: Colors.white),
+            )
           : null,
       bottomNavigationBar:
-      currentYearData != null ? _buildBottomNextBar() : null,
+          currentYearData != null ? _buildBottomNextBar() : null,
     );
   }
 
@@ -391,7 +392,7 @@ class _CurrentYearEducationYourselfViewState extends State<CurrentYearEducationY
               onPressed: () => Navigator.pop(dialogContext),
               style: OutlinedButton.styleFrom(
                 foregroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: BorderSide(
                   color: ColorHelperClass.getColorFromHex(
                       ColorResources.red_color),
@@ -406,9 +407,9 @@ class _CurrentYearEducationYourselfViewState extends State<CurrentYearEducationY
               onPressed: () async {
                 try {
                   final response =
-                  await _deleteRepo.deleteRequestedLoanEducation({
+                      await _deleteRepo.deleteRequestedLoanEducation({
                     "shiksha_applicant_requested_loan_education_id":
-                    educationId,
+                        educationId,
                   });
 
                   if (response.status != true) {
@@ -439,7 +440,7 @@ class _CurrentYearEducationYourselfViewState extends State<CurrentYearEducationY
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -496,10 +497,10 @@ class _CurrentYearEducationYourselfViewState extends State<CurrentYearEducationY
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -626,7 +627,7 @@ class _CurrentYearEducationYourselfViewState extends State<CurrentYearEducationY
     try {
       final response = await _updateRepo.updateRequestedLoanEducation({
         "shiksha_applicant_requested_loan_education_id": educationId,
-        "standard" : standard,
+        "standard": standard,
         "school_college_name": school,
         "course_duration": courseDuration,
         "admission_fees": admissionFees,
@@ -777,35 +778,35 @@ class _CurrentYearEducationYourselfViewState extends State<CurrentYearEducationY
                             onPressed: !isFormValid() || isSubmitting
                                 ? null
                                 : () async {
-                              if (isEditMode) {
-                                await _updateRequestedLoanEducation(
-                                  educationId:
-                                  existingData!["educationId"]
-                                      .toString(),
-                                  standard: yearCtrl.text.trim(),
-                                  school: schoolCtrl.text.trim(),
-                                  courseDuration:
-                                  courseDurationCtrl.text.trim(),
-                                  admissionFees: admissionFeesCtrl.text,
-                                  yearlyFees: yearlyFeesCtrl.text,
-                                  examFees: examFeesCtrl.text,
-                                  otherExpenses: otherExpensesCtrl.text,
-                                  totalExpenses: totalExpensesCtrl.text,
-                                );
-                              } else {
-                                await _submitRequestedLoanEducation(
-                                  standard: yearCtrl.text.trim(),
-                                  school: schoolCtrl.text.trim(),
-                                  courseDuration:
-                                  courseDurationCtrl.text.trim(),
-                                  admissionFees: admissionFeesCtrl.text,
-                                  yearlyFees: yearlyFeesCtrl.text,
-                                  examFees: examFeesCtrl.text,
-                                  otherExpenses: otherExpensesCtrl.text,
-                                  totalExpenses: totalExpensesCtrl.text,
-                                );
-                              }
-                            },
+                                    if (isEditMode) {
+                                      await _updateRequestedLoanEducation(
+                                        educationId:
+                                            existingData!["educationId"]
+                                                .toString(),
+                                        standard: yearCtrl.text.trim(),
+                                        school: schoolCtrl.text.trim(),
+                                        courseDuration:
+                                            courseDurationCtrl.text.trim(),
+                                        admissionFees: admissionFeesCtrl.text,
+                                        yearlyFees: yearlyFeesCtrl.text,
+                                        examFees: examFeesCtrl.text,
+                                        otherExpenses: otherExpensesCtrl.text,
+                                        totalExpenses: totalExpensesCtrl.text,
+                                      );
+                                    } else {
+                                      await _submitRequestedLoanEducation(
+                                        standard: yearCtrl.text.trim(),
+                                        school: schoolCtrl.text.trim(),
+                                        courseDuration:
+                                            courseDurationCtrl.text.trim(),
+                                        admissionFees: admissionFeesCtrl.text,
+                                        yearlyFees: yearlyFeesCtrl.text,
+                                        examFees: examFeesCtrl.text,
+                                        otherExpenses: otherExpensesCtrl.text,
+                                        totalExpenses: totalExpensesCtrl.text,
+                                      );
+                                    }
+                                  },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: ColorHelperClass.getColorFromHex(
                                   ColorResources.red_color),
@@ -818,16 +819,16 @@ class _CurrentYearEducationYourselfViewState extends State<CurrentYearEducationY
                             ),
                             child: isSubmitting
                                 ? const SizedBox(
-                              height: 18,
-                              width: 18,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
+                                    height: 18,
+                                    width: 18,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
                                 : Text(isEditMode
-                                ? "Update Details"
-                                : "Add Details"),
+                                    ? "Update Details"
+                                    : "Add Details"),
                           ),
                         ],
                       ),
@@ -1009,9 +1010,9 @@ class _CurrentYearEducationYourselfViewState extends State<CurrentYearEducationY
   }
 
   Widget _buildAdmissionUploadField(
-      BuildContext context,
-      StateSetter setModalState,
-      ) {
+    BuildContext context,
+    StateSetter setModalState,
+  ) {
     final bool isUploaded = _admissionDocument != null ||
         (currentYearData?["admissionDoc"] ?? "").toString().isNotEmpty;
 
@@ -1088,9 +1089,9 @@ class _CurrentYearEducationYourselfViewState extends State<CurrentYearEducationY
   }
 
   Widget _buildBonafideUploadField(
-      BuildContext context,
-      StateSetter setModalState,
-      ) {
+    BuildContext context,
+    StateSetter setModalState,
+  ) {
     final bool isUploaded = _bonafideDocument != null ||
         (currentYearData?["bonafideDoc"] ?? "").toString().isNotEmpty;
 
@@ -1165,9 +1166,9 @@ class _CurrentYearEducationYourselfViewState extends State<CurrentYearEducationY
   }
 
   void _showAdmissionImagePicker(
-      BuildContext context,
-      StateSetter setModalState,
-      ) {
+    BuildContext context,
+    StateSetter setModalState,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -1175,91 +1176,110 @@ class _CurrentYearEducationYourselfViewState extends State<CurrentYearEducationY
         borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
       ),
       builder: (_) {
-        return Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
-              title: const Text("Take a Picture"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                await _picker.pickImage(source: ImageSource.camera);
-                if (picked != null) {
-                  setModalState(() {
-                    _admissionDocument = File(picked.path);
-                  });
-                }
-              },
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewPadding.bottom + 20,
             ),
-            ListTile(
-              leading: const Icon(Icons.image, color: Colors.redAccent),
-              title: const Text("Choose from Gallery"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                await _picker.pickImage(source: ImageSource.gallery);
-                if (picked != null) {
-                  setModalState(() {
-                    _admissionDocument = File(picked.path);
-                  });
-                }
-              },
+            child: Wrap(
+              children: [
+                ListTile(
+                  leading:
+                      const Icon(Icons.camera_alt, color: Colors.redAccent),
+                  title: const Text("Take a Picture"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.camera);
+                    if (picked != null) {
+                      setModalState(() {
+                        _admissionDocument = File(picked.path);
+                      });
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.image, color: Colors.redAccent),
+                  title: const Text("Choose from Gallery"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.gallery);
+                    if (picked != null) {
+                      setModalState(() {
+                        _admissionDocument = File(picked.path);
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 30),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
   }
 
   void _showBonafideImagePicker(
-      BuildContext context,
-      StateSetter setModalState,
-      ) {
+    BuildContext context,
+    StateSetter setModalState,
+  ) {
     showModalBottomSheet(
+      backgroundColor: Colors.white,
       context: context,
       builder: (_) {
-        return Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
-              title: const Text("Take a Picture"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                await _picker.pickImage(source: ImageSource.camera);
-                if (picked != null) {
-                  setModalState(() {
-                    _bonafideDocument = File(picked.path);
-                  });
-                }
-              },
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewPadding.bottom + 20,
             ),
-            ListTile(
-              leading: const Icon(Icons.image, color: Colors.redAccent),
-              title: const Text("Choose from Gallery"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                await _picker.pickImage(source: ImageSource.gallery);
-                if (picked != null) {
-                  setModalState(() {
-                    _bonafideDocument = File(picked.path);
-                  });
-                }
-              },
+            child: Wrap(
+              children: [
+                ListTile(
+                  leading:
+                      const Icon(Icons.camera_alt, color: Colors.redAccent),
+                  title: const Text("Take a Picture"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.camera);
+                    if (picked != null) {
+                      setModalState(() {
+                        _bonafideDocument = File(picked.path);
+                      });
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.image, color: Colors.redAccent),
+                  title: const Text("Choose from Gallery"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.gallery);
+                    if (picked != null) {
+                      setModalState(() {
+                        _bonafideDocument = File(picked.path);
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 30),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
   }
 
   void _showDocumentPreviewDialog(
-      BuildContext context, {
-        required String title,
-        File? localFile,
-        String? networkUrl,
-      }) {
+    BuildContext context, {
+    required String title,
+    File? localFile,
+    String? networkUrl,
+  }) {
     showDialog(
       context: context,
       builder: (_) => Dialog(
@@ -1288,21 +1308,21 @@ class _CurrentYearEducationYourselfViewState extends State<CurrentYearEducationY
                 width: double.infinity,
                 child: localFile != null
                     ? Image.file(
-                  localFile,
-                  fit: BoxFit.contain,
-                )
+                        localFile,
+                        fit: BoxFit.contain,
+                      )
                     : (networkUrl != null && networkUrl.isNotEmpty)
-                    ? Image.network(
-                  networkUrl,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Text("Unable to load document"),
-                  ),
-                )
-                    : const Center(
-                  child: Text("No document available"),
-                ),
+                        ? Image.network(
+                            networkUrl,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => const Padding(
+                              padding: EdgeInsets.all(20),
+                              child: Text("Unable to load document"),
+                            ),
+                          )
+                        : const Center(
+                            child: Text("No document available"),
+                          ),
               ),
             ),
 

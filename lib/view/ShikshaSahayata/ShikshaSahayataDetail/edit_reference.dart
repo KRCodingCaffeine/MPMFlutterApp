@@ -52,8 +52,7 @@ class _EditReferenceViewState extends State<EditReferenceView> {
   String? currentMemberId;
 
   bool get _isLoanLocked {
-    final loanList =
-        widget.applicationData.requestedLoanEducationAppliedBy;
+    final loanList = widget.applicationData.requestedLoanEducationAppliedBy;
 
     if (loanList == null || loanList.isEmpty) return false;
 
@@ -186,26 +185,26 @@ class _EditReferenceViewState extends State<EditReferenceView> {
                                     existingData: item,
                                   );
                                 },
-                              icon: const Icon(
-                                Icons.edit,
-                                size: 16,
-                              ),
-                              label: const Text(
-                                "Edit",
-                                style: TextStyle(fontSize: 13),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    ColorHelperClass.getColorFromHex(
-                                        ColorResources.red_color),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 20, vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                                icon: const Icon(
+                                  Icons.edit,
+                                  size: 16,
+                                ),
+                                label: const Text(
+                                  "Edit",
+                                  style: TextStyle(fontSize: 13),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      ColorHelperClass.getColorFromHex(
+                                          ColorResources.red_color),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
                                 ),
                               ),
-                            ),
                           ],
                         ),
 
@@ -262,13 +261,13 @@ class _EditReferenceViewState extends State<EditReferenceView> {
       floatingActionButton: _isLoanLocked
           ? null
           : FloatingActionButton(
-        backgroundColor:
-            ColorHelperClass.getColorFromHex(ColorResources.red_color),
-        onPressed: () {
-          _showReferenceSheet(context);
-        },
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
+              backgroundColor:
+                  ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              onPressed: () {
+                _showReferenceSheet(context);
+              },
+              child: const Icon(Icons.add, color: Colors.white),
+            ),
     );
   }
 
@@ -289,6 +288,7 @@ class _EditReferenceViewState extends State<EditReferenceView> {
     showDialog(
       context: context,
       builder: (_) => Dialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -697,9 +697,9 @@ class _EditReferenceViewState extends State<EditReferenceView> {
                                 context: context,
                                 imageFile: referenceAadharFile,
                                 buttonText: "Upload Aadhaar",
-                                existingDocumentPath: existingData?["aadhaarDocument"],
+                                existingDocumentPath:
+                                    existingData?["aadhaarDocument"],
                                 isExistingRemoved: isExistingAadhaarRemoved,
-
                                 onPick: () {
                                   _showImagePicker(context, (file) {
                                     setModalState(() {
@@ -710,7 +710,6 @@ class _EditReferenceViewState extends State<EditReferenceView> {
                                     });
                                   });
                                 },
-
                                 onRemoveExisting: () {
                                   setModalState(() {
                                     isExistingAadhaarRemoved = true;
@@ -719,7 +718,6 @@ class _EditReferenceViewState extends State<EditReferenceView> {
                                     isExistingAadhaarRemoved = true;
                                   });
                                 },
-
                                 onRemoveNew: () {
                                   setModalState(() {
                                     referenceAadharFile = null;
@@ -813,18 +811,15 @@ class _EditReferenceViewState extends State<EditReferenceView> {
     required VoidCallback onRemoveNew,
   }) {
     final bool hasExisting =
-        !isExistingRemoved &&
-            (existingDocumentPath ?? "").isNotEmpty;
+        !isExistingRemoved && (existingDocumentPath ?? "").isNotEmpty;
 
     final bool isUploaded = imageFile != null || hasExisting;
 
-    bool isPdf(String path) =>
-        path.toLowerCase().endsWith(".pdf");
+    bool isPdf(String path) => path.toLowerCase().endsWith(".pdf");
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         /// 🔥 NEW FILE PREVIEW
         if (imageFile != null)
           Stack(
@@ -837,9 +832,9 @@ class _EditReferenceViewState extends State<EditReferenceView> {
                   borderRadius: BorderRadius.circular(10),
                   child: imageFile.path.endsWith(".pdf")
                       ? const Center(
-                    child: Icon(Icons.picture_as_pdf,
-                        size: 80, color: Colors.red),
-                  )
+                          child: Icon(Icons.picture_as_pdf,
+                              size: 80, color: Colors.red),
+                        )
                       : Image.file(imageFile, fit: BoxFit.cover),
                 ),
               ),
@@ -851,8 +846,7 @@ class _EditReferenceViewState extends State<EditReferenceView> {
                   child: const CircleAvatar(
                     radius: 14,
                     backgroundColor: Colors.red,
-                    child: Icon(Icons.close,
-                        size: 16, color: Colors.white),
+                    child: Icon(Icons.close, size: 16, color: Colors.white),
                   ),
                 ),
               ),
@@ -871,13 +865,13 @@ class _EditReferenceViewState extends State<EditReferenceView> {
                   borderRadius: BorderRadius.circular(10),
                   child: isPdf(existingDocumentPath!)
                       ? const Center(
-                    child: Icon(Icons.picture_as_pdf,
-                        size: 80, color: Colors.red),
-                  )
+                          child: Icon(Icons.picture_as_pdf,
+                              size: 80, color: Colors.red),
+                        )
                       : Image.network(
-                    _getFullImageUrl(existingDocumentPath),
-                    fit: BoxFit.cover,
-                  ),
+                          _getFullImageUrl(existingDocumentPath),
+                          fit: BoxFit.cover,
+                        ),
                 ),
               ),
               Positioned(
@@ -888,8 +882,7 @@ class _EditReferenceViewState extends State<EditReferenceView> {
                   child: const CircleAvatar(
                     radius: 14,
                     backgroundColor: Colors.red,
-                    child: Icon(Icons.close,
-                        size: 16, color: Colors.white),
+                    child: Icon(Icons.close, size: 16, color: Colors.white),
                   ),
                 ),
               ),
@@ -897,9 +890,7 @@ class _EditReferenceViewState extends State<EditReferenceView> {
           ),
 
         /// 🔥 VIEW BUTTON IF PDF
-        if (imageFile == null &&
-            hasExisting &&
-            isPdf(existingDocumentPath!))
+        if (imageFile == null && hasExisting && isPdf(existingDocumentPath!))
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -927,16 +918,14 @@ class _EditReferenceViewState extends State<EditReferenceView> {
               isUploaded ? Icons.check_circle : Icons.upload_file,
             ),
             label: Text(
-              isUploaded
-                  ? "Aadhaar Uploaded"
-                  : "$buttonText *",
+              isUploaded ? "Aadhaar Uploaded" : "$buttonText *",
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: isUploaded
                   ? Colors.green
                   : ColorHelperClass.getColorFromHex(
-                ColorResources.red_color,
-              ),
+                      ColorResources.red_color,
+                    ),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
@@ -957,36 +946,45 @@ class _EditReferenceViewState extends State<EditReferenceView> {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (_) {
-        return Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
-              title: const Text("Take a Picture"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                    await _picker.pickImage(source: ImageSource.camera);
-                if (picked != null) {
-                  onImagePicked(File(picked.path));
-                }
-              },
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewPadding.bottom + 20,
             ),
-            ListTile(
-              leading: const Icon(Icons.image, color: Colors.redAccent),
-              title: const Text("Choose from Gallery"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                    await _picker.pickImage(source: ImageSource.gallery);
-                if (picked != null) {
-                  onImagePicked(File(picked.path));
-                }
-              },
+            child: Wrap(
+              children: [
+                ListTile(
+                  leading:
+                      const Icon(Icons.camera_alt, color: Colors.redAccent),
+                  title: const Text("Take a Picture"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.camera);
+                    if (picked != null) {
+                      onImagePicked(File(picked.path));
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.image, color: Colors.redAccent),
+                  title: const Text("Choose from Gallery"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.gallery);
+                    if (picked != null) {
+                      onImagePicked(File(picked.path));
+                    }
+                  },
+                ),
+                const SizedBox(height: 30),
+              ],
             ),
-          ],
+          ),
         );
       },
     );

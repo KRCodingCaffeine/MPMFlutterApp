@@ -1612,8 +1612,8 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
               isUploaded
                   ? "$buttonText Uploaded"
                   : isMandatory
-                  ? "$buttonText *"
-                  : buttonText,
+                      ? "$buttonText *"
+                      : buttonText,
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: isUploaded
@@ -1651,6 +1651,7 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
     showDialog(
       context: context,
       builder: (_) => Dialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -1719,36 +1720,45 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (_) {
-        return Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
-              title: const Text("Take a Picture"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                    await _picker.pickImage(source: ImageSource.camera);
-                if (picked != null) {
-                  onImagePicked(File(picked.path));
-                }
-              },
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewPadding.bottom + 20,
             ),
-            ListTile(
-              leading: const Icon(Icons.image, color: Colors.redAccent),
-              title: const Text("Choose from Gallery"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                    await _picker.pickImage(source: ImageSource.gallery);
-                if (picked != null) {
-                  onImagePicked(File(picked.path));
-                }
-              },
+            child: Wrap(
+              children: [
+                ListTile(
+                  leading:
+                      const Icon(Icons.camera_alt, color: Colors.redAccent),
+                  title: const Text("Take a Picture"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.camera);
+                    if (picked != null) {
+                      onImagePicked(File(picked.path));
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.image, color: Colors.redAccent),
+                  title: const Text("Choose from Gallery"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.gallery);
+                    if (picked != null) {
+                      onImagePicked(File(picked.path));
+                    }
+                  },
+                ),
+                const SizedBox(height: 30)
+              ],
             ),
-          ],
+          ),
         );
       },
     );

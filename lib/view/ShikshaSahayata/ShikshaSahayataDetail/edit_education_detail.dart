@@ -1264,10 +1264,13 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
               onPressed: () => Navigator.pop(context),
               style: TextButton.styleFrom(
                 backgroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: const Text("Close"),
             ),
@@ -1286,40 +1289,49 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (_) {
-        return Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
-              title: const Text("Take a Picture"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                    await _picker.pickImage(source: ImageSource.camera);
-                if (picked != null) {
-                  setModalState(() {
-                    _educationDocument = File(picked.path);
-                  });
-                }
-              },
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewPadding.bottom + 20,
             ),
-            ListTile(
-              leading: const Icon(Icons.image, color: Colors.redAccent),
-              title: const Text("Choose from Gallery"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                    await _picker.pickImage(source: ImageSource.gallery);
-                if (picked != null) {
-                  setModalState(() {
-                    _educationDocument = File(picked.path);
-                  });
-                }
-              },
+            child: Wrap(
+              children: [
+                ListTile(
+                  leading:
+                      const Icon(Icons.camera_alt, color: Colors.redAccent),
+                  title: const Text("Take a Picture"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.camera);
+                    if (picked != null) {
+                      setModalState(() {
+                        _educationDocument = File(picked.path);
+                      });
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.image, color: Colors.redAccent),
+                  title: const Text("Choose from Gallery"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.gallery);
+                    if (picked != null) {
+                      setModalState(() {
+                        _educationDocument = File(picked.path);
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 30),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
