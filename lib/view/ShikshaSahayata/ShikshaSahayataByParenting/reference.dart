@@ -259,7 +259,7 @@ class _ReferenceViewState extends State<ReferenceView> {
     if (path == null || path.isEmpty) return '';
 
     if (path.startsWith('http')) {
-      return path; // already full URL
+      return path;
     }
 
     return "${Urls.base_url.replaceAll(RegExp(r'/$'), '')}/${path.replaceAll(RegExp(r'^/'), '')}";
