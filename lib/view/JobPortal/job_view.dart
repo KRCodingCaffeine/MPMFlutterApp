@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/JobPortal/job_detail.dart';
@@ -17,27 +20,32 @@ class _JobViewState extends State<JobView> {
   bool isRecruiter = false;
   int recruiterTab = 0;
   String? selectedJobTitleForMembers;
+  final ImagePicker _picker = ImagePicker();
+  File? jobSummaryFile;
   List<Map<String, dynamic>> postedJobs = [
     {
       "title": "Flutter Developer",
       "company": "Tech Solutions Pvt Ltd",
       "location": "Mumbai",
       "salary": "₹5 - 8 LPA",
-      "description": "Build cross platform mobile apps."
+      "description": "Build cross platform mobile apps.",
+      "jobSummaryFile":
+          "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
     },
     {
       "title": "UI Designer",
       "company": "Creative Studio",
       "location": "Ahmedabad",
       "salary": "₹4 - 6 LPA",
-      "description": "Design modern UI/UX screens."
+      "description": "Design modern UI/UX screens.",
+      "jobSummaryFile": "https://www.africau.edu/images/default/sample.pdf"
     },
     {
       "title": "Senior Accountant",
       "company": "Maheshwari Finance Group",
       "location": "Delhi",
       "salary": "₹6 - 9 LPA",
-      "description": "Manage accounting and GST."
+      "description": "Manage accounting and GST.",
     },
   ];
 
@@ -78,6 +86,10 @@ class _JobViewState extends State<JobView> {
       "experience": "3 Years",
       "occupation": "Flutter Developer",
       "job": "Flutter Developer",
+      "profile_summary":
+          "Passionate Flutter developer with 3 years of experience building scalable mobile applications with clean UI and optimized performance.",
+      "resume":
+          "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
       "isShortlisted": false,
     },
     {
@@ -98,6 +110,10 @@ class _JobViewState extends State<JobView> {
       "experience": "2 Years",
       "occupation": "UI/UX Designer",
       "job": "UI Designer",
+      "profile_summary":
+          "Creative UI/UX designer with strong user research and wireframing skills, focused on delivering intuitive and visually appealing digital experiences.",
+      "resume":
+          "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
       "isShortlisted": false,
     },
     {
@@ -115,16 +131,20 @@ class _JobViewState extends State<JobView> {
       "country": "India",
       "pincode": "110075",
       "education": "B.Com",
-      "experience": "1 Year",
+      "experience": "0 Year",
       "occupation": "Account Executive",
       "job": "Senior Accountant",
+      "profile_summary":
+          "Detail-oriented accounting professional with strong knowledge of financial reporting, taxation basics, and bookkeeping practices.",
+      "resume":
+          "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
       "isShortlisted": false,
     },
     {
       "name": "Neha Kapoor",
       "email": "neha.kapoor@gmail.com",
       "mobile": "9898989898",
-      "whatsapp": "9898989898",
+      "whatsapp": "1234567890",
       "father_name": "Raj Kapoor",
       "mother_name": "Meena Kapoor",
       "building": "Sky Heights",
@@ -138,6 +158,10 @@ class _JobViewState extends State<JobView> {
       "experience": "5 Years",
       "occupation": "Senior Software Engineer",
       "job": "Flutter Developer",
+      "profile_summary":
+          "Senior software engineer with 5 years of experience in mobile app architecture, API integration, and performance optimization.",
+      "resume":
+          "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
       "isShortlisted": false,
     },
   ];
@@ -288,7 +312,7 @@ class _JobViewState extends State<JobView> {
               items: const [
                 BottomNavigationBarItem(
                   icon: Icon(Icons.home),
-                  label: "Home",
+                  label: "Job",
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.bookmark),
@@ -312,7 +336,7 @@ class _JobViewState extends State<JobView> {
                       ColorResources.red_color),
                   items: const [
                     BottomNavigationBarItem(
-                        icon: Icon(Icons.people), label: "Applied Members"),
+                        icon: Icon(Icons.business_center), label: "Posted Job"),
                     BottomNavigationBarItem(
                         icon: Icon(Icons.add_box), label: "Post Job"),
                   ],
@@ -752,55 +776,158 @@ class _JobViewState extends State<JobView> {
                     ],
                   ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      /// 🔹 TOP SECTION (Image + Details)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          /// Profile Image
+                          CircleAvatar(
+                            radius: 32,
+                            backgroundColor: Colors.grey.shade200,
+                            backgroundImage: member["image"] != null &&
+                                    member["image"].toString().isNotEmpty
+                                ? NetworkImage(member["image"])
+                                : null,
+                            child: member["image"] == null ||
+                                    member["image"].toString().isEmpty
+                                ? const Icon(Icons.person,
+                                    size: 30, color: Colors.grey)
+                                : null,
+                          ),
+
+                          const SizedBox(width: 14),
+
+                          /// Member Details
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                /// Name + Shortlisted Tag
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        member["name"] ?? "",
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    if (isShortlisted)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: Colors.green.withOpacity(0.12),
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                        ),
+                                        child: const Text(
+                                          "Shortlisted",
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.green,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+
+                                const SizedBox(height: 6),
+
+                                /// Email
+                                Text(
+                                  member["email"] ?? "",
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+
+                                const SizedBox(height: 4),
+
+                                /// Mobile
+                                Text(
+                                  member["mobile"] ?? "",
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+
+                                const SizedBox(height: 6),
+
+                                /// Profile Summary
+                                Text(
+                                  member["profile_summary"] ?? "",
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.black54,
+                                  ),
+                                ),
+
+                                const SizedBox(height: 6),
+
+                                /// Experience
+                                Text(
+                                  "Experience: ${member["experience"]}",
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 14),
+
+                      /// 🔹 DIVIDER
+                      const Divider(height: 1),
+
+                      /// 🔹 BOTTOM BUTTON SECTION
                       Row(
                         children: [
                           Expanded(
-                            child: Text(
-                              member["name"] ?? "",
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          if (isShortlisted)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: Colors.green.withOpacity(0.12),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
+                            child: TextButton(
+                              onPressed: () {
+                                _showResumeDialog(
+                                  context,
+                                  member["resume"],
+                                  member["name"],
+                                );
+                              },
                               child: const Text(
-                                "Shortlisted",
+                                "View Resume",
                                 style: TextStyle(
-                                  fontSize: 10,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.green,
+                                  color: Colors.blue,
                                 ),
                               ),
                             ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text("Experience: ${member["experience"]}"),
-                      const SizedBox(height: 12),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () {
-                            _showProfileBottomSheet(member);
-                          },
-                          child: const Text(
-                            "View Profile",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: Colors.redAccent,
+                          ),
+                          Expanded(
+                            child: TextButton(
+                              onPressed: () {
+                                _showProfileBottomSheet(member);
+                              },
+                              child: const Text(
+                                "View Profile",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.redAccent,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
                     ],
                   ),
@@ -830,6 +957,12 @@ class _JobViewState extends State<JobView> {
             0;
 
         bool isShortlisted = member["isShortlisted"] ?? false;
+
+        String mobile = member["mobile"] ?? "";
+        String whatsapp = member["whatsapp"] ?? "";
+
+        String contactValue =
+            mobile == whatsapp ? mobile : "$mobile / $whatsapp";
 
         return SafeArea(
           child: FractionallySizedBox(
@@ -929,13 +1062,20 @@ class _JobViewState extends State<JobView> {
                           const SizedBox(height: 12),
                           _profileRow("Name", member["name"]),
                           _profileRow("Email", member["email"]),
-                          _profileRow("Mobile", member["mobile"]),
-                          _profileRow("WhatsApp", member["whatsapp"]),
-                          const SizedBox(height: 20),
-                          _sectionTitle("Family Details"),
-                          const SizedBox(height: 12),
-                          _profileRow("Father's Name", member["father_name"]),
-                          _profileRow("Mother's Name", member["mother_name"]),
+                          _profileRow("Mobile / WhatsApp", contactValue),
+                          const SizedBox(height: 16),
+                          _sectionTitle("Profile Summary"),
+                          const SizedBox(height: 10),
+                          Text(
+                            member["profile_summary"] ??
+                                "No profile summary available.",
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              height: 1.5,
+                              color: Colors.black87,
+                            ),
+                          ),
                           const SizedBox(height: 20),
                           _sectionTitle("Residential Address"),
                           const SizedBox(height: 12),
@@ -956,23 +1096,40 @@ class _JobViewState extends State<JobView> {
                           const SizedBox(height: 20),
                           const Divider(),
                           const SizedBox(height: 15),
-                          _sectionTitle("Education"),
-                          const SizedBox(height: 12),
-                          _profileRow(
-                              "Highest Qualification", member["education"]),
-                          const SizedBox(height: 20),
-                          if (experienceYears > 1) ...[
-                            const Divider(),
-                            const SizedBox(height: 15),
+                          if (experienceYears > 0) ...[
                             _sectionTitle("Occupation"),
                             const SizedBox(height: 12),
                             _profileRow(
-                                "Experience",
-                                member["experience"] ??
-                                    "$experienceYears Years"),
+                              "Experience",
+                              member["experience"] ?? "$experienceYears Years",
+                            ),
                             _profileRow(
                                 "Current Occupation", member["occupation"]),
+                            const SizedBox(height: 20),
+                            const Divider(),
+                            const SizedBox(height: 15),
+                            _sectionTitle("Education"),
+                            const SizedBox(height: 12),
+                            _profileRow(
+                              "Highest Qualification",
+                              member["education"],
+                            ),
+                            const SizedBox(height: 20),
+                          ] else ...[
+                            _sectionTitle("Education"),
+                            const SizedBox(height: 12),
+                            _profileRow(
+                              "Highest Qualification",
+                              member["education"],
+                            ),
+                            const SizedBox(height: 20),
                           ],
+                          const Divider(),
+                          const SizedBox(height: 15),
+                          _sectionTitle("Family Details"),
+                          const SizedBox(height: 12),
+                          _profileRow("Father's Name", member["father_name"]),
+                          _profileRow("Mother's Name", member["mother_name"]),
                           const SizedBox(height: 20),
                         ],
                       ),
@@ -984,6 +1141,88 @@ class _JobViewState extends State<JobView> {
           ),
         );
       },
+    );
+  }
+
+  void _showResumeDialog(
+    BuildContext context,
+    String filePath,
+    String candidateName,
+  ) {
+    bool isPdf = filePath.toLowerCase().endsWith(".pdf");
+
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "$candidateName Resume",
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 300,
+                width: double.infinity,
+                child: isPdf
+                    ? const Center(
+                        child: Icon(
+                          Icons.picture_as_pdf,
+                          size: 80,
+                          color: Colors.red,
+                        ),
+                      )
+                    : Image.network(filePath, fit: BoxFit.contain),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Share.share(
+                          filePath,
+                          subject: "$candidateName Resume",
+                        );
+                      },
+                      icon: const Icon(Icons.share),
+                      label: const Text("Share"),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.blue,
+                        side: const BorderSide(color: Colors.blue),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColorHelperClass.getColorFromHex(
+                            ColorResources.red_color),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text("Close"),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -1199,11 +1438,60 @@ class _JobViewState extends State<JobView> {
               const SizedBox(height: 8),
               _infoRow("Company", job["company"] ?? ""),
               const SizedBox(height: 8),
+
               _infoRow("Location", job["location"] ?? ""),
               const SizedBox(height: 8),
+
               _infoRow("Salary", job["salary"] ?? ""),
               const SizedBox(height: 8),
+
+              /// ✅ NEW FIELDS ADDED
+
+              _infoRow("Job Type", job["jobType"] ?? "Full-time"),
+              const SizedBox(height: 8),
+
+              _infoRow("Work Mode", job["workMode"] ?? "On-site"),
+              const SizedBox(height: 8),
+
+              _infoRow("Category", job["category"] ?? "IT"),
+              const SizedBox(height: 8),
+
+              _infoRow("Last Date", job["lastDate"] ?? "Not specified"),
+              const SizedBox(height: 8),
+
               _infoRow("Description", job["description"] ?? ""),
+              const SizedBox(height: 8),
+
+              if (job["jobSummaryFile"] != null)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      var file = job["jobSummaryFile"];
+
+                      if (file is File) {
+                        _showLocalDocumentPreviewDialog(
+                          context,
+                          file,
+                          "Job Summary",
+                        );
+                      } else if (file is String) {
+                        _showCvPreviewDialog(
+                          context,
+                          file,
+                          "Job Summary",
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.visibility),
+                    label: const Text("View Job Summary"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
             ],
           ),
         );
@@ -1251,146 +1539,184 @@ class _JobViewState extends State<JobView> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
-        return SafeArea(
-          child: FractionallySizedBox(
-            heightFactor: 0.85,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: [
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return StatefulBuilder(
+          builder: (context, modalSetState) {
+            return SafeArea(
+              child: FractionallySizedBox(
+                heightFactor: 0.85,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
                     children: [
-                      OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: ColorHelperClass.getColorFromHex(
-                              ColorResources.red_color),
-                          side: BorderSide(
-                            color: ColorHelperClass.getColorFromHex(
-                                ColorResources.red_color),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: ColorHelperClass.getColorFromHex(
+                                  ColorResources.red_color),
+                              side: const BorderSide(color: Colors.red),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Text("Cancel"),
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              bool isUpdate = editIndex != null;
+                              setState(() {
+                                final jobData = {
+                                  "title": titleController.text,
+                                  "company": companyController.text,
+                                  "location": locationController.text,
+                                  "salary": salaryController.text,
+                                  "description": descriptionController.text,
+                                  "qualification": qualificationController.text,
+                                  "experience": experienceController.text,
+                                  "skills": skillsController.text,
+                                  "vacancy": vacancyController.text,
+                                  "lastDate": lastDateController.text,
+                                  "jobType": selectedJobType,
+                                  "workMode": selectedWorkMode,
+                                  "category": selectedCategoryForPost,
+                                  "jobSummaryFile": jobSummaryFile,
+                                };
+
+                                if (isUpdate) {
+                                  postedJobs[editIndex] = jobData;
+                                } else {
+                                  postedJobs.add(jobData);
+                                }
+
+                                recruiterTab = 1;
+                              });
+
+                              Navigator.pop(context);
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    isUpdate
+                                        ? "Job updated successfully"
+                                        : "Job added successfully",
+                                  ),
+                                  backgroundColor: Colors.green,
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: ColorHelperClass.getColorFromHex(
+                                  ColorResources.red_color),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child:
+                                Text(editIndex != null ? "Update" : "Post Job"),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              _buildTextField("Job Title",
+                                  controller: titleController),
+                              _buildTextField("Company Name",
+                                  controller: companyController),
+                              _buildTextField("Location",
+                                  controller: locationController),
+                              _buildTextField("Salary (e.g ₹5-8 LPA)",
+                                  controller: salaryController),
+                              _buildTextField("Minimum Qualification",
+                                  controller: qualificationController),
+                              _buildTextField(
+                                  "Experience Required (e.g 2-4 Years)",
+                                  controller: experienceController),
+                              _buildTextField(
+                                  "Required Skills (Comma separated)",
+                                  controller: skillsController),
+                              _buildTextField("Number of Vacancies",
+                                  controller: vacancyController),
+                              themedDatePickerField(
+                                context: context,
+                                label: "Last Date to Apply",
+                                hint: "Select last date",
+                                controller: lastDateController,
+                                onChanged: () {
+                                  modalSetState(() {});
+                                },
+                              ),
+                              const SizedBox(height: 10),
+                              _buildDropdown(
+                                label: "Job Type",
+                                items: jobTypes,
+                                selectedValue: selectedJobType,
+                                onChanged: (val) {
+                                  modalSetState(() {
+                                    selectedJobType = val;
+                                  });
+                                },
+                              ),
+                              _buildDropdown(
+                                label: "Work Mode",
+                                items: workModes,
+                                selectedValue: selectedWorkMode,
+                                onChanged: (val) {
+                                  modalSetState(() {
+                                    selectedWorkMode = val;
+                                  });
+                                },
+                              ),
+                              _buildDropdown(
+                                label: "Category",
+                                items: categories,
+                                selectedValue: selectedCategoryForPost,
+                                onChanged: (val) {
+                                  modalSetState(() {
+                                    selectedCategoryForPost = val;
+                                  });
+                                },
+                              ),
+                              _buildTextField("Job Description",
+                                  controller: descriptionController,
+                                  maxLines: 4),
+                              buildJobSummaryUploadField(
+                                context: context,
+                                file: jobSummaryFile,
+                                buttonText: "Upload Job Summary",
+                                onPick: () {
+                                  _showImagePicker(context, (file) {
+                                    modalSetState(() {
+                                      jobSummaryFile = file;
+                                    });
+                                  });
+                                },
+                                onRemove: () {
+                                  modalSetState(() {
+                                    jobSummaryFile = null;
+                                  });
+                                },
+                              ),
+                              const SizedBox(height: 30),
+                            ],
                           ),
                         ),
-                        child: const Text("Cancel"),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          bool isUpdate = editIndex != null;
-                          setState(() {
-                            final jobData = {
-                              "title": titleController.text,
-                              "company": companyController.text,
-                              "location": locationController.text,
-                              "salary": salaryController.text,
-                              "description": descriptionController.text,
-                              "qualification": qualificationController.text,
-                              "experience": experienceController.text,
-                              "skills": skillsController.text,
-                              "vacancy": vacancyController.text,
-                              "lastDate": lastDateController.text,
-                              "jobType": selectedJobType,
-                              "workMode": selectedWorkMode,
-                              "category": selectedCategoryForPost,
-                            };
-
-                            if (isUpdate) {
-                              postedJobs[editIndex] = jobData;
-                            } else {
-                              postedJobs.add(jobData);
-                            }
-
-                            recruiterTab = 1;
-                          });
-
-                          Navigator.pop(context);
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                isUpdate
-                                    ? "Job updated successfully"
-                                    : "Job added successfully",
-                              ),
-                              backgroundColor: Colors.green,
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: ColorHelperClass.getColorFromHex(
-                              ColorResources.red_color),
-                          foregroundColor: Colors.white,
-                        ),
-                        child: Text(editIndex != null ? "Update" : "Post Job"),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          _buildTextField("Job Title",
-                              controller: titleController),
-                          _buildTextField("Company Name",
-                              controller: companyController),
-                          _buildTextField("Location",
-                              controller: locationController),
-                          _buildTextField("Salary (e.g ₹5-8 LPA)",
-                              controller: salaryController),
-                          _buildTextField("Minimum Qualification",
-                              controller: qualificationController),
-                          _buildTextField("Experience Required (e.g 2-4 Years)",
-                              controller: experienceController),
-                          _buildTextField("Required Skills (Comma separated)",
-                              controller: skillsController),
-                          _buildTextField("Number of Vacancies",
-                              controller: vacancyController),
-                          _buildTextField("Last Date to Apply",
-                              controller: lastDateController),
-                          const SizedBox(height: 10),
-                          _buildDropdown(
-                            label: "Job Type",
-                            items: jobTypes,
-                            selectedValue: selectedJobType,
-                            onChanged: (val) {
-                              setState(() {
-                                selectedJobType = val;
-                              });
-                            },
-                          ),
-                          _buildDropdown(
-                            label: "Work Mode",
-                            items: workModes,
-                            selectedValue: selectedWorkMode,
-                            onChanged: (val) {
-                              setState(() {
-                                selectedWorkMode = val;
-                              });
-                            },
-                          ),
-                          _buildDropdown(
-                            label: "Category",
-                            items: categories,
-                            selectedValue: selectedCategoryForPost,
-                            onChanged: (val) {
-                              setState(() {
-                                selectedCategoryForPost = val;
-                              });
-                            },
-                          ),
-                          _buildTextField("Job Description",
-                              controller: descriptionController, maxLines: 4),
-                          const SizedBox(height: 30),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
@@ -1471,6 +1797,213 @@ class _JobViewState extends State<JobView> {
     );
   }
 
+  Widget themedDatePickerField({
+    required BuildContext context,
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+    VoidCallback? onChanged,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: TextFormField(
+        readOnly: true,
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          border: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black),
+          ),
+          enabledBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black),
+          ),
+          focusedBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black38, width: 1),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+          labelStyle: const TextStyle(color: Colors.black),
+        ),
+        onTap: () async {
+          DateTime now = DateTime.now();
+
+          DateTime? picked = await showDatePicker(
+            context: context,
+            initialDate: now,
+            firstDate: now, // ✅ Only future dates allowed
+            lastDate: DateTime(now.year + 5),
+            builder: (context, child) {
+              return Theme(
+                data: Theme.of(context).copyWith(
+                  colorScheme: ColorScheme.light(
+                    primary: ColorHelperClass.getColorFromHex(
+                      ColorResources.red_color,
+                    ),
+                  ),
+                ),
+                child: child!,
+              );
+            },
+          );
+
+          if (picked != null) {
+            controller.text = "${picked.day.toString().padLeft(2, '0')}/"
+                "${picked.month.toString().padLeft(2, '0')}/"
+                "${picked.year}";
+
+            if (onChanged != null) {
+              onChanged();
+            }
+          }
+        },
+      ),
+    );
+  }
+
+  Widget buildJobSummaryUploadField({
+    required BuildContext context,
+    required File? file,
+    required String buttonText,
+    required VoidCallback onPick,
+    required VoidCallback onRemove,
+  }) {
+    bool isUploaded = file != null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        /// 🔹 Preview
+        if (file != null)
+          Stack(
+            children: [
+              Container(
+                height: 180,
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 10),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.file(file, fit: BoxFit.cover),
+                ),
+              ),
+              Positioned(
+                right: 8,
+                top: 8,
+                child: GestureDetector(
+                  onTap: onRemove,
+                  child: const CircleAvatar(
+                    radius: 14,
+                    backgroundColor: Colors.red,
+                    child: Icon(Icons.close, size: 16, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+        /// 🔹 Upload Button
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: onPick,
+            icon: Icon(
+              isUploaded ? Icons.check_circle : Icons.upload,
+            ),
+            label: Text(
+              isUploaded ? "$buttonText Uploaded" : "$buttonText *",
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isUploaded
+                  ? Colors.green
+                  : ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showImagePicker(
+    BuildContext context,
+    Function(File) onFilePicked,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                /// 🔹 HEADER
+                const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Text(
+                    "Upload Job Summary",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+
+                const Divider(),
+
+                /// 📷 CAMERA
+                ListTile(
+                  leading:
+                      const Icon(Icons.camera_alt, color: Colors.redAccent),
+                  title: const Text("Take a Picture"),
+                  onTap: () async {
+                    Navigator.pop(context);
+
+                    final picked = await _picker.pickImage(
+                      source: ImageSource.camera,
+                      imageQuality: 70,
+                    );
+
+                    if (picked != null) {
+                      onFilePicked(File(picked.path));
+                    }
+                  },
+                ),
+
+                /// 🖼 GALLERY
+                ListTile(
+                  leading: const Icon(Icons.image, color: Colors.redAccent),
+                  title: const Text("Choose from Gallery"),
+                  onTap: () async {
+                    Navigator.pop(context);
+
+                    final picked = await _picker.pickImage(
+                      source: ImageSource.gallery,
+                      imageQuality: 70,
+                    );
+
+                    if (picked != null) {
+                      onFilePicked(File(picked.path));
+                    }
+                  },
+                ),
+
+                const SizedBox(height: 10),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _infoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -1502,6 +2035,131 @@ class _JobViewState extends State<JobView> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showLocalDocumentPreviewDialog(
+    BuildContext context,
+    File file,
+    String title,
+  ) {
+    bool isPdf = file.path.toLowerCase().endsWith(".pdf");
+
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                height: 300,
+                width: double.infinity,
+                child: isPdf
+                    ? const Center(
+                        child: Icon(
+                          Icons.picture_as_pdf,
+                          size: 80,
+                          color: Colors.red,
+                        ),
+                      )
+                    : Image.file(
+                        file,
+                        fit: BoxFit.contain,
+                      ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text("Close"),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCvPreviewDialog(
+    BuildContext context,
+    String filePath,
+    String title,
+  ) {
+    bool isPdf = filePath.toLowerCase().endsWith(".pdf");
+
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 300,
+              width: double.infinity,
+              child: isPdf
+                  ? const Center(
+                      child: Icon(
+                        Icons.picture_as_pdf,
+                        size: 80,
+                        color: Colors.red,
+                      ),
+                    )
+                  : filePath.startsWith("http")
+                      ? Image.network(filePath, fit: BoxFit.contain)
+                      : Image.file(File(filePath), fit: BoxFit.contain),
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text("Close"),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
       ),
     );
   }

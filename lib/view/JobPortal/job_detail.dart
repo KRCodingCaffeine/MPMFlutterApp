@@ -184,41 +184,84 @@ class _JobDetailViewState extends State<JobDetailView> {
     );
   }
 
-  void _showCvPickerOptions(BuildContext context, Function(File) onPicked) {
+  void _showCvPickerOptions(
+      BuildContext context,
+      Function(File) onFilePicked,
+      ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (_) {
-        return Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
-              title: const Text("Take a Photo"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                    await ImagePicker().pickImage(source: ImageSource.camera);
-                if (picked != null) {
-                  onPicked(File(picked.path));
-                }
-              },
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+
+                /// 🔹 HEADER
+                const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Text(
+                    "Upload CV",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+
+                const Divider(),
+
+                /// 📷 CAMERA
+                ListTile(
+                  leading: const Icon(
+                    Icons.camera_alt,
+                    color: Colors.redAccent,
+                  ),
+                  title: const Text("Take a Picture"),
+                  onTap: () async {
+                    Navigator.pop(context);
+
+                    final picked = await ImagePicker().pickImage(
+                      source: ImageSource.camera,
+                      imageQuality: 70,
+                    );
+
+                    if (picked != null) {
+                      onFilePicked(File(picked.path));
+                    }
+                  },
+                ),
+
+                /// 🖼 GALLERY
+                ListTile(
+                  leading: const Icon(
+                    Icons.image,
+                    color: Colors.redAccent,
+                  ),
+                  title: const Text("Choose from Gallery"),
+                  onTap: () async {
+                    Navigator.pop(context);
+
+                    final picked = await ImagePicker().pickImage(
+                      source: ImageSource.gallery,
+                      imageQuality: 70,
+                    );
+
+                    if (picked != null) {
+                      onFilePicked(File(picked.path));
+                    }
+                  },
+                ),
+
+                const SizedBox(height: 10),
+              ],
             ),
-            ListTile(
-              leading: const Icon(Icons.image, color: Colors.redAccent),
-              title: const Text("Choose from Gallery"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                    await ImagePicker().pickImage(source: ImageSource.gallery);
-                if (picked != null) {
-                  onPicked(File(picked.path));
-                }
-              },
-            ),
-          ],
+          ),
         );
       },
     );
@@ -396,11 +439,45 @@ class _JobDetailViewState extends State<JobDetailView> {
             ),
             const SizedBox(height: 20),
             const Text(
-              "Profile Summary",
+              "Job Summary",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-            Text(job["description"]),
+            Text(job["description"] ?? ""),
+
+            const SizedBox(height: 15),
+
+            /// ✅ VIEW JOB SUMMARY BUTTON
+            if (job["jobSummaryFile"] != null)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    var file = job["jobSummaryFile"];
+
+                    if (file is File) {
+                      _showLocalDocumentPreviewDialog(
+                        context,
+                        file,
+                        "Job Summary",
+                      );
+                    } else if (file is String) {
+                      _showCvPreviewDialog(
+                        context,
+                        file,
+                        "Job Summary",
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.visibility),
+                  label: const Text("View Job Summary"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ColorHelperClass.getColorFromHex(
+                        ColorResources.red_color),
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
             const SizedBox(height: 40),
             SizedBox(
               width: double.infinity,
@@ -456,6 +533,73 @@ class _JobDetailViewState extends State<JobDetailView> {
           focusedBorder: const OutlineInputBorder(
             borderSide: BorderSide(color: Colors.black26, width: 1.0),
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showLocalDocumentPreviewDialog(
+      BuildContext context,
+      File file,
+      String title,
+      ) {
+    bool isPdf = file.path.toLowerCase().endsWith(".pdf");
+
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                height: 300,
+                width: double.infinity,
+                child: isPdf
+                    ? const Center(
+                  child: Icon(
+                    Icons.picture_as_pdf,
+                    size: 80,
+                    color: Colors.red,
+                  ),
+                )
+                    : Image.file(
+                  file,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                backgroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text("Close"),
+            ),
+            const SizedBox(height: 16),
+          ],
         ),
       ),
     );
