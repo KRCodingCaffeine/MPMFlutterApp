@@ -186,20 +186,25 @@ class _JobViewState extends State<JobView> {
       "location": "Mumbai",
       "salary": "₹5 - 8 LPA",
       "experience": "2-4 Years",
+      "postedDate": "20 Feb 2026",
       "category": "IT",
       "description":
           "We are looking for a skilled Flutter Developer to build cross-platform mobile apps.",
+      "jobSummaryFile":
+          "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
       "isBookmarked": false
     },
     {
       "title": "Senior Accountant",
       "company": "Maheshwari Finance Group",
       "location": "Ahmedabad",
-      "salary": "₹4 - 7 LPA",
+      "salary": "₹4 - 6 LPA",
       "experience": "3-5 Years",
+      "postedDate": "18 Feb 2026",
       "category": "Finance",
       "description":
           "Manage financial records, GST filing, and accounting operations.",
+      "jobSummaryFile": "https://www.africau.edu/images/default/sample.pdf",
       "isBookmarked": false
     },
     {
@@ -208,9 +213,11 @@ class _JobViewState extends State<JobView> {
       "location": "Delhi",
       "salary": "₹3 - 5 LPA",
       "experience": "1-3 Years",
+      "postedDate": "12 Feb 2026",
       "category": "Marketing",
       "description":
           "Handle SEO, Google Ads, and social media marketing campaigns.",
+      "jobSummaryFile": "https://www.africau.edu/images/default/sample.pdf",
       "isBookmarked": false
     },
     {
@@ -483,6 +490,21 @@ class _JobViewState extends State<JobView> {
                             color: Colors.green, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 6),
                     Text("Experience: ${job["experience"]}"),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(Icons.calendar_today,
+                            size: 14, color: Colors.grey),
+                        const SizedBox(width: 6),
+                        Text(
+                          "Posted on: ${job["postedDate"] ?? "Recently"}",
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 12),
                     if (selectedTab != 2)
                       Align(

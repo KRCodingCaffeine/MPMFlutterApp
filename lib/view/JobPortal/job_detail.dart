@@ -185,9 +185,9 @@ class _JobDetailViewState extends State<JobDetailView> {
   }
 
   void _showCvPickerOptions(
-      BuildContext context,
-      Function(File) onFilePicked,
-      ) {
+    BuildContext context,
+    Function(File) onFilePicked,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -201,7 +201,6 @@ class _JobDetailViewState extends State<JobDetailView> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-
                 /// 🔹 HEADER
                 const Padding(
                   padding: EdgeInsets.all(12),
@@ -389,6 +388,7 @@ class _JobDetailViewState extends State<JobDetailView> {
   @override
   Widget build(BuildContext context) {
     final job = widget.job;
+    final jobSummaryFile = job["jobSummaryFile"];
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -448,33 +448,34 @@ class _JobDetailViewState extends State<JobDetailView> {
             const SizedBox(height: 15),
 
             /// ✅ VIEW JOB SUMMARY BUTTON
-            if (job["jobSummaryFile"] != null)
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    var file = job["jobSummaryFile"];
-
-                    if (file is File) {
-                      _showLocalDocumentPreviewDialog(
-                        context,
-                        file,
-                        "Job Summary",
-                      );
-                    } else if (file is String) {
-                      _showCvPreviewDialog(
-                        context,
-                        file,
-                        "Job Summary",
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.visibility),
-                  label: const Text("View Job Summary"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorHelperClass.getColorFromHex(
-                        ColorResources.red_color),
-                    foregroundColor: Colors.white,
+            if (jobSummaryFile != null && jobSummaryFile.toString().isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      if (jobSummaryFile is File) {
+                        _showLocalDocumentPreviewDialog(
+                          context,
+                          jobSummaryFile,
+                          "Job Summary",
+                        );
+                      } else if (jobSummaryFile is String) {
+                        _showCvPreviewDialog(
+                          context,
+                          jobSummaryFile,
+                          "Job Summary",
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.picture_as_pdf),
+                    label: const Text("View Job Summary"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
+                      foregroundColor: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -539,10 +540,10 @@ class _JobDetailViewState extends State<JobDetailView> {
   }
 
   void _showLocalDocumentPreviewDialog(
-      BuildContext context,
-      File file,
-      String title,
-      ) {
+    BuildContext context,
+    File file,
+    String title,
+  ) {
     bool isPdf = file.path.toLowerCase().endsWith(".pdf");
 
     showDialog(
@@ -571,16 +572,16 @@ class _JobDetailViewState extends State<JobDetailView> {
                 width: double.infinity,
                 child: isPdf
                     ? const Center(
-                  child: Icon(
-                    Icons.picture_as_pdf,
-                    size: 80,
-                    color: Colors.red,
-                  ),
-                )
+                        child: Icon(
+                          Icons.picture_as_pdf,
+                          size: 80,
+                          color: Colors.red,
+                        ),
+                      )
                     : Image.file(
-                  file,
-                  fit: BoxFit.contain,
-                ),
+                        file,
+                        fit: BoxFit.contain,
+                      ),
               ),
             ),
             const SizedBox(height: 16),
@@ -588,10 +589,10 @@ class _JobDetailViewState extends State<JobDetailView> {
               onPressed: () => Navigator.pop(context),
               style: TextButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
