@@ -1038,6 +1038,7 @@ class _HomeViewState extends State<HomeView>
       case "Shiksha Sahayata":
         Navigator.pushNamed(context, RouteNames.shiksha_sahayata);
         break;
+      case "QR Scanner":
       case "QR Code Scanner":
         Navigator.pushNamed(context, RouteNames.qr_code);
         break;
