@@ -92,6 +92,28 @@ class _HomeViewState extends State<HomeView>
     return items;
   }
 
+  /// Returns unread notification count for a grid menu label (reactive via controller observables).
+  int _getUnreadCountForLabel(String label) {
+    switch (label) {
+      case 'Events':
+        return notificationController.unreadEventCount.value;
+      case 'Discounts & Offers':
+        return notificationController.unreadOfferCount.value;
+      case 'Saraswani':
+        return notificationController.unreadSaraswaniCount.value;
+      case 'Trips':
+        return notificationController.unreadTripsCount.value;
+      case 'Networking':
+      case 'Shiksha Sahayata':
+      case 'My Profile':
+      case 'Make New Member':
+      case 'QR Scanner':
+        return notificationController.unreadDefaultCount.value;
+      default:
+        return 0;
+    }
+  }
+
   void _updateArrowsFromScrollPosition() {
     if (!_gridScrollController.hasClients || !mounted) return;
     final maxScroll = _gridScrollController.position.maxScrollExtent;
@@ -427,11 +449,14 @@ class _HomeViewState extends State<HomeView>
                                       itemBuilder: (context, index) {
                                         final item = gridItems[index];
                                         final screenWidth = MediaQuery.of(context).size.width;
+                                        final label = item['label'] as String;
 
                                         return Material(
                                           color: Colors.transparent,
                                           child: InkWell(
-                                            onTap: () => _handleGridItemClick(item['label']),
+                                            // Tap is handled by the Listener above (onPointerUp) to avoid gesture conflict with parent scroll.
+                                            // Do not add onTap here or the same screen will be pushed twice (back would show same screen again).
+                                            onTap: () {},
                                             borderRadius: BorderRadius.circular(12),
                                             child: Container(
                                               decoration: BoxDecoration(
@@ -448,14 +473,52 @@ class _HomeViewState extends State<HomeView>
                                               child: Column(
                                                 mainAxisAlignment: MainAxisAlignment.center,
                                                 children: [
-                                                  SvgPicture.asset(
-                                                    item['icon'],
-                                                    height: screenWidth * 0.06,
-                                                    width: screenWidth * 0.06,
-                                                  ),
+                                                  Obx(() {
+                                                    final count = _getUnreadCountForLabel(label);
+                                                    return Stack(
+                                                      clipBehavior: Clip.none,
+                                                      alignment: Alignment.center,
+                                                      children: [
+                                                        SvgPicture.asset(
+                                                          item['icon'],
+                                                          height: screenWidth * 0.06,
+                                                          width: screenWidth * 0.06,
+                                                        ),
+                                                        if (count > 0)
+                                                          Positioned(
+                                                            right: -4,
+                                                            top: -4,
+                                                            child: Container(
+                                                              padding: const EdgeInsets.symmetric(
+                                                                horizontal: 4,
+                                                                vertical: 2,
+                                                              ),
+                                                              decoration: BoxDecoration(
+                                                                color: Colors.red,
+                                                                borderRadius: BorderRadius.circular(10),
+                                                              ),
+                                                              constraints: const BoxConstraints(
+                                                                minWidth: 16,
+                                                                minHeight: 16,
+                                                              ),
+                                                              child: Center(
+                                                                child: Text(
+                                                                  count > 99 ? '99+' : '$count',
+                                                                  style: const TextStyle(
+                                                                    color: Colors.white,
+                                                                    fontSize: 9,
+                                                                    fontWeight: FontWeight.bold,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                      ],
+                                                    );
+                                                  }),
                                                   const SizedBox(height: 6),
                                                   Text(
-                                                    item['label'],
+                                                    label,
                                                     style: TextStyle(
                                                       fontSize: screenWidth * 0.03,
                                                       fontWeight: FontWeight.w600,
