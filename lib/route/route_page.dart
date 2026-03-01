@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mpm/route/route_name.dart';
 import 'package:mpm/utils/Session.dart';
+import 'package:mpm/view/BhavanBooking/bhavan_booking_view.dart';
 import 'package:mpm/view/EnquiryForm/add_enquiry_form.dart';
 import 'package:mpm/view/EventTrip/event_trip.dart';
 import 'package:mpm/view/Networking/network_view.dart';
@@ -89,6 +90,8 @@ class RoutePages {
         return _buildRoute(const QRScannerScreen(), settings);
       case RouteNames.forms:
         return _buildRoute(const FormsDownloadView(), settings);
+      case RouteNames.bhavan_booking:
+        return _buildRoute(const BhavanBookingView(), settings);
       case RouteNames.gov_scheme:
         return _buildRoute(GovSchemeView(), settings);
       case RouteNames.add_enquiry_form:

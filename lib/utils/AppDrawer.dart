@@ -159,6 +159,14 @@ class AppDrawer extends StatelessWidget {
           //   },
           // ),
           ListTile(
+            leading: const Icon(Icons.account_balance),
+            title: const Text('Bhavan Booking'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, RouteNames.bhavan_booking);
+            },
+          ),
+          ListTile(
             leading: const Icon(Icons.contact_page),
             title: const Text('Enquiry Form'),
             onTap: () {
