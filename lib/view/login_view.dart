@@ -147,16 +147,16 @@ class _LoginPageState extends State<LoginPage> {
                               controller: mobileController,
                               keyboardType: TextInputType.text,
                               decoration: const InputDecoration(
-                                hintText:
-                                'Enter Your Mobile / Membership Code',
+                                hintText: 'Enter Your Mobile / Membership Code',
                                 border: InputBorder.none,
                                 contentPadding:
-                                EdgeInsets.symmetric(vertical: 8),
+                                    EdgeInsets.symmetric(vertical: 8),
                               ),
                               validator: (value) {
                                 if (value!.isEmpty) {
                                   return 'Enter Membership code / Mobile number';
-                                } else if (RegExp(r'^[0-9]+$').hasMatch(value)) {
+                                } else if (RegExp(r'^[0-9]+$')
+                                    .hasMatch(value)) {
                                   controller.isNumber.value = true;
                                 } else if (RegExp(r'^[a-zA-Z]+$')
                                     .hasMatch(value)) {
@@ -195,8 +195,8 @@ class _LoginPageState extends State<LoginPage> {
                                       decoration: const InputDecoration(
                                         hintText: 'Enter Membership Code',
                                         border: InputBorder.none,
-                                        contentPadding: EdgeInsets.symmetric(
-                                            vertical: 8),
+                                        contentPadding:
+                                            EdgeInsets.symmetric(vertical: 8),
                                       ),
                                       validator: (value) {
                                         if (value!.isEmpty) {
@@ -241,7 +241,7 @@ class _LoginPageState extends State<LoginPage> {
                                         hintText: 'Mobile Number',
                                         border: InputBorder.none,
                                         contentPadding:
-                                        EdgeInsets.symmetric(vertical: 8),
+                                            EdgeInsets.symmetric(vertical: 8),
                                       ),
                                       validator: (value) {
                                         if (value!.isEmpty) {
@@ -268,7 +268,7 @@ class _LoginPageState extends State<LoginPage> {
                         child: Padding(
                           padding: const EdgeInsets.only(left: 6.0, right: 6),
                           child: Obx(
-                                () => ElevatedButton(
+                            () => ElevatedButton(
                               onPressed: () async {
                                 if (_formKeyLogin!.currentState!.validate()) {
                                   if (controller.lmCodeVisible.value == false) {
@@ -294,22 +294,22 @@ class _LoginPageState extends State<LoginPage> {
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
-                                ColorHelperClass.getColorFromHex(
-                                    ColorResources.red_color),
+                                    ColorHelperClass.getColorFromHex(
+                                        ColorResources.red_color),
                                 padding:
-                                const EdgeInsets.symmetric(vertical: 14),
+                                    const EdgeInsets.symmetric(vertical: 14),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                               child: controller.loadinng.value
                                   ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
+                                      color: Colors.white,
+                                    )
                                   : Text(
-                                AppConstants.continues,
-                                style: TextStyleClass.white16style,
-                              ),
+                                      AppConstants.continues,
+                                      style: TextStyleClass.white16style,
+                                    ),
                             ),
                           ),
                         ),
@@ -318,22 +318,22 @@ class _LoginPageState extends State<LoginPage> {
 
                       // "Forgot Mobile or Membership?" Button
                       Obx(() => Visibility(
-                        visible: controller.showForgotButton.value,
-                        child: TextButton(
-                          onPressed: () {
-                            _showForgotBottomSheet(context);
-                          },
-                          child: const Text(
-                            "Forgot Mobile or Membership?",
-                            style: TextStyle(
-                              color: Colors.black87,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              decoration: TextDecoration.underline,
+                            visible: controller.showForgotButton.value,
+                            child: TextButton(
+                              onPressed: () {
+                                _showForgotBottomSheet(context);
+                              },
+                              child: const Text(
+                                "Forgot Mobile or Membership?",
+                                style: TextStyle(
+                                  color: Colors.black87,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      )),
+                          )),
                       const SizedBox(height: 30),
 
                       // OutSide Mumbai Login
@@ -382,13 +382,13 @@ class _LoginPageState extends State<LoginPage> {
               right: 20,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, RouteNames.registration_screen);
+                  _showPincodeDialog(context);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: ColorHelperClass.getColorFromHex(
                       ColorResources.red_color),
                   padding:
-                  const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -412,6 +412,209 @@ class _LoginPageState extends State<LoginPage> {
     //   print('firebase device token >>>>> $token');
     //   // sharedPreference.saveDeviceToken(token);
     // }
+  }
+
+  void _showPincodeDialog(BuildContext context) {
+    final TextEditingController pincodeController = TextEditingController();
+    final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+
+          // 🔹 Title Section
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Enter Your Pincode",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+
+          // 🔹 Content Section
+          content: Form(
+            key: formKey,
+            child: TextFormField(
+              controller: pincodeController,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              decoration: const InputDecoration(
+                hintText: "Enter pincode",
+                counterText: "",
+                border: OutlineInputBorder(),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black38),
+                ),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return "Enter pincode";
+                } else if (value.length != 6) {
+                  return "Enter valid 6 digit pincode";
+                }
+                return null;
+              },
+            ),
+          ),
+
+          // 🔹 Action Buttons
+          actions: [
+            OutlinedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (formKey.currentState!.validate()) {
+                  String pincode = pincodeController.text.trim();
+
+                  final response = await controller.verifyPincode(pincode);
+
+                  if (response != null && response.status == true) {
+                    Navigator.pop(context);
+
+                    Navigator.pushNamed(
+                      context,
+                      RouteNames.registration_screen,
+                      arguments: pincode,
+                    );
+                  } else {
+                    Navigator.pop(context); // close pincode dialog first
+                    _showOutsideAreaDialog(context);
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Continue"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showOutsideAreaDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Pincode is from outside Pragati Mandal Area",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(thickness: 1, color: Colors.grey),
+            ],
+          ),
+
+          content: const Text(
+            "Please select one option:",
+            style: TextStyle(
+              fontSize: 15,
+              color: Colors.black87,
+            ),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () {
+                Navigator.pop(context);
+
+                // Navigate as Sarawani Member
+                Navigator.pushNamed(
+                  context,
+                  RouteNames.registration_screen,
+                  arguments: {
+                    "type": "sarawani_member",
+                  },
+                );
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Sarawani Member"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+
+                // Navigate as Guest Member
+                Navigator.pushNamed(
+                  context,
+                  RouteNames.registration_screen,
+                  arguments: {
+                    "type": "guest_member",
+                  },
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Guest Member"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showForgotBottomSheet(BuildContext context) {
@@ -457,7 +660,6 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -483,8 +685,8 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: () async {
                           if (_formKey.currentState!.validate()) {
                             final fullName =
-                            "${firstNameController.text.trim()} ${middleNameController.text.trim()} ${surnameController.text.trim()}"
-                                .trim();
+                                "${firstNameController.text.trim()} ${middleNameController.text.trim()} ${surnameController.text.trim()}"
+                                    .trim();
 
                             try {
                               // Get.snackbar(
@@ -496,7 +698,7 @@ class _LoginPageState extends State<LoginPage> {
                               // );
 
                               final response =
-                              await forgotRepo.sendForgotMemberLoginRequest(
+                                  await forgotRepo.sendForgotMemberLoginRequest(
                                 fullName: fullName,
                                 mobile: mobileController.text.trim(),
                                 email: emailController.text.trim(),
@@ -551,9 +753,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 30),
-
                   _buildTextField("First Name", firstNameController,
                       validatorMsg: "Enter first name"),
                   const SizedBox(height: 12),
@@ -577,7 +777,6 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 12),
                   _buildTextField("Message", messageController, maxLines: 3),
-
                   const SizedBox(height: 30),
                 ],
               ),
@@ -589,13 +788,13 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildTextField(
-      String label,
-      TextEditingController controller, {
-        TextInputType keyboardType = TextInputType.text,
-        int maxLines = 1,
-        String? validatorMsg,
-        bool readOnly = false,
-      }) {
+    String label,
+    TextEditingController controller, {
+    TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
+    String? validatorMsg,
+    bool readOnly = false,
+  }) {
     return Container(
       margin: const EdgeInsets.only(left: 5, right: 5, bottom: 10),
       child: TextFormField(
@@ -634,5 +833,4 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-
 }

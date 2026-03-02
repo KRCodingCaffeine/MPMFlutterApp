@@ -6,6 +6,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
+import 'package:mpm/model/CheckPinCode/CheckPinCodeModel.dart';
 import 'package:mpm/model/CheckUser/CheckModelClass.dart';
 import 'package:mpm/model/CheckUser/CheckUserData.dart';
 import 'package:mpm/model/CheckUser/CheckUserData2.dart';
@@ -43,6 +44,7 @@ class LoginController {
   BuildContext? context = Get.context;
   Rx<SessionManager?> sessionData = Rx<SessionManager?>(null);
   Rx<CheckUserData?> userData = Rx<CheckUserData?>(null);
+  RxBool isCheckingPincode = false.obs;
 
   void checkUser(String mobile, BuildContext context) async {
     loadinng.value = true;
@@ -575,5 +577,24 @@ class LoginController {
         );
       },
     );
+  }
+
+  Future<CheckPinCodeModel?> verifyPincode(String pincode) async {
+    try {
+      isCheckingPincode.value = true;
+
+      Map<String, dynamic> data = {
+        "pincode": pincode,
+      };
+
+      final response = await api.checkPinCode(data);
+      isCheckingPincode.value = false;
+
+      return response;
+    } catch (e) {
+      isCheckingPincode.value = false;
+      Get.snackbar("Error", "Something went wrong");
+      return null;
+    }
   }
 }
