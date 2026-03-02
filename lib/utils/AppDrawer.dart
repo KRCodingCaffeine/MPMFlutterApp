@@ -110,12 +110,11 @@ class AppDrawer extends StatelessWidget {
             leading: Icon(Icons.home),
             title: Text('Home'),
             onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                RouteNames.dashboard,
-                (route) => false,
-              );
+              Navigator.pop(context); // Close drawer
+              // Pop back to existing Dashboard so banner/state are preserved (don't replace stack)
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+              }
             },
           ),
           ListTile(
