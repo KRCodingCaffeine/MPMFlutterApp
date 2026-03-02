@@ -800,6 +800,7 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
                               buildImageUploadField(
                                 context: context,
                                 imageFile: applicantAadharFile,
+                                isMandatory: true,
                                 existingDocumentPath: widget.applicationData
                                     .applicantAadharCardDocument,
                                 isExistingRemoved: isExistingAadhaarRemoved,
@@ -840,6 +841,7 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
                               buildImageUploadField(
                                 context: context,
                                 imageFile: fatherPanFile,
+                                isMandatory: true,
                                 existingDocumentPath: widget.applicationData
                                     .applicantFatherPanCardDocument,
                                 isExistingRemoved: isExistingPanRemoved,
@@ -875,6 +877,7 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
                               buildImageUploadField(
                                 context: context,
                                 imageFile: addressProofFile,
+                                isMandatory: false,
                                 existingDocumentPath: widget.applicationData
                                     .applicantRationCardDocument,
                                 isExistingRemoved: isExistingRationRemoved,
@@ -1117,6 +1120,7 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
     required BuildContext context,
     required File? imageFile,
     required String buttonText,
+    bool isMandatory = false,
     required String? existingDocumentPath,
     required bool isExistingRemoved,
     required VoidCallback onPick,
@@ -1221,7 +1225,11 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
               isUploaded ? Icons.check_circle : Icons.upload,
             ),
             label: Text(
-              isUploaded ? "$buttonText Uploaded" : "$buttonText *",
+              isUploaded
+                  ? "$buttonText Uploaded"
+                  : isMandatory
+                  ? "$buttonText *"
+                  : buttonText,
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: isUploaded
@@ -1240,43 +1248,59 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
   }
 
   void _showImagePicker(
-    BuildContext context,
-    Function(File) onImagePicked,
-  ) {
+      BuildContext context,
+      Function(File) onImagePicked,
+      ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(16),
+        ),
       ),
       builder: (_) {
-        return Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
-              title: const Text("Take a Picture"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                    await _picker.pickImage(source: ImageSource.camera);
-                if (picked != null) {
-                  onImagePicked(File(picked.path));
-                }
-              },
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewPadding.bottom + 20,
             ),
-            ListTile(
-              leading: const Icon(Icons.image, color: Colors.redAccent),
-              title: const Text("Choose from Gallery"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                    await _picker.pickImage(source: ImageSource.gallery);
-                if (picked != null) {
-                  onImagePicked(File(picked.path));
-                }
-              },
+            child: Wrap(
+              children: [
+                const SizedBox(height: 10),
+
+                ListTile(
+                  leading: const Icon(Icons.camera_alt,
+                      color: Colors.redAccent),
+                  title: const Text("Take a Picture"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked = await _picker.pickImage(
+                        source: ImageSource.camera);
+                    if (picked != null) {
+                      onImagePicked(File(picked.path));
+                    }
+                  },
+                ),
+
+                ListTile(
+                  leading: const Icon(Icons.image,
+                      color: Colors.redAccent),
+                  title: const Text("Choose from Gallery"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked = await _picker.pickImage(
+                        source: ImageSource.gallery);
+                    if (picked != null) {
+                      onImagePicked(File(picked.path));
+                    }
+                  },
+                ),
+
+                const SizedBox(height: 30),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
@@ -1300,6 +1324,7 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
     showDialog(
       context: context,
       builder: (_) => Dialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -1343,10 +1368,10 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
               onPressed: () => Navigator.pop(context),
               style: TextButton.styleFrom(
                 backgroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),

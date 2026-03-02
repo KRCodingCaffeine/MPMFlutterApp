@@ -38,10 +38,10 @@ class _ReferenceYourselfViewState extends State<ReferenceYourselfView> {
 
   final AddReferredMemberRepository _addRepo = AddReferredMemberRepository();
   final UpdateReferredMemberRepository _updateRepo =
-  UpdateReferredMemberRepository();
+      UpdateReferredMemberRepository();
   final AadhaarUploadRepository _aadhaarRepo = AadhaarUploadRepository();
   final ShikshaApplicationRepository _shikshaRepo =
-  ShikshaApplicationRepository();
+      ShikshaApplicationRepository();
 
   bool isLoading = true;
   bool isSubmitting = false;
@@ -106,7 +106,7 @@ class _ReferenceYourselfViewState extends State<ReferenceYourselfView> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Builder(
           builder: (context) {
             double fontSize = MediaQuery.of(context).size.width * 0.045;
@@ -124,132 +124,132 @@ class _ReferenceYourselfViewState extends State<ReferenceYourselfView> {
       ),
       body: charityList.isEmpty
           ? const Center(
-        child: Text(
-          "No reference has been added yet",
-          style: TextStyle(color: Colors.grey),
-        ),
-      )
-          : ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: charityList.length,
-          itemBuilder: (context, index) {
-            final item = charityList[index];
-
-            return Card(
-              color: Colors.white,
-              elevation: 4,
-              margin: const EdgeInsets.only(bottom: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+              child: Text(
+                "No reference has been added yet",
+                style: TextStyle(color: Colors.grey),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    /// 🔥 HEADER (Reference Name)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: charityList.length,
+              itemBuilder: (context, index) {
+                final item = charityList[index];
+
+                return Card(
+                  color: Colors.white,
+                  elevation: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Text(
-                            item["name"] ?? "",
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                        /// 🔥 HEADER (Reference Name)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                item["name"] ?? "",
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            _showReferenceSheet(
-                              context,
-                              existingData: item,
-                            );
-                          },
-                          icon: const Icon(
-                            Icons.edit,
-                            size: 16,
-                          ),
-                          label: const Text(
-                            "Edit",
-                            style: TextStyle(fontSize: 13),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                            ColorHelperClass.getColorFromHex(
-                                ColorResources.red_color),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const Divider(height: 20),
-
-                    _infoRow("Member Code", item["memberCode"] ?? ""),
-                    const SizedBox(height: 8),
-
-                    _infoRow("Mobile", item["mobile"] ?? ""),
-                    const SizedBox(height: 8),
-
-                    _infoRow("Email", item["email"] ?? ""),
-                    const SizedBox(height: 8),
-
-                    _infoRow("Address", item["address"] ?? ""),
-                    const SizedBox(height: 12),
-
-                    if (item["aadhaarDocument"] != null &&
-                        item["aadhaarDocument"].toString().isNotEmpty)
-                      Builder(
-                        builder: (context) {
-                          final String imagePath =
-                          _getFullImageUrl(item["aadhaarDocument"]);
-
-                          return SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
+                            ElevatedButton.icon(
                               onPressed: () {
-                                _showAadhaarPreviewDialog(
-                                    context, imagePath);
+                                _showReferenceSheet(
+                                  context,
+                                  existingData: item,
+                                );
                               },
-                              icon: const Icon(Icons.visibility),
-                              label: const Text("View Aadhaar"),
+                              icon: const Icon(
+                                Icons.edit,
+                                size: 16,
+                              ),
+                              label: const Text(
+                                "Edit",
+                                style: TextStyle(fontSize: 13),
+                              ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
-                                ColorHelperClass.getColorFromHex(
-                                    ColorResources.red_color),
+                                    ColorHelperClass.getColorFromHex(
+                                        ColorResources.red_color),
                                 foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 12),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 12),
                               ),
                             ),
-                          );
-                        },
-                      ),
-                  ],
-                ),
-              ),
-            );
-          }),
+                          ],
+                        ),
+
+                        const Divider(height: 20),
+
+                        _infoRow("Member Code", item["memberCode"] ?? ""),
+                        const SizedBox(height: 8),
+
+                        _infoRow("Mobile", item["mobile"] ?? ""),
+                        const SizedBox(height: 8),
+
+                        _infoRow("Email", item["email"] ?? ""),
+                        const SizedBox(height: 8),
+
+                        _infoRow("Address", item["address"] ?? ""),
+                        const SizedBox(height: 12),
+
+                        if (item["aadhaarDocument"] != null &&
+                            item["aadhaarDocument"].toString().isNotEmpty)
+                          Builder(
+                            builder: (context) {
+                              final String imagePath =
+                                  _getFullImageUrl(item["aadhaarDocument"]);
+
+                              return SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    _showAadhaarPreviewDialog(
+                                        context, imagePath);
+                                  },
+                                  icon: const Icon(Icons.visibility),
+                                  label: const Text("View Aadhaar"),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        ColorHelperClass.getColorFromHex(
+                                            ColorResources.red_color),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
       floatingActionButton: FloatingActionButton(
         backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.red_color),
+            ColorHelperClass.getColorFromHex(ColorResources.red_color),
         onPressed: () {
           _showReferenceSheet(context);
         },
         child: const Icon(Icons.add, color: Colors.white),
       ),
       bottomNavigationBar:
-      charityList.isNotEmpty ? _buildBottomNextBar() : null,
+          charityList.isNotEmpty ? _buildBottomNextBar() : null,
     );
   }
 
@@ -264,12 +264,13 @@ class _ReferenceYourselfViewState extends State<ReferenceYourselfView> {
   }
 
   void _showAadhaarPreviewDialog(
-      BuildContext context,
-      String imageUrl,
-      ) {
+    BuildContext context,
+    String imageUrl,
+  ) {
     showDialog(
       context: context,
       builder: (_) => Dialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -292,22 +293,22 @@ class _ReferenceYourselfViewState extends State<ReferenceYourselfView> {
                 width: double.infinity,
                 child: imageUrl.toLowerCase().endsWith(".pdf")
                     ? const Center(
-                  child: Icon(
-                    Icons.picture_as_pdf,
-                    size: 80,
-                    color: Colors.red,
-                  ),
-                )
+                        child: Icon(
+                          Icons.picture_as_pdf,
+                          size: 80,
+                          color: Colors.red,
+                        ),
+                      )
                     : Image.network(
-                  imageUrl,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Text(
-                      "Unable to load document",
-                    ),
-                  ),
-                ),
+                        imageUrl,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const Padding(
+                          padding: EdgeInsets.all(20),
+                          child: Text(
+                            "Unable to load document",
+                          ),
+                        ),
+                      ),
               ),
             ),
             const SizedBox(height: 16),
@@ -315,10 +316,10 @@ class _ReferenceYourselfViewState extends State<ReferenceYourselfView> {
               onPressed: () => Navigator.pop(context),
               style: TextButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -519,8 +520,8 @@ class _ReferenceYourselfViewState extends State<ReferenceYourselfView> {
                               onPressed: () => Navigator.pop(context),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor:
-                                ColorHelperClass.getColorFromHex(
-                                    ColorResources.red_color),
+                                    ColorHelperClass.getColorFromHex(
+                                        ColorResources.red_color),
                                 side: BorderSide(
                                   color: ColorHelperClass.getColorFromHex(
                                       ColorResources.red_color),
@@ -537,36 +538,36 @@ class _ReferenceYourselfViewState extends State<ReferenceYourselfView> {
                               onPressed: (!isFormValid() || isSubmitting)
                                   ? null
                                   : () async {
-                                if (!_formKey.currentState!.validate()) {
-                                  return;
-                                }
+                                      if (!_formKey.currentState!.validate()) {
+                                        return;
+                                      }
 
-                                if (isEditMode) {
-                                  await _updateReference(
-                                    referenceId:
-                                    existingData!["referenceId"],
-                                    name: nameCtrl.text.trim(),
-                                    address: addressCtrl.text.trim(),
-                                    mobile: mobileCtrl.text.trim(),
-                                    email: emailCtrl.text.trim(),
-                                    memberCode:
-                                    memberCodeCtrl.text.trim(),
-                                  );
-                                } else {
-                                  await _submitReference(
-                                    name: nameCtrl.text.trim(),
-                                    address: addressCtrl.text.trim(),
-                                    mobile: mobileCtrl.text.trim(),
-                                    email: emailCtrl.text.trim(),
-                                    memberCode:
-                                    memberCodeCtrl.text.trim(),
-                                  );
-                                }
-                              },
+                                      if (isEditMode) {
+                                        await _updateReference(
+                                          referenceId:
+                                              existingData!["referenceId"],
+                                          name: nameCtrl.text.trim(),
+                                          address: addressCtrl.text.trim(),
+                                          mobile: mobileCtrl.text.trim(),
+                                          email: emailCtrl.text.trim(),
+                                          memberCode:
+                                              memberCodeCtrl.text.trim(),
+                                        );
+                                      } else {
+                                        await _submitReference(
+                                          name: nameCtrl.text.trim(),
+                                          address: addressCtrl.text.trim(),
+                                          mobile: mobileCtrl.text.trim(),
+                                          email: emailCtrl.text.trim(),
+                                          memberCode:
+                                              memberCodeCtrl.text.trim(),
+                                        );
+                                      }
+                                    },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
-                                ColorHelperClass.getColorFromHex(
-                                    ColorResources.red_color),
+                                    ColorHelperClass.getColorFromHex(
+                                        ColorResources.red_color),
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 20, vertical: 12),
@@ -576,18 +577,18 @@ class _ReferenceYourselfViewState extends State<ReferenceYourselfView> {
                               ),
                               child: isSubmitting
                                   ? const SizedBox(
-                                height: 18,
-                                width: 18,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
+                                      height: 18,
+                                      width: 18,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
                                   : Text(
-                                isEditMode
-                                    ? "Update Reference"
-                                    : "Add Reference",
-                              ),
+                                      isEditMode
+                                          ? "Update Reference"
+                                          : "Add Reference",
+                                    ),
                             ),
                           ],
                         ),
@@ -755,10 +756,10 @@ class _ReferenceYourselfViewState extends State<ReferenceYourselfView> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -893,8 +894,8 @@ class _ReferenceYourselfViewState extends State<ReferenceYourselfView> {
               backgroundColor: isUploaded
                   ? Colors.green
                   : ColorHelperClass.getColorFromHex(
-                ColorResources.red_color,
-              ),
+                      ColorResources.red_color,
+                    ),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -908,9 +909,9 @@ class _ReferenceYourselfViewState extends State<ReferenceYourselfView> {
   }
 
   void _showImagePicker(
-      BuildContext context,
-      Function(File) onImagePicked,
-      ) {
+    BuildContext context,
+    Function(File) onImagePicked,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -918,33 +919,42 @@ class _ReferenceYourselfViewState extends State<ReferenceYourselfView> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
       ),
       builder: (_) {
-        return Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
-              title: const Text("Take a Picture"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                await _picker.pickImage(source: ImageSource.camera);
-                if (picked != null) {
-                  onImagePicked(File(picked.path));
-                }
-              },
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewPadding.bottom + 20,
             ),
-            ListTile(
-              leading: const Icon(Icons.image, color: Colors.redAccent),
-              title: const Text("Choose from Gallery"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                await _picker.pickImage(source: ImageSource.gallery);
-                if (picked != null) {
-                  onImagePicked(File(picked.path));
-                }
-              },
+            child: Wrap(
+              children: [
+                ListTile(
+                  leading:
+                      const Icon(Icons.camera_alt, color: Colors.redAccent),
+                  title: const Text("Take a Picture"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.camera);
+                    if (picked != null) {
+                      onImagePicked(File(picked.path));
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.image, color: Colors.redAccent),
+                  title: const Text("Choose from Gallery"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.gallery);
+                    if (picked != null) {
+                      onImagePicked(File(picked.path));
+                    }
+                  },
+                ),
+                const SizedBox(height: 30),
+              ],
             ),
-          ],
+          ),
         );
       },
     );

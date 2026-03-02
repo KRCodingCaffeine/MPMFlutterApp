@@ -33,7 +33,8 @@ class EditCurrentYearEducationView extends StatefulWidget {
       _EditCurrentYearEducationViewState();
 }
 
-class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationView> {
+class _EditCurrentYearEducationViewState
+    extends State<EditCurrentYearEducationView> {
   final ImagePicker _picker = ImagePicker();
   Map<String, dynamic>? currentYearData;
   bool isLoading = false;
@@ -66,8 +67,7 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
       ShikshaApplicationRepository();
 
   bool get _isLoanLocked {
-    final loanList =
-        widget.applicationData.requestedLoanEducationAppliedBy;
+    final loanList = widget.applicationData.requestedLoanEducationAppliedBy;
 
     if (loanList == null || loanList.isEmpty) return false;
 
@@ -178,9 +178,9 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
               ),
             )
           : _buildCurrentYearEducationCard(),
-        floatingActionButton: (_isLoanLocked || currentYearData != null)
-            ? null
-            : FloatingActionButton(
+      floatingActionButton: (_isLoanLocked || currentYearData != null)
+          ? null
+          : FloatingActionButton(
               backgroundColor:
                   ColorHelperClass.getColorFromHex(ColorResources.red_color),
               onPressed: () {
@@ -220,70 +220,70 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
                   ),
                   if (!_isLoanLocked)
                     PopupMenuButton<String>(
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    onSelected: (value) {
-                      if (value == 'edit') {
-                        _showCurrentYearEducationSheet(
-                          context,
-                          existingData: currentYearData,
-                        );
-                      } else if (value == 'delete') {
-                        _showDeleteDialog(
-                          currentYearData!["educationId"],
-                        );
-                      }
-                    },
-                    itemBuilder: (context) => const [
-                      PopupMenuItem(
-                        value: 'edit',
-                        child: Text(
-                          'Edit Education Detail',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      onSelected: (value) {
+                        if (value == 'edit') {
+                          _showCurrentYearEducationSheet(
+                            context,
+                            existingData: currentYearData,
+                          );
+                        } else if (value == 'delete') {
+                          _showDeleteDialog(
+                            currentYearData!["educationId"],
+                          );
+                        }
+                      },
+                      itemBuilder: (context) => const [
+                        PopupMenuItem(
+                          value: 'edit',
+                          child: Text(
+                            'Edit Education Detail',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
-                      ),
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Text(
-                          'Delete Education Detail',
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: Text(
+                            'Delete Education Detail',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ),
+                      ],
+                      child: ElevatedButton(
+                        onPressed: null, // Important
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFFDC3545),
+                          elevation: 2,
+                          shadowColor: Colors.black26,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                        ),
+                        child: const Text(
+                          "Edit / Delete",
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 12,
                             fontWeight: FontWeight.w500,
                             color: Colors.red,
                           ),
                         ),
                       ),
-                    ],
-                    child: ElevatedButton(
-                      onPressed: null, // Important
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFFDC3545),
-                        elevation: 2,
-                        shadowColor: Colors.black26,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                      ),
-                      child: const Text(
-                        "Edit / Delete",
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.red,
-                        ),
-                      ),
                     ),
-                  ),
                 ],
               ),
 
@@ -582,7 +582,7 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
     try {
       final response = await _updateRepo.updateRequestedLoanEducation({
         "shiksha_applicant_requested_loan_education_id": educationId,
-        "standard" : standard,
+        "standard": standard,
         "school_college_name": school,
         "course_duration": courseDuration,
         "admission_fees": admissionFees,
@@ -741,7 +741,7 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
                                         standard: yearCtrl.text.trim(),
                                         school: schoolCtrl.text.trim(),
                                         courseDuration:
-                                        courseDurationCtrl.text.trim(),
+                                            courseDurationCtrl.text.trim(),
                                         admissionFees: admissionFeesCtrl.text,
                                         yearlyFees: yearlyFeesCtrl.text,
                                         examFees: examFeesCtrl.text,
@@ -888,13 +888,15 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
                             _buildAdmissionUploadField(
                               context,
                               setModalState,
-                              existingDocumentPath: existingData?["admissionDoc"],
+                              existingDocumentPath:
+                                  existingData?["admissionDoc"],
                             ),
                             const SizedBox(height: 20),
                             _buildBonafideUploadField(
                               context,
                               setModalState,
-                              existingDocumentPath: existingData?["bonafideDoc"],
+                              existingDocumentPath:
+                                  existingData?["bonafideDoc"],
                             ),
                             const SizedBox(height: 40),
                           ],
@@ -973,13 +975,10 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
   }
 
   Widget _buildAdmissionUploadField(
-      BuildContext context,
-      StateSetter setModalState,
-      {String? existingDocumentPath}
-      ) {
+      BuildContext context, StateSetter setModalState,
+      {String? existingDocumentPath}) {
     final bool hasExisting =
-        !isExistingAdmissionRemoved &&
-            (existingDocumentPath ?? "").isNotEmpty;
+        !isExistingAdmissionRemoved && (existingDocumentPath ?? "").isNotEmpty;
 
     final bool isUploaded = _admissionDocument != null || hasExisting;
 
@@ -988,7 +987,6 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         /// 🔥 NEW FILE PREVIEW
         if (_admissionDocument != null)
           Stack(
@@ -1001,9 +999,9 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
                   borderRadius: BorderRadius.circular(10),
                   child: _admissionDocument!.path.endsWith(".pdf")
                       ? const Center(
-                    child: Icon(Icons.picture_as_pdf,
-                        size: 80, color: Colors.red),
-                  )
+                          child: Icon(Icons.picture_as_pdf,
+                              size: 80, color: Colors.red),
+                        )
                       : Image.file(_admissionDocument!, fit: BoxFit.cover),
                 ),
               ),
@@ -1019,8 +1017,7 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
                   child: const CircleAvatar(
                     radius: 14,
                     backgroundColor: Colors.red,
-                    child: Icon(Icons.close,
-                        size: 16, color: Colors.white),
+                    child: Icon(Icons.close, size: 16, color: Colors.white),
                   ),
                 ),
               ),
@@ -1039,13 +1036,13 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
                   borderRadius: BorderRadius.circular(10),
                   child: isPdf(existingDocumentPath!)
                       ? const Center(
-                    child: Icon(Icons.picture_as_pdf,
-                        size: 80, color: Colors.red),
-                  )
+                          child: Icon(Icons.picture_as_pdf,
+                              size: 80, color: Colors.red),
+                        )
                       : Image.network(
-                    _getFullImageUrl(existingDocumentPath),
-                    fit: BoxFit.cover,
-                  ),
+                          _getFullImageUrl(existingDocumentPath),
+                          fit: BoxFit.cover,
+                        ),
                 ),
               ),
               Positioned(
@@ -1060,8 +1057,7 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
                   child: const CircleAvatar(
                     radius: 14,
                     backgroundColor: Colors.red,
-                    child: Icon(Icons.close,
-                        size: 16, color: Colors.white),
+                    child: Icon(Icons.close, size: 16, color: Colors.white),
                   ),
                 ),
               ),
@@ -1094,8 +1090,7 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            onPressed: () =>
-                _showAdmissionImagePicker(context, setModalState),
+            onPressed: () => _showAdmissionImagePicker(context, setModalState),
             icon: Icon(
               isUploaded ? Icons.check_circle : Icons.upload_file,
             ),
@@ -1107,8 +1102,7 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
             style: ElevatedButton.styleFrom(
               backgroundColor: isUploaded
                   ? Colors.green
-                  : ColorHelperClass.getColorFromHex(
-                  ColorResources.red_color),
+                  : ColorHelperClass.getColorFromHex(ColorResources.red_color),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
@@ -1119,13 +1113,10 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
   }
 
   Widget _buildBonafideUploadField(
-      BuildContext context,
-      StateSetter setModalState,
-      {String? existingDocumentPath}
-      ) {
+      BuildContext context, StateSetter setModalState,
+      {String? existingDocumentPath}) {
     final bool hasExisting =
-        !isExistingBonafideRemoved &&
-            (existingDocumentPath ?? "").isNotEmpty;
+        !isExistingBonafideRemoved && (existingDocumentPath ?? "").isNotEmpty;
 
     final bool isUploaded = _bonafideDocument != null || hasExisting;
 
@@ -1134,7 +1125,6 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         if (_bonafideDocument != null)
           Stack(
             children: [
@@ -1146,9 +1136,9 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
                   borderRadius: BorderRadius.circular(10),
                   child: _bonafideDocument!.path.endsWith(".pdf")
                       ? const Center(
-                    child: Icon(Icons.picture_as_pdf,
-                        size: 80, color: Colors.red),
-                  )
+                          child: Icon(Icons.picture_as_pdf,
+                              size: 80, color: Colors.red),
+                        )
                       : Image.file(_bonafideDocument!, fit: BoxFit.cover),
                 ),
               ),
@@ -1164,14 +1154,12 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
                   child: const CircleAvatar(
                     radius: 14,
                     backgroundColor: Colors.red,
-                    child: Icon(Icons.close,
-                        size: 16, color: Colors.white),
+                    child: Icon(Icons.close, size: 16, color: Colors.white),
                   ),
                 ),
               ),
             ],
           ),
-
         if (_bonafideDocument == null && hasExisting)
           Stack(
             children: [
@@ -1183,13 +1171,13 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
                   borderRadius: BorderRadius.circular(10),
                   child: isPdf(existingDocumentPath!)
                       ? const Center(
-                    child: Icon(Icons.picture_as_pdf,
-                        size: 80, color: Colors.red),
-                  )
+                          child: Icon(Icons.picture_as_pdf,
+                              size: 80, color: Colors.red),
+                        )
                       : Image.network(
-                    _getFullImageUrl(existingDocumentPath),
-                    fit: BoxFit.cover,
-                  ),
+                          _getFullImageUrl(existingDocumentPath),
+                          fit: BoxFit.cover,
+                        ),
                 ),
               ),
               Positioned(
@@ -1204,14 +1192,12 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
                   child: const CircleAvatar(
                     radius: 14,
                     backgroundColor: Colors.red,
-                    child: Icon(Icons.close,
-                        size: 16, color: Colors.white),
+                    child: Icon(Icons.close, size: 16, color: Colors.white),
                   ),
                 ),
               ),
             ],
           ),
-
         if (_bonafideDocument == null &&
             hasExisting &&
             isPdf(existingDocumentPath!))
@@ -1233,12 +1219,10 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
               ),
             ),
           ),
-
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            onPressed: () =>
-                _showBonafideImagePicker(context, setModalState),
+            onPressed: () => _showBonafideImagePicker(context, setModalState),
             icon: Icon(
               isUploaded ? Icons.check_circle : Icons.upload_file,
             ),
@@ -1250,8 +1234,7 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
             style: ElevatedButton.styleFrom(
               backgroundColor: isUploaded
                   ? Colors.green
-                  : ColorHelperClass.getColorFromHex(
-                  ColorResources.red_color),
+                  : ColorHelperClass.getColorFromHex(ColorResources.red_color),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
@@ -1266,39 +1249,52 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
     StateSetter setModalState,
   ) {
     showModalBottomSheet(
+      backgroundColor: Colors.white,
       context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (_) {
-        return Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
-              title: const Text("Take a Picture"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                    await _picker.pickImage(source: ImageSource.camera);
-                if (picked != null) {
-                  setModalState(() {
-                    _admissionDocument = File(picked.path);
-                  });
-                }
-              },
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewPadding.bottom + 20,
             ),
-            ListTile(
-              leading: const Icon(Icons.image, color: Colors.redAccent),
-              title: const Text("Choose from Gallery"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                    await _picker.pickImage(source: ImageSource.gallery);
-                if (picked != null) {
-                  setModalState(() {
-                    _admissionDocument = File(picked.path);
-                  });
-                }
-              },
+            child: Wrap(
+              children: [
+                ListTile(
+                  leading:
+                      const Icon(Icons.camera_alt, color: Colors.redAccent),
+                  title: const Text("Take a Picture"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.camera);
+                    if (picked != null) {
+                      setModalState(() {
+                        _admissionDocument = File(picked.path);
+                      });
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.image, color: Colors.redAccent),
+                  title: const Text("Choose from Gallery"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.gallery);
+                    if (picked != null) {
+                      setModalState(() {
+                        _admissionDocument = File(picked.path);
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 30),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
@@ -1309,39 +1305,52 @@ class _EditCurrentYearEducationViewState extends State<EditCurrentYearEducationV
     StateSetter setModalState,
   ) {
     showModalBottomSheet(
+      backgroundColor: Colors.white,
       context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (_) {
-        return Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
-              title: const Text("Take a Picture"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                    await _picker.pickImage(source: ImageSource.camera);
-                if (picked != null) {
-                  setModalState(() {
-                    _bonafideDocument = File(picked.path);
-                  });
-                }
-              },
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewPadding.bottom + 20,
             ),
-            ListTile(
-              leading: const Icon(Icons.image, color: Colors.redAccent),
-              title: const Text("Choose from Gallery"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                    await _picker.pickImage(source: ImageSource.gallery);
-                if (picked != null) {
-                  setModalState(() {
-                    _bonafideDocument = File(picked.path);
-                  });
-                }
-              },
+            child: Wrap(
+              children: [
+                ListTile(
+                  leading:
+                      const Icon(Icons.camera_alt, color: Colors.redAccent),
+                  title: const Text("Take a Picture"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.camera);
+                    if (picked != null) {
+                      setModalState(() {
+                        _bonafideDocument = File(picked.path);
+                      });
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.image, color: Colors.redAccent),
+                  title: const Text("Choose from Gallery"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.gallery);
+                    if (picked != null) {
+                      setModalState(() {
+                        _bonafideDocument = File(picked.path);
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 30),
+              ],
             ),
-          ],
+          ),
         );
       },
     );

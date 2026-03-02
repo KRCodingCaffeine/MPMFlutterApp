@@ -382,7 +382,6 @@ class _EducationDetailViewState extends State<EducationDetailView> {
           titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
           contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
           actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: const [
@@ -397,7 +396,6 @@ class _EducationDetailViewState extends State<EducationDetailView> {
               Divider(thickness: 1, color: Colors.grey),
             ],
           ),
-
           content: const Text(
             "Are you sure you want to delete this education detail?",
             style: TextStyle(
@@ -405,13 +403,12 @@ class _EducationDetailViewState extends State<EducationDetailView> {
               color: Colors.black87,
             ),
           ),
-
           actions: [
             OutlinedButton(
               onPressed: () => Navigator.pop(dialogContext),
               style: OutlinedButton.styleFrom(
-                foregroundColor: ColorHelperClass.getColorFromHex(
-                    ColorResources.red_color),
+                foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: BorderSide(
                   color: ColorHelperClass.getColorFromHex(
                       ColorResources.red_color),
@@ -422,12 +419,10 @@ class _EducationDetailViewState extends State<EducationDetailView> {
               ),
               child: const Text("Cancel"),
             ),
-
             ElevatedButton(
               onPressed: () async {
                 try {
-                  final response =
-                  await _deleteRepo.deleteEducation({
+                  final response = await _deleteRepo.deleteEducation({
                     "shiksha_applicant_education_id": educationId,
                   });
 
@@ -445,8 +440,7 @@ class _EducationDetailViewState extends State<EducationDetailView> {
 
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content:
-                      Text("Education detail deleted successfully"),
+                      content: Text("Education detail deleted successfully"),
                       backgroundColor: Colors.green,
                     ),
                   );
@@ -462,8 +456,8 @@ class _EducationDetailViewState extends State<EducationDetailView> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: ColorHelperClass.getColorFromHex(
-                    ColorResources.red_color),
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -546,13 +540,11 @@ class _EducationDetailViewState extends State<EducationDetailView> {
   }) async {
     if (isSubmitting) return;
 
-    final bool hasExisting =
-        _existingMarksheetPath != null &&
-            _existingMarksheetPath!.isNotEmpty &&
-            !isExistingMarksheetRemoved;
+    final bool hasExisting = _existingMarksheetPath != null &&
+        _existingMarksheetPath!.isNotEmpty &&
+        !isExistingMarksheetRemoved;
 
     if (_educationDocument == null && !hasExisting) {
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Please upload Marksheet / Certificate"),
@@ -711,7 +703,6 @@ class _EducationDetailViewState extends State<EducationDetailView> {
     String selectedClass = '';
     isExistingMarksheetRemoved = false;
     _educationDocument = null;
-
 
     final TextEditingController passedCtrl = TextEditingController();
     final TextEditingController marksCtrl = TextEditingController();
@@ -1132,24 +1123,20 @@ class _EducationDetailViewState extends State<EducationDetailView> {
   }
 
   Widget _buildEducationUploadField(
-      BuildContext context,
-      StateSetter setModalState, {
-        String? existingDocumentPath,
-      }) {
+    BuildContext context,
+    StateSetter setModalState, {
+    String? existingDocumentPath,
+  }) {
     final bool hasExisting =
-        !isExistingMarksheetRemoved &&
-            (existingDocumentPath ?? "").isNotEmpty;
+        !isExistingMarksheetRemoved && (existingDocumentPath ?? "").isNotEmpty;
 
-    final bool isUploaded =
-        _educationDocument != null || hasExisting;
+    final bool isUploaded = _educationDocument != null || hasExisting;
 
-    bool isPdf(String path) =>
-        path.toLowerCase().endsWith(".pdf");
+    bool isPdf(String path) => path.toLowerCase().endsWith(".pdf");
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         /// 🔥 NEW FILE PREVIEW
         if (_educationDocument != null)
           Stack(
@@ -1162,13 +1149,13 @@ class _EducationDetailViewState extends State<EducationDetailView> {
                   borderRadius: BorderRadius.circular(10),
                   child: _educationDocument!.path.endsWith(".pdf")
                       ? const Center(
-                    child: Icon(Icons.picture_as_pdf,
-                        size: 80, color: Colors.red),
-                  )
+                          child: Icon(Icons.picture_as_pdf,
+                              size: 80, color: Colors.red),
+                        )
                       : Image.file(
-                    _educationDocument!,
-                    fit: BoxFit.cover,
-                  ),
+                          _educationDocument!,
+                          fit: BoxFit.cover,
+                        ),
                 ),
               ),
               Positioned(
@@ -1183,8 +1170,7 @@ class _EducationDetailViewState extends State<EducationDetailView> {
                   child: const CircleAvatar(
                     radius: 14,
                     backgroundColor: Colors.red,
-                    child: Icon(Icons.close,
-                        size: 16, color: Colors.white),
+                    child: Icon(Icons.close, size: 16, color: Colors.white),
                   ),
                 ),
               ),
@@ -1203,13 +1189,13 @@ class _EducationDetailViewState extends State<EducationDetailView> {
                   borderRadius: BorderRadius.circular(10),
                   child: isPdf(existingDocumentPath!)
                       ? const Center(
-                    child: Icon(Icons.picture_as_pdf,
-                        size: 80, color: Colors.red),
-                  )
+                          child: Icon(Icons.picture_as_pdf,
+                              size: 80, color: Colors.red),
+                        )
                       : Image.network(
-                    _getFullImageUrl(existingDocumentPath),
-                    fit: BoxFit.cover,
-                  ),
+                          _getFullImageUrl(existingDocumentPath),
+                          fit: BoxFit.cover,
+                        ),
                 ),
               ),
               Positioned(
@@ -1224,8 +1210,7 @@ class _EducationDetailViewState extends State<EducationDetailView> {
                   child: const CircleAvatar(
                     radius: 14,
                     backgroundColor: Colors.red,
-                    child: Icon(Icons.close,
-                        size: 16, color: Colors.white),
+                    child: Icon(Icons.close, size: 16, color: Colors.white),
                   ),
                 ),
               ),
@@ -1272,8 +1257,7 @@ class _EducationDetailViewState extends State<EducationDetailView> {
             style: ElevatedButton.styleFrom(
               backgroundColor: isUploaded
                   ? Colors.green
-                  : ColorHelperClass.getColorFromHex(
-                  ColorResources.red_color),
+                  : ColorHelperClass.getColorFromHex(ColorResources.red_color),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
@@ -1343,11 +1327,17 @@ class _EducationDetailViewState extends State<EducationDetailView> {
             TextButton(
               onPressed: () => Navigator.pop(context),
               style: TextButton.styleFrom(
-                backgroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                backgroundColor: ColorHelperClass.getColorFromHex(
+                  ColorResources.red_color,
+                ),
                 foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: const Text("Close"),
             ),
@@ -1359,9 +1349,9 @@ class _EducationDetailViewState extends State<EducationDetailView> {
   }
 
   void _showEducationImagePicker(
-      BuildContext context,
-      StateSetter setModalState,
-      ) {
+    BuildContext context,
+    StateSetter setModalState,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -1369,37 +1359,46 @@ class _EducationDetailViewState extends State<EducationDetailView> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
       ),
       builder: (_) {
-        return Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
-              title: const Text("Take a Picture"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                await _picker.pickImage(source: ImageSource.camera);
-                if (picked != null) {
-                  setModalState(() {
-                    _educationDocument = File(picked.path);
-                  });
-                }
-              },
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewPadding.bottom + 20,
             ),
-            ListTile(
-              leading: const Icon(Icons.image, color: Colors.redAccent),
-              title: const Text("Choose from Gallery"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                await _picker.pickImage(source: ImageSource.gallery);
-                if (picked != null) {
-                  setModalState(() {
-                    _educationDocument = File(picked.path);
-                  });
-                }
-              },
+            child: Wrap(
+              children: [
+                ListTile(
+                  leading:
+                      const Icon(Icons.camera_alt, color: Colors.redAccent),
+                  title: const Text("Take a Picture"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.camera);
+                    if (picked != null) {
+                      setModalState(() {
+                        _educationDocument = File(picked.path);
+                      });
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.image, color: Colors.redAccent),
+                  title: const Text("Choose from Gallery"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.gallery);
+                    if (picked != null) {
+                      setModalState(() {
+                        _educationDocument = File(picked.path);
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 30),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
