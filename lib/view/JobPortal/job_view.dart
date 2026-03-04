@@ -28,6 +28,7 @@ class _JobViewState extends State<JobView> {
       "company": "Tech Solutions Pvt Ltd",
       "location": "Mumbai",
       "salary": "₹5 - 8 LPA",
+      "lastDate": "23/03/2026",
       "description": "Build cross platform mobile apps.",
       "jobSummaryFile":
           "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
@@ -37,6 +38,7 @@ class _JobViewState extends State<JobView> {
       "company": "Creative Studio",
       "location": "Ahmedabad",
       "salary": "₹4 - 6 LPA",
+      "lastDate": "20/04/2026",
       "description": "Design modern UI/UX screens.",
       "jobSummaryFile": "https://www.africau.edu/images/default/sample.pdf"
     },
@@ -45,6 +47,7 @@ class _JobViewState extends State<JobView> {
       "company": "Maheshwari Finance Group",
       "location": "Delhi",
       "salary": "₹6 - 9 LPA",
+      "lastDate": "02/04/2026",
       "description": "Manage accounting and GST.",
     },
   ];
@@ -64,7 +67,12 @@ class _JobViewState extends State<JobView> {
   String selectedWorkMode = "On-site";
   String selectedCategoryForPost = "IT";
 
-  final List<String> jobTypes = ["Full-time", "Part-time", "Internship"];
+  final List<String> jobTypes = [
+    "Full-time",
+    "Part-time",
+    "Internship",
+    "Work From Home"
+  ];
   final List<String> workModes = ["On-site", "Remote", "Hybrid"];
 
   List<Map<String, dynamic>> appliedMembers = [
@@ -90,6 +98,7 @@ class _JobViewState extends State<JobView> {
           "Passionate Flutter developer with 3 years of experience building scalable mobile applications with clean UI and optimized performance.",
       "resume":
           "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+      "status": "pending",
       "isShortlisted": false,
     },
     {
@@ -114,6 +123,7 @@ class _JobViewState extends State<JobView> {
           "Creative UI/UX designer with strong user research and wireframing skills, focused on delivering intuitive and visually appealing digital experiences.",
       "resume":
           "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+      "status": "pending",
       "isShortlisted": false,
     },
     {
@@ -138,6 +148,7 @@ class _JobViewState extends State<JobView> {
           "Detail-oriented accounting professional with strong knowledge of financial reporting, taxation basics, and bookkeeping practices.",
       "resume":
           "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+      "status": "pending",
       "isShortlisted": false,
     },
     {
@@ -162,6 +173,7 @@ class _JobViewState extends State<JobView> {
           "Senior software engineer with 5 years of experience in mobile app architecture, API integration, and performance optimization.",
       "resume":
           "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+      "status": "pending",
       "isShortlisted": false,
     },
   ];
@@ -171,13 +183,7 @@ class _JobViewState extends State<JobView> {
 
   List<Map<String, dynamic>> appliedJobs = [];
 
-  final List<String> categories = [
-    "All",
-    "IT",
-    "Finance",
-    "Marketing",
-    "Design"
-  ];
+  final List<String> categories = ["IT", "Finance", "Marketing", "Design"];
 
   final List<Map<String, dynamic>> jobs = [
     {
@@ -837,24 +843,40 @@ class _JobViewState extends State<JobView> {
                                         ),
                                       ),
                                     ),
-                                    if (isShortlisted)
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 8, vertical: 3),
-                                        decoration: BoxDecoration(
-                                          color: Colors.green.withOpacity(0.12),
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                        ),
-                                        child: const Text(
-                                          "Shortlisted",
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.green,
-                                          ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: member["status"] == "selected"
+                                            ? Colors.green.withOpacity(0.1)
+                                            : member["status"] == "shortlisted"
+                                                ? Colors.orange.withOpacity(0.1)
+                                                : member["status"] == "rejected"
+                                                    ? Colors.red
+                                                        .withOpacity(0.1)
+                                                    : Colors.grey
+                                                        .withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        member["status"]
+                                            .toString()
+                                            .toUpperCase(),
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: member["status"] == "selected"
+                                              ? Colors.green
+                                              : member["status"] ==
+                                                      "shortlisted"
+                                                  ? Colors.orange
+                                                  : member["status"] ==
+                                                          "rejected"
+                                                      ? Colors.red
+                                                      : Colors.grey,
                                         ),
                                       ),
+                                    )
                                   ],
                                 ),
 
@@ -971,20 +993,18 @@ class _JobViewState extends State<JobView> {
       ),
       builder: (context) {
         int experienceYears = int.tryParse(
-              member["experience"]
-                      ?.toString()
-                      .replaceAll(RegExp(r'[^0-9]'), '') ??
-                  "0",
-            ) ??
+          member["experience"]
+              ?.toString()
+              .replaceAll(RegExp(r'[^0-9]'), '') ??
+              "0",
+        ) ??
             0;
-
-        bool isShortlisted = member["isShortlisted"] ?? false;
 
         String mobile = member["mobile"] ?? "";
         String whatsapp = member["whatsapp"] ?? "";
 
         String contactValue =
-            mobile == whatsapp ? mobile : "$mobile / $whatsapp";
+        mobile == whatsapp ? mobile : "$mobile / $whatsapp";
 
         return SafeArea(
           child: FractionallySizedBox(
@@ -994,6 +1014,8 @@ class _JobViewState extends State<JobView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+
+                  /// 🔹 HEADER
                   Row(
                     children: [
                       const Text(
@@ -1004,88 +1026,126 @@ class _JobViewState extends State<JobView> {
                         ),
                       ),
                       const Spacer(),
-                      GestureDetector(
-                        onTap: isShortlisted
-                            ? null
-                            : () {
-                                setState(() {
-                                  member["isShortlisted"] = true;
-                                });
-
-                                Navigator.pop(context);
-
-                                Future.delayed(
-                                    const Duration(milliseconds: 300), () {
-                                  ScaffoldMessenger.of(this.context)
-                                      .showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                          "${member["name"]} has been shortlisted"),
-                                      backgroundColor: Colors.green,
-                                      behavior: SnackBarBehavior.floating,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      margin: const EdgeInsets.all(16),
-                                    ),
-                                  );
-                                });
-                              },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: isShortlisted
-                                ? Colors.green.withOpacity(0.15)
-                                : Colors.grey.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                isShortlisted
-                                    ? Icons.check_circle
-                                    : Icons.star_border,
-                                size: 16,
-                                color:
-                                    isShortlisted ? Colors.green : Colors.grey,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                isShortlisted ? "Shortlisted" : "Shortlist",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: isShortlisted
-                                      ? Colors.green
-                                      : Colors.black,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
                       IconButton(
                         onPressed: () => Navigator.pop(context),
                         icon: const Icon(Icons.close),
                       ),
                     ],
                   ),
+
                   const Divider(),
+
+                  /// 🔹 ACTION BUTTONS
+                  Row(
+                    children: [
+
+                      /// SHORTLIST
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            setState(() {
+                              member["status"] = "shortlisted";
+                              member["isShortlisted"] = true;
+                            });
+
+                            Navigator.pop(context);
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    "${member["name"]} has been shortlisted"),
+                                backgroundColor: Colors.orange,
+                              ),
+                            );
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.orange,
+                            side: const BorderSide(color: Colors.orange),
+                          ),
+                          child: const Text("Shortlist"),
+                        ),
+                      ),
+
+                      const SizedBox(width: 8),
+
+                      /// REJECT
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            setState(() {
+                              member["status"] = "rejected";
+                              member["isShortlisted"] = false;
+                            });
+
+                            Navigator.pop(context);
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content:
+                                Text("${member["name"]} has been rejected"),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.red,
+                            side: const BorderSide(color: Colors.red),
+                          ),
+                          child: const Text("Reject"),
+                        ),
+                      ),
+
+                      const SizedBox(width: 8),
+
+                      /// SELECT
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              member["status"] = "selected";
+                              member["isShortlisted"] = true;
+                            });
+
+                            Navigator.pop(context);
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content:
+                                Text("${member["name"]} has been selected"),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text("Select"),
+                        ),
+                      ),
+                    ],
+                  ),
+
                   const SizedBox(height: 10),
+                  const Divider(),
+
+                  /// 🔹 PROFILE DETAILS
                   Expanded(
                     child: SingleChildScrollView(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+
+                          /// PERSONAL DETAILS
                           _sectionTitle("Personal Details"),
                           const SizedBox(height: 12),
                           _profileRow("Name", member["name"]),
                           _profileRow("Email", member["email"]),
                           _profileRow("Mobile / WhatsApp", contactValue),
+
                           const SizedBox(height: 16),
+
+                          /// PROFILE SUMMARY
                           _sectionTitle("Profile Summary"),
                           const SizedBox(height: 10),
                           Text(
@@ -1098,26 +1158,32 @@ class _JobViewState extends State<JobView> {
                               color: Colors.black87,
                             ),
                           ),
+
                           const SizedBox(height: 20),
+
+                          /// ADDRESS
                           _sectionTitle("Residential Address"),
                           const SizedBox(height: 12),
                           Text(
                             "${member["flat"] ?? ""}, "
-                            "${member["building"] ?? ""}, "
-                            "${member["area"] ?? ""},\n"
-                            "${member["city"] ?? ""}, "
-                            "${member["state"] ?? ""}, "
-                            "${member["country"] ?? ""} - "
-                            "${member["pincode"] ?? ""}",
+                                "${member["building"] ?? ""}, "
+                                "${member["area"] ?? ""},\n"
+                                "${member["city"] ?? ""}, "
+                                "${member["state"] ?? ""}, "
+                                "${member["country"] ?? ""} - "
+                                "${member["pincode"] ?? ""}",
                             style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
                               height: 1.5,
                             ),
                           ),
+
                           const SizedBox(height: 20),
                           const Divider(),
                           const SizedBox(height: 15),
+
+                          /// EXPERIENCE
                           if (experienceYears > 0) ...[
                             _sectionTitle("Occupation"),
                             const SizedBox(height: 12),
@@ -1130,29 +1196,27 @@ class _JobViewState extends State<JobView> {
                             const SizedBox(height: 20),
                             const Divider(),
                             const SizedBox(height: 15),
-                            _sectionTitle("Education"),
-                            const SizedBox(height: 12),
-                            _profileRow(
-                              "Highest Qualification",
-                              member["education"],
-                            ),
-                            const SizedBox(height: 20),
-                          ] else ...[
-                            _sectionTitle("Education"),
-                            const SizedBox(height: 12),
-                            _profileRow(
-                              "Highest Qualification",
-                              member["education"],
-                            ),
-                            const SizedBox(height: 20),
                           ],
+
+                          /// EDUCATION
+                          _sectionTitle("Education"),
+                          const SizedBox(height: 12),
+                          _profileRow(
+                            "Highest Qualification",
+                            member["education"],
+                          ),
+
+                          const SizedBox(height: 20),
                           const Divider(),
                           const SizedBox(height: 15),
+
+                          /// FAMILY DETAILS
                           _sectionTitle("Family Details"),
                           const SizedBox(height: 12),
                           _profileRow("Father's Name", member["father_name"]),
                           _profileRow("Mother's Name", member["mother_name"]),
-                          const SizedBox(height: 20),
+
+                          const SizedBox(height: 30),
                         ],
                       ),
                     ),
@@ -1640,8 +1704,8 @@ class _JobViewState extends State<JobView> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                             ),
-                            child:
-                                Text(editIndex != null ? "Update" : "Post Job"),
+                            child: Text(
+                                editIndex != null ? "Update Job" : "Post Job"),
                           ),
                         ],
                       ),
@@ -1650,6 +1714,7 @@ class _JobViewState extends State<JobView> {
                         child: SingleChildScrollView(
                           child: Column(
                             children: [
+                              const SizedBox(height: 20),
                               _buildTextField("Job Title",
                                   controller: titleController),
                               _buildTextField("Company Name",
