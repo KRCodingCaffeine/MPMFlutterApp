@@ -139,6 +139,9 @@ class Urls {
   static const String upload_shiksha_applicant_ration_card_document = base_url+"api/upload_shiksha_applicant_ration_card_document";
   static const String upload_shiksha_applicant_father_pan_card_document = base_url+"api/upload_shiksha_applicant_father_pan_card_document";
 
+  // Job Portal
+  static const String update_job_portal_role_url = base_url+"api/update_job_portal_role";
+
   // Notification API URLs - Following same pattern as device_mapping
   static const String get_all_notifications_url = base_url+"api/notifications/get_all";
   static const String mark_notification_read_url = base_url+"api/notifications/mark_read";
