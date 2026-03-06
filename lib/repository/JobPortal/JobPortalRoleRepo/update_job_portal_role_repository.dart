@@ -20,7 +20,7 @@ class UpdateJobPortalRoleRepository {
         safeBody,
         url,
         "",
-        "1",
+        "2",
       );
 
       debugPrint("🟢 Response: $response");

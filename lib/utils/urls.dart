@@ -140,7 +140,8 @@ class Urls {
   static const String upload_shiksha_applicant_father_pan_card_document = base_url+"api/upload_shiksha_applicant_father_pan_card_document";
 
   // Job Portal
-  static const String update_job_portal_role_url = base_url+"api/update_job_portal_role";
+  static const String update_job_portal_role_url = base_url+"api/member_job/update_job_portal_role";
+  static const String get_occupations_by_member_id_url = base_url+"api/member_job/get_occupations_by_member_id";
 
   // Notification API URLs - Following same pattern as device_mapping
   static const String get_all_notifications_url = base_url+"api/notifications/get_all";
