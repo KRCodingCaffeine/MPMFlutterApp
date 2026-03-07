@@ -14,208 +14,304 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 class AppDrawer extends StatelessWidget {
+  /// True when running on tablet/iPad (shortest side >= 600).
+  static bool _isTablet(BuildContext context) {
+    return MediaQuery.sizeOf(context).shortestSide >= 600;
+  }
+
   @override
   Widget build(BuildContext context) {
     final UdateProfileController dashBoardController = Get.find();
-    return Drawer(
-      backgroundColor: Colors.white,
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          DrawerHeader(
-            decoration: const BoxDecoration(
-              color: Color(0xFFcd4e2b),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Row(
+    final isTablet = _isTablet(context);
+
+    // Wider drawer on iPad so menu titles are not cramped or hidden (Guideline 4).
+    final double? drawerWidth = isTablet ? 400.0 : null;
+    final theme = drawerWidth != null
+        ? Theme.of(context).copyWith(
+            drawerTheme: Theme.of(context).drawerTheme.copyWith(width: drawerWidth),
+          )
+        : null;
+
+    // Responsive sizes for header and list items
+    final double headerPadding = isTablet ? 20.0 : 10.0;
+    final double avatarRadius = isTablet ? 48.0 : 40.0;
+    final double nameFontSize = isTablet ? 18.0 : 14.0;
+    final double metaFontSize = isTablet ? 14.0 : 12.0;
+    final double listTilePaddingH = isTablet ? 24.0 : 16.0;
+    final double listTilePaddingV = isTablet ? 16.0 : 8.0;
+    final double titleFontSize = isTablet ? 17.0 : 14.0;
+    final double iconSize = isTablet ? 28.0 : 24.0;
+
+    Widget drawerChild = ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        DrawerHeader(
+          decoration: const BoxDecoration(
+            color: Color(0xFFcd4e2b),
+          ),
+          padding: EdgeInsets.all(headerPadding),
+          child: Row(
+            children: [
+              // Profile Image
+              Stack(
                 children: [
-                  // Profile Image
-                  Stack(
-                    children: [
-                      Obx(() {
-                        return CircleAvatar(
-                          radius: 40,
-                          backgroundColor: Colors.grey[300],
-                          child: ClipOval(
-                            child: (dashBoardController
-                                    .profileImage.value.isNotEmpty)
-                                ? FadeInImage(
-                                    placeholder: const AssetImage(
-                                        "assets/images/user3.png"),
-                                    image: NetworkImage(Urls.imagePathUrl +
-                                        dashBoardController.profileImage.value),
-                                    imageErrorBuilder:
-                                        (context, error, stackTrace) {
-                                      return Image.asset(
-                                        "assets/images/male.png",
-                                        fit: BoxFit.cover,
-                                        width: 80,
-                                        height: 80,
-                                      );
-                                    },
+                  Obx(() {
+                    return CircleAvatar(
+                      radius: avatarRadius,
+                      backgroundColor: Colors.grey[300],
+                      child: ClipOval(
+                        child: (dashBoardController.profileImage.value.isNotEmpty)
+                            ? FadeInImage(
+                                placeholder: const AssetImage("assets/images/user3.png"),
+                                image: NetworkImage(Urls.imagePathUrl +
+                                    dashBoardController.profileImage.value),
+                                imageErrorBuilder: (context, error, stackTrace) {
+                                  return Image.asset(
+                                    "assets/images/male.png",
                                     fit: BoxFit.cover,
-                                    width: 80,
-                                    height: 80,
-                                  )
-                                : Image.asset(
-                                    "assets/images/user3.png",
-                                    fit: BoxFit.cover,
-                                    width: 80,
-                                    height: 80,
-                                  ),
-                          ),
-                        );
-                      }),
-                    ],
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Obx(() => Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          dashBoardController.userName.value.isNotEmpty
-                              ? dashBoardController.userName.value
-                              : "Guest User",
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "Membership Code : ${(dashBoardController.memberCode.value.trim().isNotEmpty) ? dashBoardController.memberCode.value : " -- "}",
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "Mobile: ${dashBoardController.mobileNumber.value.isNotEmpty ? dashBoardController.mobileNumber.value : "N/A"}",
-                          style: const TextStyle(
-                              fontSize: 12, color: Colors.white70),
-                        ),
-                      ],
-                    )),
-                  )
+                                    width: avatarRadius * 2,
+                                    height: avatarRadius * 2,
+                                  );
+                                },
+                                fit: BoxFit.cover,
+                                width: avatarRadius * 2,
+                                height: avatarRadius * 2,
+                              )
+                            : Image.asset(
+                                "assets/images/user3.png",
+                                fit: BoxFit.cover,
+                                width: avatarRadius * 2,
+                                height: avatarRadius * 2,
+                              ),
+                      ),
+                    );
+                  }),
                 ],
               ),
-            ),
+              SizedBox(width: isTablet ? 20 : 12),
+              Expanded(
+                child: Obx(() => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      dashBoardController.userName.value.isNotEmpty
+                          ? dashBoardController.userName.value
+                          : "Guest User",
+                      style: TextStyle(
+                        fontSize: nameFontSize,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                    ),
+                    SizedBox(height: isTablet ? 6 : 4),
+                    Text(
+                      "Membership Code : ${(dashBoardController.memberCode.value.trim().isNotEmpty) ? dashBoardController.memberCode.value : " -- "}",
+                      style: TextStyle(
+                        fontSize: metaFontSize,
+                        color: Colors.white,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                    SizedBox(height: isTablet ? 6 : 4),
+                    Text(
+                      "Mobile: ${dashBoardController.mobileNumber.value.isNotEmpty ? dashBoardController.mobileNumber.value : "N/A"}",
+                      style: TextStyle(
+                        fontSize: metaFontSize,
+                        color: Colors.white70,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ],
+                )),
+              ),
+            ],
           ),
-          ListTile(
-            leading: Icon(Icons.home),
-            title: Text('Home'),
-            onTap: () {
-              Navigator.pop(context); // Close drawer
-              // Pop back to existing Dashboard so banner/state are preserved (don't replace stack)
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.person),
-            title: Text('My Profile'),
-            onTap: () {
+        ),
+        _drawerTile(
+          context,
+          icon: Icons.home,
+          title: 'Home',
+          iconSize: iconSize,
+          titleFontSize: titleFontSize,
+          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          onTap: () {
+            Navigator.pop(context);
+            if (Navigator.canPop(context)) {
               Navigator.pop(context);
-              Navigator.pushNamed(context, RouteNames.profile);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.share),
-            title: const Text('Share App'),
-            onTap: () {
-              Navigator.pop(context);
-              _onShare(context);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.ios_share),
-            title: const Text('Share Membership Form'),
-            onTap: () {
-              Navigator.pop(context);
-              _onSharememberForm(context);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.file_copy),
-            title: const Text('Forms'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, RouteNames.forms);
-            },
-          ),
-          // ListTile(
-          //   leading: const Icon(Icons.account_balance),
-          //   title: const Text('Government Scheme'),
-          //   onTap: () {
-          //     Navigator.pop(context);
-          //     Navigator.pushNamed(context, RouteNames.gov_scheme);
-          //   },
-          // ),
-          ListTile(
-            leading: const Icon(Icons.account_balance),
-            title: const Text('Bhavan Booking'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, RouteNames.bhavan_booking);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.contact_page),
-            title: const Text('Enquiry Form'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, RouteNames.add_enquiry_form);
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.info),
-            title: Text('About Us'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, RouteNames.aboutUs);
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.headset_mic),
-            title: Text('Contact Us'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, RouteNames.contactUs);
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.privacy_tip),
-            title: Text('Privacy Policy'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, RouteNames.pravacypolicy);
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.description),
-            title: Text('Terms & Condition'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, RouteNames.termandcondition);
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.exit_to_app),
-            title: Text('Logout'),
-            onTap: () {
-              Navigator.pop(context);
-              _showLogoutDialog(context);
-            },
-          ),
-          const SizedBox(height: 30),
-        ],
+            }
+          },
+        ),
+        _drawerTile(
+          context,
+          icon: Icons.person,
+          title: 'My Profile',
+          iconSize: iconSize,
+          titleFontSize: titleFontSize,
+          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, RouteNames.profile);
+          },
+        ),
+        _drawerTile(
+          context,
+          icon: Icons.share,
+          title: 'Share App',
+          iconSize: iconSize,
+          titleFontSize: titleFontSize,
+          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          onTap: () {
+            Navigator.pop(context);
+            _onShare(context);
+          },
+        ),
+        _drawerTile(
+          context,
+          icon: Icons.ios_share,
+          title: 'Share Membership Form',
+          iconSize: iconSize,
+          titleFontSize: titleFontSize,
+          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          onTap: () {
+            Navigator.pop(context);
+            _onSharememberForm(context);
+          },
+        ),
+        _drawerTile(
+          context,
+          icon: Icons.file_copy,
+          title: 'Forms',
+          iconSize: iconSize,
+          titleFontSize: titleFontSize,
+          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, RouteNames.forms);
+          },
+        ),
+        _drawerTile(
+          context,
+          icon: Icons.account_balance,
+          title: 'Bhavan Booking',
+          iconSize: iconSize,
+          titleFontSize: titleFontSize,
+          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, RouteNames.bhavan_booking);
+          },
+        ),
+        _drawerTile(
+          context,
+          icon: Icons.contact_page,
+          title: 'Enquiry Form',
+          iconSize: iconSize,
+          titleFontSize: titleFontSize,
+          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, RouteNames.add_enquiry_form);
+          },
+        ),
+        _drawerTile(
+          context,
+          icon: Icons.info,
+          title: 'About Us',
+          iconSize: iconSize,
+          titleFontSize: titleFontSize,
+          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, RouteNames.aboutUs);
+          },
+        ),
+        _drawerTile(
+          context,
+          icon: Icons.headset_mic,
+          title: 'Contact Us',
+          iconSize: iconSize,
+          titleFontSize: titleFontSize,
+          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, RouteNames.contactUs);
+          },
+        ),
+        _drawerTile(
+          context,
+          icon: Icons.privacy_tip,
+          title: 'Privacy Policy',
+          iconSize: iconSize,
+          titleFontSize: titleFontSize,
+          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, RouteNames.pravacypolicy);
+          },
+        ),
+        _drawerTile(
+          context,
+          icon: Icons.description,
+          title: 'Terms & Condition',
+          iconSize: iconSize,
+          titleFontSize: titleFontSize,
+          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, RouteNames.termandcondition);
+          },
+        ),
+        _drawerTile(
+          context,
+          icon: Icons.exit_to_app,
+          title: 'Logout',
+          iconSize: iconSize,
+          titleFontSize: titleFontSize,
+          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          onTap: () {
+            Navigator.pop(context);
+            _showLogoutDialog(context);
+          },
+        ),
+        SizedBox(height: isTablet ? 40 : 30),
+      ],
+    );
+
+    final drawer = Drawer(
+      backgroundColor: Colors.white,
+      child: drawerChild,
+    );
+
+    if (theme != null) {
+      return Theme(data: theme, child: drawer);
+    }
+    return drawer;
+  }
+
+  static Widget _drawerTile(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required double iconSize,
+    required double titleFontSize,
+    required EdgeInsets contentPadding,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      contentPadding: contentPadding,
+      leading: Icon(icon, size: iconSize),
+      title: Text(
+        title,
+        style: TextStyle(fontSize: titleFontSize),
+        overflow: TextOverflow.visible,
+        maxLines: 2,
       ),
+      onTap: onTap,
     );
   }
 
@@ -248,7 +344,7 @@ class AppDrawer extends StatelessWidget {
     final box = context.findRenderObject() as RenderBox?;
 
     const String membershipFormLink =
-        'https://members.mumbaimaheshwari.com/staging/member/registration';
+        'https://members.mumbaimaheshwari.com/user/registration';
 
     String shareText = "We invite you to join us! 🎉\n\n"
         "Register now using the following link: \n\n"
