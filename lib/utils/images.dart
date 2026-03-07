@@ -26,6 +26,7 @@ class Images {
   static const String qr_code = 'assets/images/qr_code.svg';
   static const String networking = 'assets/images/networking.svg';
   static const String network = 'assets/images/network.svg';
+  static const String job_portal = 'assets/images/job-portal.svg';
   static const String publication = 'assets/images/publication.svg';
   static const String shiksha = 'assets/images/shiksha_sahayata.svg';
   static const String vivah = 'assets/images/vivah.svg';

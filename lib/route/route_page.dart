@@ -4,6 +4,7 @@ import 'package:mpm/utils/Session.dart';
 import 'package:mpm/view/BhavanBooking/bhavan_booking_view.dart';
 import 'package:mpm/view/EnquiryForm/add_enquiry_form.dart';
 import 'package:mpm/view/EventTrip/event_trip.dart';
+import 'package:mpm/view/JobPortal/job_view.dart';
 import 'package:mpm/view/Networking/network_view.dart';
 import 'package:mpm/view/OutsideMumbaiLogin/outside_mumbai_login.dart';
 import 'package:mpm/view/QRCodeScanner/qr_code.dart';
@@ -119,7 +120,11 @@ class RoutePages {
       case RouteNames.networking:
         return _buildRoute(NetworkView(), settings);
 
-      // Shiksha Sahayata
+      // Job
+      case RouteNames.job:
+        return _buildRoute(JobView(), settings);
+
+        // Shiksha Sahayata
       case RouteNames.shiksha_sahayata:
         return _buildRoute(ShikshaSahayataView(), settings);
 
