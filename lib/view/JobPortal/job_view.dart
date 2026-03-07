@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/repository/JobPortal/GetOccupationByMemberIdRepo/get_occupation_by_member_id_repository.dart';
+import 'package:mpm/repository/JobPortal/GetQualificationByMemberIdRepo/get_qualification_by_member_id_repository.dart';
 import 'package:mpm/repository/JobPortal/JobPortalRoleRepo/update_job_portal_role_repository.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/JobPortal/job_seeker_view.dart';
 import 'package:mpm/view/JobPortal/recruiter_job_view.dart';
+import 'package:mpm/view/profile%20view/Education_page_info.dart';
 import 'package:mpm/view/profile%20view/business_info_page.dart';
+import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
 class JobView extends StatefulWidget {
@@ -23,11 +26,35 @@ class _JobViewState extends State<JobView> {
   final GetOccupationByMemberIdRepository occupationRepository =
       GetOccupationByMemberIdRepository();
 
+  final GetQualificationByMemberIdRepository qualificationRepository =
+      GetQualificationByMemberIdRepository();
+
   final UdateProfileController profileController =
       Get.find<UdateProfileController>();
 
   bool isLoading = false;
   bool showOccupationBanner = false;
+  bool showEducationBanner = false;
+  String selectedRole = "";
+  UdateProfileController controller =Get.put(UdateProfileController());
+  NewMemberController newMemberController=Get.put(NewMemberController());
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    controller.getUserProfile();
+    controller.getQualification();
+    controller.getRelation();
+    controller.getOccupationData();
+    newMemberController.getGender();
+    newMemberController.getBloodGroup();
+    newMemberController.getMaritalStatus();
+    newMemberController.getCountry();
+    newMemberController.getCity();
+    newMemberController.getState();
+    newMemberController.getDocumentType();
+  }
 
   Future<void> updateRole(String role) async {
     try {
@@ -58,34 +85,75 @@ class _JobViewState extends State<JobView> {
     }
   }
 
-  Future<void> checkOccupationAndProceed() async {
+  Future<void> checkEducationAndProceed() async {
     try {
       setState(() {
         isLoading = true;
+        showEducationBanner = false;
+        showOccupationBanner = false; // hide other banner
       });
 
       String memberId = profileController.memberId.value;
 
-      final response =
-          await occupationRepository.getOccupationsByMemberId(memberId);
+      final eduResponse =
+      await qualificationRepository.getQualificationsByMemberId(memberId);
 
-      if (response.status == true) {
-        if ((response.totalCount ?? 0) == 0) {
-          setState(() {
-            showOccupationBanner = true;
-          });
+      bool hasEducation = (eduResponse.totalCount ?? 0) > 0;
 
-        } else {
-          await updateRole("recruiter");
-
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const RecruiterJobView(),
-            ),
-          );
-        }
+      if (!hasEducation) {
+        setState(() {
+          showEducationBanner = true;
+        });
+        return;
       }
+
+      await updateRole("job_seeker");
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const JobSeekerView(),
+        ),
+      );
+    } catch (e) {
+      debugPrint("Education Check Error: $e");
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> checkOccupationAndProceed() async {
+    try {
+      setState(() {
+        isLoading = true;
+        showOccupationBanner = false;
+        showEducationBanner = false; // hide other banner
+      });
+
+      String memberId = profileController.memberId.value;
+
+      final occResponse =
+      await occupationRepository.getOccupationsByMemberId(memberId);
+
+      bool hasOccupation = (occResponse.totalCount ?? 0) > 0;
+
+      if (!hasOccupation) {
+        setState(() {
+          showOccupationBanner = true;
+        });
+        return;
+      }
+
+      await updateRole("recruiter");
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const RecruiterJobView(),
+        ),
+      );
     } catch (e) {
       debugPrint("Occupation Check Error: $e");
     } finally {
@@ -112,7 +180,6 @@ class _JobViewState extends State<JobView> {
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -124,13 +191,15 @@ class _JobViewState extends State<JobView> {
                       Padding(
                         padding: const EdgeInsets.all(16),
                         child: GestureDetector(
-                          onTap: () {
-                            Navigator.push(
+                          onTap: () async {
+                            await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (_) => const BusinessInformationPage(),
                               ),
                             );
+
+                            checkOccupationAndProceed();
                           },
                           child: Container(
                             padding: const EdgeInsets.all(16),
@@ -159,86 +228,36 @@ class _JobViewState extends State<JobView> {
                           ),
                         ),
                       ),
+                    if (showEducationBanner)
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: GestureDetector(
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const EducationPageInfo(),
+                              ),
+                            );
 
-                    Expanded(
-                      child: Center(
-                        child: Card(
-                          color: Colors.white,
-                          elevation: 6,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(25),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  height: 70,
-                                  width: 70,
-                                  decoration: BoxDecoration(
-                                    color: Colors.redAccent.withOpacity(0.1),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.work_outline,
-                                    size: 35,
-                                    color: Colors.redAccent,
-                                  ),
-                                ),
-                                const SizedBox(height: 30),
-
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 55,
-                                  child: ElevatedButton.icon(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.redAccent,
-                                      foregroundColor: Colors.white,
-                                    ),
-                                    onPressed: () async {
-                                      await updateRole("job_seeker");
-
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => const JobSeekerView(),
-                                        ),
-                                      );
-                                    },
-                                    icon: const Icon(Icons.search),
-                                    label: const Text(
-                                      "Looking for Job",
-                                      style: TextStyle(fontSize: 16),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 18),
-
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 55,
-                                  child: OutlinedButton.icon(
-                                    onPressed: () async {
-                                      await checkOccupationAndProceed();
-                                    },
-                                    icon: const Icon(
-                                      Icons.work,
-                                      color: Colors.redAccent,
-                                    ),
-                                    label: const Text(
-                                      "Offer Jobs (Employer)",
-                                      style: TextStyle(
-                                        color: Colors.redAccent,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(
-                                          color: Colors.redAccent, width: 1.5),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
+                            checkEducationAndProceed();
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.shade700,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              children: const [
+                                Icon(Icons.warning_amber_rounded, color: Colors.white),
+                                SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    "Click here to update your Education details",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 ),
@@ -247,7 +266,189 @@ class _JobViewState extends State<JobView> {
                           ),
                         ),
                       ),
-                    ),
+                    Expanded(
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                height: 70,
+                                width: 70,
+                                decoration: BoxDecoration(
+                                  color: Colors.redAccent.withOpacity(0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.work_outline,
+                                  size: 35,
+                                  color: Colors.redAccent,
+                                ),
+                              ),
+
+                              const SizedBox(height: 30),
+
+                              const Text(
+                                "Choose Your Role",
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+
+                              const SizedBox(height: 30),
+
+                              /// JOB SEEKER CARD
+                              GestureDetector(
+                                onTap: () async {
+                                  setState(() {
+                                    selectedRole = "job_seeker";
+                                  });
+
+                                  await checkEducationAndProceed();
+                                },
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: selectedRole == "job_seeker"
+                                        ? Colors.redAccent
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: Colors.redAccent,
+                                      width: 1.5,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.05),
+                                        blurRadius: 10,
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.search,
+                                        size: 32,
+                                        color: selectedRole == "job_seeker"
+                                            ? Colors.white
+                                            : Colors.redAccent,
+                                      ),
+                                      const SizedBox(width: 20),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              "Looking for Job",
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color:
+                                                    selectedRole == "job_seeker"
+                                                        ? Colors.white
+                                                        : Colors.black,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 5),
+                                            Text(
+                                              "Find opportunities and apply for jobs",
+                                              style: TextStyle(
+                                                color:
+                                                    selectedRole == "job_seeker"
+                                                        ? Colors.white70
+                                                        : Colors.grey,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 20),
+
+                              /// RECRUITER CARD
+                              GestureDetector(
+                                onTap: () async {
+                                  setState(() {
+                                    selectedRole = "recruiter";
+                                  });
+
+                                  await checkOccupationAndProceed();
+                                },
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: selectedRole == "recruiter"
+                                        ? Colors.redAccent
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: Colors.redAccent,
+                                      width: 1.5,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.05),
+                                        blurRadius: 10,
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.business_center,
+                                        size: 32,
+                                        color: selectedRole == "recruiter"
+                                            ? Colors.white
+                                            : Colors.redAccent,
+                                      ),
+                                      const SizedBox(width: 20),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              "Offer Jobs (Employer)",
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color:
+                                                    selectedRole == "recruiter"
+                                                        ? Colors.white
+                                                        : Colors.black,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 5),
+                                            Text(
+                                              "Hire talented candidates for your company",
+                                              style: TextStyle(
+                                                color:
+                                                    selectedRole == "recruiter"
+                                                        ? Colors.white70
+                                                        : Colors.grey,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
                   ],
                 ),
               ),

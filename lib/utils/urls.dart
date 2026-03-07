@@ -142,6 +142,7 @@ class Urls {
   // Job Portal
   static const String update_job_portal_role_url = base_url+"api/member_job/update_job_portal_role";
   static const String get_occupations_by_member_id_url = base_url+"api/member_job/get_occupations_by_member_id";
+  static const String get_qualifications_by_member_id_url = base_url+"api/member_job/get_qualifications_by_member_id";
 
   // Notification API URLs - Following same pattern as device_mapping
   static const String get_all_notifications_url = base_url+"api/notifications/get_all";
