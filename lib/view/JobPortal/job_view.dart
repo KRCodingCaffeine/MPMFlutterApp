@@ -171,7 +171,7 @@ class _JobViewState extends State<JobView> {
         backgroundColor:
             ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Text(
-          "Job",
+          "Jobs",
           style: TextStyle(
             color: Colors.white,
             fontSize: MediaQuery.of(context).size.width * 0.045,
@@ -195,7 +195,7 @@ class _JobViewState extends State<JobView> {
                             await Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const BusinessInformationPage(),
+                                builder: (_) => const BusinessInformationPage(autoOpenAddSheet: true),
                               ),
                             );
 
@@ -236,7 +236,7 @@ class _JobViewState extends State<JobView> {
                             await Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const EducationPageInfo(),
+                                builder: (_) => const EducationPageInfo(autoOpenAddSheet: true),
                               ),
                             );
 
@@ -343,6 +343,16 @@ class _JobViewState extends State<JobView> {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
+                                              "Find opportunities and apply for jobs",
+                                              style: TextStyle(
+                                                color:
+                                                selectedRole == "job_seeker"
+                                                    ? Colors.white70
+                                                    : Colors.grey,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 5),
+                                            Text(
                                               "Looking for Job",
                                               style: TextStyle(
                                                 fontSize: 18,
@@ -351,16 +361,6 @@ class _JobViewState extends State<JobView> {
                                                     selectedRole == "job_seeker"
                                                         ? Colors.white
                                                         : Colors.black,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 5),
-                                            Text(
-                                              "Find opportunities and apply for jobs",
-                                              style: TextStyle(
-                                                color:
-                                                    selectedRole == "job_seeker"
-                                                        ? Colors.white70
-                                                        : Colors.grey,
                                               ),
                                             ),
                                           ],
@@ -417,6 +417,16 @@ class _JobViewState extends State<JobView> {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
+                                              "Hire talented candidates From Samaj Member",
+                                              style: TextStyle(
+                                                color:
+                                                selectedRole == "recruiter"
+                                                    ? Colors.white70
+                                                    : Colors.grey,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 5),
+                                            Text(
                                               "Offer Jobs (Employer)",
                                               style: TextStyle(
                                                 fontSize: 18,
@@ -425,16 +435,6 @@ class _JobViewState extends State<JobView> {
                                                     selectedRole == "recruiter"
                                                         ? Colors.white
                                                         : Colors.black,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 5),
-                                            Text(
-                                              "Hire talented candidates for your company",
-                                              style: TextStyle(
-                                                color:
-                                                    selectedRole == "recruiter"
-                                                        ? Colors.white70
-                                                        : Colors.grey,
                                               ),
                                             ),
                                           ],
@@ -456,3 +456,5 @@ class _JobViewState extends State<JobView> {
     );
   }
 }
+
+

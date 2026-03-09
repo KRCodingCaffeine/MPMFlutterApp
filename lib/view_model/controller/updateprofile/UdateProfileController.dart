@@ -739,7 +739,7 @@ class UdateProfileController extends GetxController {
   //     if (occuptionSubSubCategoryList.isEmpty) {
   //       showDetailsField.value = true;
   //     } else {
-  //       // Add “Other” option
+  //       // Add â€œOtherâ€ option
   //       if (!occuptionSubSubCategoryList
   //           .any((item) => item.subSubCategoryId == "Other")) {
   //         occuptionSubSubCategoryList.add(
@@ -766,7 +766,25 @@ class UdateProfileController extends GetxController {
   //   }
   // }
 
-  Future<void> addOccupation() async {
+  void _showOccupationSnackBar(
+    BuildContext context,
+    String message, {
+    required bool isSuccess,
+  }) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return;
+
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isSuccess ? Colors.green : Colors.red,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  Future<void> addOccupation(BuildContext context) async {
     try {
       isOccupationLoading.value = true;
 
@@ -777,14 +795,16 @@ class UdateProfileController extends GetxController {
         throw Exception("Please select an occupation");
       }
 
-      // Handle dropdown values
       String occupationId = selectedOccupation.value;
-      String professionId = (selectedProfession.value == "Other") ? "" : selectedProfession.value;
-      String specializationId = (selectedSpecialization.value == "Other") ? "" : selectedSpecialization.value;
-      String subCategoryId = (selectedSubCategory.value == "Other") ? "" : selectedSubCategory.value;
-      String subSubCategoryId = (selectedSubSubCategory.value == "Other") ? "" : selectedSubSubCategory.value;
+      String professionId =
+          (selectedProfession.value == "Other") ? "" : selectedProfession.value;
+      String specializationId =
+          (selectedSpecialization.value == "Other") ? "" : selectedSpecialization.value;
+      String subCategoryId =
+          (selectedSubCategory.value == "Other") ? "" : selectedSubCategory.value;
+      String subSubCategoryId =
+          (selectedSubSubCategory.value == "Other") ? "" : selectedSubSubCategory.value;
 
-      // Final "Other Details"
       String otherName = showDetailsField.value ? detailsController.value.text : "";
 
       final Map<String, dynamic> data = {
@@ -798,25 +818,13 @@ class UdateProfileController extends GetxController {
         "created_by": userData.memberId.toString()
       };
 
-      print("📤 Add Occupation Payload: $data");
+      print("Add Occupation Payload: $data");
 
-      // Call Add repository
       final response = await addOccupationRepo.addOccupation(data);
 
       if (response.status == true) {
-        Get.snackbar(
-          'Success',
-          response.message ?? "Occupation added successfully",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          duration: Duration(seconds: 3),
-        );
+        await getUserProfile();
 
-        getUserProfile();
-        Navigator.of(context!).pop();
-
-        // ⚡ Reset fields after success
         selectedOccupation.value = "";
         selectedProfession.value = "";
         selectedSpecialization.value = "";
@@ -825,18 +833,20 @@ class UdateProfileController extends GetxController {
         detailsController.value.text = "";
         showDetailsField.value = false;
 
+        _showOccupationSnackBar(
+          context,
+          response.message ?? "Occupation added successfully",
+          isSuccess: true,
+        );
       } else {
         throw Exception(response.message ?? "Failed to add occupation");
       }
     } catch (e) {
-      print("❌ Add Occupation Error: $e");
-
-      Get.snackbar(
-        'Error',
+      print("Add Occupation Error: $e");
+      _showOccupationSnackBar(
+        context,
         e.toString().replaceAll("Exception:", "").trim(),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        isSuccess: false,
       );
     } finally {
       isOccupationLoading.value = false;
@@ -1021,7 +1031,7 @@ class UdateProfileController extends GetxController {
       }
     } catch (e) {
       _rxBusinessProfileStatus.value = Status.ERROR;
-      debugPrint("❌ Error fetching business profiles: $e");
+      debugPrint("âŒ Error fetching business profiles: $e");
       Get.snackbar(
         "Error",
         "Failed to load business profiles: $e",
@@ -1091,7 +1101,7 @@ class UdateProfileController extends GetxController {
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
-      debugPrint("❌ DELETE BUSINESS PROFILE ERROR: $e");
+      debugPrint("âŒ DELETE BUSINESS PROFILE ERROR: $e");
     }
   }
 
@@ -1270,7 +1280,25 @@ class UdateProfileController extends GetxController {
     });
   }
 
-  void addQualification() async {
+  void _showEducationSnackBar(
+    BuildContext context,
+    String message, {
+    required bool isSuccess,
+  }) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return;
+
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isSuccess ? Colors.green : Colors.pink,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  Future<void> addQualification(BuildContext context) async {
     CheckUserData2? userData = await SessionManager.getSession();
     print('User ID: ${userData?.memberId}');
     memberId.value = userData!.memberId.toString();
@@ -1307,56 +1335,39 @@ class UdateProfileController extends GetxController {
 
       print("Sending qualification data: $map");
 
-      api.addQualification(map).then((_value) async {
-        addloading.value = false;
-        if (_value['status'] == true) {
-          Get.snackbar(
-            'Success',
-            "Add Education Successfully",
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-            duration: Duration(seconds: 3),
-          );
-          getUserProfile();
-          Navigator.of(Get.context!).pop();
-        } else {
-          Get.snackbar(
-            'Error',
-            _value['message'] ?? "Failed to add qualification",
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.pink,
-            colorText: Colors.white,
-            duration: Duration(seconds: 3),
-          );
+      final dynamic response = await api.addQualification(map);
+      addloading.value = false;
+
+      if (response['status'] == true) {
+        await getUserProfile();
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
         }
-      }).onError((error, strack) async {
-        addloading.value = false;
-        print("Error: $error");
-        Get.snackbar(
-          'Error',
-          "Something went wrong: ${error.toString()}",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.pink,
-          colorText: Colors.white,
-          duration: Duration(seconds: 3),
+        _showEducationSnackBar(
+          context,
+          response['message']?.toString() ?? "Add Education Successfully",
+          isSuccess: true,
         );
-      });
+      } else {
+        _showEducationSnackBar(
+          context,
+          response['message']?.toString() ?? "Failed to add qualification",
+          isSuccess: false,
+        );
+      }
     } catch (e) {
       addloading.value = false;
       print('Error: $e');
-      Get.snackbar(
-        'Error',
+      _showEducationSnackBar(
+        context,
         "An unexpected error occurred: $e",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.pink,
-        colorText: Colors.white,
-        duration: Duration(seconds: 3),
+        isSuccess: false,
       );
     }
   }
 
-  void updateQualification(String member_qualification_id) async {
+  Future<void> updateQualification(
+      String member_qualification_id, BuildContext context) async {
     CheckUserData2? userData = await SessionManager.getSession();
     print('User ID: ${userData?.memberId}');
     print('User Name: ${userData?.mobile}');
@@ -1378,38 +1389,36 @@ class UdateProfileController extends GetxController {
       };
 
       print("fffh" + map.toString());
-      api.updateQualification(map).then((_value) async {
-        addloading.value = false;
-        if (_value['status'] == true) {
-          Get.snackbar(
-            'Success',
-            "Update Education Successfully",
-            snackPosition: SnackPosition.TOP,
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-            duration: Duration(seconds: 3),
-          );
-          getUserProfile();
-          Navigator.of(context!).pop();
+      final dynamic response = await api.updateQualification(map);
+      addloading.value = false;
+
+      if (response['status'] == true) {
+        await getUserProfile();
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
         }
-      }).onError((error, strack) async {
-        addloading.value = false;
-        print("fvvf" + error.toString());
-        Get.snackbar(
-          'Error',
-          "Some thing went wrong ",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.pink,
-          colorText: Colors.white,
-          duration: Duration(seconds: 3),
+        _showEducationSnackBar(
+          context,
+          response['message']?.toString() ?? "Update Education Successfully",
+          isSuccess: true,
         );
-      });
+      } else {
+        _showEducationSnackBar(
+          context,
+          response['message']?.toString() ?? "Failed to update qualification",
+          isSuccess: false,
+        );
+      }
     } catch (e) {
       addloading.value = false;
       print('Error: $e');
+      _showEducationSnackBar(
+        context,
+        "Something went wrong: ${e.toString()}",
+        isSuccess: false,
+      );
     } finally {}
   }
-
   void checkReviewApproval() {
     if (memberStatusId.value == "1" &&
         membershipApprovalStatusId.value == "6") {

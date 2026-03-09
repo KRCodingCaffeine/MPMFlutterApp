@@ -18,11 +18,13 @@ import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.d
 class BusinessInformationPage extends StatefulWidget {
   final String? successMessage;
   final String? failureMessage;
+  final bool autoOpenAddSheet;
 
   const BusinessInformationPage({
     Key? key,
     this.successMessage,
     this.failureMessage,
+    this.autoOpenAddSheet = false,
   }) : super(key: key);
 
   @override
@@ -35,6 +37,31 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
   UdateProfileController controller = Get.put(UdateProfileController());
   final updateOccupationRepo = UpdateOccupationRepository();
   final GlobalKey<FormState> _occupationFormKey = GlobalKey<FormState>();
+  bool _didAutoOpenSheet = false;
+
+  void _showOccupationSnackBar(String message, {required bool isSuccess}) {
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return;
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isSuccess ? Colors.green : Colors.red,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !widget.autoOpenAddSheet || _didAutoOpenSheet) return;
+      _didAutoOpenSheet = true;
+      _showAddModalSheet(context);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -302,7 +329,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                         return;
                       }
 
-                      await controller.addOccupation();
+                      await controller.addOccupation(context);
                       if (mounted) Navigator.pop(context);
                     },
                     style: ElevatedButton.styleFrom(
@@ -478,13 +505,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
 
   Future<void> _updateOccupation(Occupation oldData) async {
     if (controller.selectedOccupation.value.isEmpty) {
-      Get.snackbar(
-        "Error",
-        "Please select Level 1",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _showOccupationSnackBar("Please select Level 1", isSuccess: false);
       return;
     }
 
@@ -508,41 +529,27 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
         "updated_by": oldData.memberId ?? "",
       };
 
-      print("📤 UPDATE PAYLOAD: $payload");
+      print("UPDATE PAYLOAD: $payload");
 
       final res = await updateOccupationRepo.updateOccupation(payload);
 
       if (res == true) {
         final updateCtrl = Get.find<UdateProfileController>();
         await updateCtrl.getUserProfile();
-
-        Get.snackbar(
-          "Success",
+        _showOccupationSnackBar(
           "Occupation updated successfully!",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
+          isSuccess: true,
         );
-
-        if (Navigator.canPop(context)) {
-          Navigator.pop(context);
-        }
       } else {
-        Get.snackbar(
-          "Error",
+        _showOccupationSnackBar(
           "Failed to update occupation!",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
+          isSuccess: false,
         );
       }
     } catch (e) {
-      Get.snackbar(
-        "Error",
+      _showOccupationSnackBar(
         "Unexpected error: $e",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        isSuccess: false,
       );
     }
 
@@ -1020,3 +1027,5 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
     );
   }
 }
+
+

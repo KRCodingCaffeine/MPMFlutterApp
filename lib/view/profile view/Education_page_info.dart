@@ -9,7 +9,12 @@ import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
 class EducationPageInfo extends StatefulWidget {
-  const EducationPageInfo({Key? key}) : super(key: key);
+  final bool autoOpenAddSheet;
+
+  const EducationPageInfo({
+    Key? key,
+    this.autoOpenAddSheet = false,
+  }) : super(key: key);
 
   @override
   _EducationPageInfoState createState() => _EducationPageInfoState();
@@ -18,6 +23,19 @@ class EducationPageInfo extends StatefulWidget {
 class _EducationPageInfoState extends State<EducationPageInfo> {
   // Variables to store information
   UdateProfileController regiController = Get.put(UdateProfileController());
+  bool _didAutoOpenSheet = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !widget.autoOpenAddSheet || _didAutoOpenSheet) {
+        return;
+      }
+      _didAutoOpenSheet = true;
+      _showEditModalSheet(context, "1");
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +90,7 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
     );
   }
 
-  Future<void> _showEditModalSheet(BuildContext context, String type) async {
+  Future<void> _showEditModalSheet(BuildContext pageContext, String type) async {
     regiController.selectQlification.value = "";
     regiController.selectQualicationMain.value = "";
     regiController.selectQualicationCat.value = "";
@@ -82,16 +100,16 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
     regiController.isQualificationDetailVisible.value = false;
 
     showModalBottomSheet(
-      context: context,
+      context: pageContext,
       backgroundColor: Colors.white,
       isScrollControlled: true,
-      builder: (context) {
+      builder: (modalContext) {
         return Padding(
           padding: EdgeInsets.only(
             left: 16.0,
             right: 16.0,
             top: 16.0,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16.0,
+            bottom: MediaQuery.of(modalContext).viewInsets.bottom + 16.0,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -101,7 +119,7 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () => Navigator.pop(modalContext),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: ColorHelperClass.getColorFromHex(
                           ColorResources.red_color),
@@ -114,7 +132,7 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                   ),
                   ElevatedButton(
                     onPressed: () async {
-                      regiController.addQualification();
+                      await regiController.addQualification(pageContext);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ColorHelperClass.getColorFromHex(
@@ -375,7 +393,7 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
   }
 
   Future<void> _showUpdateModalSheet(
-      BuildContext context, Qualification qualification) async {
+      BuildContext pageContext, Qualification qualification) async {
 
     print("Loading qualification data: ${qualification.toJson()}");
 
@@ -436,10 +454,10 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
     });
 
     showModalBottomSheet(
-      context: context,
+      context: pageContext,
       backgroundColor: Colors.white,
       isScrollControlled: true,
-      builder: (context) {
+      builder: (modalContext) {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return SingleChildScrollView(
@@ -448,7 +466,7 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                   left: 16.0,
                   right: 16.0,
                   top: 16.0,
-                  bottom: MediaQuery.of(context).viewInsets.bottom + 16.0,
+                  bottom: MediaQuery.of(modalContext).viewInsets.bottom + 16.0,
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -459,7 +477,7 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
+                          onPressed: () => Navigator.pop(modalContext),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: ColorHelperClass.getColorFromHex(
                                 ColorResources.red_color),
@@ -472,8 +490,9 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                         ),
                         ElevatedButton(
                           onPressed: () async {
-                            regiController.updateQualification(
+                            await regiController.updateQualification(
                               qualification.memberQualificationId.toString(),
+                              pageContext,
                             );
                           },
                           style: ElevatedButton.styleFrom(
