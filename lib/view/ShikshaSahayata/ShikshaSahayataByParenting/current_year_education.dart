@@ -625,7 +625,7 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
     try {
       final response = await _updateRepo.updateRequestedLoanEducation({
         "shiksha_applicant_requested_loan_education_id": educationId,
-        "standard" : standard,
+        "standard": standard,
         "school_college_name": school,
         "course_duration": courseDuration,
         "admission_fees": admissionFees,
@@ -784,7 +784,7 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
                                         standard: yearCtrl.text.trim(),
                                         school: schoolCtrl.text.trim(),
                                         courseDuration:
-                                        courseDurationCtrl.text.trim(),
+                                            courseDurationCtrl.text.trim(),
                                         admissionFees: admissionFeesCtrl.text,
                                         yearlyFees: yearlyFeesCtrl.text,
                                         examFees: examFeesCtrl.text,
@@ -1170,37 +1170,46 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
     showModalBottomSheet(
       context: context,
       builder: (_) {
-        return Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
-              title: const Text("Take a Picture"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                    await _picker.pickImage(source: ImageSource.camera);
-                if (picked != null) {
-                  setModalState(() {
-                    _admissionDocument = File(picked.path);
-                  });
-                }
-              },
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewPadding.bottom + 20,
             ),
-            ListTile(
-              leading: const Icon(Icons.image, color: Colors.redAccent),
-              title: const Text("Choose from Gallery"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                    await _picker.pickImage(source: ImageSource.gallery);
-                if (picked != null) {
-                  setModalState(() {
-                    _admissionDocument = File(picked.path);
-                  });
-                }
-              },
+            child: Wrap(
+              children: [
+                ListTile(
+                  leading:
+                      const Icon(Icons.camera_alt, color: Colors.redAccent),
+                  title: const Text("Take a Picture"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.camera);
+                    if (picked != null) {
+                      setModalState(() {
+                        _admissionDocument = File(picked.path);
+                      });
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.image, color: Colors.redAccent),
+                  title: const Text("Choose from Gallery"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.gallery);
+                    if (picked != null) {
+                      setModalState(() {
+                        _admissionDocument = File(picked.path);
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 30),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
@@ -1211,39 +1220,49 @@ class _CurrentYearEducationViewState extends State<CurrentYearEducationView> {
     StateSetter setModalState,
   ) {
     showModalBottomSheet(
+      backgroundColor: Colors.white,
       context: context,
       builder: (_) {
-        return Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
-              title: const Text("Take a Picture"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                    await _picker.pickImage(source: ImageSource.camera);
-                if (picked != null) {
-                  setModalState(() {
-                    _bonafideDocument = File(picked.path);
-                  });
-                }
-              },
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewPadding.bottom + 20,
             ),
-            ListTile(
-              leading: const Icon(Icons.image, color: Colors.redAccent),
-              title: const Text("Choose from Gallery"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                    await _picker.pickImage(source: ImageSource.gallery);
-                if (picked != null) {
-                  setModalState(() {
-                    _bonafideDocument = File(picked.path);
-                  });
-                }
-              },
+            child: Wrap(
+              children: [
+                ListTile(
+                  leading:
+                      const Icon(Icons.camera_alt, color: Colors.redAccent),
+                  title: const Text("Take a Picture"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.camera);
+                    if (picked != null) {
+                      setModalState(() {
+                        _bonafideDocument = File(picked.path);
+                      });
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.image, color: Colors.redAccent),
+                  title: const Text("Choose from Gallery"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.gallery);
+                    if (picked != null) {
+                      setModalState(() {
+                        _bonafideDocument = File(picked.path);
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 30),
+              ],
             ),
-          ],
+          ),
         );
       },
     );

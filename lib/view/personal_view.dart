@@ -220,14 +220,7 @@ class _PersonalViewState extends State<PersonalView> {
                           showErrorSnackbar("Select Marital Status");
                           return;
                         }
-                        if (regiController.MaritalAnnivery.value == true) {
-                          if (regiController
-                                  .marriagedateController.value.text ==
-                              '') {
-                            showErrorSnackbar("Select Marriage Date");
-                            return;
-                          }
-                        } else {
+                        else {
                           regiController.marriagedateController.value.text = "";
                         }
 
