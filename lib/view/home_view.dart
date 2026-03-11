@@ -50,6 +50,11 @@ class _HomeViewState extends State<HomeView>
   final double _cardWidth = 360.0;
   static const double _gridItemWidth = 95 + 12; // mainAxisExtent + mainAxisSpacing
   static const double _gridPaddingHorizontal = 14;
+
+  /// True when running on tablet/iPad (shortest side >= 600).
+  static bool _isTablet(BuildContext context) {
+    return MediaQuery.sizeOf(context).shortestSide >= 600;
+  }
   final double _cardSpacing = 16.0;
   late Timer _timer;
   double screenWidth = 0.0;
@@ -93,6 +98,7 @@ class _HomeViewState extends State<HomeView>
   }
 
   /// Returns unread notification count for a grid menu label (reactive via controller observables).
+  /// Badge shown only for: Events, Trips, Discounts & Offers, Saraswani.
   int _getUnreadCountForLabel(String label) {
     switch (label) {
       case 'Events':
@@ -103,14 +109,21 @@ class _HomeViewState extends State<HomeView>
         return notificationController.unreadSaraswaniCount.value;
       case 'Trips':
         return notificationController.unreadTripsCount.value;
-      case 'Networking':
-      case 'Shiksha Sahayata':
-      case 'My Profile':
-      case 'Make New Member':
-      case 'QR Scanner':
-        return notificationController.unreadDefaultCount.value;
       default:
         return 0;
+    }
+  }
+
+  /// True if this label can show a notification badge (Obx must subscribe to observables).
+  bool _labelCanShowBadge(String label) {
+    switch (label) {
+      case 'Events':
+      case 'Discounts & Offers':
+      case 'Saraswani':
+      case 'Trips':
+        return true;
+      default:
+        return false;
     }
   }
 
@@ -241,6 +254,8 @@ class _HomeViewState extends State<HomeView>
   @override
   Widget build(BuildContext context) {
     screenWidth = MediaQuery.of(context).size.width * 0.8;
+    // +32 for always-reserved arrow row so grid height stays constant (prevents text disturbance)
+    final gridHeight = _isTablet(context) ? 312.0 : 232.0;
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: Column(
@@ -312,59 +327,61 @@ class _HomeViewState extends State<HomeView>
                             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
                           child: SizedBox(
-                            height: 190,
+                            height: gridHeight,
                             child: Column(
                               children: [
-                                // Arrows row: only the arrow buttons receive taps; middle passes through
-                                if (_showLeftArrow || _showRightArrow)
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                                    child: Row(
-                                      children: [
-                                        if (_showLeftArrow)
-                                          SizedBox(
-                                            width: 26,
-                                            height: 26,
-                                            child: _buildSmallTopArrow(
-                                              icon: Icons.keyboard_arrow_left,
-                                              onTap: () {
-                                                _gridScrollController.animateTo(
-                                                  _gridScrollController.offset - 200,
-                                                  duration: const Duration(milliseconds: 400),
-                                                  curve: Curves.easeInOut,
-                                                );
-                                              },
-                                            ),
-                                          )
-                                        else
-                                          const SizedBox(width: 26, height: 26),
-                                        // Middle area: ignore pointer so taps pass through to grid below
-                                        Expanded(
-                                          child: IgnorePointer(
-                                            child: const SizedBox(height: 26),
+                                // Arrows row: always reserve space so grid height stays constant (prevents text disturbance)
+                                SizedBox(
+                                  height: 32,
+                                  child: (_showLeftArrow || _showRightArrow)
+                                      ? Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                                          child: Row(
+                                            children: [
+                                              if (_showLeftArrow)
+                                                SizedBox(
+                                                  width: 26,
+                                                  height: 26,
+                                                  child: _buildSmallTopArrow(
+                                                    icon: Icons.keyboard_arrow_left,
+                                                    onTap: () {
+                                                      _gridScrollController.animateTo(
+                                                        _gridScrollController.offset - 200,
+                                                        duration: const Duration(milliseconds: 400),
+                                                        curve: Curves.easeInOut,
+                                                      );
+                                                    },
+                                                  ),
+                                                )
+                                              else
+                                                const SizedBox(width: 26, height: 26),
+                                              Expanded(
+                                                child: IgnorePointer(
+                                                  child: const SizedBox(height: 26),
+                                                ),
+                                              ),
+                                              if (_showRightArrow)
+                                                SizedBox(
+                                                  width: 26,
+                                                  height: 26,
+                                                  child: _buildSmallTopArrow(
+                                                    icon: Icons.keyboard_arrow_right,
+                                                    onTap: () {
+                                                      _gridScrollController.animateTo(
+                                                        _gridScrollController.offset + 200,
+                                                        duration: const Duration(milliseconds: 400),
+                                                        curve: Curves.easeInOut,
+                                                      );
+                                                    },
+                                                  ),
+                                                )
+                                              else
+                                                const SizedBox(width: 26, height: 26),
+                                            ],
                                           ),
-                                        ),
-                                        if (_showRightArrow)
-                                          SizedBox(
-                                            width: 26,
-                                            height: 26,
-                                            child: _buildSmallTopArrow(
-                                              icon: Icons.keyboard_arrow_right,
-                                              onTap: () {
-                                                _gridScrollController.animateTo(
-                                                  _gridScrollController.offset + 200,
-                                                  duration: const Duration(milliseconds: 400),
-                                                  curve: Curves.easeInOut,
-                                                );
-                                              },
-                                            ),
-                                          )
-                                        else
-                                          const SizedBox(width: 26, height: 26),
-                                      ],
-                                    ),
-                                  ),
-                                const SizedBox(height: 6),
+                                        )
+                                      : const SizedBox.shrink(),
+                                ),
                                 Expanded(
                                   key: _gridTapKey,
                                   child: Listener(
@@ -404,6 +421,7 @@ class _HomeViewState extends State<HomeView>
                                     child: NotificationListener<
                                         ScrollEndNotification>(
                                       onNotification: (notification) {
+                                        if (!_gridScrollController.hasClients) return false;
                                         final double itemWidth = 95 + 12;
                                         final double currentOffset =
                                             _gridScrollController.offset;
@@ -413,12 +431,15 @@ class _HomeViewState extends State<HomeView>
                                                 .roundToDouble();
                                         final double target = page * itemWidth;
 
-                                        _gridScrollController.animateTo(
-                                          target,
-                                          duration:
-                                              const Duration(milliseconds: 300),
-                                          curve: Curves.easeOut,
-                                        );
+                                        // Only animate if we need to snap (prevents stack overflow from re-triggering)
+                                        if ((target - currentOffset).abs() > 2) {
+                                          _gridScrollController.animateTo(
+                                            target,
+                                            duration:
+                                                const Duration(milliseconds: 300),
+                                            curve: Curves.easeOut,
+                                          );
+                                        }
 
                                         return true;
                                       },
@@ -449,6 +470,14 @@ class _HomeViewState extends State<HomeView>
                                       itemBuilder: (context, index) {
                                         final item = gridItems[index];
                                         final screenWidth = MediaQuery.of(context).size.width;
+                                        final isTablet = _isTablet(context);
+                                        // Clamp sizes on tablet to prevent overflow (BOTTOM OVERFLOWED)
+                                        final iconSize = isTablet
+                                            ? 36.0
+                                            : (screenWidth * 0.06).clamp(24.0, 36.0);
+                                        final fontSize = isTablet
+                                            ? 12.0
+                                            : (screenWidth * 0.03).clamp(10.0, 14.0);
                                         final label = item['label'] as String;
 
                                         return Material(
@@ -470,57 +499,75 @@ class _HomeViewState extends State<HomeView>
                                                   ),
                                                 ],
                                               ),
+                                              clipBehavior: Clip.none,
                                               child: Column(
                                                 mainAxisAlignment: MainAxisAlignment.center,
+                                                mainAxisSize: MainAxisSize.min,
                                                 children: [
-                                                  Obx(() {
-                                                    final count = _getUnreadCountForLabel(label);
-                                                    return Stack(
-                                                      clipBehavior: Clip.none,
-                                                      alignment: Alignment.center,
-                                                      children: [
-                                                        SvgPicture.asset(
-                                                          item['icon'],
-                                                          height: screenWidth * 0.06,
-                                                          width: screenWidth * 0.06,
-                                                        ),
-                                                        if (count > 0)
-                                                          Positioned(
-                                                            right: -4,
-                                                            top: -4,
-                                                            child: Container(
-                                                              padding: const EdgeInsets.symmetric(
-                                                                horizontal: 4,
-                                                                vertical: 2,
-                                                              ),
-                                                              decoration: BoxDecoration(
-                                                                color: Colors.red,
-                                                                borderRadius: BorderRadius.circular(10),
-                                                              ),
-                                                              constraints: const BoxConstraints(
-                                                                minWidth: 16,
-                                                                minHeight: 16,
-                                                              ),
-                                                              child: Center(
-                                                                child: Text(
-                                                                  count > 99 ? '99+' : '$count',
-                                                                  style: const TextStyle(
-                                                                    color: Colors.white,
-                                                                    fontSize: 9,
-                                                                    fontWeight: FontWeight.bold,
-                                                                  ),
+                                                  SizedBox(
+                                                    width: iconSize + 20,
+                                                    height: iconSize + 12,
+                                                    child: _labelCanShowBadge(label)
+                                                        ? Obx(() {
+                                                            final count = _getUnreadCountForLabel(label);
+                                                            return Stack(
+                                                              clipBehavior: Clip.none,
+                                                              alignment: Alignment.center,
+                                                              children: [
+                                                                SvgPicture.asset(
+                                                                  item['icon'],
+                                                                  height: iconSize,
+                                                                  width: iconSize,
                                                                 ),
+                                                                if (count > 0)
+                                                                  Positioned(
+                                                                    right: -4,
+                                                                    top: -4,
+                                                                    child: Container(
+                                                                      padding: const EdgeInsets.symmetric(
+                                                                        horizontal: 4,
+                                                                        vertical: 2,
+                                                                      ),
+                                                                      decoration: BoxDecoration(
+                                                                        color: Colors.red,
+                                                                        borderRadius: BorderRadius.circular(10),
+                                                                      ),
+                                                                      constraints: const BoxConstraints(
+                                                                        minWidth: 16,
+                                                                        minHeight: 16,
+                                                                      ),
+                                                                      child: Center(
+                                                                        child: Text(
+                                                                          count > 99 ? '99+' : '$count',
+                                                                          style: const TextStyle(
+                                                                            color: Colors.white,
+                                                                            fontSize: 9,
+                                                                            fontWeight: FontWeight.bold,
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                              ],
+                                                            );
+                                                          })
+                                                        : Stack(
+                                                            clipBehavior: Clip.none,
+                                                            alignment: Alignment.center,
+                                                            children: [
+                                                              SvgPicture.asset(
+                                                                item['icon'],
+                                                                height: iconSize,
+                                                                width: iconSize,
                                                               ),
-                                                            ),
+                                                            ],
                                                           ),
-                                                      ],
-                                                    );
-                                                  }),
+                                                  ),
                                                   const SizedBox(height: 6),
                                                   Text(
                                                     label,
                                                     style: TextStyle(
-                                                      fontSize: screenWidth * 0.03,
+                                                      fontSize: fontSize,
                                                       fontWeight: FontWeight.w600,
                                                       color: ColorHelperClass.getColorFromHex(
                                                           ColorResources.red_color),
@@ -540,11 +587,11 @@ class _HomeViewState extends State<HomeView>
                                 ),
                               ),
                             ),
-                            ],
-                          ),
+                          ],
                         ),
                       ),
                     ),
+                  ),
 
                       // Banner card
                       Obx(() {
@@ -602,8 +649,12 @@ class _HomeViewState extends State<HomeView>
           // Fixed advertisement section at bottom
           Container(
             color: Colors.grey[100],
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).padding.bottom,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 _buildAdvertisementTitle(),
                 _buildDashboardEventsList(),
@@ -1183,7 +1234,9 @@ class _HomeViewState extends State<HomeView>
   Widget _buildDashboardEventsList() {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
-    final listHeight = screenHeight * 0.20; // 18% of screen height
+    final isTablet = _isTablet(context);
+    // Use larger height on tablet to prevent BOTTOM OVERFLOWED on advertisement cards
+    final listHeight = isTablet ? screenHeight * 0.25 : screenHeight * 0.20;
     final horizontalPadding = screenWidth * 0.04; // 4% of screen width
 
     if (dashboardEvents.isEmpty) {
@@ -1220,7 +1273,7 @@ class _HomeViewState extends State<HomeView>
                       ),
                     );
                   },
-                  child: _buildEventCard(event),
+                  child: _buildEventCard(event, listHeight),
                 );
               },
             )
@@ -1242,18 +1295,28 @@ class _HomeViewState extends State<HomeView>
                     ),
                   );
                 },
-                child: _buildEventCard(dashboardEvents.first),
+                child: _buildEventCard(dashboardEvents.first, listHeight),
               ),
             ),
     );
   }
 
-  Widget _buildEventCard(DashboardEventData event) {
+  Widget _buildEventCard(DashboardEventData event, double listHeight) {
     final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = _isTablet(context);
     final cardWidth = screenWidth * 0.9; // 85% of screen width
-    final imageSize = screenWidth * 0.27; // 20% of screen width
-    final fontSize = screenWidth * 0.047; // 3.5% of screen width
-    final smallFontSize = screenWidth * 0.03; // 3% of screen width+
+    // Constrain image to fit within listHeight on tablet to prevent overflow
+    final rawImageSize = screenWidth * 0.27;
+    final imageSize = isTablet
+        ? (rawImageSize > listHeight * 0.85 ? listHeight * 0.85 : rawImageSize)
+        : rawImageSize;
+    // Clamp font sizes on tablet to prevent BOTTOM OVERFLOWED
+    final fontSize = isTablet
+        ? 16.0
+        : (screenWidth * 0.047).clamp(14.0, 18.0);
+    final smallFontSize = isTablet
+        ? 12.0
+        : (screenWidth * 0.03).clamp(10.0, 14.0);
 
     Widget? dateTag;
     if (event.date != null && event.date!.isNotEmpty) {
@@ -1270,6 +1333,7 @@ class _HomeViewState extends State<HomeView>
 
     return Container(
       width: cardWidth,
+      height: listHeight,
       margin: EdgeInsets.only(right: screenWidth * 0.04),
       padding: EdgeInsets.all(screenWidth * 0.03),
       decoration: BoxDecoration(
@@ -1283,8 +1347,9 @@ class _HomeViewState extends State<HomeView>
           ),
         ],
       ),
+      clipBehavior: Clip.antiAlias,
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
@@ -1308,6 +1373,7 @@ class _HomeViewState extends State<HomeView>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   event.title ?? '',
