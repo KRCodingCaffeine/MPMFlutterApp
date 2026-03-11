@@ -27,7 +27,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
   int recruiterTab = 0;
   List<BusinessOccupationProfileData> businessProfiles = [];
   final UdateProfileController profileController =
-  Get.find<UdateProfileController>();
+      Get.find<UdateProfileController>();
   final NewMemberController regiController = Get.put(NewMemberController());
 
   String? selectedBusinessId;
@@ -37,13 +37,19 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
   final TextEditingController titleController = TextEditingController();
   final TextEditingController companyController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
-  final TextEditingController salaryController = TextEditingController();
+  final TextEditingController salaryMinController = TextEditingController();
+  final TextEditingController salaryMaxController = TextEditingController();
+  String salaryVisible = "1";
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController qualificationController = TextEditingController();
-  final TextEditingController experienceController = TextEditingController();
+  final TextEditingController experienceMinController = TextEditingController();
+  final TextEditingController experienceMaxController = TextEditingController();
   final TextEditingController skillsController = TextEditingController();
   final TextEditingController vacancyController = TextEditingController();
   final TextEditingController lastDateController = TextEditingController();
+  String selectedOccupationId = "";
+  String selectedProfessionId = "";
+  String selectedSpecializationId = "";
   String selectedJobType = 'Full-time';
   String selectedWorkMode = 'On-site';
   String selectedCategoryForPost = 'IT';
@@ -122,9 +128,9 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       "occupation": "Flutter Developer",
       "job": "Flutter Developer",
       "profile_summary":
-      "Passionate Flutter developer with 3 years of experience building scalable mobile applications with clean UI and optimized performance.",
+          "Passionate Flutter developer with 3 years of experience building scalable mobile applications with clean UI and optimized performance.",
       "resume":
-      "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+          "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
       "status": "pending",
       "isShortlisted": false,
     },
@@ -147,9 +153,9 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       "occupation": "UI/UX Designer",
       "job": "UI Designer",
       "profile_summary":
-      "Creative UI/UX designer with strong user research and wireframing skills, focused on delivering intuitive and visually appealing digital experiences.",
+          "Creative UI/UX designer with strong user research and wireframing skills, focused on delivering intuitive and visually appealing digital experiences.",
       "resume":
-      "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+          "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
       "status": "pending",
       "isShortlisted": false,
     },
@@ -172,9 +178,9 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       "occupation": "Account Executive",
       "job": "Senior Accountant",
       "profile_summary":
-      "Detail-oriented accounting professional with strong knowledge of financial reporting, taxation basics, and bookkeeping practices.",
+          "Detail-oriented accounting professional with strong knowledge of financial reporting, taxation basics, and bookkeeping practices.",
       "resume":
-      "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+          "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
       "status": "pending",
       "isShortlisted": false,
     },
@@ -197,9 +203,9 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       "occupation": "Senior Software Engineer",
       "job": "Flutter Developer",
       "profile_summary":
-      "Senior software engineer with 5 years of experience in mobile app architecture, API integration, and performance optimization.",
+          "Senior software engineer with 5 years of experience in mobile app architecture, API integration, and performance optimization.",
       "resume":
-      "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+          "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
       "status": "pending",
       "isShortlisted": false,
     },
@@ -245,44 +251,41 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Text(
           "Offer Jobs",
           style: TextStyle(
             color: Colors.white,
-            fontSize: MediaQuery
-                .of(context)
-                .size
-                .width * 0.045,
+            fontSize: MediaQuery.of(context).size.width * 0.045,
             fontWeight: FontWeight.w500,
           ),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         leading: selectedJobTitleForMembers != null
             ? IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            setState(() {
-              selectedJobTitleForMembers = null;
-            });
-          },
-        )
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  setState(() {
+                    selectedJobTitleForMembers = null;
+                  });
+                },
+              )
             : null,
       ),
       body: recruiterTab == 0
           ? (selectedJobTitleForMembers == null
-          ? _buildPostedJobs()
-          : _buildAppliedMembersForJob(selectedJobTitleForMembers!))
+              ? _buildPostedJobs()
+              : _buildAppliedMembersForJob(selectedJobTitleForMembers!))
           : _buildPostJobForm(),
       floatingActionButton: recruiterTab == 1
           ? FloatingActionButton(
-        backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.red_color),
-        onPressed: () {
-          _openPostJobBottomSheet();
-        },
-        child: const Icon(Icons.add, color: Colors.white),
-      )
+              backgroundColor:
+                  ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              onPressed: () {
+                _openPostJobBottomSheet();
+              },
+              child: const Icon(Icons.add, color: Colors.white),
+            )
           : null,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: recruiterTab,
@@ -292,7 +295,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
           });
         },
         selectedItemColor:
-        ColorHelperClass.getColorFromHex(ColorResources.red_color),
+            ColorHelperClass.getColorFromHex(ColorResources.red_color),
         items: const [
           BottomNavigationBarItem(
               icon: Icon(Icons.business_center), label: "Posted Jobs"),
@@ -304,10 +307,10 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
 
   Widget _buildAppliedMembersForJob(String jobTitle) {
     final filteredMembers =
-    appliedMembers.where((member) => member["job"] == jobTitle).toList();
+        appliedMembers.where((member) => member["job"] == jobTitle).toList();
 
     bool hasShortlisted =
-    filteredMembers.any((member) => member["isShortlisted"] == true);
+        filteredMembers.any((member) => member["isShortlisted"] == true);
 
     return Column(
       children: [
@@ -365,13 +368,13 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                             radius: 32,
                             backgroundColor: Colors.grey.shade200,
                             backgroundImage: member["image"] != null &&
-                                member["image"].toString().isNotEmpty
+                                    member["image"].toString().isNotEmpty
                                 ? NetworkImage(member["image"])
                                 : null,
                             child: member["image"] == null ||
-                                member["image"].toString().isEmpty
+                                    member["image"].toString().isEmpty
                                 ? const Icon(Icons.person,
-                                size: 30, color: Colors.grey)
+                                    size: 30, color: Colors.grey)
                                 : null,
                           ),
 
@@ -401,12 +404,12 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                                         color: member["status"] == "selected"
                                             ? Colors.green.withOpacity(0.1)
                                             : member["status"] == "shortlisted"
-                                            ? Colors.orange.withOpacity(0.1)
-                                            : member["status"] == "rejected"
-                                            ? Colors.red
-                                            .withOpacity(0.1)
-                                            : Colors.grey
-                                            .withOpacity(0.1),
+                                                ? Colors.orange.withOpacity(0.1)
+                                                : member["status"] == "rejected"
+                                                    ? Colors.red
+                                                        .withOpacity(0.1)
+                                                    : Colors.grey
+                                                        .withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(20),
                                       ),
                                       child: Text(
@@ -419,12 +422,12 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                                           color: member["status"] == "selected"
                                               ? Colors.green
                                               : member["status"] ==
-                                              "shortlisted"
-                                              ? Colors.orange
-                                              : member["status"] ==
-                                              "rejected"
-                                              ? Colors.red
-                                              : Colors.grey,
+                                                      "shortlisted"
+                                                  ? Colors.orange
+                                                  : member["status"] ==
+                                                          "rejected"
+                                                      ? Colors.red
+                                                      : Colors.grey,
                                         ),
                                       ),
                                     )
@@ -550,8 +553,8 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
 
         int shortlistedCount = appliedMembers
             .where((member) =>
-        member["job"] == job["title"] &&
-            member["isShortlisted"] == true)
+                member["job"] == job["title"] &&
+                member["isShortlisted"] == true)
             .length;
 
         return GestureDetector(
@@ -645,18 +648,18 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       ),
       builder: (context) {
         int experienceYears = int.tryParse(
-          member["experience"]
-              ?.toString()
-              .replaceAll(RegExp(r'[^0-9]'), '') ??
-              "0",
-        ) ??
+              member["experience"]
+                      ?.toString()
+                      .replaceAll(RegExp(r'[^0-9]'), '') ??
+                  "0",
+            ) ??
             0;
 
         String mobile = member["mobile"] ?? "";
         String whatsapp = member["whatsapp"] ?? "";
 
         String contactValue =
-        mobile == whatsapp ? mobile : "$mobile / $whatsapp";
+            mobile == whatsapp ? mobile : "$mobile / $whatsapp";
 
         return SafeArea(
           child: FractionallySizedBox(
@@ -666,7 +669,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
                   /// 🔹 HEADER
                   Row(
                     children: [
@@ -690,7 +692,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                   /// 🔹 ACTION BUTTONS
                   Row(
                     children: [
-
                       /// SHORTLIST
                       Expanded(
                         child: OutlinedButton(
@@ -734,7 +735,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content:
-                                Text("${member["name"]} has been rejected"),
+                                    Text("${member["name"]} has been rejected"),
                                 backgroundColor: Colors.red,
                               ),
                             );
@@ -763,7 +764,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content:
-                                Text("${member["name"]} has been selected"),
+                                    Text("${member["name"]} has been selected"),
                                 backgroundColor: Colors.green,
                               ),
                             );
@@ -787,7 +788,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-
                           /// PERSONAL DETAILS
                           _sectionTitle("Personal Details"),
                           const SizedBox(height: 12),
@@ -818,12 +818,12 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                           const SizedBox(height: 12),
                           Text(
                             "${member["flat"] ?? ""}, "
-                                "${member["building"] ?? ""}, "
-                                "${member["area"] ?? ""},\n"
-                                "${member["city"] ?? ""}, "
-                                "${member["state"] ?? ""}, "
-                                "${member["country"] ?? ""} - "
-                                "${member["pincode"] ?? ""}",
+                            "${member["building"] ?? ""}, "
+                            "${member["area"] ?? ""},\n"
+                            "${member["city"] ?? ""}, "
+                            "${member["state"] ?? ""}, "
+                            "${member["country"] ?? ""} - "
+                            "${member["pincode"] ?? ""}",
                             style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
@@ -883,10 +883,10 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
   }
 
   void _showResumeDialog(
-      BuildContext context,
-      String filePath,
-      String candidateName,
-      ) {
+    BuildContext context,
+    String filePath,
+    String candidateName,
+  ) {
     bool isPdf = filePath.toLowerCase().endsWith(".pdf");
 
     showDialog(
@@ -914,12 +914,12 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                 width: double.infinity,
                 child: isPdf
                     ? const Center(
-                  child: Icon(
-                    Icons.picture_as_pdf,
-                    size: 80,
-                    color: Colors.red,
-                  ),
-                )
+                        child: Icon(
+                          Icons.picture_as_pdf,
+                          size: 80,
+                          color: Colors.red,
+                        ),
+                      )
                     : Image.network(filePath, fit: BoxFit.contain),
               ),
               const SizedBox(height: 20),
@@ -1043,10 +1043,12 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
     titleController.dispose();
     companyController.dispose();
     locationController.dispose();
-    salaryController.dispose();
+    salaryMinController.dispose();
+    salaryMaxController.dispose();
     descriptionController.dispose();
     qualificationController.dispose();
-    experienceController.dispose();
+    experienceMinController.dispose();
+    experienceMaxController.dispose();
     skillsController.dispose();
     vacancyController.dispose();
     lastDateController.dispose();
@@ -1084,10 +1086,10 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 padding:
-                const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
+                    const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -1142,8 +1144,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                         _showDeleteDialog(index);
                       }
                     },
-                    itemBuilder: (context) =>
-                    const [
+                    itemBuilder: (context) => const [
                       PopupMenuItem(
                         value: "edit",
                         child: Text(
@@ -1259,10 +1260,12 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       titleController.text = job["title"] ?? "";
       companyController.text = job["company"] ?? "";
       locationController.text = job["location"] ?? "";
-      salaryController.text = job["salary"] ?? "";
+      salaryMinController.text = job["salary_min"] ?? "";
+      salaryMaxController.text = job["salary_max"] ?? "";
       descriptionController.text = job["description"] ?? "";
       qualificationController.text = job["qualification"] ?? "";
-      experienceController.text = job["experience"] ?? "";
+      experienceMinController.text = job["experience_min"] ?? "";
+      experienceMaxController.text = job["experience_max"] ?? "";
       skillsController.text = job["skills"] ?? "";
       vacancyController.text = job["vacancy"] ?? "";
       lastDateController.text = job["lastDate"] ?? "";
@@ -1273,13 +1276,16 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       titleController.clear();
       companyController.clear();
       locationController.clear();
-      salaryController.clear();
+      salaryMinController.clear();
+      salaryMaxController.clear();
       descriptionController.clear();
       qualificationController.clear();
-      experienceController.clear();
+      experienceMaxController.clear();
+      experienceMinController.clear();
       skillsController.clear();
       vacancyController.clear();
       lastDateController.clear();
+
       /// ✅ Reset city so it shows "Select City"
       regiController.setSelectedCity("");
       selectedJobType = "Full-time";
@@ -1327,12 +1333,18 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                                 final jobData = {
                                   "title": titleController.text,
                                   "company": selectedBusinessName,
-                                  "member_business_occupation_profile_id": selectedBusinessId,
+                                  "member_business_occupation_profile_id":
+                                      selectedBusinessId,
                                   "location": locationController.text,
-                                  "salary": salaryController.text,
+                                  "salary_min": salaryMinController.text,
+                                  "salary_max": salaryMaxController.text,
+                                  "salary_visible": salaryVisible,
                                   "description": descriptionController.text,
                                   "qualification": qualificationController.text,
-                                  "experience": experienceController.text,
+                                  "experience_min":
+                                      experienceMinController.text,
+                                  "experience_max":
+                                      experienceMaxController.text,
                                   "skills": skillsController.text,
                                   "vacancy": vacancyController.text,
                                   "lastDate": lastDateController.text,
@@ -1396,16 +1408,39 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                               _buildTextField("Job Description",
                                   controller: descriptionController,
                                   maxLines: 3),
+                              _buildOccupationDropdown(),
                               _buildCityDropdown(
                                 label: "Location",
                               ),
-                              _buildTextField("Salary (e.g ₹5-8 LPA)",
-                                  controller: salaryController),
+                              _buildTextField(
+                                "Salary Minimum",
+                                controller: salaryMinController,
+                              ),
+                              _buildTextField(
+                                "Salary Maximum",
+                                controller: salaryMaxController,
+                              ),
+                              _buildDropdown(
+                                label: "Salary Visible",
+                                items: const ["Yes", "No"],
+                                selectedValue:
+                                    salaryVisible == "1" ? "Yes" : "No",
+                                onChanged: (val) {
+                                  modalSetState(() {
+                                    salaryVisible = val == "Yes" ? "1" : "0";
+                                  });
+                                },
+                              ),
                               _buildTextField("Minimum Qualification",
                                   controller: qualificationController),
                               _buildTextField(
-                                  "Experience Required (e.g 2-4 Years)",
-                                  controller: experienceController),
+                                "Minimum Experience (Years)",
+                                controller: experienceMinController,
+                              ),
+                              _buildTextField(
+                                "Maximum Experience (Years)",
+                                controller: experienceMaxController,
+                              ),
                               _buildTextField(
                                   "Required Skills (Comma separated)",
                                   controller: skillsController),
@@ -1584,38 +1619,40 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
         isEmpty: selectedValue.isEmpty,
         child: DropdownButtonHideUnderline(
           child: DropdownButton<String>(
-            dropdownColor: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            isExpanded: true,
-            value: selectedValue.isEmpty ? null : selectedValue,
-            items: businessProfiles.map((business) {
-              return DropdownMenuItem<String>(
-                value: business.memberBusinessOccupationProfileId,
-                child: Text(
-                  business.businessName ?? "",
-                  style: const TextStyle(fontSize: 14),
-                ),
-              );
-            }).toList(),
+              dropdownColor: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              isExpanded: true,
+              value: selectedValue.isEmpty ? null : selectedValue,
+              items: businessProfiles.map((business) {
+                return DropdownMenuItem<String>(
+                  value: business.memberBusinessOccupationProfileId,
+                  child: Text(
+                    business.businessName ?? "",
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                );
+              }).toList(),
               onChanged: (val) {
                 if (val != null) {
                   modalSetState(() {
                     selectedBusinessId = val;
 
                     final business = businessProfiles.firstWhere(
-                          (b) => b.memberBusinessOccupationProfileId == val,
+                      (b) => b.memberBusinessOccupationProfileId == val,
                     );
 
                     selectedBusinessName = business.businessName;
 
                     /// ✅ Prefill city from business address
-                    if (business.addresses != null && business.addresses!.isNotEmpty) {
-                      final businessCityName = business.addresses!.first.cityName;
+                    if (business.addresses != null &&
+                        business.addresses!.isNotEmpty) {
+                      final businessCityName =
+                          business.addresses!.first.cityName;
 
                       if (businessCityName != null) {
-
                         final city = regiController.cityList.firstWhereOrNull(
-                              (c) => (c.cityName ?? "").toLowerCase() ==
+                          (c) =>
+                              (c.cityName ?? "").toLowerCase() ==
                               businessCityName.toLowerCase(),
                         );
 
@@ -1626,8 +1663,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                     }
                   });
                 }
-              }
-          ),
+              }),
         ),
       ),
     );
@@ -1639,7 +1675,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Obx(() {
-
         if (regiController.rxStatusCityLoading.value == Status.LOADING) {
           return const Center(
             child: Padding(
@@ -1700,6 +1735,151 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
           ),
         );
       }),
+    );
+  }
+
+  Widget _buildOccupationDropdown() {
+    return Column(
+      children: [
+        /// LEVEL 1
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: Obx(() {
+            if (profileController.rxStatusOccupation.value == Status.LOADING) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: SizedBox(
+                    height: 22,
+                    width: 22,
+                    child: CircularProgressIndicator(color: Colors.redAccent),
+                  ),
+                ),
+              );
+            }
+
+            return DropdownButtonFormField<String>(
+              dropdownColor: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              value: selectedOccupationId.isEmpty ? null : selectedOccupationId,
+              decoration: const InputDecoration(
+                labelText: "Occupation (Level 1)",
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black38, width: 1),
+                ),
+                contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                labelStyle: TextStyle(color: Colors.black),
+              ),
+              items: profileController.occuptionList.map((occupation) {
+                return DropdownMenuItem<String>(
+                  value: occupation.id.toString(),
+                  child: Text(occupation.occupation ?? ""),
+                );
+              }).toList(),
+              onChanged: (val) async {
+                if (val != null) {
+                  setState(() {
+                    selectedOccupationId = val;
+                    selectedProfessionId = "";
+                    selectedSpecializationId = "";
+                  });
+
+                  await profileController.getOccupationProData(val);
+                }
+              },
+            );
+          }),
+        ),
+
+        /// LEVEL 2
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: Obx(() {
+            return DropdownButtonFormField<String>(
+              dropdownColor: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              value: selectedProfessionId.isEmpty ? null : selectedProfessionId,
+              decoration: const InputDecoration(
+                labelText: "Profession (Level 2)",
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black38, width: 1),
+                ),
+                contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                labelStyle: TextStyle(color: Colors.black),
+              ),
+              items: profileController.occuptionProfessionList.map((prof) {
+                return DropdownMenuItem<String>(
+                  value: prof.id.toString(),
+                  child: Text(prof.name ?? ""),
+                );
+              }).toList(),
+              onChanged: (val) async {
+                if (val != null) {
+                  setState(() {
+                    selectedProfessionId = val;
+                    selectedSpecializationId = "";
+                  });
+
+                  await profileController.getOccupationSpectData(val);
+                }
+              },
+            );
+          }),
+        ),
+
+        /// LEVEL 3
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: Obx(() {
+            return DropdownButtonFormField<String>(
+              dropdownColor: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              value: selectedSpecializationId.isEmpty
+                  ? null
+                  : selectedSpecializationId,
+              decoration: const InputDecoration(
+                labelText: "Specialization (Level 3)",
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black38, width: 1),
+                ),
+                contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                labelStyle: TextStyle(color: Colors.black),
+              ),
+              items: profileController.occuptionSpeList.map((spec) {
+                return DropdownMenuItem<String>(
+                  value: spec.id.toString(),
+                  child: Text(spec.name ?? ""),
+                );
+              }).toList(),
+              onChanged: (val) {
+                if (val != null) {
+                  setState(() {
+                    selectedSpecializationId = val;
+                  });
+                }
+              },
+            );
+          }),
+        ),
+      ],
     );
   }
 
@@ -1779,7 +1959,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         /// 🔹 Preview
         if (file != null)
           Stack(
@@ -1835,8 +2014,10 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
     );
   }
 
-  void _showImagePicker(BuildContext context,
-      Function(File) onFilePicked,) {
+  void _showImagePicker(
+    BuildContext context,
+    Function(File) onFilePicked,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -1850,7 +2031,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-
                 /// 🔹 HEADER
                 const Padding(
                   padding: EdgeInsets.all(12),
@@ -1868,7 +2048,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                 /// 📷 CAMERA
                 ListTile(
                   leading:
-                  const Icon(Icons.camera_alt, color: Colors.redAccent),
+                      const Icon(Icons.camera_alt, color: Colors.redAccent),
                   title: const Text("Take a Picture"),
                   onTap: () async {
                     Navigator.pop(context);
@@ -1946,126 +2126,128 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
     );
   }
 
-  void _showLocalDocumentPreviewDialog(BuildContext context,
-      File file,
-      String title,) {
+  void _showLocalDocumentPreviewDialog(
+    BuildContext context,
+    File file,
+    String title,
+  ) {
     bool isPdf = file.path.toLowerCase().endsWith(".pdf");
 
     showDialog(
       context: context,
-      builder: (_) =>
-          Dialog(
-            backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+      builder: (_) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 16),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ClipRRect(
+            const SizedBox(height: 16),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                height: 300,
+                width: double.infinity,
+                child: isPdf
+                    ? const Center(
+                        child: Icon(
+                          Icons.picture_as_pdf,
+                          size: 80,
+                          color: Colors.red,
+                        ),
+                      )
+                    : Image.file(
+                        file,
+                        fit: BoxFit.contain,
+                      ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
-                  child: SizedBox(
-                    height: 300,
-                    width: double.infinity,
-                    child: isPdf
-                        ? const Center(
+                ),
+              ),
+              child: const Text("Close"),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCvPreviewDialog(
+    BuildContext context,
+    String filePath,
+    String title,
+  ) {
+    bool isPdf = filePath.toLowerCase().endsWith(".pdf");
+
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 300,
+              width: double.infinity,
+              child: isPdf
+                  ? const Center(
                       child: Icon(
                         Icons.picture_as_pdf,
                         size: 80,
                         color: Colors.red,
                       ),
                     )
-                        : Image.file(
-                      file,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: TextButton.styleFrom(
-                    backgroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                    foregroundColor: Colors.white,
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text("Close"),
-                ),
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
-    );
-  }
-
-  void _showCvPreviewDialog(BuildContext context,
-      String filePath,
-      String title,) {
-    bool isPdf = filePath.toLowerCase().endsWith(".pdf");
-
-    showDialog(
-      context: context,
-      builder: (_) =>
-          Dialog(
-            backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 16),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  height: 300,
-                  width: double.infinity,
-                  child: isPdf
-                      ? const Center(
-                    child: Icon(
-                      Icons.picture_as_pdf,
-                      size: 80,
-                      color: Colors.red,
-                    ),
-                  )
-                      : filePath.startsWith("http")
+                  : filePath.startsWith("http")
                       ? Image.network(filePath, fit: BoxFit.contain)
                       : Image.file(File(filePath), fit: BoxFit.contain),
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: TextButton.styleFrom(
-                    backgroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text("Close"),
-                ),
-                const SizedBox(height: 16),
-              ],
             ),
-          ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text("Close"),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
     );
   }
 
@@ -2112,7 +2294,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
               },
               style: OutlinedButton.styleFrom(
                 foregroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: BorderSide(
                   color: ColorHelperClass.getColorFromHex(
                       ColorResources.red_color),
@@ -2140,7 +2322,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
