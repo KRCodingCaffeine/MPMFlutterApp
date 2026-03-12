@@ -33,6 +33,7 @@ import 'package:mpm/repository/BusinessProfileRepo/add_occupation_business_repos
 import 'package:mpm/repository/BusinessProfileRepo/delete_occupation_business_repository/delete_occupation_business_repo.dart';
 import 'package:mpm/repository/BusinessProfileRepo/get_occupation_product_by_id_repository/get_occupation_product_by_id_repo.dart';
 import 'package:mpm/repository/BusinessProfileRepo/update_occupation_business_repository/update_occupation_business_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/EducationDetailRepo/update_education_detail_repository/update_education_detail_repo.dart';
 import 'package:mpm/repository/add_existing_family_member_repository/add_existing_family_member_repo.dart';
 import 'package:mpm/repository/add_occupation_repository/add_occupation_repo.dart';
 import 'package:mpm/repository/change_family_head_repository/change_family_head_repo.dart';
@@ -40,6 +41,7 @@ import 'package:mpm/repository/product_category_repository/product_category_repo
 import 'package:mpm/repository/product_subcategory_repository/product_subcategory_repo.dart';
 import 'package:mpm/repository/register_repository/register_repo.dart';
 import 'package:mpm/repository/send_verification_email_repository/send_verification_email_repo.dart';
+import 'package:mpm/repository/update_education_repository/update_education_repo.dart';
 import 'package:mpm/repository/update_repository/UpdateProfileRepository.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
@@ -1145,6 +1147,13 @@ class UdateProfileController extends GetxController {
   final rxStatusQualification = Status.LOADING.obs;
   final rxStatusQualificationMain = Status.IDLE.obs;
   final rxStatusQualificationCat = Status.IDLE.obs;
+  TextEditingController instituteController = TextEditingController();
+  TextEditingController yearPassingController = TextEditingController();
+  TextEditingController boardUniversityController = TextEditingController();
+  TextEditingController percentageController = TextEditingController();
+  final UpdateProfileEducationRepository updateProfileEducationRepository =
+  UpdateProfileEducationRepository();
+  RxString pursuingStatus = "0".obs;
   var qulicationList = <QualificationData>[].obs;
   var qulicationMainList = <QualicationMainData>[].obs;
   var qulicationCategoryList = <Qualificationcategorydata>[].obs;
@@ -1429,6 +1438,46 @@ class UdateProfileController extends GetxController {
           showDashboardReviewFlag.value = false;
         }
       }
+    }
+  }
+
+  Future<void> updateEducationDetail(
+      String qualificationId,
+      String memberId,
+      BuildContext context) async {
+
+    try {
+
+      addloading.value = true;
+
+      Map<String, dynamic> body = {
+        "member_qualification_id": qualificationId,
+        "member_id": memberId,
+        "institute_name": instituteController.text.trim(),
+        "year_of_passing": yearPassingController.text,
+        "board_university": boardUniversityController.text.trim(),
+        "percentage_grade": "${percentageController.text.trim()}%",
+        "is_currently_pursuing": pursuingStatus.value,
+        "updated_by": memberId
+      };
+
+      final response =
+      await updateProfileEducationRepository.updateprofileEducation(body);
+
+      if (response.status == true) {
+        Get.snackbar("Success", response.message ?? "Education updated");
+
+        Navigator.pop(context);
+
+        getUserProfile(); // reload profile
+      } else {
+        Get.snackbar("Error", response.message ?? "Update failed");
+      }
+
+    } catch (e) {
+      debugPrint("Update Education Error: $e");
+    } finally {
+      addloading.value = false;
     }
   }
 
