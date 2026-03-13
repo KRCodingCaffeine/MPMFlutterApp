@@ -36,8 +36,11 @@ class _JobViewState extends State<JobView> {
   bool showOccupationBanner = false;
   bool showEducationBanner = false;
   String selectedRole = "";
-  UdateProfileController controller =Get.put(UdateProfileController());
-  NewMemberController newMemberController=Get.put(NewMemberController());
+  UdateProfileController controller = Get.put(UdateProfileController());
+  NewMemberController newMemberController = Get.put(NewMemberController());
+
+  final Color selectedColor =
+      ColorHelperClass.getColorFromHex(ColorResources.secondary_color);
 
   @override
   void initState() {
@@ -96,7 +99,7 @@ class _JobViewState extends State<JobView> {
       String memberId = profileController.memberId.value;
 
       final eduResponse =
-      await qualificationRepository.getQualificationsByMemberId(memberId);
+          await qualificationRepository.getQualificationsByMemberId(memberId);
 
       bool hasEducation = (eduResponse.totalCount ?? 0) > 0;
 
@@ -135,7 +138,7 @@ class _JobViewState extends State<JobView> {
       String memberId = profileController.memberId.value;
 
       final occResponse =
-      await occupationRepository.getOccupationsByMemberId(memberId);
+          await occupationRepository.getOccupationsByMemberId(memberId);
 
       bool hasOccupation = (occResponse.totalCount ?? 0) > 0;
 
@@ -195,7 +198,8 @@ class _JobViewState extends State<JobView> {
                             await Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const BusinessInformationPage(autoOpenAddSheet: true),
+                                builder: (_) => const BusinessInformationPage(
+                                    autoOpenAddSheet: true),
                               ),
                             );
 
@@ -236,7 +240,8 @@ class _JobViewState extends State<JobView> {
                             await Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const EducationPageInfo(autoOpenAddSheet: true),
+                                builder: (_) => const EducationPageInfo(
+                                    autoOpenAddSheet: true),
                               ),
                             );
 
@@ -250,7 +255,8 @@ class _JobViewState extends State<JobView> {
                             ),
                             child: Row(
                               children: const [
-                                Icon(Icons.warning_amber_rounded, color: Colors.white),
+                                Icon(Icons.warning_amber_rounded,
+                                    color: Colors.white),
                                 SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
@@ -299,80 +305,6 @@ class _JobViewState extends State<JobView> {
 
                               const SizedBox(height: 30),
 
-                              /// JOB SEEKER CARD
-                              GestureDetector(
-                                onTap: () async {
-                                  setState(() {
-                                    selectedRole = "job_seeker";
-                                  });
-
-                                  await checkEducationAndProceed();
-                                },
-                                child: Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.all(20),
-                                  decoration: BoxDecoration(
-                                    color: selectedRole == "job_seeker"
-                                        ? Colors.redAccent
-                                        : Colors.white,
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: Colors.redAccent,
-                                      width: 1.5,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.05),
-                                        blurRadius: 10,
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.search,
-                                        size: 32,
-                                        color: selectedRole == "job_seeker"
-                                            ? Colors.white
-                                            : Colors.redAccent,
-                                      ),
-                                      const SizedBox(width: 20),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              "Find opportunities and apply for jobs",
-                                              style: TextStyle(
-                                                color:
-                                                selectedRole == "job_seeker"
-                                                    ? Colors.white70
-                                                    : Colors.grey,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 5),
-                                            Text(
-                                              "Looking for Job",
-                                              style: TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                                color:
-                                                    selectedRole == "job_seeker"
-                                                        ? Colors.white
-                                                        : Colors.black,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      )
-                                    ],
-                                  ),
-                                ),
-                              ),
-
-                              const SizedBox(height: 20),
-
                               /// RECRUITER CARD
                               GestureDetector(
                                 onTap: () async {
@@ -387,7 +319,7 @@ class _JobViewState extends State<JobView> {
                                   padding: const EdgeInsets.all(20),
                                   decoration: BoxDecoration(
                                     color: selectedRole == "recruiter"
-                                        ? Colors.redAccent
+                                        ? selectedColor
                                         : Colors.white,
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
@@ -408,7 +340,7 @@ class _JobViewState extends State<JobView> {
                                         size: 32,
                                         color: selectedRole == "recruiter"
                                             ? Colors.white
-                                            : Colors.redAccent,
+                                            : selectedColor,
                                       ),
                                       const SizedBox(width: 20),
                                       Expanded(
@@ -416,16 +348,6 @@ class _JobViewState extends State<JobView> {
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
-                                            Text(
-                                              "Hire talented candidates From Samaj Member",
-                                              style: TextStyle(
-                                                color:
-                                                selectedRole == "recruiter"
-                                                    ? Colors.white70
-                                                    : Colors.grey,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 5),
                                             Text(
                                               "Offer Jobs (Employer)",
                                               style: TextStyle(
@@ -435,6 +357,89 @@ class _JobViewState extends State<JobView> {
                                                     selectedRole == "recruiter"
                                                         ? Colors.white
                                                         : Colors.black,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 5),
+                                            Text(
+                                              "Hire talented candidates From Samaj Member",
+                                              style: TextStyle(
+                                                color:
+                                                    selectedRole == "recruiter"
+                                                        ? Colors.white70
+                                                        : Colors.grey,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+
+                              /// JOB SEEKER CARD
+                              GestureDetector(
+                                onTap: () async {
+                                  setState(() {
+                                    selectedRole = "job_seeker";
+                                  });
+
+                                  await checkEducationAndProceed();
+                                },
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: selectedRole == "job_seeker"
+                                        ? selectedColor
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: Colors.redAccent,
+                                      width: 1.5,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.05),
+                                        blurRadius: 10,
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.search,
+                                        size: 32,
+                                        color: selectedRole == "job_seeker"
+                                            ? Colors.white
+                                            : selectedColor,
+                                      ),
+                                      const SizedBox(width: 20),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              "Looking for Job",
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color:
+                                                    selectedRole == "job_seeker"
+                                                        ? Colors.white
+                                                        : Colors.black,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 5),
+                                            Text(
+                                              "Find opportunities and apply for jobs",
+                                              style: TextStyle(
+                                                color:
+                                                    selectedRole == "job_seeker"
+                                                        ? Colors.white70
+                                                        : Colors.grey,
                                               ),
                                             ),
                                           ],
@@ -456,5 +461,3 @@ class _JobViewState extends State<JobView> {
     );
   }
 }
-
-
