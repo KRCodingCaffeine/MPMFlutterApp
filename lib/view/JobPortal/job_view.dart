@@ -319,7 +319,7 @@ class _JobViewState extends State<JobView> {
                                   padding: const EdgeInsets.all(20),
                                   decoration: BoxDecoration(
                                     color: selectedRole == "recruiter"
-                                        ? selectedColor
+                                        ? Colors.redAccent.withOpacity(0.1)
                                         : Colors.white,
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
@@ -339,8 +339,8 @@ class _JobViewState extends State<JobView> {
                                         Icons.business_center,
                                         size: 32,
                                         color: selectedRole == "recruiter"
-                                            ? Colors.white
-                                            : selectedColor,
+                                            ? selectedColor
+                                            : Colors.redAccent.withOpacity(0.1),
                                       ),
                                       const SizedBox(width: 20),
                                       Expanded(
@@ -355,7 +355,7 @@ class _JobViewState extends State<JobView> {
                                                 fontWeight: FontWeight.bold,
                                                 color:
                                                     selectedRole == "recruiter"
-                                                        ? Colors.white
+                                                        ? Colors.black
                                                         : Colors.black,
                                               ),
                                             ),
@@ -365,7 +365,7 @@ class _JobViewState extends State<JobView> {
                                               style: TextStyle(
                                                 color:
                                                     selectedRole == "recruiter"
-                                                        ? Colors.white70
+                                                        ? Colors.black38
                                                         : Colors.grey,
                                               ),
                                             ),
@@ -392,7 +392,7 @@ class _JobViewState extends State<JobView> {
                                   padding: const EdgeInsets.all(20),
                                   decoration: BoxDecoration(
                                     color: selectedRole == "job_seeker"
-                                        ? selectedColor
+                                        ? Colors.redAccent.withOpacity(0.1)
                                         : Colors.white,
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
@@ -412,8 +412,8 @@ class _JobViewState extends State<JobView> {
                                         Icons.search,
                                         size: 32,
                                         color: selectedRole == "job_seeker"
-                                            ? Colors.white
-                                            : selectedColor,
+                                            ? selectedColor
+                                            : Colors.redAccent.withOpacity(0.1),
                                       ),
                                       const SizedBox(width: 20),
                                       Expanded(
@@ -428,7 +428,7 @@ class _JobViewState extends State<JobView> {
                                                 fontWeight: FontWeight.bold,
                                                 color:
                                                     selectedRole == "job_seeker"
-                                                        ? Colors.white
+                                                        ? Colors.black
                                                         : Colors.black,
                                               ),
                                             ),
@@ -438,7 +438,7 @@ class _JobViewState extends State<JobView> {
                                               style: TextStyle(
                                                 color:
                                                     selectedRole == "job_seeker"
-                                                        ? Colors.white70
+                                                        ? Colors.black38
                                                         : Colors.grey,
                                               ),
                                             ),

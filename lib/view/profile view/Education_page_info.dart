@@ -398,6 +398,7 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
   Future<void> _showUpdateModalSheet(
       BuildContext pageContext, Qualification qualification) async {
     print("Loading qualification data: ${qualification.toJson()}");
+
     final bool hasExistingDetailText =
         qualification.qualificationOtherName?.trim().isNotEmpty ?? false;
     regiController.selectQlification.value =
@@ -417,6 +418,21 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
 
     regiController.educationdetailController.value.text =
         qualification.qualificationOtherName ?? '';
+
+    regiController.instituteController.text =
+        qualification.instituteName ?? "";
+
+    regiController.yearPassingController.text =
+        qualification.yearOfPassing ?? "";
+
+    regiController.boardUniversityController.text =
+        qualification.boardUniversity ?? "";
+
+    regiController.percentageController.text =
+        qualification.percentageGrade?.replaceAll("%", "") ?? "";
+
+    regiController.pursuingStatus.value =
+        qualification.isCurrentlyPursuing ?? "0";
 
     if (regiController.selectQlification.value == "other") {
       regiController.isQualicationList.value = false;
@@ -839,8 +855,24 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                               TextFormField(
                                 controller: regiController.instituteController,
                                 decoration: InputDecoration(
-                                  labelText: "Institute Name",
-                                  border: OutlineInputBorder(),
+                                  labelText: 'Institute Name',
+                                  border: OutlineInputBorder(
+                                    borderSide:
+                                    BorderSide(color: Colors.black26),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderSide:
+                                    BorderSide(color: Colors.black26),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: Colors.black26,
+                                        width: 1.5),
+                                  ),
+                                  contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 20),
+                                  labelStyle:
+                                  TextStyle(color: Colors.black45),
                                 ),
                               ),
                               const SizedBox(height: 20),
@@ -857,8 +889,24 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                                 controller:
                                     regiController.boardUniversityController,
                                 decoration: InputDecoration(
-                                  labelText: "Board / University",
-                                  border: OutlineInputBorder(),
+                                  labelText: 'Board / University',
+                                  border: OutlineInputBorder(
+                                    borderSide:
+                                    BorderSide(color: Colors.black26),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderSide:
+                                    BorderSide(color: Colors.black26),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: Colors.black26,
+                                        width: 1.5),
+                                  ),
+                                  contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 20),
+                                  labelStyle:
+                                  TextStyle(color: Colors.black45),
                                 ),
                               ),
                               const SizedBox(height: 20),
@@ -867,14 +915,32 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                                 controller: regiController.percentageController,
                                 keyboardType: TextInputType.number,
                                 decoration: InputDecoration(
-                                  labelText: "Percentage / Grade",
-                                  border: OutlineInputBorder(),
+                                  labelText: 'Percentage / Grade',
+                                  border: OutlineInputBorder(
+                                    borderSide:
+                                    BorderSide(color: Colors.black26),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderSide:
+                                    BorderSide(color: Colors.black26),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: Colors.black26,
+                                        width: 1.5),
+                                  ),
+                                  contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 20),
+                                  labelStyle:
+                                  TextStyle(color: Colors.black45),
                                 ),
                               ),
                               const SizedBox(height: 20),
 
                               Obx(() {
                                 return DropdownButtonFormField<String>(
+                                  dropdownColor: Colors.white,
+                                  borderRadius: BorderRadius.circular(10),
                                   value: regiController.pursuingStatus.value,
                                   decoration: InputDecoration(
                                     labelText: 'Currently Pursuing',
@@ -1066,17 +1132,23 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
       controller: controller,
       decoration: InputDecoration(
         labelText: label,
-        border: const OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.black),
+        border: OutlineInputBorder(
+          borderSide:
+          BorderSide(color: Colors.black26),
         ),
-        enabledBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.black),
+        enabledBorder: OutlineInputBorder(
+          borderSide:
+          BorderSide(color: Colors.black26),
         ),
-        focusedBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.black38, width: 1),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(
+              color: Colors.black26,
+              width: 1.5),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-        labelStyle: const TextStyle(color: Colors.black),
+        contentPadding: EdgeInsets.symmetric(
+            horizontal: 20),
+        labelStyle:
+        TextStyle(color: Colors.black45),
       ),
       onTap: () async {
         final selected = await showMonthYearPicker(

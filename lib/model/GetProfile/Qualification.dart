@@ -5,6 +5,11 @@ class Qualification {
   var qualificationCategoryId;
   var qualificationMainId;
   var qualificationOtherName;
+  var instituteName;
+  var yearOfPassing;
+  var boardUniversity;
+  var percentageGrade;
+  var isCurrentlyPursuing;
   var createdAt;
   var createdBy;
 
@@ -20,6 +25,11 @@ class Qualification {
         this.qualificationCategoryId,
         this.qualificationMainId,
         this.qualificationOtherName,
+        this.instituteName,
+        this.yearOfPassing,
+        this.boardUniversity,
+        this.percentageGrade,
+        this.isCurrentlyPursuing,
         this.createdAt,
         this.createdBy,
 
@@ -35,6 +45,11 @@ class Qualification {
     qualificationCategoryId = json['qualification_category_id'];
     qualificationMainId = json['qualification_main_id'];
     qualificationOtherName = json['qualification_other_name'];
+    instituteName = json['institute_name'];
+    yearOfPassing = json['year_of_passing'];
+    boardUniversity = json['board_university'];
+    percentageGrade = json['percentage_grade'];
+    isCurrentlyPursuing = json['is_currently_pursuing'];
     createdAt = json['created_at'];
     createdBy = json['created_by'];
 
@@ -52,6 +67,11 @@ class Qualification {
     data['qualification_category_id'] = this.qualificationCategoryId;
     data['qualification_main_id'] = this.qualificationMainId;
     data['qualification_other_name'] = this.qualificationOtherName;
+    data['institute_name'] = this.instituteName;
+    data['year_of_passing'] = this.yearOfPassing;
+    data['board_university'] = this.boardUniversity;
+    data['percentage_grade'] = this.percentageGrade;
+    data['is_currently_pursuing'] = this.isCurrentlyPursuing;
     data['created_at'] = this.createdAt;
     data['created_by'] = this.createdBy;
 
