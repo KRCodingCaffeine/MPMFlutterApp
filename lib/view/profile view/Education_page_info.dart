@@ -1,11 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:month_year_picker/month_year_picker.dart';
 import 'package:mpm/model/GetProfile/Qualification.dart';
 import 'package:mpm/model/Qualification/QualificationData.dart';
 import 'package:mpm/model/QualificationCategory/QualificationCategoryModel.dart';
 import 'package:mpm/model/QualificationMain/QualicationMainData.dart';
+import 'package:mpm/repository/JobPortal/UploadResumeRepo/upload_resume_repository.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
@@ -25,7 +29,10 @@ class EducationPageInfo extends StatefulWidget {
 class _EducationPageInfoState extends State<EducationPageInfo> {
   // Variables to store information
   UdateProfileController regiController = Get.put(UdateProfileController());
+  final UploadResumeRepository _resumeRepository = UploadResumeRepository();
   bool _didAutoOpenSheet = false;
+  final ImagePicker _picker = ImagePicker();
+  File? resumeFile;
 
   @override
   void initState() {
@@ -37,6 +44,43 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
       _didAutoOpenSheet = true;
       _showEditModalSheet(context, "1");
     });
+  }
+
+
+  Future<void> _uploadResume(File file) async {
+    try {
+      final response = await _resumeRepository.uploadResume(
+        memberId: regiController.memberId.value,
+        filePath: file.path,
+      );
+
+      if (response.status) {
+        debugPrint("✅ Resume uploaded successfully");
+
+        Get.snackbar(
+          "Success",
+          response.message,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+      } else {
+        Get.snackbar(
+          "Error",
+          response.message,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      debugPrint("❌ Resume Upload Error: $e");
+
+      Get.snackbar(
+        "Error",
+        "Failed to upload resume",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
   }
 
   @override
@@ -973,6 +1017,31 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                                   },
                                 );
                               }),
+                              const SizedBox(height: 20),
+
+                              buildResumeUploadField(
+                                context: context,
+                                resumeFile: resumeFile,
+                                buttonText: "Upload Resume",
+                                onPick: () {
+                                  _showResumePicker(context, (file) {
+                                    setModalState(() {
+                                      resumeFile = file;
+                                    });
+                                    setState(() {
+                                      resumeFile = file;
+                                    });
+                                  });
+                                },
+                                onRemoveNew: () {
+                                  setModalState(() {
+                                    resumeFile = null;
+                                  });
+                                  setState(() {
+                                    resumeFile = null;
+                                  });
+                                },
+                              ),
                             ],
                           ),
                         ),
@@ -993,6 +1062,7 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
       regiController.isQualicationList.value = false;
       regiController.isQualificationCategoryVisible.value = false;
       regiController.isQualificationDetailVisible.value = false;
+      resumeFile = null;
     });
   }
 
@@ -1040,6 +1110,188 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
             ),
         ],
       ),
+    );
+  }
+
+  Widget buildResumeUploadField({
+    required BuildContext context,
+    required File? resumeFile,
+    required String buttonText,
+    required VoidCallback onPick,
+    required VoidCallback onRemoveNew,
+  }) {
+    final bool isUploaded = resumeFile != null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (resumeFile != null)
+          Stack(
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.black12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _isPdfFile(resumeFile.path)
+                          ? Icons.picture_as_pdf
+                          : Icons.image,
+                      color: _isPdfFile(resumeFile.path)
+                          ? Colors.red
+                          : Colors.green,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        resumeFile.path.split('/').last,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Positioned(
+                right: 8,
+                top: 8,
+                child: GestureDetector(
+                  onTap: onRemoveNew,
+                  child: const CircleAvatar(
+                    radius: 14,
+                    backgroundColor: Colors.red,
+                    child: Icon(Icons.close, size: 16, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: onPick,
+            icon: Icon(
+              isUploaded ? Icons.check_circle : Icons.upload_file,
+            ),
+            label: Text(
+              isUploaded ? "$buttonText Uploaded" : buttonText,
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isUploaded
+                  ? Colors.green
+                  : ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  bool _isPdfFile(String path) {
+    return path.toLowerCase().endsWith(".pdf");
+  }
+
+  void _showResumePicker(
+      BuildContext context,
+      Function(File) onFilePicked,
+      ) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+
+                /// 🔹 HEADER
+                const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Text(
+                    "Upload Resume",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+
+                const Divider(),
+
+                /// 📷 CAMERA
+                ListTile(
+                  leading: const Icon(
+                    Icons.camera_alt,
+                    color: Colors.redAccent,
+                  ),
+                  title: const Text("Take a Picture"),
+                  onTap: () async {
+                    Navigator.pop(context);
+
+                    final picked = await _picker.pickImage(
+                      source: ImageSource.camera,
+                      imageQuality: 70,
+                    );
+
+                    if (picked != null) {
+                      final file = File(picked.path);
+                      onFilePicked(file);
+
+                      await _uploadResume(file);
+                    }
+                  },
+                ),
+
+                /// 🖼 GALLERY
+                ListTile(
+                  leading: const Icon(
+                    Icons.image,
+                    color: Colors.redAccent,
+                  ),
+                  title: const Text("Choose from Gallery"),
+                  onTap: () async {
+                    Navigator.pop(context);
+
+                    final picked = await _picker.pickImage(
+                      source: ImageSource.gallery,
+                      imageQuality: 70,
+                    );
+
+                    if (picked != null) {
+                      final file = File(picked.path);
+                      onFilePicked(file);
+
+                      await _uploadResume(file);
+                    }
+                  },
+                ),
+
+                const SizedBox(height: 10),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
