@@ -93,17 +93,31 @@ class _JobViewState extends State<JobView> {
       setState(() {
         isLoading = true;
         showEducationBanner = false;
-        showOccupationBanner = false; // hide other banner
+        showOccupationBanner = false;
       });
 
       String memberId = profileController.memberId.value;
 
       final eduResponse =
-          await qualificationRepository.getQualificationsByMemberId(memberId);
+      await qualificationRepository.getQualificationsByMemberId(memberId);
 
       bool hasEducation = (eduResponse.totalCount ?? 0) > 0;
 
-      if (!hasEducation) {
+      /// 🔹 Check institute name also
+      bool hasInstitute = false;
+
+      if (eduResponse.data != null && eduResponse.data!.isNotEmpty) {
+        for (var edu in eduResponse.data!) {
+          if (edu.instituteName != null &&
+              edu.instituteName.toString().trim().isNotEmpty) {
+            hasInstitute = true;
+            break;
+          }
+        }
+      }
+
+      /// 🔹 If education OR institute missing → show banner
+      if (!hasEducation || !hasInstitute) {
         setState(() {
           showEducationBanner = true;
         });
@@ -340,7 +354,7 @@ class _JobViewState extends State<JobView> {
                                         size: 32,
                                         color: selectedRole == "recruiter"
                                             ? selectedColor
-                                            : Colors.redAccent.withOpacity(0.1),
+                                            : Colors.redAccent,
                                       ),
                                       const SizedBox(width: 20),
                                       Expanded(
@@ -413,7 +427,7 @@ class _JobViewState extends State<JobView> {
                                         size: 32,
                                         color: selectedRole == "job_seeker"
                                             ? selectedColor
-                                            : Colors.redAccent.withOpacity(0.1),
+                                            : Colors.redAccent,
                                       ),
                                       const SizedBox(width: 20),
                                       Expanded(

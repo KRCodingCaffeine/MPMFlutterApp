@@ -33,19 +33,35 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
   bool _didAutoOpenSheet = false;
   final ImagePicker _picker = ImagePicker();
   File? resumeFile;
+  bool showEducationBanner = false;
 
   @override
   void initState() {
     super.initState();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !widget.autoOpenAddSheet || _didAutoOpenSheet) {
+      if (!mounted) return;
+
+      final educationList = regiController.qualificationList;
+
+      /// CASE 1 — No education
+      if (educationList.isEmpty && widget.autoOpenAddSheet) {
+        _showEditModalSheet(context, "1");
         return;
       }
-      _didAutoOpenSheet = true;
-      _showEditModalSheet(context, "1");
+
+      /// CASE 2 — Institute missing
+      bool instituteMissing = educationList.any((edu) =>
+      edu.instituteName == null ||
+          edu.instituteName.toString().trim().isEmpty);
+
+      if (instituteMissing) {
+        setState(() {
+          showEducationBanner = true;
+        });
+      }
     });
   }
-
 
   Future<void> _uploadResume(File file) async {
     try {
@@ -121,17 +137,52 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Obx(() {
-          return regiController.qualificationList.value.isEmpty
-              ? const Center(child: Text("No Education added yet."))
-              : ListView.builder(
+        child: Column(
+          children: [
+
+            /// 🔴 EDUCATION WARNING BANNER
+            if (showEducationBanner)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                margin: const EdgeInsets.only(bottom: 15),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade700,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: const [
+                    Icon(Icons.warning_amber_rounded, color: Colors.white),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        "Click Edit button to update more education detail",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            /// EDUCATION LIST
+            Expanded(
+              child: Obx(() {
+                return regiController.qualificationList.value.isEmpty
+                    ? const Center(child: Text("No Education added yet."))
+                    : ListView.builder(
                   itemCount: regiController.qualificationList.value.length,
                   itemBuilder: (context, index) {
                     return educationWidget(
                         regiController.qualificationList.value[index]);
                   },
                 );
-        }),
+              }),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1310,6 +1361,8 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+
+                /// TITLE + EDIT
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -1346,25 +1399,70 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                     ),
                   ],
                 ),
+
                 const Divider(color: Colors.black26),
                 const SizedBox(height: 8),
 
-                /// Qualification Details
+                /// Qualification Main
                 _buildInfoBox(
                   'Qualification Main',
                   subtitle: qualification.qualificationMainName ?? 'Other',
                 ),
+
+                /// Qualification Category
                 _buildInfoBox(
                   'Qualification Category',
                   subtitle: qualification.qualificationCategoryName ?? 'Other',
                 ),
-                qualification.qualificationOtherName != null &&
-                        qualification.qualificationOtherName!.trim().isNotEmpty
-                    ? _buildInfoBox(
-                        'Qualification Details',
-                        subtitle: qualification.qualificationOtherName!,
-                      )
-                    : const SizedBox.shrink(),
+
+                /// Qualification Detail
+                if (qualification.qualificationOtherName != null &&
+                    qualification.qualificationOtherName!.trim().isNotEmpty)
+                  _buildInfoBox(
+                    'Qualification Details',
+                    subtitle: qualification.qualificationOtherName!,
+                  ),
+
+                /// Institute Name
+                if (qualification.instituteName != null &&
+                    qualification.instituteName!.isNotEmpty)
+                  _buildInfoBox(
+                    'Institute',
+                    subtitle: qualification.instituteName,
+                  ),
+
+                /// Year of Passing
+                if (qualification.yearOfPassing != null &&
+                    qualification.yearOfPassing!.isNotEmpty)
+                  _buildInfoBox(
+                    'Year Of Passing',
+                    subtitle: qualification.yearOfPassing,
+                  ),
+
+                /// Board / University
+                if (qualification.boardUniversity != null &&
+                    qualification.boardUniversity!.isNotEmpty)
+                  _buildInfoBox(
+                    'Board / University',
+                    subtitle: qualification.boardUniversity,
+                  ),
+
+                /// Percentage
+                if (qualification.percentageGrade != null &&
+                    qualification.percentageGrade!.isNotEmpty)
+                  _buildInfoBox(
+                    'Percentage',
+                    subtitle: qualification.percentageGrade,
+                  ),
+
+                /// Pursuing Status
+                if (qualification.isCurrentlyPursuing != null)
+                  _buildInfoBox(
+                    'Currently Pursuing',
+                    subtitle: qualification.isCurrentlyPursuing == "1"
+                        ? "Yes"
+                        : "No",
+                  ),
               ],
             ),
           ),
