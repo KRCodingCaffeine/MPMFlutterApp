@@ -146,17 +146,34 @@ class _JobViewState extends State<JobView> {
       setState(() {
         isLoading = true;
         showOccupationBanner = false;
-        showEducationBanner = false; // hide other banner
+        showEducationBanner = false;
       });
 
       String memberId = profileController.memberId.value;
 
       final occResponse =
-          await occupationRepository.getOccupationsByMemberId(memberId);
+      await occupationRepository.getOccupationsByMemberId(memberId);
 
       bool hasOccupation = (occResponse.totalCount ?? 0) > 0;
 
-      if (!hasOccupation) {
+      /// 🔹 Check company name also
+      bool hasCompanyName = false;
+
+      if (occResponse.data != null && occResponse.data!.isNotEmpty) {
+        for (var occ in occResponse.data!) {
+          if (occ.companyName != null &&
+              occ.companyName
+                  .toString()
+                  .trim()
+                  .isNotEmpty) {
+            hasCompanyName = true;
+            break;
+          }
+        }
+      }
+
+      /// 🔹 If occupation OR company name missing → show banner
+      if (!hasOccupation || !hasCompanyName) {
         setState(() {
           showOccupationBanner = true;
         });

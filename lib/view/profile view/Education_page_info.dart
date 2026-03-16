@@ -606,7 +606,7 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                           ),
                           ElevatedButton(
                             onPressed: () async {
-                              await regiController.updateEducationDetail(
+                              await regiController.updateFullEducation(
                                 qualification.memberQualificationId.toString(),
                                 regiController.memberId.value,
                                 pageContext,
@@ -1456,7 +1456,7 @@ class _EducationPageInfoState extends State<EducationPageInfo> {
                   ),
 
                 /// Pursuing Status
-                if (qualification.isCurrentlyPursuing != null)
+                if (qualification.isCurrentlyPursuing != "0")
                   _buildInfoBox(
                     'Currently Pursuing',
                     subtitle: qualification.isCurrentlyPursuing == "1"

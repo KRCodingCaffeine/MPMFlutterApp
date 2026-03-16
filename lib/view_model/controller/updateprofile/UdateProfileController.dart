@@ -42,6 +42,8 @@ import 'package:mpm/repository/product_subcategory_repository/product_subcategor
 import 'package:mpm/repository/register_repository/register_repo.dart';
 import 'package:mpm/repository/send_verification_email_repository/send_verification_email_repo.dart';
 import 'package:mpm/repository/update_education_repository/update_education_repo.dart';
+import 'package:mpm/repository/update_more_occupation_repository/update_more_occupation_repo.dart';
+import 'package:mpm/repository/update_occupation_repository/update_occupation_repo.dart';
 import 'package:mpm/repository/update_repository/UpdateProfileRepository.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
@@ -564,6 +566,12 @@ class UdateProfileController extends GetxController {
   final RxString selectedSpecialization = RxString('');
   final RxBool showDetailsField = RxBool(false);
   final RxBool isOccupationLoading = RxBool(false);
+  final TextEditingController companyNameController = TextEditingController();
+  final TextEditingController designationController = TextEditingController();
+  final TextEditingController startDateController = TextEditingController();
+  final TextEditingController endDateController = TextEditingController();
+
+  RxString isCurrentlyEmployed = "0".obs;
 
   void resetDependentFields() {
     selectedProfession.value = '';
@@ -916,6 +924,121 @@ class UdateProfileController extends GetxController {
         showDetailsField.value = true;
       }
     });
+  }
+  final updateOccupationRepo = UpdateOccupationRepository();
+  final updateMoreOccupationRepository = UpdateMoreOccupationRepository();
+
+  Future<void> updateFullOccupation(
+      Occupation oldData,
+      BuildContext context,
+      ) async {
+
+    if (selectedOccupation.value.isEmpty) {
+      _showOccupationSnackBar(
+        context,
+        "Please select Level 1",
+        isSuccess: false,
+      );
+      return;
+    }
+
+    isOccupationLoading.value = true;
+
+    try {
+
+      /// STEP 1: UPDATE OCCUPATION
+      Map<String, dynamic> occupationPayload = {
+        "member_occupation_id": oldData.memberOccupationId ?? "",
+        "member_id": oldData.memberId ?? "",
+        "occupation_id": selectedOccupation.value,
+        "occupation_profession_id":
+        selectedProfession.value == "Other" || selectedProfession.value.isEmpty
+            ? ""
+            : selectedProfession.value,
+        "occupation_specialization_id":
+        selectedSpecialization.value == "Other" ||
+            selectedSpecialization.value.isEmpty
+            ? ""
+            : selectedSpecialization.value,
+        "occupation_other_name": detailsController.value.text.trim(),
+        "updated_by": oldData.memberId ?? "",
+      };
+
+      final res = await updateOccupationRepo.updateOccupation(occupationPayload);
+
+      if (res != true) {
+
+        isOccupationLoading.value = false;
+
+        _showOccupationSnackBar(
+          context,
+          "Failed to update occupation",
+          isSuccess: false,
+        );
+
+        return;
+      }
+
+      /// STEP 2: UPDATE MORE OCCUPATION
+      Map<String, dynamic> moreOccupationPayload = {
+        "member_occupation_id": oldData.memberOccupationId ?? "",
+        "member_id": oldData.memberId ?? "",
+        "company_name": companyNameController.text.trim(),
+        "designation": designationController.text.trim().isEmpty
+            ? null
+            : designationController.text.trim(),
+        "start_date": startDateController.text.isEmpty
+            ? null
+            : startDateController.text,
+        "end_date": endDateController.text.isEmpty
+            ? null
+            : endDateController.text,
+        "is_current_employment": isCurrentlyEmployed.value,
+        "role_description": detailsController.value.text.trim().isEmpty
+            ? null
+            : detailsController.value.text.trim(),
+        "updated_by": oldData.memberId,
+      };
+
+      final moreOccupationResponse =
+      await updateMoreOccupationRepository.updateMoreOccupation(
+          moreOccupationPayload);
+
+      isOccupationLoading.value = false;
+
+      if (moreOccupationResponse.status == true) {
+
+        await getUserProfile();
+
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
+
+        _showOccupationSnackBar(
+          context,
+          "Occupation updated successfully",
+          isSuccess: true,
+        );
+
+      } else {
+
+        _showOccupationSnackBar(
+          context,
+          moreOccupationResponse.message ?? "Failed to update occupation details",
+          isSuccess: false,
+        );
+      }
+
+    } catch (e) {
+
+      isOccupationLoading.value = false;
+
+      _showOccupationSnackBar(
+        context,
+        "Unexpected error: $e",
+        isSuccess: false,
+      );
+    }
   }
 
   // Business Product Category and subcategory
@@ -1375,59 +1498,161 @@ class UdateProfileController extends GetxController {
     }
   }
 
-  Future<void> updateQualification(
-      String member_qualification_id, BuildContext context) async {
-    CheckUserData2? userData = await SessionManager.getSession();
-    print('User ID: ${userData?.memberId}');
-    print('User Name: ${userData?.mobile}');
-    memberId.value = userData!.memberId.toString();
+  Future<void> updateFullEducation(
+      String memberQualificationId,
+      String memberId,
+      BuildContext context,
+      ) async {
+
     addloading.value = true;
+
     try {
-      Map<String, String> map = {
-        'member_id': memberId.value.toString(),
-        'qualification_id': selectQlification.value.toString(),
-        'member_qualification_id': member_qualification_id.toString(),
-        'qualification_main_id': selectQualicationMain.value.toString(),
+
+      /// STEP 1️⃣ UPDATE QUALIFICATION
+      Map<String, String> qualificationPayload = {
+        'member_id': memberId,
+        'qualification_id': selectQlification.value,
+        'member_qualification_id': memberQualificationId,
+        'qualification_main_id': selectQualicationMain.value,
         'qualification_category_id':
-            (selectQualicationCat.value == "other_category" ||
-                    selectQualicationCat.value.isEmpty)
-                ? "0"
-                : selectQualicationCat.value.toString(),
+        (selectQualicationCat.value == "other_category" ||
+            selectQualicationCat.value.isEmpty)
+            ? "0"
+            : selectQualicationCat.value,
         'qualification_other_name': educationdetailController.value.text,
-        'updated_by': memberId.value.toString(),
+        'updated_by': memberId,
       };
 
-      print("fffh" + map.toString());
-      final dynamic response = await api.updateQualification(map);
+      print("📤 Qualification Payload: $qualificationPayload");
+
+      final qualificationResponse =
+      await api.updateQualification(qualificationPayload);
+
+      if (qualificationResponse['status'] != true) {
+        addloading.value = false;
+
+        _showEducationSnackBar(
+          context,
+          qualificationResponse['message'] ?? "Failed to update qualification",
+          isSuccess: false,
+        );
+
+        return;
+      }
+
+      /// STEP 2️⃣ UPDATE EDUCATION DETAIL
+      Map<String, dynamic> educationPayload = {
+        "member_qualification_id": memberQualificationId,
+        "member_id": memberId,
+        "institute_name": instituteController.text.trim(),
+        "year_of_passing": yearPassingController.text,
+        "board_university": boardUniversityController.text.trim(),
+        "percentage_grade": percentageController.text.trim().isEmpty
+            ? ""
+            : "${percentageController.text.trim()}%",
+        "is_currently_pursuing": pursuingStatus.value,
+        "updated_by": memberId
+      };
+
+      print("📤 Education Payload: $educationPayload");
+
+      final educationResponse =
+      await updateProfileEducationRepository.updateprofileEducation(
+          educationPayload);
+
       addloading.value = false;
 
-      if (response['status'] == true) {
+      if (educationResponse.status == true) {
+
         await getUserProfile();
+
         if (Navigator.canPop(context)) {
           Navigator.pop(context);
         }
+
         _showEducationSnackBar(
           context,
-          response['message']?.toString() ?? "Update Education Successfully",
+          "Education updated successfully",
           isSuccess: true,
         );
+
       } else {
+
         _showEducationSnackBar(
           context,
-          response['message']?.toString() ?? "Failed to update qualification",
+          educationResponse.message ?? "Failed to update education",
           isSuccess: false,
         );
       }
+
     } catch (e) {
+
       addloading.value = false;
-      print('Error: $e');
+
+      print("❌ Update Error: $e");
+
       _showEducationSnackBar(
         context,
         "Something went wrong: ${e.toString()}",
         isSuccess: false,
       );
-    } finally {}
+    }
   }
+
+  // Future<void> updateQualification(
+  //     String member_qualification_id, BuildContext context) async {
+  //   CheckUserData2? userData = await SessionManager.getSession();
+  //   print('User ID: ${userData?.memberId}');
+  //   print('User Name: ${userData?.mobile}');
+  //   memberId.value = userData!.memberId.toString();
+  //   addloading.value = true;
+  //   try {
+  //     Map<String, String> map = {
+  //       'member_id': memberId.value.toString(),
+  //       'qualification_id': selectQlification.value.toString(),
+  //       'member_qualification_id': member_qualification_id.toString(),
+  //       'qualification_main_id': selectQualicationMain.value.toString(),
+  //       'qualification_category_id':
+  //           (selectQualicationCat.value == "other_category" ||
+  //                   selectQualicationCat.value.isEmpty)
+  //               ? "0"
+  //               : selectQualicationCat.value.toString(),
+  //       'qualification_other_name': educationdetailController.value.text,
+  //       'updated_by': memberId.value.toString(),
+  //     };
+  //
+  //     print("fffh" + map.toString());
+  //     final dynamic response = await api.updateQualification(map);
+  //     addloading.value = false;
+  //
+  //     if (response['status'] == true) {
+  //       await getUserProfile();
+  //       if (Navigator.canPop(context)) {
+  //         Navigator.pop(context);
+  //       }
+  //       _showEducationSnackBar(
+  //         context,
+  //         response['message']?.toString() ?? "Update Education Successfully",
+  //         isSuccess: true,
+  //       );
+  //     } else {
+  //       _showEducationSnackBar(
+  //         context,
+  //         response['message']?.toString() ?? "Failed to update qualification",
+  //         isSuccess: false,
+  //       );
+  //     }
+  //   } catch (e) {
+  //     addloading.value = false;
+  //     print('Error: $e');
+  //     _showEducationSnackBar(
+  //       context,
+  //       "Something went wrong: ${e.toString()}",
+  //       isSuccess: false,
+  //     );
+  //   } finally {}
+  // }
+
   void checkReviewApproval() {
     if (memberStatusId.value == "1" &&
         membershipApprovalStatusId.value == "6") {
@@ -1441,45 +1666,69 @@ class UdateProfileController extends GetxController {
     }
   }
 
-  Future<void> updateEducationDetail(
-      String qualificationId,
-      String memberId,
-      BuildContext context) async {
-
-    try {
-
-      addloading.value = true;
-
-      Map<String, dynamic> body = {
-        "member_qualification_id": qualificationId,
-        "member_id": memberId,
-        "institute_name": instituteController.text.trim(),
-        "year_of_passing": yearPassingController.text,
-        "board_university": boardUniversityController.text.trim(),
-        "percentage_grade": "${percentageController.text.trim()}%",
-        "is_currently_pursuing": pursuingStatus.value,
-        "updated_by": memberId
-      };
-
-      final response =
-      await updateProfileEducationRepository.updateprofileEducation(body);
-
-      if (response.status == true) {
-        Get.snackbar("Success", response.message ?? "Education updated");
-
-        Navigator.pop(context);
-
-        getUserProfile(); // reload profile
-      } else {
-        Get.snackbar("Error", response.message ?? "Update failed");
-      }
-
-    } catch (e) {
-      debugPrint("Update Education Error: $e");
-    } finally {
-      addloading.value = false;
-    }
-  }
+  // Future<void> updateEducationDetail(
+  //     String qualificationId,
+  //     String memberId,
+  //     BuildContext context) async {
+  //
+  //   try {
+  //
+  //     addloading.value = true;
+  //
+  //     Map<String, dynamic> body = {
+  //       "member_qualification_id": qualificationId,
+  //       "member_id": memberId,
+  //       "institute_name": instituteController.text.trim(),
+  //       "year_of_passing": yearPassingController.text,
+  //       "board_university": boardUniversityController.text.trim(),
+  //       "percentage_grade": "${percentageController.text.trim()}%",
+  //       "is_currently_pursuing": pursuingStatus.value,
+  //       "updated_by": memberId
+  //     };
+  //
+  //     print("📤 Update Education Payload: $body");
+  //
+  //     final response =
+  //     await updateProfileEducationRepository.updateprofileEducation(body);
+  //
+  //     addloading.value = false;
+  //
+  //     if (response.status == true) {
+  //
+  //       await getUserProfile();
+  //
+  //       if (Navigator.canPop(context)) {
+  //         Navigator.pop(context);
+  //       }
+  //
+  //       _showEducationSnackBar(
+  //         context,
+  //         response.message ?? "Education updated successfully",
+  //         isSuccess: true,
+  //       );
+  //
+  //     } else {
+  //
+  //       _showEducationSnackBar(
+  //         context,
+  //         response.message ?? "Failed to update education",
+  //         isSuccess: false,
+  //       );
+  //     }
+  //
+  //   } catch (e) {
+  //
+  //     addloading.value = false;
+  //
+  //     print("Update Education Error: $e");
+  //
+  //     _showEducationSnackBar(
+  //       context,
+  //       "Something went wrong: ${e.toString()}",
+  //       isSuccess: false,
+  //     );
+  //   }
+  // }
 
   // Family Relation
   void setRxRelationType(Status _value) => rxStatusRelationType.value = _value;

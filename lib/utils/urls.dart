@@ -146,6 +146,7 @@ class Urls {
   static const String add_job_url = base_url+"api/member_job/add_job";
   static const String get_jobs_url = base_url+"api/member_job/get_jobs";
   static const String update_education_url = base_url+"api/member_job/update_education";
+  static const String update_more_occupation_url = base_url+"api/member_job/update_occupation";
   static const String upload_seeker_resume_url = base_url+"api/member_job/upload_seeker_resume";
 
   // Notification API URLs - Following same pattern as device_mapping
