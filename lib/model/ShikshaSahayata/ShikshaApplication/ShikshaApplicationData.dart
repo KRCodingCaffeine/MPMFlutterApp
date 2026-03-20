@@ -1,5 +1,6 @@
 import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/Education.dart';
 import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/FamilyMember.dart';
+import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/LoanRepayment.dart';
 import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/ReceivedLoan.dart';
 import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/ReferredMember.dart';
 import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/RequestedLoanEducation.dart';
@@ -33,6 +34,7 @@ class ShikshaApplicationData {
   final List<Education>? education;
   final List<RequestedLoanEducation>? requestedLoanEducation;
   final List<ReceivedLoan>? receivedLoans;
+  final List<LoanRepayment>? loanRepayments;
   final List<ReferredMember>? referredMembers;
 
   ShikshaApplicationData({
@@ -63,6 +65,7 @@ class ShikshaApplicationData {
     this.education,
     this.requestedLoanEducation,
     this.receivedLoans,
+    this.loanRepayments,
     this.referredMembers,
   });
 
@@ -110,6 +113,11 @@ class ShikshaApplicationData {
           ? List<ReceivedLoan>.from(
               json['received_loans'].map((x) => ReceivedLoan.fromJson(x)))
           : [],
+      loanRepayments: json['loan_repayments'] != null
+          ? List<LoanRepayment>.from(
+          json['loan_repayments']
+              .map((x) => LoanRepayment.fromJson(x)))
+          : [],
       referredMembers: json['referred_members'] != null
           ? List<ReferredMember>.from(
               json['referred_members'].map((x) => ReferredMember.fromJson(x)))
@@ -147,6 +155,8 @@ class ShikshaApplicationData {
       'requested_loan_education':
           requestedLoanEducation?.map((x) => x.toJson()).toList(),
       'received_loans': receivedLoans?.map((x) => x.toJson()).toList(),
+      'loan_repayments':
+      loanRepayments?.map((x) => x.toJson()).toList(),
       'referred_members': referredMembers?.map((x) => x.toJson()).toList(),
     };
   }

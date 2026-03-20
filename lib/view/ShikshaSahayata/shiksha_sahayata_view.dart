@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/LoanRepayment.dart';
 import 'package:mpm/model/ShikshaSahayata/ShikshaApplicationsByAppliedBy/ShikshaApplicationsByAppliedByData.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/ShikshaApplicationsAppliedByRepo/shiksha_applications_applied_by_repository/shiksha_application_applied_by_repository.dart';
 import 'package:mpm/route/route_name.dart';
@@ -11,14 +13,12 @@ class ShikshaSahayataView extends StatefulWidget {
   const ShikshaSahayataView({super.key});
 
   @override
-  State<ShikshaSahayataView> createState() =>
-      _ShikshaSahayataViewState();
+  State<ShikshaSahayataView> createState() => _ShikshaSahayataViewState();
 }
 
-class _ShikshaSahayataViewState
-    extends State<ShikshaSahayataView> {
+class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
   final ShikshaApplicationsByAppliedByRepository _repo =
-  ShikshaApplicationsByAppliedByRepository();
+      ShikshaApplicationsByAppliedByRepository();
 
   bool isLoading = true;
   bool hasApplied = false;
@@ -41,8 +41,7 @@ class _ShikshaSahayataViewState
         return;
       }
 
-      final response =
-      await _repo.fetchShikshaApplicationsByAppliedBy(
+      final response = await _repo.fetchShikshaApplicationsByAppliedBy(
         appliedBy: memberId,
       );
 
@@ -55,7 +54,6 @@ class _ShikshaSahayataViewState
           isLoading = false;
         });
         print("Full Response Data: ${response.data}");
-
       } else {
         setState(() {
           hasApplied = false;
@@ -73,7 +71,7 @@ class _ShikshaSahayataViewState
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Builder(
           builder: (context) {
             double fontSize = MediaQuery.of(context).size.width * 0.045;
@@ -88,37 +86,51 @@ class _ShikshaSahayataViewState
           },
         ),
         iconTheme: const IconThemeData(color: Colors.white),
-
-        // ✅ SHOW APPLY BUTTON ONLY IF ALREADY APPLIED
         actions: hasApplied
             ? [
-          TextButton.icon(
-            onPressed: _showInstructionDialog,
-            icon: const Icon(
-              Icons.add_circle_outline,
-              color: Colors.white,
-              size: 18,
-            ),
-            label: const Text(
-              "Apply",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ]
+                TextButton.icon(
+                  onPressed: _showInstructionDialog,
+                  icon: const Icon(
+                    Icons.add_circle_outline,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                  label: const Text(
+                    "Apply",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ]
             : null,
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : hasApplied
-          ? _buildAppliedView()
-          : _buildApplyCard(),
+          : RefreshIndicator(
+              color: Colors.redAccent,
+              onRefresh: _handleRefresh,
+              child: hasApplied
+                  ? _buildAppliedView()
+                  : SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.8,
+                        child: _buildApplyCard(),
+                      ),
+                    ),
+            ),
     );
   }
 
-  // ================= APPLICATION SUMMARY =================
+  Future<void> _handleRefresh() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    await _checkApplicationStatus();
+  }
 
   Widget _buildAppliedView() {
     if (applicationList.isEmpty) {
@@ -127,41 +139,29 @@ class _ShikshaSahayataViewState
       );
     }
 
-    // Check first application's loan status
-    final firstLoan = applicationList.first
-        .requestedLoanEducationAppliedBy !=
-        null &&
-        applicationList.first
-            .requestedLoanEducationAppliedBy!
-            .isNotEmpty
-        ? applicationList.first
-        .requestedLoanEducationAppliedBy!
-        .first
+    final firstLoan = applicationList.first.requestedLoanEducationAppliedBy !=
+                null &&
+            applicationList.first.requestedLoanEducationAppliedBy!.isNotEmpty
+        ? applicationList.first.requestedLoanEducationAppliedBy!.first
         : null;
 
-    final isDisbursed =
-        firstLoan?.loanStatus?.toLowerCase() == "disbursed";
+    final isDisbursed = firstLoan?.loanStatus?.toLowerCase() == "disbursed";
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-
-        /// ✅ SHOW INFO CARD ONLY ONCE (TOP)
-        if (!isDisbursed)
-          _applicationInfoCard(false),
-
-        if (!isDisbursed)
-          const SizedBox(height: 16),
-
-        /// ✅ LOOP THROUGH APPLICATIONS
+        if (!isDisbursed) _applicationInfoCard(false),
+        if (!isDisbursed) const SizedBox(height: 16),
         ...applicationList.map((data) {
-          final loan =
-          data.requestedLoanEducationAppliedBy != null &&
-              data.requestedLoanEducationAppliedBy!
-                  .isNotEmpty
-              ? data.requestedLoanEducationAppliedBy!
-              .first
+          final loan = data.requestedLoanEducationAppliedBy != null &&
+                  data.requestedLoanEducationAppliedBy!.isNotEmpty
+              ? data.requestedLoanEducationAppliedBy!.first
               : null;
+
+          final repayment =
+              data.loanRepayments != null && data.loanRepayments!.isNotEmpty
+                  ? data.loanRepayments!.first
+                  : null;
 
           return InkWell(
             borderRadius: BorderRadius.circular(16),
@@ -169,12 +169,10 @@ class _ShikshaSahayataViewState
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) =>
-                      ShikshaSahayataDetailView(
-                        shikshaApplicantId:
-                        data.shikshaApplicantId ?? "",
-                        applicationData: data,
-                      ),
+                  builder: (_) => ShikshaSahayataDetailView(
+                    shikshaApplicantId: data.shikshaApplicantId ?? "",
+                    applicationData: data,
+                  ),
                 ),
               );
             },
@@ -188,14 +186,10 @@ class _ShikshaSahayataViewState
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
-                  crossAxisAlignment:
-                  CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-
-                    /// 🔹 HEADER
                     Row(
-                      mainAxisAlignment:
-                      MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
                           "Loan Summary",
@@ -205,50 +199,238 @@ class _ShikshaSahayataViewState
                           ),
                         ),
                         if (loan != null)
-                          _buildLoanStatusBadge(
-                              loan.loanStatus),
+                          _buildLoanStatusBadge(loan.loanStatus),
                       ],
                     ),
-
                     const Divider(height: 20),
-
-                    _infoRow("Applicant ID",
-                        data.shikshaApplicantId ?? "-"),
-                    _infoRow("Applicant Name",
-                        data.fullName ?? "-"),
-                    _infoRow("Applicant Mobile",
-                        data.mobile ?? "-"),
-                    _infoRow("Applicant Town",
-                        data.applicantCityName ?? "-"),
-                    _infoRow("Applicant State",
-                        data.applicantStateName ?? "-"),
-                    _infoRow("Applied Education",
-                        loan?.standard ?? "-"),
-
+                    _infoRow("Applicant ID", data.shikshaApplicantId ?? "-"),
+                    _infoRow("Applicant Name", data.fullName ?? "-"),
+                    _infoRow("Applicant Mobile", data.mobile ?? "-"),
+                    _infoRow("Applicant Town", data.applicantCityName ?? "-"),
+                    _infoRow("Applicant State", data.applicantStateName ?? "-"),
+                    _infoRow("Applied Education", loan?.standard ?? "-"),
+                    _infoRow(
+                      "Applied By",
+                      data.appliedByFullName ?? "-",
+                    ),
+                    _infoRow(
+                      "Applied On",
+                      data.createdAt != null && data.createdAt!.isNotEmpty
+                          ? _formatDateTime(data.createdAt!)
+                          : "-",
+                    ),
                     if (loan?.sanctionedAmount != null &&
-                        loan!.sanctionedAmount!
-                            .isNotEmpty &&
+                        loan!.sanctionedAmount!.isNotEmpty &&
                         loan.sanctionedAmount != "0")
                       _infoRow(
                         "Loan Sanctioned",
                         "₹ ${loan.sanctionedAmount}",
                       ),
-
                     if (loan?.disbursedAmount != null &&
-                        loan!.disbursedAmount!
-                            .isNotEmpty &&
+                        loan!.disbursedAmount!.isNotEmpty &&
                         loan.disbursedAmount != "0")
                       _infoRow(
                         "Loan Disbursed",
                         "₹ ${loan.disbursedAmount}",
                       ),
-
                     if (loan?.disbursedOn != null &&
-                        loan!.disbursedOn!
-                            .isNotEmpty)
+                        loan!.disbursedOn!.isNotEmpty)
                       _infoRow(
-                        "Dispersal Date",
-                        loan.disbursedOn!,
+                        "Disbursed on",
+                        _formatDateTime(loan.disbursedOn!),
+                      ),
+                    if (data.loanRepayments != null &&
+                        data.loanRepayments!.isNotEmpty)
+                      Builder(
+                        builder: (_) {
+                          final themeColor = ColorHelperClass.getColorFromHex(
+                              ColorResources.logo_color);
+                          final sortedRepayments = [...data.loanRepayments!];
+                          sortedRepayments.sort((a, b) {
+                            final dateA =
+                                DateTime.tryParse(a.createdAt ?? '') ??
+                                    DateTime(1900);
+                            final dateB =
+                                DateTime.tryParse(b.createdAt ?? '') ??
+                                    DateTime(1900);
+
+                            return dateB.compareTo(dateA); // latest first
+                          });
+
+                          final latestRepayment = sortedRepayments.first;
+
+                          final totalRepaid =
+                              _calculateTotalRepaid(data.loanRepayments);
+
+                          final remaining = _calculateRemainingAmount(
+                              repayment?.loanAmount, data.loanRepayments);
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Repayment Details",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              _infoRow("Total Repaid",
+                                  "₹ ${totalRepaid.toStringAsFixed(0)}"),
+                              _infoRow("Remaining Amount",
+                                  "₹ ${remaining.toStringAsFixed(0)}"),
+                              Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.green.shade50,
+                                      Colors.green.shade100,
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border:
+                                      Border.all(color: Colors.green.shade300),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.green.withOpacity(0.15),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
+                                    )
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Row(
+                                          children: const [
+                                            Icon(Icons.payments,
+                                                color: Colors.green, size: 20),
+                                            SizedBox(width: 8),
+                                            Text(
+                                              "Latest Repayment",
+                                              style: TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.green,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        GestureDetector(
+                                          onTap: () {
+                                            _showRepaymentBottomSheet(
+                                              context,
+                                              data.loanRepayments!,
+                                              repayment?.loanAmount,
+                                            );
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 14, vertical: 6),
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  themeColor.withOpacity(0.12),
+                                              borderRadius:
+                                                  BorderRadius.circular(30),
+                                              border: Border.all(
+                                                color:
+                                                    themeColor.withOpacity(0.4),
+                                              ),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Text(
+                                                  "View All",
+                                                  style: TextStyle(
+                                                    color: themeColor,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 13,
+                                                  ),
+                                                ),
+                                                SizedBox(width: 4),
+                                                Icon(
+                                                  Icons.arrow_forward_ios,
+                                                  size: 12,
+                                                  color: themeColor,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const Divider(height: 18),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        const Text(
+                                          "Paid Amount",
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: Colors.black54,
+                                          ),
+                                        ),
+                                        Text(
+                                          "₹ ${latestRepayment.loanRepaymentAmount}",
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.green,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        const Text(
+                                          "Payment Date",
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: Colors.black54,
+                                          ),
+                                        ),
+                                        Text(
+                                          latestRepayment.loanRepaymentDate !=
+                                                  null
+                                              ? _formatDateTime(latestRepayment
+                                                  .loanRepaymentDate!)
+                                              : "-",
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    if (latestRepayment.loanRepaymentRemarks !=
+                                            null &&
+                                        latestRepayment
+                                            .loanRepaymentRemarks!.isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 8),
+                                        child: Text(
+                                          "Remarks: ${latestRepayment.loanRepaymentRemarks}",
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        },
                       ),
                   ],
                 ),
@@ -260,6 +442,32 @@ class _ShikshaSahayataViewState
     );
   }
 
+  String _formatDateTime(String rawDate) {
+    try {
+      final parsed = DateTime.parse(rawDate);
+      // return DateFormat("dd MMM yyyy, hh:mm a").format(parsed);
+      return DateFormat("dd MMM yyyy").format(parsed);
+    } catch (e) {
+      return rawDate;
+    }
+  }
+
+  double _calculateTotalRepaid(List<LoanRepayment>? repayments) {
+    if (repayments == null || repayments.isEmpty) return 0;
+
+    return repayments.fold(0, (sum, item) {
+      final amount = double.tryParse(item.loanRepaymentAmount ?? "0") ?? 0;
+      return sum + amount;
+    });
+  }
+
+  double _calculateRemainingAmount(
+      String? loanAmount, List<LoanRepayment>? repayments) {
+    final totalLoan = double.tryParse(loanAmount ?? "0") ?? 0;
+    final totalRepaid = _calculateTotalRepaid(repayments);
+    return totalLoan - totalRepaid;
+  }
+
   Widget _buildLoanStatusBadge(String? status) {
     final loanStatus = (status ?? "pending").toLowerCase();
 
@@ -269,7 +477,6 @@ class _ShikshaSahayataViewState
     String displayText;
 
     switch (loanStatus) {
-
       case "sanctioned":
         bgColor = Colors.blue.withOpacity(0.15);
         textColor = Colors.blue;
@@ -343,18 +550,247 @@ class _ShikshaSahayataViewState
     );
   }
 
+  void _showRepaymentBottomSheet(
+      BuildContext context,
+      List<LoanRepayment> repayments,
+      String? loanAmount,
+      ) {
+    // Sort latest first
+    repayments.sort((a, b) {
+      final dateA =
+          DateTime.tryParse(a.createdAt ?? '') ?? DateTime(1900);
+      final dateB =
+          DateTime.tryParse(b.createdAt ?? '') ?? DateTime(1900);
+      return dateB.compareTo(dateA);
+    });
+
+    final totalRepaid = _calculateTotalRepaid(repayments);
+    final remaining = _calculateRemainingAmount(loanAmount, repayments);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      enableDrag: false,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.65,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(28),
+            ),
+          ),
+          child: Column(
+            children: [
+
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 20, vertical: 16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.green.shade400,
+                      Colors.green.shade600,
+                    ],
+                  ),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(28),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment:
+                  MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Repayment History",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: const CircleAvatar(
+                        radius: 16,
+                        backgroundColor: Colors.white,
+                        child: Icon(Icons.close,
+                            size: 18,
+                            color: Colors.black87),
+                      ),
+                    )
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              Padding(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _summaryCard(
+                        title: "Total Repaid",
+                        amount:
+                        "₹ ${totalRepaid.toStringAsFixed(0)}",
+                        color: Colors.green,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _summaryCard(
+                        title: "Remaining",
+                        amount:
+                        "₹ ${remaining.toStringAsFixed(0)}",
+                        color: Colors.red,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              Expanded(
+                child: Scrollbar(
+                  thumbVisibility: true,
+                  child: ListView.builder(
+                    physics: const BouncingScrollPhysics(),
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: repayments.length,
+                    itemBuilder: (context, index) {
+                      final repayment = repayments[index];
+
+                      return Container(
+                        margin:
+                        const EdgeInsets.only(bottom: 14),
+                        padding:
+                        const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius:
+                          BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black
+                                  .withOpacity(0.05),
+                              blurRadius: 6,
+                              offset:
+                              const Offset(0, 3),
+                            )
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment:
+                          MainAxisAlignment
+                              .spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment:
+                              CrossAxisAlignment
+                                  .start,
+                              children: [
+                                Text(
+                                  repayment.loanRepaymentDate !=
+                                      null
+                                      ? _formatDateTime(
+                                      repayment
+                                          .loanRepaymentDate!)
+                                      : "-",
+                                  style:
+                                  const TextStyle(
+                                    fontWeight:
+                                    FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(
+                                    height: 4),
+                                const Text(
+                                  "Repayment Date",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color:
+                                    Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Text(
+                              "₹ ${repayment.loanRepaymentAmount}",
+                              style:
+                              const TextStyle(
+                                fontSize: 16,
+                                fontWeight:
+                                FontWeight.bold,
+                                color:
+                                Colors.green,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _summaryCard({
+    required String title,
+    required String amount,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            amount,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _applicationInfoCard(bool isDisbursed) {
     return Card(
-      color: isDisbursed
-          ? Colors.red.shade50
-          : Colors.orange.shade50,
+      color: isDisbursed ? Colors.red.shade50 : Colors.orange.shade50,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: isDisbursed
-              ? Colors.red.shade200
-              : Colors.orange.shade200,
+          color: isDisbursed ? Colors.red.shade200 : Colors.orange.shade200,
         ),
       ),
       child: Padding(
@@ -363,13 +799,9 @@ class _ShikshaSahayataViewState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(
-              isDisbursed
-                  ? Icons.lock
-                  : Icons.edit_note,
+              isDisbursed ? Icons.lock : Icons.edit_note,
               size: 18,
-              color: isDisbursed
-                  ? Colors.red
-                  : Colors.orange,
+              color: isDisbursed ? Colors.red : Colors.orange,
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -379,9 +811,7 @@ class _ShikshaSahayataViewState
                     : "If you want to edit or upload your details, please complete it before disbursal. Once disbursed, editing will not be allowed.",
                 style: TextStyle(
                   fontSize: 13,
-                  color: isDisbursed
-                      ? Colors.red
-                      : Colors.orange.shade800,
+                  color: isDisbursed ? Colors.red : Colors.orange.shade800,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -401,8 +831,7 @@ class _ShikshaSahayataViewState
           const Text(": "),
           Expanded(
             child: Text(value,
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold)),
+                style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -430,7 +859,7 @@ class _ShikshaSahayataViewState
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: ColorHelperClass.getColorFromHex(
-                        ColorResources.red_color)
+                            ColorResources.red_color)
                         .withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
@@ -512,42 +941,23 @@ class _ShikshaSahayataViewState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                "Please ensure the following documents are available with you before submit with the application.",
+                "Please ensure that soft copies of following documents are ready before proceeding further:-",
                 style:
-                TextStyle(fontSize: 16, color: Colors.black87, height: 1.4),
+                    TextStyle(fontSize: 16, color: Colors.black87, height: 1.4),
               ),
               const SizedBox(height: 12),
+              _bulletRichText(text: "Aadhar card"),
               _bulletRichText(
-                prefix: "Copy of ",
-                bold: "Aadhar card",
-              ),
-              _bulletRichText(
-                prefix: "Copy of ",
-                bold:
-                "Address proof (If Aadhar and current address are not the same)",
-              ),
-              _bulletRichText(
-                prefix: "Copy of ",
-                bold: "Father's PAN card",
-              ),
+                  text:
+                      "Address proof (If Aadhar and current address are not the same)"),
+              _bulletRichText(text: "Father's PAN card"),
               const SizedBox(height: 8),
               _bulletRichText(
-                prefix:
-                "Copy of ",
-                bold: "Bonafide Certificate & Fees Structure by authority from college",
-              ),
-              _bulletRichText(
-                prefix: "Copy of ",
-                bold: "Marksheet starting from Class X",
-              ),
-              _bulletRichText(
-                prefix: "Copy of ",
-                bold: "Annual Income Proof",
-              ),
-              _bulletRichText(
-                prefix: "Copy of ",
-                bold: "Admission Letter",
-              ),
+                  text:
+                      "Bonafide Certificate & Fees Structure by authority from college"),
+              _bulletRichText(text: "Marksheet starting from Class X"),
+              _bulletRichText(text: "Annual Income Proof"),
+              _bulletRichText(text: "Admission Letter"),
             ],
           ),
           actions: [
@@ -666,7 +1076,7 @@ class _ShikshaSahayataViewState
     );
   }
 
-  Widget _bulletRichText({required String prefix, String? bold}) {
+  Widget _bulletRichText({required String text}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
@@ -674,21 +1084,13 @@ class _ShikshaSahayataViewState
         children: [
           const Text("• ", style: TextStyle(fontSize: 16, height: 1.4)),
           Expanded(
-            child: RichText(
-              text: TextSpan(
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.black87,
-                  height: 1.4,
-                ),
-                children: [
-                  TextSpan(text: prefix),
-                  if (bold != null)
-                    TextSpan(
-                      text: bold,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                ],
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.black87,
+                height: 1.4,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),

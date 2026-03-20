@@ -12,12 +12,12 @@ android {
 
     compileOptions {
         coreLibraryDesugaringEnabled true
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8
+        jvmTarget = '17'
     }
     bundle {
         language {
@@ -38,7 +38,7 @@ android {
         applicationId = "com.mpm.member"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 23
+        minSdkVersion = 23  // Required by awesome_notifications (was flutter.minSdkVersion 21)
         targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -89,7 +89,7 @@ configurations.all {
         // Force use of newer versions to avoid conflicts
         force 'com.google.android.play:core-common:2.0.3'
         force 'com.google.android.play:app-update:2.1.0'
-        
+
         // Exclude old core library to prevent duplicates
         exclude group: 'com.google.android.play', module: 'core'
     }

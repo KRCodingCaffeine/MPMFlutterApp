@@ -1207,6 +1207,7 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                                 context: context,
                                 imageFile: applicantAadharFile,
                                 buttonText: "Applicant Aadhaar",
+                                isMandatory: true,
                                 existingDocumentPath: _applicationData
                                     ?.applicantAadharCardDocument,
                                 isExistingRemoved: isExistingAadhaarRemoved,
@@ -1242,6 +1243,7 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                                 context: context,
                                 imageFile: fatherPanFile,
                                 buttonText: "Father's PAN Card",
+                                isMandatory: true,
                                 existingDocumentPath: _applicationData
                                     ?.applicantFatherPanCardDocument,
                                 isExistingRemoved: isExistingPanRemoved,
@@ -1278,6 +1280,7 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                                 imageFile: addressProofFile,
                                 buttonText:
                                     "Address Proof (if Aadhaar and current address are not the same)",
+                                isMandatory: false,
                                 existingDocumentPath: _applicationData
                                     ?.applicantRationCardDocument,
                                 isExistingRemoved: isExistingRationRemoved,
@@ -1512,6 +1515,7 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
     required BuildContext context,
     required File? imageFile,
     required String buttonText,
+    bool isMandatory = false,
     required String? existingDocumentPath,
     required bool isExistingRemoved,
     required VoidCallback onPick,
@@ -1605,7 +1609,11 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
               isUploaded ? Icons.check_circle : Icons.upload_file,
             ),
             label: Text(
-              isUploaded ? "$buttonText Uploaded" : "$buttonText *",
+              isUploaded
+                  ? "$buttonText Uploaded"
+                  : isMandatory
+                      ? "$buttonText *"
+                      : buttonText,
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: isUploaded
@@ -1643,6 +1651,7 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
     showDialog(
       context: context,
       builder: (_) => Dialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -1711,36 +1720,45 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (_) {
-        return Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
-              title: const Text("Take a Picture"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                    await _picker.pickImage(source: ImageSource.camera);
-                if (picked != null) {
-                  onImagePicked(File(picked.path));
-                }
-              },
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewPadding.bottom + 20,
             ),
-            ListTile(
-              leading: const Icon(Icons.image, color: Colors.redAccent),
-              title: const Text("Choose from Gallery"),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked =
-                    await _picker.pickImage(source: ImageSource.gallery);
-                if (picked != null) {
-                  onImagePicked(File(picked.path));
-                }
-              },
+            child: Wrap(
+              children: [
+                ListTile(
+                  leading:
+                      const Icon(Icons.camera_alt, color: Colors.redAccent),
+                  title: const Text("Take a Picture"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.camera);
+                    if (picked != null) {
+                      onImagePicked(File(picked.path));
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.image, color: Colors.redAccent),
+                  title: const Text("Choose from Gallery"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final picked =
+                        await _picker.pickImage(source: ImageSource.gallery);
+                    if (picked != null) {
+                      onImagePicked(File(picked.path));
+                    }
+                  },
+                ),
+                const SizedBox(height: 30)
+              ],
             ),
-          ],
+          ),
         );
       },
     );
