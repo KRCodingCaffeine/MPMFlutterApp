@@ -910,7 +910,7 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
   }
 
   void _showInstructionDialog() {
-    showDialog<bool>(
+    showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) {
@@ -922,159 +922,215 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
           titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
           contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
           actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text(
-                "Documents Required to complete your application",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 8),
-              Divider(color: Colors.grey),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
+
+          // 🔹 TITLE
+          title: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "Please ensure that soft copies of following documents are ready before proceeding further:-",
-                style:
-                    TextStyle(fontSize: 16, color: Colors.black87, height: 1.4),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Mandatory Documents Required",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 8),
+                    Divider(color: Colors.grey),
+                  ],
+                ),
               ),
-              const SizedBox(height: 12),
-              _bulletRichText(text: "Aadhar card"),
-              _bulletRichText(
-                  text:
-                      "Address proof (If Aadhar and current address are not the same)"),
-              _bulletRichText(text: "Father's PAN card"),
-              const SizedBox(height: 8),
-              _bulletRichText(
-                  text:
-                      "Bonafide Certificate & Fees Structure by authority from college"),
-              _bulletRichText(text: "Marksheet starting from Class X"),
-              _bulletRichText(text: "Annual Income Proof"),
-              _bulletRichText(text: "Admission Letter"),
+
+              // ❌ Close Icon
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.grey),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
             ],
           ),
+
+          // 🔹 CONTENT
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+
+                const Text(
+                  "Please ensure that soft copies of following documents are ready before proceeding further:",
+                  style: TextStyle(fontSize: 15, height: 1.4),
+                ),
+
+                const SizedBox(height: 16),
+
+                // ✅ DOMESTIC
+                const Text(
+                  "Domestic Application",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                _bulletRichText(text: "Applicant Aadhar Card"),
+                _bulletRichText(
+                    text:
+                    "Address Proof (If Aadhar and current address are not the same)"),
+                _bulletRichText(text: "Marksheet starting from Class X"),
+                _bulletRichText(text: "Father's Annual Income Proof (Last 3 years of ITR file Document)"),
+                _bulletRichText(text: "Bonafide Certificate / Fees Structure"),
+                _bulletRichText(text: "Father's PAN Card"),
+                _bulletRichText(text: "Admission Letter"),
+
+                const SizedBox(height: 16),
+
+                // ✅ DIVIDER
+                const Center(
+                  child: Text(
+                    "---------------- OR ----------------",
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // ✅ OVERSEAS
+                const Text(
+                  "Overseas Application",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                _bulletRichText(text: "Passport"),
+                _bulletRichText(text: "Visa"),
+                _bulletRichText(text: "Flight Ticket"),
+              ],
+            ),
+          ),
+
+          // 🔹 BUTTON
           actions: [
             Center(
               child: SizedBox(
-                width: 220,
-                child: ElevatedButton.icon(
+                width: 240,
+                child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pop(context, true);
+                    Navigator.pop(context);
+
+                    // clear storage
+                    // (if using shared prefs instead of localStorage in Flutter)
+
+                    Navigator.pushNamed(
+                      context,
+                      RouteNames.shiksha_sahayata_by_yourself,
+                    );
                   },
-                  label: const Text(
-                    "OK, Understood, Click to proceed",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  child: const Text(
+                    "I Understand & Continue",
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.redAccent,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 14),
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
-          ],
-        );
-      },
-    ).then((value) {
-      if (!mounted) return;
-      if (value == true) {
-        _showShikshaDialog();
-      }
-    });
-  }
-
-  void _showShikshaDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text(
-                "Shiksha Sahayata",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 8),
-              Divider(color: Colors.grey),
-            ],
-          ),
-          content: const Text(
-            "Do you want to apply Shiksha Sahayata for?",
-            style: TextStyle(fontSize: 16, color: Colors.black87),
-          ),
-          actions: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                OutlinedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(
-                        context, RouteNames.shiksha_sahayata_by_yourself);
-                  },
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.red),
-                    foregroundColor: Colors.red,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 22, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: const Text("Your Self"),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(
-                        context, RouteNames.shiksha_sahayata_by_parenting);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 22, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: const Text("Your Children"),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
           ],
         );
       },
     );
   }
+
+  // void _showShikshaDialog() {
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) {
+  //       return AlertDialog(
+  //         backgroundColor: Colors.white,
+  //         shape: RoundedRectangleBorder(
+  //           borderRadius: BorderRadius.circular(15),
+  //         ),
+  //         titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+  //         contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+  //         actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+  //         title: Column(
+  //           crossAxisAlignment: CrossAxisAlignment.start,
+  //           children: const [
+  //             Text(
+  //               "Shiksha Sahayata",
+  //               style: TextStyle(
+  //                 fontSize: 18,
+  //                 fontWeight: FontWeight.bold,
+  //               ),
+  //             ),
+  //             SizedBox(height: 8),
+  //             Divider(color: Colors.grey),
+  //           ],
+  //         ),
+  //         content: const Text(
+  //           "Do you want to apply Shiksha Sahayata for?",
+  //           style: TextStyle(fontSize: 16, color: Colors.black87),
+  //         ),
+  //         actions: [
+  //           Row(
+  //             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  //             children: [
+  //               OutlinedButton(
+  //                 onPressed: () {
+  //                   Navigator.pop(context);
+  //                   Navigator.pushNamed(
+  //                       context, RouteNames.shiksha_sahayata_by_yourself);
+  //                 },
+  //                 style: OutlinedButton.styleFrom(
+  //                   side: const BorderSide(color: Colors.red),
+  //                   foregroundColor: Colors.red,
+  //                   padding: const EdgeInsets.symmetric(
+  //                       horizontal: 22, vertical: 12),
+  //                   shape: RoundedRectangleBorder(
+  //                     borderRadius: BorderRadius.circular(10),
+  //                   ),
+  //                 ),
+  //                 child: const Text("Your Self"),
+  //               ),
+  //               ElevatedButton(
+  //                 onPressed: () {
+  //                   Navigator.pop(context);
+  //                   Navigator.pushNamed(
+  //                       context, RouteNames.shiksha_sahayata_by_parenting);
+  //                 },
+  //                 style: ElevatedButton.styleFrom(
+  //                   backgroundColor: Colors.red,
+  //                   foregroundColor: Colors.white,
+  //                   padding: const EdgeInsets.symmetric(
+  //                       horizontal: 22, vertical: 12),
+  //                   shape: RoundedRectangleBorder(
+  //                     borderRadius: BorderRadius.circular(10),
+  //                   ),
+  //                 ),
+  //                 child: const Text("Your Children"),
+  //               ),
+  //             ],
+  //           ),
+  //           const SizedBox(height: 12),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
 
   Widget _bulletRichText({required String text}) {
     return Padding(

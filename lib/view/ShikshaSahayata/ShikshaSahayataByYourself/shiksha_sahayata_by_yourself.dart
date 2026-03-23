@@ -75,7 +75,7 @@ class _ShikshaSahayataByYourselfState extends State<ShikshaSahayataByYourself> {
         backgroundColor:
             ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Text(
-          "Shiksha Sahayata For Yourself",
+          "Shiksha Sahayata Application Form",
           style: TextStyle(
             color: Colors.white,
             fontSize: MediaQuery.of(context).size.width * 0.045,
