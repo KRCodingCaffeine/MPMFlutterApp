@@ -29,22 +29,24 @@ class EditCurrentYearAnyOtherLoanView extends StatefulWidget {
       _EditCurrentYearAnyOtherLoanViewState();
 }
 
-class _EditCurrentYearAnyOtherLoanViewState extends State<EditCurrentYearAnyOtherLoanView> {
+class _EditCurrentYearAnyOtherLoanViewState
+    extends State<EditCurrentYearAnyOtherLoanView> {
   final List<Map<String, dynamic>> charityList = [];
 
   final AddReceivedLoanRepository _addRepo = AddReceivedLoanRepository();
-  final UpdateReceivedLoanRepository _updateRepo = UpdateReceivedLoanRepository();
-  final DeleteReceivedLoanRepository _deleteRepo = DeleteReceivedLoanRepository();
+  final UpdateReceivedLoanRepository _updateRepo =
+      UpdateReceivedLoanRepository();
+  final DeleteReceivedLoanRepository _deleteRepo =
+      DeleteReceivedLoanRepository();
   final ShikshaApplicationRepository _shikshaRepo =
-  ShikshaApplicationRepository();
+      ShikshaApplicationRepository();
 
   bool isLoading = true;
   bool isSubmitting = false;
   String? currentMemberId;
 
   bool get _isLoanLocked {
-    final loanList =
-        widget.applicationData.requestedLoanEducationAppliedBy;
+    final loanList = widget.applicationData.requestedLoanEducationAppliedBy;
 
     if (loanList == null || loanList.isEmpty) return false;
 
@@ -83,18 +85,30 @@ class _EditCurrentYearAnyOtherLoanViewState extends State<EditCurrentYearAnyOthe
       final loans = response.data?.receivedLoans ?? [];
 
       for (var loan in loans) {
-        if (loan.appliedYearOn == "current") {
-          charityList.add({
-            "loanId": loan.shikshaApplicantReceivedLoanId?.toString(),
-            "loanFrom": loan.receivedFrom ?? "",
-            "school": loan.schoolCollegeName ?? "",
-            "course": loan.courseName ?? "",
-            "whichYear": loan.yearOfEducation ?? "",
-            "amount": loan.amountReceived ?? "",
-            "receivedOn": loan.amountReceivedOn ?? "",
-            "otherCharity": loan.otherCharityName ?? "",
-          });
-        }
+        // if (loan.appliedYearOn == "current") {
+        //   charityList.add({
+        //     "loanId": loan.shikshaApplicantReceivedLoanId?.toString(),
+        //     "loanFrom": loan.receivedFrom ?? "",
+        //     "school": loan.schoolCollegeName ?? "",
+        //     "course": loan.courseName ?? "",
+        //     "whichYear": loan.yearOfEducation ?? "",
+        //     "amount": loan.amountReceived ?? "",
+        //     "receivedOn": loan.amountReceivedOn ?? "",
+        //     "otherCharity": loan.otherCharityName ?? "",
+        //     "appliedYearOn": loan.appliedYearOn ?? "",
+        //   });
+        // }
+        charityList.add({
+          "loanId": loan.shikshaApplicantReceivedLoanId?.toString(),
+          "loanFrom": loan.receivedFrom ?? "",
+          "school": loan.schoolCollegeName ?? "",
+          "course": loan.courseName ?? "",
+          "whichYear": loan.yearOfEducation ?? "",
+          "amount": loan.amountReceived ?? "",
+          "receivedOn": loan.amountReceivedOn ?? "",
+          "otherCharity": loan.otherCharityName ?? "",
+          "appliedYearOn": loan.appliedYearOn ?? "",
+        });
       }
 
       setState(() {
@@ -108,7 +122,6 @@ class _EditCurrentYearAnyOtherLoanViewState extends State<EditCurrentYearAnyOthe
           }
         });
       }
-
     } catch (e) {
       setState(() => isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -152,114 +165,112 @@ class _EditCurrentYearAnyOtherLoanViewState extends State<EditCurrentYearAnyOthe
           : ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: charityList.length,
-          itemBuilder: (context, index) {
-            final item = charityList[index];
+              itemBuilder: (context, index) {
+                final item = charityList[index];
 
-            return Card(
-              color: Colors.white,
-              elevation: 4,
-              margin: const EdgeInsets.only(bottom: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-
-                    /// 🔥 HEADER (Loan From + Popup Menu)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                return Card(
+                  color: Colors.white,
+                  elevation: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Text(
-                            item["loanFrom"] == "mpm"
-                                ? "Maheshwari Pragati Mandal (MPM)"
-                                : item["loanFrom"] == "other"
-                                ? (item["otherCharity"] ?? "")
-                                : "",
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-
-                        if (!_isLoanLocked)
-                          PopupMenuButton<String>(
-                          color: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          onSelected: (value) {
-                            if (value == "edit") {
-                              _showAddCharitySheet(
-                                context,
-                                existingData: item,
-                              );
-                            } else if (value == "delete") {
-                              _showDeleteDialog(item["loanId"]);
-                            }
-                          },
-                          itemBuilder: (context) => const [
-                            PopupMenuItem(
-                              value: "edit",
+                        /// 🔥 HEADER (Loan From + Popup Menu)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
                               child: Text(
-                                "Edit Loan Detail",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
+                                item["loanFrom"] == "mpm"
+                                    ? "Maheshwari Pragati Mandal (MPM)"
+                                    : item["loanFrom"] == "other"
+                                        ? (item["otherCharity"] ?? "")
+                                        : "",
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
-                            PopupMenuItem(
-                              value: "delete",
-                              child: Text(
-                                "Delete Loan Detail",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.red,
+                            if (!_isLoanLocked)
+                              PopupMenuButton<String>(
+                                color: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                onSelected: (value) {
+                                  if (value == "edit") {
+                                    _showAddCharitySheet(
+                                      context,
+                                      existingData: item,
+                                    );
+                                  } else if (value == "delete") {
+                                    _showDeleteDialog(item["loanId"]);
+                                  }
+                                },
+                                itemBuilder: (context) => const [
+                                  PopupMenuItem(
+                                    value: "edit",
+                                    child: Text(
+                                      "Edit Loan Detail",
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                  PopupMenuItem(
+                                    value: "delete",
+                                    child: Text(
+                                      "Delete Loan Detail",
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.red,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                child: ElevatedButton(
+                                  onPressed: null,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: const Color(0xFFDC3545),
+                                    elevation: 2,
+                                    shadowColor: Colors.black26,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    "Edit / Delete",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.red,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
                           ],
-                          child: ElevatedButton(
-                            onPressed: null,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: const Color(0xFFDC3545),
-                              elevation: 2,
-                              shadowColor: Colors.black26,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                            ),
-                            child: const Text(
-                              "Edit / Delete",
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.red,
-                              ),
-                            ),
-                          ),
                         ),
-                      ],
-                    ),
 
-                    const Divider(height: 20),
+                        const Divider(height: 20),
 
-                    _infoRow("School", item["school"] ?? ""),
-                    const SizedBox(height: 8),
+                        _infoRow("School", item["school"] ?? ""),
+                        const SizedBox(height: 8),
 
-                    _infoRow("Course", item["course"] ?? ""),
-                    const SizedBox(height: 8),
+                        _infoRow("Course", item["course"] ?? ""),
+                        const SizedBox(height: 8),
 
                     _infoRow("Year", item["whichYear"] ?? ""),
                     const SizedBox(height: 8),
@@ -267,24 +278,36 @@ class _EditCurrentYearAnyOtherLoanViewState extends State<EditCurrentYearAnyOthe
                     _infoRow("Amount", "₹ ${item["amount"] ?? ""}"),
                     const SizedBox(height: 8),
 
-                    _infoRow("Received On", item["receivedOn"] ?? ""),
+                    _infoRow(
+                      "Loan Status",
+                      item["appliedYearOn"] == "previous"
+                          ? "Received"
+                          : "Requested",
+                    ),
+                    const SizedBox(height: 8),
+
+                    _infoRow(
+                      item["appliedYearOn"] == "previous"
+                          ? "Received On"
+                          : "Applied On",
+                      item["receivedOn"] ?? "",
+                    ),
                   ],
                 ),
               ),
             );
-          }
-      ),
+              }),
 
       floatingActionButton: _isLoanLocked
           ? null
-          : FloatingActionButton (
-        backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.red_color),
-        onPressed: () {
-          _showAddCharitySheet(context);
-        },
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
+          : FloatingActionButton(
+              backgroundColor:
+                  ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              onPressed: () {
+                _showAddCharitySheet(context);
+              },
+              child: const Icon(Icons.add, color: Colors.white),
+            ),
     );
   }
 
@@ -331,7 +354,7 @@ class _EditCurrentYearAnyOtherLoanViewState extends State<EditCurrentYearAnyOthe
               },
               style: OutlinedButton.styleFrom(
                 foregroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: BorderSide(
                   color: ColorHelperClass.getColorFromHex(
                       ColorResources.red_color),
@@ -345,8 +368,7 @@ class _EditCurrentYearAnyOtherLoanViewState extends State<EditCurrentYearAnyOthe
             ElevatedButton(
               onPressed: () async {
                 try {
-                  final response =
-                  await _deleteRepo.deleteReceivedLoan({
+                  final response = await _deleteRepo.deleteReceivedLoan({
                     "shiksha_applicant_received_loan_id": loanId,
                   });
 
@@ -375,8 +397,7 @@ class _EditCurrentYearAnyOtherLoanViewState extends State<EditCurrentYearAnyOthe
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(
-                    ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -398,8 +419,8 @@ class _EditCurrentYearAnyOtherLoanViewState extends State<EditCurrentYearAnyOthe
     required String amount,
     required String receivedOn,
     required String otherCharity,
+    required String loanStatus,
   }) async {
-
     if (isSubmitting) return;
 
     setState(() => isSubmitting = true);
@@ -413,7 +434,7 @@ class _EditCurrentYearAnyOtherLoanViewState extends State<EditCurrentYearAnyOthe
         amountReceived: amount,
         receivedFrom: receivedFrom,
         amountReceivedOn: receivedOn,
-        appliedYearOn: "current",
+        appliedYearOn: loanStatus == "Requested" ? "current" : "previous",
         otherCharityName: otherCharity,
         createdBy: currentMemberId,
       );
@@ -433,7 +454,6 @@ class _EditCurrentYearAnyOtherLoanViewState extends State<EditCurrentYearAnyOthe
           backgroundColor: Colors.green,
         ),
       );
-
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
@@ -452,8 +472,8 @@ class _EditCurrentYearAnyOtherLoanViewState extends State<EditCurrentYearAnyOthe
     required String amount,
     required String receivedOn,
     required String otherCharity,
+    required String loanStatus,
   }) async {
-
     if (isSubmitting) return;
 
     setState(() => isSubmitting = true);
@@ -468,7 +488,7 @@ class _EditCurrentYearAnyOtherLoanViewState extends State<EditCurrentYearAnyOthe
         amountReceived: amount,
         receivedFrom: receivedFrom,
         amountReceivedOn: receivedOn,
-        appliedYearOn: "current",
+        appliedYearOn: loanStatus == "Requested" ? "current" : "previous",
         otherCharityName: otherCharity,
         updatedBy: currentMemberId,
       );
@@ -488,7 +508,6 @@ class _EditCurrentYearAnyOtherLoanViewState extends State<EditCurrentYearAnyOthe
           backgroundColor: Colors.green,
         ),
       );
-
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
@@ -503,8 +522,8 @@ class _EditCurrentYearAnyOtherLoanViewState extends State<EditCurrentYearAnyOthe
   void _showAddCharitySheet(BuildContext context,
       {Map<String, dynamic>? existingData}) {
     String selectedLoanFrom = '';
+    String selectedLoanStatus = 'Requested';
 
-    final TextEditingController loanFromCtrl = TextEditingController();
     final TextEditingController otherCharityCtrl = TextEditingController();
     final TextEditingController schoolCtrl = TextEditingController();
     final TextEditingController courseCtrl = TextEditingController();
@@ -529,6 +548,9 @@ class _EditCurrentYearAnyOtherLoanViewState extends State<EditCurrentYearAnyOthe
       whichYearCtrl.text = existingData["whichYear"] ?? "";
       amountCtrl.text = existingData["amount"] ?? "";
       receivedOnCtrl.text = existingData["receivedOn"] ?? "";
+      selectedLoanStatus = existingData["appliedYearOn"] == "previous"
+          ? "Received"
+          : "Requested";
     }
 
     bool isFormValid() {
@@ -566,15 +588,14 @@ class _EditCurrentYearAnyOtherLoanViewState extends State<EditCurrentYearAnyOthe
                           OutlinedButton(
                             onPressed: () => Navigator.pop(context),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor:
-                              ColorHelperClass.getColorFromHex(
+                              foregroundColor: ColorHelperClass.getColorFromHex(
                                   ColorResources.red_color),
                               side: BorderSide(
                                 color: ColorHelperClass.getColorFromHex(
                                     ColorResources.red_color),
                               ),
-                              padding:
-                              const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -585,67 +606,66 @@ class _EditCurrentYearAnyOtherLoanViewState extends State<EditCurrentYearAnyOthe
                             onPressed: !isFormValid() || isSubmitting
                                 ? null
                                 : () async {
-                              final receivedFromValue =
-                              selectedLoanFrom == "MPM" ? "mpm" : "other";
+                                    final receivedFromValue =
+                                        selectedLoanFrom == "MPM"
+                                            ? "mpm"
+                                            : "other";
 
-                              final otherCharityValue =
-                              selectedLoanFrom == "OTHER"
-                                  ? otherCharityCtrl.text.trim()
-                                  : "";
-
-                              if (isEditMode) {
-                                await _updateReceivedLoan(
-                                  loanId: existingData!["loanId"],
-                                  receivedFrom: receivedFromValue,
-                                  school: schoolCtrl.text.trim(),
-                                  course: courseCtrl.text.trim(),
-                                  year: whichYearCtrl.text.trim(),
-                                  amount: amountCtrl.text.trim(),
-                                  receivedOn: receivedOnCtrl.text.trim(),
-                                  otherCharity:
-                                  selectedLoanFrom == "OTHER"
-                                      ? otherCharityCtrl.text.trim()
-                                      : "",
-                                );
-                              } else {
-                                await _submitReceivedLoan(
-                                  receivedFrom: receivedFromValue,
-                                  school: schoolCtrl.text.trim(),
-                                  course: courseCtrl.text.trim(),
-                                  year: whichYearCtrl.text.trim(),
-                                  amount: amountCtrl.text.trim(),
-                                  receivedOn: receivedOnCtrl.text.trim(),
-                                  otherCharity:
-                                  selectedLoanFrom == "OTHER"
-                                      ? otherCharityCtrl.text.trim()
-                                      : "",
-                                );
-                              }
-                            },
+                                    if (isEditMode) {
+                                      await _updateReceivedLoan(
+                                        loanId: existingData!["loanId"],
+                                        receivedFrom: receivedFromValue,
+                                        school: schoolCtrl.text.trim(),
+                                        course: courseCtrl.text.trim(),
+                                        year: whichYearCtrl.text.trim(),
+                                        amount: amountCtrl.text.trim(),
+                                        receivedOn: receivedOnCtrl.text.trim(),
+                                        loanStatus: selectedLoanStatus,
+                                        otherCharity:
+                                            selectedLoanFrom == "OTHER"
+                                                ? otherCharityCtrl.text.trim()
+                                                : "",
+                                      );
+                                    } else {
+                                      await _submitReceivedLoan(
+                                        receivedFrom: receivedFromValue,
+                                        school: schoolCtrl.text.trim(),
+                                        course: courseCtrl.text.trim(),
+                                        year: whichYearCtrl.text.trim(),
+                                        amount: amountCtrl.text.trim(),
+                                        receivedOn: receivedOnCtrl.text.trim(),
+                                        loanStatus: selectedLoanStatus,
+                                        otherCharity:
+                                            selectedLoanFrom == "OTHER"
+                                                ? otherCharityCtrl.text.trim()
+                                                : "",
+                                      );
+                                    }
+                                  },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                              ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                              backgroundColor: ColorHelperClass.getColorFromHex(
+                                  ColorResources.red_color),
                               foregroundColor: Colors.white,
-                              padding:
-                              const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
                             ),
                             child: isSubmitting
                                 ? const SizedBox(
-                              height: 18,
-                              width: 18,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
+                                    height: 18,
+                                    width: 18,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
                                 : Text(
-                              isEditMode
-                                  ? "Update Loan Detail"
-                                  : "Add Loan Detail",
-                            ),
+                                    isEditMode
+                                        ? "Update Loan Detail"
+                                        : "Add Loan Detail",
+                                  ),
                           ),
                         ],
                       ),
@@ -673,27 +693,20 @@ class _EditCurrentYearAnyOtherLoanViewState extends State<EditCurrentYearAnyOthe
                             InputDecorator(
                               decoration: InputDecoration(
                                 labelText: "Loan Applied / Received From *",
-                                border:
-                                const OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      color: Colors.black),
+                                border: const OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.black),
                                 ),
-                                enabledBorder:
-                                const OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      color: Colors.black),
+                                enabledBorder: const OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.black),
                                 ),
-                                focusedBorder:
-                                const OutlineInputBorder(
+                                focusedBorder: const OutlineInputBorder(
                                   borderSide: BorderSide(
-                                      color: Colors.black38,
-                                      width: 1),
+                                      color: Colors.black38, width: 1),
                                 ),
                                 contentPadding:
-                                const EdgeInsets.symmetric(
-                                    horizontal: 20),
-                                labelStyle: const TextStyle(
-                                    color: Colors.black),
+                                    const EdgeInsets.symmetric(horizontal: 20),
+                                labelStyle:
+                                    const TextStyle(color: Colors.black),
                               ),
                               child: DropdownButton<String>(
                                 dropdownColor: Colors.white,
@@ -757,6 +770,52 @@ class _EditCurrentYearAnyOtherLoanViewState extends State<EditCurrentYearAnyOthe
                               label: "Which Year (Month / Year) *",
                               controller: whichYearCtrl,
                               setModalState: setModalState,
+                            ),
+                            const SizedBox(height: 20),
+
+                            InputDecorator(
+                              decoration: InputDecoration(
+                                labelText: "Loan Status *",
+                                border: const OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.black),
+                                ),
+                                enabledBorder: const OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.black),
+                                ),
+                                focusedBorder: const OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: Colors.black38,
+                                    width: 1,
+                                  ),
+                                ),
+                                contentPadding:
+                                    const EdgeInsets.symmetric(horizontal: 20),
+                                labelStyle:
+                                    const TextStyle(color: Colors.black),
+                              ),
+                              child: DropdownButton<String>(
+                                dropdownColor: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                isExpanded: true,
+                                underline: const SizedBox(),
+                                value: selectedLoanStatus,
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: "Requested",
+                                    child: Text("Requested"),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: "Received",
+                                    child: Text("Received"),
+                                  ),
+                                ],
+                                onChanged: (value) {
+                                  if (value == null) return;
+                                  setModalState(() {
+                                    selectedLoanStatus = value;
+                                  });
+                                },
+                              ),
                             ),
                             const SizedBox(height: 20),
 
@@ -841,7 +900,6 @@ class _EditCurrentYearAnyOtherLoanViewState extends State<EditCurrentYearAnyOthe
     );
   }
 
-
   Widget themedMonthYearPickerField({
     required BuildContext context,
     required String label,
@@ -862,8 +920,7 @@ class _EditCurrentYearAnyOtherLoanViewState extends State<EditCurrentYearAnyOthe
         focusedBorder: const OutlineInputBorder(
           borderSide: BorderSide(color: Colors.black38, width: 1),
         ),
-        contentPadding:
-        const EdgeInsets.symmetric(horizontal: 20),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
         labelStyle: const TextStyle(color: Colors.black),
       ),
       onTap: () async {
@@ -886,8 +943,7 @@ class _EditCurrentYearAnyOtherLoanViewState extends State<EditCurrentYearAnyOthe
         );
 
         if (selected != null) {
-          controller.text =
-              DateFormat('MM/yyyy').format(selected);
+          controller.text = DateFormat('MM/yyyy').format(selected);
           setState(() {});
         }
       },
@@ -925,10 +981,9 @@ class _EditCurrentYearAnyOtherLoanViewState extends State<EditCurrentYearAnyOthe
 
         if (picked != null) {
           setModalState(() {
-            controller.text =
-                DateFormat('yyyy-MM-dd').format(picked);
+            controller.text = DateFormat('yyyy-MM-dd').format(picked);
           });
-      }
+        }
       },
     );
   }

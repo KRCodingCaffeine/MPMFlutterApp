@@ -113,6 +113,20 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
     await controller.getUserProfile();
     await regiController.getState();
 
+    final address = controller.getUserData.value.address;
+
+    if (address != null && address.stateId != null) {
+      final stateId = address.stateId.toString();
+      regiController.setSelectedState(stateId);
+      await regiController.getCityByState(stateId);
+
+      if (address.city_id != null &&
+          address.city_id.toString().isNotEmpty &&
+          address.city_id.toString() != 'null') {
+        regiController.setSelectedCity(address.city_id.toString());
+      }
+    }
+
     _prefillFromLoggedInUser();
 
     final prefs = await SharedPreferences.getInstance();
@@ -1187,10 +1201,14 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                                                       'Unknown'),
                                                 );
                                               }).toList(),
-                                              onChanged: (val) {
+                                              onChanged: (val) async {
                                                 if (val != null) {
                                                   regiController
                                                       .setSelectedState(val);
+                                                  regiController
+                                                      .setSelectedCity('');
+                                                  await regiController
+                                                      .getCityByState(val);
                                                   setModalState(() {});
                                                 }
                                               },

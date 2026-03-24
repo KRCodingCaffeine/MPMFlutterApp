@@ -981,7 +981,7 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
                     text:
                     "Address Proof (If Aadhar and current address are not the same)"),
                 _bulletRichText(text: "Marksheet starting from Class X"),
-                _bulletRichText(text: "Father's Annual Income Proof (Last 3 years of ITR file Document)"),
+                _bulletRichText(text: "Father's Annual Income Proof"),
                 _bulletRichText(text: "Bonafide Certificate / Fees Structure"),
                 _bulletRichText(text: "Father's PAN Card"),
                 _bulletRichText(text: "Admission Letter"),
@@ -1013,6 +1013,7 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
                 _bulletRichText(text: "Passport"),
                 _bulletRichText(text: "Visa"),
                 _bulletRichText(text: "Flight Ticket"),
+                _bulletRichText(text: "Father's / Applicant Annual Income Proof (Last 3 years of ITR file Document)"),
               ],
             ),
           ),

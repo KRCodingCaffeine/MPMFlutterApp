@@ -42,6 +42,9 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
   File? applicantAadharFile;
   File? fatherPanFile;
   File? addressProofFile;
+  File? passportFile;
+  File? visaFile;
+  File? annualIncomeProofFile;
 
   final UpdateShikshaApplicationRepository _updateRepo =
       UpdateShikshaApplicationRepository();
@@ -535,6 +538,38 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
+                              const SizedBox(height: 12),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFF4E5),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: const Color(0xFFFFD8A8),
+                                  ),
+                                ),
+                                child: const Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      Icons.info_outline,
+                                      color: Colors.deepOrange,
+                                    ),
+                                    SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        "If you are an overseas applicant, please upload additional documents like Passport, Visa, and Applicant / Father's Annual Income Proof (last 3 years ITR document).",
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          height: 1.4,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                               const SizedBox(height: 30),
                               _buildTextField("Applicant First Name *",
                                   controller: firstNameCtrl,
@@ -807,14 +842,18 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
                                 buttonText: "Applicant Aadhaar Card",
 
                                 onPick: () {
-                                  _showImagePicker(context, (file) {
-                                    setModalState(() {
-                                      applicantAadharFile = file;
-                                    });
-                                    setState(() {
-                                      applicantAadharFile = file;
-                                    });
-                                  });
+                                  _showImagePicker(
+                                    context,
+                                        (file) {
+                                      setModalState(() {
+                                        applicantAadharFile = file;
+                                      });
+                                      setState(() {
+                                        applicantAadharFile = file;
+                                      });
+                                    },
+                                    title: "Upload Applicant Aadhaar Card", // 👈 custom title
+                                  );
                                 },
 
                                 /// ❌ REMOVE EXISTING NETWORK FILE
@@ -847,14 +886,18 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
                                 isExistingRemoved: isExistingPanRemoved,
                                 buttonText: "Father's PAN Card",
                                 onPick: () {
-                                  _showImagePicker(context, (file) {
-                                    setModalState(() {
-                                      fatherPanFile = file;
-                                    });
-                                    setState(() {
-                                      fatherPanFile = file;
-                                    });
-                                  });
+                                  _showImagePicker(
+                                    context,
+                                        (file) {
+                                      setModalState(() {
+                                        fatherPanFile = file;
+                                      });
+                                      setState(() {
+                                        fatherPanFile = file;
+                                      });
+                                    },
+                                    title: "Upload Father's PAN Card",
+                                  );
                                 },
                                 onRemoveExisting: () {
                                   setModalState(() {
@@ -884,14 +927,18 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
                                 buttonText:
                                     "Address Proof (if Aadhaar and current address are not the same)",
                                 onPick: () {
-                                  _showImagePicker(context, (file) {
-                                    setModalState(() {
-                                      addressProofFile = file;
-                                    });
-                                    setState(() {
-                                      addressProofFile = file;
-                                    });
-                                  });
+                                  _showImagePicker(
+                                    context,
+                                        (file) {
+                                      setModalState(() {
+                                        addressProofFile = file;
+                                      });
+                                      setState(() {
+                                        addressProofFile = file;
+                                      });
+                                    },
+                                    title: "Upload Address Proof",
+                                  );
                                 },
                                 onRemoveExisting: () {
                                   setModalState(() {
@@ -907,6 +954,104 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
                                   });
                                   setState(() {
                                     addressProofFile = null;
+                                  });
+                                },
+                              ),
+                              const SizedBox(height: 20),
+                              buildImageUploadField(
+                                context: context,
+                                imageFile: passportFile,
+                                isMandatory: false,
+                                existingDocumentPath: null,
+                                isExistingRemoved: false,
+                                buttonText: "Passport",
+                                onPick: () {
+                                  _showImagePicker(
+                                    context,
+                                    (file) {
+                                      setModalState(() {
+                                        passportFile = file;
+                                      });
+                                      setState(() {
+                                        passportFile = file;
+                                      });
+                                    },
+                                    title: "Upload Passport",
+                                  );
+                                },
+                                onRemoveExisting: () {},
+                                onRemoveNew: () {
+                                  setModalState(() {
+                                    passportFile = null;
+                                  });
+                                  setState(() {
+                                    passportFile = null;
+                                  });
+                                },
+                              ),
+                              const SizedBox(height: 20),
+                              buildImageUploadField(
+                                context: context,
+                                imageFile: visaFile,
+                                isMandatory: false,
+                                existingDocumentPath: null,
+                                isExistingRemoved: false,
+                                buttonText: "Visa",
+                                onPick: () {
+                                  _showImagePicker(
+                                    context,
+                                    (file) {
+                                      setModalState(() {
+                                        visaFile = file;
+                                      });
+                                      setState(() {
+                                        visaFile = file;
+                                      });
+                                    },
+                                    title: "Upload Visa",
+                                  );
+                                },
+                                onRemoveExisting: () {},
+                                onRemoveNew: () {
+                                  setModalState(() {
+                                    visaFile = null;
+                                  });
+                                  setState(() {
+                                    visaFile = null;
+                                  });
+                                },
+                              ),
+                              const SizedBox(height: 20),
+                              buildImageUploadField(
+                                context: context,
+                                imageFile: annualIncomeProofFile,
+                                isMandatory: false,
+                                existingDocumentPath: null,
+                                isExistingRemoved: false,
+                                buttonText:
+                                    "Applicant / Father's Annual Income Proof (Last 3 years of ITR file Document)",
+                                onPick: () {
+                                  _showImagePicker(
+                                    context,
+                                    (file) {
+                                      setModalState(() {
+                                        annualIncomeProofFile = file;
+                                      });
+                                      setState(() {
+                                        annualIncomeProofFile = file;
+                                      });
+                                    },
+                                    title:
+                                        "Upload Applicant / Father's Annual Income Proof",
+                                  );
+                                },
+                                onRemoveExisting: () {},
+                                onRemoveNew: () {
+                                  setModalState(() {
+                                    annualIncomeProofFile = null;
+                                  });
+                                  setState(() {
+                                    annualIncomeProofFile = null;
                                   });
                                 },
                               ),
@@ -1249,8 +1394,9 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
 
   void _showImagePicker(
       BuildContext context,
-      Function(File) onImagePicked,
-      ) {
+      Function(File) onImagePicked, {
+        String title = "Select Image",
+      }) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -1263,41 +1409,62 @@ class _EditApplicantDetailViewState extends State<EditApplicantDetailView> {
         return SafeArea(
           child: Padding(
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewPadding.bottom + 20,
+              bottom: MediaQuery.of(context).viewPadding.bottom + 10,
             ),
-            child: Wrap(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(height: 10),
+                /// 🔹 Dynamic Title
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Text(
+                    title, // 👈 use dynamic title
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
 
+                const Divider(),
+
+                /// Camera
                 ListTile(
-                  leading: const Icon(Icons.camera_alt,
-                      color: Colors.redAccent),
+                  leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
                   title: const Text("Take a Picture"),
                   onTap: () async {
                     Navigator.pop(context);
+
                     final picked = await _picker.pickImage(
-                        source: ImageSource.camera);
+                      source: ImageSource.camera,
+                      imageQuality: 70,
+                    );
+
                     if (picked != null) {
                       onImagePicked(File(picked.path));
                     }
                   },
                 ),
 
+                /// Gallery
                 ListTile(
-                  leading: const Icon(Icons.image,
-                      color: Colors.redAccent),
+                  leading: const Icon(Icons.image, color: Colors.orange),
                   title: const Text("Choose from Gallery"),
                   onTap: () async {
                     Navigator.pop(context);
+
                     final picked = await _picker.pickImage(
-                        source: ImageSource.gallery);
+                      source: ImageSource.gallery,
+                      imageQuality: 70,
+                    );
+
                     if (picked != null) {
                       onImagePicked(File(picked.path));
                     }
                   },
                 ),
 
-                const SizedBox(height: 30),
+                const SizedBox(height: 10),
               ],
             ),
           ),
