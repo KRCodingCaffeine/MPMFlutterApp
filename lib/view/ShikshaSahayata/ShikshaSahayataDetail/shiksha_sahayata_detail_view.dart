@@ -105,7 +105,7 @@ class _ShikshaSahayataDetailViewState
 
             buildStepButton(
               title:
-              "Current Year Education & Loan Requested From MPM",
+              "Current Year Education which Loan Requested From MPM",
               icon: Icons.school,
               onTap: () {
                 Navigator.push(
@@ -122,7 +122,7 @@ class _ShikshaSahayataDetailViewState
 
             buildStepButton(
               title:
-              "Current Year Loan Applied / Received Elsewhere",
+              "Current Year Loan Applied Elsewhere",
               icon: Icons.handshake,
               onTap: () {
                 Navigator.push(
