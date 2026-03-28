@@ -1385,10 +1385,10 @@ class _EditCurrentYearEducationViewState
   }
 
   void _showImagePicker(
-    BuildContext context,
-    Function(File) onImagePicked, {
-    String title = "Select Image",
-  }) {
+      BuildContext context,
+      Function(File) onImagePicked, {
+        String title = "Select Image",
+      }) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -1404,17 +1404,31 @@ class _EditCurrentYearEducationViewState
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                /// 🔹 Title + Cancel Button
                 Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.grey),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
                   ),
                 ),
+
                 const Divider(),
+
+                /// Camera
                 ListTile(
                   leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
                   title: const Text("Take a Picture"),
@@ -1429,8 +1443,10 @@ class _EditCurrentYearEducationViewState
                     }
                   },
                 ),
+
+                /// Gallery
                 ListTile(
-                  leading: const Icon(Icons.image, color: Colors.redAccent),
+                  leading: const Icon(Icons.image, color: Colors.orange),
                   title: const Text("Choose from Gallery"),
                   onTap: () async {
                     Navigator.pop(context);
@@ -1443,6 +1459,7 @@ class _EditCurrentYearEducationViewState
                     }
                   },
                 ),
+
                 const SizedBox(height: 30),
               ],
             ),

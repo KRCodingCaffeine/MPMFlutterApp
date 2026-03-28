@@ -85,30 +85,19 @@ class _EditCurrentYearAnyOtherLoanViewState
       final loans = response.data?.receivedLoans ?? [];
 
       for (var loan in loans) {
-        // if (loan.appliedYearOn == "current") {
-        //   charityList.add({
-        //     "loanId": loan.shikshaApplicantReceivedLoanId?.toString(),
-        //     "loanFrom": loan.receivedFrom ?? "",
-        //     "school": loan.schoolCollegeName ?? "",
-        //     "course": loan.courseName ?? "",
-        //     "whichYear": loan.yearOfEducation ?? "",
-        //     "amount": loan.amountReceived ?? "",
-        //     "receivedOn": loan.amountReceivedOn ?? "",
-        //     "otherCharity": loan.otherCharityName ?? "",
-        //     "appliedYearOn": loan.appliedYearOn ?? "",
-        //   });
-        // }
-        charityList.add({
-          "loanId": loan.shikshaApplicantReceivedLoanId?.toString(),
-          "loanFrom": loan.receivedFrom ?? "",
-          "school": loan.schoolCollegeName ?? "",
-          "course": loan.courseName ?? "",
-          "whichYear": loan.yearOfEducation ?? "",
-          "amount": loan.amountReceived ?? "",
-          "receivedOn": loan.amountReceivedOn ?? "",
-          "otherCharity": loan.otherCharityName ?? "",
-          "appliedYearOn": loan.appliedYearOn ?? "",
-        });
+        if (loan.appliedYearOn == "current") {
+          charityList.add({
+            "loanId": loan.shikshaApplicantReceivedLoanId?.toString(),
+            "loanFrom": loan.receivedFrom ?? "",
+            "school": loan.schoolCollegeName ?? "",
+            "course": loan.courseName ?? "",
+            "whichYear": loan.yearOfEducation ?? "",
+            "amount": loan.amountReceived ?? "",
+            "receivedOn": loan.amountReceivedOn ?? "",
+            "otherCharity": loan.otherCharityName ?? "",
+            "appliedYearOn": loan.appliedYearOn ?? "",
+          });
+        }
       }
 
       setState(() {
