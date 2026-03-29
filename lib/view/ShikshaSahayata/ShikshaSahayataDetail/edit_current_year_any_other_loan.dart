@@ -130,7 +130,7 @@ class _EditCurrentYearAnyOtherLoanViewState
           builder: (context) {
             double fontSize = MediaQuery.of(context).size.width * 0.045;
             return Text(
-              "Current Year Loan Applied / Received Elsewhere",
+              "Current Year Loan Applied Elsewhere",
               maxLines: 2,
               style: TextStyle(
                 color: Colors.white,
@@ -147,7 +147,7 @@ class _EditCurrentYearAnyOtherLoanViewState
       body: charityList.isEmpty
           ? const Center(
               child: Text(
-                "No current year loan applied / received elsewhere has been added yet",
+                "No current year loan applied elsewhere has been added yet",
                 style: TextStyle(color: Colors.grey),
               ),
             )
@@ -261,30 +261,30 @@ class _EditCurrentYearAnyOtherLoanViewState
                         _infoRow("Course", item["course"] ?? ""),
                         const SizedBox(height: 8),
 
-                    _infoRow("Year", item["whichYear"] ?? ""),
-                    const SizedBox(height: 8),
+                        _infoRow("Year", item["whichYear"] ?? ""),
+                        const SizedBox(height: 8),
 
-                    _infoRow("Amount", "₹ ${item["amount"] ?? ""}"),
-                    const SizedBox(height: 8),
+                        _infoRow("Amount", "₹ ${item["amount"] ?? ""}"),
+                        const SizedBox(height: 8),
 
-                    _infoRow(
-                      "Loan Status",
-                      item["appliedYearOn"] == "previous"
-                          ? "Received"
-                          : "Requested",
+                        // _infoRow(
+                        //   "Loan Status",
+                        //   item["appliedYearOn"] == "previous"
+                        //       ? "Received"
+                        //       : "Requested",
+                        // ),
+                        // const SizedBox(height: 8),
+
+                        _infoRow(
+                          item["appliedYearOn"] == "previous"
+                              ? "Received On"
+                              : "Applied On",
+                          item["receivedOn"] ?? "",
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-
-                    _infoRow(
-                      item["appliedYearOn"] == "previous"
-                          ? "Received On"
-                          : "Applied On",
-                      item["receivedOn"] ?? "",
-                    ),
-                  ],
-                ),
-              ),
-            );
+                  ),
+                );
               }),
 
       floatingActionButton: _isLoanLocked
@@ -423,7 +423,7 @@ class _EditCurrentYearAnyOtherLoanViewState
         amountReceived: amount,
         receivedFrom: receivedFrom,
         amountReceivedOn: receivedOn,
-        appliedYearOn: loanStatus == "Requested" ? "current" : "previous",
+        appliedYearOn:"current",
         otherCharityName: otherCharity,
         createdBy: currentMemberId,
       );
@@ -477,7 +477,7 @@ class _EditCurrentYearAnyOtherLoanViewState
         amountReceived: amount,
         receivedFrom: receivedFrom,
         amountReceivedOn: receivedOn,
-        appliedYearOn: loanStatus == "Requested" ? "current" : "previous",
+        appliedYearOn: "current",
         otherCharityName: otherCharity,
         updatedBy: currentMemberId,
       );
@@ -537,9 +537,9 @@ class _EditCurrentYearAnyOtherLoanViewState
       whichYearCtrl.text = existingData["whichYear"] ?? "";
       amountCtrl.text = existingData["amount"] ?? "";
       receivedOnCtrl.text = existingData["receivedOn"] ?? "";
-      selectedLoanStatus = existingData["appliedYearOn"] == "previous"
-          ? "Received"
-          : "Requested";
+      // selectedLoanStatus = existingData["appliedYearOn"] == "previous"
+      //     ? "Received"
+      //     : "Requested";
     }
 
     bool isFormValid() {
@@ -762,51 +762,51 @@ class _EditCurrentYearAnyOtherLoanViewState
                             ),
                             const SizedBox(height: 20),
 
-                            InputDecorator(
-                              decoration: InputDecoration(
-                                labelText: "Loan Status *",
-                                border: const OutlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.black),
-                                ),
-                                enabledBorder: const OutlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.black),
-                                ),
-                                focusedBorder: const OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: Colors.black38,
-                                    width: 1,
-                                  ),
-                                ),
-                                contentPadding:
-                                    const EdgeInsets.symmetric(horizontal: 20),
-                                labelStyle:
-                                    const TextStyle(color: Colors.black),
-                              ),
-                              child: DropdownButton<String>(
-                                dropdownColor: Colors.white,
-                                borderRadius: BorderRadius.circular(10),
-                                isExpanded: true,
-                                underline: const SizedBox(),
-                                value: selectedLoanStatus,
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: "Requested",
-                                    child: Text("Requested"),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: "Received",
-                                    child: Text("Received"),
-                                  ),
-                                ],
-                                onChanged: (value) {
-                                  if (value == null) return;
-                                  setModalState(() {
-                                    selectedLoanStatus = value;
-                                  });
-                                },
-                              ),
-                            ),
-                            const SizedBox(height: 20),
+                            // InputDecorator(
+                            //   decoration: InputDecoration(
+                            //     labelText: "Loan Status *",
+                            //     border: const OutlineInputBorder(
+                            //       borderSide: BorderSide(color: Colors.black),
+                            //     ),
+                            //     enabledBorder: const OutlineInputBorder(
+                            //       borderSide: BorderSide(color: Colors.black),
+                            //     ),
+                            //     focusedBorder: const OutlineInputBorder(
+                            //       borderSide: BorderSide(
+                            //         color: Colors.black38,
+                            //         width: 1,
+                            //       ),
+                            //     ),
+                            //     contentPadding:
+                            //         const EdgeInsets.symmetric(horizontal: 20),
+                            //     labelStyle:
+                            //         const TextStyle(color: Colors.black),
+                            //   ),
+                            //   child: DropdownButton<String>(
+                            //     dropdownColor: Colors.white,
+                            //     borderRadius: BorderRadius.circular(10),
+                            //     isExpanded: true,
+                            //     underline: const SizedBox(),
+                            //     value: selectedLoanStatus,
+                            //     items: const [
+                            //       DropdownMenuItem(
+                            //         value: "Requested",
+                            //         child: Text("Requested"),
+                            //       ),
+                            //       DropdownMenuItem(
+                            //         value: "Received",
+                            //         child: Text("Received"),
+                            //       ),
+                            //     ],
+                            //     onChanged: (value) {
+                            //       if (value == null) return;
+                            //       setModalState(() {
+                            //         selectedLoanStatus = value;
+                            //       });
+                            //     },
+                            //   ),
+                            // ),
+                            // const SizedBox(height: 20),
 
                             _buildTextField(
                               label: "Amount Applied / Received (₹) *",

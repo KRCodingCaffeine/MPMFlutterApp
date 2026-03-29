@@ -131,6 +131,7 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
   @override
   void initState() {
     super.initState();
+    dobCtrl.addListener(_syncAgeFromDobText);
     _initializeData();
   }
 
@@ -1502,7 +1503,7 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                                     setState(() {
                                       applicantAadharFile = file;
                                     });
-                                  });
+                                  }, title: "Upload Applicant Aadhaar");
                                 },
                                 onRemoveExisting: () {
                                   setModalState(() {
@@ -1538,7 +1539,7 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                                     setState(() {
                                       fatherPanFile = file;
                                     });
-                                  });
+                                  }, title: "Upload Father's PAN Card");
                                 },
                                 onRemoveExisting: () {
                                   setModalState(() {
@@ -1575,7 +1576,7 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                                     setState(() {
                                       fatherAnnualIncomeFile = file;
                                     });
-                                  });
+                                  }, title: "Upload Father's Annual Income");
                                 },
                                 onRemoveExisting: () {
                                   setModalState(() {
@@ -1612,7 +1613,7 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                                     setState(() {
                                       addressProofFile = file;
                                     });
-                                  });
+                                  }, title: "Upload Address Proof");
                                 },
                                 onRemoveExisting: () {
                                   setModalState(() {
@@ -1778,7 +1779,7 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                                       setState(() {
                                         passportFile = file;
                                       });
-                                    });
+                                    }, title: "Upload Applicant Passport");
                                   },
                                   onRemoveExisting: () {
                                     setModalState(() {
@@ -1813,7 +1814,7 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                                       setState(() {
                                         visaFile = file;
                                       });
-                                    });
+                                    }, title: "Upload Applicant Visa");
                                   },
                                   onRemoveExisting: () {
                                     setModalState(() {
@@ -1851,7 +1852,7 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                                       setState(() {
                                         applicantAnnualIncomeFile = file;
                                       });
-                                    });
+                                    }, title: "Upload Applicant Annual Income");
                                   },
                                   onRemoveExisting: () {
                                     setModalState(() {
@@ -1891,7 +1892,9 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                                       setState(() {
                                         applicantFatherAnnualIncomeFile = file;
                                       });
-                                    });
+                                    },
+                                        title:
+                                            "Upload Applicant Father's Annual Income");
                                   },
                                   onRemoveExisting: () {
                                     setModalState(() {
@@ -2086,6 +2089,42 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
     }
 
     ageCtrl.text = age.toString();
+  }
+
+  void _syncAgeFromDobText() {
+    final rawDob = dobCtrl.text.trim();
+
+    if (rawDob.isEmpty) {
+      if (ageCtrl.text.isNotEmpty) {
+        ageCtrl.text = '';
+      }
+      return;
+    }
+
+    DateTime? parsedDob;
+
+    try {
+      parsedDob = DateFormat('dd/MM/yyyy').parseStrict(rawDob);
+    } catch (_) {
+      parsedDob = DateTime.tryParse(rawDob);
+    }
+
+    if (parsedDob == null) {
+      return;
+    }
+
+    final DateTime today = DateTime.now();
+    int age = today.year - parsedDob.year;
+
+    if (today.month < parsedDob.month ||
+        (today.month == parsedDob.month && today.day < parsedDob.day)) {
+      age--;
+    }
+
+    final calculatedAge = age.toString();
+    if (ageCtrl.text != calculatedAge) {
+      ageCtrl.text = calculatedAge;
+    }
   }
 
   Widget themedDatePickerField({
@@ -2354,7 +2393,9 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
 
   void _showImagePicker(
     BuildContext context,
-    Function(File) onImagePicked,
+    Function(File) onImagePicked, {
+    String title = "Select Image",
+  }
   ) {
     showModalBottomSheet(
       context: context,
@@ -2366,36 +2407,62 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
         return SafeArea(
           child: Padding(
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewPadding.bottom + 20,
+              bottom: MediaQuery.of(context).viewPadding.bottom + 10,
             ),
-            child: Wrap(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.grey),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(),
                 ListTile(
-                  leading:
-                      const Icon(Icons.camera_alt, color: Colors.redAccent),
+                  leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
                   title: const Text("Take a Picture"),
                   onTap: () async {
                     Navigator.pop(context);
-                    final picked =
-                        await _picker.pickImage(source: ImageSource.camera);
+                    final picked = await _picker.pickImage(
+                      source: ImageSource.camera,
+                      imageQuality: 70,
+                    );
                     if (picked != null) {
                       onImagePicked(File(picked.path));
                     }
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.image, color: Colors.redAccent),
+                  leading: const Icon(Icons.image, color: Colors.orange),
                   title: const Text("Choose from Gallery"),
                   onTap: () async {
                     Navigator.pop(context);
-                    final picked =
-                        await _picker.pickImage(source: ImageSource.gallery);
+                    final picked = await _picker.pickImage(
+                      source: ImageSource.gallery,
+                      imageQuality: 70,
+                    );
                     if (picked != null) {
                       onImagePicked(File(picked.path));
                     }
                   },
                 ),
-                const SizedBox(height: 30)
+                const SizedBox(height: 10),
               ],
             ),
           ),
