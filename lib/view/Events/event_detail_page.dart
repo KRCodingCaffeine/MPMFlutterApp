@@ -25,6 +25,7 @@ import 'package:url_launcher/url_launcher.dart' show canLaunchUrl, launchUrl;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:mpm/view/Events/YouTubeBottomSheet.dart';
+import 'package:mpm/view/Events/event_payment_detail_page.dart';
 
 class EventDetailPage extends StatefulWidget {
   final String eventId;
@@ -977,7 +978,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          onPressed: _isRegistered ? null : _showRegistrationConfirmationDialog,
+          onPressed: _isRegistered ? null : _handleRegisterButtonTap,
           child: _isRegistering
               ? const SizedBox(
                   width: 20,
@@ -994,6 +995,25 @@ class _EventDetailPageState extends State<EventDetailPage> {
         ),
       ),
     );
+  }
+
+  bool _isPaidEvent() {
+    final costType = _eventDetails?.eventCostType?.trim().toLowerCase();
+    return costType != null && costType.isNotEmpty && costType != 'free';
+  }
+
+  Future<void> _handleRegisterButtonTap() async {
+    if (_isPaidEvent()) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => EventPaymentDetailPage(eventDetails: _eventDetails!),
+        ),
+      );
+      return;
+    }
+
+    await _showRegistrationConfirmationDialog();
   }
 
   Future<bool> _requestPermission() async {
