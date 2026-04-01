@@ -138,9 +138,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
     bool showSeatDialog = _eventDetails?.eventsTypeId != '1' &&
         _eventDetails?.hasSeatAllocate == '1';
 
-    bool shouldProceed = await _showFinalConfirmationDialog();
-    if (!shouldProceed) return;
-
     if (showSeatDialog) {
       final seatCount = await _showSeatDialog(context);
       if (seatCount == null) return;
@@ -450,8 +447,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     if (selectedFoodCount == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                            content:
-                            Text('Please select the number of meals (0–2)')),
+                            content: Text(
+                                'Please select the number of meals (0–2)')),
                       );
                       return;
                     }
@@ -597,11 +594,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
         addedBy: int.tryParse(userData.memberId.toString()),
         dateAdded: DateFormat('yyyy-MM-dd HH:mm:ss').format(now),
         noOfFoodContainer: (_eventDetails?.eventsTypeId != '1' &&
-            _eventDetails?.hasFood == '1')
+                _eventDetails?.hasFood == '1')
             ? _foodBoxCount
             : 0,
         noOfSeatAllocated: (_eventDetails?.eventsTypeId != '1' &&
-            _eventDetails?.hasSeatAllocate == '1')
+                _eventDetails?.hasSeatAllocate == '1')
             ? _seatCount
             : 0,
       );
@@ -609,7 +606,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
       debugPrint('Sending food count: ${registrationData.noOfFoodContainer}');
       debugPrint('Sending seat count: ${registrationData.noOfSeatAllocated}');
 
-      final response = await _registrationRepo.registerForEvent(registrationData);
+      final response =
+          await _registrationRepo.registerForEvent(registrationData);
 
       // ✅ FIXED: Add debug to see actual response structure
       debugPrint('=== API RESPONSE ===');
@@ -624,7 +622,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
         setState(() {
           _isRegistered = true;
         });
-        await _showAlreadyRegisteredDialog(response['message'] ?? 'Already registered');
+        await _showAlreadyRegisteredDialog(
+            response['message'] ?? 'Already registered');
         return;
       }
 
@@ -633,13 +632,16 @@ class _EventDetailPageState extends State<EventDetailPage> {
           _isRegistered = true;
         });
 
-        final attendeeId = int.tryParse(response['data']['attendee_id']?.toString() ?? '0');
+        final attendeeId =
+            int.tryParse(response['data']['attendee_id']?.toString() ?? '0');
         final memberId = int.tryParse(userData.memberId.toString()) ?? 0;
 
         if (_eventDetails?.eventsTypeId == '3') {
-          await _showStudentPrizeConfirmationDialog(3, attendeeId ?? 0, memberId);
+          await _showStudentPrizeConfirmationDialog(
+              3, attendeeId ?? 0, memberId);
         } else {
-          await _showSuccessDialog(response['message'] ?? 'Successfully registered for event');
+          await _showSuccessDialog(
+              response['message'] ?? 'Successfully registered for event');
         }
       } else {
         throw Exception(response['message'] ?? 'Failed to register for event');
@@ -699,7 +701,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -750,9 +752,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
           ),
           actions: [
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(context).pop();
-                _redirectToEventsList();
+                await _handlePostRegistrationSuccess();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
@@ -826,6 +828,22 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
   void _redirectToEventsList() {
     Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
+  Future<void> _handlePostRegistrationSuccess() async {
+    if (!mounted || _eventDetails == null) return;
+
+    if (_hasPaymentDetails()) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => EventPaymentDetailPage(eventDetails: _eventDetails!),
+        ),
+      );
+      return;
+    }
+
+    _redirectToEventsList();
   }
 
   Widget _buildEventInfoList() {
@@ -1002,16 +1020,21 @@ class _EventDetailPageState extends State<EventDetailPage> {
     return costType != null && costType.isNotEmpty && costType != 'free';
   }
 
+  bool _hasPaymentDetails() {
+    final qrCode = _eventDetails?.eventQrCode?.trim();
+    final amount = _eventDetails?.eventAmount?.trim();
+    final hasPaidFood = _eventDetails?.hasFood == '1' &&
+        _eventDetails?.hasFoodPaid?.trim().toLowerCase() == 'paid';
+
+    return _isPaidEvent() ||
+        hasPaidFood ||
+        (qrCode != null && qrCode.isNotEmpty) ||
+        (amount != null && amount.isNotEmpty && amount != '0');
+  }
+
   Future<void> _handleRegisterButtonTap() async {
-    if (_isPaidEvent()) {
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => EventPaymentDetailPage(eventDetails: _eventDetails!),
-        ),
-      );
-      return;
-    }
+    final shouldProceed = await _showFinalConfirmationDialog();
+    if (!shouldProceed) return;
 
     await _showRegistrationConfirmationDialog();
   }
@@ -1411,7 +1434,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
               _buildEventCostInfo(),
               const SizedBox(height: 24),
             ],
-            if (_eventDetails?.hasFood == '1' && _eventDetails?.hasFoodPaid == 'paid') ...[
+            if (_eventDetails?.hasFood == '1' &&
+                _eventDetails?.hasFoodPaid == 'paid') ...[
               _buildEventFoodCostInfo(),
               const SizedBox(height: 24),
             ],
@@ -1442,9 +1466,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
       bottomNavigationBar: _isPastEvent
           ? const SizedBox.shrink()
           : Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: _buildRegisterButton(),
-      ),
+              padding: const EdgeInsets.all(12.0),
+              child: _buildRegisterButton(),
+            ),
     );
   }
 
@@ -1510,7 +1534,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   ? (await getExternalStorageDirectory())!
                   : await getApplicationDocumentsDirectory();
 
-              String filePath = "${directory!.path}/Event_Terms_${_eventDetails!.eventId}.$fileExtension";
+              String filePath =
+                  "${directory!.path}/Event_Terms_${_eventDetails!.eventId}.$fileExtension";
 
               await _dio.download(
                 docUrl,
@@ -1526,7 +1551,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
               );
 
               setLocalState(() => isDownloading = false);
-              _showDownloadDialog(context, "Event_Terms_${_eventDetails!.eventId}.$fileExtension", filePath);
+              _showDownloadDialog(
+                  context,
+                  "Event_Terms_${_eventDetails!.eventId}.$fileExtension",
+                  filePath);
             } catch (e) {
               setLocalState(() => isDownloading = false);
               ScaffoldMessenger.of(context).showSnackBar(
@@ -1539,52 +1567,54 @@ class _EventDetailPageState extends State<EventDetailPage> {
             height: 48,
             child: isDownloading
                 ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  LinearProgressIndicator(
-                    value: downloadProgress / 100,
-                    backgroundColor: Colors.grey[300],
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        LinearProgressIndicator(
+                          value: downloadProgress / 100,
+                          backgroundColor: Colors.grey[300],
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Downloading... $downloadProgress%',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  )
+                : SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey[200],
+                        foregroundColor: Colors.black87,
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 12, horizontal: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 0,
+                      ),
+                      icon: Icon(
+                        fileExtension == 'pdf'
+                            ? Icons.picture_as_pdf
+                            : Icons.description,
+                        color:
+                            fileExtension == 'pdf' ? Colors.red : Colors.blue,
+                      ),
+                      label: Text(
+                        "Download & View ${fileExtension.toUpperCase()}",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      onPressed: startDownload,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Downloading... $downloadProgress%',
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                ],
-              ),
-            )
-                : SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey[200],
-                  foregroundColor: Colors.black87,
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 12, horizontal: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  elevation: 0,
-                ),
-                icon: Icon(
-                  fileExtension == 'pdf'
-                      ? Icons.picture_as_pdf
-                      : Icons.description,
-                  color: fileExtension == 'pdf' ? Colors.red : Colors.blue,
-                ),
-                label: Text(
-                  "Download & View ${fileExtension.toUpperCase()}",
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                onPressed: startDownload,
-              ),
-            ),
           );
         },
       );

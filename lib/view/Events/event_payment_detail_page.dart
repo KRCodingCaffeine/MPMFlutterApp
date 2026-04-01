@@ -1,7 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:mpm/model/GetEventDetailsById/GetEventDetailsByIdData.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class EventPaymentDetailPage extends StatelessWidget {
@@ -29,44 +33,32 @@ class EventPaymentDetailPage extends StatelessWidget {
     return qrCode.startsWith('http://') || qrCode.startsWith('https://');
   }
 
-  Future<void> _handleQrTap(BuildContext context) async {
-    final qrCode = eventDetails.eventQrCode?.trim();
-    if (qrCode == null || qrCode.isEmpty) {
+  Future<void> _downloadQr(BuildContext context) async {
+    final qrUrl = eventDetails.eventQrCode?.trim();
+
+    if (qrUrl == null || qrUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('QR code is not available for this event.')),
+        const SnackBar(content: Text('QR not available')),
       );
       return;
     }
 
-    Uri? paymentUri;
+    try {
+      final response = await http.get(Uri.parse(qrUrl));
 
-    if (qrCode.startsWith('upi://') || qrCode.startsWith('tez://')) {
-      paymentUri = Uri.parse(qrCode);
-      final updatedParams = Map<String, String>.from(paymentUri.queryParameters);
-      updatedParams['am'] = _paymentAmount;
-      updatedParams.putIfAbsent('cu', () => 'INR');
-      paymentUri = paymentUri.replace(queryParameters: updatedParams);
-    }
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File('${dir.path}/event_qr.png');
 
-    if (paymentUri == null) {
+      await file.writeAsBytes(response.bodyBytes);
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'This QR is an image. Direct Google Pay launch needs a UPI payment link from the API.',
-          ),
-        ),
+        SnackBar(content: Text('QR downloaded to: ${file.path}')),
       );
-      return;
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Download failed: $e')),
+      );
     }
-
-    if (await canLaunchUrl(paymentUri)) {
-      await launchUrl(paymentUri, mode: LaunchMode.externalApplication);
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Unable to open Google Pay on this device.')),
-    );
   }
 
   @override
@@ -77,7 +69,7 @@ class EventPaymentDetailPage extends StatelessWidget {
         ColorHelperClass.getColorFromHex(ColorResources.logo_color);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F1EB),
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         elevation: 0,
         backgroundColor: logoColor,
@@ -107,13 +99,8 @@ class EventPaymentDetailPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeroCard(themeColor, logoColor),
-              const SizedBox(height: 18),
-              _buildAmountCard(themeColor),
-              const SizedBox(height: 18),
               _buildQrShowcase(context, themeColor),
               const SizedBox(height: 18),
-              _buildInfoCard(),
               if ((eventDetails.eventOrganiserName?.isNotEmpty ?? false) ||
                   (eventDetails.eventOrganiserMobile?.isNotEmpty ?? false)) ...[
                 const SizedBox(height: 18),
@@ -126,163 +113,9 @@ class EventPaymentDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildHeroCard(Color themeColor, Color logoColor) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            logoColor,
-            themeColor,
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: themeColor.withOpacity(0.24),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.16),
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: Colors.white24),
-            ),
-            child: Text(
-              (eventDetails.eventCostType?.isNotEmpty ?? false)
-                  ? '${eventDetails.eventCostType} Access'
-                  : 'Premium Access',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.4,
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            eventDetails.eventName ?? 'Event Payment',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              height: 1.2,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            eventDetails.eventDescription?.isNotEmpty == true
-                ? eventDetails.eventDescription!
-                : 'Complete payment for your event registration using the QR below.',
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-              height: 1.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAmountCard(Color themeColor) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFECE3D5)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            height: 56,
-            width: 56,
-            decoration: BoxDecoration(
-              color: themeColor.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Icon(Icons.currency_rupee, color: themeColor, size: 30),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Event Amount',
-                  style: TextStyle(
-                    color: Colors.black54,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  _paymentAmount,
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (eventDetails.eventRegistrationLastDate?.isNotEmpty ?? false)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8F2E8),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Last Date',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.black54,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    eventDetails.eventRegistrationLastDate!,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildQrShowcase(BuildContext context, Color themeColor) {
+    final eventName = eventDetails.eventName ?? 'the event';
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
@@ -302,21 +135,21 @@ class EventPaymentDetailPage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.qr_code_2_rounded, color: themeColor, size: 20),
-              const SizedBox(width: 8),
-              const Text(
-                'Scan Or Tap To Pay',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black87,
+              Expanded(
+                child: Text(
+                  "We have received your registration request for the event $eventName.",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
           const Text(
-            'Tap the QR card to continue with Google Pay using the event amount.',
+            "Kindly make the payment through the QR code provided.",
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
@@ -326,7 +159,6 @@ class EventPaymentDetailPage extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           GestureDetector(
-            onTap: () => _handleQrTap(context),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 220),
               width: 260,
@@ -335,23 +167,15 @@ class EventPaymentDetailPage extends StatelessWidget {
                 color: const Color(0xFFFCFAF6),
                 borderRadius: BorderRadius.circular(28),
                 border: Border.all(color: const Color(0xFFE8DECF), width: 1.2),
-                boxShadow: [
-                  BoxShadow(
-                    color: themeColor.withOpacity(0.12),
-                    blurRadius: 18,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
               ),
               child: Column(
                 children: [
                   Container(
-                    height: 220,
+                    height: 350,
                     width: 220,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: const Color(0xFFF0E7DB)),
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: _hasQrImage
@@ -363,18 +187,20 @@ class EventPaymentDetailPage extends StatelessWidget {
                         : _buildQrPlaceholder(),
                   ),
                   const SizedBox(height: 16),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                    decoration: BoxDecoration(
-                      color: themeColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'Tap QR to pay Rs. $_paymentAmount',
-                      style: TextStyle(
-                        color: themeColor,
-                        fontWeight: FontWeight.w700,
+                  GestureDetector(
+                    onTap: () => _downloadQr(context),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                      decoration: BoxDecoration(
+                        color: themeColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        'Click here to download QR to pay Rs. $_paymentAmount',
+                        style: TextStyle(
+                          color: themeColor,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ),
@@ -412,40 +238,10 @@ class EventPaymentDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Payment Notes',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          SizedBox(height: 12),
-          Text(
-            'Use the QR above to pay the event amount. After payment, keep the transaction reference ready in case the organiser asks for verification.',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 13,
-              height: 1.6,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildCoordinatorCard() {
+    final organiserName = eventDetails.eventOrganiserName ?? '';
+    final organiserMobile = eventDetails.eventOrganiserMobile ?? '';
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -466,11 +262,25 @@ class EventPaymentDetailPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          if (eventDetails.eventOrganiserName?.isNotEmpty ?? false)
-            _buildContactRow(Icons.person_outline, eventDetails.eventOrganiserName!),
-          if (eventDetails.eventOrganiserMobile?.isNotEmpty ?? false) ...[
-            const SizedBox(height: 12),
-            _buildContactRow(Icons.call_outlined, eventDetails.eventOrganiserMobile!),
+
+          /// 🔥 FIXED TEXT (NO const)
+          Text(
+            "If you have any queries related to payment or the event, feel free to contact:\n",
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black87,
+              height: 1.5,
+            ),
+          ),
+
+          if (organiserName.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            _buildContactRow(Icons.person_outline, organiserName),
+          ],
+
+          if (organiserMobile.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            _buildContactRow(Icons.call_outlined, organiserMobile),
           ],
         ],
       ),

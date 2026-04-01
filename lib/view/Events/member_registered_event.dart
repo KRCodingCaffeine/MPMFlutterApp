@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:mpm/model/GetEventAttendeesDetailById/GetEventAttendeesDetailByIdData.dart';
 import 'package:mpm/model/GetMemberRegisteredEvents/GetMemberRegisteredEventsData.dart';
 import 'package:mpm/model/GetMemberRegisteredEvents/GetMemberRegisteredEventsModelClass.dart';
-import 'package:mpm/model/UpdateEventByMember/UpdateEventByMemberModelClass.dart';
 import 'package:mpm/repository/get_event_attendees_detail_by_id_repository/get_event_attendees_detail_by_id_repo.dart';
 import 'package:mpm/repository/get_member_registered_events_repository/get_member_registered_events_repo.dart';
-import 'package:mpm/repository/update_event_by_member_repository/update_event_by_member_repo.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
-import 'package:mpm/view/Events/member_registered_event_detail.dart' hide EventAttendeesRepository;
+import 'package:mpm/view/Events/member_registered_event_detail.dart';
 
 class RegisteredEventsListPage extends StatefulWidget {
   @override
@@ -21,53 +18,65 @@ class RegisteredEventsListPage extends StatefulWidget {
 class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
   late Future<EventAttendeesModelClass> _registeredEventsFuture;
   final EventAttendeesRepository _repository = EventAttendeesRepository();
-  final CancelEventRepository _cancelRepo = CancelEventRepository();
 
   List<EventAttendeeData> _events = [];
-  Set<int> _cancelledEventIds = {};
 
   String memberName = 'Loading...';
 
   @override
   void initState() {
     super.initState();
-    _loadUserDataAndFetchEvents();
+    _registeredEventsFuture = _loadUserDataAndFetchEvents();
   }
 
-  Future<void> _loadUserDataAndFetchEvents() async {
+  Future<EventAttendeesModelClass> _loadUserDataAndFetchEvents() async {
     try {
       final userData = await SessionManager.getSession();
-      if (userData != null) {
-        final name = _getUserName(
-            userData.firstName, userData.middleName, userData.lastName);
+      if (userData == null) {
+        throw Exception('User data not available');
+      }
 
+      final name = _getUserName(
+          userData.firstName, userData.middleName, userData.lastName);
+      final response = await _repository.fetchEventAttendeesByMemberId(
+        int.tryParse(userData.memberId.toString()) ?? 0,
+      );
+
+      final events = List<EventAttendeeData>.from(response.data ?? []);
+      events.sort((a, b) {
+        final firstDate = DateTime.tryParse(b.dateStartsFrom ?? '') ??
+            DateTime.fromMillisecondsSinceEpoch(0);
+        final secondDate = DateTime.tryParse(a.dateStartsFrom ?? '') ??
+            DateTime.fromMillisecondsSinceEpoch(0);
+        return firstDate.compareTo(secondDate);
+      });
+
+      if (mounted) {
         setState(() {
           memberName = name;
-          _registeredEventsFuture = _repository
-              .fetchEventAttendeesByMemberId(
-                  int.tryParse(userData.memberId.toString()) ?? 0)
-              .then((response) {
-            setState(() {
-              _events = (response.data ?? []).where((event) {
-                final endDate = DateTime.tryParse(event.dateEndTo ?? '');
-                if (endDate == null) return false;
-                return endDate.isAfter(DateTime.now()) ||
-                    endDate.isAtSameMomentAs(DateTime.now());
-              }).toList();
-            });
-            return response;
-          });
+          _events = events;
         });
-        return;
       }
-      setState(() {
-        _registeredEventsFuture = Future.error('User data not available');
-      });
+
+      return response;
     } catch (e) {
-      setState(() {
-        _registeredEventsFuture = Future.error(e.toString());
-      });
+      if (mounted) {
+        setState(() {
+          _events = [];
+        });
+      }
+      rethrow;
     }
+  }
+
+  Future<void> _refreshEvents() async {
+    setState(() {
+      _registeredEventsFuture = _loadUserDataAndFetchEvents();
+    });
+
+    try {
+      await _registeredEventsFuture;
+    } catch (_) {}
   }
 
   Widget _buildEventCard(EventAttendeeData event) {
@@ -98,7 +107,8 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
         child: InkWell(
           onTap: () async {
             final repo = GetEventAttendeesDetailByIdRepository();
-            final detail = await repo.fetchEventAttendeeDetailById(event.eventAttendeesId!.toString());
+            final detail = await repo.fetchEventAttendeeDetailById(
+                event.eventAttendeesId!.toString());
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -108,7 +118,6 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
               ),
             );
           },
-
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -209,7 +218,7 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
             } else {
               return RefreshIndicator(
                 color: Colors.redAccent,
-                onRefresh: _loadUserDataAndFetchEvents,
+                onRefresh: _refreshEvents,
                 child: ListView.builder(
                   padding: const EdgeInsets.only(top: 8),
                   itemCount: _events.length,
@@ -225,7 +234,7 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
   Widget _buildEmptyState() {
     return RefreshIndicator(
       color: Colors.redAccent,
-      onRefresh: _loadUserDataAndFetchEvents,
+      onRefresh: _refreshEvents,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: SizedBox(
