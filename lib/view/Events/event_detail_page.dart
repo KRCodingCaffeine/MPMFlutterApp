@@ -715,6 +715,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<void> _showSuccessDialog(String message) async {
+    final isPaidEvent =
+        _eventDetails?.eventCostType?.trim().toLowerCase() == 'paid';
+    final dialogTitle = isPaidEvent ? 'Received Your Request' : 'Success';
+    final dialogMessage = isPaidEvent ? 'Click ok to proceed Further' : message;
+
     await showDialog(
       context: context,
       barrierDismissible: true,
@@ -730,20 +735,20 @@ class _EventDetailPageState extends State<EventDetailPage> {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
-            children: const [
+            children: [
               Text(
-                "Success",
-                style: TextStyle(
+                dialogTitle,
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              SizedBox(height: 8),
-              Divider(thickness: 1, color: Colors.grey),
+              const SizedBox(height: 8),
+              const Divider(thickness: 1, color: Colors.grey),
             ],
           ),
           content: Text(
-            message,
+            dialogMessage,
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 16,
