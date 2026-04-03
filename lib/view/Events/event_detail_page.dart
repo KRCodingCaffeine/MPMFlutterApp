@@ -9,6 +9,7 @@ import 'package:mpm/model/EventRegesitration/EventRegistrationData.dart';
 import 'package:mpm/model/GetEventDetailsById/GetEventDetailsByIdData.dart';
 import 'package:mpm/model/GetEventsList/EventDateTimeData.dart';
 import 'package:mpm/model/GetEventsList/GetEventsListData.dart';
+import 'package:mpm/model/GetProfile/FamilyMembersData.dart';
 import 'package:mpm/repository/event_register_repository/event_register_repo.dart';
 import 'package:mpm/repository/get_even_details_by_id_repository/get_even_details_by_id_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
@@ -26,6 +27,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:mpm/view/Events/YouTubeBottomSheet.dart';
 import 'package:mpm/view/Events/event_payment_detail_page.dart';
+import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
 class EventDetailPage extends StatefulWidget {
   final String eventId;
@@ -55,6 +57,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
       GetEventDetailByIdRepository();
   final EventRegistrationRepository _registrationRepo =
       EventRegistrationRepository();
+  final UdateProfileController _profileController =
+      Get.isRegistered<UdateProfileController>()
+          ? Get.find<UdateProfileController>()
+          : Get.put(UdateProfileController());
 
   bool _isLoading = true;
   bool _isDownloading = false;
@@ -68,6 +74,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   int _seatCount = 0;
   final _foodBoxController = TextEditingController();
   final _seatController = TextEditingController();
+  List<String> _selectedFamilyMemberIds = [];
 
   int? _attendeeId;
 
@@ -134,14 +141,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
   Future<void> _showRegistrationConfirmationDialog() async {
     bool showFoodDialog =
-        _eventDetails?.eventsTypeId != '1' && _eventDetails?.hasFood == '1';
-    bool showSeatDialog = _eventDetails?.eventsTypeId != '1' &&
-        _eventDetails?.hasSeatAllocate == '1';
+        _eventDetails?.hasFood == '1';
 
-    if (showSeatDialog) {
-      final seatCount = await _showSeatDialog(context);
-      if (seatCount == null) return;
-      debugPrint("✅ User requested $seatCount seats");
+    {
+      final selectedIds = await _showFamilyMemberBottomSheet();
+
+      if (selectedIds == null || selectedIds.isEmpty) return;
+
+      debugPrint("✅ Selected members: $selectedIds");
     }
 
     if (showFoodDialog) {
@@ -222,6 +229,250 @@ class _EventDetailPageState extends State<EventDetailPage> {
     );
 
     return shouldProceed ?? false;
+  }
+
+  Future<List<String>?> _showFamilyMemberBottomSheet() async {
+    final userData = await SessionManager.getSession();
+    final loggedInMemberId = userData?.memberId?.toString();
+
+    if (_profileController.familyDataList.isEmpty) {
+      await _profileController.getUserProfile();
+    }
+
+    final availableMembers = _profileController.familyDataList
+        .where((member) => member.memberId?.toString() != loggedInMemberId)
+        .toList();
+
+    if (availableMembers.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No family members available to select.')),
+      );
+      return null;
+    }
+
+    final selectedIds = <String>{};
+    bool isOnlyMeSelected = false;
+
+    final selectedMemberIds = await showModalBottomSheet<List<String>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext bottomSheetContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 18,
+                bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom + 20,
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 48,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.grey,
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    const Text(
+                      'Select Family Members',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'You can select up to 4 family members',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.black54,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      activeColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
+                      value: isOnlyMeSelected,
+                      title: const Text(
+                        'Only Me',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      subtitle: const Text('Register only the logged in member'),
+                      onChanged: (value) {
+                        setModalState(() {
+                          isOnlyMeSelected = value ?? false;
+                        });
+                      },
+                    ),
+                    const Divider(height: 1),
+                    const SizedBox(height: 12),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight:
+                            MediaQuery.of(bottomSheetContext).size.height * 0.45,
+                      ),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: availableMembers.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemBuilder: (context, index) {
+                          final member = availableMembers[index];
+                          final memberId = member.memberId?.toString() ?? '';
+                          final isSelected = selectedIds.contains(memberId);
+
+                          return CheckboxListTile(
+                            contentPadding: EdgeInsets.zero,
+                            controlAffinity: ListTileControlAffinity.leading,
+                            activeColor: ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color),
+                            value: isSelected,
+                            title: Text(
+                              _getFamilyMemberName(member),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            subtitle: (member.relationshipName
+                                        ?.toString()
+                                        .trim()
+                                        .isNotEmpty ??
+                                    false)
+                                ? Text(member.relationshipName.toString())
+                                : null,
+                            onChanged: (value) {
+                              setModalState(() {
+                                if (value == true) {
+                                  if (selectedIds.length >= 4) {
+                                    ScaffoldMessenger.of(bottomSheetContext)
+                                        .showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'Only 4 family members can be selected.'),
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  selectedIds.add(memberId);
+                                } else {
+                                  selectedIds.remove(memberId);
+                                }
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Selected members: ${selectedIds.length}${isOnlyMeSelected ? ' + only me' : ''}',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () =>
+                                Navigator.pop(bottomSheetContext, null),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor:
+                                  ColorHelperClass.getColorFromHex(
+                                      ColorResources.red_color),
+                              side: const BorderSide(color: Colors.red),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: (isOnlyMeSelected || selectedIds.isNotEmpty)
+                                ? () {
+                                    final membersToRegister = <String>[
+                                      if (isOnlyMeSelected &&
+                                          loggedInMemberId != null)
+                                        loggedInMemberId,
+                                      ...selectedIds,
+                                    ];
+
+                                    Navigator.pop(
+                                        bottomSheetContext, membersToRegister);
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  ColorHelperClass.getColorFromHex(
+                                      ColorResources.red_color),
+                              disabledBackgroundColor: Colors.grey[400],
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Text(
+                              'Yes, Register',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (selectedMemberIds != null && selectedMemberIds.isNotEmpty) {
+      setState(() {
+        _selectedFamilyMemberIds = selectedMemberIds;
+        _seatCount = selectedMemberIds.length;
+      });
+    }
+
+    return selectedMemberIds;
+  }
+
+  String _getFamilyMemberName(FamilyMembersData member) {
+    return [
+      member.firstName?.toString().trim() ?? '',
+      member.middleName?.toString().trim() ?? '',
+      member.lastName?.toString().trim() ?? '',
+    ].where((name) => name.isNotEmpty).join(' ');
   }
 
   Future<int?> _showSeatDialog(BuildContext context) async {
@@ -593,14 +844,13 @@ class _EventDetailPageState extends State<EventDetailPage> {
         eventRegisteredDate: DateFormat('yyyy-MM-dd').format(now),
         addedBy: int.tryParse(userData.memberId.toString()),
         dateAdded: DateFormat('yyyy-MM-dd HH:mm:ss').format(now),
-        noOfFoodContainer: (_eventDetails?.eventsTypeId != '1' &&
-                _eventDetails?.hasFood == '1')
+        noOfFoodContainer: (_eventDetails?.hasFood == '1')
             ? _foodBoxCount
             : 0,
-        noOfSeatAllocated: (_eventDetails?.eventsTypeId != '1' &&
-                _eventDetails?.hasSeatAllocate == '1')
+        noOfSeatAllocated: (_eventDetails?.hasSeatAllocate == '1')
             ? _seatCount
             : 0,
+        familyMemberIds: _selectedFamilyMemberIds.join(','),
       );
 
       debugPrint('Sending food count: ${registrationData.noOfFoodContainer}');
@@ -1026,7 +1276,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   bool _hasPaymentDetails() {
-    final qrCode = _eventDetails?.eventQrCode?.trim();
+    final qrCode = _eventDetails?.eventAmountQrCode?.trim();
     final amount = _eventDetails?.eventAmount?.trim();
     final hasPaidFood = _eventDetails?.hasFood == '1' &&
         _eventDetails?.hasFoodPaid?.trim().toLowerCase() == 'paid';

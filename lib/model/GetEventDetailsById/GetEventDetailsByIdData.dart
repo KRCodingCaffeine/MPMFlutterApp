@@ -19,7 +19,7 @@ class GetEventDetailsByIdData {
   String? approvedDate;
   String? eventCostType;
   String? eventAmount;
-  String? eventQrCode;
+  String? eventAmountQrCode;
   String? eventRegistrationLastDate;
   String? eventsTypeId;
   String? hasGatepassEntry;
@@ -52,7 +52,7 @@ class GetEventDetailsByIdData {
     this.approvedDate,
     this.eventCostType,
     this.eventAmount,
-    this.eventQrCode,
+    this.eventAmountQrCode,
     this.eventRegistrationLastDate,
     this.eventsTypeId,
     this.hasGatepassEntry,
@@ -91,7 +91,7 @@ class GetEventDetailsByIdData {
       approvedDate: json['approved_date'],
       eventCostType: json['event_cost_type'],
       eventAmount: json['event_amount']?.toString(),
-      eventQrCode: json['event_amount_qr_code']?.toString().isNotEmpty == true
+      eventAmountQrCode: json['event_amount_qr_code']?.toString().isNotEmpty == true
           ? (json['event_amount_qr_code'].toString().startsWith('upi://') ||
                   json['event_amount_qr_code'].toString().startsWith('tez://')
               ? json['event_amount_qr_code'].toString()
@@ -138,7 +138,7 @@ class GetEventDetailsByIdData {
     data['approved_date'] = approvedDate;
     data['event_cost_type'] = eventCostType;
     data['event_amount'] = eventAmount;
-    data['event_amount_qr_code'] = eventQrCode;
+    data['event_amount_qr_code'] = eventAmountQrCode;
     data['event_registration_last_date'] = eventRegistrationLastDate;
     data['events_type_id'] = eventsTypeId;
     data['has_gatepass_entry'] = hasGatepassEntry;

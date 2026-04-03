@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:mpm/model/GetEventDetailsById/GetEventDetailsByIdData.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/view/Events/event_view.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -25,7 +26,7 @@ class EventPaymentDetailPage extends StatelessWidget {
   }
 
   bool get _hasQrImage {
-    final qrCode = eventDetails.eventQrCode?.trim();
+    final qrCode = eventDetails.eventAmountQrCode?.trim();
     if (qrCode == null || qrCode.isEmpty) {
       return false;
     }
@@ -34,7 +35,7 @@ class EventPaymentDetailPage extends StatelessWidget {
   }
 
   Future<void> _downloadQr(BuildContext context) async {
-    final qrUrl = eventDetails.eventQrCode?.trim();
+    final qrUrl = eventDetails.eventAmountQrCode?.trim();
 
     if (qrUrl == null || qrUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -73,6 +74,16 @@ class EventPaymentDetailPage extends StatelessWidget {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: logoColor,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const EventsPage()),
+              (route) => false,
+            );
+          },
+        ),
         title: const Text(
           'Event Payment',
           style: TextStyle(
@@ -180,7 +191,7 @@ class EventPaymentDetailPage extends StatelessWidget {
                     clipBehavior: Clip.antiAlias,
                     child: _hasQrImage
                         ? Image.network(
-                            eventDetails.eventQrCode!,
+                            eventDetails.eventAmountQrCode!,
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => _buildQrPlaceholder(),
                           )

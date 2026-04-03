@@ -91,6 +91,26 @@ class _RegisteredEventsDetailPageState
   String? existingMarksheetUrl;
   GetEventDetailsByIdData? _eventDetails;
 
+  String? get _displayQrCode {
+    final attendeeQr = widget.eventAttendee.eventQrCode;
+    if (attendeeQr != null && attendeeQr.isNotEmpty) {
+      return attendeeQr;
+    }
+
+    final eventAmountQr = _eventDetails?.eventAmountQrCode;
+    if (eventAmountQr != null && eventAmountQr.isNotEmpty) {
+      return eventAmountQr;
+    }
+
+    return null;
+  }
+
+  bool get _isPaymentQrFallback {
+    final attendeeQr = widget.eventAttendee.eventQrCode;
+    return (attendeeQr == null || attendeeQr.isEmpty) &&
+        (_eventDetails?.eventAmountQrCode?.isNotEmpty ?? false);
+  }
+
   final TextEditingController studentNameController = TextEditingController();
   final TextEditingController schoolNameController = TextEditingController();
   final TextEditingController standardController = TextEditingController();
@@ -1091,8 +1111,7 @@ class _RegisteredEventsDetailPageState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (widget.eventAttendee.eventQrCode != null &&
-                      widget.eventAttendee.eventQrCode!.isNotEmpty) ...[
+                  if (_displayQrCode != null && _displayQrCode!.isNotEmpty) ...[
                     Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -1111,7 +1130,7 @@ class _RegisteredEventsDetailPageState
                                     minScale: 0.5,
                                     maxScale: 4.0,
                                     child: Image.network(
-                                      widget.eventAttendee.eventQrCode!,
+                                      _displayQrCode!,
                                       fit: BoxFit.contain,
                                       errorBuilder: (_, __, ___) =>
                                           const Center(
@@ -1126,7 +1145,7 @@ class _RegisteredEventsDetailPageState
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               child: Image.network(
-                                widget.eventAttendee.eventQrCode!,
+                                _displayQrCode!,
                                 height: 300,
                                 width: 400,
                                 fit: BoxFit.cover,
@@ -1138,10 +1157,12 @@ class _RegisteredEventsDetailPageState
                             ),
                           ),
                           const SizedBox(height: 12),
-                          const Text(
-                            "Scan this QR Code for Gate Pass Entry",
+                          Text(
+                            _isPaymentQrFallback
+                                ? "Kindly make the payment thru the QR code enclosed."
+                                : "Scan this QR Code for Event Entry",
                             textAlign: TextAlign.center,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                               color: Colors.black87,
