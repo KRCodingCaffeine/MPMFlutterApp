@@ -140,8 +140,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<void> _showRegistrationConfirmationDialog() async {
-    bool showFoodDialog =
-        _eventDetails?.hasFood == '1';
+    bool showFoodDialog = _eventDetails?.hasFood == '1';
 
     {
       final selectedIds = await _showFamilyMemberBottomSheet();
@@ -265,7 +264,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 left: 20,
                 right: 20,
                 top: 18,
-                bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom + 20,
+                bottom:
+                    MediaQuery.of(bottomSheetContext).viewInsets.bottom + 20,
               ),
               decoration: const BoxDecoration(
                 color: Colors.white,
@@ -319,7 +319,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                           color: Colors.black87,
                         ),
                       ),
-                      subtitle: const Text('Register only the logged in member'),
+                      subtitle:
+                          const Text('Register only the logged in member'),
                       onChanged: (value) {
                         setModalState(() {
                           isOnlyMeSelected = value ?? false;
@@ -331,7 +332,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     ConstrainedBox(
                       constraints: BoxConstraints(
                         maxHeight:
-                            MediaQuery.of(bottomSheetContext).size.height * 0.45,
+                            MediaQuery.of(bottomSheetContext).size.height *
+                                0.45,
                       ),
                       child: ListView.separated(
                         shrinkWrap: true,
@@ -402,9 +404,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                             onPressed: () =>
                                 Navigator.pop(bottomSheetContext, null),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor:
-                                  ColorHelperClass.getColorFromHex(
-                                      ColorResources.red_color),
+                              foregroundColor: ColorHelperClass.getColorFromHex(
+                                  ColorResources.red_color),
                               side: const BorderSide(color: Colors.red),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
@@ -417,7 +418,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: (isOnlyMeSelected || selectedIds.isNotEmpty)
+                            onPressed: (isOnlyMeSelected ||
+                                    selectedIds.isNotEmpty)
                                 ? () {
                                     final membersToRegister = <String>[
                                       if (isOnlyMeSelected &&
@@ -431,9 +433,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                   }
                                 : null,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  ColorHelperClass.getColorFromHex(
-                                      ColorResources.red_color),
+                              backgroundColor: ColorHelperClass.getColorFromHex(
+                                  ColorResources.red_color),
                               disabledBackgroundColor: Colors.grey[400],
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
@@ -837,6 +838,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
         throw Exception('User not logged in');
       }
 
+      final loggedInMemberId = userData.memberId.toString();
+      final familyMemberIdsForRequest = _selectedFamilyMemberIds
+          .where((memberId) => memberId != loggedInMemberId)
+          .toList();
       final now = DateTime.now();
       final registrationData = EventRegistrationData(
         memberId: int.tryParse(userData.memberId.toString()),
@@ -844,17 +849,16 @@ class _EventDetailPageState extends State<EventDetailPage> {
         eventRegisteredDate: DateFormat('yyyy-MM-dd').format(now),
         addedBy: int.tryParse(userData.memberId.toString()),
         dateAdded: DateFormat('yyyy-MM-dd HH:mm:ss').format(now),
-        noOfFoodContainer: (_eventDetails?.hasFood == '1')
-            ? _foodBoxCount
-            : 0,
-        noOfSeatAllocated: (_eventDetails?.hasSeatAllocate == '1')
-            ? _seatCount
-            : 0,
-        familyMemberIds: _selectedFamilyMemberIds.join(','),
+        noOfFoodContainer: (_eventDetails?.hasFood == '1') ? _foodBoxCount : 0,
+        noOfSeatAllocated:
+            (_eventDetails?.hasSeatAllocate == '1') ? _seatCount : 0,
+        familyMemberIds: familyMemberIdsForRequest.join(','),
       );
 
       debugPrint('Sending food count: ${registrationData.noOfFoodContainer}');
       debugPrint('Sending seat count: ${registrationData.noOfSeatAllocated}');
+      debugPrint(
+          'Sending family member ids: ${registrationData.familyMemberIds}');
 
       final response =
           await _registrationRepo.registerForEvent(registrationData);
@@ -1089,10 +1093,17 @@ class _EventDetailPageState extends State<EventDetailPage> {
     if (!mounted || _eventDetails == null) return;
 
     if (_hasPaymentDetails()) {
+      final selectedMemberCount = _selectedFamilyMemberIds.isEmpty
+          ? 1
+          : _selectedFamilyMemberIds.length;
       await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => EventPaymentDetailPage(eventDetails: _eventDetails!),
+          builder: (_) => EventPaymentDetailPage(
+            eventDetails: _eventDetails!,
+            selectedMemberCount: selectedMemberCount,
+            selectedFoodBoxCount: _foodBoxCount,
+          ),
         ),
       );
       return;

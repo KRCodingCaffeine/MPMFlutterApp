@@ -7,22 +7,57 @@ import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/Events/event_view.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class EventPaymentDetailPage extends StatelessWidget {
   final GetEventDetailsByIdData eventDetails;
+  final int selectedMemberCount;
+  final int selectedFoodBoxCount;
 
   const EventPaymentDetailPage({
     Key? key,
     required this.eventDetails,
+    this.selectedMemberCount = 1,
+    this.selectedFoodBoxCount = 0,
   }) : super(key: key);
 
-  String get _paymentAmount {
+  int get _eventEntryAmount {
     final amount = eventDetails.eventAmount?.trim();
     if (amount == null || amount.isEmpty) {
-      return '0';
+      return 0;
     }
-    return amount;
+
+    return int.tryParse(amount) ?? 0;
+  }
+
+  int get _foodAmount {
+    final amount = eventDetails.foodAmount?.trim();
+    if (amount == null || amount.isEmpty) {
+      return 0;
+    }
+
+    return int.tryParse(amount) ?? 0;
+  }
+
+  bool get _hasPaidFood {
+    return eventDetails.hasFood == '1' &&
+        eventDetails.hasFoodPaid?.trim().toLowerCase() == 'paid';
+  }
+
+  int get _eventEntryTotal {
+    final memberCount = selectedMemberCount > 0 ? selectedMemberCount : 1;
+    return _eventEntryAmount * memberCount;
+  }
+
+  int get _foodTotal {
+    if (!_hasPaidFood) {
+      return 0;
+    }
+
+    return _foodAmount * selectedFoodBoxCount;
+  }
+
+  int get _totalPaymentAmount {
+    return _eventEntryTotal + _foodTotal;
   }
 
   bool get _hasQrImage {
@@ -99,9 +134,9 @@ class EventPaymentDetailPage extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFFEEE7DA),
-              Color(0xFFF8F5EF),
-              Color(0xFFFFFFFF),
+              Color(0xFF908E8E),
+              Color(0xFFCDCBC9),
+              Color(0xFF716D6D),
             ],
           ),
         ),
@@ -201,13 +236,14 @@ class EventPaymentDetailPage extends StatelessWidget {
                   GestureDetector(
                     onTap: () => _downloadQr(context),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 9),
                       decoration: BoxDecoration(
                         color: themeColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        'Click here to download QR to pay Rs. $_paymentAmount',
+                        'Click here to download QR to pay Rs. $_totalPaymentAmount',
                         style: TextStyle(
                           color: themeColor,
                           fontWeight: FontWeight.w700,
@@ -219,8 +255,78 @@ class EventPaymentDetailPage extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 16),
+          Text(
+            "Amount is calculated based on your selected family members also.",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              color: themeColor.withOpacity(0.85),
+              fontWeight: FontWeight.w500,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildAmountBreakdown(),
+          const SizedBox(height: 12),
         ],
       ),
+    );
+  }
+
+  Widget _buildAmountBreakdown() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBF5),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE7DAC6)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildAmountRow(
+            label:
+                'Event Entry amount: Rs. $_eventEntryAmount x $selectedMemberCount',
+            value: 'Rs. $_eventEntryTotal',
+          ),
+          if (_hasPaidFood)
+            _buildAmountRow(
+              label: _foodAmount > 0
+                  ? 'Food amount: Rs. $_foodAmount x $selectedFoodBoxCount'
+                  : 'Food amount: selected boxes $selectedFoodBoxCount',
+              value: 'Rs. $_foodTotal',
+            ),
+          const Divider(height: 18),
+          _buildAmountRow(
+            label: 'Total amount',
+            value: 'Rs. $_totalPaymentAmount',
+            isTotal: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAmountRow({
+    required String label,
+    required String value,
+    bool isTotal = false,
+  }) {
+    final textStyle = TextStyle(
+      fontSize: isTotal ? 15 : 13,
+      fontWeight: isTotal ? FontWeight.w700 : FontWeight.w500,
+      color: Colors.black87,
+    );
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: Text(label, style: textStyle)),
+        const SizedBox(width: 12),
+        Text(value, style: textStyle, textAlign: TextAlign.right),
+      ],
     );
   }
 
