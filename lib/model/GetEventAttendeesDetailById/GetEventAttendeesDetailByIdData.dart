@@ -1,4 +1,4 @@
-import 'package:mpm/model/GetEventsList/GetEventsListData.dart';
+import 'package:mpm/model/GetEventAttendeesDetailById/FamilyMember/FamilyMember.dart';
 
 class GetEventAttendeesDetailByIdData {
   final String? eventAttendeesId;
@@ -12,6 +12,7 @@ class GetEventAttendeesDetailByIdData {
   final EventData? event;
   final List<PriceMember>? priceMembersList;
   final SeatAllotment? seatAllotment;
+  final List<FamilyMember>? familyMembers;
 
   GetEventAttendeesDetailByIdData({
     this.eventAttendeesId,
@@ -25,6 +26,7 @@ class GetEventAttendeesDetailByIdData {
     this.event,
     this.priceMembersList,
     this.seatAllotment,
+    this.familyMembers,
   });
 
   factory GetEventAttendeesDetailByIdData.fromJson(Map<String, dynamic> json) {
@@ -44,6 +46,9 @@ class GetEventAttendeesDetailByIdData {
       seatAllotment: json['seat_allotment'] != null
           ? SeatAllotment.fromJson(json['seat_allotment'])
           : null,
+      familyMembers: (json['family_members'] as List<dynamic>?)
+          ?.map((e) => FamilyMember.fromJson(e as Map<String, dynamic>))
+          .toList(),
     );
   }
 
@@ -59,6 +64,7 @@ class GetEventAttendeesDetailByIdData {
     'event': event?.toJson(),
     'price_members': priceMembersList?.map((e) => e.toJson()).toList(),
     'seat_allotment': seatAllotment?.toJson(),
+    'family_members': familyMembers?.map((e) => e.toJson()).toList(),
   };
 }
 

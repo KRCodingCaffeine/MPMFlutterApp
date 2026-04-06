@@ -129,17 +129,7 @@ class EventPaymentDetailPage extends StatelessWidget {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF908E8E),
-              Color(0xFFCDCBC9),
-              Color(0xFF716D6D),
-            ],
-          ),
-        ),
+        color: Colors.grey[100],
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
           child: Column(

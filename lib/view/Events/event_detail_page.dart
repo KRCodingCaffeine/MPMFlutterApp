@@ -233,6 +233,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
   Future<List<String>?> _showFamilyMemberBottomSheet() async {
     final userData = await SessionManager.getSession();
     final loggedInMemberId = userData?.memberId?.toString();
+    final loggedInMemberName = [
+      userData?.firstName?.trim() ?? '',
+      userData?.middleName?.trim() ?? '',
+      userData?.lastName?.trim() ?? '',
+    ].where((name) => name.isNotEmpty).join(' ');
 
     if (_profileController.familyDataList.isEmpty) {
       await _profileController.getUserProfile();
@@ -242,15 +247,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
         .where((member) => member.memberId?.toString() != loggedInMemberId)
         .toList();
 
-    if (availableMembers.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No family members available to select.')),
-      );
-      return null;
-    }
-
     final selectedIds = <String>{};
-    bool isOnlyMeSelected = false;
+    bool isOnlyMeSelected = true;
 
     final selectedMemberIds = await showModalBottomSheet<List<String>>(
       context: context,
@@ -289,7 +287,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     ),
                     const SizedBox(height: 18),
                     const Text(
-                      'Select Family Members',
+                      'Select Members',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -312,20 +310,16 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       activeColor: ColorHelperClass.getColorFromHex(
                           ColorResources.red_color),
                       value: isOnlyMeSelected,
-                      title: const Text(
-                        'Only Me',
-                        style: TextStyle(
+                      title: Text(
+                        loggedInMemberName.isNotEmpty
+                            ? loggedInMemberName
+                            : 'Logged in member',
+                        style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           color: Colors.black87,
                         ),
                       ),
-                      subtitle:
-                          const Text('Register only the logged in member'),
-                      onChanged: (value) {
-                        setModalState(() {
-                          isOnlyMeSelected = value ?? false;
-                        });
-                      },
+                      onChanged: null,
                     ),
                     const Divider(height: 1),
                     const SizedBox(height: 12),
@@ -385,15 +379,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
                             },
                           );
                         },
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Selected members: ${selectedIds.length}${isOnlyMeSelected ? ' + only me' : ''}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -633,7 +618,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    "Number of meals for this event (Max 2):",
+                    "Number of meals for this event (Max 4):",
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.black87,
@@ -671,6 +656,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       DropdownMenuItem<int>(
                         value: 2,
                         child: Text("2"),
+                      ),
+                      DropdownMenuItem<int>(
+                        value: 3,
+                        child: Text("3"),
+                      ),
+                      DropdownMenuItem<int>(
+                        value: 4,
+                        child: Text("4"),
                       ),
                     ],
                     onChanged: (value) {
