@@ -7,7 +7,9 @@ import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
 import '../../repository/qr_code_scanner_repository/qr_code_scanner_repo.dart';
 
 class QRScannerScreen extends StatefulWidget {
-  const QRScannerScreen({Key? key}) : super(key: key);
+  final String scanType;
+
+  const QRScannerScreen({Key? key, required this.scanType}) : super(key: key);
 
   @override
   State<QRScannerScreen> createState() => _QRScannerScreenState();
@@ -15,16 +17,18 @@ class QRScannerScreen extends StatefulWidget {
 
 class _QRScannerScreenState extends State<QRScannerScreen>
     with SingleTickerProviderStateMixin {
+
   String? scannedData;
   late AnimationController _animationController;
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
   QRViewController? controller;
   final QrCodeScannerRepository _repository = QrCodeScannerRepository();
-  bool isDialogOpen = false; // prevent multiple dialogs
+  bool isDialogOpen = false;
 
   @override
   void initState() {
     super.initState();
+
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -50,19 +54,15 @@ class _QRScannerScreenState extends State<QRScannerScreen>
         backgroundColor:
         ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Text(
-          'QR Code Scanner',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: MediaQuery.of(context).size.width * 0.045,
-            fontWeight: FontWeight.w500,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+          "${widget.scanType} Scanner",
+          style: const TextStyle(color: Colors.white),
         ),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Stack(
         children: [
-          // Camera view
+
+          /// CAMERA
           QRView(
             key: qrKey,
             onQRViewCreated: _onQRViewCreated,
@@ -75,7 +75,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
             ),
           ),
 
-          // Overlay mask
+          /// DARK OVERLAY
           ColorFiltered(
             colorFilter: ColorFilter.mode(
               Colors.green.withOpacity(0.2),
@@ -104,7 +104,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
             ),
           ),
 
-          // Animated scanning line
+          /// SCAN LINE
           AnimatedBuilder(
             animation: _animationController,
             builder: (context, child) {
@@ -116,13 +116,15 @@ class _QRScannerScreenState extends State<QRScannerScreen>
                 child: Container(
                   width: cutOutSize,
                   height: 2,
-                  color: Colors.greenAccent,
+                  color: widget.scanType == "Gate Entry"
+                      ? Colors.greenAccent
+                      : Colors.orangeAccent,
                 ),
               );
             },
           ),
 
-          // Bottom text
+          /// BOTTOM TEXT
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
@@ -130,7 +132,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
               padding: const EdgeInsets.all(16),
               child: Text(
                 scannedData != null
-                    ? "Scanned: $scannedData"
+                    ? "${widget.scanType} Scanned: $scannedData"
                     : "Align the QR code within the frame to scan",
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: Colors.white),
@@ -144,40 +146,82 @@ class _QRScannerScreenState extends State<QRScannerScreen>
 
   void _onQRViewCreated(QRViewController ctrl) {
     controller = ctrl;
+
     ctrl.scannedDataStream.listen((scanData) async {
-      if (isDialogOpen) return; // avoid duplicate dialogs
-      final String? scannedValue = scanData.code;
+      if (isDialogOpen) return;
+
+      final scannedValue = scanData.code;
 
       if (scannedValue != null && scannedValue.isNotEmpty) {
-        setState(() {
-          scannedData = scannedValue;
-        });
+        setState(() => scannedData = scannedValue);
 
-        //log('QR Scanned: $scannedValue');
         isDialogOpen = true;
         controller?.pauseCamera();
 
-        // First popup: show scanned value and ask to proceed
         final bool? proceed = await showDialog<bool>(
           context: context,
-          barrierDismissible: false,
-          builder: (context) {
+          builder: (BuildContext context) {
             return AlertDialog(
-              title: Text(
-                'Attendee - $scannedValue QR Code Detected',
-                style: const TextStyle(fontWeight: FontWeight.bold),
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15.0),
               ),
-              content: const Text(
-                'Do you want to verify this attendee’s event check-in?',
+              titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+              contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+              actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+
+              /// 🔥 TITLE
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.scanType,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
+                  const Divider(thickness: 1, color: Colors.grey),
+                ],
               ),
+
+              /// 🔥 CONTENT
+              content: Text(
+                "$scannedValue\n\nDo you want to verify this attendee’s event check-in?",
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.black87,
+                ),
+              ),
+
+              /// 🔥 ACTIONS
               actions: [
-                TextButton(
+                OutlinedButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Cancel'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    side: const BorderSide(color: Colors.red),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text("Cancel"),
                 ),
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context, true),
-                  child: const Text('Done'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: widget.scanType == "Gate Entry"
+                        ? Colors.green
+                        : Colors.orange,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text("Confirm"),
                 ),
               ],
             );
@@ -186,21 +230,47 @@ class _QRScannerScreenState extends State<QRScannerScreen>
 
         if (proceed == true) {
           try {
-            final result = await _repository.scanQrCode(scannedValue);
 
-            if (result.status == true) {
-              _showTopBanner(context,
-                  result.message ?? "Attendance confirmed", Colors.green);
+            if (widget.scanType == "Meal Box Entry") {
+              /// 🍱 FOOD API
+              final result =
+              await _repository.scanQrCodeForFood(scannedValue);
+
+              Color bannerColor = Colors.green;
+
+              if (result.status == false) {
+                if (result.message!
+                    .toLowerCase()
+                    .contains("already")) {
+                  bannerColor = Colors.orange;
+                } else {
+                  bannerColor = Colors.red;
+                }
+              }
+
+              _showTopBanner(
+                context,
+                result.message ?? "Food Entry Done",
+                bannerColor,
+              );
+
             } else {
-              _showTopBanner(context,
-                  result.message ?? "Invalid attendee code", Colors.red);
+              /// 🚪 GATE ENTRY API
+              final result =
+              await _repository.scanQrCode(scannedValue);
+
+              _showTopBanner(
+                context,
+                result.message ?? "Success",
+                result.status == true ? Colors.green : Colors.red,
+              );
             }
+
           } catch (e) {
             _showTopBanner(context, "Error: $e", Colors.red);
           }
         }
 
-        // Resume scanning after short delay
         await Future.delayed(const Duration(milliseconds: 500));
         controller?.resumeCamera();
         isDialogOpen = false;
@@ -208,20 +278,12 @@ class _QRScannerScreenState extends State<QRScannerScreen>
     });
   }
 
-  void _showTopBanner(BuildContext context, String message, Color color) {
-    ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
-
+  void _showTopBanner(BuildContext context, String msg, Color color) {
     ScaffoldMessenger.of(context).showMaterialBanner(
       MaterialBanner(
         backgroundColor: color,
-        content: Text(
-          message,
-          style: const TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        actions: const [
-          SizedBox.shrink(),
-        ],
+        content: Text(msg, style: const TextStyle(color: Colors.white)),
+        actions: const [SizedBox()],
       ),
     );
 
