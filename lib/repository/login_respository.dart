@@ -1,4 +1,5 @@
 import 'package:mpm/data/network/network_api_Service.dart';
+import 'package:mpm/model/CheckPinCode/CheckPinCodeModel.dart';
 import 'package:mpm/model/CheckUser/CheckModelClass.dart';
 import 'package:mpm/model/Register/RegisterModelClass.dart';
 import 'package:mpm/utils/urls.dart';
@@ -31,4 +32,13 @@ class LoginRepo{
     return response;
   }
 
+  // Check Pincode
+  Future<CheckPinCodeModel> checkPinCode(var data) async {
+    dynamic response =
+    await api.postApi(data, Urls.checkPinCode_url, "", "2");
+
+    print("Check Pincode Response => $response");
+
+    return CheckPinCodeModel.fromJson(response);
+  }
 }

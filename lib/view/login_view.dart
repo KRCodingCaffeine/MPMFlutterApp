@@ -382,8 +382,8 @@ class _LoginPageState extends State<LoginPage> {
               top: 70,
               right: 20,
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, RouteNames.registration_screen);
+                 onPressed: () {
+                  _showPincodeDialog(context);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: ColorHelperClass.getColorFromHex(
@@ -414,309 +414,423 @@ class _LoginPageState extends State<LoginPage> {
     //   // sharedPreference.saveDeviceToken(token);
     // }
   }
+  
+  void _showPincodeDialog(BuildContext context) {
+    final TextEditingController pincodeController = TextEditingController();
+    final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
-  void _showForgotBottomSheet(BuildContext context) {
-    final firstNameController = TextEditingController();
-    final middleNameController = TextEditingController();
-    final surnameController = TextEditingController();
-    final mobileController = TextEditingController();
-    final emailController = TextEditingController();
-    final messageController = TextEditingController();
-
-    final forgotRepo = ForgotMemberLoginRepository();
-
-    bool isSubmitting = false;
-
-    // Track touched fields individually
-    bool firstTouched = false;
-    bool surnameTouched = false;
-    bool mobileTouched = false;
-    bool emailTouched = false;
-    bool messageTouched = false;
-
-    String? firstError;
-    String? surnameError;
-    String? mobileError;
-    String? emailError;
-    String? messageError;
-
-    // Individual validators
-    void validateFirst() {
-      firstError = firstNameController.text.trim().isEmpty
-          ? "First name is required"
-          : null;
-    }
-
-    void validateSurname() {
-      surnameError =
-          surnameController.text.trim().isEmpty ? "Surname is required" : null;
-    }
-
-    void validateMobile() {
-      mobileError = mobileController.text.trim().length != 10
-          ? "Mobile must be 10 digits"
-          : null;
-    }
-
-    void validateEmail() {
-      emailError =
-          !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(emailController.text.trim())
-              ? "Enter valid email"
-              : null;
-    }
-
-    void validateMessage() {
-      messageError =
-          messageController.text.trim().isEmpty ? "Message is required" : null;
-    }
-
-    bool isFormValid() {
-      validateFirst();
-      validateSurname();
-      validateMobile();
-      validateEmail();
-      validateMessage();
-
-      return firstError == null &&
-          surnameError == null &&
-          mobileError == null &&
-          emailError == null &&
-          messageError == null;
-    }
-
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-                left: 16,
-                right: 16,
-                top: 20,
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text("Close"),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: ColorHelperClass.getColorFromHex(
-                                ColorResources.red_color),
-                            side: const BorderSide(color: Colors.red),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                        ElevatedButton(
-                            onPressed: (!isFormValid() || isSubmitting)
-                                ? null
-                                : () async {
-                                    setState(() {
-                                      isSubmitting = true;
-                                    });
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
 
-                                    final fullName =
-                                        "${firstNameController.text.trim()} "
-                                                "${middleNameController.text.trim()} "
-                                                "${surnameController.text.trim()}"
-                                            .trim();
-
-                                    try {
-                                      final response = await forgotRepo
-                                          .sendForgotMemberLoginRequest(
-                                        fullName: fullName,
-                                        mobile: mobileController.text.trim(),
-                                        email: emailController.text.trim(),
-                                        message: messageController.text.trim(),
-                                      );
-
-                                      Navigator.pop(context);
-
-                                      if (response.status == true) {
-                                        Get.snackbar(
-                                          "Success",
-                                          "Forgot login request submitted successfully.",
-                                          backgroundColor: Colors.green,
-                                          colorText: Colors.white,
-                                        );
-                                      } else {
-                                        Get.snackbar(
-                                          "Failed",
-                                          "Unable to submit request.",
-                                          backgroundColor: Colors.red,
-                                          colorText: Colors.white,
-                                        );
-                                      }
-                                    } catch (_) {
-                                      Navigator.pop(context);
-                                      Get.snackbar(
-                                        "Error",
-                                        "Something went wrong.",
-                                        backgroundColor: Colors.red,
-                                        colorText: Colors.white,
-                                      );
-                                    } finally {
-                                      setState(() {
-                                        isSubmitting = false;
-                                      });
-                                    }
-                                  },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: ColorHelperClass.getColorFromHex(
-                                  ColorResources.red_color),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: isSubmitting
-                                ? Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: const [
-                                      SizedBox(
-                                        height: 16,
-                                        width: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      SizedBox(width: 10),
-                                      Text("Submitting..."),
-                                    ],
-                                  )
-                                : const Text("Submit")),
-                      ],
-                    ),
-                    const SizedBox(height: 30),
-                    _forgotField(
-                      "First Name *",
-                      firstNameController,
-                      errorText: firstTouched ? firstError : null,
-                      onChanged: (_) {
-                        firstTouched = true;
-                        validateFirst();
-                        setState(() {});
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    _forgotField(
-                      "Middle Name",
-                      middleNameController,
-                    ),
-                    const SizedBox(height: 12),
-                    _forgotField(
-                      "Surname *",
-                      surnameController,
-                      errorText: surnameTouched ? surnameError : null,
-                      onChanged: (_) {
-                        surnameTouched = true;
-                        validateSurname();
-                        setState(() {});
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    _forgotField(
-                      "Mobile *",
-                      mobileController,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(10),
-                      ],
-                      errorText: mobileTouched ? mobileError : null,
-                      onChanged: (_) {
-                        mobileTouched = true;
-                        validateMobile();
-                        setState(() {});
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    _forgotField(
-                      "Email *",
-                      emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      errorText: emailTouched ? emailError : null,
-                      onChanged: (_) {
-                        emailTouched = true;
-                        validateEmail();
-                        setState(() {});
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    _forgotField(
-                      "Message *",
-                      messageController,
-                      maxLines: 3,
-                      errorText: messageTouched ? messageError : null,
-                      onChanged: (_) {
-                        messageTouched = true;
-                        validateMessage();
-                        setState(() {});
-                      },
-                    ),
-                    const SizedBox(height: 30),
-                  ],
+          // 🔹 Title Section
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Enter Your Pincode",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            );
-          },
+              SizedBox(height: 8),
+              Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+
+          // 🔹 Content Section
+          content: Form(
+            key: formKey,
+            child: TextFormField(
+              controller: pincodeController,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              decoration: const InputDecoration(
+                hintText: "Enter pincode",
+                counterText: "",
+                border: OutlineInputBorder(),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black38),
+                ),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return "Enter pincode";
+                } else if (value.length != 6) {
+                  return "Enter valid 6 digit pincode";
+                }
+                return null;
+              },
+            ),
+          ),
+
+          // 🔹 Action Buttons
+          actions: [
+            OutlinedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (formKey.currentState!.validate()) {
+                  String pincode = pincodeController.text.trim();
+
+                  final response = await controller.verifyPincode(pincode);
+
+                  if (response != null && response.status == true) {
+                    Navigator.pop(context);
+
+                    Navigator.pushNamed(
+                      context,
+                      RouteNames.registration_screen,
+                      arguments: pincode,
+                    );
+                  } else {
+                    Navigator.pop(context); // close pincode dialog first
+                    _showOutsideAreaDialog(context);
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Continue"),
+            ),
+          ],
         );
       },
     );
   }
 
-  Widget _forgotField(
+  void _showOutsideAreaDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Pincode is from outside Pragati Mandal Area",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(thickness: 1, color: Colors.grey),
+            ],
+          ),
+
+          content: const Text(
+            "Please select one option:",
+            style: TextStyle(
+              fontSize: 15,
+              color: Colors.black87,
+            ),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () {
+                Navigator.pop(context);
+
+                // Navigate as Sarawani Member
+                Navigator.pushNamed(
+                  context,
+                  RouteNames.registration_screen,
+                  arguments: {
+                    "type": "sarawani_member",
+                  },
+                );
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Sarawani Member"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+
+                // Navigate as Guest Member
+                Navigator.pushNamed(
+                  context,
+                  RouteNames.registration_screen,
+                  arguments: {
+                    "type": "guest_member",
+                  },
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Guest Member"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showForgotBottomSheet(BuildContext context) {
+    final _formKey = GlobalKey<FormState>();
+    final TextEditingController firstNameController = TextEditingController();
+    final TextEditingController middleNameController = TextEditingController();
+    final TextEditingController surnameController = TextEditingController();
+    final TextEditingController mobileController = TextEditingController();
+    final TextEditingController emailController = TextEditingController();
+    final TextEditingController messageController = TextEditingController();
+
+    final forgotRepo = ForgotMemberLoginRepository();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      backgroundColor: Colors.white,
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 16,
+            right: 16,
+            top: 20,
+          ),
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 60,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.redAccent),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 10),
+                        ),
+                        child: const Text(
+                          "Cancel",
+                          style: TextStyle(
+                            color: Colors.redAccent,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () async {
+                          if (_formKey.currentState!.validate()) {
+                            final fullName =
+                                "${firstNameController.text.trim()} ${middleNameController.text.trim()} ${surnameController.text.trim()}"
+                                    .trim();
+
+                            try {
+                              // Get.snackbar(
+                              //   "Processing",
+                              //   "Sending your request...",
+                              //   backgroundColor: Colors.orange.shade600,
+                              //   colorText: Colors.white,
+                              //   duration: const Duration(seconds: 2),
+                              // );
+
+                              final response =
+                                  await forgotRepo.sendForgotMemberLoginRequest(
+                                fullName: fullName,
+                                mobile: mobileController.text.trim(),
+                                email: emailController.text.trim(),
+                                message: messageController.text.trim(),
+                              );
+
+                              Navigator.pop(context);
+
+                              if (response.status == true) {
+                                Get.snackbar(
+                                  "Success",
+                                  response.data?.message ??
+                                      "Your request has been submitted successfully.",
+                                  backgroundColor: Colors.green.shade600,
+                                  colorText: Colors.white,
+                                );
+                              } else {
+                                Get.snackbar(
+                                  "Failed",
+                                  "Unable to submit your request.",
+                                  backgroundColor: Colors.red.shade600,
+                                  colorText: Colors.white,
+                                );
+                              }
+                            } catch (e) {
+                              Navigator.pop(context);
+                              Get.snackbar(
+                                "Error",
+                                "Something went wrong. Please try again.",
+                                backgroundColor: Colors.red.shade700,
+                                colorText: Colors.white,
+                              );
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorHelperClass.getColorFromHex(
+                              ColorResources.red_color),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 10),
+                        ),
+                        child: const Text(
+                          "Submit",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+                  _buildTextField("First Name", firstNameController,
+                      validatorMsg: "Enter first name"),
+                  const SizedBox(height: 12),
+                  _buildTextField("Middle Name", middleNameController),
+                  const SizedBox(height: 12),
+                  _buildTextField("Surname", surnameController,
+                      validatorMsg: "Enter surname"),
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    "Mobile",
+                    mobileController,
+                    keyboardType: TextInputType.phone,
+                    validatorMsg: "Enter mobile number",
+                  ),
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    "Email",
+                    emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    validatorMsg: "Enter valid email",
+                  ),
+                  const SizedBox(height: 12),
+                  _buildTextField("Message", messageController, maxLines: 3),
+                  const SizedBox(height: 30),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTextField(
     String label,
     TextEditingController controller, {
     TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
-    List<TextInputFormatter>? inputFormatters,
-    String? errorText,
-    ValueChanged<String>? onChanged,
+    String? validatorMsg,
+    bool readOnly = false,
   }) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      inputFormatters: inputFormatters,
-      onChanged: onChanged,
-      decoration: InputDecoration(
-        labelText: label,
-        errorText: errorText,
-        labelStyle: const TextStyle(color: Colors.black),
-        hintText: label,
-        hintStyle: const TextStyle(color: Colors.black54),
-        filled: true,
-        fillColor: Colors.white,
-        border: const OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.black),
+    return Container(
+      margin: const EdgeInsets.only(left: 5, right: 5, bottom: 10),
+      child: TextFormField(
+        controller: controller,
+        readOnly: readOnly,
+        keyboardType: keyboardType,
+        maxLines: maxLines,
+        style: const TextStyle(color: Colors.black),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(color: Colors.black),
+          hintText: label,
+          hintStyle: const TextStyle(color: Colors.black54),
+          filled: true,
+          fillColor: Colors.grey[100],
+          border: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black),
+          ),
+          enabledBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black),
+          ),
+          focusedBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black38, width: 1),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 12,
+            horizontal: 20,
+          ),
         ),
-        enabledBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.black),
-        ),
-        focusedBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.black38, width: 1),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          vertical: 12,
-          horizontal: 20,
-        ),
+        validator: (value) {
+          if (validatorMsg != null && (value == null || value.isEmpty)) {
+            return validatorMsg;
+          }
+          return null;
+        },
       ),
     );
   }
