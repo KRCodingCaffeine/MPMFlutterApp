@@ -218,6 +218,25 @@ class _RegisteredEventsDetailPageState
     return '$fName$mName$lName'.trim();
   }
 
+  String getFullNameWithFamily() {
+    String name = memberName;
+
+    if (widget.eventAttendee.familyMembers != null &&
+        widget.eventAttendee.familyMembers!.isNotEmpty) {
+
+      final familyNames = widget.eventAttendee.familyMembers!
+          .where((m) => m.fullName != null && m.fullName!.trim().isNotEmpty)
+          .map((m) => m.fullName!.trim())
+          .join(', ');
+
+      if (familyNames.isNotEmpty) {
+        name = "$memberName, $familyNames";
+      }
+    }
+
+    return name;
+  }
+
   void _checkIfCancelled() {
     setState(() {
       _isCancelled = widget.eventAttendee.cancelledDate != null &&
@@ -1188,7 +1207,7 @@ class _RegisteredEventsDetailPageState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildRow("Name", memberName),
+                        _buildRow("Name", getFullNameWithFamily()),
                         _buildRow(
                           "Reference Code",
                           widget.eventAttendee.eventAttendeesCode ??
@@ -1284,47 +1303,47 @@ class _RegisteredEventsDetailPageState
                     ),
                   ),
                   const SizedBox(height: 10),
-                  if (widget.eventAttendee.familyMembers != null &&
-                      widget.eventAttendee.familyMembers!.isNotEmpty) ...[
-                    const Text(
-                      'Attendee Family Members:',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
-                      ),
-                    ),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ...widget.eventAttendee.familyMembers!
-                              .where((member) =>
-                                  member.fullName != null &&
-                                  member.fullName!.trim().isNotEmpty)
-                              .toList()
-                              .asMap()
-                              .entries
-                              .map(
-                                (entry) => Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 4),
-                                  child: Text(
-                                    '${entry.key + 1}. ${entry.value.fullName!.trim()}',
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                  ],
+                  // if (widget.eventAttendee.familyMembers != null &&
+                  //     widget.eventAttendee.familyMembers!.isNotEmpty) ...[
+                  //   const Text(
+                  //     'Attendee Family Members:',
+                  //     style: TextStyle(
+                  //       fontSize: 16,
+                  //       fontWeight: FontWeight.w600,
+                  //       color: Colors.black,
+                  //     ),
+                  //   ),
+                  //   Container(
+                  //     width: double.infinity,
+                  //     padding: const EdgeInsets.all(12),
+                  //     child: Column(
+                  //       crossAxisAlignment: CrossAxisAlignment.start,
+                  //       children: [
+                  //         ...widget.eventAttendee.familyMembers!
+                  //             .where((member) =>
+                  //                 member.fullName != null &&
+                  //                 member.fullName!.trim().isNotEmpty)
+                  //             .toList()
+                  //             .asMap()
+                  //             .entries
+                  //             .map(
+                  //               (entry) => Padding(
+                  //                 padding:
+                  //                     const EdgeInsets.symmetric(vertical: 4),
+                  //                 child: Text(
+                  //                   '${entry.key + 1}. ${entry.value.fullName!.trim()}',
+                  //                   style: const TextStyle(
+                  //                     fontSize: 14,
+                  //                     color: Colors.black87,
+                  //                   ),
+                  //                 ),
+                  //               ),
+                  //             ),
+                  //       ],
+                  //     ),
+                  //   ),
+                  //   const SizedBox(height: 10),
+                  // ],
                   _buildEventInfo(),
                   if (_hasStudentPrizeMember) ...[
                     const Divider(thickness: 1, color: Colors.grey),

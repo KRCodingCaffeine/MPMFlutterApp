@@ -296,7 +296,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                      'You can select up to 4 family members',
+                      'You can select up to 4 members',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.black54,
@@ -799,6 +799,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       attendeeId: attendeeId!,
                       memberId: int.tryParse(userData!.memberId.toString())!,
                       addedBy: int.tryParse(userData!.memberId.toString())!,
+                      eventDetails: _eventDetails!,
+                      selectedMemberCount: _selectedFamilyMemberIds.isEmpty
+                          ? 1
+                          : _selectedFamilyMemberIds.length,
+                      selectedFoodBoxCount: _foodBoxCount,
                     ),
                   ),
                 );
