@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:mpm/model/ShikshaSahayata/ShikshaApplication/LoanRepayment.dart';
 import 'package:mpm/model/ShikshaSahayata/ShikshaApplicationsByAppliedBy/ShikshaApplicationsByAppliedByData.dart';
@@ -8,6 +9,7 @@ import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataDetail/shiksha_sahayata_detail_view.dart';
+import 'package:mpm/view/payment/ShikshaPaymentScreen.dart';
 
 class ShikshaSahayataView extends StatefulWidget {
   const ShikshaSahayataView({super.key});
@@ -157,11 +159,20 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
                   data.requestedLoanEducationAppliedBy!.isNotEmpty
               ? data.requestedLoanEducationAppliedBy!.first
               : null;
+          final loanStatus = loan?.loanStatus?.toLowerCase() ?? "";
+          final shouldShowPayNow = (loanStatus == "disbursed" ||
+                  loanStatus == "partially_repaid") &&
+              loanStatus != "fully_repaid";
 
           final repayment =
               data.loanRepayments != null && data.loanRepayments!.isNotEmpty
                   ? data.loanRepayments!.first
                   : null;
+          final payableAmount = _getPayableAmount(
+            loanAmount: repayment?.loanAmount,
+            disbursedAmount: loan?.disbursedAmount,
+            repayments: data.loanRepayments,
+          );
 
           return InkWell(
             borderRadius: BorderRadius.circular(16),
@@ -239,13 +250,16 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
                         "Disbursed on",
                         _formatDateTime(loan.disbursedOn!),
                       ),
-                    if (data.loanRepayments != null &&
-                        data.loanRepayments!.isNotEmpty)
+                    if (shouldShowPayNow ||
+                        (data.loanRepayments != null &&
+                            data.loanRepayments!.isNotEmpty))
                       Builder(
                         builder: (_) {
                           final themeColor = ColorHelperClass.getColorFromHex(
                               ColorResources.logo_color);
-                          final sortedRepayments = [...data.loanRepayments!];
+                          final sortedRepayments = data.loanRepayments != null
+                              ? [...data.loanRepayments!]
+                              : <LoanRepayment>[];
                           sortedRepayments.sort((a, b) {
                             final dateA =
                                 DateTime.tryParse(a.createdAt ?? '') ??
@@ -256,6 +270,17 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
 
                             return dateB.compareTo(dateA); // latest first
                           });
+
+                          final hasRepayments = sortedRepayments.isNotEmpty;
+                          if (!hasRepayments) {
+                            sortedRepayments.add(
+                              LoanRepayment(
+                                loanRepaymentAmount: "0",
+                                loanRepaymentDate: null,
+                                loanRepaymentRemarks: "",
+                              ),
+                            );
+                          }
 
                           final latestRepayment = sortedRepayments.first;
 
@@ -280,6 +305,41 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
                                   "₹ ${totalRepaid.toStringAsFixed(0)}"),
                               _infoRow("Remaining Amount",
                                   "₹ ${remaining.toStringAsFixed(0)}"),
+                              if (shouldShowPayNow && payableAmount != null) ...[
+                                const SizedBox(height: 12),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                          ColorHelperClass.getColorFromHex(
+                                        ColorResources.red_color,
+                                      ),
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 12,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      _showRepaymentAmountDialog(
+                                        context,
+                                        maxAmount: payableAmount,
+                                      );
+                                    },
+                                    icon: const Icon(Icons.payments_outlined),
+                                    label: const Text(
+                                      "Pay Now",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                              ],
                               Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
@@ -322,47 +382,53 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
                                             ),
                                           ],
                                         ),
-                                        GestureDetector(
-                                          onTap: () {
-                                            _showRepaymentBottomSheet(
-                                              context,
-                                              data.loanRepayments!,
-                                              repayment?.loanAmount,
-                                            );
-                                          },
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 14, vertical: 6),
-                                            decoration: BoxDecoration(
-                                              color:
-                                                  themeColor.withOpacity(0.12),
-                                              borderRadius:
-                                                  BorderRadius.circular(30),
-                                              border: Border.all(
-                                                color:
-                                                    themeColor.withOpacity(0.4),
+                                        if (hasRepayments)
+                                          GestureDetector(
+                                            onTap: () {
+                                              _showRepaymentBottomSheet(
+                                                context,
+                                                data.loanRepayments!,
+                                                repayment?.loanAmount,
+                                              );
+                                            },
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 14,
+                                                      vertical: 6),
+                                              decoration: BoxDecoration(
+                                                color: themeColor
+                                                    .withOpacity(0.12),
+                                                borderRadius:
+                                                    BorderRadius.circular(30),
+                                                border: Border.all(
+                                                  color: themeColor
+                                                      .withOpacity(0.4),
+                                                ),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  Text(
+                                                    "View All",
+                                                    style: TextStyle(
+                                                      color: themeColor,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 13,
+                                                    ),
+                                                  ),
+                                                  SizedBox(width: 4),
+                                                  Icon(
+                                                    Icons.arrow_forward_ios,
+                                                    size: 12,
+                                                    color: themeColor,
+                                                  ),
+                                                ],
                                               ),
                                             ),
-                                            child: Row(
-                                              children: [
-                                                Text(
-                                                  "View All",
-                                                  style: TextStyle(
-                                                    color: themeColor,
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 13,
-                                                  ),
-                                                ),
-                                                SizedBox(width: 4),
-                                                Icon(
-                                                  Icons.arrow_forward_ios,
-                                                  size: 12,
-                                                  color: themeColor,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
+                                          )
+                                        else
+                                          const SizedBox.shrink(),
                                       ],
                                     ),
                                     const Divider(height: 18),
@@ -468,6 +534,161 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
     return totalLoan - totalRepaid;
   }
 
+  String? _getPayableAmount({
+    String? loanAmount,
+    String? disbursedAmount,
+    List<LoanRepayment>? repayments,
+  }) {
+    final remainingAmount = _calculateRemainingAmount(loanAmount, repayments);
+    if (remainingAmount > 0) {
+      return remainingAmount.toStringAsFixed(0);
+    }
+
+    final disbursed = double.tryParse(disbursedAmount ?? "0") ?? 0;
+    if (disbursed > 0) {
+      return disbursed.toStringAsFixed(0);
+    }
+
+    return null;
+  }
+
+  void _showRepaymentAmountDialog(
+    BuildContext context, {
+    required String maxAmount,
+  }) {
+    String enteredAmount = "";
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Repayment",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Enter repayment amount",
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  autofocus: true,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(
+                      RegExp(r'^\d*\.?\d{0,2}'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    enteredAmount = value.trim();
+                  },
+                  decoration: InputDecoration(
+                    hintText: "Enter amount",
+                    helperText: "Maximum: Rs. $maxAmount",
+                    prefixText: "Rs. ",
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.red,
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final amount = double.tryParse(enteredAmount);
+                final maximum = double.tryParse(maxAmount);
+
+                if (amount == null || amount <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Please enter a valid repayment amount."),
+                    ),
+                  );
+                  return;
+                }
+
+                if (maximum != null && amount > maximum) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        "Repayment amount cannot be more than Rs. $maxAmount.",
+                      ),
+                    ),
+                  );
+                  return;
+                }
+
+                Navigator.pop(dialogContext);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ShikshaPaymentScreen(
+                      paymentAmount: enteredAmount,
+                    ),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Pay"),
+            ),
+          ],
+        );
+      },
+    );
+  }
   Widget _buildLoanStatusBadge(String? status) {
     final loanStatus = (status ?? "pending").toLowerCase();
 
@@ -1157,3 +1378,4 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
     );
   }
 }
+
