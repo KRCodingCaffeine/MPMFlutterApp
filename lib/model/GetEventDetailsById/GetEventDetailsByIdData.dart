@@ -27,6 +27,7 @@ class GetEventDetailsByIdData {
   String? hasSeatAllocate;
   String? hasFood;
   String? hasFoodPaid;
+  String? FamilyMemberAllowed;
   String? isAllZone;
   String? youtubeUrl;
   String? addedBy;
@@ -61,6 +62,7 @@ class GetEventDetailsByIdData {
     this.hasSeatAllocate,
     this.hasFood,
     this.hasFoodPaid,
+    this.FamilyMemberAllowed,
     this.isAllZone,
     this.youtubeUrl,
     this.addedBy,
@@ -116,6 +118,7 @@ class GetEventDetailsByIdData {
       hasSeatAllocate: json['has_seat_allocate']?.toString(),
       hasFood: json['has_food']?.toString(),
       hasFoodPaid: json['has_food_paid']?.toString(),
+      FamilyMemberAllowed: json['no_of_family_member_allowed']?.toString(),
       isAllZone: json['is_all_zone']?.toString(),
       youtubeUrl: json['youtube_url'],
       addedBy: json['added_by']?.toString(),
@@ -161,6 +164,7 @@ class GetEventDetailsByIdData {
     data['has_seat_allocate'] = hasSeatAllocate;
     data['has_food'] = hasFood;
     data['has_foos_paid'] = hasFoodPaid;
+    data['no_of_family_member_allowed'] = FamilyMemberAllowed;
     data['is_all_zone'] = isAllZone;
     data['youtube_url'] = youtubeUrl;
     data['added_by'] = addedBy;
