@@ -155,7 +155,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
       final userData = await SessionManager.getSession();
       if (userData?.memberId != null) {
         _selectedFamilyMemberIds = [userData!.memberId.toString()];
-        _seatCount = 1;
+        _seatCount = 0;
+        _foodBoxCount = 0;
       }
     }
 
@@ -487,8 +488,13 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<int?> _showSeatDialog(BuildContext context) async {
-    final TextEditingController _seatController = TextEditingController();
-    int localSeatCount = 0;
+    final isFamilySelectionEvent = _eventDetails?.eventsTypeId == '5';
+    final maxAllowed = isFamilySelectionEvent
+        ? (int.tryParse(_eventDetails?.FamilyMemberAllowed ?? '0') ?? 0)
+        : 4;
+    int localSeatCount = _seatCount > 0
+        ? (_seatCount > maxAllowed ? maxAllowed : _seatCount)
+        : 1;
 
     final seatCount = await showDialog<int>(
       context: context,
@@ -523,33 +529,35 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Enter the number of seats you want to request (max 2):",
-                    style: TextStyle(
+                  Text(
+                    "Select the number of seats you want to request (max $maxAllowed):",
+                    style: const TextStyle(
                       fontSize: 16,
                       color: Colors.black87,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _seatController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Number of Seats (Max 2)',
+                  DropdownButtonFormField<int>(
+                    dropdownColor: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    value: localSeatCount,
+                    decoration: InputDecoration(
+                      labelText: 'Number of Seats (Max $maxAllowed)',
                       border: OutlineInputBorder(),
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 20),
+                    ),
+                    items: List.generate(
+                      maxAllowed,
+                      (index) => DropdownMenuItem<int>(
+                        value: index + 1,
+                        child: Text('${index + 1}'),
+                      ),
                     ),
                     onChanged: (value) {
-                      int num = int.tryParse(value) ?? 0;
-                      if (num > 2) {
-                        num = 2;
-                        _seatController.text = '2';
-                        _seatController.selection = TextSelection.fromPosition(
-                          TextPosition(offset: _seatController.text.length),
-                        );
-                      }
                       setState(() {
-                        localSeatCount = num;
+                        localSeatCount = value ?? 1;
                       });
                     },
                   ),
@@ -570,11 +578,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    if (localSeatCount <= 0 || localSeatCount > 2) {
+                    if (localSeatCount <= 0 || localSeatCount > maxAllowed) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
+                        SnackBar(
                           content: Text(
-                              'Please enter a valid number of seats (1-2)'),
+                              'Please select a valid number of seats (1-$maxAllowed)'),
                         ),
                       );
                       return;
@@ -607,14 +615,18 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<bool> _showFoodDialog(BuildContext context) async {
-    final maxAllowed =
-        int.tryParse(_eventDetails?.FamilyMemberAllowed ?? '0') ?? 0;
+    final isFamilySelectionEvent = _eventDetails?.eventsTypeId == '5';
+    final maxAllowed = isFamilySelectionEvent
+        ? (int.tryParse(_eventDetails?.FamilyMemberAllowed ?? '0') ?? 0)
+        : 4;
 
     final memberCount =
-    _selectedFamilyMemberIds.isEmpty ? 1 : _selectedFamilyMemberIds.length;
+        _selectedFamilyMemberIds.isEmpty ? 1 : _selectedFamilyMemberIds.length;
 
     int selectedFoodCount =
-    (memberCount > maxAllowed) ? maxAllowed : memberCount;
+        _foodBoxCount > 0
+            ? (_foodBoxCount > maxAllowed ? maxAllowed : _foodBoxCount)
+            : ((memberCount > maxAllowed) ? maxAllowed : memberCount);
 
     final shouldProceed = await showDialog<bool>(
       context: context,
