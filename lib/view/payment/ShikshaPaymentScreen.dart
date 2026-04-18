@@ -2,8 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mpm/model/CheckUser/CheckUserData2.dart';
-import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/images.dart';
@@ -12,9 +10,16 @@ import 'package:mpm/view/payment/CustomDialog.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class ShikshaPaymentScreen extends StatefulWidget {
+  final String shikshaApplicantId;
+  final String loanAmount;
   final String paymentAmount;
 
-  ShikshaPaymentScreen({required this.paymentAmount});
+  ShikshaPaymentScreen({
+    super.key,
+    required this.shikshaApplicantId,
+    required this.loanAmount,
+    required this.paymentAmount,
+  });
 
   @override
   _ShikshaPaymentScreenState createState() => _ShikshaPaymentScreenState();
@@ -22,7 +27,6 @@ class ShikshaPaymentScreen extends StatefulWidget {
 
 class _ShikshaPaymentScreenState extends State<ShikshaPaymentScreen> {
   late final WebViewController controller;
-  var memberid = "";
   bool isControllerReady = false;
   @override
   void initState() {
@@ -59,8 +63,13 @@ class _ShikshaPaymentScreenState extends State<ShikshaPaymentScreen> {
   }
 
   void loadWebview() async {
-    CheckUserData2? userData = await SessionManager.getSession();
-    var memberid = userData!.memberId.toString();
+    final paymentUri = Uri.parse(Urls.shiksha_payment_url).replace(
+      queryParameters: {
+        'shiksha_applicant_id': widget.shikshaApplicantId,
+        'loan_amount': widget.loanAmount,
+        'loan_repayment_amount': widget.paymentAmount,
+      },
+    );
 
     final webViewController = WebViewController();
     webViewController
@@ -115,8 +124,7 @@ class _ShikshaPaymentScreenState extends State<ShikshaPaymentScreen> {
           },
         ),
       )
-      ..loadRequest(Uri.parse(
-          "${Urls.payment_url}?member_id=$memberid&&amount=${widget.paymentAmount}"));
+      ..loadRequest(paymentUri);
 
     setState(() {
       controller = webViewController;

@@ -144,6 +144,7 @@ class Urls {
   static const String upload_shiksha_applicant_pan_card_document = base_url+"api/upload_shiksha_applicant_pan_card_document";
   static const String upload_shiksha_applicant_overseas_father_annual_income_document = base_url+"api/upload_shiksha_applicant_overseas_father_annual_income_document";
   static const String upload_shiksha_applicant_flight_ticket_document = base_url+"api/upload_shiksha_applicant_flight_ticket_document";
+  static const String shiksha_payment_url = base_url+"api/payment/shikshaloanrepaymentprocess";
 
   // Notification API URLs - Following same pattern as device_mapping
   static const String get_all_notifications_url = base_url+"api/notifications/get_all";

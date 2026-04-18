@@ -326,6 +326,11 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
                                     onPressed: () {
                                       _showRepaymentAmountDialog(
                                         context,
+                                        shikshaApplicantId:
+                                            data.shikshaApplicantId ?? "",
+                                        loanAmount: repayment?.loanAmount ??
+                                            loan?.disbursedAmount ??
+                                            payableAmount,
                                         maxAmount: payableAmount,
                                       );
                                     },
@@ -554,6 +559,8 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
 
   void _showRepaymentAmountDialog(
     BuildContext context, {
+    required String shikshaApplicantId,
+    required String loanAmount,
     required String maxAmount,
   }) {
     String enteredAmount = "";
@@ -670,6 +677,8 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
                   context,
                   MaterialPageRoute(
                     builder: (_) => ShikshaPaymentScreen(
+                      shikshaApplicantId: shikshaApplicantId,
+                      loanAmount: loanAmount,
                       paymentAmount: enteredAmount,
                     ),
                   ),
