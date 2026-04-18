@@ -11,6 +11,7 @@ import 'package:mpm/model/GetEventsList/EventDateTimeData.dart';
 import 'package:mpm/model/GetEventsList/GetEventsListData.dart';
 import 'package:mpm/model/GetProfile/FamilyMembersData.dart';
 import 'package:mpm/repository/event_register_repository/event_register_repo.dart';
+import 'package:mpm/repository/get_member_registered_events_repository/get_member_registered_events_repo.dart';
 import 'package:mpm/repository/get_even_details_by_id_repository/get_even_details_by_id_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
@@ -55,6 +56,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
   final Dio _dio = Dio();
   final GetEventDetailByIdRepository _eventDetailRepo =
       GetEventDetailByIdRepository();
+  final EventAttendeesRepository _eventAttendeesRepository =
+      EventAttendeesRepository();
   final EventRegistrationRepository _registrationRepo =
       EventRegistrationRepository();
   final UdateProfileController _profileController =
@@ -99,8 +102,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
           _eventDetails = GetEventDetailsByIdData.fromJson(response['data']);
           _isLoading = false;
           _checkEventDate();
-          _checkRegistrationStatus();
         });
+        _checkRegistrationStatus();
       } else {
         setState(() {
           _isLoading = false;
@@ -133,10 +136,41 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<void> _checkRegistrationStatus() async {
-    // Implement your registration status check logic here
+    final isRegistered = await _fetchRegistrationStatus();
+    if (!mounted) return;
+
     setState(() {
-      _isRegistered = false;
+      _isRegistered = isRegistered;
     });
+  }
+
+  Future<bool> _fetchRegistrationStatus() async {
+    try {
+      final userData = await SessionManager.getSession();
+      final memberId = int.tryParse(userData?.memberId?.toString() ?? '');
+      final eventId = int.tryParse(_eventDetails?.eventId?.toString() ?? '');
+
+      if (memberId == null || eventId == null) {
+        return false;
+      }
+
+      final response =
+          await _eventAttendeesRepository.fetchEventAttendeesByMemberId(
+        memberId,
+      );
+
+      final registeredEvents = response.data ?? [];
+
+      return registeredEvents.any((event) {
+        final isSameEvent = event.eventId == eventId;
+        final isCancelled =
+            event.cancelledDate != null && event.cancelledDate!.isNotEmpty;
+        return isSameEvent && !isCancelled;
+      });
+    } catch (e) {
+      debugPrint('Error checking registration status: $e');
+      return false;
+    }
   }
 
   Future<void> _showRegistrationConfirmationDialog() async {
@@ -623,10 +657,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
     final memberCount =
         _selectedFamilyMemberIds.isEmpty ? 1 : _selectedFamilyMemberIds.length;
 
-    int selectedFoodCount =
-        _foodBoxCount > 0
-            ? (_foodBoxCount > maxAllowed ? maxAllowed : _foodBoxCount)
-            : ((memberCount > maxAllowed) ? maxAllowed : memberCount);
+    int selectedFoodCount = _foodBoxCount > 0
+        ? (_foodBoxCount > maxAllowed ? maxAllowed : _foodBoxCount)
+        : ((memberCount > maxAllowed) ? maxAllowed : memberCount);
 
     final shouldProceed = await showDialog<bool>(
       context: context,
@@ -683,12 +716,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     decoration: const InputDecoration(
                       labelText: "Meals",
                       border: OutlineInputBorder(),
-                      contentPadding:
-                      EdgeInsets.symmetric(horizontal: 20),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 20),
                     ),
                     items: List.generate(
                       maxAllowed + 1,
-                          (index) => DropdownMenuItem<int>(
+                      (index) => DropdownMenuItem<int>(
                         value: index,
                         child: Text(
                           index == 0 ? "0 (Don't want)" : "$index",
@@ -1304,18 +1336,22 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   bool _hasPaymentDetails() {
-    final qrCode = _eventDetails?.eventAmountQrCode?.trim();
-    final amount = _eventDetails?.eventAmount?.trim();
-    final hasPaidFood = _eventDetails?.hasFood == '1' &&
-        _eventDetails?.hasFoodPaid?.trim().toLowerCase() == 'paid';
-
-    return _isPaidEvent() ||
-        hasPaidFood ||
-        (qrCode != null && qrCode.isNotEmpty) ||
-        (amount != null && amount.isNotEmpty && amount != '0');
+    return _isPaidEvent();
   }
 
   Future<void> _handleRegisterButtonTap() async {
+    final isAlreadyRegistered = await _fetchRegistrationStatus();
+    if (!mounted) return;
+
+    if (isAlreadyRegistered) {
+      setState(() {
+        _isRegistered = true;
+      });
+      await _showAlreadyRegisteredDialog(
+          'You are already registered for this event.');
+      return;
+    }
+
     final maxAllowed =
         int.tryParse(_eventDetails?.FamilyMemberAllowed ?? '0') ?? 0;
 
