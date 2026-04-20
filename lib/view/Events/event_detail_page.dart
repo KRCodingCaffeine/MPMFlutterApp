@@ -11,6 +11,7 @@ import 'package:mpm/model/GetEventsList/EventDateTimeData.dart';
 import 'package:mpm/model/GetEventsList/GetEventsListData.dart';
 import 'package:mpm/model/GetProfile/FamilyMembersData.dart';
 import 'package:mpm/repository/event_register_repository/event_register_repo.dart';
+import 'package:mpm/repository/get_member_registered_events_repository/get_member_registered_events_repo.dart';
 import 'package:mpm/repository/get_even_details_by_id_repository/get_even_details_by_id_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
@@ -55,6 +56,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
   final Dio _dio = Dio();
   final GetEventDetailByIdRepository _eventDetailRepo =
       GetEventDetailByIdRepository();
+  final EventAttendeesRepository _eventAttendeesRepository =
+      EventAttendeesRepository();
   final EventRegistrationRepository _registrationRepo =
       EventRegistrationRepository();
   final UdateProfileController _profileController =
@@ -99,8 +102,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
           _eventDetails = GetEventDetailsByIdData.fromJson(response['data']);
           _isLoading = false;
           _checkEventDate();
-          _checkRegistrationStatus();
         });
+        _checkRegistrationStatus();
       } else {
         setState(() {
           _isLoading = false;
@@ -133,27 +136,74 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<void> _checkRegistrationStatus() async {
-    // Implement your registration status check logic here
+    final isRegistered = await _fetchRegistrationStatus();
+    if (!mounted) return;
+
     setState(() {
-      _isRegistered = false;
+      _isRegistered = isRegistered;
     });
+  }
+
+  Future<bool> _fetchRegistrationStatus() async {
+    try {
+      final userData = await SessionManager.getSession();
+      final memberId = int.tryParse(userData?.memberId?.toString() ?? '');
+      final eventId = int.tryParse(_eventDetails?.eventId?.toString() ?? '');
+
+      if (memberId == null || eventId == null) {
+        return false;
+      }
+
+      final response =
+          await _eventAttendeesRepository.fetchEventAttendeesByMemberId(
+        memberId,
+      );
+
+      final registeredEvents = response.data ?? [];
+
+      return registeredEvents.any((event) {
+        final isSameEvent = event.eventId == eventId;
+        final isCancelled =
+            event.cancelledDate != null && event.cancelledDate!.isNotEmpty;
+        return isSameEvent && !isCancelled;
+      });
+    } catch (e) {
+      debugPrint('Error checking registration status: $e');
+      return false;
+    }
   }
 
   Future<void> _showRegistrationConfirmationDialog() async {
     bool showFoodDialog = _eventDetails?.hasFood == '1';
+    bool showSeatDialog = _eventDetails?.hasSeatAllocate == '1';
 
-    {
+    final eventTypeId = _eventDetails?.eventsTypeId;
+
+    if (eventTypeId == '5') {
       final selectedIds = await _showFamilyMemberBottomSheet();
 
       if (selectedIds == null || selectedIds.isEmpty) return;
 
       debugPrint("✅ Selected members: $selectedIds");
+    } else {
+      final userData = await SessionManager.getSession();
+      if (userData?.memberId != null) {
+        _selectedFamilyMemberIds = [userData!.memberId.toString()];
+        _seatCount = 0;
+        _foodBoxCount = 0;
+      }
+    }
+
+    if (showSeatDialog && eventTypeId != '5') {
+      final seat = await _showSeatDialog(context);
+      if (seat == null) return;
+      debugPrint("✅ Seat count: $seat");
     }
 
     if (showFoodDialog) {
       bool foodConfirmed = await _showFoodDialog(context);
       if (!foodConfirmed) return;
-      debugPrint("✅ User requested $_foodBoxCount food boxes");
+      debugPrint("✅ Food boxes: $_foodBoxCount");
     }
 
     _registerForEvent();
@@ -295,9 +345,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    const Text(
-                      'You can select up to 4 members',
-                      style: TextStyle(
+                    Text(
+                      'You can select up to ${_eventDetails?.FamilyMemberAllowed ?? 0} members',
+                      style: const TextStyle(
                         fontSize: 14,
                         color: Colors.black54,
                         height: 1.4,
@@ -361,12 +411,17 @@ class _EventDetailPageState extends State<EventDetailPage> {
                             onChanged: (value) {
                               setModalState(() {
                                 if (value == true) {
-                                  if (selectedIds.length >= 4) {
+                                  final maxAllowed = int.tryParse(
+                                          _eventDetails?.FamilyMemberAllowed ??
+                                              '0') ??
+                                      0;
+
+                                  if (selectedIds.length >= maxAllowed) {
                                     ScaffoldMessenger.of(bottomSheetContext)
                                         .showSnackBar(
-                                      const SnackBar(
+                                      SnackBar(
                                         content: Text(
-                                            'Only 4 family members can be selected.'),
+                                            'Only $maxAllowed family members can be selected.'),
                                       ),
                                     );
                                     return;
@@ -447,6 +502,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
       setState(() {
         _selectedFamilyMemberIds = selectedMemberIds;
         _seatCount = selectedMemberIds.length;
+
+        // ✅ AUTO FOOD COUNT
+        if (_eventDetails?.hasFood == '1') {
+          _foodBoxCount = selectedMemberIds.length;
+        }
       });
     }
 
@@ -462,8 +522,13 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<int?> _showSeatDialog(BuildContext context) async {
-    final TextEditingController _seatController = TextEditingController();
-    int localSeatCount = 0;
+    final isFamilySelectionEvent = _eventDetails?.eventsTypeId == '5';
+    final maxAllowed = isFamilySelectionEvent
+        ? (int.tryParse(_eventDetails?.FamilyMemberAllowed ?? '0') ?? 0)
+        : 4;
+    int localSeatCount = _seatCount > 0
+        ? (_seatCount > maxAllowed ? maxAllowed : _seatCount)
+        : 1;
 
     final seatCount = await showDialog<int>(
       context: context,
@@ -498,33 +563,35 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Enter the number of seats you want to request (max 2):",
-                    style: TextStyle(
+                  Text(
+                    "Select the number of seats you want to request (max $maxAllowed):",
+                    style: const TextStyle(
                       fontSize: 16,
                       color: Colors.black87,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _seatController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Number of Seats (Max 2)',
+                  DropdownButtonFormField<int>(
+                    dropdownColor: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    value: localSeatCount,
+                    decoration: InputDecoration(
+                      labelText: 'Number of Seats (Max $maxAllowed)',
                       border: OutlineInputBorder(),
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 20),
+                    ),
+                    items: List.generate(
+                      maxAllowed,
+                      (index) => DropdownMenuItem<int>(
+                        value: index + 1,
+                        child: Text('${index + 1}'),
+                      ),
                     ),
                     onChanged: (value) {
-                      int num = int.tryParse(value) ?? 0;
-                      if (num > 2) {
-                        num = 2;
-                        _seatController.text = '2';
-                        _seatController.selection = TextSelection.fromPosition(
-                          TextPosition(offset: _seatController.text.length),
-                        );
-                      }
                       setState(() {
-                        localSeatCount = num;
+                        localSeatCount = value ?? 1;
                       });
                     },
                   ),
@@ -545,11 +612,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    if (localSeatCount <= 0 || localSeatCount > 2) {
+                    if (localSeatCount <= 0 || localSeatCount > maxAllowed) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
+                        SnackBar(
                           content: Text(
-                              'Please enter a valid number of seats (1-2)'),
+                              'Please select a valid number of seats (1-$maxAllowed)'),
                         ),
                       );
                       return;
@@ -582,7 +649,17 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<bool> _showFoodDialog(BuildContext context) async {
-    int? selectedFoodCount;
+    final isFamilySelectionEvent = _eventDetails?.eventsTypeId == '5';
+    final maxAllowed = isFamilySelectionEvent
+        ? (int.tryParse(_eventDetails?.FamilyMemberAllowed ?? '0') ?? 0)
+        : 4;
+
+    final memberCount =
+        _selectedFamilyMemberIds.isEmpty ? 1 : _selectedFamilyMemberIds.length;
+
+    int selectedFoodCount = _foodBoxCount > 0
+        ? (_foodBoxCount > maxAllowed ? maxAllowed : _foodBoxCount)
+        : ((memberCount > maxAllowed) ? maxAllowed : memberCount);
 
     final shouldProceed = await showDialog<bool>(
       context: context,
@@ -598,6 +675,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
               titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
               contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
               actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+
+              // ✅ TITLE SAME AS SEAT DIALOG
               title: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -613,67 +692,51 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   Divider(thickness: 1, color: Colors.grey),
                 ],
               ),
+
+              // ✅ CONTENT
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Number of meals for this event (Max 4):",
-                    style: TextStyle(
+                  Text(
+                    "Number of meals (Max $maxAllowed):",
+                    style: const TextStyle(
                       fontSize: 16,
                       color: Colors.black87,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: 12),
+
+                  // ✅ DROPDOWN (PRESELECTED VALUE)
                   DropdownButtonFormField<int>(
                     dropdownColor: Colors.white,
                     borderRadius: BorderRadius.circular(8),
                     value: selectedFoodCount,
                     decoration: const InputDecoration(
                       labelText: "Meals",
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black38, width: 1),
-                      ),
+                      border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.symmetric(horizontal: 20),
-                      labelStyle: TextStyle(color: Colors.black),
                     ),
-                    items: const [
-                      DropdownMenuItem<int>(
-                        value: 0,
-                        child: Text("0 (Don't want)"),
+                    items: List.generate(
+                      maxAllowed + 1,
+                      (index) => DropdownMenuItem<int>(
+                        value: index,
+                        child: Text(
+                          index == 0 ? "0 (Don't want)" : "$index",
+                        ),
                       ),
-                      DropdownMenuItem<int>(
-                        value: 1,
-                        child: Text("1"),
-                      ),
-                      DropdownMenuItem<int>(
-                        value: 2,
-                        child: Text("2"),
-                      ),
-                      DropdownMenuItem<int>(
-                        value: 3,
-                        child: Text("3"),
-                      ),
-                      DropdownMenuItem<int>(
-                        value: 4,
-                        child: Text("4"),
-                      ),
-                    ],
+                    ),
                     onChanged: (value) {
                       setState(() {
-                        selectedFoodCount = value;
+                        selectedFoodCount = value ?? 0;
                       });
                     },
                   ),
                 ],
               ),
+
+              // ✅ ACTIONS SAME STYLE
               actions: [
                 OutlinedButton(
                   onPressed: () => Navigator.pop(context, false),
@@ -689,19 +752,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    if (selectedFoodCount == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text(
-                                'Please select the number of meals (0–2)')),
-                      );
-                      return;
-                    }
-
-                    setState(() {
-                      _foodBoxCount = selectedFoodCount!;
-                    });
-
+                    _foodBoxCount = selectedFoodCount;
                     Navigator.pop(context, true);
                   },
                   style: ElevatedButton.styleFrom(
@@ -1285,18 +1336,35 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   bool _hasPaymentDetails() {
-    final qrCode = _eventDetails?.eventAmountQrCode?.trim();
-    final amount = _eventDetails?.eventAmount?.trim();
-    final hasPaidFood = _eventDetails?.hasFood == '1' &&
-        _eventDetails?.hasFoodPaid?.trim().toLowerCase() == 'paid';
-
-    return _isPaidEvent() ||
-        hasPaidFood ||
-        (qrCode != null && qrCode.isNotEmpty) ||
-        (amount != null && amount.isNotEmpty && amount != '0');
+    return _isPaidEvent();
   }
 
   Future<void> _handleRegisterButtonTap() async {
+    final isAlreadyRegistered = await _fetchRegistrationStatus();
+    if (!mounted) return;
+
+    if (isAlreadyRegistered) {
+      setState(() {
+        _isRegistered = true;
+      });
+      await _showAlreadyRegisteredDialog(
+          'You are already registered for this event.');
+      return;
+    }
+
+    final maxAllowed =
+        int.tryParse(_eventDetails?.FamilyMemberAllowed ?? '0') ?? 0;
+
+    if (_eventDetails?.eventsTypeId == '5' &&
+        _selectedFamilyMemberIds.length > maxAllowed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Maximum $maxAllowed members allowed'),
+        ),
+      );
+      return;
+    }
+
     final shouldProceed = await _showFinalConfirmationDialog();
     if (!shouldProceed) return;
 
