@@ -160,9 +160,9 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
               ? data.requestedLoanEducationAppliedBy!.first
               : null;
           final loanStatus = loan?.loanStatus?.toLowerCase() ?? "";
-          final shouldShowPayNow = (loanStatus == "disbursed" ||
-                  loanStatus == "partially_repaid") &&
-              loanStatus != "fully_repaid";
+          final shouldShowPayNow =
+              (loanStatus == "disbursed" || loanStatus == "partially_repaid") &&
+                  loanStatus != "fully_repaid";
 
           final repayment =
               data.loanRepayments != null && data.loanRepayments!.isNotEmpty
@@ -272,41 +272,35 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
                           });
 
                           final hasRepayments = sortedRepayments.isNotEmpty;
-                          if (!hasRepayments) {
-                            sortedRepayments.add(
-                              LoanRepayment(
-                                loanRepaymentAmount: "0",
-                                loanRepaymentDate: null,
-                                loanRepaymentRemarks: "",
-                              ),
-                            );
-                          }
-
-                          final latestRepayment = sortedRepayments.first;
-
+                          final latestRepayment =
+                              hasRepayments ? sortedRepayments.first : null;
                           final totalRepaid =
-                              _calculateTotalRepaid(data.loanRepayments);
-
+                              _calculateCompletedRepaid(data.loanRepayments);
                           final remaining = _calculateRemainingAmount(
-                              repayment?.loanAmount, data.loanRepayments);
+                            repayment?.loanAmount,
+                            data.loanRepayments,
+                          );
 
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                "Repayment Details",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                              if (hasRepayments) ...[
+                                const Text(
+                                  "Repayment Details",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 8),
-                              _infoRow("Total Repaid",
-                                  "₹ ${totalRepaid.toStringAsFixed(0)}"),
-                              _infoRow("Remaining Amount",
-                                  "₹ ${remaining.toStringAsFixed(0)}"),
-                              if (shouldShowPayNow && payableAmount != null) ...[
-                                const SizedBox(height: 12),
+                                const SizedBox(height: 8),
+                                _infoRow("Total Repaid",
+                                    "₹ ${totalRepaid.toStringAsFixed(0)}"),
+                                _infoRow("Remaining Amount",
+                                    "₹ ${remaining.toStringAsFixed(0)}"),
+                              ],
+                              if (shouldShowPayNow &&
+                                  payableAmount != null) ...[
+                                if (hasRepayments) const SizedBox(height: 12),
                                 SizedBox(
                                   width: double.infinity,
                                   child: ElevatedButton.icon(
@@ -343,162 +337,168 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 12),
+                                if (hasRepayments) const SizedBox(height: 12),
                               ],
-                              Container(
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      Colors.green.shade50,
-                                      Colors.green.shade100,
+                              if (hasRepayments && latestRepayment != null)
+                                Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Colors.green.shade50,
+                                        Colors.green.shade100,
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                        color: Colors.green.shade300),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.green.withOpacity(0.15),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
+                                      )
                                     ],
                                   ),
-                                  borderRadius: BorderRadius.circular(14),
-                                  border:
-                                      Border.all(color: Colors.green.shade300),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.green.withOpacity(0.15),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 4),
-                                    )
-                                  ],
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Row(
-                                          children: const [
-                                            Icon(Icons.payments,
-                                                color: Colors.green, size: 20),
-                                            SizedBox(width: 8),
-                                            Text(
-                                              "Latest Repayment",
-                                              style: TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.green,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        if (hasRepayments)
-                                          GestureDetector(
-                                            onTap: () {
-                                              _showRepaymentBottomSheet(
-                                                context,
-                                                data.loanRepayments!,
-                                                repayment?.loanAmount,
-                                              );
-                                            },
-                                            child: Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 14,
-                                                      vertical: 6),
-                                              decoration: BoxDecoration(
-                                                color: themeColor
-                                                    .withOpacity(0.12),
-                                                borderRadius:
-                                                    BorderRadius.circular(30),
-                                                border: Border.all(
-                                                  color: themeColor
-                                                      .withOpacity(0.4),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            children: const [
+                                              Icon(Icons.payments,
+                                                  color: Colors.green,
+                                                  size: 20),
+                                              SizedBox(width: 8),
+                                              Text(
+                                                "Latest Repayment",
+                                                style: TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.green,
                                                 ),
                                               ),
-                                              child: Row(
-                                                children: [
-                                                  Text(
-                                                    "View All",
-                                                    style: TextStyle(
-                                                      color: themeColor,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 13,
+                                            ],
+                                          ),
+                                          if (hasRepayments)
+                                            GestureDetector(
+                                              onTap: () {
+                                                _showRepaymentBottomSheet(
+                                                  context,
+                                                  data.loanRepayments!,
+                                                  repayment?.loanAmount,
+                                                );
+                                              },
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 14,
+                                                        vertical: 6),
+                                                decoration: BoxDecoration(
+                                                  color: themeColor
+                                                      .withOpacity(0.12),
+                                                  borderRadius:
+                                                      BorderRadius.circular(30),
+                                                  border: Border.all(
+                                                    color: themeColor
+                                                        .withOpacity(0.4),
+                                                  ),
+                                                ),
+                                                child: Row(
+                                                  children: [
+                                                    Text(
+                                                      "View All",
+                                                      style: TextStyle(
+                                                        color: themeColor,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 13,
+                                                      ),
                                                     ),
-                                                  ),
-                                                  SizedBox(width: 4),
-                                                  Icon(
-                                                    Icons.arrow_forward_ios,
-                                                    size: 12,
-                                                    color: themeColor,
-                                                  ),
-                                                ],
+                                                    SizedBox(width: 4),
+                                                    Icon(
+                                                      Icons.arrow_forward_ios,
+                                                      size: 12,
+                                                      color: themeColor,
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
-                                            ),
-                                          )
-                                        else
-                                          const SizedBox.shrink(),
-                                      ],
-                                    ),
-                                    const Divider(height: 18),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        const Text(
-                                          "Paid Amount",
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            color: Colors.black54,
-                                          ),
-                                        ),
-                                        Text(
-                                          "₹ ${latestRepayment.loanRepaymentAmount}",
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.green,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        const Text(
-                                          "Payment Date",
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            color: Colors.black54,
-                                          ),
-                                        ),
-                                        Text(
-                                          latestRepayment.loanRepaymentDate !=
-                                                  null
-                                              ? _formatDateTime(latestRepayment
-                                                  .loanRepaymentDate!)
-                                              : "-",
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    if (latestRepayment.loanRepaymentRemarks !=
-                                            null &&
-                                        latestRepayment
-                                            .loanRepaymentRemarks!.isNotEmpty)
-                                      Padding(
-                                        padding: const EdgeInsets.only(top: 8),
-                                        child: Text(
-                                          "Remarks: ${latestRepayment.loanRepaymentRemarks}",
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.black87,
-                                          ),
-                                        ),
+                                            )
+                                          else
+                                            const SizedBox.shrink(),
+                                        ],
                                       ),
-                                  ],
+                                      const Divider(height: 18),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text(
+                                            "Paid Amount",
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.black54,
+                                            ),
+                                          ),
+                                          Text(
+                                            "₹ ${latestRepayment.loanRepaymentAmount}",
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.green,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text(
+                                            "Payment Date",
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.black54,
+                                            ),
+                                          ),
+                                          Text(
+                                            latestRepayment.loanRepaymentDate !=
+                                                    null
+                                                ? _formatDateTime(
+                                                    latestRepayment
+                                                        .loanRepaymentDate!)
+                                                : "-",
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      if (latestRepayment
+                                                  .loanRepaymentRemarks !=
+                                              null &&
+                                          latestRepayment
+                                              .loanRepaymentRemarks!.isNotEmpty)
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(top: 8),
+                                          child: Text(
+                                            "Remarks: ${latestRepayment.loanRepaymentRemarks}",
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.black87,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
                                 ),
-                              ),
                             ],
                           );
                         },
@@ -532,10 +532,23 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
     });
   }
 
+  double _calculateCompletedRepaid(List<LoanRepayment>? repayments) {
+    if (repayments == null || repayments.isEmpty) return 0;
+
+    return repayments.fold(0, (sum, item) {
+      final isCompleted =
+          (item.status ?? '').toLowerCase().trim() == 'completed';
+      if (!isCompleted) return sum;
+
+      final amount = double.tryParse(item.loanRepaymentAmount ?? "0") ?? 0;
+      return sum + amount;
+    });
+  }
+
   double _calculateRemainingAmount(
       String? loanAmount, List<LoanRepayment>? repayments) {
     final totalLoan = double.tryParse(loanAmount ?? "0") ?? 0;
-    final totalRepaid = _calculateTotalRepaid(repayments);
+    final totalRepaid = _calculateCompletedRepaid(repayments);
     return totalLoan - totalRepaid;
   }
 
@@ -698,6 +711,7 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
       },
     );
   }
+
   Widget _buildLoanStatusBadge(String? status) {
     final loanStatus = (status ?? "pending").toLowerCase();
 
@@ -781,21 +795,26 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
   }
 
   void _showRepaymentBottomSheet(
-      BuildContext context,
-      List<LoanRepayment> repayments,
-      String? loanAmount,
-      ) {
+    BuildContext context,
+    List<LoanRepayment> repayments,
+    String? loanAmount,
+  ) {
+    final filteredRepayments = repayments
+        .where(
+          (repayment) =>
+              (repayment.status ?? '').toLowerCase().trim() != 'pending',
+        )
+        .toList();
+
     // Sort latest first
-    repayments.sort((a, b) {
-      final dateA =
-          DateTime.tryParse(a.createdAt ?? '') ?? DateTime(1900);
-      final dateB =
-          DateTime.tryParse(b.createdAt ?? '') ?? DateTime(1900);
+    filteredRepayments.sort((a, b) {
+      final dateA = DateTime.tryParse(a.createdAt ?? '') ?? DateTime(1900);
+      final dateB = DateTime.tryParse(b.createdAt ?? '') ?? DateTime(1900);
       return dateB.compareTo(dateA);
     });
 
-    final totalRepaid = _calculateTotalRepaid(repayments);
-    final remaining = _calculateRemainingAmount(loanAmount, repayments);
+    final totalRepaid = _calculateCompletedRepaid(filteredRepayments);
+    final remaining = _calculateRemainingAmount(loanAmount, filteredRepayments);
 
     showModalBottomSheet(
       context: context,
@@ -813,10 +832,9 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
           ),
           child: Column(
             children: [
-
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -829,8 +847,7 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
                   ),
                 ),
                 child: Row(
-                  mainAxisAlignment:
-                  MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
                       "Repayment History",
@@ -845,27 +862,22 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
                       child: const CircleAvatar(
                         radius: 16,
                         backgroundColor: Colors.white,
-                        child: Icon(Icons.close,
-                            size: 18,
-                            color: Colors.black87),
+                        child:
+                            Icon(Icons.close, size: 18, color: Colors.black87),
                       ),
                     )
                   ],
                 ),
               ),
-
               const SizedBox(height: 16),
-
               Padding(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
                     Expanded(
                       child: _summaryCard(
                         title: "Total Repaid",
-                        amount:
-                        "₹ ${totalRepaid.toStringAsFixed(0)}",
+                        amount: "₹ ${totalRepaid.toStringAsFixed(0)}",
                         color: Colors.green,
                       ),
                     ),
@@ -873,91 +885,82 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
                     Expanded(
                       child: _summaryCard(
                         title: "Remaining",
-                        amount:
-                        "₹ ${remaining.toStringAsFixed(0)}",
+                        amount: "₹ ${remaining.toStringAsFixed(0)}",
                         color: Colors.red,
                       ),
                     ),
                   ],
                 ),
               ),
-
               const SizedBox(height: 20),
-
               Expanded(
                 child: Scrollbar(
                   thumbVisibility: true,
                   child: ListView.builder(
                     physics: const BouncingScrollPhysics(),
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: repayments.length,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: filteredRepayments.length,
                     itemBuilder: (context, index) {
-                      final repayment = repayments[index];
+                      final repayment = filteredRepayments[index];
 
                       return Container(
-                        margin:
-                        const EdgeInsets.only(bottom: 14),
-                        padding:
-                        const EdgeInsets.all(14),
+                        margin: const EdgeInsets.only(bottom: 14),
+                        padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
                           color: Colors.grey.shade100,
-                          borderRadius:
-                          BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black
-                                  .withOpacity(0.05),
+                              color: Colors.black.withOpacity(0.05),
                               blurRadius: 6,
-                              offset:
-                              const Offset(0, 3),
+                              offset: const Offset(0, 3),
                             )
                           ],
                         ),
                         child: Row(
-                          mainAxisAlignment:
-                          MainAxisAlignment
-                              .spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Column(
-                              crossAxisAlignment:
-                              CrossAxisAlignment
-                                  .start,
-                              children: [
-                                Text(
-                                  repayment.loanRepaymentDate !=
-                                      null
-                                      ? _formatDateTime(
-                                      repayment
-                                          .loanRepaymentDate!)
-                                      : "-",
-                                  style:
-                                  const TextStyle(
-                                    fontWeight:
-                                    FontWeight.bold,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    repayment.loanRepaymentDate != null
+                                        ? _formatDateTime(
+                                            repayment.loanRepaymentDate!,
+                                          )
+                                        : "-",
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(
-                                    height: 4),
-                                const Text(
-                                  "Repayment Date",
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color:
-                                    Colors.grey,
+                                  const SizedBox(height: 4),
+                                  const Text(
+                                    "Repayment Date",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  if ((repayment.status ?? '')
+                                      .trim()
+                                      .isNotEmpty) ...[
+                                    const SizedBox(height: 10),
+                                    _buildRepaymentStatusBadge(
+                                      repayment.status,
+                                    ),
+                                  ],
+                                ],
+                              ),
                             ),
+                            const SizedBox(width: 12),
                             Text(
                               "₹ ${repayment.loanRepaymentAmount}",
-                              style:
-                              const TextStyle(
+                              style: const TextStyle(
                                 fontSize: 16,
-                                fontWeight:
-                                FontWeight.bold,
-                                color:
-                                Colors.green,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
                               ),
                             ),
                           ],
@@ -967,7 +970,6 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
             ],
           ),
@@ -1009,6 +1011,54 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildRepaymentStatusBadge(String? status) {
+    final normalizedStatus = (status ?? '').toLowerCase().trim();
+
+    if (normalizedStatus.isEmpty ||
+        (normalizedStatus != 'failed' && normalizedStatus != 'refunded')) {
+      return const SizedBox.shrink();
+    }
+
+    Color backgroundColor;
+    Color borderColor;
+    Color textColor;
+    String label;
+
+    switch (normalizedStatus) {
+      case 'failed':
+        backgroundColor = Colors.red.shade50;
+        borderColor = Colors.red.shade200;
+        textColor = Colors.red.shade700;
+        label = 'Failed';
+        break;
+      case 'refunded':
+        backgroundColor = Colors.orange.shade50;
+        borderColor = Colors.orange.shade200;
+        textColor = Colors.orange.shade800;
+        label = 'Refunded';
+        break;
+      default:
+        return const SizedBox.shrink();
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: borderColor),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -1163,7 +1213,8 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
                   children: [
                     Text(
                       "Mandatory Documents Required",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     SizedBox(height: 8),
                     Divider(color: Colors.grey),
@@ -1186,7 +1237,6 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 const Text(
                   "Please ensure that soft copies of following documents are ready before proceeding further:",
                   style: TextStyle(fontSize: 15, height: 1.4),
@@ -1209,7 +1259,7 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
                 _bulletRichText(text: "Applicant Aadhar Card"),
                 _bulletRichText(
                     text:
-                    "Address Proof (If Aadhar and current address are not the same)"),
+                        "Address Proof (If Aadhar and current address are not the same)"),
                 _bulletRichText(text: "Marksheet starting from Class X"),
                 _bulletRichText(text: "Father's Annual Income Proof"),
                 _bulletRichText(text: "Bonafide Certificate / Fees Structure"),
@@ -1243,8 +1293,12 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
                 _bulletRichText(text: "Passport"),
                 _bulletRichText(text: "Visa"),
                 _bulletRichText(text: "Flight Ticket"),
-                _bulletRichText(text: "Applicant Annual Income Proof (Last 3 years of ITR Returns)"),
-                _bulletRichText(text: "Applicant Father's Annual Income Proof (Last 3 years of ITR Returns)"),
+                _bulletRichText(
+                    text:
+                        "Applicant Annual Income Proof (Last 3 years of ITR Returns)"),
+                _bulletRichText(
+                    text:
+                        "Applicant Father's Annual Income Proof (Last 3 years of ITR Returns)"),
               ],
             ),
           ),
@@ -1268,12 +1322,13 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
                   },
                   child: const Text(
                     "I Understand & Continue",
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.redAccent,
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -1387,4 +1442,3 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
     );
   }
 }
-
