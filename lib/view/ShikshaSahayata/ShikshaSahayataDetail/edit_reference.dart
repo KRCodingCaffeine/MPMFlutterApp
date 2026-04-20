@@ -939,9 +939,9 @@ class _EditReferenceViewState extends State<EditReferenceView> {
   }
 
   void _showImagePicker(
-    BuildContext context,
-    Function(File) onImagePicked,
-  ) {
+      BuildContext context,
+      Function(File) onImagePicked,
+      ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -956,31 +956,58 @@ class _EditReferenceViewState extends State<EditReferenceView> {
             ),
             child: Wrap(
               children: [
+                /// 🔹 Header with Close Button
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          "Upload Aadhar",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.grey),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Divider(),
+
+                /// Camera
                 ListTile(
-                  leading:
-                      const Icon(Icons.camera_alt, color: Colors.redAccent),
+                  leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
                   title: const Text("Take a Picture"),
                   onTap: () async {
                     Navigator.pop(context);
                     final picked =
-                        await _picker.pickImage(source: ImageSource.camera);
+                    await _picker.pickImage(source: ImageSource.camera);
                     if (picked != null) {
                       onImagePicked(File(picked.path));
                     }
                   },
                 ),
+
+                /// Gallery
                 ListTile(
-                  leading: const Icon(Icons.image, color: Colors.redAccent),
+                  leading: const Icon(Icons.image, color: Colors.orange),
                   title: const Text("Choose from Gallery"),
                   onTap: () async {
                     Navigator.pop(context);
                     final picked =
-                        await _picker.pickImage(source: ImageSource.gallery);
+                    await _picker.pickImage(source: ImageSource.gallery);
                     if (picked != null) {
                       onImagePicked(File(picked.path));
                     }
                   },
                 ),
+
                 const SizedBox(height: 30),
               ],
             ),
