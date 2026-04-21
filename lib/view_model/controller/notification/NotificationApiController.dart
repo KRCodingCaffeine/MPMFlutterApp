@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mpm/model/notification/NotificationDataModel.dart';
 import 'package:mpm/repository/notification_repository/notification_repo.dart';
 import 'package:mpm/utils/NotificationDatabase.dart';
+import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/notification_service.dart';
 import 'package:mpm/data/response/status.dart';
 import 'package:mpm/route/route_name.dart';
@@ -21,6 +23,7 @@ class NotificationApiController extends GetxController with WidgetsBindingObserv
   final RxInt unreadTripsCount = 0.obs; // Unread notifications with type "trips"
   final Rx<Status> requestStatus = Status.LOADING.obs;
   final RxBool isLoading = false.obs;
+  static const String _lastNotificationOwnerKey = 'last_notification_owner_id';
   
   Timer? _periodicTimer;
 
@@ -41,6 +44,7 @@ class NotificationApiController extends GetxController with WidgetsBindingObserv
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      _ensureLocalDataBelongsToCurrentUser();
       _simpleSyncWithServer();
     }
   }
@@ -50,6 +54,7 @@ class NotificationApiController extends GetxController with WidgetsBindingObserv
     debugPrint('🚀 Initializing notifications...');
     isLoading.value = true;
     try {
+      await _ensureLocalDataBelongsToCurrentUser();
       // Always sync with server first to get latest data
       debugPrint('🔄 Step 1: Syncing with server...');
       await _simpleSyncWithServer().timeout(
@@ -70,6 +75,38 @@ class NotificationApiController extends GetxController with WidgetsBindingObserv
     } finally {
       isLoading.value = false;
       debugPrint('🏁 Initialization completed');
+    }
+  }
+
+  Future<void> _ensureLocalDataBelongsToCurrentUser() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final currentUser = await SessionManager.getSession();
+      final currentUserId = currentUser?.memberId?.trim();
+      final lastOwnerId = prefs.getString(_lastNotificationOwnerKey);
+
+      if (currentUserId == null || currentUserId.isEmpty) {
+        return;
+      }
+
+      // First login in this install/session for notifications.
+      if (lastOwnerId == null || lastOwnerId.isEmpty) {
+        await prefs.setString(_lastNotificationOwnerKey, currentUserId);
+        return;
+      }
+
+      if (lastOwnerId == currentUserId) {
+        return;
+      }
+
+      debugPrint('👤 Notification owner changed: $lastOwnerId -> $currentUserId');
+      await NotificationDatabase.instance.deleteAllNotifications();
+      await NotificationService.resetLocalNotificationStateForUserSwitch();
+      await prefs.setString(_lastNotificationOwnerKey, currentUserId);
+      await loadLocalNotifications();
+      debugPrint('✅ Cleared old user notification state after account switch');
+    } catch (e) {
+      debugPrint('❌ Error ensuring user-scoped notifications: $e');
     }
   }
 
