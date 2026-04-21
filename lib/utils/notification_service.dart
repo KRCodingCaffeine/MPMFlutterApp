@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_app_badger/flutter_app_badger.dart';
 import 'dart:io' show Platform;
+import 'dart:convert';
 import 'package:mpm/model/notification/NotificationDataModel.dart';
 import 'package:mpm/utils/NotificationDatabase.dart';
 import 'package:intl/intl.dart';
@@ -20,21 +21,144 @@ class NotificationService {
 
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   static const String _badgeKey = "badge_count";
+  static const String _dedupeStoreKey = "recent_notification_fingerprints";
+  static const int _dedupeWindowMs = 45000;
+  static const int _maxDedupeEntries = 200;
+  static const int _localDisplayDedupeWindowMs = 15000;
   static final Set<String> _processedMessageIds = <String>{};
+  static final Map<String, int> _recentLocalDisplay = <String, int>{};
   
-  // Check if message has already been processed (to prevent duplicates)
-  static bool isMessageProcessed(String messageId) {
-    return _processedMessageIds.contains(messageId);
-  }
-  
-  // Mark message as processed
-  static void markMessageProcessed(String messageId) {
-    _processedMessageIds.add(messageId);
-    // Clean up old message IDs (keep only last 100)
-    if (_processedMessageIds.length > 100) {
-      final toRemove = _processedMessageIds.take(_processedMessageIds.length - 100).toList();
-      _processedMessageIds.removeAll(toRemove);
+  static String _messageFingerprint(RemoteMessage message) {
+    if (message.messageId != null && message.messageId!.isNotEmpty) {
+      return 'mid:${message.messageId}';
     }
+
+    const stableIdKeys = <String>[
+      'serverId',
+      'server_id',
+      'notification_id',
+      'notificationId',
+      'id',
+      'eventOfferId',
+      'event_offer_id',
+      'event_offerId',
+    ];
+
+    for (final key in stableIdKeys) {
+      final value = message.data[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) {
+        return 'data:$key:$value';
+      }
+    }
+
+    // Fallback to stable semantic fields only (avoid volatile payload keys).
+    final payload = <String, dynamic>{
+      'title': message.notification?.title ?? message.data['title'] ?? '',
+      'body': message.notification?.body ?? message.data['body'] ?? '',
+      'type': message.data['type']?.toString() ?? message.data['notification_type']?.toString() ?? '',
+      'from': message.from ?? '',
+    };
+    return 'fallback:${jsonEncode(payload)}';
+  }
+
+  static Map<String, int> _decodeStoredFingerprints(List<String> raw) {
+    final decoded = <String, int>{};
+    for (final item in raw) {
+      final separator = item.lastIndexOf('|');
+      if (separator <= 0) continue;
+      final fingerprint = item.substring(0, separator);
+      final timestamp = int.tryParse(item.substring(separator + 1));
+      if (timestamp != null) {
+        decoded[fingerprint] = timestamp;
+      }
+    }
+    return decoded;
+  }
+
+  static List<String> _encodeStoredFingerprints(Map<String, int> entries) {
+    final sorted = entries.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    return sorted
+        .take(_maxDedupeEntries)
+        .map((entry) => '${entry.key}|${entry.value}')
+        .toList();
+  }
+
+  static String _localDisplayKey(RemoteMessage message) {
+    final preferredId = message.messageId?.trim();
+    if (preferredId != null && preferredId.isNotEmpty) {
+      return 'mid:$preferredId';
+    }
+    final stableId = message.data['serverId']?.toString() ??
+        message.data['server_id']?.toString() ??
+        message.data['notification_id']?.toString() ??
+        message.data['event_offer_id']?.toString() ??
+        '';
+    if (stableId.trim().isNotEmpty) {
+      return 'sid:$stableId';
+    }
+    final title = message.notification?.title ?? message.data['title']?.toString() ?? '';
+    final body = message.notification?.body ?? message.data['body']?.toString() ?? '';
+    return 'tb:${title.trim()}|${body.trim()}';
+  }
+
+  static bool shouldDisplayLocalNotification(RemoteMessage message) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final key = _localDisplayKey(message);
+    _recentLocalDisplay.removeWhere((_, ts) => now - ts > _localDisplayDedupeWindowMs);
+    final previous = _recentLocalDisplay[key];
+    if (previous != null && (now - previous) < _localDisplayDedupeWindowMs) {
+      debugPrint("⚠️ Duplicate local notification suppressed: $key");
+      return false;
+    }
+    _recentLocalDisplay[key] = now;
+    return true;
+  }
+
+  static Future<void> resetLocalNotificationStateForUserSwitch() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_dedupeStoreKey);
+      _processedMessageIds.clear();
+      await _saveBadgeCount(0);
+      await _updateBadgeCountStatic(0);
+      debugPrint("✅ Notification state reset for user switch");
+    } catch (e) {
+      debugPrint("❌ Error resetting notification state for user switch: $e");
+    }
+  }
+
+  // Returns false when the same payload is seen repeatedly within a short window.
+  static Future<bool> shouldProcessMessage(RemoteMessage message) async {
+    final fingerprint = _messageFingerprint(message);
+    final now = DateTime.now().millisecondsSinceEpoch;
+
+    if (_processedMessageIds.contains(fingerprint)) {
+      debugPrint("⚠️ Duplicate message in-memory, skipping");
+      return false;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getStringList(_dedupeStoreKey) ?? <String>[];
+    final stored = _decodeStoredFingerprints(raw);
+    final cutoff = now - _dedupeWindowMs;
+    stored.removeWhere((_, timestamp) => timestamp < cutoff);
+
+    final previousSeenAt = stored[fingerprint];
+    if (previousSeenAt != null && (now - previousSeenAt) < _dedupeWindowMs) {
+      debugPrint("⚠️ Duplicate message in persistent cache, skipping");
+      return false;
+    }
+
+    stored[fingerprint] = now;
+    _processedMessageIds.add(fingerprint);
+    if (_processedMessageIds.length > _maxDedupeEntries) {
+      _processedMessageIds.clear();
+      _processedMessageIds.add(fingerprint);
+    }
+
+    await prefs.setStringList(_dedupeStoreKey, _encodeStoredFingerprints(stored));
+    return true;
   }
 
   Future<void> init() async {
@@ -97,7 +221,7 @@ class NotificationService {
 
     // iOS: ensure notifications appear while app is in foreground
     await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-      alert: true,
+      alert: false,
       badge: true,
       sound: true,
     );
@@ -149,13 +273,10 @@ class NotificationService {
     debugPrint("   Platform: ${Platform.isIOS ? 'iOS' : 'Android'}");
     debugPrint("   Has notification payload: ${message.notification != null}");
     
-    // Prevent duplicate processing
-    final messageId = message.messageId ?? '${message.sentTime?.millisecondsSinceEpoch ?? DateTime.now().millisecondsSinceEpoch}';
-    if (isMessageProcessed(messageId)) {
-      debugPrint("⚠️ Duplicate message detected, skipping: $messageId");
+    if (!await shouldProcessMessage(message)) {
+      debugPrint("⚠️ Duplicate foreground message detected, skipping");
       return;
     }
-    markMessageProcessed(messageId);
     
     try {
       final service = NotificationService();
@@ -203,6 +324,9 @@ class NotificationService {
 
   static Future<void> _createFallbackNotification(RemoteMessage message) async {
     try {
+      if (!shouldDisplayLocalNotification(message)) {
+        return;
+      }
       final title = message.notification?.title ?? message.data['title'] ?? "MPM Notification";
       final body = message.notification?.body ?? message.data['body'] ?? "You have a new message";
       
@@ -226,6 +350,9 @@ class NotificationService {
 
   Future<void> _showLocalNotification(RemoteMessage message) async {
     try {
+      if (!shouldDisplayLocalNotification(message)) {
+        return;
+      }
       // Handle both notification payload and data payload
       final title = message.notification?.title ?? 
                    message.data['title'] ?? 
@@ -355,29 +482,6 @@ class NotificationService {
           }
         } catch (e) {
           debugPrint("❌ Flutter App Badger update failed: $e");
-        }
-      }
-      
-      // Method 3: Try setting badge on notification content itself
-      if (Platform.isIOS) {
-        try {
-          // Force badge update by creating a temporary notification
-          await AwesomeNotifications().createNotification(
-            content: NotificationContent(
-              id: 999999, // Use a high ID to avoid conflicts
-              channelKey: 'mpm_app_channel',
-              title: '',
-              body: '',
-              badge: badgeCount,
-              displayOnBackground: false,
-              displayOnForeground: false,
-            ),
-          );
-          // Immediately cancel it
-          await AwesomeNotifications().cancel(999999);
-          debugPrint("✅ Badge forced update via temporary notification");
-        } catch (e) {
-          debugPrint("❌ Badge force update failed: $e");
         }
       }
       
@@ -959,6 +1063,9 @@ class NotificationService {
   // Method to create local notification from FCM message (for background/closed app)
   static Future<void> createLocalNotificationFromMessage(RemoteMessage message) async {
     try {
+      if (!shouldDisplayLocalNotification(message)) {
+        return;
+      }
       debugPrint("📱 Creating local notification from FCM message...");
       
       // Get notification data
@@ -1096,13 +1203,10 @@ class NotificationService {
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   debugPrint("🔥 Background FCM received: ${message.data}");
   
-  // Prevent duplicate processing
-  final messageId = message.messageId ?? '${message.sentTime?.millisecondsSinceEpoch ?? DateTime.now().millisecondsSinceEpoch}';
-  if (NotificationService.isMessageProcessed(messageId)) {
-    debugPrint("⚠️ Duplicate background message detected, skipping: $messageId");
+  if (!await NotificationService.shouldProcessMessage(message)) {
+    debugPrint("⚠️ Duplicate background message detected, skipping");
     return;
   }
-  NotificationService.markMessageProcessed(messageId);
   
   try {
     // Initialize Firebase for background context
@@ -1153,15 +1257,11 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     // Handle the notification in background-safe way
     await NotificationService.handleIncomingFCMBackground(message);
     
-    // Only create a local notification if this is a data-only message (no notification payload)
-    // If the message has a notification payload, the system will display it automatically
-    // Creating a local notification here would cause duplicates
-    if (message.notification == null) {
-      debugPrint("📱 Data-only message detected, creating local notification");
-      await NotificationService.createLocalNotificationFromMessage(message);
-    } else {
-      debugPrint("📱 Notification payload detected, system will handle display");
-    }
+    // Strict duplicate prevention:
+    // In background/terminated state we do NOT create any local notification.
+    // System-level FCM/APNs delivery should own presentation here.
+    // This avoids one system notification + one local notification duplicates.
+    debugPrint("📱 Background message processed without local notification display");
     
     debugPrint("✅ Background notification handled successfully");
   } catch (e) {
