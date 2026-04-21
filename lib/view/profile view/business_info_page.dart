@@ -292,14 +292,14 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                     occupation.startDate!.isNotEmpty)
                   _buildInfoBox(
                     'Start Date',
-                    subtitle: occupation.startDate!,
+                    subtitle: _formatOccupationDate(occupation.startDate!),
                   ),
 
                 if (occupation.endDate != null &&
                     occupation.endDate!.isNotEmpty)
                   _buildInfoBox(
                     'End Date',
-                    subtitle: occupation.endDate!,
+                    subtitle: _formatOccupationDate(occupation.endDate!),
                   ),
 
                 if (occupation.isCurrentEmployment != "0")
@@ -379,74 +379,104 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
     );
   }
 
+  String _formatOccupationDate(String value) {
+    final trimmedValue = value.trim();
+    if (trimmedValue.isEmpty) {
+      return "";
+    }
+
+    for (final format in [
+      DateFormat('yyyy-MM-dd'),
+      DateFormat('dd/MM/yyyy'),
+      DateFormat('dd-MM-yyyy'),
+    ]) {
+      try {
+        return DateFormat('d-M-y').format(format.parseStrict(trimmedValue));
+      } catch (_) {}
+    }
+
+    return trimmedValue;
+  }
+
   Future<void> _showAddModalSheet(BuildContext context) async {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
       isScrollControlled: true,
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16.0,
-            right: 16.0,
-            top: 16.0,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16.0,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 30),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      builder: (modalContext) {
+        return FractionallySizedBox(
+          heightFactor: 0.75,
+          child: SafeArea(
+            top: false,
+            child: AnimatedPadding(
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeOut,
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: MediaQuery.of(modalContext).viewInsets.bottom + 16,
+              ),
+              child: Column(
                 children: [
-                  OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: ColorHelperClass.getColorFromHex(
-                          ColorResources.red_color),
-                      side: const BorderSide(color: Colors.red),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                  const SizedBox(height: 30),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      OutlinedButton(
+                        onPressed: () => Navigator.pop(modalContext),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: ColorHelperClass.getColorFromHex(
+                              ColorResources.red_color),
+                          side: const BorderSide(color: Colors.red),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text("Cancel"),
                       ),
-                    ),
-                    child: const Text("Cancel"),
-                  ),
-                  ElevatedButton(
-                    onPressed: () async {
-                      if (!_occupationFormKey.currentState!.validate()) {
-                        return;
-                      }
+                      ElevatedButton(
+                        onPressed: () async {
+                          if (!_occupationFormKey.currentState!.validate()) {
+                            return;
+                          }
 
-                      await controller.addOccupation(context);
-                      if (mounted) Navigator.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorHelperClass.getColorFromHex(
-                          ColorResources.red_color),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                          await controller.addOccupation(modalContext);
+                          if (mounted) Navigator.pop(modalContext);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorHelperClass.getColorFromHex(
+                              ColorResources.red_color),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: controller.isOccupationLoading.value
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text("Submit"),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Form(
+                        key: _occupationFormKey,
+                        child: _buildOccupationForm(),
                       ),
                     ),
-                    child: controller.isOccupationLoading.value
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : const Text("Submit"),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-              Form(
-                key: _occupationFormKey,
-                child: _buildOccupationForm(),
-              ),
-            ],
+            ),
           ),
         );
       },
@@ -455,7 +485,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
 
   Future<void> _showUpdateModalSheet(
       BuildContext context, Occupation occupation) async {
-    _initOccupationDataForEdit(occupation);
+    await _initOccupationDataForEdit(occupation);
 
     showModalBottomSheet(
       context: context,
@@ -500,8 +530,7 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
                           }
 
                           await controller.updateFullOccupation(
-                              occupation, context);
-                          if (mounted) Navigator.pop(modalContext);
+                              occupation, modalContext);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: ColorHelperClass.getColorFromHex(
@@ -563,7 +592,15 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
     });
   }
 
-  void _initOccupationDataForEdit(Occupation occupation) async {
+  Future<void> _initOccupationDataForEdit(Occupation occupation) async {
+    controller.occuptionProfessionList.clear();
+    controller.occuptionSpeList.clear();
+    controller.selectedProfession.value = "";
+    controller.selectedSpecialization.value = "";
+    controller.selectedSubCategory.value = "";
+    controller.selectedSubSubCategory.value = "";
+    controller.showDetailsField.value = false;
+
     controller.selectedOccupation.value = (occupation.occupationId == null ||
             occupation.occupationId.toString().isEmpty)
         ? "0"
@@ -577,11 +614,20 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
 
     controller.detailsController.value.text =
         occupation.occupationOtherName ?? "";
+    controller.companyNameController.text = occupation.companyName ?? "";
+    controller.designationController.text = occupation.designation ?? "";
+    controller.startDateController.text = occupation.startDate ?? "";
+    controller.endDateController.text = occupation.endDate ?? "";
+    controller.isCurrentlyEmployed.value =
+        occupation.isCurrentEmployment?.toString() == "1" ? "1" : "0";
 
     controller.currentOccupation.value = occupation;
 
     /// SHOW DETAILS IF OTHER
-    if (controller.selectedOccupation.value == "0") {
+    if (controller.selectedOccupation.value == "0" ||
+        controller.selectedOccupation.value == "6" ||
+        controller.selectedProfession.value == "Other" ||
+        controller.selectedSpecialization.value == "Other") {
       controller.showDetailsField.value = true;
     }
 
@@ -595,6 +641,13 @@ class _BusinessInformationPageState extends State<BusinessInformationPage> {
         controller.selectedProfession.value != "Other") {
       await controller
           .getOccupationSpectData(controller.selectedProfession.value);
+    }
+
+    if (controller.selectedOccupation.value == "0" ||
+        controller.selectedOccupation.value == "6" ||
+        controller.selectedProfession.value == "Other" ||
+        controller.selectedSpecialization.value == "Other") {
+      controller.showDetailsField.value = true;
     }
   }
 

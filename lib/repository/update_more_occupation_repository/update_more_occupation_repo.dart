@@ -4,43 +4,36 @@ import 'package:mpm/model/UpdateMoreOccupation/UpdateMoreOccupationModelClass.da
 import 'package:mpm/utils/urls.dart';
 
 class UpdateMoreOccupationRepository {
-
   final api = NetWorkApiService();
 
   Future<UpdateMoreOccupationModelClass> updateMoreOccupation(
       Map<String, dynamic> body) async {
-
     try {
-
       final url = Urls.update_more_occupation_url;
 
-      debugPrint("🔵 Update Occupation API URL: $url");
-      debugPrint("📤 Request Body: $body");
+      debugPrint("MORE OCCUPATION DETAIL API URL: $url");
+      debugPrint("MORE OCCUPATION DETAIL RAW BODY: $body");
 
       final safeBody = _convertAllValuesToStrings(body);
+      debugPrint("MORE OCCUPATION DETAIL FORM BODY: $safeBody");
 
       final response = await api.postApi(
         safeBody,
         url,
         "",
-        "2", // x-www-form-urlencoded
+        "2",
       );
 
-      debugPrint("🟢 Response: $response");
+      debugPrint("MORE OCCUPATION DETAIL API RESPONSE: $response");
 
       return UpdateMoreOccupationModelClass.fromJson(response);
-
     } catch (e) {
-
-      debugPrint("❌ Error Updating Occupation: $e");
+      debugPrint("MORE OCCUPATION DETAIL API ERROR: $e");
       rethrow;
-
     }
   }
 
-  Map<String, dynamic> _convertAllValuesToStrings(
-      Map<String, dynamic> body) {
-
+  Map<String, dynamic> _convertAllValuesToStrings(Map<String, dynamic> body) {
     final safeBody = <String, dynamic>{};
 
     body.forEach((key, value) {

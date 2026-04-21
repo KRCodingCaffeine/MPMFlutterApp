@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:mpm/OccuptionProfession/OccuptionProfessionData.dart';
 import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/AddExistingFamilyMember/addExistingFamilyMemberData.dart';
@@ -828,31 +829,74 @@ class UdateProfileController extends GetxController {
         "created_by": userData.memberId.toString()
       };
 
-      print("Add Occupation Payload: $data");
+      debugPrint("UPLOAD OCCUPATION ADD PAYLOAD: $data");
 
       final response = await addOccupationRepo.addOccupation(data);
 
+      debugPrint("UPLOAD OCCUPATION ADD RESPONSE: ${response.toJson()}");
+
       if (response.status == true) {
+        final memberOccupationId = response.data?.memberOccupationId;
+
+        if (memberOccupationId == null || memberOccupationId.toString().isEmpty) {
+          throw Exception("Occupation ID not returned from API");
+        }
+
+        /// STEP 2: CALL MORE OCCUPATION API
+        final startDateForApi = _dateForApi(startDateController.text);
+        final endDateForApi = _dateForApi(endDateController.text);
+
+        final moreOccupationPayload = <String, dynamic>{
+          "member_occupation_id": memberOccupationId.toString(),
+          "member_id": userData.memberId.toString(),
+          "company_name": companyNameController.text.trim(),
+          "is_current_employment": isCurrentlyEmployed.value,
+          "created_by": userData.memberId.toString(),
+        };
+
+        _putIfNotEmpty(moreOccupationPayload, "designation", designationController.text);
+        _putIfNotEmpty(moreOccupationPayload, "start_date", startDateForApi);
+        _putIfNotEmpty(moreOccupationPayload, "end_date", endDateForApi);
+        _putIfNotEmpty(
+            moreOccupationPayload, "role_description", detailsController.value.text);
+
+        debugPrint("ADD -> MORE OCCUPATION PAYLOAD: $moreOccupationPayload");
+
+        final moreResponse = await updateMoreOccupationRepository
+            .updateMoreOccupation(moreOccupationPayload);
+
+        debugPrint("ADD -> MORE OCCUPATION RESPONSE: ${moreResponse.toJson()}");
+
+        if (moreResponse.status != true) {
+          throw Exception(moreResponse.message ?? "Failed to update more details");
+        }
+
+        /// REFRESH PROFILE
         await getUserProfile();
 
+        /// RESET FORM
         selectedOccupation.value = "";
         selectedProfession.value = "";
         selectedSpecialization.value = "";
         selectedSubCategory.value = "";
         selectedSubSubCategory.value = "";
         detailsController.value.text = "";
+        companyNameController.clear();
+        designationController.clear();
+        startDateController.clear();
+        endDateController.clear();
         showDetailsField.value = false;
 
         _showOccupationSnackBar(
           context,
-          response.message ?? "Occupation added successfully",
+          "Occupation added successfully",
           isSuccess: true,
         );
       } else {
         throw Exception(response.message ?? "Failed to add occupation");
       }
     } catch (e) {
-      print("Add Occupation Error: $e");
+      debugPrint("UPLOAD OCCUPATION ADD ERROR: $e");
       _showOccupationSnackBar(
         context,
         e.toString().replaceAll("Exception:", "").trim(),
@@ -945,68 +989,85 @@ class UdateProfileController extends GetxController {
     isOccupationLoading.value = true;
 
     try {
+      final nextOccupationId = selectedOccupation.value.trim();
+      final nextProfessionId = _selectedIdOrEmpty(selectedProfession.value);
+      final nextSpecializationId =
+          _selectedIdOrEmpty(selectedSpecialization.value);
+      final nextOtherName = detailsController.value.text.trim();
+      final hasOccupationChanges =
+          nextOccupationId != _valueOrEmpty(oldData.occupationId) ||
+              nextProfessionId !=
+                  _valueOrEmpty(oldData.occupationProfessionId) ||
+              nextSpecializationId !=
+                  _valueOrEmpty(oldData.occupationSpecializationId) ||
+              nextOtherName != _valueOrEmpty(oldData.occupationOtherName);
 
       /// STEP 1: UPDATE OCCUPATION
-      Map<String, dynamic> occupationPayload = {
-        "member_occupation_id": oldData.memberOccupationId ?? "",
-        "member_id": oldData.memberId ?? "",
-        "occupation_id": selectedOccupation.value,
-        "occupation_profession_id":
-        selectedProfession.value == "Other" || selectedProfession.value.isEmpty
-            ? ""
-            : selectedProfession.value,
-        "occupation_specialization_id":
-        selectedSpecialization.value == "Other" ||
-            selectedSpecialization.value.isEmpty
-            ? ""
-            : selectedSpecialization.value,
-        "occupation_other_name": detailsController.value.text.trim(),
-        "updated_by": oldData.memberId ?? "",
-      };
+      if (hasOccupationChanges) {
+        Map<String, dynamic> occupationPayload = {
+          "member_occupation_id": oldData.memberOccupationId ?? "",
+          "member_id": oldData.memberId ?? "",
+          "occupation_id": nextOccupationId,
+          "occupation_profession_id": nextProfessionId,
+          "occupation_specialization_id": nextSpecializationId,
+          "occupation_other_name": nextOtherName,
+          "updated_by": oldData.memberId ?? "",
+        };
 
-      final res = await updateOccupationRepo.updateOccupation(occupationPayload);
+        debugPrint("UPLOAD OCCUPATION UPDATE: changes detected");
+        debugPrint("UPLOAD OCCUPATION UPDATE PAYLOAD: $occupationPayload");
 
-      if (res != true) {
+        final res =
+            await updateOccupationRepo.updateOccupation(occupationPayload);
 
-        isOccupationLoading.value = false;
+        debugPrint("UPLOAD OCCUPATION UPDATE RESULT: $res");
 
-        _showOccupationSnackBar(
-          context,
-          "Failed to update occupation",
-          isSuccess: false,
-        );
+        if (res != true) {
+          isOccupationLoading.value = false;
 
-        return;
+          debugPrint("UPLOAD OCCUPATION UPDATE FAILED");
+
+          _showOccupationSnackBar(
+            context,
+            "Failed to update occupation",
+            isSuccess: false,
+          );
+
+          return;
+        }
+      } else {
+        debugPrint("UPLOAD OCCUPATION UPDATE: skipped, no Level 1/2/3 changes");
       }
-
       /// STEP 2: UPDATE MORE OCCUPATION
-      Map<String, dynamic> moreOccupationPayload = {
+      final startDateForApi = _dateForApi(startDateController.text);
+      final endDateForApi = _dateForApi(endDateController.text);
+      final moreOccupationPayload = <String, dynamic>{
         "member_occupation_id": oldData.memberOccupationId ?? "",
         "member_id": oldData.memberId ?? "",
         "company_name": companyNameController.text.trim(),
-        "designation": designationController.text.trim().isEmpty
-            ? null
-            : designationController.text.trim(),
-        "start_date": startDateController.text.isEmpty
-            ? null
-            : startDateController.text,
-        "end_date": endDateController.text.isEmpty
-            ? null
-            : endDateController.text,
         "is_current_employment": isCurrentlyEmployed.value,
-        "role_description": detailsController.value.text.trim().isEmpty
-            ? null
-            : detailsController.value.text.trim(),
         "updated_by": oldData.memberId,
       };
+      _putIfNotEmpty(
+          moreOccupationPayload, "designation", designationController.text);
+      _putIfNotEmpty(moreOccupationPayload, "start_date", startDateForApi);
+      _putIfNotEmpty(moreOccupationPayload, "end_date", endDateForApi);
+      _putIfNotEmpty(moreOccupationPayload, "role_description",
+          detailsController.value.text);
+
+      debugPrint("MORE OCCUPATION DETAIL PAYLOAD: $moreOccupationPayload");
 
       final moreOccupationResponse =
-      await updateMoreOccupationRepository.updateMoreOccupation(
-          moreOccupationPayload);
+          await updateMoreOccupationRepository.updateMoreOccupation(
+              moreOccupationPayload);
+
+      debugPrint(
+          "MORE OCCUPATION DETAIL RESPONSE: ${moreOccupationResponse.toJson()}");
 
       isOccupationLoading.value = false;
 
       if (moreOccupationResponse.status == true) {
+        debugPrint("MORE OCCUPATION DETAIL UPDATED SUCCESSFULLY");
 
         await getUserProfile();
 
@@ -1019,19 +1080,21 @@ class UdateProfileController extends GetxController {
           "Occupation updated successfully",
           isSuccess: true,
         );
-
       } else {
+        debugPrint(
+            "MORE OCCUPATION DETAIL FAILED: ${moreOccupationResponse.message}");
 
         _showOccupationSnackBar(
           context,
-          moreOccupationResponse.message ?? "Failed to update occupation details",
+          moreOccupationResponse.message ??
+              "Failed to update occupation details",
           isSuccess: false,
         );
       }
-
     } catch (e) {
-
       isOccupationLoading.value = false;
+
+      debugPrint("UPDATE FULL OCCUPATION ERROR: $e");
 
       _showOccupationSnackBar(
         context,
@@ -1039,6 +1102,43 @@ class UdateProfileController extends GetxController {
         isSuccess: false,
       );
     }
+  }
+
+  String _selectedIdOrEmpty(String value) {
+    final trimmedValue = value.trim();
+    if (trimmedValue.isEmpty || trimmedValue == "Other") {
+      return "";
+    }
+    return trimmedValue;
+  }
+
+  String _valueOrEmpty(String? value) => value?.trim() ?? "";
+
+  void _putIfNotEmpty(
+      Map<String, dynamic> payload, String key, String? value) {
+    final trimmedValue = value?.trim() ?? "";
+    if (trimmedValue.isNotEmpty) {
+      payload[key] = trimmedValue;
+    }
+  }
+
+  String _dateForApi(String value) {
+    final trimmedValue = value.trim();
+    if (trimmedValue.isEmpty) {
+      return "";
+    }
+
+    for (final format in [
+      DateFormat('dd/MM/yyyy'),
+      DateFormat('dd-MM-yyyy'),
+      DateFormat('yyyy-MM-dd'),
+    ]) {
+      try {
+        return DateFormat('yyyy-MM-dd').format(format.parseStrict(trimmedValue));
+      } catch (_) {}
+    }
+
+    return trimmedValue;
   }
 
   // Business Product Category and subcategory
