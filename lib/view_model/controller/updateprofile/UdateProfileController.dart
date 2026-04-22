@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:mpm/OccuptionProfession/OccuptionProfessionData.dart';
 import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/AddExistingFamilyMember/addExistingFamilyMemberData.dart';
@@ -33,6 +34,7 @@ import 'package:mpm/repository/BusinessProfileRepo/add_occupation_business_repos
 import 'package:mpm/repository/BusinessProfileRepo/delete_occupation_business_repository/delete_occupation_business_repo.dart';
 import 'package:mpm/repository/BusinessProfileRepo/get_occupation_product_by_id_repository/get_occupation_product_by_id_repo.dart';
 import 'package:mpm/repository/BusinessProfileRepo/update_occupation_business_repository/update_occupation_business_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/EducationDetailRepo/update_education_detail_repository/update_education_detail_repo.dart';
 import 'package:mpm/repository/add_existing_family_member_repository/add_existing_family_member_repo.dart';
 import 'package:mpm/repository/add_occupation_repository/add_occupation_repo.dart';
 import 'package:mpm/repository/change_family_head_repository/change_family_head_repo.dart';
@@ -40,6 +42,9 @@ import 'package:mpm/repository/product_category_repository/product_category_repo
 import 'package:mpm/repository/product_subcategory_repository/product_subcategory_repo.dart';
 import 'package:mpm/repository/register_repository/register_repo.dart';
 import 'package:mpm/repository/send_verification_email_repository/send_verification_email_repo.dart';
+import 'package:mpm/repository/update_education_repository/update_education_repo.dart';
+import 'package:mpm/repository/update_more_occupation_repository/update_more_occupation_repo.dart';
+import 'package:mpm/repository/update_occupation_repository/update_occupation_repo.dart';
 import 'package:mpm/repository/update_repository/UpdateProfileRepository.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
@@ -562,6 +567,12 @@ class UdateProfileController extends GetxController {
   final RxString selectedSpecialization = RxString('');
   final RxBool showDetailsField = RxBool(false);
   final RxBool isOccupationLoading = RxBool(false);
+  final TextEditingController companyNameController = TextEditingController();
+  final TextEditingController designationController = TextEditingController();
+  final TextEditingController startDateController = TextEditingController();
+  final TextEditingController endDateController = TextEditingController();
+
+  RxString isCurrentlyEmployed = "0".obs;
 
   void resetDependentFields() {
     selectedProfession.value = '';
@@ -739,7 +750,7 @@ class UdateProfileController extends GetxController {
   //     if (occuptionSubSubCategoryList.isEmpty) {
   //       showDetailsField.value = true;
   //     } else {
-  //       // Add “Other” option
+  //       // Add â€œOtherâ€ option
   //       if (!occuptionSubSubCategoryList
   //           .any((item) => item.subSubCategoryId == "Other")) {
   //         occuptionSubSubCategoryList.add(
@@ -766,7 +777,25 @@ class UdateProfileController extends GetxController {
   //   }
   // }
 
-  Future<void> addOccupation() async {
+  void _showOccupationSnackBar(
+    BuildContext context,
+    String message, {
+    required bool isSuccess,
+  }) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return;
+
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isSuccess ? Colors.green : Colors.red,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  Future<void> addOccupation(BuildContext context) async {
     try {
       isOccupationLoading.value = true;
 
@@ -777,14 +806,16 @@ class UdateProfileController extends GetxController {
         throw Exception("Please select an occupation");
       }
 
-      // Handle dropdown values
       String occupationId = selectedOccupation.value;
-      String professionId = (selectedProfession.value == "Other") ? "" : selectedProfession.value;
-      String specializationId = (selectedSpecialization.value == "Other") ? "" : selectedSpecialization.value;
-      String subCategoryId = (selectedSubCategory.value == "Other") ? "" : selectedSubCategory.value;
-      String subSubCategoryId = (selectedSubSubCategory.value == "Other") ? "" : selectedSubSubCategory.value;
+      String professionId =
+          (selectedProfession.value == "Other") ? "" : selectedProfession.value;
+      String specializationId =
+          (selectedSpecialization.value == "Other") ? "" : selectedSpecialization.value;
+      String subCategoryId =
+          (selectedSubCategory.value == "Other") ? "" : selectedSubCategory.value;
+      String subSubCategoryId =
+          (selectedSubSubCategory.value == "Other") ? "" : selectedSubSubCategory.value;
 
-      // Final "Other Details"
       String otherName = showDetailsField.value ? detailsController.value.text : "";
 
       final Map<String, dynamic> data = {
@@ -798,45 +829,78 @@ class UdateProfileController extends GetxController {
         "created_by": userData.memberId.toString()
       };
 
-      print("📤 Add Occupation Payload: $data");
+      debugPrint("UPLOAD OCCUPATION ADD PAYLOAD: $data");
 
-      // Call Add repository
       final response = await addOccupationRepo.addOccupation(data);
 
+      debugPrint("UPLOAD OCCUPATION ADD RESPONSE: ${response.toJson()}");
+
       if (response.status == true) {
-        Get.snackbar(
-          'Success',
-          response.message ?? "Occupation added successfully",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          duration: Duration(seconds: 3),
-        );
+        final memberOccupationId = response.data?.memberOccupationId;
 
-        getUserProfile();
-        Navigator.of(context!).pop();
+        if (memberOccupationId == null || memberOccupationId.toString().isEmpty) {
+          throw Exception("Occupation ID not returned from API");
+        }
 
-        // ⚡ Reset fields after success
+        /// STEP 2: CALL MORE OCCUPATION API
+        final startDateForApi = _dateForApi(startDateController.text);
+        final endDateForApi = _dateForApi(endDateController.text);
+
+        final moreOccupationPayload = <String, dynamic>{
+          "member_occupation_id": memberOccupationId.toString(),
+          "member_id": userData.memberId.toString(),
+          "company_name": companyNameController.text.trim(),
+          "is_current_employment": isCurrentlyEmployed.value,
+          "created_by": userData.memberId.toString(),
+        };
+
+        _putIfNotEmpty(moreOccupationPayload, "designation", designationController.text);
+        _putIfNotEmpty(moreOccupationPayload, "start_date", startDateForApi);
+        _putIfNotEmpty(moreOccupationPayload, "end_date", endDateForApi);
+        _putIfNotEmpty(
+            moreOccupationPayload, "role_description", detailsController.value.text);
+
+        debugPrint("ADD -> MORE OCCUPATION PAYLOAD: $moreOccupationPayload");
+
+        final moreResponse = await updateMoreOccupationRepository
+            .updateMoreOccupation(moreOccupationPayload);
+
+        debugPrint("ADD -> MORE OCCUPATION RESPONSE: ${moreResponse.toJson()}");
+
+        if (moreResponse.status != true) {
+          throw Exception(moreResponse.message ?? "Failed to update more details");
+        }
+
+        /// REFRESH PROFILE
+        await getUserProfile();
+
+        /// RESET FORM
         selectedOccupation.value = "";
         selectedProfession.value = "";
         selectedSpecialization.value = "";
         selectedSubCategory.value = "";
         selectedSubSubCategory.value = "";
         detailsController.value.text = "";
+        companyNameController.clear();
+        designationController.clear();
+        startDateController.clear();
+        endDateController.clear();
         showDetailsField.value = false;
 
+        _showOccupationSnackBar(
+          context,
+          "Occupation added successfully",
+          isSuccess: true,
+        );
       } else {
         throw Exception(response.message ?? "Failed to add occupation");
       }
     } catch (e) {
-      print("❌ Add Occupation Error: $e");
-
-      Get.snackbar(
-        'Error',
+      debugPrint("UPLOAD OCCUPATION ADD ERROR: $e");
+      _showOccupationSnackBar(
+        context,
         e.toString().replaceAll("Exception:", "").trim(),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        isSuccess: false,
       );
     } finally {
       isOccupationLoading.value = false;
@@ -904,6 +968,177 @@ class UdateProfileController extends GetxController {
         showDetailsField.value = true;
       }
     });
+  }
+  final updateOccupationRepo = UpdateOccupationRepository();
+  final updateMoreOccupationRepository = UpdateMoreOccupationRepository();
+
+  Future<void> updateFullOccupation(
+      Occupation oldData,
+      BuildContext context,
+      ) async {
+
+    if (selectedOccupation.value.isEmpty) {
+      _showOccupationSnackBar(
+        context,
+        "Please select Level 1",
+        isSuccess: false,
+      );
+      return;
+    }
+
+    isOccupationLoading.value = true;
+
+    try {
+      final nextOccupationId = selectedOccupation.value.trim();
+      final nextProfessionId = _selectedIdOrEmpty(selectedProfession.value);
+      final nextSpecializationId =
+          _selectedIdOrEmpty(selectedSpecialization.value);
+      final nextOtherName = detailsController.value.text.trim();
+      final hasOccupationChanges =
+          nextOccupationId != _valueOrEmpty(oldData.occupationId) ||
+              nextProfessionId !=
+                  _valueOrEmpty(oldData.occupationProfessionId) ||
+              nextSpecializationId !=
+                  _valueOrEmpty(oldData.occupationSpecializationId) ||
+              nextOtherName != _valueOrEmpty(oldData.occupationOtherName);
+
+      /// STEP 1: UPDATE OCCUPATION
+      if (hasOccupationChanges) {
+        Map<String, dynamic> occupationPayload = {
+          "member_occupation_id": oldData.memberOccupationId ?? "",
+          "member_id": oldData.memberId ?? "",
+          "occupation_id": nextOccupationId,
+          "occupation_profession_id": nextProfessionId,
+          "occupation_specialization_id": nextSpecializationId,
+          "occupation_other_name": nextOtherName,
+          "updated_by": oldData.memberId ?? "",
+        };
+
+        debugPrint("UPLOAD OCCUPATION UPDATE: changes detected");
+        debugPrint("UPLOAD OCCUPATION UPDATE PAYLOAD: $occupationPayload");
+
+        final res =
+            await updateOccupationRepo.updateOccupation(occupationPayload);
+
+        debugPrint("UPLOAD OCCUPATION UPDATE RESULT: $res");
+
+        if (res != true) {
+          isOccupationLoading.value = false;
+
+          debugPrint("UPLOAD OCCUPATION UPDATE FAILED");
+
+          _showOccupationSnackBar(
+            context,
+            "Failed to update occupation",
+            isSuccess: false,
+          );
+
+          return;
+        }
+      } else {
+        debugPrint("UPLOAD OCCUPATION UPDATE: skipped, no Level 1/2/3 changes");
+      }
+      /// STEP 2: UPDATE MORE OCCUPATION
+      final startDateForApi = _dateForApi(startDateController.text);
+      final endDateForApi = _dateForApi(endDateController.text);
+      final moreOccupationPayload = <String, dynamic>{
+        "member_occupation_id": oldData.memberOccupationId ?? "",
+        "member_id": oldData.memberId ?? "",
+        "company_name": companyNameController.text.trim(),
+        "is_current_employment": isCurrentlyEmployed.value,
+        "updated_by": oldData.memberId,
+      };
+      _putIfNotEmpty(
+          moreOccupationPayload, "designation", designationController.text);
+      _putIfNotEmpty(moreOccupationPayload, "start_date", startDateForApi);
+      _putIfNotEmpty(moreOccupationPayload, "end_date", endDateForApi);
+      _putIfNotEmpty(moreOccupationPayload, "role_description",
+          detailsController.value.text);
+
+      debugPrint("MORE OCCUPATION DETAIL PAYLOAD: $moreOccupationPayload");
+
+      final moreOccupationResponse =
+          await updateMoreOccupationRepository.updateMoreOccupation(
+              moreOccupationPayload);
+
+      debugPrint(
+          "MORE OCCUPATION DETAIL RESPONSE: ${moreOccupationResponse.toJson()}");
+
+      isOccupationLoading.value = false;
+
+      if (moreOccupationResponse.status == true) {
+        debugPrint("MORE OCCUPATION DETAIL UPDATED SUCCESSFULLY");
+
+        await getUserProfile();
+
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
+
+        _showOccupationSnackBar(
+          context,
+          "Occupation updated successfully",
+          isSuccess: true,
+        );
+      } else {
+        debugPrint(
+            "MORE OCCUPATION DETAIL FAILED: ${moreOccupationResponse.message}");
+
+        _showOccupationSnackBar(
+          context,
+          moreOccupationResponse.message ??
+              "Failed to update occupation details",
+          isSuccess: false,
+        );
+      }
+    } catch (e) {
+      isOccupationLoading.value = false;
+
+      debugPrint("UPDATE FULL OCCUPATION ERROR: $e");
+
+      _showOccupationSnackBar(
+        context,
+        "Unexpected error: $e",
+        isSuccess: false,
+      );
+    }
+  }
+
+  String _selectedIdOrEmpty(String value) {
+    final trimmedValue = value.trim();
+    if (trimmedValue.isEmpty || trimmedValue == "Other") {
+      return "";
+    }
+    return trimmedValue;
+  }
+
+  String _valueOrEmpty(String? value) => value?.trim() ?? "";
+
+  void _putIfNotEmpty(
+      Map<String, dynamic> payload, String key, String? value) {
+    final trimmedValue = value?.trim() ?? "";
+    if (trimmedValue.isNotEmpty) {
+      payload[key] = trimmedValue;
+    }
+  }
+
+  String _dateForApi(String value) {
+    final trimmedValue = value.trim();
+    if (trimmedValue.isEmpty) {
+      return "";
+    }
+
+    for (final format in [
+      DateFormat('dd/MM/yyyy'),
+      DateFormat('dd-MM-yyyy'),
+      DateFormat('yyyy-MM-dd'),
+    ]) {
+      try {
+        return DateFormat('yyyy-MM-dd').format(format.parseStrict(trimmedValue));
+      } catch (_) {}
+    }
+
+    return trimmedValue;
   }
 
   // Business Product Category and subcategory
@@ -1021,7 +1256,7 @@ class UdateProfileController extends GetxController {
       }
     } catch (e) {
       _rxBusinessProfileStatus.value = Status.ERROR;
-      debugPrint("❌ Error fetching business profiles: $e");
+      debugPrint("âŒ Error fetching business profiles: $e");
       Get.snackbar(
         "Error",
         "Failed to load business profiles: $e",
@@ -1091,7 +1326,7 @@ class UdateProfileController extends GetxController {
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
-      debugPrint("❌ DELETE BUSINESS PROFILE ERROR: $e");
+      debugPrint("âŒ DELETE BUSINESS PROFILE ERROR: $e");
     }
   }
 
@@ -1135,6 +1370,13 @@ class UdateProfileController extends GetxController {
   final rxStatusQualification = Status.LOADING.obs;
   final rxStatusQualificationMain = Status.IDLE.obs;
   final rxStatusQualificationCat = Status.IDLE.obs;
+  TextEditingController instituteController = TextEditingController();
+  TextEditingController yearPassingController = TextEditingController();
+  TextEditingController boardUniversityController = TextEditingController();
+  TextEditingController percentageController = TextEditingController();
+  final UpdateProfileEducationRepository updateProfileEducationRepository =
+  UpdateProfileEducationRepository();
+  RxString pursuingStatus = "0".obs;
   var qulicationList = <QualificationData>[].obs;
   var qulicationMainList = <QualicationMainData>[].obs;
   var qulicationCategoryList = <Qualificationcategorydata>[].obs;
@@ -1270,7 +1512,25 @@ class UdateProfileController extends GetxController {
     });
   }
 
-  void addQualification() async {
+  void _showEducationSnackBar(
+    BuildContext context,
+    String message, {
+    required bool isSuccess,
+  }) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return;
+
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isSuccess ? Colors.green : Colors.pink,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  Future<void> addQualification(BuildContext context) async {
     CheckUserData2? userData = await SessionManager.getSession();
     print('User ID: ${userData?.memberId}');
     memberId.value = userData!.memberId.toString();
@@ -1307,108 +1567,191 @@ class UdateProfileController extends GetxController {
 
       print("Sending qualification data: $map");
 
-      api.addQualification(map).then((_value) async {
-        addloading.value = false;
-        if (_value['status'] == true) {
-          Get.snackbar(
-            'Success',
-            "Add Education Successfully",
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-            duration: Duration(seconds: 3),
-          );
-          getUserProfile();
-          Navigator.of(Get.context!).pop();
-        } else {
-          Get.snackbar(
-            'Error',
-            _value['message'] ?? "Failed to add qualification",
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.pink,
-            colorText: Colors.white,
-            duration: Duration(seconds: 3),
-          );
+      final dynamic response = await api.addQualification(map);
+      addloading.value = false;
+
+      if (response['status'] == true) {
+        await getUserProfile();
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
         }
-      }).onError((error, strack) async {
-        addloading.value = false;
-        print("Error: $error");
-        Get.snackbar(
-          'Error',
-          "Something went wrong: ${error.toString()}",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.pink,
-          colorText: Colors.white,
-          duration: Duration(seconds: 3),
+        _showEducationSnackBar(
+          context,
+          response['message']?.toString() ?? "Add Education Successfully",
+          isSuccess: true,
         );
-      });
+      } else {
+        _showEducationSnackBar(
+          context,
+          response['message']?.toString() ?? "Failed to add qualification",
+          isSuccess: false,
+        );
+      }
     } catch (e) {
       addloading.value = false;
       print('Error: $e');
-      Get.snackbar(
-        'Error',
+      _showEducationSnackBar(
+        context,
         "An unexpected error occurred: $e",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.pink,
-        colorText: Colors.white,
-        duration: Duration(seconds: 3),
+        isSuccess: false,
       );
     }
   }
 
-  void updateQualification(String member_qualification_id) async {
-    CheckUserData2? userData = await SessionManager.getSession();
-    print('User ID: ${userData?.memberId}');
-    print('User Name: ${userData?.mobile}');
-    memberId.value = userData!.memberId.toString();
+  Future<void> updateFullEducation(
+      String memberQualificationId,
+      String memberId,
+      BuildContext context,
+      ) async {
+
     addloading.value = true;
+
     try {
-      Map<String, String> map = {
-        'member_id': memberId.value.toString(),
-        'qualification_id': selectQlification.value.toString(),
-        'member_qualification_id': member_qualification_id.toString(),
-        'qualification_main_id': selectQualicationMain.value.toString(),
+
+      /// STEP 1️⃣ UPDATE QUALIFICATION
+      Map<String, String> qualificationPayload = {
+        'member_id': memberId,
+        'qualification_id': selectQlification.value,
+        'member_qualification_id': memberQualificationId,
+        'qualification_main_id': selectQualicationMain.value,
         'qualification_category_id':
-            (selectQualicationCat.value == "other_category" ||
-                    selectQualicationCat.value.isEmpty)
-                ? "0"
-                : selectQualicationCat.value.toString(),
+        (selectQualicationCat.value == "other_category" ||
+            selectQualicationCat.value.isEmpty)
+            ? "0"
+            : selectQualicationCat.value,
         'qualification_other_name': educationdetailController.value.text,
-        'updated_by': memberId.value.toString(),
+        'updated_by': memberId,
       };
 
-      print("fffh" + map.toString());
-      api.updateQualification(map).then((_value) async {
+      print("📤 Qualification Payload: $qualificationPayload");
+
+      final qualificationResponse =
+      await api.updateQualification(qualificationPayload);
+
+      if (qualificationResponse['status'] != true) {
         addloading.value = false;
-        if (_value['status'] == true) {
-          Get.snackbar(
-            'Success',
-            "Update Education Successfully",
-            snackPosition: SnackPosition.TOP,
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-            duration: Duration(seconds: 3),
-          );
-          getUserProfile();
-          Navigator.of(context!).pop();
-        }
-      }).onError((error, strack) async {
-        addloading.value = false;
-        print("fvvf" + error.toString());
-        Get.snackbar(
-          'Error',
-          "Some thing went wrong ",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.pink,
-          colorText: Colors.white,
-          duration: Duration(seconds: 3),
+
+        _showEducationSnackBar(
+          context,
+          qualificationResponse['message'] ?? "Failed to update qualification",
+          isSuccess: false,
         );
-      });
-    } catch (e) {
+
+        return;
+      }
+
+      /// STEP 2️⃣ UPDATE EDUCATION DETAIL
+      Map<String, dynamic> educationPayload = {
+        "member_qualification_id": memberQualificationId,
+        "member_id": memberId,
+        "institute_name": instituteController.text.trim(),
+        "year_of_passing": yearPassingController.text,
+        "board_university": boardUniversityController.text.trim(),
+        "percentage_grade": percentageController.text.trim().isEmpty
+            ? ""
+            : "${percentageController.text.trim()}%",
+        "is_currently_pursuing": pursuingStatus.value,
+        "updated_by": memberId
+      };
+
+      print("📤 Education Payload: $educationPayload");
+
+      final educationResponse =
+      await updateProfileEducationRepository.updateprofileEducation(
+          educationPayload);
+
       addloading.value = false;
-      print('Error: $e');
-    } finally {}
+
+      if (educationResponse.status == true) {
+
+        await getUserProfile();
+
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
+
+        _showEducationSnackBar(
+          context,
+          "Education updated successfully",
+          isSuccess: true,
+        );
+
+      } else {
+
+        _showEducationSnackBar(
+          context,
+          educationResponse.message ?? "Failed to update education",
+          isSuccess: false,
+        );
+      }
+
+    } catch (e) {
+
+      addloading.value = false;
+
+      print("❌ Update Error: $e");
+
+      _showEducationSnackBar(
+        context,
+        "Something went wrong: ${e.toString()}",
+        isSuccess: false,
+      );
+    }
   }
+
+  // Future<void> updateQualification(
+  //     String member_qualification_id, BuildContext context) async {
+  //   CheckUserData2? userData = await SessionManager.getSession();
+  //   print('User ID: ${userData?.memberId}');
+  //   print('User Name: ${userData?.mobile}');
+  //   memberId.value = userData!.memberId.toString();
+  //   addloading.value = true;
+  //   try {
+  //     Map<String, String> map = {
+  //       'member_id': memberId.value.toString(),
+  //       'qualification_id': selectQlification.value.toString(),
+  //       'member_qualification_id': member_qualification_id.toString(),
+  //       'qualification_main_id': selectQualicationMain.value.toString(),
+  //       'qualification_category_id':
+  //           (selectQualicationCat.value == "other_category" ||
+  //                   selectQualicationCat.value.isEmpty)
+  //               ? "0"
+  //               : selectQualicationCat.value.toString(),
+  //       'qualification_other_name': educationdetailController.value.text,
+  //       'updated_by': memberId.value.toString(),
+  //     };
+  //
+  //     print("fffh" + map.toString());
+  //     final dynamic response = await api.updateQualification(map);
+  //     addloading.value = false;
+  //
+  //     if (response['status'] == true) {
+  //       await getUserProfile();
+  //       if (Navigator.canPop(context)) {
+  //         Navigator.pop(context);
+  //       }
+  //       _showEducationSnackBar(
+  //         context,
+  //         response['message']?.toString() ?? "Update Education Successfully",
+  //         isSuccess: true,
+  //       );
+  //     } else {
+  //       _showEducationSnackBar(
+  //         context,
+  //         response['message']?.toString() ?? "Failed to update qualification",
+  //         isSuccess: false,
+  //       );
+  //     }
+  //   } catch (e) {
+  //     addloading.value = false;
+  //     print('Error: $e');
+  //     _showEducationSnackBar(
+  //       context,
+  //       "Something went wrong: ${e.toString()}",
+  //       isSuccess: false,
+  //     );
+  //   } finally {}
+  // }
 
   void checkReviewApproval() {
     if (memberStatusId.value == "1" &&
@@ -1422,6 +1765,70 @@ class UdateProfileController extends GetxController {
       }
     }
   }
+
+  // Future<void> updateEducationDetail(
+  //     String qualificationId,
+  //     String memberId,
+  //     BuildContext context) async {
+  //
+  //   try {
+  //
+  //     addloading.value = true;
+  //
+  //     Map<String, dynamic> body = {
+  //       "member_qualification_id": qualificationId,
+  //       "member_id": memberId,
+  //       "institute_name": instituteController.text.trim(),
+  //       "year_of_passing": yearPassingController.text,
+  //       "board_university": boardUniversityController.text.trim(),
+  //       "percentage_grade": "${percentageController.text.trim()}%",
+  //       "is_currently_pursuing": pursuingStatus.value,
+  //       "updated_by": memberId
+  //     };
+  //
+  //     print("📤 Update Education Payload: $body");
+  //
+  //     final response =
+  //     await updateProfileEducationRepository.updateprofileEducation(body);
+  //
+  //     addloading.value = false;
+  //
+  //     if (response.status == true) {
+  //
+  //       await getUserProfile();
+  //
+  //       if (Navigator.canPop(context)) {
+  //         Navigator.pop(context);
+  //       }
+  //
+  //       _showEducationSnackBar(
+  //         context,
+  //         response.message ?? "Education updated successfully",
+  //         isSuccess: true,
+  //       );
+  //
+  //     } else {
+  //
+  //       _showEducationSnackBar(
+  //         context,
+  //         response.message ?? "Failed to update education",
+  //         isSuccess: false,
+  //       );
+  //     }
+  //
+  //   } catch (e) {
+  //
+  //     addloading.value = false;
+  //
+  //     print("Update Education Error: $e");
+  //
+  //     _showEducationSnackBar(
+  //       context,
+  //       "Something went wrong: ${e.toString()}",
+  //       isSuccess: false,
+  //     );
+  //   }
+  // }
 
   // Family Relation
   void setRxRelationType(Status _value) => rxStatusRelationType.value = _value;

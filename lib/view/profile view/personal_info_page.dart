@@ -10,9 +10,9 @@ import 'package:mpm/model/gender/DataX.dart';
 import 'package:mpm/model/marital/MaritalData.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/utils/urls.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
-import '../../utils/urls.dart';
 
 class PersonalInformationPage extends StatefulWidget {
   const PersonalInformationPage({Key? key}) : super(key: key);
@@ -164,7 +164,6 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                       Obx(() {
                         String saraswaniOptionText = controller.saraswaniOptionId.value;
 
-                        // Map the ID to the corresponding text and additional information
                         switch (controller.saraswaniOptionId.value) {
                           case '1':
                             saraswaniOptionText = 'Physical Copy';
@@ -238,7 +237,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                             if (mobile.length != 10 ||
                                 !RegExp(r'^[0-9]+$').hasMatch(mobile)) {
                               Get.snackbar(
-                                "", // Empty because we use titleText below
+                                "",
                                 "",
                                 titleText: const Text(
                                   "Personal Info",
@@ -323,7 +322,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                         ),
                       ],
                     ),
-                    // Expanded section with editable fields
+
                     Expanded(
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.all(16.0),
@@ -403,7 +402,6 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                   'Email', controller.emailController.value);
                             }),
 
-                            // DoB
                             SizedBox(
                               width: double.infinity,
                               child: Container(
@@ -488,7 +486,6 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                             ),
                             const SizedBox(height: 30),
 
-                            // Gender
                             Container(
                               child: Row(
                                 children: [
@@ -589,7 +586,6 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                             ),
                             const SizedBox(height: 30),
 
-                            // Blood Group
                             Container(
                               child: Row(
                                 children: [
@@ -693,7 +689,6 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                             ),
                             const SizedBox(height: 30),
 
-                            // Saraswani Option
                             Container(
                               child: Row(
                                 children: [
@@ -797,7 +792,6 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                             ),
                             const SizedBox(height: 30),
 
-                            // Marital Status
                             SizedBox(
                               child: Container(
                                 child: Row(
@@ -910,7 +904,6 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                             ),
                             const SizedBox(height: 30),
 
-                            // Marriage Anniversary
                             Obx(() {
                               return Visibility(
                                 visible: controller.MaritalAnnivery.value ==
@@ -1188,7 +1181,6 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title and Colon
           Container(
             width: 105,
             child: Row(
@@ -1214,7 +1206,6 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
               ],
             ),
           ),
-          // Subtitle
           Expanded(
             child: subtitle != null
                 ? Text(

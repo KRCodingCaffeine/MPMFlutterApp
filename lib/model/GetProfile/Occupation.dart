@@ -9,6 +9,11 @@ class Occupation {
   String? occupationSpecializationSubCategoryId;
   String? occupationSpecializationSubSubCategoryId;
   String? occupationOtherName;
+  String? companyName;
+  String? designation;
+  String? startDate;
+  String? endDate;
+  String? isCurrentEmployment;
   String? createdAt;
   String? createdBy;
   String? updatedAt;
@@ -30,6 +35,11 @@ class Occupation {
     this.occupationSpecializationSubCategoryId,
     this.occupationSpecializationSubSubCategoryId,
     this.occupationOtherName,
+    this.companyName,
+    this.designation,
+    this.startDate,
+    this.endDate,
+    this.isCurrentEmployment,
     this.createdAt,
     this.createdBy,
     this.updatedAt,
@@ -53,6 +63,11 @@ class Occupation {
     occupationSpecializationSubSubCategoryId =
     json['occupation_specialization_sub_sub_category_id'];
     occupationOtherName = json['occupation_other_name'];
+    companyName = json['company_name'];
+    designation = json['designation'];
+    startDate = json['start_date'];
+    endDate = json['end_date'];
+    isCurrentEmployment = json['is_current_employment'];
     createdAt = json['created_at'];
     createdBy = json['created_by'];
     updatedAt = json['updated_at'];
@@ -81,6 +96,11 @@ class Occupation {
     data['occupation_specialization_sub_sub_category_id'] =
         occupationSpecializationSubSubCategoryId;
     data['occupation_other_name'] = occupationOtherName;
+    data['company_name'] = companyName;
+    data['designation'] = designation;
+    data['start_date'] = startDate;
+    data['end_date'] = endDate;
+    data['is_current_employment'] = isCurrentEmployment;
     data['created_at'] = createdAt;
     data['created_by'] = createdBy;
     data['updated_at'] = updatedAt;
