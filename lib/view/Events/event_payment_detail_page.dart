@@ -73,8 +73,11 @@ class EventPaymentDetailPage extends StatelessWidget {
     final qrUrl = eventDetails.eventAmountQrCode?.trim();
 
     if (qrUrl == null || qrUrl.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('QR not available')),
+      _showPremiumSnackBar(
+        context: context,
+        message: 'QR not available',
+        icon: Icons.qr_code_scanner_rounded,
+        color: Colors.orangeAccent,
       );
       return;
     }
@@ -87,14 +90,67 @@ class EventPaymentDetailPage extends StatelessWidget {
 
       await file.writeAsBytes(response.bodyBytes);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('QR downloaded to: ${file.path}')),
+      _showPremiumSnackBar(
+        context: context,
+        message: 'QR downloaded successfully!',
+        icon: Icons.check_circle_outline_rounded,
+        color: const Color(0xFF2ECC71),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Download failed: $e')),
+      _showPremiumSnackBar(
+        context: context,
+        message: 'Download failed: $e',
+        icon: Icons.error_outline_rounded,
+        color: Colors.redAccent,
       );
     }
+  }
+
+  void _showPremiumSnackBar({
+    required BuildContext context,
+    required String message,
+    required IconData icon,
+    required Color color,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+        content: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: Colors.white, size: 24),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -233,7 +289,7 @@ class EventPaymentDetailPage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        'Click here to download QR to pay Rs. $_totalPaymentAmount',
+                        'Click here to download QR Code to pay Rs. $_totalPaymentAmount',
                         style: TextStyle(
                           color: themeColor,
                           fontWeight: FontWeight.w700,
@@ -246,17 +302,17 @@ class EventPaymentDetailPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Text(
-            "Amount is calculated based on your selected family members also.",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12,
-              color: themeColor.withOpacity(0.85),
-              fontWeight: FontWeight.w500,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 12),
+          // Text(
+          //   "Amount is calculated based on your selected family members also.",
+          //   textAlign: TextAlign.center,
+          //   style: TextStyle(
+          //     fontSize: 12,
+          //     color: themeColor.withOpacity(0.85),
+          //     fontWeight: FontWeight.w500,
+          //     height: 1.4,
+          //   ),
+          // ),
+          // const SizedBox(height: 12),
           _buildAmountBreakdown(),
           const SizedBox(height: 12),
         ],

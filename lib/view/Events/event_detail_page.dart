@@ -190,7 +190,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       if (userData?.memberId != null) {
         _selectedFamilyMemberIds = [userData!.memberId.toString()];
         _seatCount = 0;
-        _foodBoxCount = 0;
+        _foodBoxCount = showFoodDialog ? 1 : 0;
       }
     }
 
@@ -201,8 +201,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
 
     if (showFoodDialog) {
-      bool foodConfirmed = await _showFoodDialog(context);
-      if (!foodConfirmed) return;
+      // Food selection dialog is intentionally disabled.
+      _foodBoxCount = 1;
       debugPrint("✅ Food boxes: $_foodBoxCount");
     }
 
@@ -503,9 +503,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
         _selectedFamilyMemberIds = selectedMemberIds;
         _seatCount = selectedMemberIds.length;
 
-        // ✅ AUTO FOOD COUNT
+        // Per registration, allow only one food container when food is enabled.
         if (_eventDetails?.hasFood == '1') {
-          _foodBoxCount = selectedMemberIds.length;
+          _foodBoxCount = 1;
         }
       });
     }

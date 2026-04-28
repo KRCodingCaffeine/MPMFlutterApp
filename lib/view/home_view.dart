@@ -79,16 +79,17 @@ class _HomeViewState extends State<HomeView>
       {'icon': Images.events, 'label': 'Events'},
       {'icon': Images.saraswani, 'label': 'Saraswani'},
       {'icon': Images.event_trip, 'label': 'Trips'},
-      {'icon': Images.network, 'label': 'Networking'}
+      {'icon': Images.network, 'label': 'Networking'},
+      {'icon': Images.shiksha, 'label': 'Shiksha Sahayata'}
     ];
 
     /* if (memberId == 1 || memberId == 2 || memberId == 2040) {
       items.add({'icon': Images.network, 'label': 'Networking'});
     }*/
 
-    if (memberId == 1 || memberId == 2 || memberId == 2040) {
-      items.add({'icon': Images.shiksha, 'label': 'Shiksha Sahayata'});
-    }
+    // if (memberId == 1 || memberId == 2 || memberId == 2040) {
+    //   items.add({'icon': Images.shiksha, 'label': 'Shiksha Sahayata'});
+    // }
 
     if (memberId == 1 || memberId == 2) {
       items.add({'icon': Images.qr_code, 'label': 'QR Scanner'});

@@ -90,7 +90,7 @@ class _ShikshaPaymentScreenState extends State<ShikshaPaymentScreen> {
               context: context,
               builder: (BuildContext context) => CustomDialog(
                 title: "Success",
-                description: "Payment Successfully",
+                description: "Payment Success",
                 buttonText: "Okay",
                 image: Image.asset(Images.sucess),
               ),
