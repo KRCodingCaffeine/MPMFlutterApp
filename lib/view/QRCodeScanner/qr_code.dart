@@ -17,7 +17,6 @@ class QRScannerScreen extends StatefulWidget {
 
 class _QRScannerScreenState extends State<QRScannerScreen>
     with SingleTickerProviderStateMixin {
-
   String? scannedData;
   late AnimationController _animationController;
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
@@ -52,7 +51,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Text(
           "${widget.scanType} Scanner",
           style: const TextStyle(color: Colors.white),
@@ -61,7 +60,6 @@ class _QRScannerScreenState extends State<QRScannerScreen>
       ),
       body: Stack(
         children: [
-
           /// CAMERA
           QRView(
             key: qrKey,
@@ -158,117 +156,108 @@ class _QRScannerScreenState extends State<QRScannerScreen>
         isDialogOpen = true;
         controller?.pauseCamera();
 
-        final bool? proceed = await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15.0),
-              ),
-              titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-              contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-              actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+        try {
+          late final bool resultStatus;
+          late final String resultMessage;
+          late final Color resultBannerColor;
 
-              /// 🔥 TITLE
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.scanType,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  const SizedBox(height: 8),
-                  const Divider(thickness: 1, color: Colors.grey),
-                ],
-              ),
-
-              /// 🔥 CONTENT
-              content: Text(
-                "$scannedValue\n\nDo you want to verify this attendee’s event check-in?",
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.black87,
-                ),
-              ),
-
-              /// 🔥 ACTIONS
-              actions: [
-                OutlinedButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                    side: const BorderSide(color: Colors.red),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: const Text("Cancel"),
-                ),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: widget.scanType == "Gate Entry"
-                        ? Colors.green
-                        : Colors.orange,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: const Text("Confirm"),
-                ),
-              ],
-            );
-          },
-        );
-
-        if (proceed == true) {
-          try {
-
-            if (widget.scanType == "Meal Box Entry") {
-              /// 🍱 FOOD API
-              final result =
-              await _repository.scanQrCodeForFood(scannedValue);
-
-              Color bannerColor = Colors.green;
-
-              if (result.status == false) {
-                if (result.message!
-                    .toLowerCase()
-                    .contains("already")) {
-                  bannerColor = Colors.orange;
-                } else {
-                  bannerColor = Colors.red;
-                }
-              }
-
-              _showTopBanner(
-                context,
-                result.message ?? "Food Entry Done",
-                bannerColor,
-              );
-
-            } else {
-              /// 🚪 GATE ENTRY API
-              final result =
-              await _repository.scanQrCode(scannedValue);
-
-              _showTopBanner(
-                context,
-                result.message ?? "Success",
-                result.status == true ? Colors.green : Colors.red,
-              );
-            }
-
-          } catch (e) {
-            _showTopBanner(context, "Error: $e", Colors.red);
+          if (widget.scanType == "Meal Box Entry") {
+            final result = await _repository.scanQrCodeForFood(scannedValue);
+            resultStatus = result.status == true;
+            resultMessage = result.message ?? "Food Entry Done";
+            resultBannerColor = resultStatus ? Colors.green : Colors.red;
+          } else {
+            final result = await _repository.scanQrCode(scannedValue);
+            resultStatus = result.status == true;
+            resultMessage = result.message ?? "Success";
+            resultBannerColor = resultStatus ? Colors.green : Colors.red;
           }
+
+          if (_isAlreadyRegisteredMessage(resultMessage)) {
+            await _showAlreadyRegisteredDialog(resultMessage);
+            await Future.delayed(const Duration(milliseconds: 500));
+            controller?.resumeCamera();
+            isDialogOpen = false;
+            return;
+          }
+
+          if (!resultStatus) {
+            _showTopBanner(context, resultMessage, resultBannerColor);
+            await Future.delayed(const Duration(milliseconds: 500));
+            controller?.resumeCamera();
+            isDialogOpen = false;
+            return;
+          }
+
+          final bool? proceed = await showDialog<bool>(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                backgroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15.0),
+                ),
+                titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+                title: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.scanType,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
+                    const Divider(thickness: 1, color: Colors.grey),
+                  ],
+                ),
+                content: Text(
+                  "$scannedValue\n\nDo you want to verify this attendee’s event check-in?",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.black87,
+                  ),
+                ),
+                actions: [
+                  OutlinedButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
+                      side: const BorderSide(color: Colors.red),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text("Cancel"),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: widget.scanType == "Gate Entry"
+                          ? Colors.green
+                          : Colors.orange,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text("Confirm"),
+                  ),
+                ],
+              );
+            },
+          );
+
+          if (proceed == true) {
+            _showTopBanner(context, resultMessage, resultBannerColor);
+          }
+        } catch (e) {
+          _showTopBanner(context, "Error: $e", Colors.red);
         }
 
         await Future.delayed(const Duration(milliseconds: 500));
@@ -276,6 +265,67 @@ class _QRScannerScreenState extends State<QRScannerScreen>
         isDialogOpen = false;
       }
     });
+  }
+
+  bool _isAlreadyRegisteredMessage(String? message) {
+    final normalizedMessage = message?.toLowerCase() ?? '';
+    return normalizedMessage.contains('already') &&
+        (normalizedMessage.contains('register') ||
+            normalizedMessage.contains('entry') ||
+            normalizedMessage.contains('check-in') ||
+            normalizedMessage.contains('checked in'));
+  }
+
+  Future<void> _showAlreadyRegisteredDialog(String message) async {
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                'Already Registered',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(thickness: 1, color: Colors.grey),
+            ],
+          ),
+          content: Text(
+            message,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showTopBanner(BuildContext context, String msg, Color color) {
