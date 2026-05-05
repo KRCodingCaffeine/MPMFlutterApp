@@ -8,7 +8,6 @@ import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/JobPortal/job_seeker_view.dart';
 import 'package:mpm/view/JobPortal/recruiter_job_view.dart';
 import 'package:mpm/view/profile%20view/Education_page_info.dart';
-import 'package:mpm/view/profile%20view/business_info_page.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
@@ -33,7 +32,6 @@ class _JobViewState extends State<JobView> {
       Get.find<UdateProfileController>();
 
   bool isLoading = false;
-  bool showOccupationBanner = false;
   bool showEducationBanner = false;
   String selectedRole = "";
   UdateProfileController controller = Get.put(UdateProfileController());
@@ -93,13 +91,12 @@ class _JobViewState extends State<JobView> {
       setState(() {
         isLoading = true;
         showEducationBanner = false;
-        showOccupationBanner = false;
       });
 
       String memberId = profileController.memberId.value;
 
       final eduResponse =
-      await qualificationRepository.getQualificationsByMemberId(memberId);
+          await qualificationRepository.getQualificationsByMemberId(memberId);
 
       bool hasEducation = (eduResponse.totalCount ?? 0) > 0;
 
@@ -145,14 +142,13 @@ class _JobViewState extends State<JobView> {
     try {
       setState(() {
         isLoading = true;
-        showOccupationBanner = false;
         showEducationBanner = false;
       });
 
       String memberId = profileController.memberId.value;
 
       final occResponse =
-      await occupationRepository.getOccupationsByMemberId(memberId);
+          await occupationRepository.getOccupationsByMemberId(memberId);
 
       bool hasOccupation = (occResponse.totalCount ?? 0) > 0;
 
@@ -162,21 +158,23 @@ class _JobViewState extends State<JobView> {
       if (occResponse.data != null && occResponse.data!.isNotEmpty) {
         for (var occ in occResponse.data!) {
           if (occ.companyName != null &&
-              occ.companyName
-                  .toString()
-                  .trim()
-                  .isNotEmpty) {
+              occ.companyName.toString().trim().isNotEmpty) {
             hasCompanyName = true;
             break;
           }
         }
       }
 
-      /// 🔹 If occupation OR company name missing → show banner
+      /// 🔹 Allow recruiter flow, but show banner on recruiter screen
       if (!hasOccupation || !hasCompanyName) {
-        setState(() {
-          showOccupationBanner = true;
-        });
+        await updateRole("recruiter");
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const RecruiterJobView(showOccupationBanner: true),
+          ),
+        );
         return;
       }
 
@@ -221,48 +219,6 @@ class _JobViewState extends State<JobView> {
                 height: MediaQuery.of(context).size.height * 0.8,
                 child: Column(
                   children: [
-                    if (showOccupationBanner)
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: GestureDetector(
-                          onTap: () async {
-                            await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const BusinessInformationPage(
-                                    autoOpenAddSheet: true),
-                              ),
-                            );
-
-                            checkOccupationAndProceed();
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.orange.shade700,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
-                              children: const [
-                                Icon(
-                                  Icons.warning_amber_rounded,
-                                  color: Colors.white,
-                                ),
-                                SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    "Click here to update your Occupation and Business Profile",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
                     if (showEducationBanner)
                       Padding(
                         padding: const EdgeInsets.all(16),

@@ -9,14 +9,21 @@ import 'package:mpm/model/city/CityData.dart';
 import 'package:mpm/repository/BusinessProfileRepo/business_occupation_profile_repository/business_occupation_profile_repo.dart';
 import 'package:mpm/repository/JobPortal/CreateJobRepo/create_job_repository.dart';
 import 'package:mpm/repository/JobPortal/GetJobByMemberIdRepo/get_job_by_member_id_repository.dart';
+import 'package:mpm/repository/JobPortal/GetOccupationByMemberIdRepo/get_occupation_by_member_id_repository.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/view/profile%20view/business_info_page.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 import 'package:share_plus/share_plus.dart';
 
 class RecruiterJobView extends StatefulWidget {
-  const RecruiterJobView({super.key});
+  final bool showOccupationBanner;
+
+  const RecruiterJobView({
+    super.key,
+    this.showOccupationBanner = false,
+  });
 
   @override
   State<RecruiterJobView> createState() => _RecruiterJobViewState();
@@ -25,6 +32,9 @@ class RecruiterJobView extends StatefulWidget {
 class _RecruiterJobViewState extends State<RecruiterJobView> {
   String? selectedJobTitleForMembers;
   bool isRecruiter = false;
+  late bool showOccupationBanner;
+  final GetOccupationByMemberIdRepository occupationRepository =
+      GetOccupationByMemberIdRepository();
   final ImagePicker _picker = ImagePicker();
   File? jobSummaryFile;
   int recruiterTab = 0;
@@ -41,6 +51,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
   final TextEditingController titleController = TextEditingController();
   final TextEditingController companyController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
+  final TextEditingController areaController = TextEditingController();
   final TextEditingController salaryMinController = TextEditingController();
   final TextEditingController salaryMaxController = TextEditingController();
   String salaryVisible = "1";
@@ -61,9 +72,8 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
     'Full-time',
     'Part-time',
     'Internship',
-    'Work From Home',
   ];
-  final List<String> workModes = ['On-site', 'Remote', 'Hybrid'];
+  final List<String> workModes = ['On-site', 'Work From Home', 'Hybrid'];
   final List<String> status = ['Draft', 'Published', 'Closed', 'Archived'];
   List<GetJobByMemberIdData> postedJobs = [];
   String getBusinessName(String? businessId) {
@@ -228,8 +238,10 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
   @override
   void initState() {
     super.initState();
+    showOccupationBanner = widget.showOccupationBanner;
     loadBusinessProfiles();
     loadPostedJobs();
+    _refreshOccupationBanner();
   }
 
   String _getSelectedCityName() {
@@ -246,6 +258,23 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
     return selectedCity?.cityName?.trim() ?? locationController.text.trim();
   }
 
+  bool _shouldShowCompanyNameInput() {
+    if (showOccupationBanner || businessProfiles.isEmpty) return true;
+
+    if (selectedBusinessId == null || selectedBusinessId!.isEmpty) {
+      return !businessProfiles.any(
+        (business) => (business.businessName ?? "").trim().isNotEmpty,
+      );
+    }
+
+    final selectedBusiness = businessProfiles.firstWhereOrNull(
+      (business) =>
+          business.memberBusinessOccupationProfileId == selectedBusinessId,
+    );
+
+    return (selectedBusiness?.businessName ?? "").trim().isEmpty;
+  }
+
   Future<void> _submitJob({int? editIndex}) async {
     final isUpdate = editIndex != null;
     final locationName = _getSelectedCityName();
@@ -253,6 +282,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
     final body = {
       "member_id": profileController.memberId.value,
       "member_business_occupation_profile_id": selectedBusinessId ?? "",
+      "company_name": companyController.text.trim(),
       "title": titleController.text.trim(),
       "description": descriptionController.text.trim(),
       "occupation_id": selectedOccupationId,
@@ -260,8 +290,10 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       "occupation_specialization_id": selectedSpecializationId,
       "location": locationName,
       "city_id": regiController.city_id.value,
-      "salary_min": salaryMinController.text.trim(),
-      "salary_max": salaryMaxController.text.trim(),
+      "area_name":
+          regiController.city_id.value == "2" ? areaController.text.trim() : "",
+      "salary_min": salaryVisible == "1" ? salaryMinController.text.trim() : "",
+      "salary_max": salaryVisible == "1" ? salaryMaxController.text.trim() : "",
       "salary_visible": salaryVisible,
       "experience_min_years": experienceMinController.text.trim(),
       "experience_max_years": experienceMaxController.text.trim(),
@@ -316,6 +348,91 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
     }
   }
 
+  Future<void> _refreshOccupationBanner() async {
+    try {
+      final memberId = profileController.memberId.value;
+      final response =
+          await occupationRepository.getOccupationsByMemberId(memberId);
+
+      final hasOccupation = (response.totalCount ?? 0) > 0;
+      var hasCompanyName = false;
+
+      if (response.data != null && response.data!.isNotEmpty) {
+        for (final occupation in response.data!) {
+          if (occupation.companyName != null &&
+              occupation.companyName.toString().trim().isNotEmpty) {
+            hasCompanyName = true;
+            break;
+          }
+        }
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        showOccupationBanner = !hasOccupation || !hasCompanyName;
+      });
+    } catch (e) {
+      debugPrint("Occupation Banner Check Error: $e");
+    }
+  }
+
+  Future<void> _openOccupationDetails() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const BusinessInformationPage(autoOpenAddSheet: true),
+      ),
+    );
+
+    await profileController.getUserProfile();
+    await loadBusinessProfiles();
+    await _refreshOccupationBanner();
+  }
+
+  Widget _buildOccupationBanner() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: GestureDetector(
+        onTap: _openOccupationDetails,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.orange.shade700,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: const [
+              Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.white,
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  "Click here to update your Occupation and Business Profile",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecruiterBody() {
+    return recruiterTab == 0
+        ? (selectedJobTitleForMembers == null
+            ? _buildPostedJobs()
+            : _buildAppliedMembersForJob(selectedJobTitleForMembers!))
+        : _buildPostJobForm();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -343,11 +460,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
               )
             : null,
       ),
-      body: recruiterTab == 0
-          ? (selectedJobTitleForMembers == null
-              ? _buildPostedJobs()
-              : _buildAppliedMembersForJob(selectedJobTitleForMembers!))
-          : _buildPostJobForm(),
+      body: _buildRecruiterBody(),
       floatingActionButton: recruiterTab == 1
           ? FloatingActionButton(
               backgroundColor:
@@ -610,121 +723,137 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
 
   Widget _buildPostedJobs() {
     if (postedJobs.isEmpty) {
-      return const Center(child: Text("No jobs posted yet"));
+      return Column(
+        children: [
+          if (showOccupationBanner) _buildOccupationBanner(),
+          const Expanded(
+            child: Center(child: Text("No jobs posted yet")),
+          ),
+        ],
+      );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-      itemCount: postedJobs.length,
-      itemBuilder: (context, index) {
-        final job = postedJobs[index];
-
-        String salary = "${job.salaryMin ?? "0"} - ${job.salaryMax ?? "0"}";
-
-        String experience =
-            "${job.experienceMinYears ?? "0"} - ${job.experienceMaxYears ?? "0"} Years";
-
-        int applicantCount =
-            appliedMembers.where((member) => member["job"] == job.title).length;
-
-        int shortlistedCount = appliedMembers
-            .where((member) =>
-                member["job"] == job.title && member["isShortlisted"] == true)
-            .length;
-
-        return GestureDetector(
-          onTap: () {
-            setState(() {
-              selectedJobTitleForMembers = job.title;
-            });
-          },
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 14),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(color: Colors.grey.shade200, blurRadius: 6)
-              ],
+    return Column(
+      children: [
+        if (showOccupationBanner) _buildOccupationBanner(),
+        Expanded(
+          child: ListView.builder(
+            padding: EdgeInsets.fromLTRB(
+              16,
+              showOccupationBanner ? 0 : 16,
+              16,
+              20,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        job.title ?? "",
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            "$applicantCount Applicants",
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.red,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        if (shortlistedCount > 0)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4),
+            itemCount: postedJobs.length,
+            itemBuilder: (context, index) {
+              final job = postedJobs[index];
+
+              String salary =
+                  "${job.salaryMin ?? "0"} - ${job.salaryMax ?? "0"}";
+
+              String experience =
+                  "${job.experienceMinYears ?? "0"} - ${job.experienceMaxYears ?? "0"} Years";
+
+              int applicantCount = appliedMembers
+                  .where((member) => member["job"] == job.title)
+                  .length;
+
+              int shortlistedCount = appliedMembers
+                  .where((member) =>
+                      member["job"] == job.title &&
+                      member["isShortlisted"] == true)
+                  .length;
+
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    selectedJobTitleForMembers = job.title;
+                  });
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 14),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(color: Colors.grey.shade200, blurRadius: 6)
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
                             child: Text(
-                              "$shortlistedCount Shortlisted",
+                              job.title ?? "",
                               style: const TextStyle(
-                                fontSize: 11,
-                                color: Colors.green,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
-                      ],
-                    )
-                  ],
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  "$applicantCount Applicants",
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.red,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              if (shortlistedCount > 0)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    "$shortlistedCount Shortlisted",
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          )
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
+                      const Divider(),
+                      const SizedBox(height: 8),
+                      _infoRow(
+                        "Company",
+                        getBusinessName(job.memberBusinessOccupationProfileId),
+                      ),
+                      const SizedBox(height: 8),
+                      _infoRow("Location", job.location ?? ""),
+                      const SizedBox(height: 8),
+                      _infoRow("Salary", salary),
+                      const SizedBox(height: 8),
+                      _infoRow("Experience", experience),
+                      const SizedBox(height: 8),
+                      _infoRow("Status", job.status ?? ""),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 8),
-
-                const SizedBox(height: 6),
-                const Divider(),
-                const SizedBox(height: 8),
-
-                _infoRow(
-                  "Company",
-                  getBusinessName(job.memberBusinessOccupationProfileId),
-                ),
-                const SizedBox(height: 8),
-
-                _infoRow("Location", job.location ?? ""),
-                const SizedBox(height: 8),
-
-                _infoRow("Salary", salary),
-                const SizedBox(height: 8),
-
-                _infoRow("Experience", experience),
-                const SizedBox(height: 8),
-
-                _infoRow("Status", job.status ?? ""),
-              ],
-            ),
+              );
+            },
           ),
-        );
-      },
+        ),
+      ],
     );
   }
 
@@ -1107,6 +1236,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
     titleController.dispose();
     companyController.dispose();
     locationController.dispose();
+    areaController.dispose();
     salaryMinController.dispose();
     salaryMaxController.dispose();
     descriptionController.dispose();
@@ -1326,6 +1456,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
 
       titleController.text = job.title ?? "";
       locationController.text = job.location ?? "";
+      areaController.clear();
       salaryMinController.text = job.salaryMin ?? "";
       salaryMaxController.text = job.salaryMax ?? "";
       descriptionController.text = job.description ?? "";
@@ -1335,9 +1466,10 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       selectedBusinessId = job.memberBusinessOccupationProfileId ?? "";
 
       final business = businessProfiles.firstWhereOrNull(
-              (b) => b.memberBusinessOccupationProfileId == selectedBusinessId);
+          (b) => b.memberBusinessOccupationProfileId == selectedBusinessId);
 
       selectedBusinessName = business?.businessName;
+      companyController.text = selectedBusinessName ?? "";
 
       selectedOccupationId = job.occupationId ?? "";
 
@@ -1354,6 +1486,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       titleController.clear();
       companyController.clear();
       locationController.clear();
+      areaController.clear();
       salaryMinController.clear();
       salaryMaxController.clear();
       descriptionController.clear();
@@ -1420,8 +1553,8 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                               backgroundColor: ColorHelperClass.getColorFromHex(
                                   ColorResources.red_color),
                               foregroundColor: Colors.white,
-                              padding:
-                              const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 10),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -1445,7 +1578,9 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                       const SizedBox(height: 10),
 
                       Text(
-                        editIndex != null ? "Update Posted Job" : "Post New Job",
+                        editIndex != null
+                            ? "Update Posted Job"
+                            : "Post New Job",
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -1458,11 +1593,17 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                           child: Column(
                             children: [
                               const SizedBox(height: 20),
-                              _buildBusinessDropdown(
-                                label: "Company Name",
-                                selectedValue: selectedBusinessId ?? "",
-                                modalSetState: modalSetState,
-                              ),
+                              if (_shouldShowCompanyNameInput())
+                                _buildTextField(
+                                  "Company Name",
+                                  controller: companyController,
+                                )
+                              else
+                                _buildBusinessDropdown(
+                                  label: "Company Name",
+                                  selectedValue: selectedBusinessId ?? "",
+                                  modalSetState: modalSetState,
+                                ),
                               _buildTextField(
                                 "Job Title",
                                 controller: titleController,
@@ -1472,16 +1613,9 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                                 controller: descriptionController,
                                 maxLines: 3,
                               ),
-                              _buildOccupationDropdown(),
+                              // _buildOccupationDropdown(),
                               _buildCityDropdown(label: "Location"),
-                              _buildTextField(
-                                "Salary Minimum",
-                                controller: salaryMinController,
-                              ),
-                              _buildTextField(
-                                "Salary Maximum",
-                                controller: salaryMaxController,
-                              ),
+                              _buildAreaFieldForSelectedCity(),
                               _buildDropdown(
                                 label: "Salary Visible",
                                 items: const ["Yes", "No"],
@@ -1490,9 +1624,23 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                                 onChanged: (val) {
                                   modalSetState(() {
                                     salaryVisible = val == "Yes" ? "1" : "0";
+                                    if (salaryVisible == "0") {
+                                      salaryMinController.clear();
+                                      salaryMaxController.clear();
+                                    }
                                   });
                                 },
                               ),
+                              if (salaryVisible == "1") ...[
+                                _buildTextField(
+                                  "Salary Minimum",
+                                  controller: salaryMinController,
+                                ),
+                                _buildTextField(
+                                  "Salary Maximum",
+                                  controller: salaryMaxController,
+                                ),
+                              ],
                               _buildTextField(
                                 "Minimum Experience (Years)",
                                 controller: experienceMinController,
@@ -1606,6 +1754,19 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
     );
   }
 
+  Widget _buildAreaFieldForSelectedCity() {
+    return Obx(() {
+      if (regiController.city_id.value != "2") {
+        return const SizedBox.shrink();
+      }
+
+      return _buildTextField(
+        "Area",
+        controller: areaController,
+      );
+    });
+  }
+
   Widget _buildDropdown({
     required String label,
     required List<String> items,
@@ -1704,6 +1865,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                     );
 
                     selectedBusinessName = business.businessName;
+                    companyController.text = business.businessName ?? "";
 
                     if (business.addresses != null &&
                         business.addresses!.isNotEmpty) {
@@ -1719,6 +1881,8 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
 
                         if (city != null) {
                           regiController.setSelectedCity(city.id.toString());
+                          areaController.text =
+                              business.addresses!.first.areaName ?? "";
                         }
                       }
                     }
@@ -1790,6 +1954,9 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
               onChanged: (val) {
                 if (val != null) {
                   regiController.setSelectedCity(val);
+                  if (val != "2") {
+                    areaController.clear();
+                  }
                 }
               },
             ),
