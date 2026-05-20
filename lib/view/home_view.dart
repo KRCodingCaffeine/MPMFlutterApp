@@ -95,6 +95,10 @@ class _HomeViewState extends State<HomeView>
       items.add({'icon': Images.qr_code, 'label': 'QR Scanner'});
     }
 
+    if (memberId == 1 || memberId == 2) {
+      items.add({'icon': Images.event_attendees, 'label': 'Event Attendees'});
+    }
+
     return items;
   }
 
@@ -1156,6 +1160,9 @@ class _HomeViewState extends State<HomeView>
       case "QR Scanner":
       case "QR Code Scanner":
         Navigator.pushNamed(context, RouteNames.qr_code);
+        break;
+      case "Event Attendees":
+        Navigator.pushNamed(context, RouteNames.event_attendees);
         break;
       // case "QR Code Scanner":
       //   _showAttendanceMarkedDialog(context);

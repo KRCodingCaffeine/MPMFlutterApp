@@ -1,8 +1,8 @@
 
 class Urls {
- //static const  String base_url = "https://krcodingcaffeine.com/pragati-mandal-api/";
-  static const  String base_url = "https://members.mumbaimaheshwari.com/api/";
-  //static const  String base_url = "https://members.mumbaimaheshwari.com/staging/api/";
+ // static const  String base_url = "https://krcodingcaffeine.com/pragati-mandal-api/";
+ //  static const  String base_url = "https://members.mumbaimaheshwari.com/api/";
+  static const  String base_url = "https://members.mumbaimaheshwari.com/staging/api/";
   static const  String register_url = base_url+"api/make_new_member";
   static const  String login_url = base_url+"api/login";
   static const  String check_url = base_url+"api/check_lm_code_or_mobile";
@@ -113,6 +113,7 @@ class Urls {
   static const String searchSuggestions_url = base_url+"api/search_suggestions";
   static const String product_categories_url = base_url+"api/product_category";
   static const String product_subcategories_url = base_url+"api/product_subcategory";
+  static const String get_event_attendees_list = base_url+"api/get_event_attendees_list";
 
   //Shiksha Sahayata
   static const String get_shiksha_application_by_id_url = base_url+"api/get_shiksha_application_by_id";

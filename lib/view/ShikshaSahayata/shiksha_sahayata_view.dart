@@ -209,8 +209,7 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        if (loan != null)
-                          _buildLoanStatusBadge(loan.loanStatus),
+                        _buildLoanStatusBadge(loan?.loanStatus),
                       ],
                     ),
                     const Divider(height: 20),
@@ -713,7 +712,7 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
   }
 
   Widget _buildLoanStatusBadge(String? status) {
-    final loanStatus = (status ?? "pending").toLowerCase();
+    final loanStatus = status?.trim().toLowerCase() ?? "";
 
     Color bgColor;
     Color textColor;
@@ -721,6 +720,13 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
     String displayText;
 
     switch (loanStatus) {
+      case "":
+        bgColor = Colors.orange.withOpacity(0.15);
+        textColor = Colors.orange;
+        icon = Icons.assignment_outlined;
+        displayText = "Application Pending";
+        break;
+
       case "sanctioned":
         bgColor = Colors.blue.withOpacity(0.15);
         textColor = Colors.blue;
@@ -750,11 +756,17 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
         break;
 
       case "pending":
-      default:
         bgColor = Colors.orange.withOpacity(0.15);
         textColor = Colors.orange;
         icon = Icons.hourglass_top;
-        displayText = "PENDING";
+        displayText = "Verification Pending";
+        break;
+
+      default:
+        bgColor = Colors.orange.withOpacity(0.15);
+        textColor = Colors.orange;
+        icon = Icons.assignment_outlined;
+        displayText = "Application Pending";
     }
 
     return AnimatedSwitcher(

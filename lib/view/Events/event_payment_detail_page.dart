@@ -1,12 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:mpm/model/GetEventDetailsById/GetEventDetailsByIdData.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/Events/event_view.dart';
-import 'package:path_provider/path_provider.dart';
 
 class EventPaymentDetailPage extends StatelessWidget {
   final GetEventDetailsByIdData eventDetails;
@@ -67,90 +63,6 @@ class EventPaymentDetailPage extends StatelessWidget {
     }
 
     return qrCode.startsWith('http://') || qrCode.startsWith('https://');
-  }
-
-  Future<void> _downloadQr(BuildContext context) async {
-    final qrUrl = eventDetails.eventAmountQrCode?.trim();
-
-    if (qrUrl == null || qrUrl.isEmpty) {
-      _showPremiumSnackBar(
-        context: context,
-        message: 'QR not available',
-        icon: Icons.qr_code_scanner_rounded,
-        color: Colors.orangeAccent,
-      );
-      return;
-    }
-
-    try {
-      final response = await http.get(Uri.parse(qrUrl));
-
-      final dir = await getApplicationDocumentsDirectory();
-      final file = File('${dir.path}/event_qr.png');
-
-      await file.writeAsBytes(response.bodyBytes);
-
-      _showPremiumSnackBar(
-        context: context,
-        message: 'QR downloaded successfully!',
-        icon: Icons.check_circle_outline_rounded,
-        color: const Color(0xFF2ECC71),
-      );
-    } catch (e) {
-      _showPremiumSnackBar(
-        context: context,
-        message: 'Download failed: $e',
-        icon: Icons.error_outline_rounded,
-        color: Colors.redAccent,
-      );
-    }
-  }
-
-  void _showPremiumSnackBar({
-    required BuildContext context,
-    required String message,
-    required IconData icon,
-    required Color color,
-  }) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 3),
-        content: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: [
-              BoxShadow(
-                color: color.withOpacity(0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Icon(icon, color: Colors.white, size: 24),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  message,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   @override
@@ -250,55 +162,30 @@ class EventPaymentDetailPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          GestureDetector(
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              width: 260,
-              padding: const EdgeInsets.all(16),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            width: 260,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFCFAF6),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: const Color(0xFFE8DECF), width: 1.2),
+            ),
+            child: Container(
+              height: 350,
+              width: 220,
               decoration: BoxDecoration(
-                color: const Color(0xFFFCFAF6),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: const Color(0xFFE8DECF), width: 1.2),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(22),
               ),
-              child: Column(
-                children: [
-                  Container(
-                    height: 350,
-                    width: 220,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(22),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: _hasQrImage
-                        ? Image.network(
-                            eventDetails.eventAmountQrCode!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => _buildQrPlaceholder(),
-                          )
-                        : _buildQrPlaceholder(),
-                  ),
-                  const SizedBox(height: 16),
-                  GestureDetector(
-                    onTap: () => _downloadQr(context),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 9),
-                      decoration: BoxDecoration(
-                        color: themeColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        'Click here to download QR Code to pay Rs. $_totalPaymentAmount',
-                        style: TextStyle(
-                          color: themeColor,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              clipBehavior: Clip.antiAlias,
+              child: _hasQrImage
+                  ? Image.network(
+                      eventDetails.eventAmountQrCode!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _buildQrPlaceholder(),
+                    )
+                  : _buildQrPlaceholder(),
             ),
           ),
           const SizedBox(height: 16),

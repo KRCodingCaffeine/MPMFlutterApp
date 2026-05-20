@@ -3,6 +3,7 @@ import 'package:mpm/route/route_name.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/view/BhavanBooking/bhavan_booking_view.dart';
 import 'package:mpm/view/EnquiryForm/add_enquiry_form.dart';
+import 'package:mpm/view/Event%20Attendees/event_attendees_view.dart';
 import 'package:mpm/view/EventTrip/event_trip.dart';
 import 'package:mpm/view/Networking/network_view.dart';
 import 'package:mpm/view/OutsideMumbaiLogin/outside_mumbai_login.dart';
@@ -89,6 +90,8 @@ class RoutePages {
         return _buildRoute(const EventTripPage(), settings);
       case RouteNames.qr_code:
         return _buildRoute(const ScanSelectionScreen(), settings);
+      case RouteNames.event_attendees:
+        return _buildRoute(const EventAttendeesView(), settings);
       case RouteNames.forms:
         return _buildRoute(const FormsDownloadView(), settings);
       case RouteNames.bhavan_booking:
