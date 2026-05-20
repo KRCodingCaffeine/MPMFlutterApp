@@ -67,14 +67,14 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
   String selectedSpecializationId = "";
   String selectedJobType = 'Full-time';
   String selectedWorkMode = 'On-site';
-  String selectedCategoryForPost = 'Published';
+  String selectedCategoryForPost = 'Publish';
   final List<String> jobTypes = [
     'Full-time',
     'Part-time',
     'Internship',
   ];
   final List<String> workModes = ['On-site', 'Work From Home', 'Hybrid'];
-  final List<String> status = ['Draft', 'Published', 'Closed', 'Archived'];
+  final List<String> status = ['Publish', 'Draft'];
   List<GetJobByMemberIdData> postedJobs = [];
   String getBusinessName(String? businessId) {
     if (businessId == null || businessId.isEmpty) return "";
@@ -1505,7 +1505,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
 
       selectedJobType = "Full-time";
       selectedWorkMode = "On-site";
-      selectedCategoryForPost = "Published";
+      selectedCategoryForPost = "Publish";
     }
 
     showModalBottomSheet(
