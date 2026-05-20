@@ -20,10 +20,10 @@ import 'package:mpm/repository/update_food_container_reposiory/update_food_conta
 import 'package:mpm/repository/update_price_distribution_repository/update_price_distribution_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
-import 'package:mpm/view/Events/event_view.dart';
 import 'package:mpm/view/Events/member_registered_event.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 import 'package:mpm/utils/Session.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 Future<Size> _getImageSize(String imageUrl) async {
   final Completer<Size> completer = Completer();
@@ -110,6 +110,44 @@ class _RegisteredEventsDetailPageState
     final attendeeQr = widget.eventAttendee.eventQrCode;
     return (attendeeQr == null || attendeeQr.isEmpty) &&
         (_eventDetails?.eventAmountQrCode?.isNotEmpty ?? false);
+  }
+
+  Uri? get _gPayUri {
+    final upiCode = _eventDetails?.eventUPICode?.trim();
+    if (upiCode == null || upiCode.isEmpty) {
+      return null;
+    }
+
+    if (upiCode.startsWith('upi://') || upiCode.startsWith('tez://')) {
+      return Uri.tryParse(upiCode);
+    }
+
+    final eventAmount = _eventDetails?.eventAmount?.trim() ??
+        widget.eventAttendee.event?.eventAmount?.trim();
+
+    return Uri(
+      scheme: 'tez',
+      host: 'upi',
+      path: 'pay',
+      queryParameters: {
+        'pa': upiCode,
+        'pn': _eventName,
+        if (eventAmount != null && eventAmount.isNotEmpty) 'am': eventAmount,
+        'cu': 'INR',
+      },
+    );
+  }
+
+  Future<void> _openGPay() async {
+    final uri = _gPayUri;
+    if (uri == null) {
+      _showErrorSnackbar('UPI code not available');
+      return;
+    }
+
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      _showErrorSnackbar('Could not open Google Pay');
+    }
   }
 
   final TextEditingController studentNameController = TextEditingController();
@@ -223,7 +261,6 @@ class _RegisteredEventsDetailPageState
 
     if (widget.eventAttendee.familyMembers != null &&
         widget.eventAttendee.familyMembers!.isNotEmpty) {
-
       final familyNames = widget.eventAttendee.familyMembers!
           .where((m) => m.fullName != null && m.fullName!.trim().isNotEmpty)
           .map((m) => m.fullName!.trim())
@@ -342,13 +379,6 @@ class _RegisteredEventsDetailPageState
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.green),
     );
-
-    Future.delayed(const Duration(seconds: 1), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => EventsPage()),
-      );
-    });
   }
 
   void _showErrorSnackbar(String message) {
@@ -1139,30 +1169,7 @@ class _RegisteredEventsDetailPageState
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           GestureDetector(
-                            onTap: () {
-                              showDialog(
-                                context: context,
-                                builder: (_) => Dialog(
-                                  backgroundColor: Colors.black,
-                                  insetPadding: const EdgeInsets.all(10),
-                                  child: InteractiveViewer(
-                                    panEnabled: true,
-                                    boundaryMargin: const EdgeInsets.all(20),
-                                    minScale: 0.5,
-                                    maxScale: 4.0,
-                                    child: Image.network(
-                                      _displayQrCode!,
-                                      fit: BoxFit.contain,
-                                      errorBuilder: (_, __, ___) =>
-                                          const Center(
-                                        child: Icon(Icons.broken_image,
-                                            color: Colors.white),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
+                            onTap: _openGPay,
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               child: Image.network(
@@ -1234,7 +1241,8 @@ class _RegisteredEventsDetailPageState
                                   ElevatedButton(
                                     onPressed: () async {
                                       int? eventAttendeesId = int.tryParse(
-                                          widget.eventAttendee.eventAttendeesId ??
+                                          widget.eventAttendee
+                                                  .eventAttendeesId ??
                                               '');
 
                                       if (eventAttendeesId != null) {

@@ -7,6 +7,8 @@ import 'package:mpm/model/DashBoardEvents/DashBoardEventsData.dart';
 import 'package:mpm/model/GetEventsList/GetEventsListData.dart';
 import 'package:mpm/model/Offer/OfferData.dart';
 import 'package:mpm/model/OfferSubcategory/OfferSubcatData.dart';
+import 'package:mpm/model/AdminAccess/AdminAccessModelClass.dart';
+import 'package:mpm/repository/admin_access_repository/admin_access_repo.dart';
 import 'package:mpm/repository/dashboard_events_repository/dashboard_events_repo.dart';
 import 'package:mpm/repository/qr_code_scanner_repository/qr_code_scanner_repo.dart';
 import 'package:mpm/route/route_name.dart';
@@ -48,13 +50,15 @@ class _HomeViewState extends State<HomeView>
   Offset? _gridTapDownPosition;
 
   final double _cardWidth = 360.0;
-  static const double _gridItemWidth = 95 + 12; // mainAxisExtent + mainAxisSpacing
+  static const double _gridItemWidth =
+      95 + 12; // mainAxisExtent + mainAxisSpacing
   static const double _gridPaddingHorizontal = 14;
 
   /// True when running on tablet/iPad (shortest side >= 600).
   static bool _isTablet(BuildContext context) {
     return MediaQuery.sizeOf(context).shortestSide >= 600;
   }
+
   final double _cardSpacing = 16.0;
   late Timer _timer;
   double screenWidth = 0.0;
@@ -71,6 +75,7 @@ class _HomeViewState extends State<HomeView>
 
   List<DashboardEventData> dashboardEvents = [];
   int? memberId;
+  bool _canViewEventAttendees = false;
   List<Map<String, dynamic>> get gridItems {
     final items = [
       {'icon': Images.user, 'label': 'My Profile'},
@@ -95,7 +100,7 @@ class _HomeViewState extends State<HomeView>
       items.add({'icon': Images.qr_code, 'label': 'QR Scanner'});
     }
 
-    if (memberId == 1 || memberId == 2) {
+    if (_canViewEventAttendees) {
       items.add({'icon': Images.event_attendees, 'label': 'Event Attendees'});
     }
 
@@ -170,6 +175,7 @@ class _HomeViewState extends State<HomeView>
       memberId = int.tryParse(controller.memberId.value);
       if (memberId != null && memberId! > 0) {
         fetchDashboardEvents(memberId!);
+        fetchAdminAccess(memberId!.toString());
       } else {
         debugPrint("Invalid or missing member ID.");
       }
@@ -244,6 +250,40 @@ class _HomeViewState extends State<HomeView>
     } catch (e) {
       debugPrint("Dashboard events fetch error: $e");
     }
+  }
+
+  Future<void> fetchAdminAccess(String memberId) async {
+    try {
+      final response = await AdminAccessRepository().fetchAdminAccess(memberId);
+      final adminAccess = AdminAccessModelClass.fromJson(response);
+
+      if (!mounted) return;
+
+      setState(() {
+        _canViewEventAttendees = adminAccess.status == true &&
+            (adminAccess.data ?? []).any((access) {
+              final hasAccessId = access.adminAccessId != null &&
+                  access.adminAccessId!.isNotEmpty;
+              final isActive = access.status == null ||
+                  access.status == '1' ||
+                  access.status?.toLowerCase() == 'active';
+              final moduleKey = _normalizeAdminAccessValue(access.moduleKey);
+              final moduleName = _normalizeAdminAccessValue(access.moduleName);
+
+              return hasAccessId &&
+                  isActive &&
+                  (moduleKey == 'eventattendees' ||
+                      moduleKey == 'eventattendee' ||
+                      moduleName == 'eventattendees');
+            });
+      });
+    } catch (e) {
+      debugPrint("Admin access fetch error: $e");
+    }
+  }
+
+  String _normalizeAdminAccessValue(String? value) {
+    return (value ?? '').toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
   }
 
   @override
@@ -329,7 +369,8 @@ class _HomeViewState extends State<HomeView>
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         child: Theme(
                           data: Theme.of(context).copyWith(
-                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
                           ),
                           child: SizedBox(
                             height: gridHeight,
@@ -340,7 +381,8 @@ class _HomeViewState extends State<HomeView>
                                   height: 32,
                                   child: (_showLeftArrow || _showRightArrow)
                                       ? Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 14),
                                           child: Row(
                                             children: [
                                               if (_showLeftArrow)
@@ -348,21 +390,30 @@ class _HomeViewState extends State<HomeView>
                                                   width: 26,
                                                   height: 26,
                                                   child: _buildSmallTopArrow(
-                                                    icon: Icons.keyboard_arrow_left,
+                                                    icon: Icons
+                                                        .keyboard_arrow_left,
                                                     onTap: () {
-                                                      _gridScrollController.animateTo(
-                                                        _gridScrollController.offset - 200,
-                                                        duration: const Duration(milliseconds: 400),
+                                                      _gridScrollController
+                                                          .animateTo(
+                                                        _gridScrollController
+                                                                .offset -
+                                                            200,
+                                                        duration:
+                                                            const Duration(
+                                                                milliseconds:
+                                                                    400),
                                                         curve: Curves.easeInOut,
                                                       );
                                                     },
                                                   ),
                                                 )
                                               else
-                                                const SizedBox(width: 26, height: 26),
+                                                const SizedBox(
+                                                    width: 26, height: 26),
                                               Expanded(
                                                 child: IgnorePointer(
-                                                  child: const SizedBox(height: 26),
+                                                  child: const SizedBox(
+                                                      height: 26),
                                                 ),
                                               ),
                                               if (_showRightArrow)
@@ -370,18 +421,26 @@ class _HomeViewState extends State<HomeView>
                                                   width: 26,
                                                   height: 26,
                                                   child: _buildSmallTopArrow(
-                                                    icon: Icons.keyboard_arrow_right,
+                                                    icon: Icons
+                                                        .keyboard_arrow_right,
                                                     onTap: () {
-                                                      _gridScrollController.animateTo(
-                                                        _gridScrollController.offset + 200,
-                                                        duration: const Duration(milliseconds: 400),
+                                                      _gridScrollController
+                                                          .animateTo(
+                                                        _gridScrollController
+                                                                .offset +
+                                                            200,
+                                                        duration:
+                                                            const Duration(
+                                                                milliseconds:
+                                                                    400),
                                                         curve: Curves.easeInOut,
                                                       );
                                                     },
                                                   ),
                                                 )
                                               else
-                                                const SizedBox(width: 26, height: 26),
+                                                const SizedBox(
+                                                    width: 26, height: 26),
                                             ],
                                           ),
                                         )
@@ -396,28 +455,39 @@ class _HomeViewState extends State<HomeView>
                                     },
                                     onPointerUp: (event) {
                                       if (_gridTapDownPosition == null) return;
-                                      final delta = event.position - _gridTapDownPosition!;
+                                      final delta = event.position -
+                                          _gridTapDownPosition!;
                                       if (delta.distance > 18) {
                                         _gridTapDownPosition = null;
                                         return;
                                       }
                                       _gridTapDownPosition = null;
-                                      final box = _gridTapKey.currentContext?.findRenderObject() as RenderBox?;
+                                      final box = _gridTapKey.currentContext
+                                          ?.findRenderObject() as RenderBox?;
                                       if (box == null || !box.hasSize) return;
-                                      final local = box.globalToLocal(event.position);
-                                      final scrollOffset = _gridScrollController.hasClients
-                                          ? _gridScrollController.offset
-                                          : 0.0;
-                                      final contentX = scrollOffset + local.dx - _gridPaddingHorizontal;
+                                      final local =
+                                          box.globalToLocal(event.position);
+                                      final scrollOffset =
+                                          _gridScrollController.hasClients
+                                              ? _gridScrollController.offset
+                                              : 0.0;
+                                      final contentX = scrollOffset +
+                                          local.dx -
+                                          _gridPaddingHorizontal;
                                       if (contentX < 0 || local.dy < 0) return;
-                                      final col = (contentX / _gridItemWidth).floor();
+                                      final col =
+                                          (contentX / _gridItemWidth).floor();
                                       // crossAxisCount: 2, crossAxisSpacing: 12 → row height = (height - 12) / 2
-                                      final rowHeight = (box.size.height - 12) / 2;
-                                      final row = (local.dy / rowHeight).floor();
+                                      final rowHeight =
+                                          (box.size.height - 12) / 2;
+                                      final row =
+                                          (local.dy / rowHeight).floor();
                                       if (row < 0 || row > 1) return;
                                       final index = col * 2 + row;
-                                      if (index >= 0 && index < gridItems.length) {
-                                        _handleGridItemClick(gridItems[index]['label'] as String);
+                                      if (index >= 0 &&
+                                          index < gridItems.length) {
+                                        _handleGridItemClick(gridItems[index]
+                                            ['label'] as String);
                                       }
                                     },
                                     onPointerCancel: (_) {
@@ -426,7 +496,8 @@ class _HomeViewState extends State<HomeView>
                                     child: NotificationListener<
                                         ScrollEndNotification>(
                                       onNotification: (notification) {
-                                        if (!_gridScrollController.hasClients) return false;
+                                        if (!_gridScrollController.hasClients)
+                                          return false;
                                         final double itemWidth = 95 + 12;
                                         final double currentOffset =
                                             _gridScrollController.offset;
@@ -437,166 +508,214 @@ class _HomeViewState extends State<HomeView>
                                         final double target = page * itemWidth;
 
                                         // Only animate if we need to snap (prevents stack overflow from re-triggering)
-                                        if ((target - currentOffset).abs() > 2) {
+                                        if ((target - currentOffset).abs() >
+                                            2) {
                                           _gridScrollController.animateTo(
                                             target,
-                                            duration:
-                                                const Duration(milliseconds: 300),
+                                            duration: const Duration(
+                                                milliseconds: 300),
                                             curve: Curves.easeOut,
                                           );
                                         }
 
                                         return true;
                                       },
-                                      child: NotificationListener<ScrollNotification>(
+                                      child: NotificationListener<
+                                          ScrollNotification>(
                                         onNotification: (notification) {
-                                          if (!_gridScrollController.hasClients) return false;
+                                          if (!_gridScrollController.hasClients)
+                                            return false;
 
-                                          if (notification is ScrollUpdateNotification ||
-                                              notification is ScrollEndNotification) {
+                                          if (notification
+                                                  is ScrollUpdateNotification ||
+                                              notification
+                                                  is ScrollEndNotification) {
                                             _updateArrowsFromScrollPosition();
                                           }
 
                                           return false;
                                         },
                                         child: GridView.builder(
-                                      controller: _gridScrollController,
-                                      physics: const BouncingScrollPhysics(),
-                                      scrollDirection: Axis.horizontal,
-                                      itemCount: gridItems.length,
-                                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                                      gridDelegate:
-                                          const SliverGridDelegateWithFixedCrossAxisCount(
+                                          controller: _gridScrollController,
+                                          physics:
+                                              const BouncingScrollPhysics(),
+                                          scrollDirection: Axis.horizontal,
+                                          itemCount: gridItems.length,
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 14),
+                                          gridDelegate:
+                                              const SliverGridDelegateWithFixedCrossAxisCount(
                                             crossAxisCount: 2,
                                             mainAxisSpacing: 12,
                                             crossAxisSpacing: 12,
                                             mainAxisExtent: 95,
                                           ),
-                                      itemBuilder: (context, index) {
-                                        final item = gridItems[index];
-                                        final screenWidth = MediaQuery.of(context).size.width;
-                                        final isTablet = _isTablet(context);
-                                        // Clamp sizes on tablet to prevent overflow (BOTTOM OVERFLOWED)
-                                        final iconSize = isTablet
-                                            ? 36.0
-                                            : (screenWidth * 0.06).clamp(24.0, 36.0);
-                                        final fontSize = isTablet
-                                            ? 12.0
-                                            : (screenWidth * 0.03).clamp(10.0, 14.0);
-                                        final label = item['label'] as String;
+                                          itemBuilder: (context, index) {
+                                            final item = gridItems[index];
+                                            final screenWidth =
+                                                MediaQuery.of(context)
+                                                    .size
+                                                    .width;
+                                            final isTablet = _isTablet(context);
+                                            // Clamp sizes on tablet to prevent overflow (BOTTOM OVERFLOWED)
+                                            final iconSize = isTablet
+                                                ? 36.0
+                                                : (screenWidth * 0.06)
+                                                    .clamp(24.0, 36.0);
+                                            final fontSize = isTablet
+                                                ? 12.0
+                                                : (screenWidth * 0.03)
+                                                    .clamp(10.0, 14.0);
+                                            final label =
+                                                item['label'] as String;
 
-                                        return Material(
-                                          color: Colors.transparent,
-                                          child: InkWell(
-                                            // Tap is handled by the Listener above (onPointerUp) to avoid gesture conflict with parent scroll.
-                                            // Do not add onTap here or the same screen will be pushed twice (back would show same screen again).
-                                            onTap: () {},
-                                            borderRadius: BorderRadius.circular(12),
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                borderRadius: BorderRadius.circular(12),
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: Colors.black.withOpacity(0.08),
-                                                    blurRadius: 6,
-                                                    offset: const Offset(0, 3),
+                                            return Material(
+                                              color: Colors.transparent,
+                                              child: InkWell(
+                                                // Tap is handled by the Listener above (onPointerUp) to avoid gesture conflict with parent scroll.
+                                                // Do not add onTap here or the same screen will be pushed twice (back would show same screen again).
+                                                onTap: () {},
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            12),
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: Colors.black
+                                                            .withOpacity(0.08),
+                                                        blurRadius: 6,
+                                                        offset:
+                                                            const Offset(0, 3),
+                                                      ),
+                                                    ],
                                                   ),
-                                                ],
-                                              ),
-                                              clipBehavior: Clip.none,
-                                              child: Column(
-                                                mainAxisAlignment: MainAxisAlignment.center,
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  SizedBox(
-                                                    width: iconSize + 20,
-                                                    height: iconSize + 12,
-                                                    child: _labelCanShowBadge(label)
-                                                        ? Obx(() {
-                                                            final count = _getUnreadCountForLabel(label);
-                                                            return Stack(
-                                                              clipBehavior: Clip.none,
-                                                              alignment: Alignment.center,
-                                                              children: [
-                                                                SvgPicture.asset(
-                                                                  item['icon'],
-                                                                  height: iconSize,
-                                                                  width: iconSize,
-                                                                ),
-                                                                if (count > 0)
-                                                                  Positioned(
-                                                                    right: -4,
-                                                                    top: -4,
-                                                                    child: Container(
-                                                                      padding: const EdgeInsets.symmetric(
-                                                                        horizontal: 4,
-                                                                        vertical: 2,
-                                                                      ),
-                                                                      decoration: BoxDecoration(
-                                                                        color: Colors.red,
-                                                                        borderRadius: BorderRadius.circular(10),
-                                                                      ),
-                                                                      constraints: const BoxConstraints(
-                                                                        minWidth: 16,
-                                                                        minHeight: 16,
-                                                                      ),
-                                                                      child: Center(
-                                                                        child: Text(
-                                                                          count > 99 ? '99+' : '$count',
-                                                                          style: const TextStyle(
-                                                                            color: Colors.white,
-                                                                            fontSize: 9,
-                                                                            fontWeight: FontWeight.bold,
-                                                                          ),
+                                                  clipBehavior: Clip.none,
+                                                  child: Column(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      SizedBox(
+                                                        width: iconSize + 20,
+                                                        height: iconSize + 12,
+                                                        child:
+                                                            _labelCanShowBadge(
+                                                                    label)
+                                                                ? Obx(() {
+                                                                    final count =
+                                                                        _getUnreadCountForLabel(
+                                                                            label);
+                                                                    return Stack(
+                                                                      clipBehavior:
+                                                                          Clip.none,
+                                                                      alignment:
+                                                                          Alignment
+                                                                              .center,
+                                                                      children: [
+                                                                        SvgPicture
+                                                                            .asset(
+                                                                          item[
+                                                                              'icon'],
+                                                                          height:
+                                                                              iconSize,
+                                                                          width:
+                                                                              iconSize,
                                                                         ),
+                                                                        if (count >
+                                                                            0)
+                                                                          Positioned(
+                                                                            right:
+                                                                                -4,
+                                                                            top:
+                                                                                -4,
+                                                                            child:
+                                                                                Container(
+                                                                              padding: const EdgeInsets.symmetric(
+                                                                                horizontal: 4,
+                                                                                vertical: 2,
+                                                                              ),
+                                                                              decoration: BoxDecoration(
+                                                                                color: Colors.red,
+                                                                                borderRadius: BorderRadius.circular(10),
+                                                                              ),
+                                                                              constraints: const BoxConstraints(
+                                                                                minWidth: 16,
+                                                                                minHeight: 16,
+                                                                              ),
+                                                                              child: Center(
+                                                                                child: Text(
+                                                                                  count > 99 ? '99+' : '$count',
+                                                                                  style: const TextStyle(
+                                                                                    color: Colors.white,
+                                                                                    fontSize: 9,
+                                                                                    fontWeight: FontWeight.bold,
+                                                                                  ),
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                      ],
+                                                                    );
+                                                                  })
+                                                                : Stack(
+                                                                    clipBehavior:
+                                                                        Clip.none,
+                                                                    alignment:
+                                                                        Alignment
+                                                                            .center,
+                                                                    children: [
+                                                                      SvgPicture
+                                                                          .asset(
+                                                                        item[
+                                                                            'icon'],
+                                                                        height:
+                                                                            iconSize,
+                                                                        width:
+                                                                            iconSize,
                                                                       ),
-                                                                    ),
+                                                                    ],
                                                                   ),
-                                                              ],
-                                                            );
-                                                          })
-                                                        : Stack(
-                                                            clipBehavior: Clip.none,
-                                                            alignment: Alignment.center,
-                                                            children: [
-                                                              SvgPicture.asset(
-                                                                item['icon'],
-                                                                height: iconSize,
-                                                                width: iconSize,
-                                                              ),
-                                                            ],
-                                                          ),
+                                                      ),
+                                                      const SizedBox(height: 6),
+                                                      Text(
+                                                        label,
+                                                        style: TextStyle(
+                                                          fontSize: fontSize,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color: ColorHelperClass
+                                                              .getColorFromHex(
+                                                                  ColorResources
+                                                                      .red_color),
+                                                        ),
+                                                        textAlign:
+                                                            TextAlign.center,
+                                                        maxLines: 2,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    ],
                                                   ),
-                                                  const SizedBox(height: 6),
-                                                  Text(
-                                                    label,
-                                                    style: TextStyle(
-                                                      fontSize: fontSize,
-                                                      fontWeight: FontWeight.w600,
-                                                      color: ColorHelperClass.getColorFromHex(
-                                                          ColorResources.red_color),
-                                                    ),
-                                                    textAlign: TextAlign.center,
-                                                    maxLines: 2,
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                ],
+                                                ),
                                               ),
-                                            ),
-                                          ),
-                                        );
-                                      },
+                                            );
+                                          },
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
-                  ),
 
                       // Banner card
                       Obx(() {
@@ -1319,12 +1438,9 @@ class _HomeViewState extends State<HomeView>
         ? (rawImageSize > listHeight * 0.85 ? listHeight * 0.85 : rawImageSize)
         : rawImageSize;
     // Clamp font sizes on tablet to prevent BOTTOM OVERFLOWED
-    final fontSize = isTablet
-        ? 16.0
-        : (screenWidth * 0.047).clamp(14.0, 18.0);
-    final smallFontSize = isTablet
-        ? 12.0
-        : (screenWidth * 0.03).clamp(10.0, 14.0);
+    final fontSize = isTablet ? 16.0 : (screenWidth * 0.047).clamp(14.0, 18.0);
+    final smallFontSize =
+        isTablet ? 12.0 : (screenWidth * 0.03).clamp(10.0, 14.0);
 
     Widget? dateTag;
     if (event.date != null && event.date!.isNotEmpty) {

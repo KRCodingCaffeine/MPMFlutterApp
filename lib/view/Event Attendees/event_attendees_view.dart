@@ -3,9 +3,12 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:mpm/model/EventAttendees/EventAttendeesData.dart';
 import 'package:mpm/model/EventAttendees/EventAttendeesModelClass.dart';
+import 'package:mpm/model/EventRegistrationConfirmation/EventRegistrationConfirmationData.dart';
+import 'package:mpm/model/EventRegistrationConfirmation/EventRegistrationConfirmationModelClass.dart';
 import 'package:mpm/model/GetEventsList/GetEventsListData.dart';
 import 'package:mpm/model/GetEventsList/GetEventsListModelClass.dart';
 import 'package:mpm/repository/event_attendees_repository/event_attendees_repo.dart';
+import 'package:mpm/repository/event_registration_confirmation_repository/event_registration_confirmation_repo.dart';
 import 'package:mpm/repository/get_events_list_repository/get_events_list_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
@@ -24,7 +27,10 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
   final EventRepository _eventRepository = EventRepository();
   final EventAttendeesRepository _attendeesRepository =
       EventAttendeesRepository();
+  final EventRegistrationConfirmationRepository _confirmationRepository =
+      EventRegistrationConfirmationRepository();
   final Set<String> _approvedAttendeeIds = {};
+  final Set<String> _approvingAttendeeIds = {};
 
   Future<EventAttendeesModelClass>? _attendeesFuture;
   Future<void>? _eventsFuture;
@@ -192,6 +198,57 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
     await _eventsFuture;
   }
 
+  Future<void> _approveAttendee(EventAttendeesData attendee) async {
+    final attendeeId = attendee.eventAttendeesId;
+    if (attendeeId == null || attendeeId.isEmpty) {
+      _showSnackBar('Attendee ID not available', isSuccess: false);
+      return;
+    }
+
+    setState(() {
+      _approvingAttendeeIds.add(attendeeId);
+    });
+
+    try {
+      final response = await _confirmationRepository.confirmEventRegistration(
+        EventRegistrationConfirmationData(attendeeId: attendeeId),
+      );
+      final confirmation =
+          EventRegistrationConfirmationModelClass.fromJson(response);
+
+      if (confirmation.status == true) {
+        setState(() {
+          attendee.confirmationStatus = '1';
+          _approvedAttendeeIds.add(
+            confirmation.data?.attendeeId ?? attendeeId,
+          );
+        });
+        _showSnackBar('The Member Approved for this event successfully');
+      } else {
+        _showSnackBar(
+          confirmation.message ?? 'Failed to approve this member for the event',
+          isSuccess: false,
+        );
+      }
+    } catch (e) {
+      _showSnackBar('Error approving registration: $e', isSuccess: false);
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _approvingAttendeeIds.remove(attendeeId);
+      });
+    }
+  }
+
+  void _showSnackBar(String message, {bool isSuccess = true}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isSuccess ? Colors.green : Colors.red,
+      ),
+    );
+  }
+
   void _openAttendees(EventData event) {
     final eventId = event.eventId;
     if (eventId == null || eventId.isEmpty) return;
@@ -200,6 +257,7 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
       _eventId = eventId;
       _selectedEvent = event;
       _approvedAttendeeIds.clear();
+      _approvingAttendeeIds.clear();
       _attendeesFuture = _fetchEventAttendees();
     });
   }
@@ -210,6 +268,7 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
       _selectedEvent = null;
       _attendeesFuture = null;
       _approvedAttendeeIds.clear();
+      _approvingAttendeeIds.clear();
     });
   }
 
@@ -541,6 +600,9 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
     final mobileNumber = _valueOrDash(attendee.mobile);
     final email = _valueOrDash(attendee.email);
     final isApproved = _isApproved(attendee);
+    final attendeeId = attendee.eventAttendeesId;
+    final isApproving =
+        attendeeId != null && _approvingAttendeeIds.contains(attendeeId);
 
     return Container(
       decoration: BoxDecoration(
@@ -614,25 +676,29 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
             width: double.infinity,
             height: 42,
             child: ElevatedButton.icon(
-              onPressed: isApproved
+              onPressed: isApproved || isApproving
                   ? null
-                  : () {
-                      setState(() {
-                        _approvedAttendeeIds.add(
-                          attendee.eventAttendeesId ?? attendeesCode,
-                        );
-                      });
-                    },
-              icon: Icon(
-                isApproved
-                    ? Icons.check_circle_outline
-                    : Icons.verified_outlined,
-                size: 18,
-              ),
+                  : () => _approveAttendee(attendee),
+              icon: isApproving
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Icon(
+                      isApproved
+                          ? Icons.check_circle_outline
+                          : Icons.verified_outlined,
+                      size: 18,
+                    ),
               label: Text(isApproved ? 'Approved' : 'Approve'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: _brandColor,
-                disabledBackgroundColor: Colors.green,
+                backgroundColor: isApproved ? Colors.green : _brandColor,
+                disabledBackgroundColor:
+                    isApproved ? Colors.green : _brandColor,
                 foregroundColor: Colors.white,
                 disabledForegroundColor: Colors.white,
                 shape: RoundedRectangleBorder(

@@ -3,6 +3,7 @@ import 'package:mpm/model/GetEventDetailsById/GetEventDetailsByIdData.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/Events/event_view.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class EventPaymentDetailPage extends StatelessWidget {
   final GetEventDetailsByIdData eventDetails;
@@ -63,6 +64,47 @@ class EventPaymentDetailPage extends StatelessWidget {
     }
 
     return qrCode.startsWith('http://') || qrCode.startsWith('https://');
+  }
+
+  Uri? get _gPayUri {
+    final upiCode = eventDetails.eventUPICode?.trim();
+    if (upiCode == null || upiCode.isEmpty) {
+      return null;
+    }
+
+    if (upiCode.startsWith('upi://') || upiCode.startsWith('tez://')) {
+      return Uri.tryParse(upiCode);
+    }
+
+    return Uri(
+      scheme: 'tez',
+      host: 'upi',
+      path: 'pay',
+      queryParameters: {
+        'pa': upiCode,
+        'pn': eventDetails.eventName?.trim().isNotEmpty == true
+            ? eventDetails.eventName!.trim()
+            : 'Event Payment',
+        if (_totalPaymentAmount > 0) 'am': _totalPaymentAmount.toString(),
+        'cu': 'INR',
+      },
+    );
+  }
+
+  Future<void> _openGPay(BuildContext context) async {
+    final uri = _gPayUri;
+    if (uri == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('UPI code not available')),
+      );
+      return;
+    }
+
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open Google Pay')),
+      );
+    }
   }
 
   @override
@@ -128,7 +170,7 @@ class EventPaymentDetailPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 22,
             offset: const Offset(0, 10),
           ),
@@ -179,13 +221,16 @@ class EventPaymentDetailPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(22),
               ),
               clipBehavior: Clip.antiAlias,
-              child: _hasQrImage
-                  ? Image.network(
-                      eventDetails.eventAmountQrCode!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _buildQrPlaceholder(),
-                    )
-                  : _buildQrPlaceholder(),
+              child: InkWell(
+                onTap: () => _openGPay(context),
+                child: _hasQrImage
+                    ? Image.network(
+                        eventDetails.eventAmountQrCode!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _buildQrPlaceholder(),
+                      )
+                    : _buildQrPlaceholder(),
+              ),
             ),
           ),
           const SizedBox(height: 16),

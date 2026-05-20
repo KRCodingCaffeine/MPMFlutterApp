@@ -2,13 +2,9 @@ import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/model/EventRegesitration/EventRegistrationData.dart';
 import 'package:mpm/model/GetEventDetailsById/GetEventDetailsByIdData.dart';
-import 'package:mpm/model/GetEventsList/EventDateTimeData.dart';
-import 'package:mpm/model/GetEventsList/GetEventsListData.dart';
 import 'package:mpm/model/GetProfile/FamilyMembersData.dart';
 import 'package:mpm/repository/event_register_repository/event_register_repo.dart';
 import 'package:mpm/repository/get_member_registered_events_repository/get_member_registered_events_repo.dart';
@@ -17,17 +13,12 @@ import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:dio/dio.dart';
 import 'package:mpm/view/Events/event_prize_page.dart';
-import 'package:mpm/view/Events/event_view.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:mpm/utils/Session.dart';
-import 'package:url_launcher/url_launcher.dart' show canLaunchUrl, launchUrl;
-import 'package:url_launcher/url_launcher.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 import 'package:mpm/view/Events/YouTubeBottomSheet.dart';
-import 'package:mpm/view/Events/event_payment_detail_page.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
 class EventDetailPage extends StatefulWidget {
@@ -1060,9 +1051,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
           ),
           actions: [
             ElevatedButton(
-              onPressed: () async {
+              onPressed: () {
                 Navigator.of(context).pop();
-                await _handlePostRegistrationSuccess();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
@@ -1132,33 +1122,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
         );
       },
     );
-  }
-
-  void _redirectToEventsList() {
-    Navigator.of(context).popUntil((route) => route.isFirst);
-  }
-
-  Future<void> _handlePostRegistrationSuccess() async {
-    if (!mounted || _eventDetails == null) return;
-
-    if (_hasPaymentDetails()) {
-      final selectedMemberCount = _selectedFamilyMemberIds.isEmpty
-          ? 1
-          : _selectedFamilyMemberIds.length;
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => EventPaymentDetailPage(
-            eventDetails: _eventDetails!,
-            selectedMemberCount: selectedMemberCount,
-            selectedFoodBoxCount: _foodBoxCount,
-          ),
-        ),
-      );
-      return;
-    }
-
-    _redirectToEventsList();
   }
 
   Widget _buildEventInfoList() {
@@ -1328,15 +1291,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
         ),
       ),
     );
-  }
-
-  bool _isPaidEvent() {
-    final costType = _eventDetails?.eventCostType?.trim().toLowerCase();
-    return costType != null && costType.isNotEmpty && costType != 'free';
-  }
-
-  bool _hasPaymentDetails() {
-    return _isPaidEvent();
   }
 
   Future<void> _handleRegisterButtonTap() async {
