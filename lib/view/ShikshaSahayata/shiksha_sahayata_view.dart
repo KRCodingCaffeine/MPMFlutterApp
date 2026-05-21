@@ -117,8 +117,8 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
                   ? _buildAppliedView()
                   : SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      child: SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.8,
+                      padding: const EdgeInsets.all(16),
+                      child: Center(
                         child: _buildApplyCard(),
                       ),
                     ),
@@ -209,8 +209,7 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        if (loan != null)
-                          _buildLoanStatusBadge(loan.loanStatus),
+                        _buildLoanStatusBadge(loan?.loanStatus),
                       ],
                     ),
                     const Divider(height: 20),
@@ -713,7 +712,7 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
   }
 
   Widget _buildLoanStatusBadge(String? status) {
-    final loanStatus = (status ?? "pending").toLowerCase();
+    final loanStatus = status?.trim().toLowerCase() ?? "";
 
     Color bgColor;
     Color textColor;
@@ -721,6 +720,13 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
     String displayText;
 
     switch (loanStatus) {
+      case "":
+        bgColor = Colors.orange.withOpacity(0.15);
+        textColor = Colors.orange;
+        icon = Icons.assignment_outlined;
+        displayText = "Application Pending";
+        break;
+
       case "sanctioned":
         bgColor = Colors.blue.withOpacity(0.15);
         textColor = Colors.blue;
@@ -750,11 +756,17 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
         break;
 
       case "pending":
-      default:
         bgColor = Colors.orange.withOpacity(0.15);
         textColor = Colors.orange;
         icon = Icons.hourglass_top;
-        displayText = "PENDING";
+        displayText = "Verification Pending";
+        break;
+
+      default:
+        bgColor = Colors.orange.withOpacity(0.15);
+        textColor = Colors.orange;
+        icon = Icons.assignment_outlined;
+        displayText = "Application Pending";
     }
 
     return AnimatedSwitcher(
@@ -1121,68 +1133,76 @@ class _ShikshaSahayataViewState extends State<ShikshaSahayataView> {
   // ================= APPLY CARD =================
 
   Widget _buildApplyCard() {
-    return Center(
-      child: SizedBox(
-        width: 320,
-        child: Card(
-          color: Colors.white,
-          elevation: 6,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: ColorHelperClass.getColorFromHex(
-                            ColorResources.red_color)
-                        .withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.school_rounded,
-                    size: 42,
-                    color: ColorHelperClass.getColorFromHex(
+    return SizedBox(
+      width: 320,
+      child: Card(
+        color: Colors.white,
+        elevation: 6,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color:
+                      ColorHelperClass.getColorFromHex(ColorResources.red_color)
+                          .withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.school_rounded,
+                  size: 42,
+                  color: ColorHelperClass.getColorFromHex(
+                      ColorResources.red_color),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                "Shiksha Sahayata",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                "Maheshwari Pragati Mandal, Mumbai has established long back Shiksha Sahayata Kosh with the intention to promote education amongst community members. In this scheme Mandal, every year extends partial financial assistance (returnable) to those perusing education from 10th standard onwards right up to Ph.D. After availing financial assistance under this scheme, It is expected that once the candidate completes his/her education and gets established in profession, he/she will plough back the amount in Shiksha Sahayata Kosh to be useful for others in the community.\n\nThe scheme is restricted to candidates belonging to or pursuing education in the state of Maharashtra and Rajasthan.",
+                textAlign: TextAlign.justify,
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 1.45,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                "To apply for Shiksha Sahayata, click the Apply button below.",
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 22),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _showInstructionDialog,
+                  icon: const Icon(Icons.arrow_forward_rounded),
+                  label: const Text("Apply"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ColorHelperClass.getColorFromHex(
                         ColorResources.red_color),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  "Shiksha Sahayata",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  "To apply for Shiksha Sahayata, click the Apply button below.",
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 22),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _showInstructionDialog,
-                    icon: const Icon(Icons.arrow_forward_rounded),
-                    label: const Text("Apply"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorHelperClass.getColorFromHex(
-                          ColorResources.red_color),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

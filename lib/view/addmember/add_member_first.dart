@@ -51,12 +51,19 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
   final _sankhController = TextEditingController();
   final _sankhFocusNode = FocusNode();
   List<MemberSurnameData> get surnameListWithOther => [
-    ...regiController.surnameList,
-    MemberSurnameData(surnameName: 'Other'),
-  ];
+        ...regiController.surnameList,
+        MemberSurnameData(surnameName: 'Other'),
+      ];
 
   @override
   void dispose() {
+    regiController.firstNameController.value.removeListener(_refreshFormState);
+    regiController.lastNameController.value.removeListener(_refreshFormState);
+    regiController.mobileController.value.removeListener(_refreshFormState);
+    regiController.fathersnameController.value
+        .removeListener(_refreshFormState);
+    regiController.emailController.value.removeListener(_refreshFormState);
+    regiController.dateController.removeListener(_refreshFormState);
     _sankhController.dispose();
     _sankhFocusNode.dispose();
     super.dispose();
@@ -78,6 +85,46 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
     regiController.getCountry();
     regiController.getState();
     regiController.getCity();
+    regiController.firstNameController.value.addListener(_refreshFormState);
+    regiController.lastNameController.value.addListener(_refreshFormState);
+    regiController.mobileController.value.addListener(_refreshFormState);
+    regiController.fathersnameController.value.addListener(_refreshFormState);
+    regiController.emailController.value.addListener(_refreshFormState);
+    regiController.dateController.addListener(_refreshFormState);
+  }
+
+  void _refreshFormState() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  bool get _isMarriedSelected {
+    final selectedMaritalId = regiController.selectMarital.value;
+    if (selectedMaritalId.isEmpty) {
+      return false;
+    }
+
+    for (final maritalStatus in regiController.maritalList) {
+      if (maritalStatus.id.toString() == selectedMaritalId) {
+        return maritalStatus.maritalStatus?.trim().toLowerCase() == 'married';
+      }
+    }
+
+    return selectedMaritalId == '1';
+  }
+
+  bool get _areRequiredFieldsFilled {
+    return regiController.selectMemberSalutation.value.isNotEmpty &&
+        regiController.firstNameController.value.text.trim().isNotEmpty &&
+        regiController.lastNameController.value.text.trim().isNotEmpty &&
+        regiController.mobileController.value.text.trim().isNotEmpty &&
+        regiController.fathersnameController.value.text.trim().isNotEmpty &&
+        regiController.emailController.value.text.trim().isNotEmpty &&
+        regiController.dateController.text.trim().isNotEmpty &&
+        regiController.selectedGender.value.isNotEmpty &&
+        regiController.selectBloodGroup.value.isNotEmpty &&
+        regiController.selectMarital.value.isNotEmpty;
   }
 
   @override
@@ -117,137 +164,157 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
               children: [
                 SizedBox(
                   width: 130,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      final mobile =
-                          regiController.mobileController.value.text.trim();
-                      final whatsapp = regiController
-                          .whatappmobileController.value.text
-                          .trim();
+                  child: Obx(
+                    () {
+                      final isContinueEnabled = _areRequiredFieldsFilled;
 
-                      if (mobile.length != 10 ||
-                          !RegExp(r'^[0-9]+$').hasMatch(mobile)) {
-                        Get.snackbar(
-                          "", // Empty because we use titleText below
-                          "",
-                          titleText: const Text(
-                            "Make New Member",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
+                      return ElevatedButton(
+                        onPressed: isContinueEnabled
+                            ? () {
+                                final mobile = regiController
+                                    .mobileController.value.text
+                                    .trim();
+                                final whatsapp = regiController
+                                    .whatappmobileController.value.text
+                                    .trim();
+
+                                if (mobile.length != 10 ||
+                                    !RegExp(r'^[0-9]+$').hasMatch(mobile)) {
+                                  Get.snackbar(
+                                    "",
+                                    "",
+                                    titleText: const Text(
+                                      "Make New Member",
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    messageText: const Text(
+                                      "Invalid Mobile Number.",
+                                      style: TextStyle(
+                                        color: Colors.red,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    backgroundColor: Colors.white,
+                                    snackPosition: SnackPosition.BOTTOM,
+                                    duration: Duration(seconds: 2),
+                                    margin: const EdgeInsets.all(12),
+                                    borderRadius: 8,
+                                    boxShadows: [
+                                      BoxShadow(
+                                        color: Colors.black26,
+                                        blurRadius: 6,
+                                        offset: Offset(0, 2),
+                                      )
+                                    ],
+                                  );
+                                  return;
+                                }
+
+                                if (whatsapp.isNotEmpty &&
+                                    (whatsapp.length != 10 ||
+                                        !RegExp(r'^[0-9]+$')
+                                            .hasMatch(whatsapp))) {
+                                  Get.snackbar(
+                                    "",
+                                    "",
+                                    titleText: const Text(
+                                      "Make New Member",
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    messageText: const Text(
+                                      "Invalid WhatsApp Number.",
+                                      style: TextStyle(
+                                        color: Colors.red,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    backgroundColor: Colors.white,
+                                    snackPosition: SnackPosition.BOTTOM,
+                                    duration: Duration(seconds: 2),
+                                    margin: const EdgeInsets.all(12),
+                                    borderRadius: 8,
+                                    boxShadows: [
+                                      BoxShadow(
+                                        color: Colors.black26,
+                                        blurRadius: 6,
+                                        offset: Offset(0, 2),
+                                      )
+                                    ],
+                                  );
+                                  return;
+                                }
+
+                                if (_formKeyLogin.currentState!.validate()) {
+                                  void showErrorSnackbar(String message) {
+                                    Get.snackbar(
+                                      "Error",
+                                      message,
+                                      backgroundColor: Colors.red,
+                                      colorText: Colors.white,
+                                      snackPosition: SnackPosition.TOP,
+                                    );
+                                  }
+
+                                  if (regiController
+                                          .selectMemberSalutation.value ==
+                                      '') {
+                                    showErrorSnackbar("Select salutation");
+                                    return;
+                                  }
+                                  if (regiController.selectedGender.value ==
+                                      '') {
+                                    showErrorSnackbar("Select Gender");
+                                    return;
+                                  }
+                                  if (regiController.selectBloodGroup.value ==
+                                      '') {
+                                    showErrorSnackbar("Select Blood Group");
+                                    return;
+                                  }
+
+                                  if (regiController.selectMarital.value ==
+                                      '') {
+                                    showErrorSnackbar("Select Marital Status");
+                                    return;
+                                  }
+                                  if (!_isMarriedSelected) {
+                                    regiController
+                                        .marriagedateController.value.text = "";
+                                  }
+
+                                  print("All validations passed!");
+                                  print(
+                                      "Selected Gender: ${regiController.selectedGender}");
+                                  print(
+                                      "Selected Marital Status: ${regiController.selectMarital}");
+
+                                  Navigator.pushNamed(
+                                      context, RouteNames.newMember2);
+                                }
+                              }
+                            : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isContinueEnabled
+                              ? ColorHelperClass.getColorFromHex(
+                                  ColorResources.red_color)
+                              : Colors.grey,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          messageText: const Text(
-                            "Invalid Mobile Number.",
-                            style: TextStyle(
-                              color: Colors.red,
-                              fontSize: 14,
-                            ),
-                          ),
-                          backgroundColor: Colors.white,
-                          snackPosition: SnackPosition.BOTTOM,
-                          duration: Duration(seconds: 2),
-                          margin: const EdgeInsets.all(12),
-                          borderRadius: 8,
-                          boxShadows: [
-                            BoxShadow(
-                              color: Colors.black26,
-                              blurRadius: 6,
-                              offset: Offset(0, 2),
-                            )
-                          ],
-                        );
-                        return;
-                      }
-
-                      if (whatsapp.length != 10 ||
-                          !RegExp(r'^[0-9]+$').hasMatch(whatsapp)) {
-                        Get.snackbar(
-                          "",
-                          "",
-                          titleText: const Text(
-                            "Make New Member",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          messageText: const Text(
-                            "Invalid WhatsApp Number.",
-                            style: TextStyle(
-                              color: Colors.red,
-                              fontSize: 14,
-                            ),
-                          ),
-                          backgroundColor: Colors.white,
-                          snackPosition: SnackPosition.BOTTOM,
-                          duration: Duration(seconds: 2),
-                          margin: const EdgeInsets.all(12),
-                          borderRadius: 8,
-                          boxShadows: [
-                            BoxShadow(
-                              color: Colors.black26,
-                              blurRadius: 6,
-                              offset: Offset(0, 2),
-                            )
-                          ],
-                        );
-                        return;
-                      }
-
-                      if (_formKeyLogin!.currentState!.validate()) {
-                        void showErrorSnackbar(String message) {
-                          Get.snackbar(
-                            "Error",
-                            message,
-                            backgroundColor: Colors.red,
-                            colorText: Colors.white,
-                            snackPosition: SnackPosition.TOP,
-                          );
-                        }
-
-                        if (regiController.selectMemberSalutation.value == '') {
-                          showErrorSnackbar("Select salutation");
-                          return;
-                        }
-                        if (regiController.selectedGender == '') {
-                          showErrorSnackbar("Select Gender");
-                          return;
-                        }
-                        if (regiController.selectBloodGroup == '') {
-                          showErrorSnackbar("Select Blood Group");
-                          return;
-                        }
-
-                        if (regiController.selectMarital == '') {
-                          showErrorSnackbar("Select Marital Status");
-                          return;
-                        }
-                        else {
-                          regiController.marriagedateController.value.text = "";
-                        }
-
-                        print("All validations passed!");
-                        print(
-                            "Selected Gender: ${regiController.selectedGender}");
-                        print(
-                            "Selected Marital Status: ${regiController.selectMarital}");
-
-                        Navigator.pushNamed(context!, RouteNames.newMember2);
-                      }
+                        ),
+                        child: Text(AppConstants.continues,
+                            style: TextStyleClass.white16style),
+                      );
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorHelperClass.getColorFromHex(
-                          ColorResources.red_color),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: Text(AppConstants.continues,
-                        style: TextStyleClass.white16style),
                   ),
                 ),
               ],
@@ -437,120 +504,211 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                             children: [
                               Container(
                                 width: double.infinity,
-                                margin: const EdgeInsets.only(left: 5, right: 5),
+                                margin:
+                                    const EdgeInsets.only(left: 5, right: 5),
                                 child: Row(
                                   children: [
                                     Obx(() {
-                                      if (regiController.rxStatusSurname.value == Status.LOADING) {
+                                      if (regiController
+                                              .rxStatusSurname.value ==
+                                          Status.LOADING) {
                                         return const Padding(
-                                          padding: EdgeInsets.symmetric(vertical: 10, horizontal: 22),
+                                          padding: EdgeInsets.symmetric(
+                                              vertical: 10, horizontal: 22),
                                           child: SizedBox(
                                             height: 24,
                                             width: 24,
-                                            child: CircularProgressIndicator(color: Colors.redAccent),
+                                            child: CircularProgressIndicator(
+                                                color: Colors.redAccent),
                                           ),
                                         );
-                                      } else if (regiController.rxStatusSurname.value == Status.ERROR) {
-                                        return const Center(child: Text('Failed to load surnames'));
-                                      } else if (regiController.surnameList.isEmpty) {
-                                        return const Center(child: Text('No surnames available'));
+                                      } else if (regiController
+                                              .rxStatusSurname.value ==
+                                          Status.ERROR) {
+                                        return const Center(
+                                            child: Text(
+                                                'Failed to load surnames'));
+                                      } else if (regiController
+                                          .surnameList.isEmpty) {
+                                        return const Center(
+                                            child:
+                                                Text('No surnames available'));
                                       } else {
-                                        final List<MemberSurnameData> dropdownItems = [
+                                        final List<MemberSurnameData>
+                                            dropdownItems = [
                                           ...regiController.surnameList,
-                                          MemberSurnameData(surnameName: 'Other'),
+                                          MemberSurnameData(
+                                              surnameName: 'Other'),
                                         ];
 
-                                        final selectedValue = regiController.selectedSurname.value;
-                                        final selectedItem = dropdownItems.firstWhere(
-                                              (item) => item.surnameName == selectedValue,
+                                        final selectedValue = regiController
+                                            .selectedSurname.value;
+                                        final selectedItem =
+                                            dropdownItems.firstWhere(
+                                          (item) =>
+                                              item.surnameName == selectedValue,
                                           orElse: () => MemberSurnameData(),
                                         );
 
                                         return Expanded(
-                                          child: DropdownSearch<MemberSurnameData>(
-                                            items: dropdownItems,
-                                            selectedItem: selectedItem,
-                                            itemAsString: (item) => item?.surnameName ?? 'Surname',
-                                            dropdownDecoratorProps: const DropDownDecoratorProps(
-                                              dropdownSearchDecoration: InputDecoration(
-                                                labelText: 'SurName *',
-                                                border: OutlineInputBorder(),
-                                                enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
-                                                focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black38, width: 1)),
-                                                contentPadding: EdgeInsets.symmetric(horizontal: 20),
-                                                labelStyle: TextStyle(color: Colors.black),
+                                          child: DropdownSearch<
+                                                  MemberSurnameData>(
+                                              items: dropdownItems,
+                                              selectedItem: selectedItem,
+                                              itemAsString: (item) =>
+                                                  item?.surnameName ??
+                                                  'Surname',
+                                              dropdownDecoratorProps:
+                                                  const DropDownDecoratorProps(
+                                                dropdownSearchDecoration:
+                                                    InputDecoration(
+                                                  labelText: 'SurName *',
+                                                  border: OutlineInputBorder(),
+                                                  enabledBorder:
+                                                      OutlineInputBorder(
+                                                          borderSide:
+                                                              BorderSide(
+                                                                  color: Colors
+                                                                      .black)),
+                                                  focusedBorder:
+                                                      OutlineInputBorder(
+                                                          borderSide:
+                                                              BorderSide(
+                                                                  color: Colors
+                                                                      .black38,
+                                                                  width: 1)),
+                                                  contentPadding:
+                                                      EdgeInsets.symmetric(
+                                                          horizontal: 20),
+                                                  labelStyle: TextStyle(
+                                                      color: Colors.black),
+                                                ),
                                               ),
-                                            ),
-                                            popupProps: PopupProps.menu(
-                                              showSearchBox: true,
-                                              searchFieldProps: const TextFieldProps(
-                                                decoration: InputDecoration(hintText: 'Search surname...'),
+                                              popupProps: PopupProps.menu(
+                                                showSearchBox: true,
+                                                searchFieldProps:
+                                                    const TextFieldProps(
+                                                  decoration: InputDecoration(
+                                                      hintText:
+                                                          'Search surname...'),
+                                                ),
+                                                menuProps: MenuProps(
+                                                  backgroundColor: Colors.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                ),
                                               ),
-                                              menuProps: MenuProps(
-                                                backgroundColor: Colors.white,
-                                                borderRadius: BorderRadius.circular(10),
-                                              ),
-                                            ),
-                                              onChanged: (MemberSurnameData? newValue) {
+                                              onChanged: (MemberSurnameData?
+                                                  newValue) {
                                                 if (newValue != null) {
-                                                  final surname = newValue.surnameName?.toLowerCase() ?? '';
+                                                  final surname = newValue
+                                                          .surnameName
+                                                          ?.toLowerCase() ??
+                                                      '';
 
-                                                  final isOther = surname == "other";
-                                                  final isMaheshwariFamily = surname == "maheshwari" ||
-                                                      surname == "maheshawari" ||
-                                                      surname == "maheshwary";
+                                                  final isOther =
+                                                      surname == "other";
+                                                  final isMaheshwariFamily =
+                                                      surname == "maheshwari" ||
+                                                          surname ==
+                                                              "maheshawari" ||
+                                                          surname ==
+                                                              "maheshwary";
 
-                                                  regiController.selectedSurname.value = newValue.surnameName ?? '';
-                                                  regiController.isMaheshwariSelected.value = isMaheshwariFamily;
-                                                  regiController.showSankhField.value = isMaheshwariFamily;
-                                                  regiController.showCustomSurnameField.value = isOther;
+                                                  regiController.selectedSurname
+                                                          .value =
+                                                      newValue.surnameName ??
+                                                          '';
+                                                  regiController
+                                                          .isMaheshwariSelected
+                                                          .value =
+                                                      isMaheshwariFamily;
+                                                  regiController.showSankhField
+                                                          .value =
+                                                      isMaheshwariFamily;
+                                                  regiController
+                                                      .showCustomSurnameField
+                                                      .value = isOther;
 
                                                   if (isMaheshwariFamily) {
-                                                    final formatted = "$surname()";
-                                                    regiController.sankhText.value = formatted;
-                                                    regiController.lastNameController.value.text = formatted;
+                                                    final formatted =
+                                                        "$surname()";
+                                                    regiController.sankhText
+                                                        .value = formatted;
+                                                    regiController
+                                                        .lastNameController
+                                                        .value
+                                                        .text = formatted;
 
-                                                    Future.delayed(const Duration(milliseconds: 50), () {
-                                                      FocusScope.of(context).requestFocus(_sankhFocusNode);
-                                                      _sankhController.selection = TextSelection.collapsed(
-                                                        offset: surname.length + 1,
+                                                    Future.delayed(
+                                                        const Duration(
+                                                            milliseconds: 50),
+                                                        () {
+                                                      FocusScope.of(context)
+                                                          .requestFocus(
+                                                              _sankhFocusNode);
+                                                      _sankhController
+                                                              .selection =
+                                                          TextSelection
+                                                              .collapsed(
+                                                        offset:
+                                                            surname.length + 1,
                                                       );
                                                     });
                                                   } else if (isOther) {
-                                                    regiController.sankhText.value = "";
-                                                    regiController.lastNameController.value.text = "";
+                                                    regiController
+                                                        .sankhText.value = "";
+                                                    regiController
+                                                        .lastNameController
+                                                        .value
+                                                        .text = "";
                                                   } else {
-                                                    regiController.sankhText.value = "";
-                                                    regiController.lastNameController.value.text = newValue.surnameName ?? '';
+                                                    regiController
+                                                        .sankhText.value = "";
+                                                    regiController
+                                                            .lastNameController
+                                                            .value
+                                                            .text =
+                                                        newValue.surnameName ??
+                                                            '';
                                                   }
                                                 }
-                                              }
-                                          ),
+                                              }),
                                         );
                                       }
                                     }),
                                   ],
                                 ),
                               ),
-
                               Obx(() {
-                                if (regiController.showCustomSurnameField.value) {
+                                if (regiController
+                                    .showCustomSurnameField.value) {
                                   return Padding(
-                                    padding: const EdgeInsets.only(top: 20, left: 5, right: 5),
+                                    padding: const EdgeInsets.only(
+                                        top: 20, left: 5, right: 5),
                                     child: TextFormField(
                                       decoration: const InputDecoration(
                                         labelText: 'Enter your surname',
-                                        labelStyle: TextStyle(color: Colors.black),
+                                        labelStyle:
+                                            TextStyle(color: Colors.black),
                                         border: OutlineInputBorder(),
-                                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
-                                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black38, width: 1)),
-                                        contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                                        enabledBorder: OutlineInputBorder(
+                                            borderSide: BorderSide(
+                                                color: Colors.black)),
+                                        focusedBorder: OutlineInputBorder(
+                                            borderSide: BorderSide(
+                                                color: Colors.black38,
+                                                width: 1)),
+                                        contentPadding: EdgeInsets.symmetric(
+                                            vertical: 12, horizontal: 20),
                                       ),
                                       onChanged: (val) {
-                                        regiController.lastNameController.value.text = val.trim();
+                                        regiController.lastNameController.value
+                                            .text = val.trim();
                                       },
                                       validator: (value) {
-                                        if (regiController.showCustomSurnameField.value &&
+                                        if (regiController
+                                                .showCustomSurnameField.value &&
                                             (value == null || value.isEmpty)) {
                                           return 'Please enter your surname';
                                         }
@@ -562,30 +720,42 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                                   return const SizedBox.shrink();
                                 }
                               }),
-
                               Obx(() {
                                 if (regiController.showSankhField.value) {
                                   return Padding(
                                     padding: const EdgeInsets.only(top: 20),
                                     child: Container(
-                                      margin: const EdgeInsets.only(left: 5, right: 5),
+                                      margin: const EdgeInsets.only(
+                                          left: 5, right: 5),
                                       child: TextFormField(
                                         controller: _sankhController,
                                         focusNode: _sankhFocusNode,
                                         decoration: const InputDecoration(
                                           labelText: 'Enter Sankh',
-                                          labelStyle: TextStyle(color: Colors.black),
+                                          labelStyle:
+                                              TextStyle(color: Colors.black),
                                           border: OutlineInputBorder(),
-                                          enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
-                                          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black38, width: 1)),
-                                          contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                                          enabledBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.black)),
+                                          focusedBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.black38,
+                                                  width: 1)),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              vertical: 12, horizontal: 20),
                                         ),
                                         onChanged: (value) {
-                                          regiController.sankhText.value = value;
-                                          regiController.lastNameController.value.text = value;
+                                          regiController.sankhText.value =
+                                              value;
+                                          regiController.lastNameController
+                                              .value.text = value;
                                         },
                                         validator: (value) {
-                                          if (regiController.showSankhField.value && (value == null || value.isEmpty)) {
+                                          if (regiController
+                                                  .showSankhField.value &&
+                                              (value == null ||
+                                                  value.isEmpty)) {
                                             return 'Please enter your sankh';
                                           }
                                           return null;
@@ -661,12 +831,12 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
 
                           //WhatsApp Number
                           _buildEditableField(
-                            "WhatsApp Number *",
+                            "WhatsApp Number",
                             regiController.whatappmobileController.value,
                             "WhatsApp Number",
                             "WhatsApp number is required",
                             text: TextInputType.phone,
-                            isRequired: true,
+                            isRequired: false,
                             maxLength: 10,
                           ),
                           const SizedBox(height: 20),
@@ -683,12 +853,12 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
 
                           //Mother's Name
                           _buildEditableField(
-                              "Mother's Name",
-                              regiController.mothersnameController.value,
-                              "Mother's Name",
-                              "",
-                              text: TextInputType.text,
-                              ),
+                            "Mother's Name",
+                            regiController.mothersnameController.value,
+                            "Mother's Name",
+                            "",
+                            text: TextInputType.text,
+                          ),
                           const SizedBox(height: 20),
 
                           //Email
@@ -1056,6 +1226,12 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                                                 regiController
                                                     .setSelectedMarital(
                                                         newValue);
+                                                if (!_isMarriedSelected) {
+                                                  regiController
+                                                      .marriagedateController
+                                                      .value
+                                                      .text = "";
+                                                }
                                               }
                                             },
                                           ),
@@ -1071,8 +1247,7 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
 
                           Obx(() {
                             return Visibility(
-                              visible:
-                                  regiController.MaritalAnnivery.value == true,
+                              visible: _isMarriedSelected,
                               child: Column(
                                 children: [
                                   SizedBox(

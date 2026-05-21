@@ -19,6 +19,7 @@ class GetEventDetailsByIdData {
   String? approvedDate;
   String? eventCostType;
   String? eventAmount;
+  String? eventUPICode;
   String? eventAmountQrCode;
   String? foodAmount;
   String? eventRegistrationLastDate;
@@ -54,6 +55,7 @@ class GetEventDetailsByIdData {
     this.approvedDate,
     this.eventCostType,
     this.eventAmount,
+    this.eventUPICode,
     this.eventAmountQrCode,
     this.foodAmount,
     this.eventRegistrationLastDate,
@@ -96,6 +98,7 @@ class GetEventDetailsByIdData {
       approvedDate: json['approved_date'],
       eventCostType: json['event_cost_type'],
       eventAmount: json['event_amount']?.toString(),
+      eventUPICode: json['event_upi_code'],
       eventAmountQrCode: json['event_amount_qr_code']?.toString().isNotEmpty ==
               true
           ? (json['event_amount_qr_code'].toString().startsWith('upi://') ||
@@ -156,6 +159,7 @@ class GetEventDetailsByIdData {
     data['approved_date'] = approvedDate;
     data['event_cost_type'] = eventCostType;
     data['event_amount'] = eventAmount;
+    data['event_upi_code'] = eventUPICode;
     data['event_amount_qr_code'] = eventAmountQrCode;
     data['food_amount'] = foodAmount;
     data['event_registration_last_date'] = eventRegistrationLastDate;

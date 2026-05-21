@@ -81,7 +81,8 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        backgroundColor:
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Builder(
           builder: (context) {
             double fontSize = MediaQuery.of(context).size.width * 0.045;
@@ -113,17 +114,18 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                 const SizedBox(height: 4),
                 Expanded(
                   child: Obx(() {
-                    final List<FamilyMembersData> sortedList = List.of(controller.familyDataList.value)
-                      ..sort((a, b) {
-                        final aDate = _parseDate(a.dob);
-                        final bDate = _parseDate(b.dob);
+                    final List<FamilyMembersData> sortedList =
+                        List.of(controller.familyDataList.value)
+                          ..sort((a, b) {
+                            final aDate = _parseDate(a.dob);
+                            final bDate = _parseDate(b.dob);
 
-                        if (aDate == null && bDate == null) return 0;
-                        if (aDate == null) return 1;
-                        if (bDate == null) return -1;
+                            if (aDate == null && bDate == null) return 0;
+                            if (aDate == null) return 1;
+                            if (bDate == null) return -1;
 
-                        return aDate.compareTo(bDate);
-                      });
+                            return aDate.compareTo(bDate);
+                          });
 
                     return ListView.builder(
                       itemCount: sortedList.length,
@@ -142,7 +144,8 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
           return SpeedDial(
             icon: isSpeedDialOpen ? Icons.close : Icons.add,
             activeIcon: Icons.close,
-            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+            backgroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
             foregroundColor: Colors.white,
             overlayOpacity: 0.5,
             spacing: 10,
@@ -152,7 +155,8 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
             children: [
               SpeedDialChild(
                 child: const Icon(Icons.person_add),
-                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 label: 'New NM Member',
                 labelStyle: TextStyle(fontSize: 16),
@@ -162,7 +166,8 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
               ),
               SpeedDialChild(
                 child: const Icon(Icons.person),
-                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 label: 'Existing Member',
                 labelStyle: TextStyle(fontSize: 16),
@@ -533,7 +538,8 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
     );
   }
 
-  Widget _buildFamilyMemberCard(BuildContext context, FamilyMembersData member) {
+  Widget _buildFamilyMemberCard(
+      BuildContext context, FamilyMembersData member) {
     return Card(
       color: Colors.grey[50],
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -542,7 +548,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
         leading: CircleAvatar(
           radius: 30,
           backgroundImage: (member.profileImage != null &&
-              member.profileImage.isNotEmpty)
+                  member.profileImage.isNotEmpty)
               ? NetworkImage(Urls.imagePathUrl + member.profileImage)
               : const AssetImage("assets/images/user3.png") as ImageProvider,
           backgroundColor: Colors.grey[300],
@@ -556,8 +562,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
             ),
             Text(
-              "Member Code: " +
-                  (member.memberCode ?? member.memberId ?? "N/A"),
+              "Member Code: " + (member.memberCode ?? member.memberId ?? "N/A"),
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
             Text(
@@ -704,7 +709,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                           final member = samitiController.searchDataList[index];
                           return Card(
                             color: samitiController.selectedMember.value ==
-                                member.memberId
+                                    member.memberId
                                 ? Colors.grey[200]
                                 : Colors.white,
                             margin: const EdgeInsets.only(bottom: 12),
@@ -717,18 +722,18 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                               child: ListTile(
                                 onTap: () {
                                   samitiController.selectedMember.value =
-                                  member.memberId!;
+                                      member.memberId!;
                                 },
                                 leading: CircleAvatar(
                                   radius: 23,
                                   backgroundImage:
-                                  member.profileImage != null &&
-                                      member.profileImage!.isNotEmpty
-                                      ? NetworkImage(Urls.imagePathUrl +
-                                      member.profileImage!)
-                                      : const AssetImage(
-                                      "assets/images/user3.png")
-                                  as ImageProvider,
+                                      member.profileImage != null &&
+                                              member.profileImage!.isNotEmpty
+                                          ? NetworkImage(Urls.imagePathUrl +
+                                              member.profileImage!)
+                                          : const AssetImage(
+                                                  "assets/images/user3.png")
+                                              as ImageProvider,
                                   backgroundColor: Colors.grey[300],
                                 ),
                                 title: Column(
@@ -815,7 +820,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                     ),
                                   );
                                 } else if (controller
-                                    .rxStatusRelationType.value ==
+                                        .rxStatusRelationType.value ==
                                     Status.ERROR) {
                                   return const Center(
                                       child: Text('Failed to load relation'));
@@ -834,19 +839,19 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                             : null,
                                         border: const OutlineInputBorder(
                                           borderSide:
-                                          BorderSide(color: Colors.black),
+                                              BorderSide(color: Colors.black),
                                         ),
                                         enabledBorder: const OutlineInputBorder(
                                           borderSide:
-                                          BorderSide(color: Colors.black),
+                                              BorderSide(color: Colors.black),
                                         ),
                                         focusedBorder: const OutlineInputBorder(
                                           borderSide: BorderSide(
                                               color: Colors.black38, width: 1),
                                         ),
                                         contentPadding:
-                                        const EdgeInsets.symmetric(
-                                            horizontal: 20),
+                                            const EdgeInsets.symmetric(
+                                                horizontal: 20),
                                         labelStyle: const TextStyle(
                                             color: Colors.black),
                                       ),
@@ -867,14 +872,14 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                             .map((RelationData relation) {
                                           return DropdownMenuItem<String>(
                                             value: relation.id.toString(),
-                                            child:
-                                            Text(relation.name ?? 'Unknown'),
+                                            child: Text(
+                                                relation.name ?? 'Unknown'),
                                           );
                                         }).toList(),
                                         onChanged: (String? newValue) {
                                           if (newValue != null) {
-                                            controller
-                                                .setSelectRelationShip(newValue);
+                                            controller.setSelectRelationShip(
+                                                newValue);
                                           }
                                         },
                                       ),
@@ -908,48 +913,50 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                       ElevatedButton(
                         onPressed: isAddEnabled
                             ? () async {
-                          final selectedMember = samitiController
-                              .searchDataList
-                              .firstWhere((member) =>
-                          member.memberId ==
-                              samitiController.selectedMember.value);
+                                final selectedMember = samitiController
+                                    .searchDataList
+                                    .firstWhere((member) =>
+                                        member.memberId ==
+                                        samitiController.selectedMember.value);
 
-                          final familyHeadPincode =
-                              controller.familyHeadData.value?.pincode ?? '';
+                                final familyHeadPincode =
+                                    controller.familyHeadData.value?.pincode ??
+                                        '';
 
-                          if (selectedMember.pincode != familyHeadPincode) {
-                            _showPincodeMismatchDialog(context);
-                            return;
-                          }
-
-                          if (selectedMember.mobile != null &&
-                              selectedMember.mobile!.isNotEmpty) {
-                            controller.sendOtp(selectedMember.mobile!);
-
-                            showOtpBottomSheet(
-                              context,
-                              selectedMember.mobile!,
-                              onVerified: () async {
-                                final success =
-                                await controller.addExistingFamilyMember(
-                                  samitiController.selectedMember.value,
-                                  controller.selectRelationShipType.value,
-                                );
-
-                                if (success) {
-                                  Navigator.pop(context);
+                                if (selectedMember.pincode !=
+                                    familyHeadPincode) {
+                                  _showPincodeMismatchDialog(context);
+                                  return;
                                 }
-                              },
-                            );
-                          } else {
-                            Get.snackbar(
-                              "Error",
-                              "Member doesn't have a mobile number",
-                              backgroundColor: Colors.red,
-                              colorText: Colors.white,
-                            );
-                          }
-                        }
+
+                                if (selectedMember.mobile != null &&
+                                    selectedMember.mobile!.isNotEmpty) {
+                                  controller.sendOtp(selectedMember.mobile!);
+
+                                  showOtpBottomSheet(
+                                    context,
+                                    selectedMember.mobile!,
+                                    onVerified: () async {
+                                      final success = await controller
+                                          .addExistingFamilyMember(
+                                        samitiController.selectedMember.value,
+                                        controller.selectRelationShipType.value,
+                                      );
+
+                                      if (success) {
+                                        Navigator.pop(context);
+                                      }
+                                    },
+                                  );
+                                } else {
+                                  Get.snackbar(
+                                    "Error",
+                                    "Member doesn't have a mobile number",
+                                    backgroundColor: Colors.red,
+                                    colorText: Colors.white,
+                                  );
+                                }
+                              }
                             : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: ColorHelperClass.getColorFromHex(
@@ -961,13 +968,13 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                         child: Obx(() {
                           return controller.familyloading.value
                               ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
                               : const Text("Add");
                         }),
                       ),
@@ -1043,7 +1050,8 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
     );
   }
 
-  void showOtpBottomSheet(BuildContext context, String mobile, {VoidCallback? onVerified}) {
+  void showOtpBottomSheet(BuildContext context, String mobile,
+      {VoidCallback? onVerified}) {
     final TextEditingController otpController = TextEditingController();
     const String otpValidationFor = "add_family_member";
 
@@ -1285,29 +1293,12 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
   }
 
   void _showAddModalSheet(BuildContext context) {
-
     if (controller.familyHeadData.value?.lastName != null) {
       regiController.lastNameController.value.text =
-      controller.familyHeadData.value!.lastName!;
+          controller.familyHeadData.value!.lastName!;
     }
 
-    String newSalutation = "";
-    String newFirstName = "";
-    String newMiddleName = "";
-    String newSurName = "";
-    String newRelationship = "";
-    String newMobileNumber = "";
-    String newWhatsAppNumber = "";
-    String newFathersName = "";
-    String newMothersName = "";
-    String newEmail = "";
-    String newDob = "";
-    String newGender = "";
-    String newBloodGroup = "";
-    String newMaritalStatus = "";
-    String newMembership = "";
     final GlobalKey<FormState> _formKeyLogin = GlobalKey<FormState>();
-    File? newImage;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.grey[100],
@@ -1328,11 +1319,28 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
               ),
               child: StatefulBuilder(
                 builder: (context, setState) {
+                  bool areRequiredFieldsFilled() {
+                    return regiController
+                            .selectMemberSalutation.value.isNotEmpty &&
+                        controller.selectRelationShipType.value.isNotEmpty &&
+                        regiController.firstNameController.value.text
+                            .trim()
+                            .isNotEmpty &&
+                        regiController.lastNameController.value.text
+                            .trim()
+                            .isNotEmpty &&
+                        regiController.fathersnameController.value.text
+                            .trim()
+                            .isNotEmpty &&
+                        regiController.selectedGender.value.isNotEmpty &&
+                        regiController.dateController.text.trim().isNotEmpty &&
+                        regiController.selectMarital.value.isNotEmpty;
+                  }
+
                   return Column(
                     children: [
                       Container(
-                        margin: const EdgeInsets.only(
-                            top: 20),
+                        margin: const EdgeInsets.only(top: 20),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -1349,64 +1357,97 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                               ),
                               child: const Text("Cancel"),
                             ),
-
                             Obx(() {
-                              return ElevatedButton(
-                                onPressed: () async {
-                                  if (_formKeyLogin.currentState!.validate()) {
-                                    void showErrorSnackbar(String message) {
-                                      Get.snackbar(
-                                        "Error",
-                                        message,
-                                        backgroundColor: Colors.red,
-                                        colorText: Colors.white,
-                                        snackPosition: SnackPosition.BOTTOM,
-                                      );
-                                    }
+                              final isSaveEnabled = areRequiredFieldsFilled() &&
+                                  !controller.familyloading.value;
 
-                                    if (regiController.selectMemberSalutation.value == "") {
-                                      showErrorSnackbar("Select Salutation");
-                                      return;
-                                    }
-                                    if (controller.selectRelationShipType.value == "") {
-                                      showErrorSnackbar("Select Member Relation");
-                                      return;
-                                    }
-                                    if (regiController.firstNameController.value == "") {
-                                      showErrorSnackbar("Enter First Name");
-                                      return;
-                                    }
-                                    if (regiController.lastNameController.value == "") {
-                                      showErrorSnackbar("Enter Surname");
-                                      return;
-                                    }
-                                    if (regiController.fathersnameController.value == "") {
-                                      showErrorSnackbar("Enter Father's Name");
-                                      return;
-                                    }
-                                    if (regiController.selectedGender.value == "") {
-                                      showErrorSnackbar("Select Gender");
-                                      return;
-                                    }
-                                    if (regiController.dateController.text == "") {
-                                      showErrorSnackbar("Enter Date of Birth");
-                                      return;
-                                    }
-                                    if (regiController.selectMarital.value == "") {
-                                      showErrorSnackbar("Select Marital status");
-                                      return;
-                                    }
-                                    if (regiController.MaritalAnnivery.value == true) {
-                                      if (regiController.marriagedateController.value.text == '') {
-                                        showErrorSnackbar("Select Marriage Date");
-                                        return;
+                              return ElevatedButton(
+                                onPressed: isSaveEnabled
+                                    ? () async {
+                                        if (_formKeyLogin.currentState!
+                                            .validate()) {
+                                          void showErrorSnackbar(
+                                              String message) {
+                                            Get.snackbar(
+                                              "Error",
+                                              message,
+                                              backgroundColor: Colors.red,
+                                              colorText: Colors.white,
+                                              snackPosition:
+                                                  SnackPosition.BOTTOM,
+                                            );
+                                          }
+
+                                          if (regiController
+                                                  .selectMemberSalutation
+                                                  .value ==
+                                              "") {
+                                            showErrorSnackbar(
+                                                "Select Salutation");
+                                            return;
+                                          }
+                                          if (controller.selectRelationShipType
+                                                  .value ==
+                                              "") {
+                                            showErrorSnackbar(
+                                                "Select Member Relation");
+                                            return;
+                                          }
+                                          if (regiController
+                                              .firstNameController.value.text
+                                              .trim()
+                                              .isEmpty) {
+                                            showErrorSnackbar(
+                                                "Enter First Name");
+                                            return;
+                                          }
+                                          if (regiController
+                                              .lastNameController.value.text
+                                              .trim()
+                                              .isEmpty) {
+                                            showErrorSnackbar("Enter Surname");
+                                            return;
+                                          }
+                                          if (regiController
+                                              .fathersnameController.value.text
+                                              .trim()
+                                              .isEmpty) {
+                                            showErrorSnackbar(
+                                                "Enter Father's Name");
+                                            return;
+                                          }
+                                          if (regiController
+                                                  .selectedGender.value ==
+                                              "") {
+                                            showErrorSnackbar("Select Gender");
+                                            return;
+                                          }
+                                          if (regiController
+                                                  .dateController.text ==
+                                              "") {
+                                            showErrorSnackbar(
+                                                "Enter Date of Birth");
+                                            return;
+                                          }
+                                          if (regiController
+                                                  .selectMarital.value ==
+                                              "") {
+                                            showErrorSnackbar(
+                                                "Select Marital status");
+                                            return;
+                                          }
+                                          if (regiController
+                                                  .MaritalAnnivery.value !=
+                                              true) {
+                                            regiController
+                                                .marriagedateController
+                                                .value
+                                                .text = "";
+                                          }
+                                          controller.userAddFamily(context);
+                                        }
                                       }
-                                    } else {
-                                      regiController.marriagedateController.value.text = "";
-                                    }
-                                    controller.userAddFamily(context);
-                                  }
-                                },
+                                    : null,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor:
                                       ColorHelperClass.getColorFromHex(
@@ -1427,7 +1468,6 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                         ),
                       ),
                       const SizedBox(height: 20),
-
                       Expanded(
                         child: SingleChildScrollView(
                           child: Form(
@@ -1562,6 +1602,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                                     regiController
                                                         .selectMemberSalutation(
                                                             newValue);
+                                                    setState(() {});
                                                   }
                                                 },
                                               ),
@@ -1671,6 +1712,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                                     controller
                                                         .setSelectRelationShip(
                                                             newValue);
+                                                    setState(() {});
                                                   }
                                                 },
                                               ),
@@ -1691,6 +1733,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                   'Enter First Name',
                                   text: TextInputType.text,
                                   isRequired: true,
+                                  onChanged: (_) => setState(() {}),
                                 ),
                                 const SizedBox(height: 30),
 
@@ -1713,6 +1756,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                   text: TextInputType.text,
                                   isRequired: true,
                                   readOnly: true,
+                                  onChanged: (_) => setState(() {}),
                                 ),
                                 const SizedBox(height: 30),
 
@@ -1721,7 +1765,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                   "Mobile Number",
                                   regiController.mobileController.value,
                                   "Mobile Number",
-                                  "",  // Empty validation message
+                                  "", // Empty validation message
                                   text: TextInputType.phone,
                                   maxLength: 10,
                                 ),
@@ -1732,7 +1776,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                   "WhatsApp Number",
                                   regiController.whatappmobileController.value,
                                   "WhatsApp Number",
-                                  "",  // Empty validation message
+                                  "", // Empty validation message
                                   text: TextInputType.phone,
                                   maxLength: 10,
                                 ),
@@ -1746,6 +1790,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                   "",
                                   text: TextInputType.text,
                                   isRequired: true,
+                                  onChanged: (_) => setState(() {}),
                                 ),
                                 const SizedBox(height: 30),
 
@@ -1950,6 +1995,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                                     regiController
                                                         .setSelectedGender(
                                                             newValue);
+                                                    setState(() {});
                                                   }
                                                 },
                                               ),
@@ -2175,6 +2221,7 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                                       regiController
                                                           .setSelectedMarital(
                                                               newValue);
+                                                      setState(() {});
                                                     }
                                                   },
                                                 ),
@@ -2212,10 +2259,10 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
                                                         .value
                                                         .text
                                                         .isNotEmpty
-                                                    ? 'Marriage Anniversary *'
+                                                    ? 'Marriage Anniversary'
                                                     : null,
                                                 hintText:
-                                                    'Select Marriage Anniversary *',
+                                                    'Select Marriage Anniversary',
                                                 border:
                                                     const OutlineInputBorder(
                                                   borderSide: BorderSide(
@@ -2378,17 +2425,17 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
   }
 
   Widget _buildEditableField(
-      String label,
-      TextEditingController controller,
-      String hintText,
-      String validationMessage, {
-        bool obscureText = false,
-        required TextInputType text,
-        bool isRequired = false,
-        int? maxLength,
-        ValueChanged<String>? onChanged,
-        bool readOnly = false,
-      }) {
+    String label,
+    TextEditingController controller,
+    String hintText,
+    String validationMessage, {
+    bool obscureText = false,
+    required TextInputType text,
+    bool isRequired = false,
+    int? maxLength,
+    ValueChanged<String>? onChanged,
+    bool readOnly = false,
+  }) {
     return Container(
       margin: const EdgeInsets.only(left: 5, right: 5),
       child: TextFormField(
@@ -2398,8 +2445,8 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
         maxLength: maxLength,
         onChanged: onChanged,
         buildCounter: (BuildContext context,
-            {int? currentLength, int? maxLength, bool? isFocused}) =>
-        null,
+                {int? currentLength, int? maxLength, bool? isFocused}) =>
+            null,
         readOnly: readOnly,
         style: const TextStyle(color: Colors.black),
         decoration: InputDecoration(

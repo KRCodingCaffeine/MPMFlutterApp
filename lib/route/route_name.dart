@@ -26,6 +26,7 @@ class RouteNames {
   static const String event_view = "event_view";
   static const String event_trip = "event_trip";
   static const String qr_code = "qr_code";
+  static const String event_attendees = "event_attendees";
   static const String forms = "forms_down";
   static const String bhavan_booking = "bhavan_booking";
   static const String gov_scheme = "gov_scheme";
