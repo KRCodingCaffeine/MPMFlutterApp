@@ -37,7 +37,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       GetOccupationByMemberIdRepository();
   final ImagePicker _picker = ImagePicker();
   File? jobSummaryFile;
-  int recruiterTab = 0;
   List<BusinessOccupationProfileData> businessProfiles = [];
   final UdateProfileController profileController =
       Get.find<UdateProfileController>();
@@ -62,6 +61,8 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
   final TextEditingController skillsController = TextEditingController();
   final TextEditingController vacancyController = TextEditingController();
   final TextEditingController lastDateController = TextEditingController();
+  final TextEditingController internshipPeriodController =
+      TextEditingController();
   String selectedOccupationId = "";
   String selectedProfessionId = "";
   String selectedSpecializationId = "";
@@ -76,6 +77,15 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
   final List<String> workModes = ['On-site', 'Work From Home', 'Hybrid'];
   final List<String> status = ['Publish', 'Draft'];
   List<GetJobByMemberIdData> postedJobs = [];
+
+  String _getBackendJobStatus() {
+    return selectedCategoryForPost == "Publish" ? "published" : "draft";
+  }
+
+  String _getUiJobStatus(String? backendStatus) {
+    return backendStatus?.toLowerCase() == "published" ? "Publish" : "Draft";
+  }
+
   String getBusinessName(String? businessId) {
     if (businessId == null || businessId.isEmpty) return "";
 
@@ -276,8 +286,8 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
   }
 
   Future<void> _submitJob({int? editIndex}) async {
-    final isUpdate = editIndex != null;
     final locationName = _getSelectedCityName();
+    final backendJobStatus = _getBackendJobStatus();
 
     final body = {
       "member_id": profileController.memberId.value,
@@ -297,6 +307,15 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       "salary_visible": salaryVisible,
       "experience_min_years": experienceMinController.text.trim(),
       "experience_max_years": experienceMaxController.text.trim(),
+      "number_of_vacancies": vacancyController.text.trim(),
+      "last_date_to_apply": lastDateController.text.trim(),
+      "job_type": selectedJobType,
+      "work_mode": selectedWorkMode,
+      "job_post_status": backendJobStatus,
+      "status": backendJobStatus,
+      "internship_time_period": selectedJobType == "Internship"
+          ? internshipPeriodController.text.trim()
+          : "",
       "created_by": profileController.memberId.value,
     };
 
@@ -310,10 +329,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       if (response.status == true) {
         /// Reload jobs from API instead of adding Map
         await loadPostedJobs();
-
-        setState(() {
-          recruiterTab = 1;
-        });
 
         if (!mounted) return;
 
@@ -426,11 +441,9 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
   }
 
   Widget _buildRecruiterBody() {
-    return recruiterTab == 0
-        ? (selectedJobTitleForMembers == null
-            ? _buildPostedJobs()
-            : _buildAppliedMembersForJob(selectedJobTitleForMembers!))
-        : _buildPostJobForm();
+    return selectedJobTitleForMembers == null
+        ? _buildPostedJobs()
+        : _buildAppliedMembersForJob(selectedJobTitleForMembers!);
   }
 
   @override
@@ -461,7 +474,8 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
             : null,
       ),
       body: _buildRecruiterBody(),
-      floatingActionButton: recruiterTab == 1
+      floatingActionButton: selectedJobTitleForMembers == null &&
+              postedJobs.isNotEmpty
           ? FloatingActionButton(
               backgroundColor:
                   ColorHelperClass.getColorFromHex(ColorResources.red_color),
@@ -471,21 +485,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
               child: const Icon(Icons.add, color: Colors.white),
             )
           : null,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: recruiterTab,
-        onTap: (index) {
-          setState(() {
-            recruiterTab = index;
-          });
-        },
-        selectedItemColor:
-            ColorHelperClass.getColorFromHex(ColorResources.red_color),
-        items: const [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.business_center), label: "Posted Jobs"),
-          BottomNavigationBarItem(icon: Icon(Icons.add_box), label: "Post Job"),
-        ],
-      ),
     );
   }
 
@@ -525,7 +524,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
               itemCount: filteredMembers.length,
               itemBuilder: (context, index) {
                 final member = filteredMembers[index];
-                bool isShortlisted = member["isShortlisted"] ?? false;
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
@@ -726,8 +724,54 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       return Column(
         children: [
           if (showOccupationBanner) _buildOccupationBanner(),
-          const Expanded(
-            child: Center(child: Text("No jobs posted yet")),
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.work_outline,
+                    size: 60,
+                    color: Colors.grey,
+                  ),
+                  const SizedBox(height: 15),
+                  const Text(
+                    "No Jobs Posted Yet",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    "Start by posting your first job",
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 25),
+                  ElevatedButton(
+                    onPressed: () {
+                      _openPostJobBottomSheet();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 30,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text(
+                      "Post Job",
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       );
@@ -795,39 +839,87 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                               ),
                             ),
                           ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.red.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(20),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      "$applicantCount Applicants",
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.red,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  if (shortlistedCount > 0)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4),
+                                      child: Text(
+                                        "$shortlistedCount Shortlisted",
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.green,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              PopupMenuButton<String>(
+                                color: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: Text(
-                                  "$applicantCount Applicants",
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.red,
-                                    fontWeight: FontWeight.w600,
+                                onSelected: (value) {
+                                  if (value == "edit") {
+                                    _openPostJobBottomSheet(editIndex: index);
+                                  } else if (value == "delete") {
+                                    _showDeleteDialog(index);
+                                  }
+                                },
+                                itemBuilder: (context) => const [
+                                  PopupMenuItem(
+                                    value: "edit",
+                                    child: Text(
+                                      "Edit Job",
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                  PopupMenuItem(
+                                    value: "delete",
+                                    child: Text(
+                                      "Delete Job",
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.red,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                child: const Padding(
+                                  padding: EdgeInsets.only(left: 4),
+                                  child: Icon(
+                                    Icons.more_vert,
+                                    color: Colors.black54,
                                   ),
                                 ),
                               ),
-                              if (shortlistedCount > 0)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Text(
-                                    "$shortlistedCount Shortlisted",
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.green,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
                             ],
-                          )
+                          ),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -1246,208 +1338,8 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
     skillsController.dispose();
     vacancyController.dispose();
     lastDateController.dispose();
+    internshipPeriodController.dispose();
     super.dispose();
-  }
-
-  Widget _buildPostJobForm() {
-    if (postedJobs.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.work_outline,
-              size: 60,
-              color: Colors.grey,
-            ),
-            const SizedBox(height: 15),
-            const Text(
-              "No Jobs Posted Yet",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              "Start by posting your first job",
-              style: TextStyle(color: Colors.grey),
-            ),
-            const SizedBox(height: 25),
-            ElevatedButton(
-              onPressed: () {
-                _openPostJobBottomSheet();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Text(
-                "Post Job",
-                style: TextStyle(fontSize: 16),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-      itemCount: postedJobs.length,
-      itemBuilder: (context, index) {
-        final job = postedJobs[index];
-
-        String salary = "${job.salaryMin ?? "0"} - ${job.salaryMax ?? "0"}";
-        String experience =
-            "${job.experienceMinYears ?? "0"} - ${job.experienceMaxYears ?? "0"} Years";
-
-        return Container(
-          margin: const EdgeInsets.only(bottom: 14),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [BoxShadow(color: Colors.grey.shade200, blurRadius: 6)],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      job.title ?? "",
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  PopupMenuButton<String>(
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    onSelected: (value) {
-                      if (value == "edit") {
-                        _openPostJobBottomSheet(editIndex: index);
-                      } else if (value == "delete") {
-                        _showDeleteDialog(index);
-                      }
-                    },
-                    itemBuilder: (context) => const [
-                      PopupMenuItem(
-                        value: "edit",
-                        child: Text(
-                          "Edit Job",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: "delete",
-                        child: Text(
-                          "Delete Job",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.red,
-                          ),
-                        ),
-                      ),
-                    ],
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        color: Colors.red.withOpacity(0.08),
-                      ),
-                      child: const Text(
-                        "Edit / Delete",
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.red,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              const Divider(),
-              const SizedBox(height: 8),
-              _infoRow(
-                "Company",
-                getBusinessName(job.memberBusinessOccupationProfileId),
-              ),
-              const SizedBox(height: 8),
-              _infoRow("Location", job.location ?? ""),
-              const SizedBox(height: 8),
-              _infoRow("Salary", salary),
-              const SizedBox(height: 8),
-              // _infoRow("Job Type", job["jobType"] ?? "Full-time"),
-              // const SizedBox(height: 8),
-              // _infoRow("Work Mode", job["workMode"] ?? "On-site"),
-              // const SizedBox(height: 8),
-              // _infoRow("Category", job["category"] ?? "IT"),
-              // const SizedBox(height: 8),
-              // _infoRow("Last Date", job["lastDate"] ?? "Not specified"),
-              // const SizedBox(height: 8),
-              _infoRow("Experience", experience),
-              const SizedBox(height: 8),
-              _infoRow("Status", job.status ?? ""),
-              const SizedBox(height: 8),
-              _infoRow("Description", job.description ?? ""),
-              const SizedBox(height: 8),
-              // if (job["jobSummaryFile"] != null)
-              //   SizedBox(
-              //     width: double.infinity,
-              //     child: ElevatedButton.icon(
-              //       onPressed: () {
-              //         var file = job["jobSummaryFile"];
-              //
-              //         if (file is File) {
-              //           _showLocalDocumentPreviewDialog(
-              //             context,
-              //             file,
-              //             "Job Summary",
-              //           );
-              //         } else if (file is String) {
-              //           _showCvPreviewDialog(
-              //             context,
-              //             file,
-              //             "Job Summary",
-              //           );
-              //         }
-              //       },
-              //       icon: const Icon(Icons.visibility),
-              //       label: const Text("View Job Summary"),
-              //       style: ElevatedButton.styleFrom(
-              //         backgroundColor: ColorHelperClass.getColorFromHex(
-              //             ColorResources.red_color),
-              //         foregroundColor: Colors.white,
-              //       ),
-              //     ),
-              //   ),
-            ],
-          ),
-        );
-      },
-    );
   }
 
   Future<void> _openPostJobBottomSheet({int? editIndex}) async {
@@ -1459,9 +1351,18 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       areaController.clear();
       salaryMinController.text = job.salaryMin ?? "";
       salaryMaxController.text = job.salaryMax ?? "";
+      salaryVisible = job.salaryVisible ?? "1";
       descriptionController.text = job.description ?? "";
       experienceMinController.text = job.experienceMinYears ?? "";
       experienceMaxController.text = job.experienceMaxYears ?? "";
+      vacancyController.text = job.numberOfVacancies ?? "";
+      lastDateController.text = job.lastDateToApply ?? "";
+      internshipPeriodController.text = job.internshipTimePeriod ?? "";
+      selectedJobType =
+          jobTypes.contains(job.jobType) ? job.jobType! : "Full-time";
+      selectedWorkMode =
+          workModes.contains(job.workMode) ? job.workMode! : "On-site";
+      selectedCategoryForPost = _getUiJobStatus(job.jobPostStatus);
 
       selectedBusinessId = job.memberBusinessOccupationProfileId ?? "";
 
@@ -1493,6 +1394,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       qualificationController.clear();
       experienceMinController.clear();
       experienceMaxController.clear();
+      internshipPeriodController.clear();
       skillsController.clear();
       vacancyController.clear();
       lastDateController.clear();
@@ -1500,6 +1402,9 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       selectedOccupationId = "";
       selectedProfessionId = "";
       selectedSpecializationId = "";
+      selectedBusinessId = null;
+      selectedBusinessName = null;
+      jobSummaryFile = null;
 
       regiController.setSelectedCity("");
 
@@ -1570,7 +1475,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                                   )
                                 : Text(editIndex != null
                                     ? "Update Job"
-                                    : "Post Job"),
+                                    : "Submit"),
                           ),
                         ],
                       ),
@@ -1670,9 +1575,17 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                                 onChanged: (val) {
                                   modalSetState(() {
                                     selectedJobType = val;
+                                    if (selectedJobType != "Internship") {
+                                      internshipPeriodController.clear();
+                                    }
                                   });
                                 },
                               ),
+                              if (selectedJobType == "Internship")
+                                _buildTextField(
+                                  "Internship Time Period",
+                                  controller: internshipPeriodController,
+                                ),
                               _buildDropdown(
                                 label: "Work Mode",
                                 items: workModes,

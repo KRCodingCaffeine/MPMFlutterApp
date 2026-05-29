@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:mpm/model/JobPortal/GetJobByMemberId/GetJobByMemberIdData.dart';
+import 'package:mpm/model/city/CityData.dart';
+import 'package:mpm/repository/JobPortal/GetJobByMemberIdRepo/get_job_by_member_id_repository.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/JobPortal/job_detail.dart';
+import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
+import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
 class JobSeekerView extends StatefulWidget {
   const JobSeekerView({super.key});
@@ -12,48 +18,143 @@ class JobSeekerView extends StatefulWidget {
 
 class _JobSeekerViewState extends State<JobSeekerView> {
   int selectedTab = 0;
+  final GetJobByMemberIdRepository jobRepository = GetJobByMemberIdRepository();
+  final UdateProfileController profileController =
+      Get.find<UdateProfileController>();
+  final NewMemberController regiController = Get.put(NewMemberController());
 
   String selectedCategory = "All";
   String selectedLocation = "All";
   RangeValues selectedSalaryRange = const RangeValues(0, 20);
   TextEditingController searchController = TextEditingController();
+  TextEditingController preferredNameController = TextEditingController();
+  TextEditingController preferredEmailController = TextEditingController();
+  TextEditingController preferredMobileController = TextEditingController();
+  TextEditingController preferredWhatsappController = TextEditingController();
+  TextEditingController fieldToWorkController = TextEditingController();
+  TextEditingController expectedSalaryController = TextEditingController();
+  String selectedPreferredCityId = "";
+  String selectedPreferredWorkMode = "On-site";
+  String selectedPreferredJobType = "Full-time";
+  final List<String> preferredWorkModes = [
+    "On-site",
+    "Work From Home",
+    "Hybrid",
+  ];
+  final List<String> preferredJobTypes = [
+    "Full-time",
+    "Part-time",
+    "Internship",
+  ];
 
   double _getSalaryValue(String salary) {
     try {
       final cleaned = salary.replaceAll("₹", "").replaceAll("LPA", "").trim();
       final parts = cleaned.split("-");
-      return double.parse(parts.first.trim());
+      return _normalizeSalaryForFilter(double.parse(parts.first.trim()));
     } catch (e) {
       return 0;
     }
+  }
+
+  double _normalizeSalaryForFilter(double salary) {
+    if (salary > 1000) {
+      return (salary * 12) / 100000;
+    }
+
+    return salary;
   }
 
   List<Map<String, dynamic>> appliedJobs = [];
 
   final List<String> categories = ["IT", "Finance", "Marketing", "Design"];
 
-  final List<Map<String, dynamic>> jobs = [
-    {
-      "title": "Flutter Developer",
-      "company": "Tech Solutions Pvt Ltd",
-      "location": "Mumbai",
-      "salary": "₹5 - 8 LPA",
-      "experience": "2-4 Years",
-      "postedDate": "20 Feb 2026",
-      "category": "IT",
-      "isBookmarked": false
-    },
-    {
-      "title": "Senior Accountant",
-      "company": "Maheshwari Finance Group",
-      "location": "Ahmedabad",
-      "salary": "₹4 - 6 LPA",
-      "experience": "3-5 Years",
-      "postedDate": "18 Feb 2026",
-      "category": "Finance",
-      "isBookmarked": false
+  List<Map<String, dynamic>> jobs = [];
+
+  @override
+  void initState() {
+    super.initState();
+    if (regiController.cityList.isEmpty) {
+      regiController.getCity();
     }
-  ];
+    loadJobs();
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    preferredNameController.dispose();
+    preferredEmailController.dispose();
+    preferredMobileController.dispose();
+    preferredWhatsappController.dispose();
+    fieldToWorkController.dispose();
+    expectedSalaryController.dispose();
+    super.dispose();
+  }
+
+  Future<void> loadJobs() async {
+    try {
+      final response = await jobRepository.getJobs(
+        profileController.memberId.value,
+        status: "published",
+      );
+
+      if (!mounted) return;
+
+      if (response.status == true && response.data != null) {
+        setState(() {
+          jobs = response.data!
+              .where((job) => job.status?.toLowerCase() == "published")
+              .map(_mapJobToViewData)
+              .toList();
+        });
+      }
+    } catch (e) {
+      debugPrint("Job List Fetch Error: $e");
+    }
+  }
+
+  Map<String, dynamic> _mapJobToViewData(GetJobByMemberIdData job) {
+    return {
+      "title": job.title ?? "",
+      "company": (job.companyName ?? "").trim().isNotEmpty
+          ? job.companyName
+          : "Company",
+      "location": job.location ?? "",
+      "salary": _formatSalary(job),
+      "experience": _formatExperience(job),
+      "postedDate": _formatPostedDate(job),
+      "category": "IT",
+      "isBookmarked": false,
+      "jobData": job,
+    };
+  }
+
+  String _formatSalary(GetJobByMemberIdData job) {
+    if (job.salaryVisible == "0") return "Not disclosed";
+
+    final min = job.salaryMin?.toString().trim() ?? "";
+    final max = job.salaryMax?.toString().trim() ?? "";
+
+    if (min.isEmpty && max.isEmpty) return "Not disclosed";
+    if (min.isNotEmpty && max.isNotEmpty) return "₹$min - $max LPA";
+    return "₹${min.isNotEmpty ? min : max} LPA";
+  }
+
+  String _formatExperience(GetJobByMemberIdData job) {
+    final min = job.experienceMinYears?.toString().trim() ?? "";
+    final max = job.experienceMaxYears?.toString().trim() ?? "";
+
+    if (min.isEmpty && max.isEmpty) return "Not specified";
+    if (min.isNotEmpty && max.isNotEmpty) return "$min-$max Years";
+    return "${min.isNotEmpty ? min : max} Years";
+  }
+
+  String _formatPostedDate(GetJobByMemberIdData job) {
+    final date = job.publishedAt ?? job.createdAt ?? "";
+    if (date.length >= 10) return date.substring(0, 10);
+    return date;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -98,6 +199,15 @@ class _JobSeekerViewState extends State<JobSeekerView> {
           style: TextStyle(color: Colors.white),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          TextButton(
+            onPressed: _openPreferredCitySheet,
+            child: const Text(
+              "Add preferred Details",
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -418,9 +528,295 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     );
   }
 
-  void _openFilterSheet() {
-    List<String> locations = ["All", "Mumbai", "Ahmedabad"];
+  String _cleanProfileValue(String value) {
+    return value == "null" ? "" : value.trim();
+  }
 
+  void _prefillPreferredDetails() {
+    preferredNameController.text = _cleanProfileValue(
+      profileController.userName.value,
+    );
+    preferredEmailController.text = _cleanProfileValue(
+      profileController.email.value,
+    );
+    preferredMobileController.text = _cleanProfileValue(
+      profileController.mobileNumber.value,
+    );
+    preferredWhatsappController.text = _cleanProfileValue(
+      profileController.whatsAppNumber.value,
+    );
+
+    final cityId = _cleanProfileValue(profileController.city_id.value);
+    if (cityId.isNotEmpty) {
+      selectedPreferredCityId = cityId;
+    }
+  }
+
+  Future<void> _openPreferredCitySheet() async {
+    _prefillPreferredDetails();
+
+    if (regiController.cityList.isEmpty) {
+      await regiController.getCity();
+    }
+
+    if (!mounted) return;
+
+    showModalBottomSheet(
+      backgroundColor: Colors.white,
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SafeArea(
+              child: FractionallySizedBox(
+                heightFactor: 0.85,
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    left: 20,
+                    right: 20,
+                    top: 20,
+                    bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: ColorHelperClass.getColorFromHex(
+                                  ColorResources.red_color),
+                              side: const BorderSide(color: Colors.red),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Text("Cancel"),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: ColorHelperClass.getColorFromHex(
+                                  ColorResources.red_color),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Text("Submit"),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        "Add preferred Details",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Divider(),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              const SizedBox(height: 12),
+                              _buildPreferredTextField(
+                                label: "Name",
+                                controller: preferredNameController,
+                              ),
+                              _buildPreferredTextField(
+                                label: "Email",
+                                controller: preferredEmailController,
+                                keyboardType: TextInputType.emailAddress,
+                              ),
+                              _buildPreferredTextField(
+                                label: "Mobile Number",
+                                controller: preferredMobileController,
+                                keyboardType: TextInputType.phone,
+                              ),
+                              _buildPreferredTextField(
+                                label: "Whatsapp Number",
+                                controller: preferredWhatsappController,
+                                keyboardType: TextInputType.phone,
+                              ),
+                              _buildPreferredDropdown(
+                                label: "Work Mode",
+                                items: preferredWorkModes,
+                                selectedValue: selectedPreferredWorkMode,
+                                onChanged: (value) {
+                                  setModalState(() {
+                                    selectedPreferredWorkMode = value;
+                                  });
+                                },
+                              ),
+                              _buildPreferredDropdown(
+                                label: "Job Type",
+                                items: preferredJobTypes,
+                                selectedValue: selectedPreferredJobType,
+                                onChanged: (value) {
+                                  setModalState(() {
+                                    selectedPreferredJobType = value;
+                                  });
+                                },
+                              ),
+                              _buildPreferredTextField(
+                                label: "Field to Work",
+                                controller: fieldToWorkController,
+                              ),
+                              _buildPreferredTextField(
+                                label: "Expected Salary",
+                                controller: expectedSalaryController,
+                                keyboardType: TextInputType.number,
+                              ),
+                              _buildPreferredCityDropdown(
+                                modalSetState: setModalState,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildPreferredTextField({
+    required String label,
+    required TextEditingController controller,
+    TextInputType? keyboardType,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+          enabledBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black),
+          ),
+          focusedBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black38, width: 1),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          labelStyle: const TextStyle(color: Colors.black),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPreferredDropdown({
+    required String label,
+    required List<String> items,
+    required String selectedValue,
+    required Function(String) onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+          enabledBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black),
+          ),
+          focusedBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black38, width: 1),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          labelStyle: const TextStyle(color: Colors.black),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            dropdownColor: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            isExpanded: true,
+            value: selectedValue,
+            items: items.map((item) {
+              return DropdownMenuItem<String>(
+                value: item,
+                child: Text(item),
+              );
+            }).toList(),
+            onChanged: (value) {
+              if (value != null) {
+                onChanged(value);
+              }
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPreferredCityDropdown({
+    required StateSetter modalSetState,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Obx(() {
+        if (regiController.cityList.isEmpty) {
+          return const Text("No city available");
+        }
+
+        final hasSelectedCity = regiController.cityList.any(
+          (city) => city.id.toString() == selectedPreferredCityId,
+        );
+
+        return InputDecorator(
+          decoration: const InputDecoration(
+            labelText: "Preferred City",
+            border: OutlineInputBorder(),
+            enabledBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black38, width: 1),
+            ),
+            contentPadding: EdgeInsets.symmetric(horizontal: 16),
+            labelStyle: TextStyle(color: Colors.black),
+          ),
+          isEmpty: !hasSelectedCity,
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              dropdownColor: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              isExpanded: true,
+              value: hasSelectedCity ? selectedPreferredCityId : null,
+              items: regiController.cityList.map((CityData city) {
+                return DropdownMenuItem<String>(
+                  value: city.id.toString(),
+                  child: Text(city.cityName ?? "Unknown"),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  modalSetState(() {
+                    selectedPreferredCityId = value;
+                  });
+                }
+              },
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  void _openFilterSheet() {
     showModalBottomSheet(
         backgroundColor: Colors.white,
         context: context,
