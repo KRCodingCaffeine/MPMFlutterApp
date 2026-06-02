@@ -116,6 +116,7 @@ class Urls {
   static const String get_event_attendees_list = base_url+"api/get_event_attendees_list";
   static const String get_admin_access_for_member = base_url+"api/get_admin_access_for_member";
   static const String event_registration_confirmation = base_url+"api/event_registration_confirmation";
+  static const String updateEventPaymentTransactionUrl = base_url+"api/update_event_payment_transaction";
 
   //Shiksha Sahayata
   static const String get_shiksha_application_by_id_url = base_url+"api/get_shiksha_application_by_id";

@@ -671,6 +671,18 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
           ),
           const SizedBox(height: 8),
           _buildInfoRow(Icons.email_outlined, 'Email', email),
+          const SizedBox(height: 8),
+
+          _buildInfoRow(
+            Icons.calendar_today_outlined,
+            'Registered On',
+            attendee.registrationDate != null &&
+                attendee.registrationDate!.isNotEmpty
+                ? DateFormat('dd MMM yyyy').format(
+              DateTime.parse(attendee.registrationDate!),
+            )
+                : '-',
+          ),
           const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
@@ -717,6 +729,10 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
   }
 
   bool _isApproved(EventAttendeesData attendee) {
+    if (_isFreeEvent(attendee)) {
+      return true;
+    }
+
     final attendeeId = attendee.eventAttendeesId ?? attendee.eventAttendeesCode;
     if (attendeeId != null && _approvedAttendeeIds.contains(attendeeId)) {
       return true;
@@ -724,6 +740,15 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
 
     return attendee.confirmationStatus == '1' ||
         attendee.confirmationStatus?.toLowerCase() == 'approved';
+  }
+
+  bool _isFreeEvent(EventAttendeesData attendee) {
+    final eventCostType =
+        (attendee.eventCostType ?? _selectedEvent?.eventCostType ?? '')
+            .trim()
+            .toLowerCase();
+
+    return eventCostType == 'free' || eventCostType == '0';
   }
 
   String _getAttendeeName(EventAttendeesData attendee) {
