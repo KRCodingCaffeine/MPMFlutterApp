@@ -12,6 +12,7 @@ import 'package:mpm/repository/get_even_details_by_id_repository/get_even_detail
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:dio/dio.dart';
+import 'package:mpm/view/Events/event_payment_detail_page.dart';
 import 'package:mpm/view/Events/event_prize_page.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
@@ -1011,10 +1012,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
   Future<void> _showSuccessDialog(String message) async {
     final isPaidEvent =
         _eventDetails?.eventCostType?.trim().toLowerCase() == 'paid';
-    final dialogTitle = isPaidEvent ? 'Received Your Request' : 'Success';
-    final dialogMessage = isPaidEvent ? 'Click ok to proceed Further' : message;
+    final dialogTitle = isPaidEvent ? 'Registration Detail' : 'Success';
+    final dialogMessage = isPaidEvent
+        ? 'Thank you for registering for the event. Click OK to continue to the payment page.'
+        : message;
 
-    await showDialog(
+    final shouldOpenPayment = await showDialog<bool>(
       context: context,
       barrierDismissible: true,
       builder: (BuildContext context) {
@@ -1052,7 +1055,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           actions: [
             ElevatedButton(
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(isPaidEvent);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
@@ -1067,6 +1070,21 @@ class _EventDetailPageState extends State<EventDetailPage> {
         );
       },
     );
+
+    if (isPaidEvent && shouldOpenPayment == true && mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => EventPaymentDetailPage(
+            eventDetails: _eventDetails!,
+            selectedMemberCount: _selectedFamilyMemberIds.isEmpty
+                ? 1
+                : _selectedFamilyMemberIds.length,
+            selectedFoodBoxCount: _foodBoxCount,
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _showErrorDialog(String message) async {

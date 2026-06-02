@@ -1236,65 +1236,65 @@ class _RegisteredEventsDetailPageState
                                   _currentFoodContainerCount ?? "Not Allotted",
                                   style: const TextStyle(fontSize: 14),
                                 ),
-                                if (widget.eventAttendee.eventQrCode == null ||
-                                    widget.eventAttendee.eventQrCode!.isEmpty)
-                                  ElevatedButton(
-                                    onPressed: () async {
-                                      int? eventAttendeesId = int.tryParse(
-                                          widget.eventAttendee
-                                                  .eventAttendeesId ??
-                                              '');
-
-                                      if (eventAttendeesId != null) {
-                                        _showFoodBottomSheet(
-                                          context,
-                                          eventAttendeesId,
-                                          currentFoodOption:
-                                              (_currentFoodContainerCount !=
-                                                          null &&
-                                                      _currentFoodContainerCount !=
-                                                          "0")
-                                                  ? "Yes"
-                                                  : "No",
-                                          currentFoodBoxCount: int.tryParse(
-                                                  _currentFoodContainerCount ??
-                                                      '0') ??
-                                              0,
-                                        );
-                                      } else {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          const SnackBar(
-                                              content: Text(
-                                                  'Invalid event attendees ID')),
-                                        );
-                                      }
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.white,
-                                      foregroundColor: const Color(0xFFDC3545),
-                                      elevation: 4,
-                                      shadowColor: Colors.black,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 4),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: const [
-                                        Icon(Icons.edit, size: 12),
-                                        SizedBox(width: 4),
-                                        Text(
-                                          'Edit',
-                                          style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w500),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                                // if (widget.eventAttendee.eventQrCode == null ||
+                                //     widget.eventAttendee.eventQrCode!.isEmpty)
+                                //   ElevatedButton(
+                                //     onPressed: () async {
+                                //       int? eventAttendeesId = int.tryParse(
+                                //           widget.eventAttendee
+                                //                   .eventAttendeesId ??
+                                //               '');
+                                //
+                                //       if (eventAttendeesId != null) {
+                                //         _showFoodBottomSheet(
+                                //           context,
+                                //           eventAttendeesId,
+                                //           currentFoodOption:
+                                //               (_currentFoodContainerCount !=
+                                //                           null &&
+                                //                       _currentFoodContainerCount !=
+                                //                           "0")
+                                //                   ? "Yes"
+                                //                   : "No",
+                                //           currentFoodBoxCount: int.tryParse(
+                                //                   _currentFoodContainerCount ??
+                                //                       '0') ??
+                                //               0,
+                                //         );
+                                //       } else {
+                                //         ScaffoldMessenger.of(context)
+                                //             .showSnackBar(
+                                //           const SnackBar(
+                                //               content: Text(
+                                //                   'Invalid event attendees ID')),
+                                //         );
+                                //       }
+                                //     },
+                                //     style: ElevatedButton.styleFrom(
+                                //       backgroundColor: Colors.white,
+                                //       foregroundColor: const Color(0xFFDC3545),
+                                //       elevation: 4,
+                                //       shadowColor: Colors.black,
+                                //       shape: RoundedRectangleBorder(
+                                //         borderRadius: BorderRadius.circular(8),
+                                //       ),
+                                //       padding: const EdgeInsets.symmetric(
+                                //           horizontal: 10, vertical: 4),
+                                //     ),
+                                //     child: Row(
+                                //       mainAxisSize: MainAxisSize.min,
+                                //       children: const [
+                                //         Icon(Icons.edit, size: 12),
+                                //         SizedBox(width: 4),
+                                //         Text(
+                                //           'Edit',
+                                //           style: TextStyle(
+                                //               fontSize: 12,
+                                //               fontWeight: FontWeight.w500),
+                                //         ),
+                                //       ],
+                                //     ),
+                                //   ),
                               ],
                             ),
                           ),

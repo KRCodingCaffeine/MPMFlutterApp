@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:mpm/model/GetEventDetailsById/GetEventDetailsByIdData.dart';
+import 'package:mpm/repository/payment_transaction_id_repository/payment_transaction_id_repo.dart';
+import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/Events/event_view.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class EventPaymentDetailPage extends StatelessWidget {
+class EventPaymentDetailPage extends StatefulWidget {
   final GetEventDetailsByIdData eventDetails;
   final int selectedMemberCount;
   final int selectedFoodBoxCount;
@@ -16,6 +18,26 @@ class EventPaymentDetailPage extends StatelessWidget {
     this.selectedMemberCount = 1,
     this.selectedFoodBoxCount = 0,
   }) : super(key: key);
+
+  @override
+  State<EventPaymentDetailPage> createState() => _EventPaymentDetailPageState();
+}
+
+class _EventPaymentDetailPageState extends State<EventPaymentDetailPage> {
+  final TextEditingController transactionIdController = TextEditingController();
+  final PaymentTransactionRepository _paymentTransactionRepository =
+      PaymentTransactionRepository();
+  bool _isSubmittingTransaction = false;
+
+  GetEventDetailsByIdData get eventDetails => widget.eventDetails;
+  int get selectedMemberCount => widget.selectedMemberCount;
+  int get selectedFoodBoxCount => widget.selectedFoodBoxCount;
+
+  @override
+  void dispose() {
+    transactionIdController.dispose();
+    super.dispose();
+  }
 
   int get _eventEntryAmount {
     final amount = eventDetails.eventAmount?.trim();
@@ -104,6 +126,89 @@ class EventPaymentDetailPage extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Could not open Google Pay')),
       );
+    }
+  }
+
+  Future<void> _submitTransactionId() async {
+    final transactionId = transactionIdController.text.trim();
+    if (transactionId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please enter transaction id"),
+        ),
+      );
+      return;
+    }
+
+    final eventId = eventDetails.eventId?.toString() ?? '';
+    final session = await SessionManager.getSession();
+    final memberId = session?.memberId?.toString() ?? '';
+
+    if (eventId.isEmpty || memberId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Unable to submit transaction id"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmittingTransaction = true;
+    });
+
+    try {
+      final response =
+          await _paymentTransactionRepository.updatePaymentTransaction(
+        eventId: eventId,
+        memberId: memberId,
+        paymentTransactionId: transactionId,
+      );
+
+      if (!mounted) return;
+
+      if (response.status == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              response.message ?? "Transaction id submitted successfully",
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(minutes: 1),
+          ),
+        );
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const EventsPage()),
+          (route) => false,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              response.message ?? "Failed to submit transaction id",
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Failed to submit transaction id: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmittingTransaction = false;
+        });
+      }
     }
   }
 
@@ -246,6 +351,8 @@ class EventPaymentDetailPage extends StatelessWidget {
           // ),
           // const SizedBox(height: 12),
           _buildAmountBreakdown(),
+          const SizedBox(height: 16),
+          _buildTransactionIdSection(context, themeColor),
           const SizedBox(height: 12),
         ],
       ),
@@ -305,6 +412,73 @@ class EventPaymentDetailPage extends StatelessWidget {
         const SizedBox(width: 12),
         Text(value, style: textStyle, textAlign: TextAlign.right),
       ],
+    );
+  }
+
+  Widget _buildTransactionIdSection(BuildContext context, Color themeColor) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE7DAC6)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Once your payment is completed click here to enter your transaction id",
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: transactionIdController,
+            decoration: const InputDecoration(
+              labelText: "Enter Transaction ID",
+              border: OutlineInputBorder(),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.black),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.black38, width: 1),
+              ),
+              contentPadding: EdgeInsets.symmetric(horizontal: 16),
+              labelStyle: TextStyle(color: Colors.black),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _isSubmittingTransaction ? null : _submitTransactionId,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: themeColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: _isSubmittingTransaction
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text("Submit"),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
