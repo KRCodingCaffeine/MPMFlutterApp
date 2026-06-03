@@ -598,6 +598,8 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
     final name = _getAttendeeName(attendee);
     final attendeesCode = _valueOrDash(attendee.eventAttendeesCode);
     final mobileNumber = _valueOrDash(attendee.mobile);
+    final memberCode = _valueOrDash(attendee.memberCode);
+
     final email = _valueOrDash(attendee.email);
     final isApproved = _isApproved(attendee);
     final attendeeId = attendee.eventAttendeesId;
@@ -664,6 +666,12 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
             ],
           ),
           const SizedBox(height: 14),
+          _buildInfoRow(
+            Icons.badge_outlined,
+            'Membership Code',
+            memberCode,
+          ),
+          const SizedBox(height: 8),
           _buildInfoRow(
             Icons.phone_outlined,
             'Mobile Number',

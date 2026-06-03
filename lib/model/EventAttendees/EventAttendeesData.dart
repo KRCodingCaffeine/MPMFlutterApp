@@ -16,10 +16,9 @@ class EventAttendeesData {
   String? middleName;
   String? lastName;
   String? mobile;
+  String? memberCode;
   String? email;
   String? memberFullName;
-
-// New Event Fields
   String? eventId;
   String? eventName;
   String? eventDescription;
@@ -57,8 +56,7 @@ class EventAttendeesData {
     this.mobile,
     this.email,
     this.memberFullName,
-
-// New Fields
+    this.memberCode,
     this.eventId,
     this.eventName,
     this.eventDescription,
@@ -98,8 +96,7 @@ class EventAttendeesData {
       mobile: json['mobile']?.toString(),
       email: json['email']?.toString(),
       memberFullName: json['member_full_name']?.toString(),
-
-// New Event Fields
+      memberCode: json['member_code']?.toString(),
       eventId: json['event_id']?.toString(),
       eventName: json['event_name']?.toString(),
       eventDescription: json['event_description']?.toString(),
@@ -141,8 +138,7 @@ class EventAttendeesData {
       'mobile': mobile,
       'email': email,
       'member_full_name': memberFullName,
-
-// New Event Fields
+      'member_code': memberCode,
       'event_id': eventId,
       'event_name': eventName,
       'event_description': eventDescription,
