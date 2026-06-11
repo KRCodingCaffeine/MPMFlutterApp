@@ -144,6 +144,7 @@ class Urls {
   static const String get_occupations_by_member_id_url = base_url+"api/member_job/get_occupations_by_member_id";
   static const String get_qualifications_by_member_id_url = base_url+"api/member_job/get_qualifications_by_member_id";
   static const String add_job_url = base_url+"api/member_job/add_job";
+  static const String update_job_url = base_url+"api/member_job/update_job";
   static const String get_jobs_url = base_url+"api/member_job/get_jobs";
   static const String update_education_url = base_url+"api/member_job/update_education";
   static const String update_more_occupation_url = base_url+"api/member_job/update_occupation";

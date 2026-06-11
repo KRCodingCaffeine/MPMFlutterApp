@@ -14,33 +14,24 @@ class CreateJobRepository {
       debugPrint("🔵 Add Job API URL: $url");
       debugPrint("📤 Request Body: $body");
 
-      final safeBody = _convertAllValuesToStrings(body);
-
       final response = await api.postApi(
-        safeBody,
+        body.map(
+              (key, value) => MapEntry(
+            key,
+            value?.toString() ?? "",
+          ),
+        ),
         url,
         "",
-        "2", // x-www-form-urlencoded
+        "2",
       );
 
       debugPrint("🟢 Response: $response");
 
       return CreateJobModelClass.fromJson(response);
-
     } catch (e) {
       debugPrint("❌ Error Creating Job: $e");
       rethrow;
     }
-  }
-
-  Map<String, dynamic> _convertAllValuesToStrings(
-      Map<String, dynamic> body) {
-    final safeBody = <String, dynamic>{};
-
-    body.forEach((key, value) {
-      safeBody[key] = value?.toString() ?? '';
-    });
-
-    return safeBody;
   }
 }

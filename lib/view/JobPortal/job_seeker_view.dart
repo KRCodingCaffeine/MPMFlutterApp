@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mpm/model/BusinessProfile/BusinessOccupationProfile/BusinessOccupationProfileData.dart';
 import 'package:mpm/model/JobPortal/GetJobByMemberId/GetJobByMemberIdData.dart';
 import 'package:mpm/model/city/CityData.dart';
+import 'package:mpm/repository/BusinessProfileRepo/business_occupation_profile_repository/business_occupation_profile_repo.dart';
 import 'package:mpm/repository/JobPortal/GetJobByMemberIdRepo/get_job_by_member_id_repository.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
@@ -25,6 +27,8 @@ class _JobSeekerViewState extends State<JobSeekerView> {
 
   String selectedCategory = "All";
   String selectedLocation = "All";
+  bool isLoadingJobs = false;
+  bool hasOpenedPreferredSheet = false;
   RangeValues selectedSalaryRange = const RangeValues(0, 20);
   TextEditingController searchController = TextEditingController();
   TextEditingController preferredNameController = TextEditingController();
@@ -33,6 +37,8 @@ class _JobSeekerViewState extends State<JobSeekerView> {
   TextEditingController preferredWhatsappController = TextEditingController();
   TextEditingController fieldToWorkController = TextEditingController();
   TextEditingController expectedSalaryController = TextEditingController();
+  TextEditingController preferredAreaController =
+  TextEditingController();
   String selectedPreferredCityId = "";
   String selectedPreferredWorkMode = "On-site";
   String selectedPreferredJobType = "Full-time";
@@ -46,6 +52,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     "Part-time",
     "Internship",
   ];
+
 
   double _getSalaryValue(String salary) {
     try {
@@ -69,15 +76,22 @@ class _JobSeekerViewState extends State<JobSeekerView> {
 
   final List<String> categories = ["IT", "Finance", "Marketing", "Design"];
 
+  List<BusinessOccupationProfileData> businessProfiles = [];
   List<Map<String, dynamic>> jobs = [];
 
   @override
   void initState() {
     super.initState();
+
     if (regiController.cityList.isEmpty) {
       regiController.getCity();
     }
+
     loadJobs();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndOpenPreferredDetails();
+    });
   }
 
   @override
@@ -94,6 +108,12 @@ class _JobSeekerViewState extends State<JobSeekerView> {
 
   Future<void> loadJobs() async {
     try {
+      setState(() {
+        isLoadingJobs = true;
+      });
+
+      await loadBusinessProfiles();
+
       final response = await jobRepository.getJobs(
         profileController.memberId.value,
         status: "published",
@@ -111,15 +131,70 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       }
     } catch (e) {
       debugPrint("Job List Fetch Error: $e");
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoadingJobs = false;
+        });
+      }
     }
   }
 
+  Future<void> _checkAndOpenPreferredDetails() async {
+    if (hasOpenedPreferredSheet) return;
+
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    // First-time user check
+    bool isFirstTimeUser =
+        preferredNameController.text.isEmpty &&
+            preferredEmailController.text.isEmpty &&
+            preferredMobileController.text.isEmpty &&
+            fieldToWorkController.text.isEmpty;
+
+    if (isFirstTimeUser && mounted) {
+      hasOpenedPreferredSheet = true;
+      _openPreferredCitySheet();
+    }
+  }
+
+  Future<void> loadBusinessProfiles() async {
+    try {
+      final response = await BusinessOccupationProfileRepository()
+          .fetchBusinessOccupationProfiles(
+        memberId: profileController.memberId.value,
+      );
+
+      if (response.status == true && response.data != null) {
+        businessProfiles = response.data!;
+      }
+    } catch (e) {
+      debugPrint("Business Fetch Error: $e");
+    }
+  }
+
+  String getBusinessName(String? businessId) {
+    if (businessId == null || businessId.isEmpty) return "";
+
+    final business = businessProfiles.firstWhereOrNull(
+      (b) => b.memberBusinessOccupationProfileId == businessId,
+    );
+
+    return business?.businessName ?? "";
+  }
+
   Map<String, dynamic> _mapJobToViewData(GetJobByMemberIdData job) {
+    final companyName = (job.companyName ?? "").trim();
+    final businessName =
+        getBusinessName(job.memberBusinessOccupationProfileId).trim();
+
     return {
       "title": job.title ?? "",
-      "company": (job.companyName ?? "").trim().isNotEmpty
-          ? job.companyName
-          : "Company",
+      "company": companyName.isNotEmpty
+          ? companyName
+          : businessName.isNotEmpty
+              ? businessName
+              : "Company",
       "location": job.location ?? "",
       "salary": _formatSalary(job),
       "experience": _formatExperience(job),
@@ -279,175 +354,188 @@ class _JobSeekerViewState extends State<JobSeekerView> {
             ),
           ),
           Expanded(
-            child: displayJobs.isEmpty
-                ? _buildEmptyState()
-                : ListView.builder(
-                    itemCount: displayJobs.length,
-                    itemBuilder: (context, index) {
-                      final job = displayJobs[index];
+            child: isLoadingJobs
+                ? Center(
+                    child: CircularProgressIndicator(
+                      color: ColorHelperClass.getColorFromHex(
+                        ColorResources.red_color,
+                      ),
+                    ),
+                  )
+                : displayJobs.isEmpty
+                    ? _buildEmptyState()
+                    : ListView.builder(
+                        itemCount: displayJobs.length,
+                        itemBuilder: (context, index) {
+                          final job = displayJobs[index];
 
-                      return Container(
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.shade200,
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            )
-                          ],
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            /// LEFT SIDE DETAILS
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    job["title"],
-                                    style: const TextStyle(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    job["company"],
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
+                          return Container(
+                            margin: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            padding: const EdgeInsets.all(18),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.shade200,
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                )
+                              ],
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                /// LEFT SIDE DETAILS
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      const Icon(Icons.location_on,
-                                          size: 16, color: Colors.grey),
-                                      const SizedBox(width: 4),
                                       Text(
-                                        job["location"],
+                                        job["title"],
+                                        style: const TextStyle(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        job["company"],
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.location_on,
+                                              size: 16, color: Colors.grey),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            job["location"],
+                                            style:
+                                                const TextStyle(fontSize: 13),
+                                          ),
+                                          const SizedBox(width: 14),
+                                          Text(
+                                            job["salary"],
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.green,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        "Experience: ${job["experience"]}",
                                         style: const TextStyle(fontSize: 13),
                                       ),
-                                      const SizedBox(width: 14),
+                                      const SizedBox(height: 4),
                                       Text(
-                                        job["salary"],
+                                        "Posted: ${job["postedDate"]}",
                                         style: const TextStyle(
-                                          fontSize: 13,
-                                          color: Colors.green,
-                                          fontWeight: FontWeight.w600,
+                                          fontSize: 12,
+                                          color: Colors.grey,
                                         ),
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    "Experience: ${job["experience"]}",
-                                    style: const TextStyle(fontSize: 13),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    "Posted: ${job["postedDate"]}",
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            const SizedBox(width: 12),
-
-                            /// RIGHT SIDE ACTIONS
-                            Column(
-                              children: [
-                                /// SAVE BUTTON
-                                GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      job["isBookmarked"] =
-                                          !(job["isBookmarked"] ?? false);
-                                    });
-                                  },
-                                  child: Icon(
-                                    (job["isBookmarked"] ?? false)
-                                        ? Icons.bookmark
-                                        : Icons.bookmark_border,
-                                    size: 24,
-                                    color: (job["isBookmarked"] ?? false)
-                                        ? Colors.orange
-                                        : Colors.grey,
-                                  ),
                                 ),
 
-                                const SizedBox(height: 50),
+                                const SizedBox(width: 12),
 
-                                /// APPLY BUTTON
-                                selectedTab != 2
-                                    ? SizedBox(
-                                        height: 36,
-                                        child: ElevatedButton(
-                                          onPressed: () {
-                                            if (!appliedJobs.contains(job)) {
-                                              setState(() {
-                                                appliedJobs.add(job);
-                                              });
-                                            }
+                                /// RIGHT SIDE ACTIONS
+                                Column(
+                                  children: [
+                                    /// SAVE BUTTON
+                                    GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          job["isBookmarked"] =
+                                              !(job["isBookmarked"] ?? false);
+                                        });
+                                      },
+                                      child: Icon(
+                                        (job["isBookmarked"] ?? false)
+                                            ? Icons.bookmark
+                                            : Icons.bookmark_border,
+                                        size: 24,
+                                        color: (job["isBookmarked"] ?? false)
+                                            ? Colors.orange
+                                            : Colors.grey,
+                                      ),
+                                    ),
 
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (_) =>
-                                                    JobDetailView(job: job),
+                                    const SizedBox(height: 50),
+
+                                    /// APPLY BUTTON
+                                    selectedTab != 2
+                                        ? SizedBox(
+                                            height: 36,
+                                            child: ElevatedButton(
+                                              onPressed: () {
+                                                if (!appliedJobs
+                                                    .contains(job)) {
+                                                  setState(() {
+                                                    appliedJobs.add(job);
+                                                  });
+                                                }
+
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (_) =>
+                                                        JobDetailView(job: job),
+                                                  ),
+                                                );
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Colors.red,
+                                                foregroundColor: Colors.white,
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 16),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                ),
                                               ),
-                                            );
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.red,
-                                            foregroundColor: Colors.white,
+                                              child: const Text(
+                                                "Apply",
+                                                style: TextStyle(fontSize: 13),
+                                              ),
+                                            ),
+                                          )
+                                        : Container(
                                             padding: const EdgeInsets.symmetric(
-                                                horizontal: 16),
-                                            shape: RoundedRectangleBorder(
+                                                horizontal: 12, vertical: 8),
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  Colors.green.withOpacity(0.1),
                                               borderRadius:
-                                                  BorderRadius.circular(10),
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: const Text(
+                                              "Applied",
+                                              style: TextStyle(
+                                                color: Colors.green,
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w600,
+                                              ),
                                             ),
                                           ),
-                                          child: const Text(
-                                            "Apply",
-                                            style: TextStyle(fontSize: 13),
-                                          ),
-                                        ),
-                                      )
-                                    : Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 12, vertical: 8),
-                                        decoration: BoxDecoration(
-                                          color: Colors.green.withOpacity(0.1),
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                        ),
-                                        child: const Text(
-                                          "Applied",
-                                          style: TextStyle(
-                                            color: Colors.green,
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
+                                  ],
+                                ),
                               ],
                             ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                          );
+                        },
+                      ),
           )
         ],
       ),
@@ -768,35 +856,42 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Obx(() {
-        if (regiController.cityList.isEmpty) {
+        final filteredCities = regiController.cityList.where((city) {
+          return city.id == 2 ||
+              city.id == 3 ||
+              city.id == 4;
+        }).toList();
+
+        if (filteredCities.isEmpty) {
           return const Text("No city available");
         }
 
-        final hasSelectedCity = regiController.cityList.any(
-          (city) => city.id.toString() == selectedPreferredCityId,
+        final hasSelectedCity = filteredCities.any(
+              (city) => city.id.toString() == selectedPreferredCityId,
         );
 
         return InputDecorator(
           decoration: const InputDecoration(
-            labelText: "Preferred City",
+            labelText: "Preferred Location",
             border: OutlineInputBorder(),
             enabledBorder: OutlineInputBorder(
               borderSide: BorderSide(color: Colors.black),
             ),
             focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.black38, width: 1),
+              borderSide: BorderSide(
+                color: Colors.black38,
+                width: 1,
+              ),
             ),
             contentPadding: EdgeInsets.symmetric(horizontal: 16),
-            labelStyle: TextStyle(color: Colors.black),
           ),
-          isEmpty: !hasSelectedCity,
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
-              dropdownColor: Colors.white,
-              borderRadius: BorderRadius.circular(10),
               isExpanded: true,
-              value: hasSelectedCity ? selectedPreferredCityId : null,
-              items: regiController.cityList.map((CityData city) {
+              value: hasSelectedCity
+                  ? selectedPreferredCityId
+                  : null,
+              items: filteredCities.map((CityData city) {
                 return DropdownMenuItem<String>(
                   value: city.id.toString(),
                   child: Text(city.cityName ?? "Unknown"),
