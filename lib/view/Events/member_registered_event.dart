@@ -22,11 +22,55 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
   List<EventAttendeeData> _events = [];
 
   String memberName = 'Loading...';
+  int _selectedTabIndex = 0;
+
+  List<EventAttendeeData> _upcomingEvents = [];
+  List<EventAttendeeData> _pastEvents = [];
 
   @override
   void initState() {
     super.initState();
     _registeredEventsFuture = _loadUserDataAndFetchEvents();
+  }
+
+  void _separateEvents(List<EventAttendeeData> events) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    _upcomingEvents.clear();
+    _pastEvents.clear();
+
+    for (var event in events) {
+      final eventDate =
+      DateTime.tryParse(event.dateStartsFrom ?? '');
+
+      if (eventDate == null) continue;
+
+      if (eventDate.isAfter(today) ||
+          eventDate.isAtSameMomentAs(today)) {
+        _upcomingEvents.add(event);
+      } else {
+        _pastEvents.add(event);
+      }
+    }
+
+    _upcomingEvents.sort((a, b) {
+      final aDate =
+          DateTime.tryParse(a.dateStartsFrom ?? '') ?? DateTime.now();
+      final bDate =
+          DateTime.tryParse(b.dateStartsFrom ?? '') ?? DateTime.now();
+
+      return aDate.compareTo(bDate);
+    });
+
+    _pastEvents.sort((a, b) {
+      final aDate =
+          DateTime.tryParse(a.dateStartsFrom ?? '') ?? DateTime.now();
+      final bDate =
+          DateTime.tryParse(b.dateStartsFrom ?? '') ?? DateTime.now();
+
+      return bDate.compareTo(aDate);
+    });
   }
 
   Future<EventAttendeesModelClass> _loadUserDataAndFetchEvents() async {
@@ -55,7 +99,7 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
         setState(() {
           memberName = name;
           _events = events;
-        });
+          _separateEvents(events);        });
       }
 
       return response;
@@ -77,6 +121,59 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
     try {
       await _registeredEventsFuture;
     } catch (_) {}
+  }
+
+  Widget _buildTabs() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Row(
+          children: [
+            _buildTabButton("Upcoming Events", 0),
+            const SizedBox(width: 8),
+            _buildTabButton("Past Events", 1),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabButton(String title, int index) {
+    final isSelected = _selectedTabIndex == index;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedTabIndex = index;
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? ColorHelperClass.getColorFromHex(
+                ColorResources.red_color)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            title,
+            style: TextStyle(
+              color: isSelected ? Colors.white : Colors.black87,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildEventCard(EventAttendeeData event) {
@@ -213,17 +310,32 @@ class _RegisteredEventsListPageState extends State<RegisteredEventsListPage> {
               return const Center(child: CircularProgressIndicator());
             } else if (snapshot.hasError) {
               return _buildEmptyState();
-            } else if (_events.isEmpty) {
+            } else if (_upcomingEvents.isEmpty &&
+                _pastEvents.isEmpty) {
               return _buildEmptyState();
             } else {
               return RefreshIndicator(
                 color: Colors.redAccent,
                 onRefresh: _refreshEvents,
-                child: ListView.builder(
-                  padding: const EdgeInsets.only(top: 8),
-                  itemCount: _events.length,
-                  itemBuilder: (context, index) =>
-                      _buildEventCard(_events[index]),
+                child: Column(
+                  children: [
+                    _buildTabs(),
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.only(top: 8),
+                        itemCount: _selectedTabIndex == 0
+                            ? _upcomingEvents.length
+                            : _pastEvents.length,
+                        itemBuilder: (context, index) {
+                          final event = _selectedTabIndex == 0
+                              ? _upcomingEvents[index]
+                              : _pastEvents[index];
+
+                          return _buildEventCard(event);
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               );
             }
