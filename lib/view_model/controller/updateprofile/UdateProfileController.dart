@@ -69,7 +69,6 @@ class UdateProfileController extends GetxController {
   final addOccupationRepo = AddOccupationRepository();
   NewMemberController regiController = Get.put(NewMemberController());
 
-
   var isPay = false.obs;
   RxBool showEmailVerifyBanner = false.obs;
 
@@ -130,8 +129,8 @@ class UdateProfileController extends GetxController {
       <OccuptionSpecSubCategoryData>[].obs;
   RxString selectedSubCategory = "".obs;
   final RxString selectedSubSubCategory = ''.obs;
-  final RxList<OccuptionSpecSubSubCategoryData> occuptionSubSubCategoryList = <OccuptionSpecSubSubCategoryData>[].obs;
-
+  final RxList<OccuptionSpecSubSubCategoryData> occuptionSubSubCategoryList =
+      <OccuptionSpecSubSubCategoryData>[].obs;
 
   var newProfileImage = "".obs;
   var userdocumentImage = "".obs;
@@ -362,14 +361,12 @@ class UdateProfileController extends GetxController {
       if (address != null &&
           address.stateId != null &&
           address.stateId.toString().isNotEmpty) {
-
         regiController.state_id.value = address.stateId.toString();
       }
 
       if (address != null &&
           address.city_id != null &&
           address.city_id.toString().isNotEmpty) {
-
         regiController.city_id.value = address.city_id.toString();
       }
       memberId.value = id.toString();
@@ -473,7 +470,8 @@ class UdateProfileController extends GetxController {
       // In UdateProfileController - Update the occupation section
 
       // Occupation
-      if (getUserData.value.occupation != null && getUserData.value.occupation!.isNotEmpty) {
+      if (getUserData.value.occupation != null &&
+          getUserData.value.occupation!.isNotEmpty) {
         // For backward compatibility, set the first occupation as current
         if (getUserData.value.occupation!.isNotEmpty) {
           currentOccupation.value = getUserData.value.occupation!.first;
@@ -483,13 +481,16 @@ class UdateProfileController extends GetxController {
           occupationController.value.text =
               getUserData.value.occupation!.first.occupation ?? '';
           occupation_profession_nameController.value.text =
-              getUserData.value.occupation!.first.occupationProfessionName ?? '';
+              getUserData.value.occupation!.first.occupationProfessionName ??
+                  '';
           specialization_nameController.value.text =
               getUserData.value.occupation!.first.specializationName ?? '';
-          specialization_sub_nameController.value.text =
-              getUserData.value.occupation!.first.specializationSubCategoryName ?? '';
-          specialization_sub_sub_nameController.value.text =
-              getUserData.value.occupation!.first.specializationSubSubCategoryName ?? '';
+          specialization_sub_nameController.value.text = getUserData
+                  .value.occupation!.first.specializationSubCategoryName ??
+              '';
+          specialization_sub_sub_nameController.value.text = getUserData
+                  .value.occupation!.first.specializationSubSubCategoryName ??
+              '';
           detailsController.value.text =
               getUserData.value.occupation!.first.occupationOtherName ?? '';
         }
@@ -549,7 +550,8 @@ class UdateProfileController extends GetxController {
 
 // Optional: Keep currentOccupation for backward compatibility but update its usage
   Occupation? get firstOccupation {
-    return getUserData.value.occupation != null && getUserData.value.occupation!.isNotEmpty
+    return getUserData.value.occupation != null &&
+            getUserData.value.occupation!.isNotEmpty
         ? getUserData.value.occupation!.first
         : null;
   }
@@ -779,13 +781,21 @@ class UdateProfileController extends GetxController {
 
       // Handle dropdown values
       String occupationId = selectedOccupation.value;
-      String professionId = (selectedProfession.value == "Other") ? "" : selectedProfession.value;
-      String specializationId = (selectedSpecialization.value == "Other") ? "" : selectedSpecialization.value;
-      String subCategoryId = (selectedSubCategory.value == "Other") ? "" : selectedSubCategory.value;
-      String subSubCategoryId = (selectedSubSubCategory.value == "Other") ? "" : selectedSubSubCategory.value;
+      String professionId =
+          (selectedProfession.value == "Other") ? "" : selectedProfession.value;
+      String specializationId = (selectedSpecialization.value == "Other")
+          ? ""
+          : selectedSpecialization.value;
+      String subCategoryId = (selectedSubCategory.value == "Other")
+          ? ""
+          : selectedSubCategory.value;
+      String subSubCategoryId = (selectedSubSubCategory.value == "Other")
+          ? ""
+          : selectedSubSubCategory.value;
 
       // Final "Other Details"
-      String otherName = showDetailsField.value ? detailsController.value.text : "";
+      String otherName =
+          showDetailsField.value ? detailsController.value.text : "";
 
       final Map<String, dynamic> data = {
         "member_id": userData.memberId.toString(),
@@ -824,7 +834,6 @@ class UdateProfileController extends GetxController {
         selectedSubSubCategory.value = "";
         detailsController.value.text = "";
         showDetailsField.value = false;
-
       } else {
         throw Exception(response.message ?? "Failed to add occupation");
       }
@@ -1897,13 +1906,7 @@ class UdateProfileController extends GetxController {
       RegisterModelClass registerResponse =
           RegisterModelClass.fromJson(jsonResponse);
       if (registerResponse.status == true) {
-        Get.snackbar(
-          "Success",
-          "Update Successfully",
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
-        );
+        // Clear form
         regiController.firstNameController.value.text = "";
         regiController.lastNameController.value.text = "";
         regiController.middleNameController.value.text = "";
@@ -1911,7 +1914,6 @@ class UdateProfileController extends GetxController {
         regiController.mothersnameController.value.text = "";
         regiController.emailController.value.text = "";
         regiController.whatappmobileController.value.text = "";
-        // regiController.mobileController.value.text = "";
         regiController.selectedGender.value = "";
         regiController.selectBloodGroup.value = "";
         regiController.dateController.text = "";
@@ -1919,26 +1921,27 @@ class UdateProfileController extends GetxController {
         regiController.selectMarital.value = "";
         regiController.marriagedateController.value.text = "";
         regiController.selectMemberSalutation.value = "";
-        regiController.selectMemberSalutation.value = "";
-        getUserProfile();
         String mobile = regiController.mobileController.value.text.trim();
 
-        if (mobile.isNotEmpty) {
-          //   print("Sending OTP to: $mobile");
-          //   sendOtp(regiController.mobileController.value.text);
-          //   Navigator.of(context!).pop();
-          //   showOtpBottomSheet(
-          //       context!, regiController.mobileController.value.text);
-          // }
-          Navigator.of(context).pop();
+        await getUserProfile();
+
+        Navigator.of(context).pop();
+
           Get.snackbar(
             "Success",
             "Family member added successfully",
             backgroundColor: Colors.green,
             colorText: Colors.white,
             snackPosition: SnackPosition.TOP,
+            duration: const Duration(seconds: 3),
           );
-        }
+
+        // Only OTP depends on mobile
+        // if (mobile.isNotEmpty) {
+        //   // sendOtp(mobile);
+        //   // showOtpBottomSheet(context, mobile);
+        // }
+
       } else {
         Get.snackbar(
           "Error",
