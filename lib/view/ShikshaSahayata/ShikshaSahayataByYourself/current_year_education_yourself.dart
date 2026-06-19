@@ -8,6 +8,7 @@ import 'package:mpm/repository/ShikshaSahayataRepo/CurrentYearEducationalDetailR
 import 'package:mpm/repository/ShikshaSahayataRepo/CurrentYearEducationalDetailRepo/admission_letter_upload_repository/admission_letter_upload_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/CurrentYearEducationalDetailRepo/bonafide_letter_upload_repository/bonafide_letter_upload_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/CurrentYearEducationalDetailRepo/delete_requested_loan_education_repository/delete_requested_loan_education_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/CurrentYearEducationalDetailRepo/flight_ticket_upload_repository/flight_ticket_upload_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/CurrentYearEducationalDetailRepo/update_requested_loan_education_repository/update_requested_loan_education_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/ShikshaApplicationRepo/shiksha_application_repository/shiksha_application_repo.dart';
 import 'package:mpm/utils/Session.dart';
@@ -39,6 +40,8 @@ class _CurrentYearEducationYourselfViewState
   Map<String, dynamic>? currentYearData;
   bool isLoading = false;
   bool isSubmitting = false;
+  bool isExistingFlightTicketRemoved = false;
+  bool isApplyingForOverseasStudies = false;
   String? currentMemberId;
 
   String appliedYear = '';
@@ -51,6 +54,7 @@ class _CurrentYearEducationYourselfViewState
   String totalExpenses = '';
   File? _admissionDocument;
   File? _bonafideDocument;
+  File? _flightTicketDocument;
 
   final AddRequestedLoanEducationRepository _addRepo =
       AddRequestedLoanEducationRepository();
@@ -60,6 +64,8 @@ class _CurrentYearEducationYourselfViewState
       DeleteRequestedLoanEducationRepository();
   final AdmissionUploadRepository _admissionRepo = AdmissionUploadRepository();
   final BonafideUploadRepository _bonafideRepo = BonafideUploadRepository();
+  final FlightTicketUploadRepository _flightTicketRepo =
+      FlightTicketUploadRepository();
 
   final ShikshaApplicationRepository _shikshaRepo =
       ShikshaApplicationRepository();
@@ -109,6 +115,7 @@ class _CurrentYearEducationYourselfViewState
               "total": edu.totalExpenses,
               "admissionDoc": edu.admissionConfirmationLetterDoc,
               "bonafideDoc": edu.bonafideFeesDocument,
+              "flightTicketDoc": edu.applicantFlightTicketDocument,
             };
           });
         }
@@ -289,9 +296,7 @@ class _CurrentYearEducationYourselfViewState
                   "₹ ${currentYearData?["otherExpenses"] ?? "0"}"),
               _infoRow("Total Fees", "₹ ${currentYearData?["total"] ?? "0"}"),
 
-              if ((currentYearData?["admissionDoc"] ?? "")
-                  .toString()
-                  .isNotEmpty)
+              if ((currentYearData?["admissionDoc"] ?? "").toString().isNotEmpty) ...[
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
@@ -318,9 +323,11 @@ class _CurrentYearEducationYourselfViewState
                     ),
                   ),
                 ),
-              const SizedBox(height: 20),
+                const SizedBox(height: 20), // Moved to the bottom of the field block
+              ],
 
-              if ((currentYearData?["bonafideDoc"] ?? "").toString().isNotEmpty)
+
+              if ((currentYearData?["bonafideDoc"] ?? "").toString().isNotEmpty) ...[
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
@@ -336,6 +343,38 @@ class _CurrentYearEducationYourselfViewState
                     },
                     icon: const Icon(Icons.visibility),
                     label: const Text("View Bonafide / Fees Proof"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20), // This now correctly adds space AFTER the button
+              ],
+
+              if ((currentYearData?["flightTicketDoc"] ?? "")
+                  .toString()
+                  .isNotEmpty)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      final url = currentYearData?["flightTicketDoc"];
+                      final fullUrl = _getFullImageUrl(url);
+
+                      _showDocumentPreviewDialog(
+                        context,
+                        title: "Flight Ticket",
+                        networkUrl: fullUrl,
+                      );
+                    },
+                    icon: const Icon(Icons.visibility),
+                    label: const Text("View Flight Ticket"),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ColorHelperClass.getColorFromHex(
                           ColorResources.red_color),
@@ -588,6 +627,18 @@ class _CurrentYearEducationYourselfViewState
         }
       }
 
+      if (isApplyingForOverseasStudies && _flightTicketDocument != null) {
+        final flightTicketResponse = await _flightTicketRepo.uploadFlightTicket(
+          shikshaApplicantId: widget.shikshaApplicantId,
+          educationId: educationId,
+          filePath: _flightTicketDocument!.path,
+        );
+
+        if (flightTicketResponse.status != true) {
+          throw Exception(flightTicketResponse.message);
+        }
+      }
+
       Navigator.pop(context);
       await _fetchCurrentYearEducation();
 
@@ -666,6 +717,18 @@ class _CurrentYearEducationYourselfViewState
         }
       }
 
+      if (isApplyingForOverseasStudies && _flightTicketDocument != null) {
+        final flightTicketResponse = await _flightTicketRepo.uploadFlightTicket(
+          shikshaApplicantId: widget.shikshaApplicantId,
+          educationId: educationId,
+          filePath: _flightTicketDocument!.path,
+        );
+
+        if (flightTicketResponse.status != true) {
+          throw Exception(flightTicketResponse.message);
+        }
+      }
+
       Navigator.pop(context);
 
       await _fetchCurrentYearEducation();
@@ -724,6 +787,10 @@ class _CurrentYearEducationYourselfViewState
       otherExpensesCtrl.text = existingData["otherExpenses"] ?? "";
       totalExpensesCtrl.text = existingData["total"] ?? "";
     }
+
+    isExistingFlightTicketRemoved = false;
+    isApplyingForOverseasStudies =
+        (existingData?["flightTicketDoc"] ?? "").toString().isNotEmpty;
 
     admissionFeesCtrl.addListener(calculateTotal);
     yearlyFeesCtrl.addListener(calculateTotal);
@@ -933,6 +1000,128 @@ class _CurrentYearEducationYourselfViewState
                             _buildAdmissionUploadField(context, setModalState),
                             const SizedBox(height: 20),
                             _buildBonafideUploadField(context, setModalState),
+                            const SizedBox(height: 10),
+                            Divider(height: 20),
+                            const SizedBox(height: 10),
+                            Align(
+                              alignment: Alignment.center,
+                              child: Text(
+                                "Are you applying for overseas studies?",
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      setModalState(() {
+                                        isApplyingForOverseasStudies = true;
+                                      });
+                                      setState(() {
+                                        isApplyingForOverseasStudies = true;
+                                      });
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      backgroundColor:
+                                      isApplyingForOverseasStudies
+                                          ? ColorHelperClass
+                                          .getColorFromHex(
+                                          ColorResources.red_color)
+                                          : Colors.white,
+                                      foregroundColor:
+                                      isApplyingForOverseasStudies
+                                          ? Colors.white
+                                          : Colors.black87,
+                                      side: BorderSide(
+                                        color: ColorHelperClass.getColorFromHex(
+                                          ColorResources.red_color,
+                                        ),
+                                      ),
+                                    ),
+                                    child: const Text("Yes"),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      setModalState(() {
+                                        isApplyingForOverseasStudies = false;
+                                        _flightTicketDocument = null;
+                                      });
+                                      setState(() {
+                                        isApplyingForOverseasStudies = false;
+                                        _flightTicketDocument = null;
+                                      });
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      backgroundColor:
+                                      !isApplyingForOverseasStudies
+                                          ? ColorHelperClass
+                                          .getColorFromHex(
+                                          ColorResources.red_color)
+                                          : Colors.white,
+                                      foregroundColor:
+                                      !isApplyingForOverseasStudies
+                                          ? Colors.white
+                                          : Colors.black87,
+                                      side: BorderSide(
+                                        color: ColorHelperClass.getColorFromHex(
+                                          ColorResources.red_color,
+                                        ),
+                                      ),
+                                    ),
+                                    child: const Text("No"),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (isApplyingForOverseasStudies) ...[
+                              const SizedBox(height: 20),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFF4E5),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: const Color(0xFFFFD8A8),
+                                  ),
+                                ),
+                                child: const Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      Icons.info_outline,
+                                      color: Colors.deepOrange,
+                                    ),
+                                    SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        "Are you Applying for overseas studies, please upload the additional document like a flight ticket.",
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          height: 1.4,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              _buildFlightTicketUploadField(
+                                context,
+                                setModalState,
+                                existingDocumentPath:
+                                    existingData?["flightTicketDoc"],
+                              ),
+                            ],
                             const SizedBox(height: 40),
                           ],
                         ),
@@ -1165,59 +1354,154 @@ class _CurrentYearEducationYourselfViewState
     );
   }
 
+  Widget _buildFlightTicketUploadField(
+    BuildContext context,
+    StateSetter setModalState, {
+    String? existingDocumentPath,
+  }) {
+    final bool hasExisting =
+        !isExistingFlightTicketRemoved && (existingDocumentPath ?? "").isNotEmpty;
+    final bool isUploaded = _flightTicketDocument != null || hasExisting;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_flightTicketDocument != null)
+          Stack(
+            children: [
+              Container(
+                height: 180,
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.grey.shade400),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.file(
+                    _flightTicketDocument!,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 8,
+                top: 8,
+                child: GestureDetector(
+                  onTap: () {
+                    setModalState(() {
+                      _flightTicketDocument = null;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        if (_flightTicketDocument == null && hasExisting)
+          Stack(
+            children: [
+              Container(
+                height: 180,
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.grey.shade400),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.network(
+                    _getFullImageUrl(existingDocumentPath),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 8,
+                top: 8,
+                child: GestureDetector(
+                  onTap: () {
+                    setModalState(() {
+                      isExistingFlightTicketRemoved = true;
+                    });
+                    setState(() {
+                      isExistingFlightTicketRemoved = true;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              _showImagePicker(
+                context,
+                (file) {
+                  setModalState(() {
+                    _flightTicketDocument = file;
+                  });
+                },
+                title: "Upload Flight Ticket",
+              );
+            },
+            icon: Icon(
+              isUploaded ? Icons.check_circle : Icons.upload_file,
+            ),
+            label: Text(
+              isUploaded ? "Flight Ticket Uploaded" : "Upload Flight Ticket",
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isUploaded
+                  ? Colors.green
+                  : ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   void _showAdmissionImagePicker(
     BuildContext context,
     StateSetter setModalState,
   ) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
-      ),
-      builder: (_) {
-        return SafeArea(
-          child: Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewPadding.bottom + 20,
-            ),
-            child: Wrap(
-              children: [
-                ListTile(
-                  leading:
-                      const Icon(Icons.camera_alt, color: Colors.redAccent),
-                  title: const Text("Take a Picture"),
-                  onTap: () async {
-                    Navigator.pop(context);
-                    final picked =
-                        await _picker.pickImage(source: ImageSource.camera);
-                    if (picked != null) {
-                      setModalState(() {
-                        _admissionDocument = File(picked.path);
-                      });
-                    }
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.image, color: Colors.redAccent),
-                  title: const Text("Choose from Gallery"),
-                  onTap: () async {
-                    Navigator.pop(context);
-                    final picked =
-                        await _picker.pickImage(source: ImageSource.gallery);
-                    if (picked != null) {
-                      setModalState(() {
-                        _admissionDocument = File(picked.path);
-                      });
-                    }
-                  },
-                ),
-                const SizedBox(height: 30),
-              ],
-            ),
-          ),
-        );
+    _showImagePicker(
+      context,
+      (file) {
+        setModalState(() {
+          _admissionDocument = file;
+        });
       },
+      title: "Upload Admission Confirmation Letter",
     );
   }
 
@@ -1225,47 +1509,88 @@ class _CurrentYearEducationYourselfViewState
     BuildContext context,
     StateSetter setModalState,
   ) {
+    _showImagePicker(
+      context,
+      (file) {
+        setModalState(() {
+          _bonafideDocument = file;
+        });
+      },
+      title: "Upload Bonafide / Fees Proof",
+    );
+  }
+
+  void _showImagePicker(
+    BuildContext context,
+    Function(File) onImagePicked, {
+    String title = "Select Image",
+  }) {
     showModalBottomSheet(
-      backgroundColor: Colors.white,
       context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (_) {
         return SafeArea(
           child: Padding(
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewPadding.bottom + 20,
+              bottom: MediaQuery.of(context).viewPadding.bottom + 10,
             ),
-            child: Wrap(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.grey),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(),
                 ListTile(
-                  leading:
-                      const Icon(Icons.camera_alt, color: Colors.redAccent),
+                  leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
                   title: const Text("Take a Picture"),
                   onTap: () async {
                     Navigator.pop(context);
-                    final picked =
-                        await _picker.pickImage(source: ImageSource.camera);
+                    final picked = await _picker.pickImage(
+                      source: ImageSource.camera,
+                      imageQuality: 70,
+                    );
                     if (picked != null) {
-                      setModalState(() {
-                        _bonafideDocument = File(picked.path);
-                      });
+                      onImagePicked(File(picked.path));
                     }
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.image, color: Colors.redAccent),
+                  leading: const Icon(Icons.image, color: Colors.orange),
                   title: const Text("Choose from Gallery"),
                   onTap: () async {
                     Navigator.pop(context);
-                    final picked =
-                        await _picker.pickImage(source: ImageSource.gallery);
+                    final picked = await _picker.pickImage(
+                      source: ImageSource.gallery,
+                      imageQuality: 70,
+                    );
                     if (picked != null) {
-                      setModalState(() {
-                        _bonafideDocument = File(picked.path);
-                      });
+                      onImagePicked(File(picked.path));
                     }
                   },
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 10),
               ],
             ),
           ),

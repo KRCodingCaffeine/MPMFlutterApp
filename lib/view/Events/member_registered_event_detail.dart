@@ -20,10 +20,10 @@ import 'package:mpm/repository/update_food_container_reposiory/update_food_conta
 import 'package:mpm/repository/update_price_distribution_repository/update_price_distribution_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
-import 'package:mpm/view/Events/event_view.dart';
 import 'package:mpm/view/Events/member_registered_event.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 import 'package:mpm/utils/Session.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 Future<Size> _getImageSize(String imageUrl) async {
   final Completer<Size> completer = Completer();
@@ -74,6 +74,7 @@ class _RegisteredEventsDetailPageState
   bool _isCancelled = false;
   Map<String, dynamic>? _userData;
   int foodCount = 0;
+  String? _currentFoodContainerCount;
   String get _eventName =>
       widget.eventAttendee.event?.eventName ?? 'Registered Event Details';
   String? get _eventOrganiserName =>
@@ -91,6 +92,64 @@ class _RegisteredEventsDetailPageState
   String? existingMarksheetUrl;
   GetEventDetailsByIdData? _eventDetails;
 
+  String? get _displayQrCode {
+    final attendeeQr = widget.eventAttendee.eventQrCode;
+    if (attendeeQr != null && attendeeQr.isNotEmpty) {
+      return attendeeQr;
+    }
+
+    final eventAmountQr = _eventDetails?.eventAmountQrCode;
+    if (eventAmountQr != null && eventAmountQr.isNotEmpty) {
+      return eventAmountQr;
+    }
+
+    return null;
+  }
+
+  bool get _isPaymentQrFallback {
+    final attendeeQr = widget.eventAttendee.eventQrCode;
+    return (attendeeQr == null || attendeeQr.isEmpty) &&
+        (_eventDetails?.eventAmountQrCode?.isNotEmpty ?? false);
+  }
+
+  Uri? get _gPayUri {
+    final upiCode = _eventDetails?.eventUPICode?.trim();
+    if (upiCode == null || upiCode.isEmpty) {
+      return null;
+    }
+
+    if (upiCode.startsWith('upi://') || upiCode.startsWith('tez://')) {
+      return Uri.tryParse(upiCode);
+    }
+
+    final eventAmount = _eventDetails?.eventAmount?.trim() ??
+        widget.eventAttendee.event?.eventAmount?.trim();
+
+    return Uri(
+      scheme: 'tez',
+      host: 'upi',
+      path: 'pay',
+      queryParameters: {
+        'pa': upiCode,
+        'pn': _eventName,
+        if (eventAmount != null && eventAmount.isNotEmpty) 'am': eventAmount,
+        'cu': 'INR',
+      },
+    );
+  }
+
+  Future<void> _openGPay() async {
+    final uri = _gPayUri;
+    if (uri == null) {
+      _showErrorSnackbar('UPI code not available');
+      return;
+    }
+
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      _showErrorSnackbar('Could not open Google Pay');
+    }
+  }
+
   final TextEditingController studentNameController = TextEditingController();
   final TextEditingController schoolNameController = TextEditingController();
   final TextEditingController standardController = TextEditingController();
@@ -104,6 +163,7 @@ class _RegisteredEventsDetailPageState
   @override
   void initState() {
     super.initState();
+    _currentFoodContainerCount = widget.eventAttendee.noOfFoodContainer;
     _fetchEventDetails();
     _fetchMemberId();
     _checkEventDate();
@@ -194,6 +254,24 @@ class _RegisteredEventsDetailPageState
     final mName = middleName?.isNotEmpty == true ? ' $middleName ' : ' ';
     final lName = lastName ?? '';
     return '$fName$mName$lName'.trim();
+  }
+
+  String getFullNameWithFamily() {
+    String name = memberName;
+
+    if (widget.eventAttendee.familyMembers != null &&
+        widget.eventAttendee.familyMembers!.isNotEmpty) {
+      final familyNames = widget.eventAttendee.familyMembers!
+          .where((m) => m.fullName != null && m.fullName!.trim().isNotEmpty)
+          .map((m) => m.fullName!.trim())
+          .join(', ');
+
+      if (familyNames.isNotEmpty) {
+        name = "$memberName, $familyNames";
+      }
+    }
+
+    return name;
   }
 
   void _checkIfCancelled() {
@@ -301,13 +379,6 @@ class _RegisteredEventsDetailPageState
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.green),
     );
-
-    Future.delayed(const Duration(seconds: 1), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => EventsPage()),
-      );
-    });
   }
 
   void _showErrorSnackbar(String message) {
@@ -1091,42 +1162,18 @@ class _RegisteredEventsDetailPageState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (widget.eventAttendee.eventQrCode != null &&
-                      widget.eventAttendee.eventQrCode!.isNotEmpty) ...[
+                  if (_displayQrCode != null && _displayQrCode!.isNotEmpty) ...[
                     Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           GestureDetector(
-                            onTap: () {
-                              showDialog(
-                                context: context,
-                                builder: (_) => Dialog(
-                                  backgroundColor: Colors.black,
-                                  insetPadding: const EdgeInsets.all(10),
-                                  child: InteractiveViewer(
-                                    panEnabled: true,
-                                    boundaryMargin: const EdgeInsets.all(20),
-                                    minScale: 0.5,
-                                    maxScale: 4.0,
-                                    child: Image.network(
-                                      widget.eventAttendee.eventQrCode!,
-                                      fit: BoxFit.contain,
-                                      errorBuilder: (_, __, ___) =>
-                                          const Center(
-                                        child: Icon(Icons.broken_image,
-                                            color: Colors.white),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
+                            onTap: _openGPay,
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               child: Image.network(
-                                widget.eventAttendee.eventQrCode!,
+                                _displayQrCode!,
                                 height: 300,
                                 width: 400,
                                 fit: BoxFit.cover,
@@ -1138,10 +1185,12 @@ class _RegisteredEventsDetailPageState
                             ),
                           ),
                           const SizedBox(height: 12),
-                          const Text(
-                            "Scan this QR Code for Gate Pass Entry",
+                          Text(
+                            _isPaymentQrFallback
+                                ? "Kindly make the payment thru the QR code enclosed."
+                                : "Scan this QR Code for Event Entry",
                             textAlign: TextAlign.center,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                               color: Colors.black87,
@@ -1165,7 +1214,7 @@ class _RegisteredEventsDetailPageState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildRow("Name", memberName),
+                        _buildRow("Name", getFullNameWithFamily()),
                         _buildRow(
                           "Reference Code",
                           widget.eventAttendee.eventAttendeesCode ??
@@ -1184,68 +1233,68 @@ class _RegisteredEventsDetailPageState
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  widget.eventAttendee.noOfFoodContainer ??
-                                      "Not Allotted",
+                                  _currentFoodContainerCount ?? "Not Allotted",
                                   style: const TextStyle(fontSize: 14),
                                 ),
-                                ElevatedButton(
-                                  onPressed: () async {
-                                    int? eventAttendeesId = int.tryParse(
-                                        widget.eventAttendee.eventAttendeesId ??
-                                            '');
-
-                                    if (eventAttendeesId != null) {
-                                      _showFoodBottomSheet(
-                                        context,
-                                        eventAttendeesId,
-                                        currentFoodOption: (widget.eventAttendee
-                                                        .noOfFoodContainer !=
-                                                    null &&
-                                                widget.eventAttendee
-                                                        .noOfFoodContainer !=
-                                                    "0")
-                                            ? "Yes"
-                                            : "No",
-                                        currentFoodBoxCount: int.tryParse(widget
-                                                    .eventAttendee
-                                                    .noOfFoodContainer ??
-                                                '0') ??
-                                            0,
-                                      );
-                                    } else {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                            content: Text(
-                                                'Invalid event attendees ID')),
-                                      );
-                                    }
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white,
-                                    foregroundColor: const Color(0xFFDC3545),
-                                    elevation: 4,
-                                    shadowColor: Colors.black,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 4),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: const [
-                                      Icon(Icons.edit, size: 12),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        'Edit',
-                                        style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                                // if (widget.eventAttendee.eventQrCode == null ||
+                                //     widget.eventAttendee.eventQrCode!.isEmpty)
+                                //   ElevatedButton(
+                                //     onPressed: () async {
+                                //       int? eventAttendeesId = int.tryParse(
+                                //           widget.eventAttendee
+                                //                   .eventAttendeesId ??
+                                //               '');
+                                //
+                                //       if (eventAttendeesId != null) {
+                                //         _showFoodBottomSheet(
+                                //           context,
+                                //           eventAttendeesId,
+                                //           currentFoodOption:
+                                //               (_currentFoodContainerCount !=
+                                //                           null &&
+                                //                       _currentFoodContainerCount !=
+                                //                           "0")
+                                //                   ? "Yes"
+                                //                   : "No",
+                                //           currentFoodBoxCount: int.tryParse(
+                                //                   _currentFoodContainerCount ??
+                                //                       '0') ??
+                                //               0,
+                                //         );
+                                //       } else {
+                                //         ScaffoldMessenger.of(context)
+                                //             .showSnackBar(
+                                //           const SnackBar(
+                                //               content: Text(
+                                //                   'Invalid event attendees ID')),
+                                //         );
+                                //       }
+                                //     },
+                                //     style: ElevatedButton.styleFrom(
+                                //       backgroundColor: Colors.white,
+                                //       foregroundColor: const Color(0xFFDC3545),
+                                //       elevation: 4,
+                                //       shadowColor: Colors.black,
+                                //       shape: RoundedRectangleBorder(
+                                //         borderRadius: BorderRadius.circular(8),
+                                //       ),
+                                //       padding: const EdgeInsets.symmetric(
+                                //           horizontal: 10, vertical: 4),
+                                //     ),
+                                //     child: Row(
+                                //       mainAxisSize: MainAxisSize.min,
+                                //       children: const [
+                                //         Icon(Icons.edit, size: 12),
+                                //         SizedBox(width: 4),
+                                //         Text(
+                                //           'Edit',
+                                //           style: TextStyle(
+                                //               fontSize: 12,
+                                //               fontWeight: FontWeight.w500),
+                                //         ),
+                                //       ],
+                                //     ),
+                                //   ),
                               ],
                             ),
                           ),
@@ -1262,6 +1311,47 @@ class _RegisteredEventsDetailPageState
                     ),
                   ),
                   const SizedBox(height: 10),
+                  // if (widget.eventAttendee.familyMembers != null &&
+                  //     widget.eventAttendee.familyMembers!.isNotEmpty) ...[
+                  //   const Text(
+                  //     'Attendee Family Members:',
+                  //     style: TextStyle(
+                  //       fontSize: 16,
+                  //       fontWeight: FontWeight.w600,
+                  //       color: Colors.black,
+                  //     ),
+                  //   ),
+                  //   Container(
+                  //     width: double.infinity,
+                  //     padding: const EdgeInsets.all(12),
+                  //     child: Column(
+                  //       crossAxisAlignment: CrossAxisAlignment.start,
+                  //       children: [
+                  //         ...widget.eventAttendee.familyMembers!
+                  //             .where((member) =>
+                  //                 member.fullName != null &&
+                  //                 member.fullName!.trim().isNotEmpty)
+                  //             .toList()
+                  //             .asMap()
+                  //             .entries
+                  //             .map(
+                  //               (entry) => Padding(
+                  //                 padding:
+                  //                     const EdgeInsets.symmetric(vertical: 4),
+                  //                 child: Text(
+                  //                   '${entry.key + 1}. ${entry.value.fullName!.trim()}',
+                  //                   style: const TextStyle(
+                  //                     fontSize: 14,
+                  //                     color: Colors.black87,
+                  //                   ),
+                  //                 ),
+                  //               ),
+                  //             ),
+                  //       ],
+                  //     ),
+                  //   ),
+                  //   const SizedBox(height: 10),
+                  // ],
                   _buildEventInfo(),
                   if (_hasStudentPrizeMember) ...[
                     const Divider(thickness: 1, color: Colors.grey),
@@ -1687,7 +1777,6 @@ class _RegisteredEventsDetailPageState
     String? currentFoodOption,
     int currentFoodBoxCount = 0,
   }) {
-    // Initialize foodCount with current value
     foodCount = currentFoodBoxCount;
 
     final TextEditingController _foodBoxController = TextEditingController(
@@ -1714,8 +1803,6 @@ class _RegisteredEventsDetailPageState
               mainAxisSize: MainAxisSize.min,
               children: [
                 const SizedBox(height: 30),
-
-                // Buttons Row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -1731,7 +1818,7 @@ class _RegisteredEventsDetailPageState
                         Navigator.pop(context);
                         await _updateFoodContainer(
                           eventAttendeesId,
-                          foodCount, // directly pass selected count
+                          foodCount,
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -1744,16 +1831,12 @@ class _RegisteredEventsDetailPageState
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 25),
                 const Text(
-                  "Please select how many meals you want for this event:",
+                  "Please select how many meals you want for this event (Max 4):",
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                 ),
-
                 const SizedBox(height: 25),
-
-                // Meals Dropdown (0, 1, 2)
                 DropdownButtonFormField<int>(
                   value: foodCount,
                   dropdownColor: Colors.white,
@@ -1764,7 +1847,7 @@ class _RegisteredEventsDetailPageState
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(horizontal: 20),
                   ),
-                  items: [0, 1, 2].map((count) {
+                  items: [0, 1, 2, 3, 4].map((count) {
                     return DropdownMenuItem<int>(
                       value: count,
                       child: Text(
@@ -1777,7 +1860,6 @@ class _RegisteredEventsDetailPageState
                     });
                   },
                 ),
-
                 const SizedBox(height: 25),
               ],
             ),
@@ -1806,26 +1888,28 @@ class _RegisteredEventsDetailPageState
       final response = await repository.updateFoodContainer(requestBody);
 
       if (response.status == true) {
-        Get.snackbar(
-          'Success',
-          response.message ?? 'Meals updated successfully',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.message ?? 'Meals updated successfully'),
+            backgroundColor: Colors.green,
+          ),
         );
-        Navigator.pop(context);
         setState(() {});
+        setState(() {
+          _currentFoodContainerCount = foodCount.toString();
+        });
       } else {
         throw Exception(response.message ?? 'Failed to update meals');
       }
     } catch (e) {
       debugPrint("Error updating meals: $e");
-      Get.snackbar(
-        'Error',
-        'Something went wrong. Please try again',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Something went wrong. Please try again'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }

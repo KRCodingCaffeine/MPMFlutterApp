@@ -15,6 +15,7 @@ class RequestedLoanEducation {
   final String? instituteBankIfscCode;
   final String? admissionConfirmationLetterDoc;
   final String? bonafideFeesDocument;
+  final String? applicantFlightTicketDocument;
   final String? requestedAmount;
   final String? sanctionedAmount;
   final String? sanctionedOn;
@@ -46,6 +47,7 @@ class RequestedLoanEducation {
     this.instituteBankIfscCode,
     this.admissionConfirmationLetterDoc,
     this.bonafideFeesDocument,
+    this.applicantFlightTicketDocument,
     this.requestedAmount,
     this.sanctionedAmount,
     this.sanctionedOn,
@@ -64,9 +66,8 @@ class RequestedLoanEducation {
   factory RequestedLoanEducation.fromJson(Map<String, dynamic> json) {
     return RequestedLoanEducation(
       shikshaApplicantRequestedLoanEducationId:
-      json['shiksha_applicant_requested_loan_education_id']?.toString(),
-      shikshaApplicantId:
-      json['shiksha_applicant_id']?.toString(),
+          json['shiksha_applicant_requested_loan_education_id']?.toString(),
+      shikshaApplicantId: json['shiksha_applicant_id']?.toString(),
       standard: json['standard']?.toString(),
       schoolCollegeName: json['school_college_name']?.toString(),
       courseDuration: json['course_duration']?.toString(),
@@ -80,9 +81,10 @@ class RequestedLoanEducation {
       instituteBankAccountNo: json['institute_bank_account_no']?.toString(),
       instituteBankIfscCode: json['institute_bank_ifsc_code']?.toString(),
       admissionConfirmationLetterDoc:
-      json['admision_confirmation_letter_doc']?.toString(),
-      bonafideFeesDocument:
-      json['bonafide_fees_document']?.toString(),
+          json['admision_confirmation_letter_doc']?.toString(),
+      bonafideFeesDocument: json['bonafide_fees_document']?.toString(),
+      applicantFlightTicketDocument:
+          json['applicant_flight_ticket_document']?.toString(),
       requestedAmount: json['requested_amount']?.toString(),
       sanctionedAmount: json['sanctioned_amount']?.toString(),
       sanctionedOn: json['sanctioned_on']?.toString(),
@@ -102,7 +104,7 @@ class RequestedLoanEducation {
   Map<String, dynamic> toJson() {
     return {
       'shiksha_applicant_requested_loan_education_id':
-      shikshaApplicantRequestedLoanEducationId,
+          shikshaApplicantRequestedLoanEducationId,
       'shiksha_applicant_id': shikshaApplicantId,
       'standard': standard,
       'school_college_name': schoolCollegeName,
@@ -118,6 +120,7 @@ class RequestedLoanEducation {
       'institute_bank_ifsc_code': instituteBankIfscCode,
       'admision_confirmation_letter_doc': admissionConfirmationLetterDoc,
       'bonafide_fees_document': bonafideFeesDocument,
+      'applicant_flight_ticket_document': applicantFlightTicketDocument,
       'requested_amount': requestedAmount,
       'sanctioned_amount': sanctionedAmount,
       'sanctioned_on': sanctionedOn,

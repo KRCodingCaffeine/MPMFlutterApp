@@ -916,7 +916,7 @@ class _ReferenceYourselfViewState extends State<ReferenceYourselfView> {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (_) {
         return SafeArea(
@@ -924,34 +924,60 @@ class _ReferenceYourselfViewState extends State<ReferenceYourselfView> {
             padding: EdgeInsets.only(
               bottom: MediaQuery.of(context).viewPadding.bottom + 20,
             ),
-            child: Wrap(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          "Upload Aadhar",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.grey),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(),
                 ListTile(
-                  leading:
-                      const Icon(Icons.camera_alt, color: Colors.redAccent),
+                  leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
                   title: const Text("Take a Picture"),
                   onTap: () async {
                     Navigator.pop(context);
-                    final picked =
-                        await _picker.pickImage(source: ImageSource.camera);
+                    final picked = await _picker.pickImage(
+                      source: ImageSource.camera,
+                      imageQuality: 70,
+                    );
                     if (picked != null) {
                       onImagePicked(File(picked.path));
                     }
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.image, color: Colors.redAccent),
+                  leading: const Icon(Icons.image, color: Colors.orange),
                   title: const Text("Choose from Gallery"),
                   onTap: () async {
                     Navigator.pop(context);
-                    final picked =
-                        await _picker.pickImage(source: ImageSource.gallery);
+                    final picked = await _picker.pickImage(
+                      source: ImageSource.gallery,
+                      imageQuality: 70,
+                    );
                     if (picked != null) {
                       onImagePicked(File(picked.path));
                     }
                   },
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 10),
               ],
             ),
           ),

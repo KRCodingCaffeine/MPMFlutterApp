@@ -1,18 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:mpm/model/GetClaimedOfferByID/GetClaimedOfferData.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
-class ClaimedOfferDetailPage extends StatelessWidget {
+class ClaimedOfferDetailPage extends StatefulWidget {
   final GetClaimedOfferData offer;
 
   ClaimedOfferDetailPage({required this.offer});
 
+  @override
+  State<ClaimedOfferDetailPage> createState() => _ClaimedOfferDetailPageState();
+}
+
+class _ClaimedOfferDetailPageState extends State<ClaimedOfferDetailPage> {
+  final UdateProfileController _profileController =
+      Get.isRegistered<UdateProfileController>()
+          ? Get.find<UdateProfileController>()
+          : Get.put(UdateProfileController());
+
+  late final Future<void> _profileFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _profileFuture = _loadProfileIfNeeded();
+  }
+
   String getContainerName(dynamic id) {
     switch (id.toString()) {
       case '1':
-        return 'Strips';
+        return 'Strip';
       case '2':
         return 'Tube';
       case '3':
@@ -26,6 +46,46 @@ class ClaimedOfferDetailPage extends StatelessWidget {
     }
   }
 
+  Future<void> _loadProfileIfNeeded() async {
+    if (_profileController.getUserData.value.address != null) {
+      return;
+    }
+
+    await _profileController.getUserProfile();
+  }
+
+  String _buildMemberAddress() {
+    final address = _profileController.getUserData.value.address;
+
+    final lines = <String>[
+      _joinParts([
+        address?.flatNo?.toString(),
+        address?.buildingName?.toString(),
+      ]),
+      _joinParts([
+        address?.address?.toString(),
+        address?.areaName?.toString(),
+      ]),
+      _joinParts([
+        address?.cityName?.toString(),
+        address?.stateName?.toString(),
+        address?.pincode?.toString(),
+      ]),
+    ].where((line) => line.isNotEmpty).toList();
+
+    if (lines.isEmpty) {
+      return '--';
+    }
+
+    return lines.join(', \n');
+  }
+
+  String _joinParts(List<String?> parts) {
+    return parts
+        .where((part) => part != null && part.trim().isNotEmpty)
+        .map((part) => part!.trim())
+        .join(', ');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +98,7 @@ class ClaimedOfferDetailPage extends StatelessWidget {
           builder: (context) {
             double fontSize = MediaQuery.of(context).size.width * 0.045;
             return Text(
-              offer.orgName ?? 'Offer Details',
+              widget.offer.orgName ?? 'Offer Details',
               style: TextStyle(
                   color: Colors.white,
                   fontSize: fontSize,
@@ -54,8 +114,8 @@ class ClaimedOfferDetailPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Prescription Document
-            if (offer.medicinePrescriptionDocument != null &&
-                offer.medicinePrescriptionDocument!.isNotEmpty)
+            if (widget.offer.medicinePrescriptionDocument != null &&
+                widget.offer.medicinePrescriptionDocument!.isNotEmpty)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -67,7 +127,7 @@ class ClaimedOfferDetailPage extends StatelessWidget {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: Image.network(
-                      offer.medicinePrescriptionDocument!,
+                      widget.offer.medicinePrescriptionDocument!,
                       height: 300,
                       width: double.infinity,
                       fit: BoxFit.cover,
@@ -91,7 +151,8 @@ class ClaimedOfferDetailPage extends StatelessWidget {
               ),
 
             // Medicines List
-            if (offer.medicines != null && offer.medicines!.isNotEmpty)
+            if (widget.offer.medicines != null &&
+                widget.offer.medicines!.isNotEmpty)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -99,7 +160,7 @@ class ClaimedOfferDetailPage extends StatelessWidget {
                     'Medicines:',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   ),
-                  ...offer.medicines!.map((medicine) => Padding(
+                  ...widget.offer.medicines!.map((medicine) => Padding(
                         padding: const EdgeInsets.only(top: 4.0),
                         child: Text(
                           '• ${medicine.medicineName} (${medicine.quantity} ${getContainerName(medicine.medicineContainerId)})',
@@ -111,7 +172,7 @@ class ClaimedOfferDetailPage extends StatelessWidget {
             const SizedBox(height: 20),
 
             Text(
-              'Ordered on: ${_formatDate(offer.createdAt)}',
+              'Ordered on: ${_formatDate(widget.offer.createdAt)}',
               style: TextStyle(color: Colors.grey[600], fontSize: 13),
             ),
             const SizedBox(height: 20),
@@ -122,14 +183,28 @@ class ClaimedOfferDetailPage extends StatelessWidget {
               'Address:',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             ),
-            Padding(
-              padding: const EdgeInsets.only(left: 12.0),
-              child: Text(
-                '${offer.orgAddress}, \n'
-                '${offer.orgArea}, ${offer.orgCity}, \n'
-                '${offer.orgState}, ${offer.orgPincode}',
-                style: const TextStyle(fontSize: 14),
-              ),
+            FutureBuilder<void>(
+              future: _profileFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Padding(
+                    padding: EdgeInsets.only(left: 12.0, top: 8),
+                    child: SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  );
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.only(left: 12.0),
+                  child: Text(
+                    _buildMemberAddress(),
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 20),
             const Divider(thickness: 1, color: Colors.grey),
@@ -148,12 +223,12 @@ class ClaimedOfferDetailPage extends StatelessWidget {
               },
               children: [
                 _buildTableRow(
-                    'Person Name', offer.offerContactPersonName ?? '--'),
+                    'Person Name', widget.offer.offerContactPersonName ?? '--'),
                 _buildSpacerRow(),
                 _buildTableRow('Person Mobile Number',
-                    offer.offerContactPersonMobile ?? '--'),
+                    widget.offer.offerContactPersonMobile ?? '--'),
                 _buildSpacerRow(),
-                _buildTableRow('Email', offer.orgEmail ?? '--'),
+                _buildTableRow('Email', widget.offer.orgEmail ?? '--'),
               ],
             ),
             const SizedBox(height: 20),

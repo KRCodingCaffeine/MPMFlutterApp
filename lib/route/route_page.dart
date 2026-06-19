@@ -3,11 +3,13 @@ import 'package:mpm/route/route_name.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/view/BhavanBooking/bhavan_booking_view.dart';
 import 'package:mpm/view/EnquiryForm/add_enquiry_form.dart';
+import 'package:mpm/view/Event%20Attendees/event_attendees_view.dart';
 import 'package:mpm/view/EventTrip/event_trip.dart';
 import 'package:mpm/view/JobPortal/job_view.dart';
 import 'package:mpm/view/Networking/network_view.dart';
 import 'package:mpm/view/OutsideMumbaiLogin/outside_mumbai_login.dart';
 import 'package:mpm/view/QRCodeScanner/qr_code.dart';
+import 'package:mpm/view/QRCodeScanner/select_qr_screen.dart';
 import 'package:mpm/view/Saraswanilabel/saraswani_label.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/shiksha_sahayata_by_parenting_view.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByYourself/shiksha_sahayata_by_yourself.dart';
@@ -88,7 +90,9 @@ class RoutePages {
       case RouteNames.event_trip:
         return _buildRoute(const EventTripPage(), settings);
       case RouteNames.qr_code:
-        return _buildRoute(const QRScannerScreen(), settings);
+        return _buildRoute(const ScanSelectionScreen(), settings);
+      case RouteNames.event_attendees:
+        return _buildRoute(const EventAttendeesView(), settings);
       case RouteNames.forms:
         return _buildRoute(const FormsDownloadView(), settings);
       case RouteNames.bhavan_booking:

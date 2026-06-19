@@ -1282,9 +1282,25 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
   }
 
   void _showEducationImagePicker(
-    BuildContext context,
-    StateSetter setModalState,
-  ) {
+      BuildContext context,
+      StateSetter setModalState,
+      ) {
+    _showImagePicker(
+      context,
+          (file) {
+        setModalState(() {
+          _educationDocument = file;
+        });
+      },
+      title: "Upload Education Document",
+    );
+  }
+
+  void _showImagePicker(
+      BuildContext context,
+      Function(File) onImagePicked, {
+        String title = "Select Image",
+      }) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -1295,39 +1311,67 @@ class _EditEducationDetailViewState extends State<EditEducationDetailView> {
         return SafeArea(
           child: Padding(
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewPadding.bottom + 20,
+              bottom: MediaQuery.of(context).viewPadding.bottom + 10,
             ),
-            child: Wrap(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
+                // 🔴 Header with Title + Close Button
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.grey),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Divider(),
+
                 ListTile(
-                  leading:
-                      const Icon(Icons.camera_alt, color: Colors.redAccent),
+                  leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
                   title: const Text("Take a Picture"),
                   onTap: () async {
                     Navigator.pop(context);
-                    final picked =
-                        await _picker.pickImage(source: ImageSource.camera);
+                    final picked = await _picker.pickImage(
+                      source: ImageSource.camera,
+                      imageQuality: 70,
+                    );
                     if (picked != null) {
-                      setModalState(() {
-                        _educationDocument = File(picked.path);
-                      });
+                      onImagePicked(File(picked.path));
                     }
                   },
                 ),
+
                 ListTile(
-                  leading: const Icon(Icons.image, color: Colors.redAccent),
+                  leading: const Icon(Icons.image, color: Colors.orange),
                   title: const Text("Choose from Gallery"),
                   onTap: () async {
                     Navigator.pop(context);
-                    final picked =
-                        await _picker.pickImage(source: ImageSource.gallery);
+                    final picked = await _picker.pickImage(
+                      source: ImageSource.gallery,
+                      imageQuality: 70,
+                    );
                     if (picked != null) {
-                      setModalState(() {
-                        _educationDocument = File(picked.path);
-                      });
+                      onImagePicked(File(picked.path));
                     }
                   },
                 ),
+
                 const SizedBox(height: 30),
               ],
             ),

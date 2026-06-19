@@ -1,8 +1,8 @@
 
 class Urls {
- //static const  String base_url = "https://krcodingcaffeine.com/pragati-mandal-api/";
+ // static const  String base_url = "https://krcodingcaffeine.com/pragati-mandal-api/";
   static const  String base_url = "https://members.mumbaimaheshwari.com/api/";
-  //static const  String base_url = "https://members.mumbaimaheshwari.com/staging/api/";
+  // static const  String base_url = "https://members.mumbaimaheshwari.com/staging/api/";
   static const  String register_url = base_url+"api/make_new_member";
   static const  String login_url = base_url+"api/login";
   static const  String check_url = base_url+"api/check_lm_code_or_mobile";
@@ -72,6 +72,7 @@ class Urls {
   static const String member_surname_url = base_url+"api/member_surname";
   static const String events_details_by_id_url = base_url+"api/get_events_details_by_id";
   static const String scan_qrcode_event = base_url+"api/scan_qrcode_event";
+  static const String scan_qrcode_for_food = base_url+"api/scan_qrcode_for_food";
   static const String get_saraswani_publication = base_url+"api/get_saraswani_publication";
   static const String getLatestSaraswaniPublications = base_url+"api/get_latest_saraswani_publications";
   static const String reg_otp_url = base_url+"api/check_reg_otp";
@@ -112,6 +113,10 @@ class Urls {
   static const String searchSuggestions_url = base_url+"api/search_suggestions";
   static const String product_categories_url = base_url+"api/product_category";
   static const String product_subcategories_url = base_url+"api/product_subcategory";
+  static const String get_event_attendees_list = base_url+"api/get_event_attendees_list";
+  static const String get_admin_access_for_member = base_url+"api/get_admin_access_for_member";
+  static const String event_registration_confirmation = base_url+"api/event_registration_confirmation";
+  static const String updateEventPaymentTransactionUrl = base_url+"api/update_event_payment_transaction";
 
   //Shiksha Sahayata
   static const String get_shiksha_application_by_id_url = base_url+"api/get_shiksha_application_by_id";
@@ -138,6 +143,13 @@ class Urls {
   static const String upload_shiksha_applicant_aadhar_card_document = base_url+"api/upload_shiksha_applicant_aadhar_card_document";
   static const String upload_shiksha_applicant_ration_card_document = base_url+"api/upload_shiksha_applicant_ration_card_document";
   static const String upload_shiksha_applicant_father_pan_card_document = base_url+"api/upload_shiksha_applicant_father_pan_card_document";
+  static const String upload_shiksha_applicant_passport_document = base_url+"api/upload_shiksha_applicant_passport_document";
+  static const String upload_shiksha_applicant_visa_document = base_url+"api/upload_shiksha_applicant_visa_document";
+  static const String upload_shiksha_applicant_father_annual_income_document = base_url+"api/upload_shiksha_applicant_father_annual_income_document";
+  static const String upload_shiksha_applicant_pan_card_document = base_url+"api/upload_shiksha_applicant_pan_card_document";
+  static const String upload_shiksha_applicant_overseas_father_annual_income_document = base_url+"api/upload_shiksha_applicant_overseas_father_annual_income_document";
+  static const String upload_shiksha_applicant_flight_ticket_document = base_url+"api/upload_shiksha_applicant_flight_ticket_document";
+  static const String shiksha_payment_url = base_url+"api/payment/shikshaloanrepaymentprocess";
 
   // Job Portal
   static const String update_job_portal_role_url = base_url+"api/member_job/update_job_portal_role";

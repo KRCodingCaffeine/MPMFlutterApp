@@ -2,29 +2,25 @@ import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:mpm/model/CheckUser/CheckUserData2.dart';
 import 'package:mpm/model/EventRegesitration/EventRegistrationData.dart';
 import 'package:mpm/model/GetEventDetailsById/GetEventDetailsByIdData.dart';
-import 'package:mpm/model/GetEventsList/EventDateTimeData.dart';
-import 'package:mpm/model/GetEventsList/GetEventsListData.dart';
+import 'package:mpm/model/GetProfile/FamilyMembersData.dart';
 import 'package:mpm/repository/event_register_repository/event_register_repo.dart';
+import 'package:mpm/repository/get_member_registered_events_repository/get_member_registered_events_repo.dart';
 import 'package:mpm/repository/get_even_details_by_id_repository/get_even_details_by_id_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:dio/dio.dart';
+import 'package:mpm/view/Events/event_payment_detail_page.dart';
 import 'package:mpm/view/Events/event_prize_page.dart';
-import 'package:mpm/view/Events/event_view.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:mpm/utils/Session.dart';
-import 'package:url_launcher/url_launcher.dart' show canLaunchUrl, launchUrl;
-import 'package:url_launcher/url_launcher.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 import 'package:mpm/view/Events/YouTubeBottomSheet.dart';
+import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
 class EventDetailPage extends StatefulWidget {
   final String eventId;
@@ -52,8 +48,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
   final Dio _dio = Dio();
   final GetEventDetailByIdRepository _eventDetailRepo =
       GetEventDetailByIdRepository();
+  final EventAttendeesRepository _eventAttendeesRepository =
+      EventAttendeesRepository();
   final EventRegistrationRepository _registrationRepo =
       EventRegistrationRepository();
+  final UdateProfileController _profileController =
+      Get.isRegistered<UdateProfileController>()
+          ? Get.find<UdateProfileController>()
+          : Get.put(UdateProfileController());
 
   bool _isLoading = true;
   bool _isDownloading = false;
@@ -67,6 +69,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   int _seatCount = 0;
   final _foodBoxController = TextEditingController();
   final _seatController = TextEditingController();
+  List<String> _selectedFamilyMemberIds = [];
 
   int? _attendeeId;
 
@@ -91,8 +94,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
           _eventDetails = GetEventDetailsByIdData.fromJson(response['data']);
           _isLoading = false;
           _checkEventDate();
-          _checkRegistrationStatus();
         });
+        _checkRegistrationStatus();
       } else {
         setState(() {
           _isLoading = false;
@@ -125,31 +128,74 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<void> _checkRegistrationStatus() async {
-    // Implement your registration status check logic here
+    final isRegistered = await _fetchRegistrationStatus();
+    if (!mounted) return;
+
     setState(() {
-      _isRegistered = false;
+      _isRegistered = isRegistered;
     });
   }
 
+  Future<bool> _fetchRegistrationStatus() async {
+    try {
+      final userData = await SessionManager.getSession();
+      final memberId = int.tryParse(userData?.memberId?.toString() ?? '');
+      final eventId = int.tryParse(_eventDetails?.eventId?.toString() ?? '');
+
+      if (memberId == null || eventId == null) {
+        return false;
+      }
+
+      final response =
+          await _eventAttendeesRepository.fetchEventAttendeesByMemberId(
+        memberId,
+      );
+
+      final registeredEvents = response.data ?? [];
+
+      return registeredEvents.any((event) {
+        final isSameEvent = event.eventId == eventId;
+        final isCancelled =
+            event.cancelledDate != null && event.cancelledDate!.isNotEmpty;
+        return isSameEvent && !isCancelled;
+      });
+    } catch (e) {
+      debugPrint('Error checking registration status: $e');
+      return false;
+    }
+  }
+
   Future<void> _showRegistrationConfirmationDialog() async {
-    bool showFoodDialog =
-        _eventDetails?.eventsTypeId != '1' && _eventDetails?.hasFood == '1';
-    bool showSeatDialog = _eventDetails?.eventsTypeId != '1' &&
-        _eventDetails?.hasSeatAllocate == '1';
+    bool showFoodDialog = _eventDetails?.hasFood == '1';
+    bool showSeatDialog = _eventDetails?.hasSeatAllocate == '1';
 
-    bool shouldProceed = await _showFinalConfirmationDialog();
-    if (!shouldProceed) return;
+    final eventTypeId = _eventDetails?.eventsTypeId;
 
-    if (showSeatDialog) {
-      final seatCount = await _showSeatDialog(context);
-      if (seatCount == null) return;
-      debugPrint("✅ User requested $seatCount seats");
+    if (eventTypeId == '5') {
+      final selectedIds = await _showFamilyMemberBottomSheet();
+
+      if (selectedIds == null || selectedIds.isEmpty) return;
+
+      debugPrint("✅ Selected members: $selectedIds");
+    } else {
+      final userData = await SessionManager.getSession();
+      if (userData?.memberId != null) {
+        _selectedFamilyMemberIds = [userData!.memberId.toString()];
+        _seatCount = 0;
+        _foodBoxCount = showFoodDialog ? 1 : 0;
+      }
+    }
+
+    if (showSeatDialog && eventTypeId != '5') {
+      final seat = await _showSeatDialog(context);
+      if (seat == null) return;
+      debugPrint("✅ Seat count: $seat");
     }
 
     if (showFoodDialog) {
-      bool foodConfirmed = await _showFoodDialog(context);
-      if (!foodConfirmed) return;
-      debugPrint("✅ User requested $_foodBoxCount food boxes");
+      // Food selection dialog is intentionally disabled.
+      _foodBoxCount = 1;
+      debugPrint("✅ Food boxes: $_foodBoxCount");
     }
 
     _registerForEvent();
@@ -226,9 +272,255 @@ class _EventDetailPageState extends State<EventDetailPage> {
     return shouldProceed ?? false;
   }
 
+  Future<List<String>?> _showFamilyMemberBottomSheet() async {
+    final userData = await SessionManager.getSession();
+    final loggedInMemberId = userData?.memberId?.toString();
+    final loggedInMemberName = [
+      userData?.firstName?.trim() ?? '',
+      userData?.middleName?.trim() ?? '',
+      userData?.lastName?.trim() ?? '',
+    ].where((name) => name.isNotEmpty).join(' ');
+
+    if (_profileController.familyDataList.isEmpty) {
+      await _profileController.getUserProfile();
+    }
+
+    final availableMembers = _profileController.familyDataList
+        .where((member) => member.memberId?.toString() != loggedInMemberId)
+        .toList();
+
+    final selectedIds = <String>{};
+    bool isOnlyMeSelected = true;
+
+    final selectedMemberIds = await showModalBottomSheet<List<String>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext bottomSheetContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 18,
+                bottom:
+                    MediaQuery.of(bottomSheetContext).viewInsets.bottom + 20,
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 48,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.grey,
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    const Text(
+                      'Select Members',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'You can select up to ${_eventDetails?.FamilyMemberAllowed ?? 0} members',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.black54,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      activeColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
+                      value: isOnlyMeSelected,
+                      title: Text(
+                        loggedInMemberName.isNotEmpty
+                            ? loggedInMemberName
+                            : 'Logged in member',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      onChanged: null,
+                    ),
+                    const Divider(height: 1),
+                    const SizedBox(height: 12),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight:
+                            MediaQuery.of(bottomSheetContext).size.height *
+                                0.45,
+                      ),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: availableMembers.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemBuilder: (context, index) {
+                          final member = availableMembers[index];
+                          final memberId = member.memberId?.toString() ?? '';
+                          final isSelected = selectedIds.contains(memberId);
+
+                          return CheckboxListTile(
+                            contentPadding: EdgeInsets.zero,
+                            controlAffinity: ListTileControlAffinity.leading,
+                            activeColor: ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color),
+                            value: isSelected,
+                            title: Text(
+                              _getFamilyMemberName(member),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            subtitle: (member.relationshipName
+                                        ?.toString()
+                                        .trim()
+                                        .isNotEmpty ??
+                                    false)
+                                ? Text(member.relationshipName.toString())
+                                : null,
+                            onChanged: (value) {
+                              setModalState(() {
+                                if (value == true) {
+                                  final maxAllowed = int.tryParse(
+                                          _eventDetails?.FamilyMemberAllowed ??
+                                              '0') ??
+                                      0;
+
+                                  if (selectedIds.length >= maxAllowed) {
+                                    ScaffoldMessenger.of(bottomSheetContext)
+                                        .showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            'Only $maxAllowed family members can be selected.'),
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  selectedIds.add(memberId);
+                                } else {
+                                  selectedIds.remove(memberId);
+                                }
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () =>
+                                Navigator.pop(bottomSheetContext, null),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: ColorHelperClass.getColorFromHex(
+                                  ColorResources.red_color),
+                              side: const BorderSide(color: Colors.red),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: (isOnlyMeSelected ||
+                                    selectedIds.isNotEmpty)
+                                ? () {
+                                    final membersToRegister = <String>[
+                                      if (isOnlyMeSelected &&
+                                          loggedInMemberId != null)
+                                        loggedInMemberId,
+                                      ...selectedIds,
+                                    ];
+
+                                    Navigator.pop(
+                                        bottomSheetContext, membersToRegister);
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: ColorHelperClass.getColorFromHex(
+                                  ColorResources.red_color),
+                              disabledBackgroundColor: Colors.grey[400],
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Text(
+                              'Yes, Register',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (selectedMemberIds != null && selectedMemberIds.isNotEmpty) {
+      setState(() {
+        _selectedFamilyMemberIds = selectedMemberIds;
+        _seatCount = selectedMemberIds.length;
+
+        // Per registration, allow only one food container when food is enabled.
+        if (_eventDetails?.hasFood == '1') {
+          _foodBoxCount = 1;
+        }
+      });
+    }
+
+    return selectedMemberIds;
+  }
+
+  String _getFamilyMemberName(FamilyMembersData member) {
+    return [
+      member.firstName?.toString().trim() ?? '',
+      member.middleName?.toString().trim() ?? '',
+      member.lastName?.toString().trim() ?? '',
+    ].where((name) => name.isNotEmpty).join(' ');
+  }
+
   Future<int?> _showSeatDialog(BuildContext context) async {
-    final TextEditingController _seatController = TextEditingController();
-    int localSeatCount = 0;
+    final isFamilySelectionEvent = _eventDetails?.eventsTypeId == '5';
+    final maxAllowed = isFamilySelectionEvent
+        ? (int.tryParse(_eventDetails?.FamilyMemberAllowed ?? '0') ?? 0)
+        : 4;
+    int localSeatCount = _seatCount > 0
+        ? (_seatCount > maxAllowed ? maxAllowed : _seatCount)
+        : 1;
 
     final seatCount = await showDialog<int>(
       context: context,
@@ -263,33 +555,35 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Enter the number of seats you want to request (max 2):",
-                    style: TextStyle(
+                  Text(
+                    "Select the number of seats you want to request (max $maxAllowed):",
+                    style: const TextStyle(
                       fontSize: 16,
                       color: Colors.black87,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _seatController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Number of Seats (Max 2)',
+                  DropdownButtonFormField<int>(
+                    dropdownColor: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    value: localSeatCount,
+                    decoration: InputDecoration(
+                      labelText: 'Number of Seats (Max $maxAllowed)',
                       border: OutlineInputBorder(),
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 20),
+                    ),
+                    items: List.generate(
+                      maxAllowed,
+                      (index) => DropdownMenuItem<int>(
+                        value: index + 1,
+                        child: Text('${index + 1}'),
+                      ),
                     ),
                     onChanged: (value) {
-                      int num = int.tryParse(value) ?? 0;
-                      if (num > 2) {
-                        num = 2;
-                        _seatController.text = '2';
-                        _seatController.selection = TextSelection.fromPosition(
-                          TextPosition(offset: _seatController.text.length),
-                        );
-                      }
                       setState(() {
-                        localSeatCount = num;
+                        localSeatCount = value ?? 1;
                       });
                     },
                   ),
@@ -310,11 +604,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    if (localSeatCount <= 0 || localSeatCount > 2) {
+                    if (localSeatCount <= 0 || localSeatCount > maxAllowed) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
+                        SnackBar(
                           content: Text(
-                              'Please enter a valid number of seats (1-2)'),
+                              'Please select a valid number of seats (1-$maxAllowed)'),
                         ),
                       );
                       return;
@@ -347,7 +641,17 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<bool> _showFoodDialog(BuildContext context) async {
-    int? selectedFoodCount;
+    final isFamilySelectionEvent = _eventDetails?.eventsTypeId == '5';
+    final maxAllowed = isFamilySelectionEvent
+        ? (int.tryParse(_eventDetails?.FamilyMemberAllowed ?? '0') ?? 0)
+        : 4;
+
+    final memberCount =
+        _selectedFamilyMemberIds.isEmpty ? 1 : _selectedFamilyMemberIds.length;
+
+    int selectedFoodCount = _foodBoxCount > 0
+        ? (_foodBoxCount > maxAllowed ? maxAllowed : _foodBoxCount)
+        : ((memberCount > maxAllowed) ? maxAllowed : memberCount);
 
     final shouldProceed = await showDialog<bool>(
       context: context,
@@ -363,6 +667,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
               titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
               contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
               actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+
+              // ✅ TITLE SAME AS SEAT DIALOG
               title: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -378,59 +684,51 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   Divider(thickness: 1, color: Colors.grey),
                 ],
               ),
+
+              // ✅ CONTENT
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Number of meals for this event (Max 2):",
-                    style: TextStyle(
+                  Text(
+                    "Number of meals (Max $maxAllowed):",
+                    style: const TextStyle(
                       fontSize: 16,
                       color: Colors.black87,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: 12),
+
+                  // ✅ DROPDOWN (PRESELECTED VALUE)
                   DropdownButtonFormField<int>(
                     dropdownColor: Colors.white,
                     borderRadius: BorderRadius.circular(8),
                     value: selectedFoodCount,
                     decoration: const InputDecoration(
                       labelText: "Meals",
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black38, width: 1),
-                      ),
+                      border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.symmetric(horizontal: 20),
-                      labelStyle: TextStyle(color: Colors.black),
                     ),
-                    items: const [
-                      DropdownMenuItem<int>(
-                        value: 0,
-                        child: Text("0 (Don't want)"),
+                    items: List.generate(
+                      maxAllowed + 1,
+                      (index) => DropdownMenuItem<int>(
+                        value: index,
+                        child: Text(
+                          index == 0 ? "0 (Don't want)" : "$index",
+                        ),
                       ),
-                      DropdownMenuItem<int>(
-                        value: 1,
-                        child: Text("1"),
-                      ),
-                      DropdownMenuItem<int>(
-                        value: 2,
-                        child: Text("2"),
-                      ),
-                    ],
+                    ),
                     onChanged: (value) {
                       setState(() {
-                        selectedFoodCount = value;
+                        selectedFoodCount = value ?? 0;
                       });
                     },
                   ),
                 ],
               ),
+
+              // ✅ ACTIONS SAME STYLE
               actions: [
                 OutlinedButton(
                   onPressed: () => Navigator.pop(context, false),
@@ -446,19 +744,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    if (selectedFoodCount == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content:
-                            Text('Please select the number of meals (0–2)')),
-                      );
-                      return;
-                    }
-
-                    setState(() {
-                      _foodBoxCount = selectedFoodCount!;
-                    });
-
+                    _foodBoxCount = selectedFoodCount;
                     Navigator.pop(context, true);
                   },
                   style: ElevatedButton.styleFrom(
@@ -556,6 +842,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       attendeeId: attendeeId!,
                       memberId: int.tryParse(userData!.memberId.toString())!,
                       addedBy: int.tryParse(userData!.memberId.toString())!,
+                      eventDetails: _eventDetails!,
+                      selectedMemberCount: _selectedFamilyMemberIds.isEmpty
+                          ? 1
+                          : _selectedFamilyMemberIds.length,
+                      selectedFoodBoxCount: _foodBoxCount,
                     ),
                   ),
                 );
@@ -588,6 +879,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
         throw Exception('User not logged in');
       }
 
+      final loggedInMemberId = userData.memberId.toString();
+      final familyMemberIdsForRequest = _selectedFamilyMemberIds
+          .where((memberId) => memberId != loggedInMemberId)
+          .toList();
       final now = DateTime.now();
       final registrationData = EventRegistrationData(
         memberId: int.tryParse(userData.memberId.toString()),
@@ -595,20 +890,19 @@ class _EventDetailPageState extends State<EventDetailPage> {
         eventRegisteredDate: DateFormat('yyyy-MM-dd').format(now),
         addedBy: int.tryParse(userData.memberId.toString()),
         dateAdded: DateFormat('yyyy-MM-dd HH:mm:ss').format(now),
-        noOfFoodContainer: (_eventDetails?.eventsTypeId != '1' &&
-            _eventDetails?.hasFood == '1')
-            ? _foodBoxCount
-            : 0,
-        noOfSeatAllocated: (_eventDetails?.eventsTypeId != '1' &&
-            _eventDetails?.hasSeatAllocate == '1')
-            ? _seatCount
-            : 0,
+        noOfFoodContainer: (_eventDetails?.hasFood == '1') ? _foodBoxCount : 0,
+        noOfSeatAllocated:
+            (_eventDetails?.hasSeatAllocate == '1') ? _seatCount : 0,
+        familyMemberIds: familyMemberIdsForRequest.join(','),
       );
 
       debugPrint('Sending food count: ${registrationData.noOfFoodContainer}');
       debugPrint('Sending seat count: ${registrationData.noOfSeatAllocated}');
+      debugPrint(
+          'Sending family member ids: ${registrationData.familyMemberIds}');
 
-      final response = await _registrationRepo.registerForEvent(registrationData);
+      final response =
+          await _registrationRepo.registerForEvent(registrationData);
 
       // ✅ FIXED: Add debug to see actual response structure
       debugPrint('=== API RESPONSE ===');
@@ -623,7 +917,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
         setState(() {
           _isRegistered = true;
         });
-        await _showAlreadyRegisteredDialog(response['message'] ?? 'Already registered');
+        await _showAlreadyRegisteredDialog(
+            response['message'] ?? 'Already registered');
         return;
       }
 
@@ -632,13 +927,16 @@ class _EventDetailPageState extends State<EventDetailPage> {
           _isRegistered = true;
         });
 
-        final attendeeId = int.tryParse(response['data']['attendee_id']?.toString() ?? '0');
+        final attendeeId =
+            int.tryParse(response['data']['attendee_id']?.toString() ?? '0');
         final memberId = int.tryParse(userData.memberId.toString()) ?? 0;
 
         if (_eventDetails?.eventsTypeId == '3') {
-          await _showStudentPrizeConfirmationDialog(3, attendeeId ?? 0, memberId);
+          await _showStudentPrizeConfirmationDialog(
+              3, attendeeId ?? 0, memberId);
         } else {
-          await _showSuccessDialog(response['message'] ?? 'Successfully registered for event');
+          await _showSuccessDialog(
+              response['message'] ?? 'Successfully registered for event');
         }
       } else {
         throw Exception(response['message'] ?? 'Failed to register for event');
@@ -698,7 +996,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -712,7 +1010,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Future<void> _showSuccessDialog(String message) async {
-    await showDialog(
+    final isPaidEvent =
+        _eventDetails?.eventCostType?.trim().toLowerCase() == 'paid';
+    final dialogTitle = isPaidEvent ? 'Registration Detail' : 'Success';
+    final dialogMessage = isPaidEvent
+        ? 'Thank you for registering for the event. Click OK to continue to the payment page.'
+        : message;
+
+    final shouldOpenPayment = await showDialog<bool>(
       context: context,
       barrierDismissible: true,
       builder: (BuildContext context) {
@@ -727,20 +1032,20 @@ class _EventDetailPageState extends State<EventDetailPage> {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
-            children: const [
+            children: [
               Text(
-                "Success",
-                style: TextStyle(
+                dialogTitle,
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              SizedBox(height: 8),
-              Divider(thickness: 1, color: Colors.grey),
+              const SizedBox(height: 8),
+              const Divider(thickness: 1, color: Colors.grey),
             ],
           ),
           content: Text(
-            message,
+            dialogMessage,
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 16,
@@ -750,8 +1055,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           actions: [
             ElevatedButton(
               onPressed: () {
-                Navigator.of(context).pop();
-                _redirectToEventsList();
+                Navigator.of(context).pop(isPaidEvent);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
@@ -766,6 +1070,21 @@ class _EventDetailPageState extends State<EventDetailPage> {
         );
       },
     );
+
+    if (isPaidEvent && shouldOpenPayment == true && mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => EventPaymentDetailPage(
+            eventDetails: _eventDetails!,
+            selectedMemberCount: _selectedFamilyMemberIds.isEmpty
+                ? 1
+                : _selectedFamilyMemberIds.length,
+            selectedFoodBoxCount: _foodBoxCount,
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _showErrorDialog(String message) async {
@@ -821,10 +1140,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
         );
       },
     );
-  }
-
-  void _redirectToEventsList() {
-    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   Widget _buildEventInfoList() {
@@ -977,7 +1292,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          onPressed: _isRegistered ? null : _showRegistrationConfirmationDialog,
+          onPressed: _isRegistered ? null : _handleRegisterButtonTap,
           child: _isRegistering
               ? const SizedBox(
                   width: 20,
@@ -994,6 +1309,38 @@ class _EventDetailPageState extends State<EventDetailPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _handleRegisterButtonTap() async {
+    final isAlreadyRegistered = await _fetchRegistrationStatus();
+    if (!mounted) return;
+
+    if (isAlreadyRegistered) {
+      setState(() {
+        _isRegistered = true;
+      });
+      await _showAlreadyRegisteredDialog(
+          'You are already registered for this event.');
+      return;
+    }
+
+    final maxAllowed =
+        int.tryParse(_eventDetails?.FamilyMemberAllowed ?? '0') ?? 0;
+
+    if (_eventDetails?.eventsTypeId == '5' &&
+        _selectedFamilyMemberIds.length > maxAllowed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Maximum $maxAllowed members allowed'),
+        ),
+      );
+      return;
+    }
+
+    final shouldProceed = await _showFinalConfirmationDialog();
+    if (!shouldProceed) return;
+
+    await _showRegistrationConfirmationDialog();
   }
 
   Future<bool> _requestPermission() async {
@@ -1391,7 +1738,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
               _buildEventCostInfo(),
               const SizedBox(height: 24),
             ],
-            if (_eventDetails?.hasFood == '1' && _eventDetails?.hasFoodPaid == 'paid') ...[
+            if (_eventDetails?.hasFood == '1' &&
+                _eventDetails?.hasFoodPaid == 'paid') ...[
               _buildEventFoodCostInfo(),
               const SizedBox(height: 24),
             ],
@@ -1422,9 +1770,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
       bottomNavigationBar: _isPastEvent
           ? const SizedBox.shrink()
           : Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: _buildRegisterButton(),
-      ),
+              padding: const EdgeInsets.all(12.0),
+              child: _buildRegisterButton(),
+            ),
     );
   }
 
@@ -1490,7 +1838,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   ? (await getExternalStorageDirectory())!
                   : await getApplicationDocumentsDirectory();
 
-              String filePath = "${directory!.path}/Event_Terms_${_eventDetails!.eventId}.$fileExtension";
+              String filePath =
+                  "${directory!.path}/Event_Terms_${_eventDetails!.eventId}.$fileExtension";
 
               await _dio.download(
                 docUrl,
@@ -1506,7 +1855,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
               );
 
               setLocalState(() => isDownloading = false);
-              _showDownloadDialog(context, "Event_Terms_${_eventDetails!.eventId}.$fileExtension", filePath);
+              _showDownloadDialog(
+                  context,
+                  "Event_Terms_${_eventDetails!.eventId}.$fileExtension",
+                  filePath);
             } catch (e) {
               setLocalState(() => isDownloading = false);
               ScaffoldMessenger.of(context).showSnackBar(
@@ -1519,52 +1871,54 @@ class _EventDetailPageState extends State<EventDetailPage> {
             height: 48,
             child: isDownloading
                 ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  LinearProgressIndicator(
-                    value: downloadProgress / 100,
-                    backgroundColor: Colors.grey[300],
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        LinearProgressIndicator(
+                          value: downloadProgress / 100,
+                          backgroundColor: Colors.grey[300],
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Downloading... $downloadProgress%',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  )
+                : SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey[200],
+                        foregroundColor: Colors.black87,
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 12, horizontal: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 0,
+                      ),
+                      icon: Icon(
+                        fileExtension == 'pdf'
+                            ? Icons.picture_as_pdf
+                            : Icons.description,
+                        color:
+                            fileExtension == 'pdf' ? Colors.red : Colors.blue,
+                      ),
+                      label: Text(
+                        "Download & View ${fileExtension.toUpperCase()}",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      onPressed: startDownload,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Downloading... $downloadProgress%',
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                ],
-              ),
-            )
-                : SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey[200],
-                  foregroundColor: Colors.black87,
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 12, horizontal: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  elevation: 0,
-                ),
-                icon: Icon(
-                  fileExtension == 'pdf'
-                      ? Icons.picture_as_pdf
-                      : Icons.description,
-                  color: fileExtension == 'pdf' ? Colors.red : Colors.blue,
-                ),
-                label: Text(
-                  "Download & View ${fileExtension.toUpperCase()}",
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                onPressed: startDownload,
-              ),
-            ),
           );
         },
       );

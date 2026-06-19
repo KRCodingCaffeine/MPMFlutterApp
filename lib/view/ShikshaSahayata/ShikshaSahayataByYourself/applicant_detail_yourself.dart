@@ -15,9 +15,14 @@ import 'package:mpm/model/city/CityData.dart';
 import 'package:mpm/model/ShikshaSahayata/ApplicantDetail/CreateApplicantDetail/CreateApplicantDetailData.dart';
 import 'package:mpm/model/ShikshaSahayata/UpdateFatherDetail/UpdateFatherData.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/ApplicantDetailRepo/applicant_aadhaar_upload_repository/applicant_aadhaar_upload_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/ApplicantDetailRepo/applicant_pan_upload_repository/applicant_pan_upload_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/ApplicantDetailRepo/applicant_passport_upload_repository/applicant_passport_upload_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/ApplicantDetailRepo/applicant_ration_upload_repository/applicant_ration_upload_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/ApplicantDetailRepo/applicant_visa_upload_repository/applicant_visa_upload_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/ApplicantDetailRepo/create_shiksha_application_repository/create_shiksha_application_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/ApplicantDetailRepo/father_annual_income_upload_repository/father_annual_income_upload_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/ApplicantDetailRepo/father_pan_upload_repository/father_pan_upload_repo.dart';
+import 'package:mpm/repository/ShikshaSahayataRepo/ApplicantDetailRepo/overseas_father_income_repository/overseas_father_income_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/ApplicantDetailRepo/update_shiksha_application_repository/update_shiksha_application_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/ShikshaApplicationRepo/shiksha_application_repository/shiksha_application_repo.dart';
 import 'package:mpm/repository/ShikshaSahayataRepo/UpdateFatherRepo/update_father_repository/update_father_repo.dart';
@@ -42,11 +47,22 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
   bool isExistingAadhaarRemoved = false;
   bool isExistingPanRemoved = false;
   bool isExistingRationRemoved = false;
+  bool isExistingFatherAnnualIncomeRemoved = false;
+  bool isExistingPassportRemoved = false;
+  bool isExistingVisaRemoved = false;
+  bool isExistingApplicantAnnualIncomeRemoved = false;
+  bool isExistingOverseasFatherAnnualIncomeRemoved = false;
+  bool isApplyingForOverseasStudies = false;
   bool hasApplicant = false;
   bool _isSubmitting = false;
   File? applicantAadharFile;
   File? fatherPanFile;
+  File? fatherAnnualIncomeFile;
   File? addressProofFile;
+  File? passportFile;
+  File? visaFile;
+  File? applicantAnnualIncomeFile;
+  File? applicantFatherAnnualIncomeFile;
   final ImagePicker _picker = ImagePicker();
   UdateProfileController controller = Get.put(UdateProfileController());
   NewMemberController regiController = Get.find<NewMemberController>();
@@ -61,9 +77,18 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
 
   final ApplicantAadhaarUploadRepository _aadhaarRepo =
       ApplicantAadhaarUploadRepository();
+  final ApplicantPanRepository _applicantPanRepo = ApplicantPanRepository();
+  final ApplicantPassportUploadRepository _passportRepo =
+      ApplicantPassportUploadRepository();
   final ApplicantRationUploadRepository _rationRepo =
       ApplicantRationUploadRepository();
+  final ApplicantVisaUploadRepository _visaRepo =
+      ApplicantVisaUploadRepository();
+  final FatherAnnualIncomeUploadRepository _fatherAnnualIncomeRepo =
+      FatherAnnualIncomeUploadRepository();
   final FatherPanUploadRepository _fatherPanRepo = FatherPanUploadRepository();
+  final OverseasFatherIncomeRepository _overseasFatherIncomeRepo =
+      OverseasFatherIncomeRepository();
 
   ShikshaApplicationData? _applicationData;
 
@@ -106,12 +131,27 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
   @override
   void initState() {
     super.initState();
+    dobCtrl.addListener(_syncAgeFromDobText);
     _initializeData();
   }
 
   Future<void> _initializeData() async {
     await controller.getUserProfile();
     await regiController.getState();
+
+    final address = controller.getUserData.value.address;
+
+    if (address != null && address.stateId != null) {
+      final stateId = address.stateId.toString();
+      regiController.setSelectedState(stateId);
+      await regiController.getCityByState(stateId);
+
+      if (address.city_id != null &&
+          address.city_id.toString().isNotEmpty &&
+          address.city_id.toString() != 'null') {
+        regiController.setSelectedCity(address.city_id.toString());
+      }
+    }
 
     _prefillFromLoggedInUser();
 
@@ -191,6 +231,19 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
 
     setState(() {});
   }
+
+  String? _fatherAnnualIncomeDocumentPath() =>
+      _applicationData?.fatherAnnualIncomeDocument;
+
+  String? _passportDocumentPath() => _applicationData?.applicantPassportDocument;
+
+  String? _visaDocumentPath() => _applicationData?.applicantVisaDocument;
+
+  String? _applicantAnnualIncomeDocumentPath() =>
+      _applicationData?.applicantPanCardDocument;
+
+  String? _overseasFatherAnnualIncomeDocumentPath() =>
+      _applicationData?.overseasFatherAnnualIncomeDocument;
 
   bool _isValidEmail(String email) {
     return RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email);
@@ -365,6 +418,64 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
         }
       }
 
+      if (fatherAnnualIncomeFile != null) {
+        final fatherAnnualIncomeResponse =
+            await _fatherAnnualIncomeRepo.uploadFatherAnnualIncome(
+          shikshaApplicantId: shikshaId,
+          filePath: fatherAnnualIncomeFile!.path,
+        );
+
+        if (fatherAnnualIncomeResponse.status != true) {
+          throw Exception(fatherAnnualIncomeResponse.message);
+        }
+      }
+
+      if (isApplyingForOverseasStudies && applicantAnnualIncomeFile != null) {
+        final applicantPanResponse = await _applicantPanRepo.uploadApplicantPan(
+          shikshaApplicantId: shikshaId,
+          filePath: applicantAnnualIncomeFile!.path,
+        );
+
+        if (applicantPanResponse.status != true) {
+          throw Exception(applicantPanResponse.message);
+        }
+      }
+
+      if (isApplyingForOverseasStudies && passportFile != null) {
+        final passportResponse = await _passportRepo.uploadApplicantPassport(
+          shikshaApplicantId: shikshaId,
+          filePath: passportFile!.path,
+        );
+
+        if (passportResponse.status != true) {
+          throw Exception(passportResponse.message);
+        }
+      }
+
+      if (isApplyingForOverseasStudies && visaFile != null) {
+        final visaResponse = await _visaRepo.uploadApplicantVisa(
+          shikshaApplicantId: shikshaId,
+          filePath: visaFile!.path,
+        );
+
+        if (visaResponse.status != true) {
+          throw Exception(visaResponse.message);
+        }
+      }
+
+      if (isApplyingForOverseasStudies &&
+          applicantFatherAnnualIncomeFile != null) {
+        final overseasFatherIncomeResponse =
+            await _overseasFatherIncomeRepo.uploadOverseasIncome(
+          shikshaApplicantId: shikshaId,
+          filePath: applicantFatherAnnualIncomeFile!.path,
+        );
+
+        if (overseasFatherIncomeResponse.status != true) {
+          throw Exception(overseasFatherIncomeResponse.message);
+        }
+      }
+
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('shiksha_applicant_id', shikshaId);
 
@@ -486,6 +597,64 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
         }
       }
 
+      if (fatherAnnualIncomeFile != null) {
+        final fatherAnnualIncomeResponse =
+            await _fatherAnnualIncomeRepo.uploadFatherAnnualIncome(
+          shikshaApplicantId: _shikshaApplicantId!,
+          filePath: fatherAnnualIncomeFile!.path,
+        );
+
+        if (fatherAnnualIncomeResponse.status != true) {
+          throw Exception(fatherAnnualIncomeResponse.message);
+        }
+      }
+
+      if (isApplyingForOverseasStudies && applicantAnnualIncomeFile != null) {
+        final applicantPanResponse = await _applicantPanRepo.uploadApplicantPan(
+          shikshaApplicantId: _shikshaApplicantId!,
+          filePath: applicantAnnualIncomeFile!.path,
+        );
+
+        if (applicantPanResponse.status != true) {
+          throw Exception(applicantPanResponse.message);
+        }
+      }
+
+      if (isApplyingForOverseasStudies && passportFile != null) {
+        final passportResponse = await _passportRepo.uploadApplicantPassport(
+          shikshaApplicantId: _shikshaApplicantId!,
+          filePath: passportFile!.path,
+        );
+
+        if (passportResponse.status != true) {
+          throw Exception(passportResponse.message);
+        }
+      }
+
+      if (isApplyingForOverseasStudies && visaFile != null) {
+        final visaResponse = await _visaRepo.uploadApplicantVisa(
+          shikshaApplicantId: _shikshaApplicantId!,
+          filePath: visaFile!.path,
+        );
+
+        if (visaResponse.status != true) {
+          throw Exception(visaResponse.message);
+        }
+      }
+
+      if (isApplyingForOverseasStudies &&
+          applicantFatherAnnualIncomeFile != null) {
+        final overseasFatherIncomeResponse =
+            await _overseasFatherIncomeRepo.uploadOverseasIncome(
+          shikshaApplicantId: _shikshaApplicantId!,
+          filePath: applicantFatherAnnualIncomeFile!.path,
+        );
+
+        if (overseasFatherIncomeResponse.status != true) {
+          throw Exception(overseasFatherIncomeResponse.message);
+        }
+      }
+
       await _fetchShikshaApplication(_shikshaApplicantId!);
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -562,7 +731,7 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
           ? _buildApplicantCard()
           : const Center(
               child: Text(
-                "No applicant details have been added yet.",
+                "Click below Plus button to fill your application detail",
                 style: TextStyle(color: Colors.grey),
               ),
             ),
@@ -633,13 +802,13 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
               ),
               const Divider(),
               const SizedBox(height: 12),
-              _infoRow("Full Name", data.fullName ?? ''),
-              _infoRow("Email", data.email ?? ''),
-              _infoRow("Mobile", data.mobile ?? ''),
+              _infoRow("Applicant Full Name", data.fullName ?? ''),
+              _infoRow("Applicant Email", data.email ?? ''),
+              _infoRow("Applicant Mobile", data.mobile ?? ''),
               _infoRow(
-                  "Date of Birth", _formatDobForUi(data.dateOfBirth ?? '')),
-              _infoRow("Age", data.age ?? ''),
-              _infoRow("Marital Status", data.maritalStatusName ?? ''),
+                  "Applicant Date of Birth", _formatDobForUi(data.dateOfBirth ?? '')),
+              _infoRow("Applicant Age", data.age ?? ''),
+              _infoRow("Applicant Marital Status", data.maritalStatusName ?? ''),
               const SizedBox(height: 10),
               const Text(
                 "Father / Mother Details",
@@ -719,6 +888,117 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                     },
                     icon: const Icon(Icons.visibility),
                     label: const Text("View Address Proof"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+              if ((data.fatherAnnualIncomeDocument ?? "").isNotEmpty)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      final imageUrl =
+                          _getFullImageUrl(data.fatherAnnualIncomeDocument);
+                      _showDocumentPreviewDialog(
+                        context,
+                        imageUrl,
+                        "Father's Annual Income",
+                      );
+                    },
+                    icon: const Icon(Icons.visibility),
+                    label: const Text("View Father's Annual Income"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+              if ((data.applicantPassportDocument ?? "").isNotEmpty)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      final imageUrl =
+                          _getFullImageUrl(data.applicantPassportDocument);
+                      _showDocumentPreviewDialog(
+                        context,
+                        imageUrl,
+                        "Applicant Passport",
+                      );
+                    },
+                    icon: const Icon(Icons.visibility),
+                    label: const Text("View Applicant Passport"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+              if ((data.applicantVisaDocument ?? "").isNotEmpty)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      final imageUrl =
+                          _getFullImageUrl(data.applicantVisaDocument);
+                      _showDocumentPreviewDialog(
+                        context,
+                        imageUrl,
+                        "Applicant Visa",
+                      );
+                    },
+                    icon: const Icon(Icons.visibility),
+                    label: const Text("View Applicant Visa"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+              if ((data.applicantPanCardDocument ?? "").isNotEmpty)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      final imageUrl =
+                          _getFullImageUrl(data.applicantPanCardDocument);
+                      _showDocumentPreviewDialog(
+                        context,
+                        imageUrl,
+                        "Applicant Annual Income",
+                      );
+                    },
+                    icon: const Icon(Icons.visibility),
+                    label: const Text("View Applicant Annual Income"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+              if ((data.overseasFatherAnnualIncomeDocument ?? "").isNotEmpty)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      final imageUrl = _getFullImageUrl(
+                        data.overseasFatherAnnualIncomeDocument,
+                      );
+                      _showDocumentPreviewDialog(
+                        context,
+                        imageUrl,
+                        "Applicant Father's Annual Income",
+                      );
+                    },
+                    icon: const Icon(Icons.visibility),
+                    label: const Text("View Applicant Father's Annual Income"),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ColorHelperClass.getColorFromHex(
                           ColorResources.red_color),
@@ -944,24 +1224,24 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                                 ),
                               ),
                               const SizedBox(height: 30),
-                              _buildTextField("First Name *",
+                              _buildTextField("Applicant First Name *",
                                   controller: firstNameCtrl,
                                   onChanged: (_) => setModalState(() {})),
                               const SizedBox(height: 20),
-                              _buildTextField("Middle Name",
+                              _buildTextField("Applicant Middle Name",
                                   controller: middleNameCtrl,
                                   onChanged: (_) => setModalState(() {})),
                               const SizedBox(height: 20),
-                              _buildTextField("Surname *",
+                              _buildTextField("Applicant Surname *",
                                   controller: lastNameCtrl,
                                   onChanged: (_) => setModalState(() {})),
                               const SizedBox(height: 20),
-                              _buildTextField("Email *",
+                              _buildTextField("Applicant Email *",
                                   controller: emailCtrl,
                                   onChanged: (_) => setModalState(() {})),
                               const SizedBox(height: 20),
                               _buildTextField(
-                                "Mobile Number *",
+                                "Applicant Mobile Number *",
                                 controller: mobileCtrl,
                                 keyboard: TextInputType.number,
                                 inputFormatters: number10DigitFormatter,
@@ -999,7 +1279,7 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                               const SizedBox(height: 20),
                               themedDatePickerField(
                                 context: context,
-                                label: "Date of Birth *",
+                                label: "Applicant Date of Birth *",
                                 hint: "Select DOB",
                                 controller: dobCtrl,
                                 calculateAge: true,
@@ -1007,14 +1287,14 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                               ),
                               const SizedBox(height: 20),
                               _buildTextField(
-                                "Age",
+                                "Applicant Age",
                                 controller: ageCtrl,
                                 readOnly: true,
                                 onChanged: (_) => setModalState(() {}),
                               ),
                               const SizedBox(height: 20),
                               _buildDropdown(
-                                label: "Marital Status *",
+                                label: "Applicant Marital Status *",
                                 items: ["Married", "Unmarried"],
                                 selectedValue: maritalStatus,
                                 onChanged: (val) {
@@ -1187,10 +1467,14 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                                                       'Unknown'),
                                                 );
                                               }).toList(),
-                                              onChanged: (val) {
+                                              onChanged: (val) async {
                                                 if (val != null) {
                                                   regiController
                                                       .setSelectedState(val);
+                                                  regiController
+                                                      .setSelectedCity('');
+                                                  await regiController
+                                                      .getCityByState(val);
                                                   setModalState(() {});
                                                 }
                                               },
@@ -1219,7 +1503,7 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                                     setState(() {
                                       applicantAadharFile = file;
                                     });
-                                  });
+                                  }, title: "Upload Applicant Aadhaar");
                                 },
                                 onRemoveExisting: () {
                                   setModalState(() {
@@ -1255,7 +1539,7 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                                     setState(() {
                                       fatherPanFile = file;
                                     });
-                                  });
+                                  }, title: "Upload Father's PAN Card");
                                 },
                                 onRemoveExisting: () {
                                   setModalState(() {
@@ -1277,6 +1561,43 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                               const SizedBox(height: 20),
                               buildImageUploadField(
                                 context: context,
+                                imageFile: fatherAnnualIncomeFile,
+                                buttonText: "Father's Annual Income",
+                                isMandatory: false,
+                                existingDocumentPath:
+                                    _fatherAnnualIncomeDocumentPath(),
+                                isExistingRemoved:
+                                    isExistingFatherAnnualIncomeRemoved,
+                                onPick: () {
+                                  _showImagePicker(context, (file) {
+                                    setModalState(() {
+                                      fatherAnnualIncomeFile = file;
+                                    });
+                                    setState(() {
+                                      fatherAnnualIncomeFile = file;
+                                    });
+                                  }, title: "Upload Father's Annual Income");
+                                },
+                                onRemoveExisting: () {
+                                  setModalState(() {
+                                    isExistingFatherAnnualIncomeRemoved = true;
+                                  });
+                                  setState(() {
+                                    isExistingFatherAnnualIncomeRemoved = true;
+                                  });
+                                },
+                                onRemoveNew: () {
+                                  setModalState(() {
+                                    fatherAnnualIncomeFile = null;
+                                  });
+                                  setState(() {
+                                    fatherAnnualIncomeFile = null;
+                                  });
+                                },
+                              ),
+                              const SizedBox(height: 20),
+                              buildImageUploadField(
+                                context: context,
                                 imageFile: addressProofFile,
                                 buttonText:
                                     "Address Proof (if Aadhaar and current address are not the same)",
@@ -1292,7 +1613,7 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                                     setState(() {
                                       addressProofFile = file;
                                     });
-                                  });
+                                  }, title: "Upload Address Proof");
                                 },
                                 onRemoveExisting: () {
                                   setModalState(() {
@@ -1311,6 +1632,290 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
                                   });
                                 },
                               ),
+                              const SizedBox(height: 10),
+                              const Divider(height: 20),
+                              const SizedBox(height: 10),
+                              Align(
+                                alignment: Alignment.center,
+                                child: Text(
+                                  "Are you Applying for overseas studies ?",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed: () {
+                                        setModalState(() {
+                                          isApplyingForOverseasStudies = true;
+                                        });
+                                        setState(() {
+                                          isApplyingForOverseasStudies = true;
+                                        });
+                                      },
+                                      style: OutlinedButton.styleFrom(
+                                        backgroundColor:
+                                            isApplyingForOverseasStudies
+                                                ? ColorHelperClass
+                                                    .getColorFromHex(
+                                                        ColorResources
+                                                            .red_color)
+                                                : Colors.white,
+                                        foregroundColor:
+                                            isApplyingForOverseasStudies
+                                                ? Colors.white
+                                                : Colors.black87,
+                                        side: BorderSide(
+                                          color:
+                                              ColorHelperClass.getColorFromHex(
+                                            ColorResources.red_color,
+                                          ),
+                                        ),
+                                      ),
+                                      child: const Text("Yes"),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed: () {
+                                        setModalState(() {
+                                          isApplyingForOverseasStudies = false;
+                                          passportFile = null;
+                                          visaFile = null;
+                                          applicantAnnualIncomeFile = null;
+                                          applicantFatherAnnualIncomeFile =
+                                              null;
+                                        });
+                                        setState(() {
+                                          isApplyingForOverseasStudies = false;
+                                          passportFile = null;
+                                          visaFile = null;
+                                          applicantAnnualIncomeFile = null;
+                                          applicantFatherAnnualIncomeFile =
+                                              null;
+                                        });
+                                      },
+                                      style: OutlinedButton.styleFrom(
+                                        backgroundColor:
+                                            !isApplyingForOverseasStudies
+                                                ? ColorHelperClass
+                                                    .getColorFromHex(
+                                                        ColorResources
+                                                            .red_color)
+                                                : Colors.white,
+                                        foregroundColor:
+                                            !isApplyingForOverseasStudies
+                                                ? Colors.white
+                                                : Colors.black87,
+                                        side: BorderSide(
+                                          color:
+                                              ColorHelperClass.getColorFromHex(
+                                            ColorResources.red_color,
+                                          ),
+                                        ),
+                                      ),
+                                      child: const Text("No"),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (isApplyingForOverseasStudies) ...[
+                                const SizedBox(height: 20),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFF4E5),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: const Color(0xFFFFD8A8),
+                                    ),
+                                  ),
+                                  child: const Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Icon(
+                                        Icons.info_outline,
+                                        color: Colors.deepOrange,
+                                      ),
+                                      SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          "Are you Applying for overseas studies, please upload additional documents like Passport, Visa, Applicant Annual Income, and Applicant Father's Annual Income.",
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            height: 1.4,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                buildImageUploadField(
+                                  context: context,
+                                  imageFile: passportFile,
+                                  buttonText: "Applicant Passport",
+                                  isMandatory: false,
+                                  existingDocumentPath:
+                                      _passportDocumentPath(),
+                                  isExistingRemoved:
+                                      isExistingPassportRemoved,
+                                  onPick: () {
+                                    _showImagePicker(context, (file) {
+                                      setModalState(() {
+                                        passportFile = file;
+                                      });
+                                      setState(() {
+                                        passportFile = file;
+                                      });
+                                    }, title: "Upload Applicant Passport");
+                                  },
+                                  onRemoveExisting: () {
+                                    setModalState(() {
+                                      isExistingPassportRemoved = true;
+                                    });
+                                    setState(() {
+                                      isExistingPassportRemoved = true;
+                                    });
+                                  },
+                                  onRemoveNew: () {
+                                    setModalState(() {
+                                      passportFile = null;
+                                    });
+                                    setState(() {
+                                      passportFile = null;
+                                    });
+                                  },
+                                ),
+                                const SizedBox(height: 20),
+                                buildImageUploadField(
+                                  context: context,
+                                  imageFile: visaFile,
+                                  buttonText: "Applicant Visa",
+                                  isMandatory: false,
+                                  existingDocumentPath: _visaDocumentPath(),
+                                  isExistingRemoved: isExistingVisaRemoved,
+                                  onPick: () {
+                                    _showImagePicker(context, (file) {
+                                      setModalState(() {
+                                        visaFile = file;
+                                      });
+                                      setState(() {
+                                        visaFile = file;
+                                      });
+                                    }, title: "Upload Applicant Visa");
+                                  },
+                                  onRemoveExisting: () {
+                                    setModalState(() {
+                                      isExistingVisaRemoved = true;
+                                    });
+                                    setState(() {
+                                      isExistingVisaRemoved = true;
+                                    });
+                                  },
+                                  onRemoveNew: () {
+                                    setModalState(() {
+                                      visaFile = null;
+                                    });
+                                    setState(() {
+                                      visaFile = null;
+                                    });
+                                  },
+                                ),
+                                const SizedBox(height: 20),
+                                buildImageUploadField(
+                                  context: context,
+                                  imageFile: applicantAnnualIncomeFile,
+                                  buttonText:
+                                      "Applicant Annual Income (last 3 years ITR Returns)",
+                                  isMandatory: false,
+                                  existingDocumentPath:
+                                      _applicantAnnualIncomeDocumentPath(),
+                                  isExistingRemoved:
+                                      isExistingApplicantAnnualIncomeRemoved,
+                                  onPick: () {
+                                    _showImagePicker(context, (file) {
+                                      setModalState(() {
+                                        applicantAnnualIncomeFile = file;
+                                      });
+                                      setState(() {
+                                        applicantAnnualIncomeFile = file;
+                                      });
+                                    }, title: "Upload Applicant Annual Income");
+                                  },
+                                  onRemoveExisting: () {
+                                    setModalState(() {
+                                      isExistingApplicantAnnualIncomeRemoved =
+                                          true;
+                                    });
+                                    setState(() {
+                                      isExistingApplicantAnnualIncomeRemoved =
+                                          true;
+                                    });
+                                  },
+                                  onRemoveNew: () {
+                                    setModalState(() {
+                                      applicantAnnualIncomeFile = null;
+                                    });
+                                    setState(() {
+                                      applicantAnnualIncomeFile = null;
+                                    });
+                                  },
+                                ),
+                                const SizedBox(height: 20),
+                                buildImageUploadField(
+                                  context: context,
+                                  imageFile: applicantFatherAnnualIncomeFile,
+                                  buttonText:
+                                      "Applicant Father's Annual Income (last 3 years ITR Returns)",
+                                  isMandatory: false,
+                                  existingDocumentPath:
+                                      _overseasFatherAnnualIncomeDocumentPath(),
+                                  isExistingRemoved:
+                                      isExistingOverseasFatherAnnualIncomeRemoved,
+                                  onPick: () {
+                                    _showImagePicker(context, (file) {
+                                      setModalState(() {
+                                        applicantFatherAnnualIncomeFile = file;
+                                      });
+                                      setState(() {
+                                        applicantFatherAnnualIncomeFile = file;
+                                      });
+                                    },
+                                        title:
+                                            "Upload Applicant Father's Annual Income");
+                                  },
+                                  onRemoveExisting: () {
+                                    setModalState(() {
+                                      isExistingOverseasFatherAnnualIncomeRemoved =
+                                          true;
+                                    });
+                                    setState(() {
+                                      isExistingOverseasFatherAnnualIncomeRemoved =
+                                          true;
+                                    });
+                                  },
+                                  onRemoveNew: () {
+                                    setModalState(() {
+                                      applicantFatherAnnualIncomeFile = null;
+                                    });
+                                    setState(() {
+                                      applicantFatherAnnualIncomeFile = null;
+                                    });
+                                  },
+                                ),
+                              ],
                               const SizedBox(height: 40),
                             ],
                           ),
@@ -1327,7 +1932,7 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
     );
   }
 
-  void _openEditApplicant() {
+  Future<void> _openEditApplicant() async {
     if (_applicationData == null) return;
 
     final data = _applicationData!;
@@ -1350,8 +1955,46 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
     maritalStatus = _mapMaritalStatusLabel(data.maritalStatusId ?? '');
 
     fatherNameCtrl.text = data.applicantFatherName ?? '';
+    motherNameCtrl.text = data.applicantMotherName ?? '';
     fatherEmailCtrl.text = data.fatherEmail ?? '';
     fatherMobileCtrl.text = data.fatherMobile ?? '';
+
+    applicantAadharFile = null;
+    fatherPanFile = null;
+    fatherAnnualIncomeFile = null;
+    addressProofFile = null;
+    passportFile = null;
+    visaFile = null;
+    applicantAnnualIncomeFile = null;
+    applicantFatherAnnualIncomeFile = null;
+
+    isExistingAadhaarRemoved = false;
+    isExistingPanRemoved = false;
+    isExistingRationRemoved = false;
+    isExistingFatherAnnualIncomeRemoved = false;
+    isExistingPassportRemoved = false;
+    isExistingVisaRemoved = false;
+    isExistingApplicantAnnualIncomeRemoved = false;
+    isExistingOverseasFatherAnnualIncomeRemoved = false;
+
+    await regiController.getState();
+
+    if (data.applicantStateId != null &&
+        data.applicantStateId.toString().isNotEmpty) {
+      regiController.setSelectedState(data.applicantStateId.toString());
+      await regiController.getCityByState(data.applicantStateId.toString());
+    }
+
+    if (data.applicantCityId != null &&
+        data.applicantCityId.toString().isNotEmpty) {
+      regiController.setSelectedCity(data.applicantCityId.toString());
+    }
+
+    isApplyingForOverseasStudies =
+        (_passportDocumentPath() ?? "").isNotEmpty ||
+            (_visaDocumentPath() ?? "").isNotEmpty ||
+            (_applicantAnnualIncomeDocumentPath() ?? "").isNotEmpty ||
+            (_overseasFatherAnnualIncomeDocumentPath() ?? "").isNotEmpty;
 
     _showAddApplicantModalSheet(context);
   }
@@ -1446,6 +2089,42 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
     }
 
     ageCtrl.text = age.toString();
+  }
+
+  void _syncAgeFromDobText() {
+    final rawDob = dobCtrl.text.trim();
+
+    if (rawDob.isEmpty) {
+      if (ageCtrl.text.isNotEmpty) {
+        ageCtrl.text = '';
+      }
+      return;
+    }
+
+    DateTime? parsedDob;
+
+    try {
+      parsedDob = DateFormat('dd/MM/yyyy').parseStrict(rawDob);
+    } catch (_) {
+      parsedDob = DateTime.tryParse(rawDob);
+    }
+
+    if (parsedDob == null) {
+      return;
+    }
+
+    final DateTime today = DateTime.now();
+    int age = today.year - parsedDob.year;
+
+    if (today.month < parsedDob.month ||
+        (today.month == parsedDob.month && today.day < parsedDob.day)) {
+      age--;
+    }
+
+    final calculatedAge = age.toString();
+    if (ageCtrl.text != calculatedAge) {
+      ageCtrl.text = calculatedAge;
+    }
   }
 
   Widget themedDatePickerField({
@@ -1714,7 +2393,9 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
 
   void _showImagePicker(
     BuildContext context,
-    Function(File) onImagePicked,
+    Function(File) onImagePicked, {
+    String title = "Select Image",
+  }
   ) {
     showModalBottomSheet(
       context: context,
@@ -1726,36 +2407,62 @@ class _ApplicantDetailYourselfState extends State<ApplicantDetailYourself> {
         return SafeArea(
           child: Padding(
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewPadding.bottom + 20,
+              bottom: MediaQuery.of(context).viewPadding.bottom + 10,
             ),
-            child: Wrap(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.grey),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(),
                 ListTile(
-                  leading:
-                      const Icon(Icons.camera_alt, color: Colors.redAccent),
+                  leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
                   title: const Text("Take a Picture"),
                   onTap: () async {
                     Navigator.pop(context);
-                    final picked =
-                        await _picker.pickImage(source: ImageSource.camera);
+                    final picked = await _picker.pickImage(
+                      source: ImageSource.camera,
+                      imageQuality: 70,
+                    );
                     if (picked != null) {
                       onImagePicked(File(picked.path));
                     }
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.image, color: Colors.redAccent),
+                  leading: const Icon(Icons.image, color: Colors.orange),
                   title: const Text("Choose from Gallery"),
                   onTap: () async {
                     Navigator.pop(context);
-                    final picked =
-                        await _picker.pickImage(source: ImageSource.gallery);
+                    final picked = await _picker.pickImage(
+                      source: ImageSource.gallery,
+                      imageQuality: 70,
+                    );
                     if (picked != null) {
                       onImagePicked(File(picked.path));
                     }
                   },
                 ),
-                const SizedBox(height: 30)
+                const SizedBox(height: 10),
               ],
             ),
           ),

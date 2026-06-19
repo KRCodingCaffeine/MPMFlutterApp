@@ -34,6 +34,7 @@ class EventRegistrationRepository {
       'date_added': dataModel.dateAdded ?? '',
       'no_of_food_container': dataModel.noOfFoodContainer?.toString() ?? '0',
       "no_of_seats_allocated": dataModel.noOfSeatAllocated?.toString() ?? '0',
+      'family_member_ids': dataModel.familyMemberIds ?? '',
     });
   }
 

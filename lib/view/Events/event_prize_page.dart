@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mpm/model/GetEventDetailsById/GetEventDetailsByIdData.dart';
 import 'package:mpm/model/StudentPrizeRegistration/StudentPrizeRegistrationData.dart';
 import 'package:mpm/model/UpdatePriceDistribution/UpdatePriceDistributionData.dart';
 import 'package:mpm/repository/student_prize_registration_repository/student_prize_registration_repo.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/view/Events/event_payment_detail_page.dart';
 import 'package:mpm/view/Events/event_view.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 import 'package:open_filex/open_filex.dart';
@@ -21,6 +23,10 @@ class StudentPrizeFormPage extends StatefulWidget {
   final int memberId;
   final int addedBy;
   final StudentPrizeRegistrationData? existingData;
+  final int selectedMemberCount;
+  final int selectedFoodBoxCount;
+
+  final GetEventDetailsByIdData eventDetails; // ✅ ADD THIS
 
   const StudentPrizeFormPage({
     super.key,
@@ -28,6 +34,9 @@ class StudentPrizeFormPage extends StatefulWidget {
     required this.attendeeId,
     required this.memberId,
     required this.addedBy,
+    required this.eventDetails,
+    required this.selectedMemberCount,
+    required this.selectedFoodBoxCount,
     this.existingData,
   });
 
@@ -53,6 +62,10 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
   final TextEditingController schoolNameController = TextEditingController();
   final TextEditingController standardController = TextEditingController();
   final TextEditingController gradeController = TextEditingController();
+
+  bool get isPaidEvent {
+    return widget.eventDetails.eventCostType?.toLowerCase() == "paid";
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -130,6 +143,7 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
       ),
       bottomNavigationBar: Obx(() {
         if (educationList.isEmpty) return const SizedBox.shrink();
+
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -138,15 +152,33 @@ class _StudentPrizeFormPageState extends State<StudentPrizeFormPage> {
               height: 50,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => EventsPage()),
-                  );
+                  if (isPaidEvent) {
+                    /// 💰 GO TO PAYMENT PAGE
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => EventPaymentDetailPage(
+                          eventDetails: widget.eventDetails,
+                          selectedMemberCount: widget.selectedMemberCount,
+                          selectedFoodBoxCount: widget.selectedFoodBoxCount,
+                        ),
+                      ),
+                    );
+                  } else {
+                    /// 🆓 FREE EVENT → BACK
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => EventsPage()),
+                    );
+                  }
                 },
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                label: const Text(
-                  "Back to Event",
-                  style: TextStyle(color: Colors.white, fontSize: 16),
+                icon: Icon(
+                  isPaidEvent ? Icons.payment : Icons.arrow_back,
+                  color: Colors.white,
+                ),
+                label: Text(
+                  isPaidEvent ? "Click here to move further" : "Back to Event",
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: ColorHelperClass.getColorFromHex(

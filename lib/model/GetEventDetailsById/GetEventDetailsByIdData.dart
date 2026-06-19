@@ -19,12 +19,16 @@ class GetEventDetailsByIdData {
   String? approvedDate;
   String? eventCostType;
   String? eventAmount;
+  String? eventUPICode;
+  String? eventAmountQrCode;
+  String? foodAmount;
   String? eventRegistrationLastDate;
   String? eventsTypeId;
   String? hasGatepassEntry;
   String? hasSeatAllocate;
   String? hasFood;
   String? hasFoodPaid;
+  String? FamilyMemberAllowed;
   String? isAllZone;
   String? youtubeUrl;
   String? addedBy;
@@ -51,12 +55,16 @@ class GetEventDetailsByIdData {
     this.approvedDate,
     this.eventCostType,
     this.eventAmount,
+    this.eventUPICode,
+    this.eventAmountQrCode,
+    this.foodAmount,
     this.eventRegistrationLastDate,
     this.eventsTypeId,
     this.hasGatepassEntry,
     this.hasSeatAllocate,
     this.hasFood,
     this.hasFoodPaid,
+    this.FamilyMemberAllowed,
     this.isAllZone,
     this.youtubeUrl,
     this.addedBy,
@@ -81,20 +89,39 @@ class GetEventDetailsByIdData {
       eventImage: json['event_image'] != null
           ? Urls.imagePathUrl + json['event_image']
           : null,
-      eventTermsAndConditionDocument: json['event_terms_and_condition_document'] != null
-          ? Urls.imagePathUrl +json['event_terms_and_condition_document']
-          : null,
+      eventTermsAndConditionDocument:
+          json['event_terms_and_condition_document'] != null
+              ? Urls.imagePathUrl + json['event_terms_and_condition_document']
+              : null,
       approvalStatus: json['approval_status'],
       approvedBy: json['approved_by']?.toString(),
       approvedDate: json['approved_date'],
       eventCostType: json['event_cost_type'],
       eventAmount: json['event_amount']?.toString(),
+      eventUPICode: json['event_upi_code'],
+      eventAmountQrCode: json['event_amount_qr_code']?.toString().isNotEmpty ==
+              true
+          ? (json['event_amount_qr_code'].toString().startsWith('upi://') ||
+                  json['event_amount_qr_code'].toString().startsWith('tez://')
+              ? json['event_amount_qr_code'].toString()
+              : Urls.imagePathUrl + json['event_amount_qr_code'].toString())
+          : null,
+      foodAmount: _readFirstAvailableValue(json, const [
+        'food_amount',
+        'event_food_amount',
+        'food_price',
+        'food_cost',
+        'meal_amount',
+        'meal_price',
+        'meal_cost',
+      ]),
       eventRegistrationLastDate: json['event_registration_last_date'],
       eventsTypeId: json['events_type_id']?.toString(),
       hasGatepassEntry: json['has_gatepass_entry']?.toString(),
       hasSeatAllocate: json['has_seat_allocate']?.toString(),
       hasFood: json['has_food']?.toString(),
-        hasFoodPaid: json['has_food_paid']?.toString(),
+      hasFoodPaid: json['has_food_paid']?.toString(),
+      FamilyMemberAllowed: json['no_of_family_member_allowed']?.toString(),
       isAllZone: json['is_all_zone']?.toString(),
       youtubeUrl: json['youtube_url'],
       addedBy: json['added_by']?.toString(),
@@ -102,12 +129,14 @@ class GetEventDetailsByIdData {
       updatedBy: json['updated_by']?.toString(),
       dateUpdated: json['date_updated'],
       zones: json['zones'] != null
-          ? (json['zones'] as List).map((zone) => ZoneData.fromJson(zone)).toList()
+          ? (json['zones'] as List)
+              .map((zone) => ZoneData.fromJson(zone))
+              .toList()
           : null,
       allEventDates: json['all_event_dates'] != null
           ? (json['all_event_dates'] as List)
-          .map((e) => EventDateTimeData.fromJson(e))
-          .toList()
+              .map((e) => EventDateTimeData.fromJson(e))
+              .toList()
           : null,
     );
   }
@@ -130,12 +159,16 @@ class GetEventDetailsByIdData {
     data['approved_date'] = approvedDate;
     data['event_cost_type'] = eventCostType;
     data['event_amount'] = eventAmount;
+    data['event_upi_code'] = eventUPICode;
+    data['event_amount_qr_code'] = eventAmountQrCode;
+    data['food_amount'] = foodAmount;
     data['event_registration_last_date'] = eventRegistrationLastDate;
     data['events_type_id'] = eventsTypeId;
     data['has_gatepass_entry'] = hasGatepassEntry;
     data['has_seat_allocate'] = hasSeatAllocate;
     data['has_food'] = hasFood;
     data['has_foos_paid'] = hasFoodPaid;
+    data['no_of_family_member_allowed'] = FamilyMemberAllowed;
     data['is_all_zone'] = isAllZone;
     data['youtube_url'] = youtubeUrl;
     data['added_by'] = addedBy;
@@ -149,5 +182,18 @@ class GetEventDetailsByIdData {
       data['all_event_dates'] = allEventDates!.map((e) => e.toJson()).toList();
     }
     return data;
+  }
+
+  static String? _readFirstAvailableValue(
+    Map<String, dynamic> json,
+    List<String> keys,
+  ) {
+    for (final key in keys) {
+      final value = json[key]?.toString().trim();
+      if (value != null && value.isNotEmpty && value.toLowerCase() != 'null') {
+        return value;
+      }
+    }
+    return null;
   }
 }
