@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/BusinessProfile/BusinessOccupationProfile/BusinessOccupationProfileData.dart';
 import 'package:mpm/model/JobPortal/GetJobByMemberId/GetJobByMemberIdData.dart';
@@ -101,7 +102,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
   int selectedTabIndex = 0;
 
   List<String> jobTabs = [
-    "Publish",
+    "Published",
     "Draft",
     "Closed",
   ];
@@ -537,6 +538,17 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
     await profileController.getUserProfile();
     await loadBusinessProfiles();
     await _refreshOccupationBanner();
+  }
+
+  String formatDisplayDate(String? date) {
+    if (date == null || date.isEmpty) return "";
+
+    try {
+      return DateFormat('dd MMM yyyy')
+          .format(DateTime.parse(date));
+    } catch (e) {
+      return date;
+    }
   }
 
   Widget _buildOccupationBanner() {
@@ -1070,7 +1082,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                                 onSelected: (value) {
                                   if (value == "edit") {
                                     _openPostJobBottomSheet(editIndex: index);
-                                  } else if (value == "delete") {
+                                  } else if (value == "close") {
                                     _showDeleteDialog(index);
                                   }
                                 },
@@ -1086,9 +1098,9 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                                     ),
                                   ),
                                   PopupMenuItem(
-                                    value: "delete",
+                                    value: "close",
                                     child: Text(
-                                      "Delete Job",
+                                      "Close Job",
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w500,
@@ -1125,9 +1137,15 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                       _infoRow("Experience", experience),
                       const SizedBox(height: 8),
                       if ((job.status ?? "").toLowerCase() == "published")
-                        _infoRow("Published On", job.publishedAt ?? "")
+                        _infoRow(
+                          "Published On",
+                          formatDisplayDate(job.publishedAt),
+                        )
                       else if ((job.status ?? "").toLowerCase() == "closed")
-                        _infoRow("Closed On", job.closedAt ?? ""),
+                        _infoRow(
+                          "Closed On",
+                          formatDisplayDate(job.closedAt),
+                        ),
                     ],
                   ),
                 ),
@@ -2582,7 +2600,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: const [
               Text(
-                "Delete Job",
+                "Close Job",
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -2596,7 +2614,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
             ],
           ),
           content: const Text(
-            "Are you sure you want to delete this job?",
+            "Are you sure you want to close this job?",
             style: TextStyle(
               fontSize: 16,
               color: Colors.black87,
@@ -2630,8 +2648,8 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text("Job deleted successfully"),
-                    backgroundColor: Colors.red,
+                    content: Text("Job closed successfully"),
+                    backgroundColor: Colors.green,
                   ),
                 );
               },
@@ -2643,7 +2661,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: const Text("Delete"),
+              child: const Text("close"),
             ),
           ],
         );

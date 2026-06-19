@@ -422,10 +422,10 @@ class _JobDetailViewState extends State<JobDetailView> {
             ),
             const SizedBox(height: 20),
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: Column(
                 children: [
@@ -439,7 +439,7 @@ class _JobDetailViewState extends State<JobDetailView> {
             ),
             const SizedBox(height: 20),
             const Text(
-              "Job Summary",
+              "Brief Job Description",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
@@ -459,18 +459,18 @@ class _JobDetailViewState extends State<JobDetailView> {
                         _showLocalDocumentPreviewDialog(
                           context,
                           jobSummaryFile,
-                          "Job Summary",
+                          "Job Description",
                         );
                       } else if (jobSummaryFile is String) {
                         _showCvPreviewDialog(
                           context,
                           jobSummaryFile,
-                          "Job Summary",
+                          "Job Description",
                         );
                       }
                     },
                     icon: const Icon(Icons.picture_as_pdf),
-                    label: const Text("View Job Summary"),
+                    label: const Text("View Job Description"),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ColorHelperClass.getColorFromHex(
                           ColorResources.red_color),
@@ -508,7 +508,7 @@ class _JobDetailViewState extends State<JobDetailView> {
   Widget _buildInfoRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: Colors.blue),
+        Icon(icon, size: 15, color: Colors.blue),
         const SizedBox(width: 10),
         Text("$label: ", style: const TextStyle(fontWeight: FontWeight.bold)),
         Expanded(child: Text(value)),

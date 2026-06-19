@@ -1,9 +1,12 @@
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/model/BusinessProfile/BusinessOccupationProfile/BusinessOccupationProfileData.dart';
 import 'package:mpm/model/JobPortal/GetJobByMemberId/GetJobByMemberIdData.dart';
 import 'package:mpm/model/city/CityData.dart';
 import 'package:mpm/repository/BusinessProfileRepo/business_occupation_profile_repository/business_occupation_profile_repo.dart';
+import 'package:mpm/repository/JobPortal/AddSeekerProfileRepo/add_seeker_profile_repository.dart';
 import 'package:mpm/repository/JobPortal/GetJobByMemberIdRepo/get_job_by_member_id_repository.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
@@ -24,9 +27,13 @@ class _JobSeekerViewState extends State<JobSeekerView> {
   final UdateProfileController profileController =
       Get.find<UdateProfileController>();
   final NewMemberController regiController = Get.put(NewMemberController());
+  final AddSeekerProfileRepository seekerRepository =
+  AddSeekerProfileRepository();
 
   String selectedCategory = "All";
   String selectedLocation = "All";
+  File? selectedResume;
+  String? selectedResumeName;
   bool isLoadingJobs = false;
   bool hasOpenedPreferredSheet = false;
   RangeValues selectedSalaryRange = const RangeValues(0, 20);
@@ -37,8 +44,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
   TextEditingController preferredWhatsappController = TextEditingController();
   TextEditingController fieldToWorkController = TextEditingController();
   TextEditingController expectedSalaryController = TextEditingController();
-  TextEditingController preferredAreaController =
-  TextEditingController();
+  TextEditingController preferredAreaController = TextEditingController();
   String selectedPreferredCityId = "";
   String selectedPreferredWorkMode = "On-site";
   String selectedPreferredJobType = "Full-time";
@@ -52,7 +58,6 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     "Part-time",
     "Internship",
   ];
-
 
   double _getSalaryValue(String salary) {
     try {
@@ -146,11 +151,10 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     await Future.delayed(const Duration(milliseconds: 500));
 
     // First-time user check
-    bool isFirstTimeUser =
-        preferredNameController.text.isEmpty &&
-            preferredEmailController.text.isEmpty &&
-            preferredMobileController.text.isEmpty &&
-            fieldToWorkController.text.isEmpty;
+    bool isFirstTimeUser = preferredNameController.text.isEmpty &&
+        preferredEmailController.text.isEmpty &&
+        preferredMobileController.text.isEmpty &&
+        fieldToWorkController.text.isEmpty;
 
     if (isFirstTimeUser && mounted) {
       hasOpenedPreferredSheet = true;
@@ -278,7 +282,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
           TextButton(
             onPressed: _openPreferredCitySheet,
             child: const Text(
-              "Add preferred Details",
+              "Preferred Details",
               style: TextStyle(color: Colors.white),
             ),
           ),
@@ -634,15 +638,27 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       profileController.whatsAppNumber.value,
     );
 
+    // Default Mumbai
+    selectedPreferredCityId = "2";
+
+    // If profile city exists and is 2,3,4 use it
     final cityId = _cleanProfileValue(profileController.city_id.value);
-    if (cityId.isNotEmpty) {
+
+    if (cityId == "2" || cityId == "3" || cityId == "4") {
       selectedPreferredCityId = cityId;
     }
   }
 
   Future<void> _openPreferredCitySheet() async {
     _prefillPreferredDetails();
-
+    bool isFormValid() {
+      return preferredNameController.text.trim().isNotEmpty &&
+          preferredEmailController.text.trim().isNotEmpty &&
+          preferredMobileController.text.trim().isNotEmpty &&
+          fieldToWorkController.text.trim().isNotEmpty &&
+          expectedSalaryController.text.trim().isNotEmpty &&
+          selectedPreferredCityId.isNotEmpty;
+    }
     if (regiController.cityList.isEmpty) {
       await regiController.getCity();
     }
@@ -687,22 +703,132 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                             child: const Text("Cancel"),
                           ),
                           ElevatedButton(
-                            onPressed: () => Navigator.pop(context),
+                            onPressed: isFormValid()
+                                ? () async {
+                              try {
+                                final body = {
+                                  "member_id": profileController.memberId.value,
+                                  "headline": fieldToWorkController.text.trim(),
+                                  "summary": "",
+                                  "expected_salary_max":
+                                  expectedSalaryController.text.trim(),
+                                  "expected_salary_min": "",
+                                  "work_mode":
+                                  selectedPreferredWorkMode == "On-site"
+                                      ? "onsite"
+                                      : selectedPreferredWorkMode ==
+                                      "Work From Home"
+                                      ? "remote"
+                                      : "hybrid",
+                                  "work_type":
+                                  selectedPreferredJobType == "Full-time"
+                                      ? "full_time"
+                                      : selectedPreferredJobType ==
+                                      "Part-time"
+                                      ? "part_time"
+                                      : "internship",
+                                  "is_visible": "1",
+                                  "created_by":
+                                  profileController.memberId.value,
+                                  "resume_path":
+                                  selectedResume?.path ?? "",
+                                };
+
+                                final response =
+                                await seekerRepository.addSeekerProfile(body);
+
+                                /// SUCCESS
+                                if (response.status == true) {
+                                  if (mounted) {
+                                    Navigator.pop(context);
+
+                                    ScaffoldMessenger.of(this.context)
+                                        .showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          response.message ??
+                                              "Preferred details saved successfully",
+                                        ),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  }
+                                }
+
+                                /// PROFILE ALREADY EXISTS
+                                else if (response.code == 409) {
+                                  if (mounted) {
+                                    Navigator.pop(context);
+
+                                    ScaffoldMessenger.of(this.context)
+                                        .showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          "Preferred detail already exists for this member",
+                                        ),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  }
+                                }
+
+                                /// OTHER FAILURE
+                                else {
+                                  ScaffoldMessenger.of(this.context)
+                                      .showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        response.message ??
+                                            "Unable to save details",
+                                      ),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (e.toString().contains('"code":409')) {
+                                  if (mounted) {
+                                    Navigator.pop(context);
+
+                                    ScaffoldMessenger.of(this.context)
+                                        .showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          "Preferred detail already exists for this member",
+                                        ),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  }
+                                } else {
+                                  ScaffoldMessenger.of(this.context)
+                                      .showSnackBar(
+                                    SnackBar(
+                                      content: Text(e.toString()),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              }
+                            }
+                                : null,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: ColorHelperClass.getColorFromHex(
                                   ColorResources.red_color),
                               foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 10),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(8),
                               ),
                             ),
                             child: const Text("Submit"),
-                          ),
+                          )
                         ],
                       ),
                       const SizedBox(height: 12),
                       const Text(
-                        "Add preferred Details",
+                        "preferred Details",
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -715,16 +841,16 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                             children: [
                               const SizedBox(height: 12),
                               _buildPreferredTextField(
-                                label: "Name",
+                                label: "Name *",
                                 controller: preferredNameController,
                               ),
                               _buildPreferredTextField(
-                                label: "Email",
+                                label: "Email *",
                                 controller: preferredEmailController,
                                 keyboardType: TextInputType.emailAddress,
                               ),
                               _buildPreferredTextField(
-                                label: "Mobile Number",
+                                label: "Mobile Number *",
                                 controller: preferredMobileController,
                                 keyboardType: TextInputType.phone,
                               ),
@@ -734,7 +860,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                 keyboardType: TextInputType.phone,
                               ),
                               _buildPreferredDropdown(
-                                label: "Work Mode",
+                                label: "Work Mode *",
                                 items: preferredWorkModes,
                                 selectedValue: selectedPreferredWorkMode,
                                 onChanged: (value) {
@@ -744,7 +870,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                 },
                               ),
                               _buildPreferredDropdown(
-                                label: "Job Type",
+                                label: "Job Type *",
                                 items: preferredJobTypes,
                                 selectedValue: selectedPreferredJobType,
                                 onChanged: (value) {
@@ -754,15 +880,20 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                 },
                               ),
                               _buildPreferredTextField(
-                                label: "Field to Work",
+                                label: "Field to Work *",
                                 controller: fieldToWorkController,
                               ),
                               _buildPreferredTextField(
-                                label: "Expected Salary",
+                                label: "Expected Salary *",
                                 controller: expectedSalaryController,
                                 keyboardType: TextInputType.number,
                               ),
                               _buildPreferredCityDropdown(
+                                modalSetState: setModalState,
+                              ),
+                              const SizedBox(height: 10),
+
+                              _buildResumeUploadField(
                                 modalSetState: setModalState,
                               ),
                             ],
@@ -857,9 +988,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       padding: const EdgeInsets.only(bottom: 14),
       child: Obx(() {
         final filteredCities = regiController.cityList.where((city) {
-          return city.id == 2 ||
-              city.id == 3 ||
-              city.id == 4;
+          return city.id == "2" || city.id == "3" || city.id == "4";
         }).toList();
 
         if (filteredCities.isEmpty) {
@@ -867,30 +996,26 @@ class _JobSeekerViewState extends State<JobSeekerView> {
         }
 
         final hasSelectedCity = filteredCities.any(
-              (city) => city.id.toString() == selectedPreferredCityId,
+          (city) => city.id.toString() == selectedPreferredCityId,
         );
 
         return InputDecorator(
-          decoration: const InputDecoration(
-            labelText: "Preferred Location",
-            border: OutlineInputBorder(),
-            enabledBorder: OutlineInputBorder(
+          decoration: InputDecoration(
+            labelText: "Select Preferred City *",
+            border: const OutlineInputBorder(),
+            enabledBorder: const OutlineInputBorder(
               borderSide: BorderSide(color: Colors.black),
             ),
-            focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(
-                color: Colors.black38,
-                width: 1,
-              ),
+            focusedBorder: const OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black38, width: 1),
             ),
-            contentPadding: EdgeInsets.symmetric(horizontal: 16),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+            labelStyle: const TextStyle(color: Colors.black),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               isExpanded: true,
-              value: hasSelectedCity
-                  ? selectedPreferredCityId
-                  : null,
+              value: hasSelectedCity ? selectedPreferredCityId : null,
               items: filteredCities.map((CityData city) {
                 return DropdownMenuItem<String>(
                   value: city.id.toString(),
@@ -908,6 +1033,224 @@ class _JobSeekerViewState extends State<JobSeekerView> {
           ),
         );
       }),
+    );
+  }
+
+  Widget _buildResumeUploadField({
+    required StateSetter modalSetState,
+  }) {
+    final bool isUploaded = selectedResume != null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (selectedResume != null)
+          Stack(
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.black12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      selectedResumeName
+                          ?.toLowerCase()
+                          .endsWith(".pdf") ==
+                          true
+                          ? Icons.picture_as_pdf
+                          : Icons.description,
+                      color: selectedResumeName
+                          ?.toLowerCase()
+                          .endsWith(".pdf") ==
+                          true
+                          ? Colors.red
+                          : Colors.blue,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        selectedResumeName ?? "",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              Positioned(
+                right: 8,
+                top: 8,
+                child: GestureDetector(
+                  onTap: () {
+                    modalSetState(() {
+                      selectedResume = null;
+                      selectedResumeName = null;
+                    });
+                  },
+                  child: const CircleAvatar(
+                    radius: 14,
+                    backgroundColor: Colors.red,
+                    child: Icon(
+                      Icons.close,
+                      size: 16,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              _showResumePicker(
+                context,
+                modalSetState,
+              );
+            },
+            icon: Icon(
+              isUploaded
+                  ? Icons.check_circle
+                  : Icons.upload_file,
+            ),
+            label: Text(
+              isUploaded
+                  ? "Resume Uploaded"
+                  : "Upload Resume",
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isUploaded
+                  ? Colors.green
+                  : ColorHelperClass.getColorFromHex(
+                  ColorResources.red_color),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(
+                vertical: 12,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showResumePicker(
+      BuildContext context,
+      StateSetter modalSetState,
+      ) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(16),
+        ),
+      ),
+      builder: (_) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              vertical: 10,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Text(
+                    "Upload Resume",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+
+                const Divider(),
+
+                /// PDF
+                ListTile(
+                  leading: const Icon(
+                    Icons.picture_as_pdf,
+                    color: Colors.red,
+                  ),
+                  title: const Text("Choose PDF"),
+                  onTap: () async {
+                    Navigator.pop(context);
+
+                    FilePickerResult? result =
+                    await FilePicker.platform.pickFiles(
+                      type: FileType.custom,
+                      allowedExtensions: ['pdf'],
+                    );
+
+                    if (result != null &&
+                        result.files.single.path != null) {
+                      modalSetState(() {
+                        selectedResume =
+                            File(result.files.single.path!);
+
+                        selectedResumeName =
+                            result.files.single.name;
+                      });
+
+                      // await uploadResume(selectedResume!);
+                    }
+                  },
+                ),
+
+                /// DOC / DOCX
+                ListTile(
+                  leading: const Icon(
+                    Icons.description,
+                    color: Colors.blue,
+                  ),
+                  title: const Text("Choose Word Document"),
+                  onTap: () async {
+                    Navigator.pop(context);
+
+                    FilePickerResult? result =
+                    await FilePicker.platform.pickFiles(
+                      type: FileType.custom,
+                      allowedExtensions: ['doc', 'docx'],
+                    );
+
+                    if (result != null &&
+                        result.files.single.path != null) {
+                      modalSetState(() {
+                        selectedResume =
+                            File(result.files.single.path!);
+
+                        selectedResumeName =
+                            result.files.single.name;
+                      });
+
+                      // await uploadResume(selectedResume!);
+                    }
+                  },
+                ),
+
+                const SizedBox(height: 10),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

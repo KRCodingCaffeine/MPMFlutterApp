@@ -76,6 +76,7 @@ dependencies:
   awesome_notifications: ^0.10.1
   signature: ^5.5.0
   month_year_picker: ^0.5.0+1
+  file_picker: ^10.1.9
 
 dev_dependencies:
   flutter_test:
