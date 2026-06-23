@@ -4,6 +4,7 @@ class FamilyMembersData {
   var firstName;
   var lastName;
   var middleName;
+  var mobile;
   var profileImage;
   var dob;
   var relationshipName;
@@ -15,6 +16,7 @@ class FamilyMembersData {
         this.firstName,
         this.lastName,
         this.middleName,
+        this.mobile,
         this.profileImage,
         this.dob,
         this.relationshipName,
@@ -26,6 +28,7 @@ class FamilyMembersData {
     firstName = json['first_name'];
     lastName = json['last_name'];
     middleName = json['middle_name'];
+    mobile = json['mobile'];
     profileImage = json['profile_image'];
     dob = json['dob'];
     relationshipName = json['relationship_name'];
@@ -39,6 +42,7 @@ class FamilyMembersData {
     data['first_name'] = this.firstName;
     data['last_name'] = this.lastName;
     data['middle_name'] = this.middleName;
+    data['mobile'] = this.mobile;
     data['profile_image'] = this.profileImage;
     data['dob'] = this.dob;
     data['relationship_name'] = this.relationshipName;
