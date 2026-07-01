@@ -6,9 +6,11 @@ import 'package:intl/intl.dart';
 import 'package:mpm/model/EventRegesitration/EventRegistrationData.dart';
 import 'package:mpm/model/GetEventDetailsById/GetEventDetailsByIdData.dart';
 import 'package:mpm/model/GetProfile/FamilyMembersData.dart';
+import 'package:mpm/model/UpdateEventByMember/UpdateEventByMemberModelClass.dart';
 import 'package:mpm/repository/event_register_repository/event_register_repo.dart';
 import 'package:mpm/repository/get_member_registered_events_repository/get_member_registered_events_repo.dart';
 import 'package:mpm/repository/get_even_details_by_id_repository/get_even_details_by_id_repo.dart';
+import 'package:mpm/repository/update_event_by_member_repository/update_event_by_member_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:dio/dio.dart';
@@ -52,6 +54,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       EventAttendeesRepository();
   final EventRegistrationRepository _registrationRepo =
       EventRegistrationRepository();
+  final CancelEventRepository _cancelRepo = CancelEventRepository();
   final UdateProfileController _profileController =
       Get.isRegistered<UdateProfileController>()
           ? Get.find<UdateProfileController>()
@@ -1323,6 +1326,126 @@ class _EventDetailPageState extends State<EventDetailPage> {
     );
   }
 
+  Future<void> _showUnregisterConfirmationDialog() async {
+    final bool? shouldUnregister = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Unregister",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(thickness: 1),
+            ],
+          ),
+          content: const Text(
+            "In case you don't want to attend the program for any reasons, please click OK to Unregister.\n\nThis will help Mandal in better resource planning.",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context, false),
+              style: OutlinedButton.styleFrom(
+                foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _cancelEventRegistration();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text(
+                "OK",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldUnregister == true) {
+      // Call your unregister API here
+      // await _unregisterEvent();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Event unregistration initiated."),
+        ),
+      );
+    }
+  }
+
+  Future<void> _cancelEventRegistration() async {
+    try {
+      final userData = await SessionManager.getSession();
+
+      final response = await _cancelRepo.cancelEventRegistration(
+        memberId: userData!.memberId.toString(),
+        eventId: _eventDetails!.eventId!,
+      );
+
+      final parsed = UpdateEventBYMemberModelClass.fromJson(response);
+
+      if (parsed.status == true) {
+        setState(() {
+          _isRegistered = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Cancelled this event registration successfully"),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Refresh attendee status if required
+        await _checkRegistrationStatus();
+      } else {
+        throw Exception(parsed.message ?? "Failed to cancel registration");
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Widget _buildEventInfoList() {
     final slots = _eventDetails?.allEventDates ?? [];
 
@@ -1494,15 +1617,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-
           // REGISTERED BUTTON
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: _isRegistered
-                    ? Colors.grey
-                    : ColorHelperClass.getColorFromHex(
+                backgroundColor: ColorHelperClass.getColorFromHex(
                   ColorResources.red_color,
                 ),
                 foregroundColor: Colors.white,
@@ -1511,25 +1631,33 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              onPressed: _isRegistered
+              onPressed: _isRegistering
                   ? null
-                  : _handleRegisterButtonTap,
+                  : () async {
+                if (_isRegistered) {
+                  await _showUnregisterConfirmationDialog();
+                } else {
+                  final confirmed =
+                  await _showFinalConfirmationDialog();
+
+                  if (confirmed) {
+                    await _showRegistrationConfirmationDialog();
+                  }
+                }
+              },
               child: _isRegistering
                   ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor:
-                  AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
                   : Text(
-                _isRegistered
-                    ? "Registered"
-                    : "Register Here",
-                style: const TextStyle(fontSize: 16),
-              ),
+                      _isRegistered ? "Unregister Here" : "Register Here",
+                      style: const TextStyle(fontSize: 16),
+                    ),
             ),
           ),
 
@@ -1540,17 +1668,15 @@ class _EventDetailPageState extends State<EventDetailPage> {
               width: double.infinity,
               child: OutlinedButton.icon(
                 icon: const Icon(Icons.qr_code),
-                label: const Text("View Pass"),
+                label: const Text("Entry QR Code"),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor:
-                  ColorHelperClass.getColorFromHex(
+                  foregroundColor: ColorHelperClass.getColorFromHex(
                       ColorResources.red_color),
                   side: BorderSide(
                     color: ColorHelperClass.getColorFromHex(
                         ColorResources.red_color),
                   ),
-                  padding:
-                  const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -1565,7 +1691,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       ),
     );
   }
-    
+
   Future<void> _handleRegisterButtonTap() async {
     final isAlreadyRegistered = await _fetchRegistrationStatus();
     if (!mounted) return;
