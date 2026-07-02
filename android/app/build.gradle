@@ -98,3 +98,4 @@ configurations.all {
 flutter {
     source = "../.."
 }
+

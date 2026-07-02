@@ -151,6 +151,19 @@ class Urls {
   static const String upload_shiksha_applicant_flight_ticket_document = base_url+"api/upload_shiksha_applicant_flight_ticket_document";
   static const String shiksha_payment_url = base_url+"api/payment/shikshaloanrepaymentprocess";
 
+  // Job Portal
+  static const String update_job_portal_role_url = base_url+"api/member_job/update_job_portal_role";
+  static const String get_occupations_by_member_id_url = base_url+"api/member_job/get_occupations_by_member_id";
+  static const String get_qualifications_by_member_id_url = base_url+"api/member_job/get_qualifications_by_member_id";
+  static const String add_job_url = base_url+"api/member_job/add_job";
+  static const String update_job_url = base_url+"api/member_job/update_job";
+  static const String get_jobs_url = base_url+"api/member_job/get_jobs";
+  static const String update_education_url = base_url+"api/member_job/update_education";
+  static const String update_more_occupation_url = base_url+"api/member_job/update_occupation";
+  static const String upload_seeker_resume_url = base_url+"api/member_job/upload_seeker_resume";
+  static const String add_seeker_profile_url = base_url+"api/member_job/add_seeker_profile";
+  static const String get_job_by_id_url = base_url+"api/member_job/get_job";
+
   // Notification API URLs - Following same pattern as device_mapping
   static const String get_all_notifications_url = base_url+"api/notifications/get_all";
   static const String mark_notification_read_url = base_url+"api/notifications/mark_read";
