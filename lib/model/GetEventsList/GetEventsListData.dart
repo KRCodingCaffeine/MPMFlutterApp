@@ -21,6 +21,7 @@ class EventData {
   String? eventCostType;
   String? eventAmount;
   String? eventRegistrationLastDate;
+  String? isRegistrationVisible;
   String? eventsTypeId;
   String? hasGatepassEntry;
   String? hasSeatAllocate;
@@ -53,6 +54,7 @@ class EventData {
     this.eventCostType,
     this.eventAmount,
     this.eventRegistrationLastDate,
+    this.isRegistrationVisible,
     this.eventsTypeId,
     this.hasGatepassEntry,
     this.hasSeatAllocate,
@@ -91,6 +93,7 @@ class EventData {
       eventCostType: json['event_cost_type'],
       eventAmount: json['event_amount']?.toString(),
       eventRegistrationLastDate: json['event_registration_last_date'],
+      isRegistrationVisible: json['is_registration_visible'],
       eventsTypeId: json['events_type_id']?.toString(),
       hasGatepassEntry: json['has_gatepass_entry']?.toString(),
       hasSeatAllocate: json['has_seat_allocate']?.toString(),
@@ -134,6 +137,7 @@ class EventData {
     data['event_cost_type'] = eventCostType;
     data['event_amount'] = eventAmount;
     data['event_registration_last_date'] = eventRegistrationLastDate;
+    data['is_registration_visible'] = isRegistrationVisible;
     data['events_type_id'] = eventsTypeId;
     data['has_gatepass_entry'] = hasGatepassEntry;
     data['has_seat_allocate'] = hasSeatAllocate;

@@ -21,7 +21,8 @@ class EventTripPage extends StatefulWidget {
   _EventTripPageState createState() => _EventTripPageState();
 }
 
-class _EventTripPageState extends State<EventTripPage> with SingleTickerProviderStateMixin {
+class _EventTripPageState extends State<EventTripPage>
+    with SingleTickerProviderStateMixin {
   final EventTripRepository _tripRepo = EventTripRepository();
   final ZoneRepository _zoneRepo = ZoneRepository();
   late NotificationApiController notificationController;
@@ -60,10 +61,10 @@ class _EventTripPageState extends State<EventTripPage> with SingleTickerProvider
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
-    
+
     // Note: We no longer mark all trips notifications as read when entering the view
     // Instead, we mark specific notifications when clicking individual trips
-    
+
     _fetchZones();
     _fetchTrips();
   }
@@ -88,7 +89,7 @@ class _EventTripPageState extends State<EventTripPage> with SingleTickerProvider
       final List<ZoneData> allZones = response.data ?? [];
 
       final userZone = allZones.firstWhere(
-            (zone) => zone.id == userZoneId,
+        (zone) => zone.id == userZoneId,
         orElse: () => ZoneData(id: userZoneId, zoneName: "Unknown Zone"),
       );
 
@@ -142,22 +143,22 @@ class _EventTripPageState extends State<EventTripPage> with SingleTickerProvider
       List<GetEventTripData> filteredTrips = _allTrips;
 
       List<ZoneData> selectedZones =
-      _selectedTabIndex == 0 ? _selectedUpcomingZones : _selectedPastZones;
+          _selectedTabIndex == 0 ? _selectedUpcomingZones : _selectedPastZones;
       bool isAllSelected =
-      _selectedTabIndex == 0 ? _isUpcomingAllSelected : _isPastAllSelected;
+          _selectedTabIndex == 0 ? _isUpcomingAllSelected : _isPastAllSelected;
 
       if (selectedZones.isNotEmpty || isAllSelected) {
         filteredTrips = filteredTrips.where((t) {
           return isAllSelected ||
               (selectedZones.any((zone) =>
-              t.zones?.any((tripZone) => tripZone.id == zone.id) ?? false));
+                  t.zones?.any((tripZone) => tripZone.id == zone.id) ?? false));
         }).toList();
       }
 
       DateTime? startDate =
-      _selectedTabIndex == 0 ? _upcomingStartDate : _pastStartDate;
+          _selectedTabIndex == 0 ? _upcomingStartDate : _pastStartDate;
       DateTime? endDate =
-      _selectedTabIndex == 0 ? _upcomingEndDate : _pastEndDate;
+          _selectedTabIndex == 0 ? _upcomingEndDate : _pastEndDate;
 
       if (startDate != null && endDate != null) {
         filteredTrips = filteredTrips.where((t) {
@@ -167,7 +168,7 @@ class _EventTripPageState extends State<EventTripPage> with SingleTickerProvider
           if (tripStartDate == null || tripEndDate == null) return false;
 
           return (tripStartDate.isBefore(endDate) ||
-              tripStartDate.isAtSameMomentAs(endDate)) &&
+                  tripStartDate.isAtSameMomentAs(endDate)) &&
               (tripEndDate.isAfter(startDate) ||
                   tripEndDate.isAtSameMomentAs(startDate));
         }).toList();
@@ -215,6 +216,7 @@ class _EventTripPageState extends State<EventTripPage> with SingleTickerProvider
   Widget _buildTripCard(GetEventTripData trip) {
     final parsedDate =
         DateTime.tryParse(trip.tripStartDate ?? '') ?? DateTime.now();
+    final isPastTrip = parsedDate.isBefore(DateTime.now());
     final day = DateFormat('d').format(parsedDate);
     final month = DateFormat('MMM').format(parsedDate);
 
@@ -231,9 +233,10 @@ class _EventTripPageState extends State<EventTripPage> with SingleTickerProvider
       onTap: () async {
         // Mark notifications as read for this specific trip
         if (trip.tripId != null) {
-          await notificationController.markNotificationsAsReadByEventOfferId(trip.tripId!);
+          await notificationController
+              .markNotificationsAsReadByEventOfferId(trip.tripId!);
         }
-        
+
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -242,190 +245,196 @@ class _EventTripPageState extends State<EventTripPage> with SingleTickerProvider
         );
       },
       child: FutureBuilder<bool>(
-        future: trip.tripId != null 
-            ? notificationController.hasUnreadNotificationsByEventOfferId(trip.tripId!)
-            : Future.value(false),
-        builder: (context, snapshot) {
-          final hasUnread = snapshot.data ?? false;
-          return AnimatedBuilder(
-            animation: _pulseController,
-            builder: (context, _) {
-            final pulseValue = hasUnread ? _pulseController.value : 0.0;
-            final borderWidth = hasUnread ? 2.0 + (pulseValue * 1.5) : 0.0;
-            final glowOpacity = hasUnread ? 0.4 + (pulseValue * 0.3) : 0.0;
-            final shadowBlur = hasUnread ? 8.0 + (pulseValue * 4.0) : 2.0;
-            
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: hasUnread 
-                      ? Border.all(
-                          color: ColorHelperClass.getColorFromHex(ColorResources.logo_color).withOpacity(0.8 + pulseValue * 0.2),
-                          width: borderWidth,
-                        )
-                      : null,
-                  boxShadow: [
-                    if (hasUnread)
-                      BoxShadow(
-                        color: ColorHelperClass.getColorFromHex(ColorResources.logo_color).withOpacity(glowOpacity),
-                        spreadRadius: 0,
-                        blurRadius: shadowBlur,
-                        offset: const Offset(0, 0),
-                      ),
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.2),
-                      spreadRadius: 1,
-                      blurRadius: 3,
-                      offset: const Offset(0, 1),
-                    ),
-                  ],
-                ),
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // 📅 Date Section
-                    Container(
-                      width: 60,
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            day,
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            month,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+          future: (!isPastTrip && trip.tripId != null)
+              ? notificationController
+                  .hasUnreadNotificationsByEventOfferId(trip.tripId!)
+              : Future.value(false),
+          builder: (context, snapshot) {
+            final hasUnread = !isPastTrip && (snapshot.data ?? false);
+            return AnimatedBuilder(
+              animation: _pulseController,
+              builder: (context, _) {
+                final pulseValue = hasUnread ? _pulseController.value : 0.0;
+                final borderWidth = hasUnread ? 2.0 + (pulseValue * 1.5) : 0.0;
+                final glowOpacity = hasUnread ? 0.4 + (pulseValue * 0.3) : 0.0;
+                final shadowBlur = hasUnread ? 8.0 + (pulseValue * 4.0) : 2.0;
 
-                    const SizedBox(width: 8),
-                    Container(
-                      height: 100,
-                      width: 1,
-                      color: Colors.grey[400],
-                    ),
-                    const SizedBox(width: 12),
-
-                    // 📋 Trip Details
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Trip Name
-                          Text(
-                            trip.tripName ?? '',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                              fontSize: 18,
-                            ),
+                return Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: hasUnread
+                          ? Border.all(
+                              color: ColorHelperClass.getColorFromHex(
+                                      ColorResources.logo_color)
+                                  .withOpacity(0.8 + pulseValue * 0.2),
+                              width: borderWidth,
+                            )
+                          : null,
+                      boxShadow: [
+                        if (hasUnread)
+                          BoxShadow(
+                            color: ColorHelperClass.getColorFromHex(
+                                    ColorResources.logo_color)
+                                .withOpacity(glowOpacity),
+                            spreadRadius: 0,
+                            blurRadius: shadowBlur,
+                            offset: const Offset(0, 0),
                           ),
-                          const SizedBox(height: 4),
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.2),
+                          spreadRadius: 1,
+                          blurRadius: 3,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // 📅 Date Section
+                        Container(
+                          width: 60,
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                day,
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                month,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
 
-                          // Samiti Organisers
-                          if (trip.samitiOrganisers != null &&
-                              trip.samitiOrganisers!.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 4),
-                              child: RichText(
-                                text: TextSpan(
-                                  style: const TextStyle(fontSize: 12),
+                        const SizedBox(width: 8),
+                        Container(
+                          height: 100,
+                          width: 1,
+                          color: Colors.grey[400],
+                        ),
+                        const SizedBox(width: 12),
+
+                        // 📋 Trip Details
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Trip Name
+                              Text(
+                                trip.tripName ?? '',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                  fontSize: 18,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+
+                              // Samiti Organisers
+                              if (trip.samitiOrganisers != null &&
+                                  trip.samitiOrganisers!.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 4),
+                                  child: RichText(
+                                    text: TextSpan(
+                                      style: const TextStyle(fontSize: 12),
+                                      children: [
+                                        const TextSpan(
+                                          text: "By: ",
+                                          style: TextStyle(
+                                            color: Colors.black54,
+                                            fontWeight: FontWeight.normal,
+                                          ),
+                                        ),
+                                        TextSpan(
+                                          text: trip.samitiOrganisers!
+                                              .map((organiser) =>
+                                                  organiser.subCategory
+                                                      ?.samitiSubCategoryName ??
+                                                  'Unknown')
+                                              .join(', '),
+                                          style: const TextStyle(
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+
+                              // Coordinator
+                              Text.rich(
+                                TextSpan(
                                   children: [
                                     const TextSpan(
-                                      text: "By: ",
+                                      text: 'Coordinator: ',
                                       style: TextStyle(
-                                        color: Colors.black54,
-                                        fontWeight: FontWeight.normal,
+                                        color: Colors.black,
+                                        fontSize: 14,
                                       ),
                                     ),
                                     TextSpan(
-                                      text: trip.samitiOrganisers!
-                                          .map((organiser) => organiser
-                                          .subCategory
-                                          ?.samitiSubCategoryName ??
-                                          'Unknown')
-                                          .join(', '),
-                                      style: const TextStyle(
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
+                                      text: trip.tripOrganiserName
+                                              ?.split(',')
+                                              .join(', ') ??
+                                          'Unknown',
+                                      style: TextStyle(
+                                        color: Colors.grey[700],
+                                        fontSize: 14,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                            ),
+                              const SizedBox(height: 4),
 
-                          // Coordinator
-                          Text.rich(
-                            TextSpan(
-                              children: [
-                                const TextSpan(
-                                  text: 'Coordinator: ',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 14,
-                                  ),
+                              // Description
+                              SizedBox(
+                                width: double.infinity,
+                                child: Text(
+                                  trip.tripDescription ?? '',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 12),
                                 ),
-                                TextSpan(
-                                  text: trip.tripOrganiserName
-                                      ?.split(',')
-                                      .join(', ') ??
-                                      'Unknown',
-                                  style: TextStyle(
-                                    color: Colors.grey[700],
-                                    fontSize: 14,
-                                  ),
+                              ),
+                              const SizedBox(height: 4),
+
+                              // Registration Last Date
+                              Text(
+                                "Registration Last Date: $formattedLastDate",
+                                style: const TextStyle(
+                                  color: Colors.black54,
+                                  fontSize: 14,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 4),
-
-                          // Description
-                          SizedBox(
-                            width: double.infinity,
-                            child: Text(
-                              trip.tripDescription ?? '',
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-
-                          // Registration Last Date
-                          Text(
-                            "Registration Last Date: $formattedLastDate",
-                            style: const TextStyle(
-                              color: Colors.black54,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             );
-          },
-        );
-      }),
+          }),
     );
   }
 
@@ -483,8 +492,10 @@ class _EventTripPageState extends State<EventTripPage> with SingleTickerProvider
 
   Widget _buildFilterButton() {
     final isUpcomingTab = _selectedTabIndex == 0;
-    final selectedZones = isUpcomingTab ? _selectedUpcomingZones : _selectedPastZones;
-    final isAllSelected = isUpcomingTab ? _isUpcomingAllSelected : _isPastAllSelected;
+    final selectedZones =
+        isUpcomingTab ? _selectedUpcomingZones : _selectedPastZones;
+    final isAllSelected =
+        isUpcomingTab ? _isUpcomingAllSelected : _isPastAllSelected;
     final startDate = isUpcomingTab ? _upcomingStartDate : _pastStartDate;
     final endDate = isUpcomingTab ? _upcomingEndDate : _pastEndDate;
 
@@ -516,7 +527,10 @@ class _EventTripPageState extends State<EventTripPage> with SingleTickerProvider
                     Text("${isUpcomingTab ? 'Upcoming' : 'Past'} Trips",
                         style: TextStyle(fontSize: 16)),
                     const SizedBox(height: 4),
-                    if (isAllSelected || selectedZones.isNotEmpty || startDate != null || endDate != null)
+                    if (isAllSelected ||
+                        selectedZones.isNotEmpty ||
+                        startDate != null ||
+                        endDate != null)
                       Wrap(
                         spacing: 6,
                         runSpacing: 4,
@@ -543,25 +557,25 @@ class _EventTripPageState extends State<EventTripPage> with SingleTickerProvider
                             ),
                           ...selectedZones
                               .map((zone) => Chip(
-                            label: Text(zone.zoneName ?? ''),
-                            labelStyle: const TextStyle(
-                                fontSize: 12, color: Colors.white),
-                            backgroundColor:
-                            ColorHelperClass.getColorFromHex(
-                                ColorResources.red_color),
-                            deleteIcon: const Icon(Icons.close,
-                                color: Colors.white, size: 18),
-                            onDeleted: () {
-                              setState(() {
-                                if (isUpcomingTab) {
-                                  _selectedUpcomingZones.remove(zone);
-                                } else {
-                                  _selectedPastZones.remove(zone);
-                                }
-                                _applyFilters();
-                              });
-                            },
-                          ))
+                                    label: Text(zone.zoneName ?? ''),
+                                    labelStyle: const TextStyle(
+                                        fontSize: 12, color: Colors.white),
+                                    backgroundColor:
+                                        ColorHelperClass.getColorFromHex(
+                                            ColorResources.red_color),
+                                    deleteIcon: const Icon(Icons.close,
+                                        color: Colors.white, size: 18),
+                                    onDeleted: () {
+                                      setState(() {
+                                        if (isUpcomingTab) {
+                                          _selectedUpcomingZones.remove(zone);
+                                        } else {
+                                          _selectedPastZones.remove(zone);
+                                        }
+                                        _applyFilters();
+                                      });
+                                    },
+                                  ))
                               .toList(),
                           if (startDate != null)
                             Chip(
@@ -619,8 +633,10 @@ class _EventTripPageState extends State<EventTripPage> with SingleTickerProvider
   }
 
   Widget _buildFilterDrawer(bool isUpcoming) {
-    final selectedZones = isUpcoming ? _selectedUpcomingZones : _selectedPastZones;
-    final isAllSelected = isUpcoming ? _isUpcomingAllSelected : _isPastAllSelected;
+    final selectedZones =
+        isUpcoming ? _selectedUpcomingZones : _selectedPastZones;
+    final isAllSelected =
+        isUpcoming ? _isUpcomingAllSelected : _isPastAllSelected;
     final startDate = isUpcoming ? _upcomingStartDate : _pastStartDate;
     final endDate = isUpcoming ? _upcomingEndDate : _pastEndDate;
 
@@ -640,7 +656,8 @@ class _EventTripPageState extends State<EventTripPage> with SingleTickerProvider
                 Row(
                   children: [
                     Text("${isUpcoming ? 'Upcoming' : 'Past'} Trips",
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
                     const Spacer(),
                     IconButton(
                       icon: const Icon(Icons.close),
@@ -660,7 +677,9 @@ class _EventTripPageState extends State<EventTripPage> with SingleTickerProvider
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text("Zones", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const Text("Zones",
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
                         CheckboxListTile(
                           title: const Text("All Zones"),
                           value: isAllSelected,
@@ -683,32 +702,33 @@ class _EventTripPageState extends State<EventTripPage> with SingleTickerProvider
                         ..._zoneList
                             .where((zone) => zone.id != '1')
                             .map((zone) => CheckboxListTile(
-                          title: Text(zone.zoneName ?? ''),
-                          value: selectedZones.contains(zone),
-                          onChanged: (bool? value) {
-                            setState(() {
-                              if (value == true) {
-                                if (isUpcoming) {
-                                  _selectedUpcomingZones.add(zone);
-                                  _isUpcomingAllSelected = false;
-                                } else {
-                                  _selectedPastZones.add(zone);
-                                  _isPastAllSelected = false;
-                                }
-                              } else {
-                                if (isUpcoming) {
-                                  _selectedUpcomingZones.remove(zone);
-                                } else {
-                                  _selectedPastZones.remove(zone);
-                                }
-                              }
-                            });
-                          },
-                        ))
+                                  title: Text(zone.zoneName ?? ''),
+                                  value: selectedZones.contains(zone),
+                                  onChanged: (bool? value) {
+                                    setState(() {
+                                      if (value == true) {
+                                        if (isUpcoming) {
+                                          _selectedUpcomingZones.add(zone);
+                                          _isUpcomingAllSelected = false;
+                                        } else {
+                                          _selectedPastZones.add(zone);
+                                          _isPastAllSelected = false;
+                                        }
+                                      } else {
+                                        if (isUpcoming) {
+                                          _selectedUpcomingZones.remove(zone);
+                                        } else {
+                                          _selectedPastZones.remove(zone);
+                                        }
+                                      }
+                                    });
+                                  },
+                                ))
                             .toList(),
                         const SizedBox(height: 20),
                         const Text("Date Range",
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         _buildDateField(
                             label: 'Start Date *',
@@ -718,7 +738,8 @@ class _EventTripPageState extends State<EventTripPage> with SingleTickerProvider
                                 if (isUpcoming) {
                                   _upcomingStartDate = pickedDate;
                                   if (_upcomingEndDate != null &&
-                                      _upcomingStartDate!.isAfter(_upcomingEndDate!)) {
+                                      _upcomingStartDate!
+                                          .isAfter(_upcomingEndDate!)) {
                                     _upcomingEndDate = _upcomingStartDate;
                                   }
                                 } else {
@@ -739,7 +760,8 @@ class _EventTripPageState extends State<EventTripPage> with SingleTickerProvider
                                 if (isUpcoming) {
                                   _upcomingEndDate = pickedDate;
                                   if (_upcomingStartDate != null &&
-                                      _upcomingEndDate!.isBefore(_upcomingStartDate!)) {
+                                      _upcomingEndDate!
+                                          .isBefore(_upcomingStartDate!)) {
                                     _upcomingStartDate = _upcomingEndDate;
                                   }
                                 } else {
@@ -761,8 +783,8 @@ class _EventTripPageState extends State<EventTripPage> with SingleTickerProvider
                     Expanded(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                          ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                          backgroundColor: ColorHelperClass.getColorFromHex(
+                              ColorResources.red_color),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
@@ -805,10 +827,12 @@ class _EventTripPageState extends State<EventTripPage> with SingleTickerProvider
       decoration: InputDecoration(
         labelText: label,
         hintText: 'Select $label',
-        border: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
-        enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
-        focusedBorder:
-        const OutlineInputBorder(borderSide: BorderSide(color: Colors.black26, width: 1.5)),
+        border: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black26)),
+        enabledBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black26)),
+        focusedBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black26, width: 1.5)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20),
         labelStyle: const TextStyle(color: Colors.black45),
       ),
@@ -822,14 +846,15 @@ class _EventTripPageState extends State<EventTripPage> with SingleTickerProvider
             return Theme(
               data: Theme.of(context).copyWith(
                 colorScheme: ColorScheme.light(
-                  primary: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                  primary: ColorHelperClass.getColorFromHex(
+                      ColorResources.red_color),
                   onPrimary: Colors.white,
                   onSurface: Colors.black,
                 ),
                 textButtonTheme: TextButtonThemeData(
                   style: TextButton.styleFrom(
-                    foregroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    foregroundColor: ColorHelperClass.getColorFromHex(
+                        ColorResources.red_color),
                   ),
                 ),
               ),
@@ -899,13 +924,16 @@ class _EventTripPageState extends State<EventTripPage> with SingleTickerProvider
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Builder(
           builder: (context) {
             double fontSize = MediaQuery.of(context).size.width * 0.045;
             return Text(
               'Trips',
-              style: TextStyle(color: Colors.white, fontSize: fontSize, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w500),
             );
           },
         ),
@@ -917,12 +945,14 @@ class _EventTripPageState extends State<EventTripPage> with SingleTickerProvider
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => RegisteredTripsListPage()),
+                  MaterialPageRoute(
+                      builder: (context) => RegisteredTripsListPage()),
                 );
               },
               child: const Text(
                 'Registered',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                style:
+                    TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
               ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.white,

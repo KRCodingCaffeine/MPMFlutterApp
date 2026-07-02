@@ -6,9 +6,11 @@ import 'package:intl/intl.dart';
 import 'package:mpm/model/EventRegesitration/EventRegistrationData.dart';
 import 'package:mpm/model/GetEventDetailsById/GetEventDetailsByIdData.dart';
 import 'package:mpm/model/GetProfile/FamilyMembersData.dart';
+import 'package:mpm/model/UpdateEventByMember/UpdateEventByMemberModelClass.dart';
 import 'package:mpm/repository/event_register_repository/event_register_repo.dart';
 import 'package:mpm/repository/get_member_registered_events_repository/get_member_registered_events_repo.dart';
 import 'package:mpm/repository/get_even_details_by_id_repository/get_even_details_by_id_repo.dart';
+import 'package:mpm/repository/update_event_by_member_repository/update_event_by_member_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:dio/dio.dart';
@@ -52,6 +54,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       EventAttendeesRepository();
   final EventRegistrationRepository _registrationRepo =
       EventRegistrationRepository();
+  final CancelEventRepository _cancelRepo = CancelEventRepository();
   final UdateProfileController _profileController =
       Get.isRegistered<UdateProfileController>()
           ? Get.find<UdateProfileController>()
@@ -70,7 +73,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
   final _foodBoxController = TextEditingController();
   final _seatController = TextEditingController();
   List<String> _selectedFamilyMemberIds = [];
-
+  String? _eventAttendeeCode;
+  String? _eventQrCode;
   int? _attendeeId;
 
   @override
@@ -162,6 +166,47 @@ class _EventDetailPageState extends State<EventDetailPage> {
     } catch (e) {
       debugPrint('Error checking registration status: $e');
       return false;
+    }
+  }
+
+  Future<void> _fetchAttendeeDetails(
+    int memberId,
+    int eventId,
+  ) async {
+    try {
+      final response =
+          await _eventAttendeesRepository.fetchEventAttendeesByMemberId(
+        memberId,
+      );
+
+      final attendee = response.data?.firstWhere(
+        (e) => e.eventId == eventId,
+      );
+
+      if (attendee != null) {
+        _eventAttendeeCode = attendee.eventAttendeesCode;
+        _eventQrCode = attendee.eventQrCode;
+      }
+    } catch (e) {
+      debugPrint("Attendee fetch error: $e");
+    }
+  }
+
+  Future<void> _showExistingRegistrationPass() async {
+    final userData = await SessionManager.getSession();
+
+    final memberId = int.tryParse(userData?.memberId?.toString() ?? '0') ?? 0;
+
+    final eventId =
+        int.tryParse(_eventDetails?.eventId?.toString() ?? '0') ?? 0;
+
+    await _fetchAttendeeDetails(
+      memberId,
+      eventId,
+    );
+
+    if (_eventQrCode != null && _eventQrCode!.isNotEmpty && mounted) {
+      await _showEventQrDialog();
     }
   }
 
@@ -1054,8 +1099,26 @@ class _EventDetailPageState extends State<EventDetailPage> {
           ),
           actions: [
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(context).pop(isPaidEvent);
+
+                if (!isPaidEvent) {
+                  final userData = await SessionManager.getSession();
+
+                  final memberId = int.tryParse(userData?.memberId ?? '0') ?? 0;
+
+                  final eventId =
+                      int.tryParse(_eventDetails?.eventId ?? '0') ?? 0;
+
+                  await _fetchAttendeeDetails(
+                    memberId,
+                    eventId,
+                  );
+
+                  if (mounted) {
+                    await _showEventQrDialog();
+                  }
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
@@ -1140,6 +1203,247 @@ class _EventDetailPageState extends State<EventDetailPage> {
         );
       },
     );
+  }
+
+  Future<void> _showEventQrDialog() async {
+    final userData = await SessionManager.getSession();
+
+    final memberName = [
+      userData?.firstName ?? '',
+      userData?.middleName ?? '',
+      userData?.lastName ?? '',
+    ].where((e) => e.isNotEmpty).join(' ');
+
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Text(
+                "Registration Pass",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  memberName,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    "Attendee Code : ${_eventAttendeeCode ?? '-'}",
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                if (_eventQrCode != null && _eventQrCode!.isNotEmpty)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      _eventQrCode!,
+                      height: 220,
+                      width: 220,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(
+                          Icons.qr_code,
+                          size: 150,
+                          color: Colors.grey,
+                        );
+                      },
+                    ),
+                  ),
+                const SizedBox(height: 16),
+                const Text(
+                  "Show this QR Code at the event entrance",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+            ),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              style: OutlinedButton.styleFrom(
+                foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Close"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showUnregisterConfirmationDialog() async {
+    final bool? shouldUnregister = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Unregister",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(thickness: 1),
+            ],
+          ),
+          content: const Text(
+            "In case you don't want to attend the program for any reasons, please click OK to Unregister.\n\nThis will help Mandal in better resource planning.",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context, false),
+              style: OutlinedButton.styleFrom(
+                foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _cancelEventRegistration();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text(
+                "OK",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldUnregister == true) {
+      // Call your unregister API here
+      // await _unregisterEvent();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Event unregistration initiated."),
+        ),
+      );
+    }
+  }
+
+  Future<void> _cancelEventRegistration() async {
+    try {
+      final userData = await SessionManager.getSession();
+
+      final response = await _cancelRepo.cancelEventRegistration(
+        memberId: userData!.memberId.toString(),
+        eventId: _eventDetails!.eventId!,
+      );
+
+      final parsed = UpdateEventBYMemberModelClass.fromJson(response);
+
+      if (parsed.status == true) {
+        setState(() {
+          _isRegistered = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Cancelled this event registration successfully"),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Refresh attendee status if required
+        await _checkRegistrationStatus();
+      } else {
+        throw Exception(parsed.message ?? "Failed to cancel registration");
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Widget _buildEventInfoList() {
@@ -1240,7 +1544,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   Widget _buildEventFoodCostInfo() {
-    // Only show food cost info if food is provided AND it's paid
     if (_eventDetails?.hasFood != '1' || _eventDetails?.hasFoodPaid != 'paid') {
       return const SizedBox.shrink();
     }
@@ -1277,36 +1580,114 @@ class _EventDetailPageState extends State<EventDetailPage> {
       return const SizedBox.shrink();
     }
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _isRegistered
-                ? Colors.redAccent
-                : ColorHelperClass.getColorFromHex(ColorResources.red_color),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+    if (_eventDetails?.isRegistrationVisible != '0') {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(
+            vertical: 14,
+            horizontal: 16,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.red.shade50,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: Colors.red.shade300,
             ),
           ),
-          onPressed: _isRegistered ? null : _handleRegisterButtonTap,
-          child: _isRegistering
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-              : Text(
-                  _isRegistered ? "Registered" : "Register Here",
-                  style: const TextStyle(fontSize: 16),
-                ),
+          child: const Text(
+            "Registration is closed for this Event",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.red,
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
+      );
+    }
+
+    final isFreeEvent =
+        _eventDetails?.eventCostType?.trim().toLowerCase() != 'paid';
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // REGISTERED BUTTON
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorHelperClass.getColorFromHex(
+                  ColorResources.red_color,
+                ),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: _isRegistering
+                  ? null
+                  : () async {
+                if (_isRegistered) {
+                  await _showUnregisterConfirmationDialog();
+                } else {
+                  final confirmed =
+                  await _showFinalConfirmationDialog();
+
+                  if (confirmed) {
+                    await _showRegistrationConfirmationDialog();
+                  }
+                }
+              },
+              child: _isRegistering
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Text(
+                      _isRegistered ? "Unregister Here" : "Register Here",
+                      style: const TextStyle(fontSize: 16),
+                    ),
+            ),
+          ),
+
+          // VIEW PASS BUTTON
+          if (_isRegistered && isFreeEvent) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.qr_code),
+                label: const Text("Entry QR Code"),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: ColorHelperClass.getColorFromHex(
+                      ColorResources.red_color),
+                  side: BorderSide(
+                    color: ColorHelperClass.getColorFromHex(
+                        ColorResources.red_color),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                onPressed: () async {
+                  await _showExistingRegistrationPass();
+                },
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -1319,8 +1700,17 @@ class _EventDetailPageState extends State<EventDetailPage> {
       setState(() {
         _isRegistered = true;
       });
-      await _showAlreadyRegisteredDialog(
-          'You are already registered for this event.');
+
+      final isFreeEvent = _eventDetails?.eventCostType?.toLowerCase() != 'paid';
+
+      if (isFreeEvent) {
+        await _showExistingRegistrationPass();
+      } else {
+        await _showAlreadyRegisteredDialog(
+          'You are already registered for this event.',
+        );
+      }
+
       return;
     }
 

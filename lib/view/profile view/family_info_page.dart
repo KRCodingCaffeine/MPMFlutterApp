@@ -242,6 +242,13 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
             Text(
+              "Mobile : " +
+                  (headData.mobile != null
+                      ? headData.mobile
+                      : ""),
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            ),
+            Text(
               "Family Head",
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
@@ -563,6 +570,10 @@ class _FamilyInfoPageState extends State<FamilyInfoPage> {
             ),
             Text(
               "Member Code: " + (member.memberCode ?? member.memberId ?? "N/A"),
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            ),
+            Text(
+              "Mobile: " + (member.mobile ?? member.mobile ?? "N/A"),
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
             Text(
