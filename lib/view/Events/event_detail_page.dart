@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:mpm/model/EventRegesitration/EventRegistrationData.dart';
 import 'package:mpm/model/GetEventDetailsById/GetEventDetailsByIdData.dart';
+import 'package:mpm/model/GetMemberRegisteredEvents/GetMemberRegisteredEventsData.dart';
 import 'package:mpm/model/GetProfile/FamilyMembersData.dart';
 import 'package:mpm/model/UpdateEventByMember/UpdateEventByMemberModelClass.dart';
 import 'package:mpm/repository/event_register_repository/event_register_repo.dart';
@@ -60,6 +61,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           ? Get.find<UdateProfileController>()
           : Get.put(UdateProfileController());
 
+  EventAttendeeData? _registeredEvent;
   bool _isLoading = true;
   bool _isDownloading = false;
   int _downloadProgress = 0;
@@ -81,6 +83,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   void initState() {
     super.initState();
     _fetchEventDetails();
+    _loadRegistrationStatus();
   }
 
   @override
@@ -115,6 +118,49 @@ class _EventDetailPageState extends State<EventDetailPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading event details: $e')),
       );
+    }
+  }
+
+  Future<void> _loadRegistrationStatus() async {
+    try {
+      final user = await SessionManager.getSession();
+
+      if (user == null) return;
+
+      final repository = EventAttendeesRepository();
+
+      final response = await repository.fetchEventAttendeesByMemberId(
+        int.parse(user.memberId!),
+      );
+
+      if (response.status == true && response.data != null) {
+        final selectedEventId = int.tryParse(widget.eventId);
+
+        final event = response.data!.firstWhere(
+              (e) => e.eventId == selectedEventId,
+          orElse: () => EventAttendeeData(),
+        );
+
+        // debugPrint("========== EVENT ==========");
+        // debugPrint("Logged Member : ${user.memberId}");
+        // debugPrint("Selected Event: ${widget.eventId}");
+        // debugPrint("Returned Event: ${event.eventId}");
+        // debugPrint("Confirmation : ${event.confirmationStatus}");
+        // debugPrint("Cancelled    : ${event.cancelledDate}");
+        // debugPrint("===========================");
+
+        if (!mounted) return;
+
+        setState(() {
+          _registeredEvent = event.eventId != null ? event : null;
+          _isRegistered = event.eventId != null;
+        });
+
+        // debugPrint("Found Event : ${event.eventId}");
+        // debugPrint("Status      : ${event.confirmationStatus}");
+      }
+    } catch (e) {
+      debugPrint("Error loading registration status: $e");
     }
   }
 
@@ -1495,13 +1541,13 @@ class _EventDetailPageState extends State<EventDetailPage> {
                           slot.eventStartTime!.isNotEmpty) ...[
                         const SizedBox(width: 6),
                         const Text('from ',
-                            style: TextStyle(color: Colors.grey)),
+                            style: TextStyle(color: Colors.black)),
                         Text(formatTime(slot.eventStartTime)),
                       ],
                       if (slot.eventEndTime != null &&
                           slot.eventEndTime!.isNotEmpty) ...[
                         const SizedBox(width: 6),
-                        const Text('to ', style: TextStyle(color: Colors.grey)),
+                        const Text('to ', style: TextStyle(color: Colors.black)),
                         Text(formatTime(slot.eventEndTime)),
                       ],
                     ],
@@ -1521,11 +1567,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       children: [
         const Text(
           'Event Cost:',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Colors.black54,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         const SizedBox(height: 8),
         if (_eventDetails?.eventCostType != null &&
@@ -1534,7 +1576,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             children: [
               const Text(
                 'Contact organisers for more details.',
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+                style: TextStyle(fontSize: 14, color: Colors.black87),
               ),
             ],
           ),
@@ -1553,11 +1595,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       children: [
         const Text(
           'Event Food Cost:',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Colors.black54,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         const SizedBox(height: 8),
         Row(
@@ -1566,7 +1604,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             const Expanded(
               child: Text(
                 'Contact organisers for more details about food pricing.',
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+                style: TextStyle(fontSize: 14, color: Colors.black87),
               ),
             ),
           ],
@@ -1611,6 +1649,52 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
     final isFreeEvent =
         _eventDetails?.eventCostType?.trim().toLowerCase() != 'paid';
+
+    final isRejected =
+        (_registeredEvent?.confirmationStatus ?? '')
+            .trim()
+            .toLowerCase() ==
+            'rejected';
+
+    // Registration rejected by coordinator
+    if (isRejected) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.orange.shade50,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: Colors.orange.shade300,
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.info_outline,
+                color: Colors.orange.shade700,
+                size: 22,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  "Your registration request for this event has been declined by the Event Coordinator. Please contact the Event Coordinator for further information.",
+                  style: TextStyle(
+                    color: Colors.orange.shade900,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -1897,12 +1981,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Coordinator Details:',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Colors.black54,
-          ),
+          'Event Coordinator:',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         const SizedBox(height: 8),
         if (_eventDetails?.eventOrganiserName != null) ...[
@@ -1924,7 +2004,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                             .split(',')
                             .map((name) => name.trim())
                             .join(', '),
-                        style: TextStyle(color: Colors.grey[700], fontSize: 12),
+                        style: TextStyle(color: Colors.black87, fontSize: 12),
                       ),
                     ],
                   ),
@@ -2073,11 +2153,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ],
             const Text(
               'Event Description:',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.black,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 8),
             Text(

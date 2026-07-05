@@ -1431,29 +1431,73 @@ class _RegisteredEventsDetailPageState
                 ],
               ),
             ),
-      bottomNavigationBar: _isCancelled || _isPastEvent
+      bottomNavigationBar: _isPastEvent
           ? null
-          : Padding(
-              padding: const EdgeInsets.all(16),
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: ColorHelperClass.getColorFromHex(
-                      ColorResources.red_color),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+          : (widget.eventAttendee.confirmationStatus
+          ?.trim()
+          .toLowerCase() ==
+          'rejected')
+          ? SafeArea(
+        child: Container(
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.red.shade50,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: Colors.red.shade300,
+            ),
+          ),
+          child: const Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.info_outline,
+                color: Colors.red,
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  "Your registration request for this event has been declined by the Event Coordinator. Please contact the Event Coordinator for further assistance.",
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                onPressed: () {
-                  _showCancelConfirmationDialog();
-                },
-                child: const Text(
-                  'Cancel Registration',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                ),
               ),
+            ],
+          ),
+        ),
+      )
+          : _isCancelled
+          ? null
+          : Padding(
+        padding: const EdgeInsets.all(16),
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: ColorHelperClass.getColorFromHex(
+              ColorResources.red_color,
             ),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          onPressed: _showCancelConfirmationDialog,
+          child: const Text(
+            'Cancel Registration',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ),
     );
   }
 

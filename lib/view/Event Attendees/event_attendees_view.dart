@@ -31,6 +31,7 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
       EventRegistrationConfirmationRepository();
   final Set<String> _approvedAttendeeIds = {};
   final Set<String> _approvingAttendeeIds = {};
+  final Set<String> _rejectingAttendeeIds = {};
 
   Future<EventAttendeesModelClass>? _attendeesFuture;
   Future<void>? _eventsFuture;
@@ -211,14 +212,17 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
 
     try {
       final response = await _confirmationRepository.confirmEventRegistration(
-        EventRegistrationConfirmationData(attendeeId: attendeeId),
+        EventRegistrationConfirmationData(
+          attendeeId: attendeeId,
+          confirmationStatus: 'confirmed',
+        ),
       );
       final confirmation =
           EventRegistrationConfirmationModelClass.fromJson(response);
 
       if (confirmation.status == true) {
         setState(() {
-          attendee.confirmationStatus = '1';
+          attendee.confirmationStatus = 'confirmed';
           _approvedAttendeeIds.add(
             confirmation.data?.attendeeId ?? attendeeId,
           );
@@ -236,6 +240,62 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
       if (!mounted) return;
       setState(() {
         _approvingAttendeeIds.remove(attendeeId);
+      });
+    }
+  }
+
+  Future<void> _rejectAttendee(EventAttendeesData attendee) async {
+    final attendeeId = attendee.eventAttendeesId;
+
+    if (attendeeId == null || attendeeId.isEmpty) {
+      _showSnackBar(
+        'Attendee ID not available',
+        isSuccess: false,
+      );
+      return;
+    }
+
+    setState(() {
+      _rejectingAttendeeIds.add(attendeeId);
+    });
+
+    try {
+      final response = await _confirmationRepository.confirmEventRegistration(
+        EventRegistrationConfirmationData(
+          attendeeId: attendeeId,
+          confirmationStatus: 'rejected',
+        ),
+      );
+
+      final confirmation =
+          EventRegistrationConfirmationModelClass.fromJson(response);
+
+      if (confirmation.status == true) {
+        setState(() {
+          attendee.confirmationStatus = 'rejected';
+        });
+
+        _showSnackBar(
+          'The member registration has been rejected.',
+        );
+
+        await _refreshAttendees();
+      } else {
+        _showSnackBar(
+          confirmation.message ?? 'Failed to reject registration.',
+          isSuccess: false,
+        );
+      }
+    } catch (e) {
+      _showSnackBar(
+        'Error rejecting registration: $e',
+        isSuccess: false,
+      );
+    } finally {
+      if (!mounted) return;
+
+      setState(() {
+        _rejectingAttendeeIds.remove(attendeeId);
       });
     }
   }
@@ -605,6 +665,8 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
     final attendeeId = attendee.eventAttendeesId;
     final isApproving =
         attendeeId != null && _approvingAttendeeIds.contains(attendeeId);
+    final isRejecting =
+        attendeeId != null && _rejectingAttendeeIds.contains(attendeeId);
 
     return Container(
       decoration: BoxDecoration(
@@ -680,23 +742,33 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
           const SizedBox(height: 8),
           _buildInfoRow(Icons.email_outlined, 'Email', email),
           const SizedBox(height: 8),
-
           _buildInfoRow(
             Icons.calendar_today_outlined,
             'Registered On',
             attendee.registrationDate != null &&
-                attendee.registrationDate!.isNotEmpty
+                    attendee.registrationDate!.isNotEmpty
                 ? DateFormat('dd MMM yyyy').format(
-              DateTime.parse(attendee.registrationDate!),
-            )
+                    DateTime.parse(attendee.registrationDate!),
+                  )
                 : '-',
           ),
+          if (!_isFreeEvent(attendee)) ...[
+            const SizedBox(height: 8),
+            _buildInfoRow(
+              Icons.payment_outlined,
+              'Payment Transaction Id',
+              attendee.paymentTransactionId != null &&
+                      attendee.paymentTransactionId!.isNotEmpty
+                  ? attendee.paymentTransactionId!
+                  : '-',
+            ),
+          ],
           const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
             height: 42,
             child: ElevatedButton.icon(
-              onPressed: isApproved || isApproving
+              onPressed: isApproved || isApproving || isRejecting
                   ? null
                   : () => _approveAttendee(attendee),
               icon: isApproving
@@ -716,21 +788,51 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
                     ),
               label: Text(isApproved ? 'Approved' : 'Approve'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: isApproved ? Colors.green : _brandColor,
-                disabledBackgroundColor:
-                    isApproved ? Colors.green : _brandColor,
+                backgroundColor: isApproved ? Colors.green : Colors.green,
                 foregroundColor: Colors.white,
+                disabledBackgroundColor: Colors.green,
                 disabledForegroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                textStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
               ),
             ),
           ),
+          if (!isApproved) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              height: 42,
+              child: ElevatedButton.icon(
+                onPressed: isApproving || isRejecting
+                    ? null
+                    : () => _rejectAttendee(attendee),
+                icon: isRejecting
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.cancel_outlined,
+                        size: 18,
+                      ),
+                label: const Text("Reject"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: Colors.red,
+                  disabledForegroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -742,12 +844,14 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
     }
 
     final attendeeId = attendee.eventAttendeesId ?? attendee.eventAttendeesCode;
+
     if (attendeeId != null && _approvedAttendeeIds.contains(attendeeId)) {
       return true;
     }
 
-    return attendee.confirmationStatus == '1' ||
-        attendee.confirmationStatus?.toLowerCase() == 'approved';
+    final status = (attendee.confirmationStatus ?? '').trim().toLowerCase();
+
+    return status == 'confirmed';
   }
 
   bool _isFreeEvent(EventAttendeesData attendee) {
