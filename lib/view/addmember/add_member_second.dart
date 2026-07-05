@@ -1278,14 +1278,14 @@ class _NewMemberResidentalState extends State<NewMemberResidental> {
         controller: controller,
         obscureText: obscureText,
         readOnly: readOnly,
-        style: const TextStyle(color: Colors.black), // Text color set to black
+        style: const TextStyle(color: Colors.black),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: const TextStyle(
-              color: Colors.black), // Label text color set to black
+              color: Colors.black),
           hintText: hintText,
           hintStyle: const TextStyle(
-              color: Colors.black54), // Slightly dimmed black for hint text
+              color: Colors.black54),
           border: const OutlineInputBorder(
             borderSide: BorderSide(color: Colors.black),
           ),

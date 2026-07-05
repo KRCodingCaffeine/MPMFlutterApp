@@ -1541,13 +1541,13 @@ class _EventDetailPageState extends State<EventDetailPage> {
                           slot.eventStartTime!.isNotEmpty) ...[
                         const SizedBox(width: 6),
                         const Text('from ',
-                            style: TextStyle(color: Colors.grey)),
+                            style: TextStyle(color: Colors.black)),
                         Text(formatTime(slot.eventStartTime)),
                       ],
                       if (slot.eventEndTime != null &&
                           slot.eventEndTime!.isNotEmpty) ...[
                         const SizedBox(width: 6),
-                        const Text('to ', style: TextStyle(color: Colors.grey)),
+                        const Text('to ', style: TextStyle(color: Colors.black)),
                         Text(formatTime(slot.eventEndTime)),
                       ],
                     ],
@@ -1567,11 +1567,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       children: [
         const Text(
           'Event Cost:',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Colors.black54,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         const SizedBox(height: 8),
         if (_eventDetails?.eventCostType != null &&
@@ -1580,7 +1576,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             children: [
               const Text(
                 'Contact organisers for more details.',
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+                style: TextStyle(fontSize: 14, color: Colors.black87),
               ),
             ],
           ),
@@ -1599,11 +1595,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       children: [
         const Text(
           'Event Food Cost:',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Colors.black54,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         const SizedBox(height: 8),
         Row(
@@ -1612,7 +1604,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             const Expanded(
               child: Text(
                 'Contact organisers for more details about food pricing.',
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+                style: TextStyle(fontSize: 14, color: Colors.black87),
               ),
             ),
           ],
@@ -1989,12 +1981,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Coordinator Details:',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Colors.black54,
-          ),
+          'Event Coordinator:',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         const SizedBox(height: 8),
         if (_eventDetails?.eventOrganiserName != null) ...[
@@ -2016,7 +2004,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                             .split(',')
                             .map((name) => name.trim())
                             .join(', '),
-                        style: TextStyle(color: Colors.grey[700], fontSize: 12),
+                        style: TextStyle(color: Colors.black87, fontSize: 12),
                       ),
                     ],
                   ),
@@ -2165,11 +2153,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ],
             const Text(
               'Event Description:',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.black,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 8),
             Text(
