@@ -1372,87 +1372,87 @@ class _EventDetailPageState extends State<EventDetailPage> {
     );
   }
 
-  Future<void> _showUnregisterConfirmationDialog() async {
-    final bool? shouldUnregister = await showDialog<bool>(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text(
-                "Unregister",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              SizedBox(height: 8),
-              Divider(thickness: 1),
-            ],
-          ),
-          content: const Text(
-            "In case you don't want to attend the program for any reasons, please click OK to Unregister.\n\nThis will help Mandal in better resource planning.",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.black87,
-            ),
-          ),
-          actions: [
-            OutlinedButton(
-              onPressed: () => Navigator.pop(context, false),
-              style: OutlinedButton.styleFrom(
-                foregroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                side: const BorderSide(color: Colors.red),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _cancelEventRegistration();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Text(
-                "OK",
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (shouldUnregister == true) {
-      // Call your unregister API here
-      // await _unregisterEvent();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Event unregistration initiated."),
-        ),
-      );
-    }
-  }
+  // Future<void> _showUnregisterConfirmationDialog() async {
+  //   final bool? shouldUnregister = await showDialog<bool>(
+  //     context: context,
+  //     barrierDismissible: true,
+  //     builder: (context) {
+  //       return AlertDialog(
+  //         backgroundColor: Colors.white,
+  //         shape: RoundedRectangleBorder(
+  //           borderRadius: BorderRadius.circular(20),
+  //         ),
+  //         titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+  //         contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+  //         actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+  //         title: Column(
+  //           crossAxisAlignment: CrossAxisAlignment.start,
+  //           children: const [
+  //             Text(
+  //               "Unregister",
+  //               style: TextStyle(
+  //                 fontSize: 18,
+  //                 fontWeight: FontWeight.w600,
+  //               ),
+  //             ),
+  //             SizedBox(height: 8),
+  //             Divider(thickness: 1),
+  //           ],
+  //         ),
+  //         content: const Text(
+  //           "In case you don't want to attend the program for any reasons, please click OK to Unregister.\n\nThis will help Mandal in better resource planning.",
+  //           textAlign: TextAlign.center,
+  //           style: TextStyle(
+  //             fontSize: 16,
+  //             color: Colors.black87,
+  //           ),
+  //         ),
+  //         actions: [
+  //           OutlinedButton(
+  //             onPressed: () => Navigator.pop(context, false),
+  //             style: OutlinedButton.styleFrom(
+  //               foregroundColor:
+  //                   ColorHelperClass.getColorFromHex(ColorResources.red_color),
+  //               side: const BorderSide(color: Colors.red),
+  //               shape: RoundedRectangleBorder(
+  //                 borderRadius: BorderRadius.circular(10),
+  //               ),
+  //             ),
+  //             child: const Text("Cancel"),
+  //           ),
+  //           ElevatedButton(
+  //             onPressed: () {
+  //               Navigator.pop(context);
+  //               _cancelEventRegistration();
+  //             },
+  //             style: ElevatedButton.styleFrom(
+  //               backgroundColor:
+  //                   ColorHelperClass.getColorFromHex(ColorResources.red_color),
+  //               shape: RoundedRectangleBorder(
+  //                 borderRadius: BorderRadius.circular(10),
+  //               ),
+  //             ),
+  //             child: const Text(
+  //               "OK",
+  //               style: TextStyle(color: Colors.white),
+  //             ),
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  //
+  //   if (shouldUnregister == true) {
+  //     // Call your unregister API here
+  //     // await _unregisterEvent();
+  //
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(
+  //         content: Text("Event unregistration initiated."),
+  //       ),
+  //     );
+  //   }
+  // }
 
   Future<void> _cancelEventRegistration() async {
     try {
@@ -1701,6 +1701,74 @@ class _EventDetailPageState extends State<EventDetailPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // VIEW PASS BUTTON
+          if (_isRegistered && isFreeEvent) ...[
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.qr_code),
+                label: const Text("Entry QR Code"),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: ColorHelperClass.getColorFromHex(
+                      ColorResources.red_color),
+                  side: BorderSide(
+                    color: ColorHelperClass.getColorFromHex(
+                        ColorResources.red_color),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                onPressed: () async {
+                  await _showExistingRegistrationPass();
+                },
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+
+          if (_isRegistered) ...[
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                border: Border.all(color: Colors.orange.shade200),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: RichText(
+                text: TextSpan(
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.black87,
+                    height: 1.5,
+                  ),
+                  children: [
+                    const TextSpan(
+                      text:
+                      'If you decide not to attend this program, please click ',
+                    ),
+                    TextSpan(
+                      text: 'Unregister Here',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color,
+                        ),
+                      ),
+                    ),
+                    const TextSpan(
+                      text:
+                      '. This will help Mandal in better resource planning.',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+
           // REGISTERED BUTTON
           SizedBox(
             width: double.infinity,
@@ -1719,7 +1787,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   ? null
                   : () async {
                 if (_isRegistered) {
-                  await _showUnregisterConfirmationDialog();
+                  // Directly unregister without showing confirmation dialog
+                  await _cancelEventRegistration();
                 } else {
                   final confirmed =
                   await _showFinalConfirmationDialog();
@@ -1744,33 +1813,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     ),
             ),
           ),
-
-          // VIEW PASS BUTTON
-          if (_isRegistered && isFreeEvent) ...[
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                icon: const Icon(Icons.qr_code),
-                label: const Text("Entry QR Code"),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: ColorHelperClass.getColorFromHex(
-                      ColorResources.red_color),
-                  side: BorderSide(
-                    color: ColorHelperClass.getColorFromHex(
-                        ColorResources.red_color),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                onPressed: () async {
-                  await _showExistingRegistrationPass();
-                },
-              ),
-            ),
-          ],
         ],
       ),
     );
