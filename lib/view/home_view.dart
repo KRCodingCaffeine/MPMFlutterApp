@@ -45,6 +45,7 @@ class _HomeViewState extends State<HomeView>
   bool _showLeftArrow = false;
   bool _showRightArrow = false;
   bool _initialArrowsComputed = false;
+  bool _isAllZoneAdmin = false;
 
   final GlobalKey _gridTapKey = GlobalKey();
   Offset? _gridTapDownPosition;
@@ -259,23 +260,38 @@ class _HomeViewState extends State<HomeView>
 
       if (!mounted) return;
 
-      setState(() {
-        _canViewEventAttendees = adminAccess.status == true &&
-            (adminAccess.data ?? []).any((access) {
-              final hasAccessId = access.adminAccessId != null &&
-                  access.adminAccessId!.isNotEmpty;
-              final isActive = access.status == null ||
-                  access.status == '1' ||
-                  access.status?.toLowerCase() == 'active';
-              final moduleKey = _normalizeAdminAccessValue(access.moduleKey);
-              final moduleName = _normalizeAdminAccessValue(access.moduleName);
+      bool canViewEventAttendees = false;
+      bool isAllZoneAdmin = false;
 
-              return hasAccessId &&
-                  isActive &&
-                  (moduleKey == 'eventattendees' ||
-                      moduleKey == 'eventattendee' ||
-                      moduleName == 'eventattendees');
-            });
+      if (adminAccess.status == true) {
+        for (final access in adminAccess.data ?? []) {
+
+          final isActive = access.status == null ||
+              access.status == '1' ||
+              access.status?.toLowerCase() == 'active';
+
+          if (!isActive) continue;
+
+          // Event Attendees access
+          final moduleKey = _normalizeAdminAccessValue(access.moduleKey);
+          final moduleName = _normalizeAdminAccessValue(access.moduleName);
+
+          if (moduleKey == 'eventattendees' ||
+              moduleKey == 'eventattendee' ||
+              moduleName == 'eventattendees') {
+            canViewEventAttendees = true;
+          }
+
+          // Admin Access ID 15 = All Zone
+          if (access.adminAccessId == '15') {
+            isAllZoneAdmin = true;
+          }
+        }
+      }
+
+      setState(() {
+        _canViewEventAttendees = canViewEventAttendees;
+        _isAllZoneAdmin = isAllZoneAdmin;
       });
     } catch (e) {
       debugPrint("Admin access fetch error: $e");
@@ -1281,7 +1297,13 @@ class _HomeViewState extends State<HomeView>
         Navigator.pushNamed(context, RouteNames.qr_code);
         break;
       case "Event Attendees":
-        Navigator.pushNamed(context, RouteNames.event_attendees);
+        Navigator.pushNamed(
+          context,
+          RouteNames.event_attendees,
+          arguments: {
+            'isAllZoneAdmin': _isAllZoneAdmin,
+          },
+        );
         break;
       // case "QR Code Scanner":
       //   _showAttendanceMarkedDialog(context);
