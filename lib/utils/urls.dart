@@ -163,6 +163,9 @@ class Urls {
   static const String upload_seeker_resume_url = base_url+"api/member_job/upload_seeker_resume";
   static const String add_seeker_profile_url = base_url+"api/member_job/add_seeker_profile";
   static const String get_job_by_id_url = base_url+"api/member_job/get_job";
+  static const String get_seeker_profile_url = base_url+"api/member_job/get_seeker_profile";
+  static const String update_seeker_profile_url = base_url+"api/member_job/update_seeker_profile";
+  static const String jobs_for_seeker_url = base_url+"api/job/jobs_for_seeker";
 
   // Notification API URLs - Following same pattern as device_mapping
   static const String get_all_notifications_url = base_url+"api/notifications/get_all";
