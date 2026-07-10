@@ -1,4 +1,5 @@
 class CreateJobData {
+  String? jobId;
   String? memberId;
   String? memberBusinessOccupationProfileId;
   String? companyName;
@@ -33,6 +34,7 @@ class CreateJobData {
   String? createdBy;
 
   CreateJobData({
+    this.jobId,
     this.memberId,
     this.memberBusinessOccupationProfileId,
     this.companyName,
@@ -60,6 +62,7 @@ class CreateJobData {
   });
 
   CreateJobData.fromJson(Map<String, dynamic> json) {
+    jobId = (json['job_id'] ?? json['id'])?.toString();
     memberId = json['member_id']?.toString();
     memberBusinessOccupationProfileId =
         json['member_business_occupation_profile_id']?.toString();
@@ -101,6 +104,7 @@ class CreateJobData {
 
   Map<String, dynamic> toJson() {
     return {
+      'job_id': jobId,
       'member_id': memberId,
       'member_business_occupation_profile_id':
       memberBusinessOccupationProfileId,

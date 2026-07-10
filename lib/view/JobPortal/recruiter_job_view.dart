@@ -12,6 +12,8 @@ import 'package:mpm/repository/JobPortal/CreateJobRepo/create_job_repository.dar
 import 'package:mpm/repository/JobPortal/GetJobByMemberIdRepo/get_job_by_member_id_repository.dart';
 import 'package:mpm/repository/JobPortal/GetOccupationByMemberIdRepo/get_occupation_by_member_id_repository.dart';
 import 'package:mpm/repository/JobPortal/UpdateJobRepo/update_job_repository.dart';
+import 'package:mpm/repository/JobPortal/UploadJobProfileDocumentRepo/upload_job_profile_document_repository.dart';
+import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/profile%20view/business_info_page.dart';
@@ -37,6 +39,8 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
   late bool showOccupationBanner;
   final GetOccupationByMemberIdRepository occupationRepository =
       GetOccupationByMemberIdRepository();
+  final UploadJobProfileDocumentRepository uploadJobProfileDocumentRepository =
+      UploadJobProfileDocumentRepository();
   final ImagePicker _picker = ImagePicker();
   File? jobSummaryFile;
   List<BusinessOccupationProfileData> businessProfiles = [];
@@ -328,13 +332,23 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
     return (selectedBusiness?.businessName ?? "").trim().isEmpty;
   }
 
-  Future<void> _submitJob({int? editIndex}) async {
-    final isUpdate = editIndex != null;
+  Future<String> _getLoggedInMemberId() async {
+    final session = await SessionManager.getSession();
+    final sessionMemberId = session?.memberId?.toString().trim() ?? "";
+
+    if (sessionMemberId.isNotEmpty) {
+      return sessionMemberId;
+    }
+
+    return profileController.memberId.value.trim();
+  }
+
+  Future<void> _submitJob() async {
     final locationName = _getSelectedCityName();
-    final backendJobStatus = _getBackendJobStatus();
+    final loggedInMemberId = await _getLoggedInMemberId();
 
     final body = {
-      "member_id": profileController.memberId.value,
+      "member_id": loggedInMemberId,
       "member_business_occupation_profile_id": selectedBusinessId ?? "0",
       "company_name": companyController.text.trim(),
       "title": titleController.text.trim(),
@@ -381,7 +395,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
 
       "status": _getBackendJobStatus(),
 
-      "created_by": profileController.memberId.value,
+      "created_by": loggedInMemberId,
     };
 
     setState(() {
@@ -389,32 +403,36 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
     });
 
     try {
-      bool? isSuccess;
-      String? responseMessage;
+      final response = await CreateJobRepository().createJob(body);
 
-      if (isUpdate) {
-        final updateBody = {
-          "job_id": postedJobs[editIndex].jobId ?? "",
-          "title": titleController.text.trim(),
-          "description": descriptionController.text.trim(),
-          "work_mode": selectedWorkMode,
-          "work_type": selectedJobType,
-          "last_apply_date": lastDateController.text.trim(),
-          "no_of_vacancy": vacancyController.text.trim(),
-          "status": backendJobStatus,
-          "updated_by": profileController.memberId.value,
-        };
+      if (response.status == true) {
+        final createdJobId = response.data?.jobId?.trim() ?? "";
 
-        final response = await UpdateJobRepository().updateJob(updateBody);
-        isSuccess = response.status;
-        responseMessage = response.message;
-      } else {
-        final response = await CreateJobRepository().createJob(body);
-        isSuccess = response.status;
-        responseMessage = response.message;
-      }
+        if (jobSummaryFile != null &&
+            createdJobId.isNotEmpty &&
+            loggedInMemberId.isNotEmpty) {
+          final uploadResponse =
+              await uploadJobProfileDocumentRepository.uploadJobProfileDocument(
+            memberId: loggedInMemberId,
+            jobId: createdJobId,
+            filePath: jobSummaryFile!.path,
+          );
 
-      if (isSuccess == true) {
+          if (uploadResponse.status != true) {
+            throw Exception(uploadResponse.message.isNotEmpty
+                ? uploadResponse.message
+                : "Job saved, but failed to upload job description");
+          }
+        } else if (jobSummaryFile != null && createdJobId.isEmpty) {
+          throw Exception(
+            "Job saved, but job id was missing for job description upload",
+          );
+        } else if (jobSummaryFile != null && loggedInMemberId.isEmpty) {
+          throw Exception(
+            "Job saved, but member id was missing for job description upload",
+          );
+        }
+
         await loadPostedJobs();
 
         if (!mounted) return;
@@ -423,13 +441,13 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(responseMessage ?? "Job saved successfully"),
+            content: Text(response.message ?? "Job saved successfully"),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
           ),
         );
       } else {
-        throw Exception(responseMessage ?? "Failed to save job");
+        throw Exception(response.message ?? "Failed to save job");
       }
     } catch (e) {
       if (!mounted) return;
@@ -437,6 +455,65 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Failed to save job: $e"),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSubmittingJob = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _updateJob({required int editIndex}) async {
+    final backendJobStatus = _getBackendJobStatus();
+    final loggedInMemberId = await _getLoggedInMemberId();
+
+    final updateBody = {
+      "job_id": postedJobs[editIndex].jobId ?? "",
+      "title": titleController.text.trim(),
+      "description": descriptionController.text.trim(),
+      "work_mode": selectedWorkMode,
+      "work_type": selectedJobType,
+      "last_apply_date": lastDateController.text.trim(),
+      "no_of_vacancy": vacancyController.text.trim(),
+      "status": backendJobStatus,
+      "updated_by": loggedInMemberId,
+    };
+
+    setState(() {
+      isSubmittingJob = true;
+    });
+
+    try {
+      final response = await UpdateJobRepository().updateJob(updateBody);
+
+      if (response.status == true) {
+        await loadPostedJobs();
+
+        if (!mounted) return;
+
+        Navigator.pop(context);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.message ?? "Job updated successfully"),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else {
+        throw Exception(response.message ?? "Failed to update job");
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Failed to update job: $e"),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
         ),
@@ -1662,7 +1739,11 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                             onPressed: isSubmittingJob
                                 ? null
                                 : () async {
-                                    await _submitJob(editIndex: editIndex);
+                                    if (editIndex != null) {
+                                      await _updateJob(editIndex: editIndex);
+                                    } else {
+                                      await _submitJob();
+                                    }
                                   },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: ColorHelperClass.getColorFromHex(

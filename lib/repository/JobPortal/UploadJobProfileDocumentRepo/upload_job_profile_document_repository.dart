@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import 'package:mpm/model/JobPortal/UploadResume/UploadResumeModelClass.dart';
+import 'package:flutter/material.dart';
+
+import 'package:mpm/model/JobPortal/UploadJobProfileDocument/UploadJobProfileDocumentModelClass.dart';
 import 'package:mpm/utils/urls.dart';
 
-class UploadResumeRepository {
+class UploadJobProfileDocumentRepository {
   final Dio _dio = Dio(
     BaseOptions(
       headers: {
@@ -14,35 +15,41 @@ class UploadResumeRepository {
     ),
   );
 
-  Future<UploadResumeModelClass> uploadResume({
+  Future<UploadJobProfileDocumentModelClass>
+  uploadJobProfileDocument({
     required String memberId,
+    required String jobId,
     required String filePath,
   }) async {
     try {
       final formData = FormData.fromMap({
         'member_id': memberId,
-        'resume': await MultipartFile.fromFile(
+        'job_id': jobId,
+        'profile_summary_document': await MultipartFile.fromFile(
           filePath,
           filename: filePath.split(RegExp(r'[\\/]')).last,
         ),
       });
 
       final response = await _dio.post(
-        Urls.upload_seeker_resume_url, // your API URL
+        Urls.upload_job_profile_document_url,
         data: formData,
         options: Options(
           contentType: 'multipart/form-data',
         ),
       );
 
-      debugPrint("📄 Resume Upload Response: ${response.data}");
+      debugPrint(
+          "📄 Job Profile Document Upload Response: ${response.data}");
 
-      return UploadResumeModelClass.fromJson(response.data);
+      return UploadJobProfileDocumentModelClass.fromJson(response.data);
     } on DioException catch (e) {
-      debugPrint("❌ Resume upload dio error: ${e.response?.data}");
+      debugPrint(
+          "❌ Job Profile Document Upload Dio Error: ${e.response?.data}");
       rethrow;
     } catch (e) {
-      debugPrint("❌ Resume upload error: $e");
+      debugPrint(
+          "❌ Job Profile Document Upload Error: $e");
       rethrow;
     }
   }

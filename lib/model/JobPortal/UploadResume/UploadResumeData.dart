@@ -5,7 +5,7 @@ class UploadResumeData {
 
   factory UploadResumeData.fromJson(Map<String, dynamic> json) {
     return UploadResumeData(
-      resumePath: json['resume']?.toString(),
+      resumePath: (json['resume'] ?? json['resume_path'])?.toString(),
     );
   }
 

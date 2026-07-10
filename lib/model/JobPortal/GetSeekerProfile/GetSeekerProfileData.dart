@@ -10,6 +10,9 @@ class GetSeekerProfileData {
 
   String? workMode;
   String? workType;
+  String? noOfInternshipMonth;
+  String? cityId;
+  String? areaName;
   String? isVisible;
 
   String? createdBy;
@@ -27,6 +30,9 @@ class GetSeekerProfileData {
     this.expectedSalaryMax,
     this.workMode,
     this.workType,
+    this.noOfInternshipMonth,
+    this.cityId,
+    this.areaName,
     this.isVisible,
     this.createdBy,
     this.createdAt,
@@ -46,6 +52,9 @@ class GetSeekerProfileData {
 
     workMode = json['work_mode']?.toString();
     workType = json['work_type']?.toString();
+    noOfInternshipMonth = json['no_of_internship_month']?.toString();
+    cityId = json['city_id']?.toString();
+    areaName = json['area_name']?.toString();
     isVisible = json['is_visible']?.toString();
 
     createdBy = json['created_by']?.toString();
@@ -65,6 +74,9 @@ class GetSeekerProfileData {
       'expected_salary_max': expectedSalaryMax,
       'work_mode': workMode,
       'work_type': workType,
+      'no_of_internship_month': noOfInternshipMonth,
+      'city_id': cityId,
+      'area_name': areaName,
       'is_visible': isVisible,
       'created_by': createdBy,
       'created_at': createdAt,

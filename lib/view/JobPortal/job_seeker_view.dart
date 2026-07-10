@@ -13,6 +13,7 @@ import 'package:mpm/repository/JobPortal/GetSeekerProfileRepo/get_seeker_profile
 import 'package:mpm/repository/JobPortal/GetJobByMemberIdRepo/get_job_by_member_id_repository.dart';
 import 'package:mpm/repository/JobPortal/JobsForSeekerRepo/jobs_for_seeker_repository.dart';
 import 'package:mpm/repository/JobPortal/UpdateSeekerProfileRepo/update_seeker_profile_repository.dart';
+import 'package:mpm/repository/JobPortal/UploadResumeRepo/upload_resume_repository.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
@@ -41,6 +42,8 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       GetSeekerProfileRepository();
   final UpdateSeekerProfileRepository updateSeekerProfileRepository =
       UpdateSeekerProfileRepository();
+  final UploadResumeRepository uploadResumeRepository =
+      UploadResumeRepository();
 
   String selectedCategory = "All";
   String selectedLocation = "All";
@@ -60,6 +63,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
   TextEditingController fieldToWorkController = TextEditingController();
   TextEditingController expectedSalaryController = TextEditingController();
   TextEditingController preferredAreaController = TextEditingController();
+  TextEditingController internshipMonthController = TextEditingController();
   String selectedPreferredCityId = "";
   String selectedPreferredWorkMode = "On-site";
   String selectedPreferredJobType = "Full-time";
@@ -124,6 +128,8 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     preferredWhatsappController.dispose();
     fieldToWorkController.dispose();
     expectedSalaryController.dispose();
+    preferredAreaController.dispose();
+    internshipMonthController.dispose();
     super.dispose();
   }
 
@@ -620,8 +626,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
 
                           final jobIndex = hasPreferredJobs ? index - 1 : index;
                           final job = displayJobs[jobIndex];
-                          final isPreferredJob =
-                              job["isPreferredJob"] == true;
+                          final isPreferredJob = job["isPreferredJob"] == true;
 
                           return Container(
                             margin: const EdgeInsets.symmetric(
@@ -887,6 +892,10 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     selectedResumeName = null;
     fieldToWorkController.clear();
     expectedSalaryController.clear();
+    internshipMonthController.clear();
+    preferredAreaController.text = _cleanProfileValue(
+      profileController.areaName.value,
+    );
     selectedPreferredWorkMode = "On-site";
     selectedPreferredJobType = "Full-time";
 
@@ -942,10 +951,21 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       selectedPreferredJobType = "Internship";
     }
 
+    internshipMonthController.text = _cleanProfileValue(
+      data.noOfInternshipMonth ?? "",
+    );
+
     final resumePath = _cleanProfileValue(data.resumePath ?? "");
     if (resumePath.isNotEmpty) {
       selectedResumeName = resumePath.split(RegExp(r'[\\/]')).last;
     }
+
+    final cityId = _cleanProfileValue(data.cityId ?? "");
+    if (cityId == "2" || cityId == "3" || cityId == "4") {
+      selectedPreferredCityId = cityId;
+    }
+
+    preferredAreaController.text = _cleanProfileValue(data.areaName ?? "");
   }
 
   Future<void> _openPreferredCitySheet({
@@ -975,8 +995,12 @@ class _JobSeekerViewState extends State<JobSeekerView> {
           preferredMobileController.text.trim().isNotEmpty &&
           fieldToWorkController.text.trim().isNotEmpty &&
           expectedSalaryController.text.trim().isNotEmpty &&
-          selectedPreferredCityId.isNotEmpty;
+          (selectedPreferredJobType != "Internship" ||
+              internshipMonthController.text.trim().isNotEmpty) &&
+          selectedPreferredCityId.isNotEmpty &&
+          preferredAreaController.text.trim().isNotEmpty;
     }
+
     if (regiController.cityList.isEmpty) {
       await regiController.getCity();
     }
@@ -1029,6 +1053,38 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                             onPressed: isFormValid()
                                 ? () async {
                                     try {
+                                      String resumePath =
+                                          seekerProfileData?.resumePath ?? "";
+
+                                      if (selectedResume != null) {
+                                        final uploadResponse =
+                                            await uploadResumeRepository
+                                                .uploadResume(
+                                          memberId: loggedInMemberId,
+                                          filePath: selectedResume!.path,
+                                        );
+
+                                        if (uploadResponse.status != true) {
+                                          ScaffoldMessenger.of(this.context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                uploadResponse.message
+                                                        .isNotEmpty
+                                                    ? uploadResponse.message
+                                                    : "Unable to upload resume",
+                                              ),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                          return;
+                                        }
+
+                                        resumePath = uploadResponse
+                                                .data?.resumePath ??
+                                            resumePath;
+                                      }
+
                                       final workMode =
                                           selectedPreferredWorkMode == "On-site"
                                               ? "onsite"
@@ -1055,6 +1111,15 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                         "expected_salary_min": "",
                                         "work_mode": workMode,
                                         "work_type": workType,
+                                        "no_of_internship_month":
+                                            selectedPreferredJobType ==
+                                                    "Internship"
+                                                ? internshipMonthController.text
+                                                    .trim()
+                                                : "",
+                                        "city_id": selectedPreferredCityId,
+                                        "area_name":
+                                            preferredAreaController.text.trim(),
                                         "is_visible": "1",
                                       };
 
@@ -1075,39 +1140,46 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                           hasSeekerProfile = true;
                                           seekerProfileData =
                                               GetSeekerProfileData(
-                                            seekerProfileId: response.data
-                                                    ?.seekerProfileId ??
+                                            seekerProfileId: response
+                                                    .data?.seekerProfileId ??
                                                 existingSeekerProfileId,
-                                            memberId: response
-                                                    .data?.memberId ??
+                                            memberId: response.data?.memberId ??
                                                 loggedInMemberId,
-                                            resumePath:
-                                                seekerProfileData?.resumePath,
-                                            headline: response
-                                                    .data?.headline ??
+                                            resumePath: resumePath,
+                                            headline: response.data?.headline ??
                                                 fieldToWorkController.text
                                                     .trim(),
                                             summary:
                                                 response.data?.summary ?? "",
-                                            expectedSalaryMin: response.data
-                                                    ?.expectedSalaryMin ??
+                                            expectedSalaryMin: response
+                                                    .data?.expectedSalaryMin ??
                                                 "",
-                                            expectedSalaryMax: response.data
-                                                    ?.expectedSalaryMax ??
+                                            expectedSalaryMax: response
+                                                    .data?.expectedSalaryMax ??
                                                 expectedSalaryController.text
                                                     .trim(),
-                                            workMode: response
-                                                    .data?.workMode ??
+                                            workMode: response.data?.workMode ??
                                                 workMode,
-                                            workType: response
-                                                    .data?.workType ??
+                                            workType: response.data?.workType ??
                                                 workType,
-                                            isVisible: response
-                                                    .data?.isVisible ??
-                                                "1",
-                                            updatedBy: response
-                                                    .data?.updatedBy ??
-                                                loggedInMemberId,
+                                            noOfInternshipMonth: response.data
+                                                    ?.noOFInternshipMonth ??
+                                                (selectedPreferredJobType ==
+                                                        "Internship"
+                                                    ? internshipMonthController
+                                                        .text
+                                                        .trim()
+                                                    : ""),
+                                            cityId: response.data?.cityId ??
+                                                selectedPreferredCityId,
+                                            areaName: response.data?.areaName ??
+                                                preferredAreaController.text
+                                                    .trim(),
+                                            isVisible:
+                                                response.data?.isVisible ?? "1",
+                                            updatedBy:
+                                                response.data?.updatedBy ??
+                                                    loggedInMemberId,
                                           );
 
                                           if (mounted) {
@@ -1142,8 +1214,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                       final createBody = {
                                         ...body,
                                         "created_by": loggedInMemberId,
-                                        "resume_path":
-                                            selectedResume?.path ?? "",
+                                        "resume_path": resumePath,
                                       };
 
                                       final response = await seekerRepository
@@ -1152,6 +1223,56 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                       /// SUCCESS
                                       if (response.status == true) {
                                         hasSeekerProfile = true;
+                                        seekerProfileData =
+                                            GetSeekerProfileData(
+                                          seekerProfileId: seekerProfileData
+                                              ?.seekerProfileId,
+                                          memberId:
+                                              response.data?.memberId ??
+                                                  loggedInMemberId,
+                                          resumePath:
+                                              response.data?.resumePath ??
+                                                  resumePath,
+                                          headline:
+                                              response.data?.headline ??
+                                                  fieldToWorkController.text
+                                                      .trim(),
+                                          summary:
+                                              response.data?.summary ?? "",
+                                          expectedSalaryMin: response.data
+                                                  ?.expectedSalaryMin ??
+                                              "",
+                                          expectedSalaryMax: response.data
+                                                  ?.expectedSalaryMax ??
+                                              expectedSalaryController.text
+                                                  .trim(),
+                                          workMode:
+                                              response.data?.workMode ??
+                                                  workMode,
+                                          workType:
+                                              response.data?.workType ??
+                                                  workType,
+                                          noOfInternshipMonth: response.data
+                                                  ?.noOfInternshipMonth ??
+                                              (selectedPreferredJobType ==
+                                                      "Internship"
+                                                  ? internshipMonthController
+                                                      .text
+                                                      .trim()
+                                                  : ""),
+                                          cityId: response.data?.cityId ??
+                                              selectedPreferredCityId,
+                                          areaName:
+                                              response.data?.areaName ??
+                                                  preferredAreaController.text
+                                                      .trim(),
+                                          isVisible:
+                                              response.data?.isVisible ??
+                                                  "1",
+                                          createdBy:
+                                              response.data?.createdBy ??
+                                                  loggedInMemberId,
+                                        );
                                         if (mounted) {
                                           Navigator.pop(context);
 
@@ -1259,6 +1380,27 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                             children: [
                               const SizedBox(height: 12),
                               _buildPreferredDropdown(
+                                label: "Job Type *",
+                                items: preferredJobTypes,
+                                selectedValue: selectedPreferredJobType,
+                                onChanged: (value) {
+                                  setModalState(() {
+                                    selectedPreferredJobType = value;
+                                    if (selectedPreferredJobType !=
+                                        "Internship") {
+                                      internshipMonthController.clear();
+                                    }
+                                  });
+                                },
+                              ),
+                              if (selectedPreferredJobType == "Internship")
+                                _buildPreferredTextField(
+                                  label: "No. of Internship Month *",
+                                  controller: internshipMonthController,
+                                  keyboardType: TextInputType.number,
+                                  onChanged: (_) => setModalState(() {}),
+                                ),
+                              _buildPreferredDropdown(
                                 label: "Work Mode *",
                                 items: preferredWorkModes,
                                 selectedValue: selectedPreferredWorkMode,
@@ -1268,30 +1410,27 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                   });
                                 },
                               ),
-                              _buildPreferredDropdown(
-                                label: "Job Type *",
-                                items: preferredJobTypes,
-                                selectedValue: selectedPreferredJobType,
-                                onChanged: (value) {
-                                  setModalState(() {
-                                    selectedPreferredJobType = value;
-                                  });
-                                },
-                              ),
                               _buildPreferredTextField(
                                 label: "Field to Work *",
                                 controller: fieldToWorkController,
+                                onChanged: (_) => setModalState(() {}),
                               ),
                               _buildPreferredTextField(
                                 label: "Expected Salary *",
                                 controller: expectedSalaryController,
                                 keyboardType: TextInputType.number,
+                                onChanged: (_) => setModalState(() {}),
                               ),
                               _buildPreferredCityDropdown(
                                 modalSetState: setModalState,
                               ),
+                              if (selectedPreferredCityId.isNotEmpty)
+                                _buildPreferredTextField(
+                                  label: "Area Name *",
+                                  controller: preferredAreaController,
+                                  onChanged: (_) => setModalState(() {}),
+                                ),
                               const SizedBox(height: 10),
-
                               _buildResumeUploadField(
                                 modalSetState: setModalState,
                               ),
@@ -1314,12 +1453,14 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     required String label,
     required TextEditingController controller,
     TextInputType? keyboardType,
+    ValueChanged<String>? onChanged,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
+        onChanged: onChanged,
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
@@ -1425,6 +1566,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                 if (value != null) {
                   modalSetState(() {
                     selectedPreferredCityId = value;
+                    preferredAreaController.clear();
                   });
                 }
               },
@@ -1459,18 +1601,14 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                 child: Row(
                   children: [
                     Icon(
-                      selectedResumeName
-                          ?.toLowerCase()
-                          .endsWith(".pdf") ==
-                          true
+                      selectedResumeName?.toLowerCase().endsWith(".pdf") == true
                           ? Icons.picture_as_pdf
                           : Icons.description,
-                      color: selectedResumeName
-                          ?.toLowerCase()
-                          .endsWith(".pdf") ==
-                          true
-                          ? Colors.red
-                          : Colors.blue,
+                      color:
+                          selectedResumeName?.toLowerCase().endsWith(".pdf") ==
+                                  true
+                              ? Colors.red
+                              : Colors.blue,
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -1486,7 +1624,6 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                   ],
                 ),
               ),
-
               Positioned(
                 right: 8,
                 top: 8,
@@ -1510,7 +1647,6 @@ class _JobSeekerViewState extends State<JobSeekerView> {
               ),
             ],
           ),
-
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
@@ -1521,20 +1657,15 @@ class _JobSeekerViewState extends State<JobSeekerView> {
               );
             },
             icon: Icon(
-              isUploaded
-                  ? Icons.check_circle
-                  : Icons.upload_file,
+              isUploaded ? Icons.check_circle : Icons.upload_file,
             ),
             label: Text(
-              isUploaded
-                  ? "Resume Uploaded"
-                  : "Upload Resume",
+              isUploaded ? "Resume Uploaded" : "Upload Resume",
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: isUploaded
                   ? Colors.green
-                  : ColorHelperClass.getColorFromHex(
-                  ColorResources.red_color),
+                  : ColorHelperClass.getColorFromHex(ColorResources.red_color),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(
                 vertical: 12,
@@ -1550,9 +1681,9 @@ class _JobSeekerViewState extends State<JobSeekerView> {
   }
 
   void _showResumePicker(
-      BuildContext context,
-      StateSetter modalSetState,
-      ) {
+    BuildContext context,
+    StateSetter modalSetState,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -1594,19 +1725,16 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                     Navigator.pop(context);
 
                     FilePickerResult? result =
-                    await FilePicker.platform.pickFiles(
+                        await FilePicker.platform.pickFiles(
                       type: FileType.custom,
                       allowedExtensions: ['pdf'],
                     );
 
-                    if (result != null &&
-                        result.files.single.path != null) {
+                    if (result != null && result.files.single.path != null) {
                       modalSetState(() {
-                        selectedResume =
-                            File(result.files.single.path!);
+                        selectedResume = File(result.files.single.path!);
 
-                        selectedResumeName =
-                            result.files.single.name;
+                        selectedResumeName = result.files.single.name;
                       });
 
                       // await uploadResume(selectedResume!);
@@ -1625,19 +1753,16 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                     Navigator.pop(context);
 
                     FilePickerResult? result =
-                    await FilePicker.platform.pickFiles(
+                        await FilePicker.platform.pickFiles(
                       type: FileType.custom,
                       allowedExtensions: ['doc', 'docx'],
                     );
 
-                    if (result != null &&
-                        result.files.single.path != null) {
+                    if (result != null && result.files.single.path != null) {
                       modalSetState(() {
-                        selectedResume =
-                            File(result.files.single.path!);
+                        selectedResume = File(result.files.single.path!);
 
-                        selectedResumeName =
-                            result.files.single.name;
+                        selectedResumeName = result.files.single.name;
                       });
 
                       // await uploadResume(selectedResume!);
