@@ -237,6 +237,422 @@ class _ClaimedOfferDetailPageState extends State<ClaimedOfferDetailPage> {
           ],
         ),
       ),
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 8,
+                offset: Offset(0, -2),
+              ),
+            ],
+          ),
+          child: SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                _showReorderBottomSheet();
+              },
+              icon: const Icon(Icons.refresh, color: Colors.white),
+              label: const Text(
+                'Reorder',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showReorderBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.grey[100],
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.65,
+          minChildSize: 0.65,
+          maxChildSize: 0.65,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
+              ),
+              child: Column(
+                children: [
+
+                  // Fixed Header
+                  _buildHeader(),
+
+                  // Scrollable Body
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: scrollController,
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: Column(
+                        children: [
+                          _buildPrescription(),
+                          _buildMedicineList(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(20),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 50,
+            height: 5,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade400,
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+
+          const SizedBox(height: 15),
+
+          const Text(
+            "Reorder Medicines",
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+
+          const SizedBox(height: 15),
+
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  icon: const Icon(Icons.close),
+                  label: const Text("Cancel"),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: ColorHelperClass.getColorFromHex(
+                      ColorResources.red_color,
+                    ),
+                    side: BorderSide(
+                      color: ColorHelperClass.getColorFromHex(
+                        ColorResources.red_color,
+                      ),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+
+                    // TODO: Call Reorder API
+                  },
+                  icon: const Icon(Icons.shopping_cart_checkout),
+                  label: const Text("Confirm"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ColorHelperClass.getColorFromHex(
+                      ColorResources.red_color,
+                    ),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrescription() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Prescription",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: widget.offer.medicinePrescriptionDocument != null &&
+                widget.offer.medicinePrescriptionDocument!.isNotEmpty
+                ? Image.network(
+              widget.offer.medicinePrescriptionDocument!,
+              height: 180,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, progress) {
+                if (progress == null) return child;
+
+                return Container(
+                  height: 180,
+                  alignment: Alignment.center,
+                  child: const CircularProgressIndicator(),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  height: 180,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Center(
+                    child: Text("Unable to load prescription"),
+                  ),
+                );
+              },
+            )
+                : Container(
+              height: 180,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.grey.shade300,
+                ),
+              ),
+              child: const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.description_outlined,
+                    size: 55,
+                    color: Colors.grey,
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    "No Prescription Uploaded",
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 15),
+
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () async {
+                // TODO:
+                // Pick Image/PDF
+                // Upload Prescription
+              },
+              icon: const Icon(Icons.upload_file),
+              label: const Text("Upload New Prescription"),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: ColorHelperClass.getColorFromHex(
+                  ColorResources.red_color,
+                ),
+                side: BorderSide(
+                  color: ColorHelperClass.getColorFromHex(
+                    ColorResources.red_color,
+                  ),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          Divider(
+            color: Colors.grey.shade300,
+            thickness: 1,
+          ),
+
+          const SizedBox(height: 10),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMedicineList() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Medicines",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: widget.offer.medicines?.length ?? 0,
+            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            itemBuilder: (context, index) {
+              final medicine = widget.offer.medicines![index];
+
+              return Card(
+                color: Colors.white,
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CircleAvatar(
+                        radius: 24,
+                        backgroundColor: Colors.red.shade50,
+                        child: Icon(
+                          Icons.medication,
+                          color: ColorHelperClass.getColorFromHex(
+                            ColorResources.red_color,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              medicine.medicineName ?? "--",
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+
+                            const SizedBox(height: 5),
+
+                            Text(
+                              "Qty : ${medicine.quantity} ${getContainerName(medicine.medicineContainerId)}",
+                              style: TextStyle(
+                                color: Colors.grey.shade700,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          // _showEditQuantityDialog(index);
+                        },
+                        icon: const Icon(
+                          Icons.edit,
+                          size: 16,
+                        ),
+                        label: const Text("Edit"),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor:
+                          ColorHelperClass.getColorFromHex(
+                            ColorResources.red_color,
+                          ),
+                          side: BorderSide(
+                            color: ColorHelperClass.getColorFromHex(
+                              ColorResources.red_color,
+                            ),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                            BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+
+          const SizedBox(height: 20),
+        ],
+      ),
     );
   }
 
