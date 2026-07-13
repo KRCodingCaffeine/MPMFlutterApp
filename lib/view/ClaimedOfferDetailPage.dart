@@ -62,16 +62,7 @@ class _ClaimedOfferDetailPageState extends State<ClaimedOfferDetailPage> {
         return;
       }
 
-      File? imageFile;
-
-      if (selectedImage != null) {
-        imageFile = File(selectedImage!.path);
-
-        if (!imageFile.existsSync()) {
-          await _showErrorDialog("Selected image not found");
-          return;
-        }
-      }
+      final imageFile = await _getPrescriptionFileForReorder();
 
       final offerModel = AddOfferDiscountData(
         memberId: widget.offer.memberId,
@@ -122,6 +113,69 @@ class _ClaimedOfferDetailPageState extends State<ClaimedOfferDetailPage> {
         ),
       );
     }
+  }
+
+  Future<File?> _getPrescriptionFileForReorder() async {
+    if (selectedImage != null) {
+      final imageFile = File(selectedImage!.path);
+
+      if (!imageFile.existsSync()) {
+        throw Exception("Selected image not found");
+      }
+
+      return imageFile;
+    }
+
+    final existingImageUrl = widget.offer.medicinePrescriptionDocument?.trim();
+    if (existingImageUrl == null || existingImageUrl.isEmpty) {
+      return null;
+    }
+
+    final uri = Uri.tryParse(existingImageUrl);
+    if (uri == null || !uri.hasScheme) {
+      throw Exception("Existing prescription image is invalid");
+    }
+
+    final client = HttpClient();
+    try {
+      final request = await client.getUrl(uri);
+      final response = await request.close();
+
+      if (response.statusCode != HttpStatus.ok) {
+        throw Exception("Unable to load existing prescription image");
+      }
+
+      final bytes = await response.fold<List<int>>(
+        <int>[],
+        (buffer, chunk) => buffer..addAll(chunk),
+      );
+
+      if (bytes.isEmpty) {
+        throw Exception("Existing prescription image is empty");
+      }
+
+      final file = File(
+        '${Directory.systemTemp.path}/reorder_prescription_'
+        '${widget.offer.memberClaimOfferId ?? DateTime.now().millisecondsSinceEpoch}'
+        '${_extensionFromUrl(uri.path)}',
+      );
+
+      await file.writeAsBytes(bytes, flush: true);
+      return file;
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  String _extensionFromUrl(String path) {
+    final fileName = path.split('/').last;
+    final dotIndex = fileName.lastIndexOf('.');
+
+    if (dotIndex == -1 || dotIndex == fileName.length - 1) {
+      return '.jpg';
+    }
+
+    return fileName.substring(dotIndex);
   }
 
   Future<bool?> _showSuccessDialog(String message, dynamic responseData) async {
