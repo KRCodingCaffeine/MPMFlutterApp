@@ -337,88 +337,192 @@ class _DiscountofferViewState extends State<DiscountofferView> with SingleTicker
       right: 0,
       top: 0,
       bottom: 0,
-      width: MediaQuery.of(context).size.width * 0.8,
+      width: MediaQuery.of(context).size.width * 0.82,
       child: Material(
         elevation: 16,
-        child: Container(
-          color: Colors.white,
-          padding: const EdgeInsets.all(16),
+        color: Colors.white,
+        child: SafeArea(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  const Text("Select Offers", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => setState(() => isFilterDrawerOpen = false),
-                  ),
-                ],
+              /// Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        "Select Offers",
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () {
+                        setState(() {
+                          isFilterDrawerOpen = false;
+                        });
+                      },
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 20),
-              const Text("Select Category"),
-              const SizedBox(height: 8),
-              ...allCategories.map((category) => CheckboxListTile(
-                title: Text(category.organisationCategoryName ?? 'Unknown'),
-                value: pendingSelectedCategories.contains(category.organisationCategoryId),
-                onChanged: (value) => setState(() {
-                  final catId = category.organisationCategoryId;
-                  if (catId != null) {
-                    if (value == true) {
-                      pendingSelectedCategories.add(catId);
-                      pendingSelectedSubcategories.clear();
-                    } else {
-                      pendingSelectedCategories.remove(catId);
-                      pendingSelectedSubcategories.clear();
-                    }
-                  }
-                }),
-              )),
-              const SizedBox(height: 20),
-              const Text("Select Subcategories"),
-              const SizedBox(height: 8),
-              if (pendingSelectedCategories.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Text("Please select a category first", style: TextStyle(color: Colors.grey)),
-                )
-              else
-                ...availableSubcategories.map((subcategory) => CheckboxListTile(
-                  title: Text(subcategory.organisationSubcategoryName ?? 'Unknown'),
-                  value: pendingSelectedSubcategories.contains(subcategory.organisationSubcategoryName ?? ''),
-                  onChanged: (value) => setState(() {
-                    final subcatName = subcategory.organisationSubcategoryName;
-                    if (subcatName != null) {
-                      if (value == true) {
-                        pendingSelectedSubcategories.add(subcatName);
-                      } else {
-                        pendingSelectedSubcategories.remove(subcatName);
-                      }
-                    }
-                  }),
-                )),
-              const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+
+              const Divider(height: 1),
+
+              /// Scrollable Content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Select Category",
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      ...allCategories.map(
+                            (category) => CheckboxListTile(
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          controlAffinity:
+                          ListTileControlAffinity.trailing,
+                          title: Text(
+                            category.organisationCategoryName ?? '',
+                          ),
+                          value: pendingSelectedCategories.contains(
+                            category.organisationCategoryId,
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              final catId =
+                                  category.organisationCategoryId;
+
+                              if (catId != null) {
+                                if (value == true) {
+                                  pendingSelectedCategories.add(catId);
+                                } else {
+                                  pendingSelectedCategories.remove(catId);
+                                }
+
+                                pendingSelectedSubcategories.clear();
+                              }
+                            });
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      const Divider(),
+
+                      const SizedBox(height: 20),
+
+                      const Text(
+                        "Select Subcategories",
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      if (pendingSelectedCategories.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          child: Center(
+                            child: Text(
+                              "Please select a category first",
+                              style: TextStyle(
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        ...availableSubcategories.map(
+                              (subcategory) => CheckboxListTile(
+                            contentPadding: EdgeInsets.zero,
+                            dense: true,
+                            controlAffinity:
+                            ListTileControlAffinity.trailing,
+                            title: Text(
+                              subcategory.organisationSubcategoryName ??
+                                  '',
+                            ),
+                            value: pendingSelectedSubcategories
+                                .contains(
+                              subcategory
+                                  .organisationSubcategoryName ??
+                                  '',
+                            ),
+                            onChanged: (value) {
+                              setState(() {
+                                final name = subcategory
+                                    .organisationSubcategoryName;
+
+                                if (name != null) {
+                                  if (value == true) {
+                                    pendingSelectedSubcategories
+                                        .add(name);
+                                  } else {
+                                    pendingSelectedSubcategories
+                                        .remove(name);
+                                  }
+                                }
+                              });
+                            },
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+
+              /// Bottom Button (Fixed)
+              SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                        ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color,
+                        ),
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          selectedCategories =
+                              List.from(pendingSelectedCategories);
+
+                          selectedSubcategories =
+                              List.from(
+                                  pendingSelectedSubcategories);
+
+                          isFilterApplied =
+                              selectedCategories.isNotEmpty ||
+                                  selectedSubcategories.isNotEmpty;
+
+                          isFilterDrawerOpen = false;
+                        });
+                      },
+                      child: const Text("Apply Filter"),
                     ),
                   ),
-                  onPressed: () {
-                    setState(() {
-                      selectedCategories = List.from(pendingSelectedCategories);
-                      selectedSubcategories = List.from(pendingSelectedSubcategories);
-                      isFilterApplied = selectedCategories.isNotEmpty || selectedSubcategories.isNotEmpty;
-                      isFilterDrawerOpen = false;
-                    });
-                  },
-                  child: const Text("Apply Filter", style: TextStyle(fontSize: 16)),
                 ),
               ),
             ],
