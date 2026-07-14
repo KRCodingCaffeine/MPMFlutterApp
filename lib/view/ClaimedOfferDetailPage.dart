@@ -40,18 +40,18 @@ class _ClaimedOfferDetailPageState extends State<ClaimedOfferDetailPage> {
     _profileFuture = _loadProfileIfNeeded();
 
     editableMedicines = widget.offer.medicines
-        ?.map(
-          (e) => Medicine(
-            organisationOfferDiscountId:
-                widget.offer.organisationOfferDiscountId,
-            orgDetailsID: widget.offer.orgDetailsId,
-            medicineName: e.medicineName,
-            medicineContainerId: e.medicineContainerId,
-            medicineContainerName: getContainerName(e.medicineContainerId),
-            quantity: e.quantity,
-          ),
-        )
-        .toList() ??
+            ?.map(
+              (e) => Medicine(
+                organisationOfferDiscountId:
+                    widget.offer.organisationOfferDiscountId,
+                orgDetailsID: widget.offer.orgDetailsId,
+                medicineName: e.medicineName,
+                medicineContainerId: e.medicineContainerId,
+                medicineContainerName: getContainerName(e.medicineContainerId),
+                quantity: e.quantity,
+              ),
+            )
+            .toList() ??
         [];
   }
 
@@ -68,8 +68,7 @@ class _ClaimedOfferDetailPageState extends State<ClaimedOfferDetailPage> {
         memberId: widget.offer.memberId,
         orgSubcategoryId: widget.offer.organisationSubcategoryId,
         orgDetailsID: widget.offer.orgDetailsId,
-        organisationOfferDiscountId:
-            widget.offer.organisationOfferDiscountId,
+        organisationOfferDiscountId: widget.offer.organisationOfferDiscountId,
         createdBy: widget.offer.memberId,
         medicines: editableMedicines,
       );
@@ -108,11 +107,147 @@ class _ClaimedOfferDetailPageState extends State<ClaimedOfferDetailPage> {
 
       await _showErrorDialog(
         e.toString().replaceAll(
-          "Exception:",
-          "",
-        ),
+              "Exception:",
+              "",
+            ),
       );
     }
+  }
+
+  Future<void> _showRemoveMedicineDialog(int index) async {
+    final medicine = editableMedicines[index];
+
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Remove Medicine",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+          content: RichText(
+            text: TextSpan(
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.black87,
+                height: 1.4,
+              ),
+              children: [
+                const TextSpan(
+                  text: "Are you sure you want to remove ",
+                ),
+                TextSpan(
+                  text: medicine.medicineName ?? "this medicine",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const TextSpan(text: "?"),
+              ],
+            ),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context, false),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.grey.shade700,
+                side: const BorderSide(color: Colors.grey),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Remove"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      final removedMedicine = medicine.medicineName ?? "Medicine";
+
+      _updatePageAndReorderSheet(() {
+        editableMedicines.removeAt(index);
+      });
+
+      if (!mounted) return;
+
+      _showTopSnackBar("$removedMedicine removed successfully.");
+    }
+  }
+
+  void _showTopSnackBar(String message) {
+    final overlay = Overlay.of(context, rootOverlay: true);
+    late final OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) {
+        return Positioned(
+          top: MediaQuery.of(context).padding.top + 12,
+          left: 12,
+          right: 12,
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: Colors.green,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Text(
+                message,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    overlay.insert(overlayEntry);
+    Future.delayed(const Duration(seconds: 2), overlayEntry.remove);
   }
 
   Future<File?> _getPrescriptionFileForReorder() async {
@@ -178,7 +313,10 @@ class _ClaimedOfferDetailPageState extends State<ClaimedOfferDetailPage> {
     return fileName.substring(dotIndex);
   }
 
-  Future<bool?> _showSuccessDialog(String message, dynamic responseData) async {
+  Future<bool?> _showSuccessDialog(
+    String message,
+    dynamic responseData,
+  ) async {
     return await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -186,66 +324,98 @@ class _ClaimedOfferDetailPageState extends State<ClaimedOfferDetailPage> {
         return AlertDialog(
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20.0),
+            borderRadius: BorderRadius.circular(15.0),
           ),
           titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
           contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
           actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-          title: const Row(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.check_circle, color: Colors.green, size: 32),
-              SizedBox(width: 12),
-              Text(
-                "Success",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(
+                        Icons.check_circle,
+                        color: Colors.green,
+                        size: 36,
+                      ),
+                      SizedBox(width: 12),
+                      Text(
+                        "Success",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    splashRadius: 20,
+                    onPressed: () {
+                      Navigator.pop(context, false);
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Divider(
+                thickness: 1,
+                color: Colors.grey,
+                height: 1,
               ),
             ],
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black87,
-                ),
-              ),
-              SizedBox(height: 20),
-            ],
+          content: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
           ),
           actions: [
             OutlinedButton(
-              onPressed: () => Navigator.pop(context, false),
+              onPressed: () {
+                Navigator.pop(context, false);
+              },
               style: OutlinedButton.styleFrom(
-                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                side: const BorderSide(color: Colors.redAccent),
+                foregroundColor: ColorHelperClass.getColorFromHex(
+                  ColorResources.red_color,
+                ),
+                side: const BorderSide(color: Colors.red),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: const Text("Cancel"),
+              child: const Text("Close"),
             ),
             ElevatedButton(
               onPressed: () {
-                Navigator.of(context).pop(true); // Close the dialog first
+                Navigator.pop(context, true);
+
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ClaimedOfferListPage(),
+                      builder: (_) => ClaimedOfferListPage(),
                     ),
                   );
                 });
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                backgroundColor: ColorHelperClass.getColorFromHex(
+                  ColorResources.red_color,
+                ),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
-              child: const Text("View Details", style: TextStyle(color: Colors.white)),
+              child: const Text("View Details"),
             ),
           ],
         );
@@ -306,7 +476,6 @@ class _ClaimedOfferDetailPageState extends State<ClaimedOfferDetailPage> {
       },
     );
   }
-
 
   String getContainerName(dynamic id) {
     switch (id.toString()) {
@@ -899,29 +1068,41 @@ class _ClaimedOfferDetailPageState extends State<ClaimedOfferDetailPage> {
                           ],
                         ),
                       ),
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          _showEditMedicineDialog(index);
+                      PopupMenuButton<String>(
+                        color: Colors.white,
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            _showEditMedicineDialog(index);
+                          } else if (value == 'remove') {
+                            _showRemoveMedicineDialog(index);
+                          }
                         },
-                        icon: const Icon(
-                          Icons.edit,
-                          size: 16,
-                        ),
-                        label: const Text("Edit"),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: ColorHelperClass.getColorFromHex(
-                            ColorResources.red_color,
-                          ),
-                          side: BorderSide(
-                            color: ColorHelperClass.getColorFromHex(
-                              ColorResources.red_color,
+                        itemBuilder: (context) => const [
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(Icons.edit),
+                                SizedBox(width: 10),
+                                Text("Edit"),
+                              ],
                             ),
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                          PopupMenuItem(
+                            value: 'remove',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete, color: Colors.red),
+                                SizedBox(width: 10),
+                                Text(
+                                  "Remove",
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ),
+                        ],
+                      )
                     ],
                   ),
                 ),
