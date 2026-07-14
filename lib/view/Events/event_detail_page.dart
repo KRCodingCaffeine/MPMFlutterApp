@@ -137,7 +137,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         final selectedEventId = int.tryParse(widget.eventId);
 
         final event = response.data!.firstWhere(
-              (e) => e.eventId == selectedEventId,
+          (e) => e.eventId == selectedEventId,
           orElse: () => EventAttendeeData(),
         );
 
@@ -1547,7 +1547,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       if (slot.eventEndTime != null &&
                           slot.eventEndTime!.isNotEmpty) ...[
                         const SizedBox(width: 6),
-                        const Text('to ', style: TextStyle(color: Colors.black)),
+                        const Text('to ',
+                            style: TextStyle(color: Colors.black)),
                         Text(formatTime(slot.eventEndTime)),
                       ],
                     ],
@@ -1649,12 +1650,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
     final isFreeEvent =
         _eventDetails?.eventCostType?.trim().toLowerCase() != 'paid';
+    final isPaidEvent = !isFreeEvent;
+    final confirmationStatus =
+        (_registeredEvent?.confirmationStatus ?? '').trim().toLowerCase();
 
-    final isRejected =
-        (_registeredEvent?.confirmationStatus ?? '')
-            .trim()
-            .toLowerCase() ==
-            'rejected';
+    final isConfirmed = confirmationStatus == 'confirmed';
+    final isRejected = confirmationStatus == 'rejected';
 
     // Registration rejected by coordinator
     if (isRejected) {
@@ -1702,7 +1703,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           // VIEW PASS BUTTON
-          if (_isRegistered && isFreeEvent) ...[
+          if (_isRegistered &&
+              (isFreeEvent || (isPaidEvent && isConfirmed))) ...[
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
@@ -1748,7 +1750,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   children: [
                     const TextSpan(
                       text:
-                      'If you decide not to attend this program, please click ',
+                          'If you decide not to attend this program, please click ',
                     ),
                     TextSpan(
                       text: 'Unregister Here',
@@ -1761,7 +1763,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     ),
                     const TextSpan(
                       text:
-                      '. This will help Mandal in better resource planning.',
+                          '. This will help Mandal in better resource planning.',
                     ),
                   ],
                 ),
@@ -1786,18 +1788,17 @@ class _EventDetailPageState extends State<EventDetailPage> {
               onPressed: _isRegistering
                   ? null
                   : () async {
-                if (_isRegistered) {
-                  // Directly unregister without showing confirmation dialog
-                  await _cancelEventRegistration();
-                } else {
-                  final confirmed =
-                  await _showFinalConfirmationDialog();
+                      if (_isRegistered) {
+                        // Directly unregister without showing confirmation dialog
+                        await _cancelEventRegistration();
+                      } else {
+                        final confirmed = await _showFinalConfirmationDialog();
 
-                  if (confirmed) {
-                    await _showRegistrationConfirmationDialog();
-                  }
-                }
-              },
+                        if (confirmed) {
+                          await _showRegistrationConfirmationDialog();
+                        }
+                      }
+                    },
               child: _isRegistering
                   ? const SizedBox(
                       width: 20,

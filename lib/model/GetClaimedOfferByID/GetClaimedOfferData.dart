@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:mpm/utils/urls.dart';
 
 class GetClaimedOfferData {
@@ -100,10 +102,7 @@ class GetClaimedOfferData {
           : null,
       offerContactPersonName: json['org_contact_person_name'],
       offerContactPersonMobile: json['org_contact_person_mobile'],
-      medicines: json['medicines'] != null
-          ? List<ClaimedMedicine>.from(
-              json['medicines'].map((x) => ClaimedMedicine.fromJson(x)))
-          : null,
+      medicines: _parseMedicines(json),
     );
   }
 
@@ -142,6 +141,41 @@ class GetClaimedOfferData {
     if (value == null) return null;
     if (value is int) return value;
     if (value is String) return int.tryParse(value);
+    return null;
+  }
+
+  static List<ClaimedMedicine>? _parseMedicines(Map<String, dynamic> json) {
+    final dynamic rawMedicines = json['medicines'] ??
+        json['medicine'] ??
+        json['medicine_orders'] ??
+        json['medicine_order'] ??
+        json['member_medicine_orders'];
+
+    if (rawMedicines == null) return null;
+
+    dynamic parsedMedicines = rawMedicines;
+    if (rawMedicines is String) {
+      if (rawMedicines.trim().isEmpty) return null;
+      try {
+        parsedMedicines = jsonDecode(rawMedicines);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    if (parsedMedicines is List) {
+      return parsedMedicines
+          .whereType<Map>()
+          .map((x) => ClaimedMedicine.fromJson(Map<String, dynamic>.from(x)))
+          .toList();
+    }
+
+    if (parsedMedicines is Map) {
+      return [
+        ClaimedMedicine.fromJson(Map<String, dynamic>.from(parsedMedicines)),
+      ];
+    }
+
     return null;
   }
 }

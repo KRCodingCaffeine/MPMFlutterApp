@@ -209,12 +209,12 @@ class _ClaimedOfferListPageState extends State<ClaimedOfferListPage> {
     if (dateString == null) return 'N/A';
     try {
       final dateTime = DateTime.parse(dateString);
-      final hour = dateTime.hour;
-      final minute = dateTime.minute;
-      final period = hour < 12 ? 'AM' : 'PM';
-      final twelveHour = hour > 12 ? hour - 12 : hour == 0 ? 12 : hour;
+      // final hour = dateTime.hour;
+      // final minute = dateTime.minute;
+      // final period = hour < 12 ? 'AM' : 'PM';
+      // final twelveHour = hour > 12 ? hour - 12 : hour == 0 ? 12 : hour;
 
-      return '${dateTime.day}/${dateTime.month}/${dateTime.year} $twelveHour:${minute.toString().padLeft(2, '0')} $period';
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
     } catch (e) {
       return dateString;
     }
