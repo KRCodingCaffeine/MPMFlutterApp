@@ -757,7 +757,12 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                                   context,
                                                   MaterialPageRoute(
                                                     builder: (_) =>
-                                                        JobDetailView(job: job),
+                                                        JobDetailView(
+                                                      job: job,
+                                                      jobId: job["jobId"]
+                                                              ?.toString() ??
+                                                          "",
+                                                    ),
                                                   ),
                                                 );
                                               },
@@ -1069,8 +1074,8 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                               .showSnackBar(
                                             SnackBar(
                                               content: Text(
-                                                uploadResponse.message
-                                                        .isNotEmpty
+                                                uploadResponse
+                                                        .message.isNotEmpty
                                                     ? uploadResponse.message
                                                     : "Unable to upload resume",
                                               ),
@@ -1080,9 +1085,9 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                           return;
                                         }
 
-                                        resumePath = uploadResponse
-                                                .data?.resumePath ??
-                                            resumePath;
+                                        resumePath =
+                                            uploadResponse.data?.resumePath ??
+                                                resumePath;
                                       }
 
                                       final workMode =
@@ -1227,33 +1232,27 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                             GetSeekerProfileData(
                                           seekerProfileId: seekerProfileData
                                               ?.seekerProfileId,
-                                          memberId:
-                                              response.data?.memberId ??
-                                                  loggedInMemberId,
+                                          memberId: response.data?.memberId ??
+                                              loggedInMemberId,
                                           resumePath:
                                               response.data?.resumePath ??
                                                   resumePath,
-                                          headline:
-                                              response.data?.headline ??
-                                                  fieldToWorkController.text
-                                                      .trim(),
-                                          summary:
-                                              response.data?.summary ?? "",
-                                          expectedSalaryMin: response.data
-                                                  ?.expectedSalaryMin ??
+                                          headline: response.data?.headline ??
+                                              fieldToWorkController.text.trim(),
+                                          summary: response.data?.summary ?? "",
+                                          expectedSalaryMin: response
+                                                  .data?.expectedSalaryMin ??
                                               "",
-                                          expectedSalaryMax: response.data
-                                                  ?.expectedSalaryMax ??
+                                          expectedSalaryMax: response
+                                                  .data?.expectedSalaryMax ??
                                               expectedSalaryController.text
                                                   .trim(),
-                                          workMode:
-                                              response.data?.workMode ??
-                                                  workMode,
-                                          workType:
-                                              response.data?.workType ??
-                                                  workType,
-                                          noOfInternshipMonth: response.data
-                                                  ?.noOfInternshipMonth ??
+                                          workMode: response.data?.workMode ??
+                                              workMode,
+                                          workType: response.data?.workType ??
+                                              workType,
+                                          noOfInternshipMonth: response
+                                                  .data?.noOfInternshipMonth ??
                                               (selectedPreferredJobType ==
                                                       "Internship"
                                                   ? internshipMonthController
@@ -1262,16 +1261,13 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                                   : ""),
                                           cityId: response.data?.cityId ??
                                               selectedPreferredCityId,
-                                          areaName:
-                                              response.data?.areaName ??
-                                                  preferredAreaController.text
-                                                      .trim(),
+                                          areaName: response.data?.areaName ??
+                                              preferredAreaController.text
+                                                  .trim(),
                                           isVisible:
-                                              response.data?.isVisible ??
-                                                  "1",
-                                          createdBy:
-                                              response.data?.createdBy ??
-                                                  loggedInMemberId,
+                                              response.data?.isVisible ?? "1",
+                                          createdBy: response.data?.createdBy ??
+                                              loggedInMemberId,
                                         );
                                         if (mounted) {
                                           Navigator.pop(context);
