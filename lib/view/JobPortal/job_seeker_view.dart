@@ -3,12 +3,14 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/model/BusinessProfile/BusinessOccupationProfile/BusinessOccupationProfileData.dart';
+import 'package:mpm/model/JobPortal/GetAppliedJobsByMemberId/GetAppliedJobsByMemberIdData.dart';
 import 'package:mpm/model/JobPortal/GetJobByMemberId/GetJobByMemberIdData.dart';
 import 'package:mpm/model/JobPortal/GetSeekerProfile/GetSeekerProfileData.dart';
 import 'package:mpm/model/JobPortal/JobsForSeekerJob/JobsForSeekerJobData.dart';
 import 'package:mpm/model/city/CityData.dart';
 import 'package:mpm/repository/BusinessProfileRepo/business_occupation_profile_repository/business_occupation_profile_repo.dart';
 import 'package:mpm/repository/JobPortal/AddSeekerProfileRepo/add_seeker_profile_repository.dart';
+import 'package:mpm/repository/JobPortal/GetAppliedJobsByMemberIdRepo/get_applied_jobs_by_member_id_repository.dart';
 import 'package:mpm/repository/JobPortal/GetSeekerProfileRepo/get_seeker_profile_repository.dart';
 import 'package:mpm/repository/JobPortal/GetJobByMemberIdRepo/get_job_by_member_id_repository.dart';
 import 'package:mpm/repository/JobPortal/JobsForSeekerRepo/jobs_for_seeker_repository.dart';
@@ -44,12 +46,15 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       UpdateSeekerProfileRepository();
   final UploadResumeRepository uploadResumeRepository =
       UploadResumeRepository();
+  final GetAppliedJobsByMemberIdRepository appliedJobsRepository =
+      GetAppliedJobsByMemberIdRepository();
 
   String selectedCategory = "All";
   String selectedLocation = "All";
   File? selectedResume;
   String? selectedResumeName;
   bool isLoadingJobs = false;
+  bool isLoadingAppliedJobs = false;
   bool hasOpenedPreferredSheet = false;
   bool? hasSeekerProfile;
   bool isCheckingSeekerProfile = false;
@@ -223,6 +228,52 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     }
 
     return <GetJobByMemberIdData>[];
+  }
+
+  Future<void> loadAppliedJobs() async {
+    try {
+      setState(() {
+        isLoadingAppliedJobs = true;
+      });
+
+      final memberId = await _getLoggedInMemberId();
+      if (memberId.isEmpty) {
+        if (mounted) {
+          setState(() {
+            appliedJobs = [];
+          });
+        }
+        return;
+      }
+
+      final response = await appliedJobsRepository.getAppliedJobs(memberId);
+      if (!mounted) return;
+
+      if (response.status == true) {
+        setState(() {
+          appliedJobs = (response.data ?? <GetAppliedJobsByMemberIdData>[])
+              .map(_mapAppliedJobToViewData)
+              .toList();
+        });
+      } else {
+        setState(() {
+          appliedJobs = [];
+        });
+      }
+    } catch (e) {
+      debugPrint("Get Applied Jobs Fetch Error: $e");
+      if (mounted) {
+        setState(() {
+          appliedJobs = [];
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoadingAppliedJobs = false;
+        });
+      }
+    }
   }
 
   Future<void> _loadSeekerProfileForJobs(String memberId) async {
@@ -410,6 +461,41 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     };
   }
 
+  Map<String, dynamic> _mapAppliedJobToViewData(
+    GetAppliedJobsByMemberIdData job,
+  ) {
+    return {
+      "jobId": job.jobId ?? "",
+      "title": job.title ?? "",
+      "company": "Company",
+      "location": job.location ?? "",
+      "salary": _formatSalaryFromValues(
+        salaryVisible: job.salaryVisible,
+        salaryMin: job.salaryMin,
+        salaryMax: job.salaryMax,
+      ),
+      "experience": _formatExperienceFromValues(
+        job.experienceMinYears,
+        job.experienceMaxYears,
+      ),
+      "postedDate": _formatDate(
+        job.appliedDate ?? job.publishedAt ?? job.createdAt ?? "",
+      ),
+      "category": "IT",
+      "isBookmarked": false,
+      "isPreferredJob": false,
+      "isAppliedJob": true,
+      "applicationStatus": job.applicationStatus ?? "applied",
+      "description": job.description ?? "",
+      "workMode": job.workMode ?? "",
+      "workType": job.workType ?? "",
+      "noOfVacancy": job.noOfVacancy ?? "",
+      "lastApplyDate": job.lastApplyDate ?? "",
+      "expiredAt": job.expiredAt ?? "",
+      "jobData": job,
+    };
+  }
+
   String _formatSalaryFromValues({
     String? salaryVisible,
     String? salaryMin,
@@ -503,6 +589,8 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     }
     final hasPreferredJobs = selectedTab == 0 &&
         displayJobs.any((job) => job["isPreferredJob"] == true);
+    final isLoadingCurrentTab =
+        selectedTab == 2 ? isLoadingAppliedJobs : isLoadingJobs;
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -594,7 +682,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
             ),
           ),
           Expanded(
-            child: isLoadingJobs
+            child: isLoadingCurrentTab
                 ? Center(
                     child: CircularProgressIndicator(
                       color: ColorHelperClass.getColorFromHex(
@@ -746,13 +834,6 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                             height: 36,
                                             child: ElevatedButton(
                                               onPressed: () {
-                                                if (!appliedJobs
-                                                    .contains(job)) {
-                                                  setState(() {
-                                                    appliedJobs.add(job);
-                                                  });
-                                                }
-
                                                 Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
@@ -764,7 +845,11 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                                           "",
                                                     ),
                                                   ),
-                                                );
+                                                ).then((_) {
+                                                  if (selectedTab == 2) {
+                                                    loadAppliedJobs();
+                                                  }
+                                                });
                                               },
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: Colors.red,
@@ -817,6 +902,9 @@ class _JobSeekerViewState extends State<JobSeekerView> {
           setState(() {
             selectedTab = index;
           });
+          if (index == 2) {
+            loadAppliedJobs();
+          }
         },
         selectedItemColor:
             ColorHelperClass.getColorFromHex(ColorResources.red_color),
@@ -995,6 +1083,9 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     }
 
     bool isFormValid() {
+      final hasResume = selectedResume != null ||
+          (selectedResumeName ?? "").trim().isNotEmpty;
+
       return preferredNameController.text.trim().isNotEmpty &&
           preferredEmailController.text.trim().isNotEmpty &&
           preferredMobileController.text.trim().isNotEmpty &&
@@ -1003,7 +1094,8 @@ class _JobSeekerViewState extends State<JobSeekerView> {
           (selectedPreferredJobType != "Internship" ||
               internshipMonthController.text.trim().isNotEmpty) &&
           selectedPreferredCityId.isNotEmpty &&
-          preferredAreaController.text.trim().isNotEmpty;
+          preferredAreaController.text.trim().isNotEmpty &&
+          hasResume;
     }
 
     if (regiController.cityList.isEmpty) {
@@ -1407,14 +1499,15 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                 },
                               ),
                               _buildPreferredTextField(
-                                label: "Field to Work *",
+                                label: "Field of Work *",
                                 controller: fieldToWorkController,
                                 onChanged: (_) => setModalState(() {}),
                               ),
                               _buildPreferredTextField(
-                                label: "Expected Salary *",
+                                label: "Expected Annual Salary *",
                                 controller: expectedSalaryController,
                                 keyboardType: TextInputType.number,
+                                showCurrency: true,
                                 onChanged: (_) => setModalState(() {}),
                               ),
                               _buildPreferredCityDropdown(
@@ -1450,6 +1543,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     required TextEditingController controller,
     TextInputType? keyboardType,
     ValueChanged<String>? onChanged,
+    bool showCurrency = false,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -1459,6 +1553,12 @@ class _JobSeekerViewState extends State<JobSeekerView> {
         onChanged: onChanged,
         decoration: InputDecoration(
           labelText: label,
+          prefixText: showCurrency ? '₹ ' : null,
+          prefixStyle: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
+          ),
           border: const OutlineInputBorder(),
           enabledBorder: const OutlineInputBorder(
             borderSide: BorderSide(color: Colors.black),
@@ -1656,7 +1756,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
               isUploaded ? Icons.check_circle : Icons.upload_file,
             ),
             label: Text(
-              isUploaded ? "Resume Uploaded" : "Upload Resume",
+              isUploaded ? "Resume Uploaded" : "Upload Resume *",
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: isUploaded
