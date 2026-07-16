@@ -991,28 +991,67 @@ class _JobDetailViewState extends State<JobDetailView> {
             ),
             const SizedBox(height: 20),
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Column(
                 children: [
-                  _buildInfoRow(Icons.location_on, "Location", job["location"]),
-                  const Divider(),
-                  _buildInfoRow(Icons.place, "Area", job["areaName"]),
-                  const Divider(),
-                  _buildInfoRow(Icons.currency_rupee, "Salary", job["salary"]),
-                  const Divider(),
-                  _buildInfoRow(Icons.work, "Experience", job["experience"]),
-                  const Divider(),
-                  _buildInfoRow(
-                      Icons.business_center, "Work Mode", job["workMode"]),
-                  const Divider(),
-                  _buildInfoRow(Icons.schedule, "Job Type", job["workType"]),
-                  const Divider(),
-                  _buildInfoRow(
-                    Icons.calendar_month,
+                  _buildWorkInfoRow(
+                    workMode: job["workMode"],
+                    jobType: job["workType"],
+                  ),
+                  const SizedBox(height: 12),
+
+                  _buildLocationAreaRow(
+                    location: job["location"],
+                    area: job["areaName"],
+                  ),
+                  const SizedBox(height: 12),
+
+                  _buildModernInfoRow(
+                    Icons.currency_rupee_rounded,
+                    Colors.green,
+                    "Salary",
+                    job["salary"],
+                  ),
+                  const SizedBox(height: 12),
+
+                  _buildModernInfoRow(
+                    Icons.work_history_rounded,
+                    Colors.blue,
+                    "Experience",
+                    job["experience"],
+                  ),
+                  const SizedBox(height: 12),
+
+                  _buildModernInfoRow(
+                    Icons.apartment_rounded,
+                    Colors.deepPurple,
+                    "Work Mode",
+                    job["workMode"],
+                  ),
+                  const SizedBox(height: 12),
+
+                  _buildModernInfoRow(
+                    Icons.schedule_rounded,
+                    Colors.teal,
+                    "Job Type",
+                    job["workType"],
+                  ),
+                  const SizedBox(height: 12),
+
+                  _buildModernInfoRow(
+                    Icons.calendar_month_rounded,
+                    Colors.redAccent,
                     "Last Apply Date",
                     job["lastApplyDate"],
                   ),
@@ -1092,15 +1131,314 @@ class _JobDetailViewState extends State<JobDetailView> {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 15, color: Colors.blue),
-        const SizedBox(width: 10),
-        Text("$label: ", style: const TextStyle(fontWeight: FontWeight.bold)),
-        Expanded(child: Text(value.isNotEmpty ? value : "Not specified")),
-      ],
+  Widget _buildModernInfoRow(
+      IconData icon,
+      Color color,
+      String label,
+      String value,
+      ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 12,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Colors.grey.shade200,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            height: 46,
+            width: 46,
+            decoration: BoxDecoration(
+              color: color.withOpacity(.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: 24,
+            ),
+          ),
+
+          const SizedBox(width: 14),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value.isNotEmpty ? value : "Not Specified",
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  Widget _buildLocationAreaRow({
+    required String location,
+    required String area,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 12,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Colors.grey.shade200,
+        ),
+      ),
+      child: Row(
+        children: [
+          /// Location
+          Expanded(
+            child: Row(
+              children: [
+                Container(
+                  height: 42,
+                  width: 42,
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.location_on_rounded,
+                    color: Colors.red,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Location",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        location,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          Container(
+            width: 1,
+            height: 42,
+            color: Colors.grey.shade300,
+            margin: const EdgeInsets.symmetric(horizontal: 12),
+          ),
+
+          /// Area
+          Expanded(
+            child: Row(
+              children: [
+                Container(
+                  height: 42,
+                  width: 42,
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.place_rounded,
+                    color: Colors.orange,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Area",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        area,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWorkInfoRow({
+    required String workMode,
+    required String jobType,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 12,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Colors.grey.shade200,
+        ),
+      ),
+      child: Row(
+        children: [
+          /// Work Mode
+          Expanded(
+            child: Row(
+              children: [
+                Container(
+                  height: 42,
+                  width: 42,
+                  decoration: BoxDecoration(
+                    color: Colors.deepPurple.withOpacity(.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.apartment_rounded,
+                    color: Colors.deepPurple,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Work Mode",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        workMode,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          Container(
+            width: 1,
+            height: 42,
+            margin: const EdgeInsets.symmetric(horizontal: 12),
+            color: Colors.grey.shade300,
+          ),
+
+          /// Job Type
+          Expanded(
+            child: Row(
+              children: [
+                Container(
+                  height: 42,
+                  width: 42,
+                  decoration: BoxDecoration(
+                    color: Colors.teal.withOpacity(.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.schedule_rounded,
+                    color: Colors.teal,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Job Type",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        jobType
+                            .replaceAll("_", " ")
+                            .split(" ")
+                            .map((e) =>
+                        e.isEmpty
+                            ? ""
+                            : e[0].toUpperCase() + e.substring(1))
+                            .join(" "),
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

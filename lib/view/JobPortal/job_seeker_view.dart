@@ -504,15 +504,25 @@ class _JobSeekerViewState extends State<JobSeekerView> {
   }) {
     if (salaryVisible == "0") return "Not disclosed";
 
-    final range = salaryRange?.toString().trim() ?? "";
+    final range = _formatSalaryAmount(salaryRange);
     if (range.isNotEmpty && range != "null") return range;
 
-    final min = salaryMin?.toString().trim() ?? "";
-    final max = salaryMax?.toString().trim() ?? "";
+    final min = _formatSalaryAmount(salaryMin);
+    final max = _formatSalaryAmount(salaryMax);
 
     if (min.isEmpty && max.isEmpty) return "Not disclosed";
     if (min.isNotEmpty && max.isNotEmpty) return "Rs. $min - $max LPA";
     return "Rs. ${min.isNotEmpty ? min : max} LPA";
+  }
+
+  String _formatSalaryAmount(String? value) {
+    final amount = value?.toString().trim() ?? "";
+    if (amount.isEmpty) return "";
+
+    return amount.replaceAllMapped(
+      RegExp(r'(\d+)\.0+(?=\D|$)'),
+      (match) => match.group(1) ?? "",
+    );
   }
 
   String _formatExperienceFromValues(String? minValue, String? maxValue) {
@@ -715,6 +725,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                           final jobIndex = hasPreferredJobs ? index - 1 : index;
                           final job = displayJobs[jobIndex];
                           final isPreferredJob = job["isPreferredJob"] == true;
+                          final isAppliedJob = job["isAppliedJob"] == true;
 
                           return Container(
                             margin: const EdgeInsets.symmetric(
@@ -792,7 +803,8 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        "Posted: ${job["postedDate"]}",
+                                        "${isAppliedJob ? "Applied on" : "Posted on"}: "
+                                        "${job["postedDate"]}",
                                         style: const TextStyle(
                                           fontSize: 12,
                                           color: Colors.grey,
@@ -807,26 +819,28 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                 /// RIGHT SIDE ACTIONS
                                 Column(
                                   children: [
-                                    /// SAVE BUTTON
-                                    GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          job["isBookmarked"] =
-                                              !(job["isBookmarked"] ?? false);
-                                        });
-                                      },
-                                      child: Icon(
-                                        (job["isBookmarked"] ?? false)
-                                            ? Icons.bookmark
-                                            : Icons.bookmark_border,
-                                        size: 24,
-                                        color: (job["isBookmarked"] ?? false)
-                                            ? Colors.orange
-                                            : Colors.grey,
+                                    if (!isAppliedJob) ...[
+                                      /// SAVE BUTTON
+                                      GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            job["isBookmarked"] =
+                                                !(job["isBookmarked"] ??
+                                                    false);
+                                          });
+                                        },
+                                        child: Icon(
+                                          (job["isBookmarked"] ?? false)
+                                              ? Icons.bookmark
+                                              : Icons.bookmark_border,
+                                          size: 24,
+                                          color: (job["isBookmarked"] ?? false)
+                                              ? Colors.orange
+                                              : Colors.grey,
+                                        ),
                                       ),
-                                    ),
-
-                                    const SizedBox(height: 50),
+                                      const SizedBox(height: 50),
+                                    ],
 
                                     /// APPLY BUTTON
                                     selectedTab != 2
