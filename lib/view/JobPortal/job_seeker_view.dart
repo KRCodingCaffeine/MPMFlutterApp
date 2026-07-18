@@ -14,6 +14,7 @@ import 'package:mpm/repository/JobPortal/GetAppliedJobsByMemberIdRepo/get_applie
 import 'package:mpm/repository/JobPortal/GetSeekerProfileRepo/get_seeker_profile_repository.dart';
 import 'package:mpm/repository/JobPortal/GetJobByMemberIdRepo/get_job_by_member_id_repository.dart';
 import 'package:mpm/repository/JobPortal/JobsForSeekerRepo/jobs_for_seeker_repository.dart';
+import 'package:mpm/repository/JobPortal/MemberSaveJobRepo/member_save_job_repository.dart';
 import 'package:mpm/repository/JobPortal/UpdateSeekerProfileRepo/update_seeker_profile_repository.dart';
 import 'package:mpm/repository/JobPortal/UploadResumeRepo/upload_resume_repository.dart';
 import 'package:mpm/utils/Session.dart';
@@ -61,6 +62,8 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       UploadResumeRepository();
   final GetAppliedJobsByMemberIdRepository appliedJobsRepository =
       GetAppliedJobsByMemberIdRepository();
+  final MemberSaveJobRepository memberSaveJobRepository =
+      MemberSaveJobRepository();
 
   String selectedCategory = "All";
   String selectedLocation = "All";
@@ -68,6 +71,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
   String? selectedResumeName;
   bool isLoadingJobs = false;
   bool isLoadingAppliedJobs = false;
+  final Set<String> savingJobIds = {};
   bool hasOpenedPreferredSheet = false;
   bool? hasSeekerProfile;
   bool isCheckingSeekerProfile = false;
@@ -356,6 +360,88 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     }
 
     return profileController.memberId.value.trim();
+  }
+
+  Future<void> _updateSavedJob(Map<String, dynamic> job) async {
+    final jobId = job["jobId"]?.toString().trim() ?? "";
+    if (jobId.isEmpty || savingJobIds.contains(jobId)) return;
+
+    final memberId = await _getLoggedInMemberId();
+    if (memberId.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Unable to save job. Member id not found."),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    final wasSaved = job["isBookmarked"] == true;
+    final shouldSave = !wasSaved;
+
+    setState(() {
+      savingJobIds.add(jobId);
+      job["isBookmarked"] = shouldSave;
+    });
+
+    try {
+      final response = await memberSaveJobRepository.memberSaveJob({
+        "member_id": memberId,
+        "job_id": jobId,
+        "is_saved": shouldSave ? "1" : "0",
+        "is_saved_date": shouldSave ? DateTime.now().toIso8601String() : "",
+        "created_by": memberId,
+      });
+
+      if (!mounted) return;
+
+      if (response.status == true || response.code == 409) {
+        if (response.code == 409) {
+          setState(() {
+            job["isBookmarked"] = true;
+          });
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              response.message ??
+                  (shouldSave
+                      ? "Job saved successfully"
+                      : "Job removed from saved jobs"),
+            ),
+            backgroundColor: response.code == 409 ? Colors.orange : Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else {
+        throw Exception(response.message ?? "Failed to update saved job");
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        job["isBookmarked"] = wasSaved;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Failed to update saved job: $e"),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          savingJobIds.remove(jobId);
+        });
+      }
+    }
   }
 
   Future<bool> _seekerProfileExists({bool forceRefresh = false}) async {
@@ -760,6 +846,8 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                           final job = displayJobs[jobIndex];
                           final isPreferredJob = job["isPreferredJob"] == true;
                           final isAppliedJob = job["isAppliedJob"] == true;
+                          final jobId = job["jobId"]?.toString() ?? "";
+                          final isSavingJob = savingJobIds.contains(jobId);
 
                           return Container(
                             margin: const EdgeInsets.symmetric(
@@ -856,20 +944,31 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                     if (!isAppliedJob) ...[
                                       /// SAVE BUTTON
                                       GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            job["isBookmarked"] =
-                                                !(job["isBookmarked"] ?? false);
-                                          });
-                                        },
-                                        child: Icon(
-                                          (job["isBookmarked"] ?? false)
-                                              ? Icons.bookmark
-                                              : Icons.bookmark_border,
-                                          size: 24,
-                                          color: (job["isBookmarked"] ?? false)
-                                              ? Colors.orange
-                                              : Colors.grey,
+                                        onTap: isSavingJob
+                                            ? null
+                                            : () => _updateSavedJob(job),
+                                        child: SizedBox(
+                                          width: 24,
+                                          height: 24,
+                                          child: isSavingJob
+                                              ? const Padding(
+                                                  padding: EdgeInsets.all(3),
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                  ),
+                                                )
+                                              : Icon(
+                                                  (job["isBookmarked"] ?? false)
+                                                      ? Icons.bookmark
+                                                      : Icons.bookmark_border,
+                                                  size: 24,
+                                                  color:
+                                                      (job["isBookmarked"] ??
+                                                              false)
+                                                          ? Colors.orange
+                                                          : Colors.grey,
+                                                ),
                                         ),
                                       ),
                                       const SizedBox(height: 50),
