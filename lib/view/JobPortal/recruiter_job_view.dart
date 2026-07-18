@@ -7,12 +7,14 @@ import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/BusinessProfile/BusinessOccupationProfile/BusinessOccupationProfileData.dart';
 import 'package:mpm/model/JobPortal/GetJobAppliedMembers/GetJobAppliedMembersData.dart';
 import 'package:mpm/model/JobPortal/GetJobByMemberId/GetJobByMemberIdData.dart';
+import 'package:mpm/model/JobPortal/UpdateMemberApplicationStatus/UpdateMemberApplicationStatusData.dart';
 import 'package:mpm/model/city/CityData.dart';
 import 'package:mpm/repository/BusinessProfileRepo/business_occupation_profile_repository/business_occupation_profile_repo.dart';
 import 'package:mpm/repository/JobPortal/CreateJobRepo/create_job_repository.dart';
 import 'package:mpm/repository/JobPortal/GetJobAppliedMembersRepo/get_job_applied_members_repository.dart';
 import 'package:mpm/repository/JobPortal/GetJobByMemberIdRepo/get_job_by_member_id_repository.dart';
 import 'package:mpm/repository/JobPortal/GetOccupationByMemberIdRepo/get_occupation_by_member_id_repository.dart';
+import 'package:mpm/repository/JobPortal/UpdateMemberApplicationStatusRepo/update_member_application_status_repository.dart';
 import 'package:mpm/repository/JobPortal/UpdateJobRepo/update_job_repository.dart';
 import 'package:mpm/repository/JobPortal/UploadJobProfileDocumentRepo/upload_job_profile_document_repository.dart';
 import 'package:mpm/utils/Session.dart';
@@ -26,10 +28,18 @@ import 'package:share_plus/share_plus.dart';
 
 class RecruiterJobView extends StatefulWidget {
   final bool showOccupationBanner;
+  final List<BusinessOccupationProfileData>? initialBusinessProfiles;
+  final List<GetJobByMemberIdData>? initialPostedJobs;
+  final Map<String, int>? initialApplicantCountsByJobId;
+  final bool skipInitialOccupationBannerRefresh;
 
   const RecruiterJobView({
     super.key,
     this.showOccupationBanner = false,
+    this.initialBusinessProfiles,
+    this.initialPostedJobs,
+    this.initialApplicantCountsByJobId,
+    this.skipInitialOccupationBannerRefresh = false,
   });
 
   @override
@@ -333,6 +343,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       "image": member.profileImagePath ?? member.profileImage ?? "",
       "appliedDate": member.appliedDate ?? "",
       "memberId": member.memberId ?? "",
+      "jobId": member.jobId ?? "",
       "memberJobAppliedId": member.memberJobAppliedId ?? "",
     };
   }
@@ -368,8 +379,8 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
         return "shortlisted";
       case "Reject":
         return "rejected";
-      case "Recurted":
-        return "recurted";
+      case "Recruited":
+        return "selected";
       default:
         return "pending";
     }
@@ -384,9 +395,72 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       case "recurted":
       case "recruited":
       case "selected":
-        return "Recurted";
+        return "Recruited";
       default:
         return "Shortlist";
+    }
+  }
+
+  Future<void> _updateMemberApplicationStatus({
+    required Map<String, dynamic> member,
+    required String applicationStatus,
+    required BuildContext dialogContext,
+  }) async {
+    final memberId = member["memberId"]?.toString().trim() ?? "";
+    final jobId = member["jobId"]?.toString().trim() ?? "";
+
+    if (memberId.isEmpty || jobId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Member id or job id not found"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final requestData = UpdateMemberApplicationStatusData(
+        memberId: memberId,
+        jobId: jobId,
+        applicationStatus: applicationStatus,
+      );
+
+      final response = await UpdateMemberApplicationStatusRepository()
+          .updateMemberApplicationStatus(requestData.toJson());
+
+      if (!mounted || !dialogContext.mounted) return;
+
+      if (response.status == true) {
+        setState(() {
+          member["status"] =
+              response.data?.applicationStatus ?? applicationStatus;
+          member["isShortlisted"] = member["status"] == "shortlisted";
+        });
+
+        Navigator.pop(dialogContext);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              response.message ??
+                  "${member["name"]} status updated successfully.",
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        throw Exception(response.message ?? "Failed to update status");
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Failed to update status: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -394,9 +468,23 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
   void initState() {
     super.initState();
     showOccupationBanner = widget.showOccupationBanner;
-    loadBusinessProfiles();
-    loadPostedJobs();
-    _refreshOccupationBanner();
+
+    if (widget.initialBusinessProfiles != null) {
+      businessProfiles = widget.initialBusinessProfiles!;
+    } else {
+      loadBusinessProfiles();
+    }
+
+    if (widget.initialPostedJobs != null) {
+      postedJobs = widget.initialPostedJobs!;
+      applicantCountsByJobId = widget.initialApplicantCountsByJobId ?? {};
+    } else {
+      loadPostedJobs();
+    }
+
+    if (!widget.skipInitialOccupationBannerRefresh) {
+      _refreshOccupationBanner();
+    }
   }
 
   String _getSelectedCityName() {
@@ -719,7 +807,9 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       case "internship":
         return "Internship";
       default:
-        return jobTypes.contains(backendJobType) ? backendJobType! : "Full-time";
+        return jobTypes.contains(backendJobType)
+            ? backendJobType!
+            : "Full-time";
     }
   }
 
@@ -1006,8 +1096,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
               itemBuilder: (context, index) {
                 final member = filteredMembers[index];
                 final profileImageUrl = _getProfileImageUrl(member["image"]);
-                final statusColor =
-                    _getApplicantStatusColor(member["status"]);
+                final statusColor = _getApplicantStatusColor(member["status"]);
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
@@ -1151,17 +1240,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                                     color: Colors.black54,
                                   ),
                                 ),
-
-                                const SizedBox(height: 6),
-
-                                /// Experience
-                                Text(
-                                  "Experience: ${member["experience"]}",
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
                               ],
                             ),
                           ),
@@ -1177,11 +1255,16 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                       Row(
                         children: [
                           Expanded(
-                            child: TextButton(
+                            child: TextButton.icon(
                               onPressed: () {
                                 _showApplicantStatusDialog(member);
                               },
-                              child: const Text(
+                              icon: const Icon(
+                                Icons.edit_outlined,
+                                color: Colors.blue,
+                                size: 20,
+                              ),
+                              label: const Text(
                                 "Edit",
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
@@ -1191,11 +1274,16 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                             ),
                           ),
                           Expanded(
-                            child: TextButton(
+                            child: TextButton.icon(
                               onPressed: () {
                                 _showProfileBottomSheet(member);
                               },
-                              child: const Text(
+                              icon: const Icon(
+                                Icons.visibility_outlined,
+                                color: Colors.redAccent,
+                                size: 20,
+                              ),
+                              label: const Text(
                                 "View Profile",
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
@@ -1205,7 +1293,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                             ),
                           ),
                         ],
-                      ),
+                      )
                     ],
                   ),
                 );
@@ -1586,99 +1674,92 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
 
   void _showApplicantStatusDialog(Map<String, dynamic> member) {
     String selectedStatus = _getApplicantStatusLabel(member["status"]);
-    final statusOptions = ["Shortlist", "Reject", "Recurted"];
+    bool isUpdatingStatus = false;
+
+    final statusOptions = [
+      "Shortlist",
+      "Reject",
+      "Recruited",
+    ];
 
     showDialog(
       context: context,
-      builder: (dialogContext) {
+      builder: (BuildContext dialogContext) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(15),
               ),
-              titlePadding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              contentPadding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              actionsPadding: EdgeInsets.zero,
-              title: Row(
+              titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+              contentPadding: const EdgeInsets.fromLTRB(24, 18, 24, 0),
+              actionsPadding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+
+              /// Title
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  OutlinedButton(
-                    onPressed: () => Navigator.pop(dialogContext),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: ColorHelperClass.getColorFromHex(
-                        ColorResources.red_color,
-                      ),
-                      side: const BorderSide(color: Colors.red),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text("Cancel"),
-                  ),
-                  const Spacer(),
-                  ElevatedButton(
-                    onPressed: () {
-                      final status =
-                          _getApplicantStatusFromLabel(selectedStatus);
-
-                      setState(() {
-                        member["status"] = status;
-                        member["isShortlisted"] = status == "shortlisted";
-                      });
-
-                      Navigator.pop(dialogContext);
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            "${member["name"]} status updated",
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          "Update Applicant Status",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                           ),
-                          backgroundColor: Colors.green,
                         ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorHelperClass.getColorFromHex(
-                        ColorResources.red_color,
                       ),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                      InkWell(
+                        onTap: isUpdatingStatus
+                            ? null
+                            : () => Navigator.pop(dialogContext),
+                        borderRadius: BorderRadius.circular(20),
+                        child: const Padding(
+                          padding: EdgeInsets.all(4),
+                          child: Icon(
+                            Icons.close,
+                            color: Colors.grey,
+                            size: 24,
+                          ),
+                        ),
                       ),
-                    ),
-                    child: const Text("Submit"),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const Divider(
+                    thickness: 1,
+                    color: Colors.grey,
                   ),
                 ],
               ),
+
+              /// Content
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Applicant Status",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
                   DropdownButtonFormField<String>(
                     value: selectedStatus,
                     dropdownColor: Colors.white,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: "Applicant Status",
-                      border: OutlineInputBorder(),
+                      focusColor: Colors.black,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                       enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black),
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.black26),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderSide:
-                            BorderSide(color: Colors.black38, width: 1),
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.black54),
                       ),
                     ),
                     items: statusOptions.map((status) {
-                      return DropdownMenuItem<String>(
+                      return DropdownMenuItem(
                         value: status,
                         child: Text(status),
                       );
@@ -1691,9 +1772,74 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                       }
                     },
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                 ],
               ),
+
+              /// Buttons
+              actions: [
+                OutlinedButton(
+                  onPressed: isUpdatingStatus
+                      ? null
+                      : () {
+                          Navigator.pop(dialogContext);
+                        },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: ColorHelperClass.getColorFromHex(
+                        ColorResources.red_color),
+                    side: BorderSide(
+                      color: ColorHelperClass.getColorFromHex(
+                          ColorResources.red_color),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: isUpdatingStatus
+                      ? null
+                      : () async {
+                          final status =
+                              _getApplicantStatusFromLabel(selectedStatus);
+
+                          setDialogState(() {
+                            isUpdatingStatus = true;
+                          });
+
+                          await _updateMemberApplicationStatus(
+                            member: member,
+                            applicationStatus: status,
+                            dialogContext: dialogContext,
+                          );
+
+                          if (mounted && dialogContext.mounted) {
+                            setDialogState(() {
+                              isUpdatingStatus = false;
+                            });
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ColorHelperClass.getColorFromHex(
+                        ColorResources.red_color),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: isUpdatingStatus
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text("Submit"),
+                ),
+              ],
             );
           },
         );
@@ -2010,9 +2156,8 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                                       color: Colors.white,
                                     ),
                                   )
-                                : Text(editJob != null
-                                    ? "Update Job"
-                                    : "Submit"),
+                                : Text(
+                                    editJob != null ? "Update Job" : "Submit"),
                           ),
                         ],
                       ),
@@ -2020,9 +2165,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                       const SizedBox(height: 10),
 
                       Text(
-                        editJob != null
-                            ? "Update Posted Job"
-                            : "Post New Job",
+                        editJob != null ? "Update Posted Job" : "Post New Job",
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,

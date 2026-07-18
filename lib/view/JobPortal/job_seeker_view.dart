@@ -24,7 +24,20 @@ import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
 class JobSeekerView extends StatefulWidget {
-  const JobSeekerView({super.key});
+  final List<JobsForSeekerJobData>? initialJobsForSeeker;
+  final List<GetJobByMemberIdData>? initialGetJobs;
+  final List<BusinessOccupationProfileData>? initialBusinessProfiles;
+  final GetSeekerProfileData? initialSeekerProfileData;
+  final bool? initialHasSeekerProfile;
+
+  const JobSeekerView({
+    super.key,
+    this.initialJobsForSeeker,
+    this.initialGetJobs,
+    this.initialBusinessProfiles,
+    this.initialSeekerProfileData,
+    this.initialHasSeekerProfile,
+  });
 
   @override
   State<JobSeekerView> createState() => _JobSeekerViewState();
@@ -117,11 +130,25 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       regiController.getCity();
     }
 
-    loadJobs();
+    if (_hasInitialJobData) {
+      businessProfiles = widget.initialBusinessProfiles ?? [];
+      seekerProfileData = widget.initialSeekerProfileData;
+      hasSeekerProfile = widget.initialHasSeekerProfile;
+      _applyLoadedJobs(
+        widget.initialJobsForSeeker ?? <JobsForSeekerJobData>[],
+        widget.initialGetJobs ?? <GetJobByMemberIdData>[],
+      );
+    } else {
+      loadJobs();
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndOpenPreferredDetails();
     });
+  }
+
+  bool get _hasInitialJobData {
+    return widget.initialJobsForSeeker != null || widget.initialGetJobs != null;
   }
 
   @override
@@ -168,25 +195,8 @@ class _JobSeekerViewState extends State<JobSeekerView> {
 
       if (!mounted) return;
 
-      final seenJobIds = <String>{};
-
-      final mappedJobsForSeeker = jobsForSeeker
-          .where((job) => (job.status ?? "").toLowerCase() == "published")
-          .map(_mapSeekerJobToViewData)
-          .where((job) => seenJobIds.add(job["jobId"]?.toString() ?? ""))
-          .toList();
-
-      final mappedGetJobs = getJobs
-          .where((job) => (job.status ?? "").toLowerCase() == "published")
-          .map(_mapJobToViewData)
-          .where((job) => seenJobIds.add(job["jobId"]?.toString() ?? ""))
-          .toList();
-
       setState(() {
-        jobs = [
-          ...mappedJobsForSeeker,
-          ...mappedGetJobs,
-        ];
+        _applyLoadedJobs(jobsForSeeker, getJobs);
       });
     } catch (e) {
       debugPrint("Job List Fetch Error: $e");
@@ -197,6 +207,30 @@ class _JobSeekerViewState extends State<JobSeekerView> {
         });
       }
     }
+  }
+
+  void _applyLoadedJobs(
+    List<JobsForSeekerJobData> jobsForSeeker,
+    List<GetJobByMemberIdData> getJobs,
+  ) {
+    final seenJobIds = <String>{};
+
+    final mappedJobsForSeeker = jobsForSeeker
+        .where((job) => (job.status ?? "").toLowerCase() == "published")
+        .map(_mapSeekerJobToViewData)
+        .where((job) => seenJobIds.add(job["jobId"]?.toString() ?? ""))
+        .toList();
+
+    final mappedGetJobs = getJobs
+        .where((job) => (job.status ?? "").toLowerCase() == "published")
+        .map(_mapJobToViewData)
+        .where((job) => seenJobIds.add(job["jobId"]?.toString() ?? ""))
+        .toList();
+
+    jobs = [
+      ...mappedJobsForSeeker,
+      ...mappedGetJobs,
+    ];
   }
 
   Future<List<JobsForSeekerJobData>> _loadJobsForSeeker(
@@ -616,7 +650,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
           TextButton(
             onPressed: _handlePreferredDetailsPressed,
             child: const Text(
-              "Preferrence",
+              "Preferrences",
               style: TextStyle(color: Colors.white),
             ),
           ),
@@ -710,7 +744,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                             return Padding(
                               padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
                               child: Text(
-                                "Your Preferred Job",
+                                "From Your Preferrences",
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -825,8 +859,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                         onTap: () {
                                           setState(() {
                                             job["isBookmarked"] =
-                                                !(job["isBookmarked"] ??
-                                                    false);
+                                                !(job["isBookmarked"] ?? false);
                                           });
                                         },
                                         child: Icon(
@@ -1469,7 +1502,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                       ),
                       const SizedBox(height: 12),
                       const Text(
-                        "Preferrence",
+                        "Preferrences",
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,

@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mpm/model/BusinessProfile/BusinessOccupationProfile/BusinessOccupationProfileData.dart';
+import 'package:mpm/model/JobPortal/GetJobByMemberId/GetJobByMemberIdData.dart';
+import 'package:mpm/model/JobPortal/JobsForSeekerJob/JobsForSeekerJobData.dart';
+import 'package:mpm/repository/BusinessProfileRepo/business_occupation_profile_repository/business_occupation_profile_repo.dart';
+import 'package:mpm/repository/JobPortal/GetJobAppliedMembersRepo/get_job_applied_members_repository.dart';
+import 'package:mpm/repository/JobPortal/GetJobByMemberIdRepo/get_job_by_member_id_repository.dart';
 import 'package:mpm/repository/JobPortal/GetOccupationByMemberIdRepo/get_occupation_by_member_id_repository.dart';
 import 'package:mpm/repository/JobPortal/GetQualificationByMemberIdRepo/get_qualification_by_member_id_repository.dart';
+import 'package:mpm/repository/JobPortal/GetSeekerProfileRepo/get_seeker_profile_repository.dart';
 import 'package:mpm/repository/JobPortal/JobPortalRoleRepo/update_job_portal_role_repository.dart';
+import 'package:mpm/repository/JobPortal/JobsForSeekerRepo/jobs_for_seeker_repository.dart';
+import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/JobPortal/job_seeker_view.dart';
@@ -27,6 +36,15 @@ class _JobViewState extends State<JobView> {
 
   final GetQualificationByMemberIdRepository qualificationRepository =
       GetQualificationByMemberIdRepository();
+  final BusinessOccupationProfileRepository businessProfileRepository =
+      BusinessOccupationProfileRepository();
+  final GetJobByMemberIdRepository jobRepository = GetJobByMemberIdRepository();
+  final JobsForSeekerRepository jobsForSeekerRepository =
+      JobsForSeekerRepository();
+  final GetSeekerProfileRepository seekerProfileRepository =
+      GetSeekerProfileRepository();
+  final GetJobAppliedMembersRepository jobAppliedMembersRepository =
+      GetJobAppliedMembersRepository();
 
   final UdateProfileController profileController =
       Get.find<UdateProfileController>();
@@ -59,11 +77,7 @@ class _JobViewState extends State<JobView> {
 
   Future<void> updateRole(String role) async {
     try {
-      setState(() {
-        isLoading = true;
-      });
-
-      String memberId = profileController.memberId.value;
+      String memberId = await _getLoggedInMemberId();
 
       final body = {
         "member_id": memberId,
@@ -79,11 +93,29 @@ class _JobViewState extends State<JobView> {
       }
     } catch (e) {
       debugPrint("API Error: $e");
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
     }
+  }
+
+  Future<String> _getLoggedInMemberId() async {
+    final session = await SessionManager.getSession();
+    final sessionMemberId = session?.memberId?.toString().trim() ?? "";
+
+    if (sessionMemberId.isNotEmpty) {
+      return sessionMemberId;
+    }
+
+    return profileController.memberId.value.trim();
+  }
+
+  void _showSnackBar(String message, Color backgroundColor) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: backgroundColor,
+      ),
+    );
   }
 
   Future<void> checkEducationAndProceed() async {
@@ -93,7 +125,11 @@ class _JobViewState extends State<JobView> {
         showEducationBanner = false;
       });
 
-      String memberId = profileController.memberId.value;
+      String memberId = await _getLoggedInMemberId();
+      if (memberId.isEmpty) {
+        _showSnackBar("Member ID is missing. Please login again", Colors.red);
+        return;
+      }
 
       final eduResponse =
           await qualificationRepository.getQualificationsByMemberId(memberId);
@@ -123,18 +159,59 @@ class _JobViewState extends State<JobView> {
 
       await updateRole("job_seeker");
 
+      final seekerProfileResponse =
+          await seekerProfileRepository.getSeekerProfile(memberId);
+      final seekerProfileData = seekerProfileResponse.data;
+      final hasSeekerProfile = seekerProfileResponse.status == true &&
+          seekerProfileData != null &&
+          ((seekerProfileData.seekerProfileId ?? "").trim().isNotEmpty ||
+              (seekerProfileData.memberId ?? "").trim().isNotEmpty);
+
+      final businessResponse =
+          await businessProfileRepository.fetchBusinessOccupationProfiles(
+        memberId: memberId,
+      );
+      final businessProfiles =
+          businessResponse.data ?? <BusinessOccupationProfileData>[];
+
+      final jobsForSeekerResponse =
+          await jobsForSeekerRepository.getJobsForSeeker(memberId);
+      final jobsForSeeker =
+          jobsForSeekerResponse.data?.jobs ?? <JobsForSeekerJobData>[];
+
+      final getJobsMemberId =
+          (hasSeekerProfile && (seekerProfileData.memberId ?? "").isNotEmpty)
+              ? seekerProfileData.memberId!.trim()
+              : memberId;
+      final getJobsResponse = await jobRepository.getJobs(
+        getJobsMemberId,
+        status: "published",
+      );
+      final getJobs = getJobsResponse.data ?? <GetJobByMemberIdData>[];
+
+      if (!mounted) return;
+
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => const JobSeekerView(),
+          builder: (_) => JobSeekerView(
+            initialJobsForSeeker: jobsForSeeker,
+            initialGetJobs: getJobs,
+            initialBusinessProfiles: businessProfiles,
+            initialSeekerProfileData:
+                hasSeekerProfile ? seekerProfileData : null,
+            initialHasSeekerProfile: hasSeekerProfile,
+          ),
         ),
       );
     } catch (e) {
       debugPrint("Education Check Error: $e");
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -145,7 +222,11 @@ class _JobViewState extends State<JobView> {
         showEducationBanner = false;
       });
 
-      String memberId = profileController.memberId.value;
+      String memberId = await _getLoggedInMemberId();
+      if (memberId.isEmpty) {
+        _showSnackBar("Member ID is missing. Please login again", Colors.red);
+        return;
+      }
 
       final occResponse =
           await occupationRepository.getOccupationsByMemberId(memberId);
@@ -165,34 +246,67 @@ class _JobViewState extends State<JobView> {
         }
       }
 
-      /// 🔹 Allow recruiter flow, but show banner on recruiter screen
-      if (!hasOccupation || !hasCompanyName) {
-        await updateRole("recruiter");
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const RecruiterJobView(showOccupationBanner: true),
-          ),
-        );
-        return;
-      }
-
       await updateRole("recruiter");
+
+      final businessResponse =
+          await businessProfileRepository.fetchBusinessOccupationProfiles(
+        memberId: memberId,
+      );
+      final businessProfiles =
+          businessResponse.data ?? <BusinessOccupationProfileData>[];
+
+      final jobsResponse = await jobRepository.getJobs(memberId);
+      final postedJobs = jobsResponse.data ?? <GetJobByMemberIdData>[];
+      final applicantCountsByJobId =
+          await _loadApplicantCountsForJobs(postedJobs);
+
+      if (!mounted) return;
 
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => const RecruiterJobView(),
+          builder: (_) => RecruiterJobView(
+            showOccupationBanner: !hasOccupation || !hasCompanyName,
+            initialBusinessProfiles: businessProfiles,
+            initialPostedJobs: postedJobs,
+            initialApplicantCountsByJobId: applicantCountsByJobId,
+            skipInitialOccupationBannerRefresh: true,
+          ),
         ),
       );
     } catch (e) {
       debugPrint("Occupation Check Error: $e");
+      _showSnackBar("Unable to load job portal. Please try again.", Colors.red);
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
+  }
+
+  Future<Map<String, int>> _loadApplicantCountsForJobs(
+    List<GetJobByMemberIdData> jobs,
+  ) async {
+    final counts = <String, int>{};
+
+    for (final job in jobs) {
+      final jobId = job.jobId?.toString().trim() ?? "";
+      if (jobId.isEmpty || (job.status ?? "").toLowerCase() == "draft") {
+        continue;
+      }
+
+      try {
+        final response =
+            await jobAppliedMembersRepository.getJobAppliedMembers(jobId);
+        counts[jobId] = response.totalCount ?? response.data?.length ?? 0;
+      } catch (e) {
+        debugPrint("Applicant Count Fetch Error for $jobId: $e");
+      }
+    }
+
+    return counts;
   }
 
   @override

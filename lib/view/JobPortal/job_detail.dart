@@ -5,9 +5,10 @@ import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:mpm/model/JobPortal/GetJobById/GetJobByIdData.dart';
-import 'package:mpm/repository/JobPortal/MemberApplyJobRepo/member_apply_job_repository.dart';
+import 'package:mpm/repository/JobPortal/GetAppliedJobsByMemberIdRepo/get_applied_jobs_by_member_id_repository.dart';
 import 'package:mpm/repository/JobPortal/GetJobByIdRepo/get_job_by_id_repository.dart';
 import 'package:mpm/repository/JobPortal/GetSeekerResumeRepo/get_seeker_resume_repository.dart';
+import 'package:mpm/repository/JobPortal/MemberApplyJobRepo/member_apply_job_repository.dart';
 import 'package:mpm/repository/JobPortal/UploadResumeRepo/upload_resume_repository.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
@@ -34,6 +35,8 @@ class JobDetailView extends StatefulWidget {
 class _JobDetailViewState extends State<JobDetailView> {
   final Dio _dio = Dio();
   final GetJobByIdRepository getJobByIdRepository = GetJobByIdRepository();
+  final GetAppliedJobsByMemberIdRepository appliedJobsRepository =
+      GetAppliedJobsByMemberIdRepository();
   final GetSeekerResumeRepository getSeekerResumeRepository =
       GetSeekerResumeRepository();
   final UploadResumeRepository uploadResumeRepository =
@@ -48,6 +51,7 @@ class _JobDetailViewState extends State<JobDetailView> {
   bool isApplied = false;
   bool isSubmittingApplication = false;
   bool isLoadingJobDetail = false;
+  bool isLoadingAppliedStatus = false;
   bool isLoadingSeekerResume = false;
   String? jobDetailError;
   String? seekerResumeError;
@@ -59,7 +63,9 @@ class _JobDetailViewState extends State<JobDetailView> {
   void initState() {
     super.initState();
 
+    isApplied = _isAlreadyAppliedFromJob(widget.job);
     _loadJobDetail();
+    _loadAppliedStatus();
   }
 
   @override
@@ -105,6 +111,42 @@ class _JobDetailViewState extends State<JobDetailView> {
       if (mounted) {
         setState(() {
           isLoadingJobDetail = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadAppliedStatus() async {
+    final jobId = _firstValue(widget.jobId, widget.job["jobId"]);
+    if (jobId.isEmpty || isApplied) return;
+
+    try {
+      setState(() {
+        isLoadingAppliedStatus = true;
+      });
+
+      final session = await SessionManager.getSession();
+      final memberId = session?.memberId?.toString().trim() ?? "";
+      if (memberId.isEmpty) return;
+
+      final response = await appliedJobsRepository.getAppliedJobs(memberId);
+      if (!mounted || response.status != true) return;
+
+      final alreadyApplied = (response.data ?? []).any(
+        (job) => (job.jobId ?? "").trim() == jobId,
+      );
+
+      if (alreadyApplied) {
+        setState(() {
+          isApplied = true;
+        });
+      }
+    } catch (e) {
+      debugPrint("Applied Job Status Check Error: $e");
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoadingAppliedStatus = false;
         });
       }
     }
@@ -252,6 +294,19 @@ class _JobDetailViewState extends State<JobDetailView> {
         _showSnackBar(
           response.message ?? "Application Applied Successfully",
           Colors.green,
+        );
+        return;
+      }
+
+      if (response.code == 409) {
+        setState(() {
+          isApplied = true;
+        });
+
+        Navigator.pop(context);
+        _showSnackBar(
+          response.message ?? "You have already applied for this job.",
+          Colors.orange,
         );
         return;
       }
@@ -942,6 +997,59 @@ class _JobDetailViewState extends State<JobDetailView> {
 
   @override
   Widget build(BuildContext context) {
+    final isWaitingForJobDetail =
+        isLoadingJobDetail || (jobDetailData == null && jobDetailError == null);
+    final isPageLoading = isWaitingForJobDetail || isLoadingAppliedStatus;
+
+    if (isPageLoading) {
+      return Scaffold(
+        backgroundColor: Colors.grey[100],
+        appBar: AppBar(
+          backgroundColor:
+              ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+          title: const Text(
+            "Job Details",
+            style: TextStyle(color: Colors.white),
+          ),
+          iconTheme: const IconThemeData(color: Colors.white),
+        ),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+          ),
+        ),
+      );
+    }
+
+    if (jobDetailError != null || jobDetailData == null) {
+      return Scaffold(
+        backgroundColor: Colors.grey[100],
+        appBar: AppBar(
+          backgroundColor:
+              ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+          title: const Text(
+            "Job Details",
+            style: TextStyle(color: Colors.white),
+          ),
+          iconTheme: const IconThemeData(color: Colors.white),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              jobDetailError ?? "Unable to fetch job detail",
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.redAccent,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     final job = _buildDisplayJob();
     final jobSummaryFile = job["jobSummaryFile"];
 
@@ -966,25 +1074,6 @@ class _JobDetailViewState extends State<JobDetailView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (isLoadingJobDetail)
-              const Padding(
-                padding: EdgeInsets.only(bottom: 12),
-                child: LinearProgressIndicator(),
-              ),
-            if (jobDetailError != null)
-              Container(
-                width: double.infinity,
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  jobDetailError!,
-                  style: const TextStyle(color: Colors.orange),
-                ),
-              ),
             Text(
               job["company"],
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
@@ -992,17 +1081,17 @@ class _JobDetailViewState extends State<JobDetailView> {
             const SizedBox(height: 20),
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
+              // decoration: BoxDecoration(
+              //   color: Colors.white,
+              //   borderRadius: BorderRadius.circular(18),
+              //   boxShadow: [
+              //     BoxShadow(
+              //       color: Colors.black.withOpacity(0.05),
+              //       blurRadius: 12,
+              //       offset: const Offset(0, 4),
+              //     ),
+              //   ],
+              // ),
               child: Column(
                 children: [
                   _buildWorkInfoRow(
@@ -1010,13 +1099,11 @@ class _JobDetailViewState extends State<JobDetailView> {
                     jobType: job["workType"],
                   ),
                   const SizedBox(height: 12),
-
                   _buildLocationAreaRow(
                     location: job["location"],
                     area: job["areaName"],
                   ),
                   const SizedBox(height: 12),
-
                   _buildModernInfoRow(
                     Icons.currency_rupee_rounded,
                     Colors.green,
@@ -1024,7 +1111,6 @@ class _JobDetailViewState extends State<JobDetailView> {
                     job["salary"],
                   ),
                   const SizedBox(height: 12),
-
                   _buildModernInfoRow(
                     Icons.work_history_rounded,
                     Colors.blue,
@@ -1032,27 +1118,10 @@ class _JobDetailViewState extends State<JobDetailView> {
                     job["experience"],
                   ),
                   const SizedBox(height: 12),
-
-                  _buildModernInfoRow(
-                    Icons.apartment_rounded,
-                    Colors.deepPurple,
-                    "Work Mode",
-                    job["workMode"],
-                  ),
-                  const SizedBox(height: 12),
-
-                  _buildModernInfoRow(
-                    Icons.schedule_rounded,
-                    Colors.teal,
-                    "Job Type",
-                    job["workType"],
-                  ),
-                  const SizedBox(height: 12),
-
                   _buildModernInfoRow(
                     Icons.calendar_month_rounded,
                     Colors.redAccent,
-                    "Last Apply Date",
+                    "Last Date to Apply",
                     job["lastApplyDate"],
                   ),
                 ],
@@ -1092,9 +1161,12 @@ class _JobDetailViewState extends State<JobDetailView> {
                     },
                     label: const Text("View Job Description"),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorHelperClass.getColorFromHex(
-                          ColorResources.red_color),
+                      backgroundColor: Colors.redAccent,
                       foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                   ),
                 ),
@@ -1117,8 +1189,15 @@ class _JobDetailViewState extends State<JobDetailView> {
                       _openApplyModal();
                     },
               style: ElevatedButton.styleFrom(
-                backgroundColor: isApplied ? Colors.green : Colors.red,
+                backgroundColor: isApplied
+                    ? Colors.green
+                    : ColorHelperClass.getColorFromHex(
+                        ColorResources.red_color),
                 foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: Text(
                 isApplied ? "Applied" : "Apply Now",
@@ -1132,11 +1211,11 @@ class _JobDetailViewState extends State<JobDetailView> {
   }
 
   Widget _buildModernInfoRow(
-      IconData icon,
-      Color color,
-      String label,
-      String value,
-      ) {
+    IconData icon,
+    Color color,
+    String label,
+    String value,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: 12,
@@ -1164,9 +1243,7 @@ class _JobDetailViewState extends State<JobDetailView> {
               size: 24,
             ),
           ),
-
           const SizedBox(width: 14),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1195,7 +1272,6 @@ class _JobDetailViewState extends State<JobDetailView> {
       ),
     );
   }
-
 
   Widget _buildLocationAreaRow({
     required String location,
@@ -1420,10 +1496,9 @@ class _JobDetailViewState extends State<JobDetailView> {
                         jobType
                             .replaceAll("_", " ")
                             .split(" ")
-                            .map((e) =>
-                        e.isEmpty
-                            ? ""
-                            : e[0].toUpperCase() + e.substring(1))
+                            .map((e) => e.isEmpty
+                                ? ""
+                                : e[0].toUpperCase() + e.substring(1))
                             .join(" "),
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -1493,6 +1568,13 @@ class _JobDetailViewState extends State<JobDetailView> {
         fallback["jobSummaryFile"],
       ),
     };
+  }
+
+  bool _isAlreadyAppliedFromJob(Map<String, dynamic> job) {
+    if (job["isAppliedJob"] == true) return true;
+
+    final status = job["applicationStatus"]?.toString().trim().toLowerCase();
+    return status != null && status.isNotEmpty && status != "pending";
   }
 
   String _firstValue(
