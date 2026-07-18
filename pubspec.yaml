@@ -59,7 +59,7 @@ dependencies:
   path_provider: ^2.1.5
   open_filex: ^4.6.0
   flutter_widget_from_html: ^0.16.0
-  sqflite: ^2.3.0
+  sqflite: 2.3.3+1
   path: ^1.8.3
   device_info_plus: ^10.1.0
   el_tooltip: ^2.2.1
@@ -76,6 +76,7 @@ dependencies:
   awesome_notifications: ^0.10.1
   signature: ^5.5.0
   month_year_picker: ^0.5.0+1
+  file_picker: ^10.1.9
 
 dev_dependencies:
   flutter_test:
