@@ -5,7 +5,7 @@ import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/Events/event_view.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_upi_india/flutter_upi_india.dart';
 
 class EventPaymentDetailPage extends StatefulWidget {
   final GetEventDetailsByIdData eventDetails;
@@ -27,6 +27,7 @@ class _EventPaymentDetailPageState extends State<EventPaymentDetailPage> {
   final TextEditingController transactionIdController = TextEditingController();
   final PaymentTransactionRepository _paymentTransactionRepository =
       PaymentTransactionRepository();
+  List<ApplicationMeta> _apps = [];
   bool _isSubmittingTransaction = false;
 
   GetEventDetailsByIdData get eventDetails => widget.eventDetails;
@@ -37,6 +38,24 @@ class _EventPaymentDetailPageState extends State<EventPaymentDetailPage> {
   void dispose() {
     transactionIdController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUpiApps();
+  }
+
+  Future<void> _loadUpiApps() async {
+    final apps = await UpiPay.getInstalledUpiApplications(
+      statusType: UpiApplicationDiscoveryAppStatusType.all,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _apps = apps;
+    });
   }
 
   int get _eventEntryAmount {
@@ -88,44 +107,86 @@ class _EventPaymentDetailPageState extends State<EventPaymentDetailPage> {
     return qrCode.startsWith('http://') || qrCode.startsWith('https://');
   }
 
-  Uri? get _gPayUri {
-    final upiCode = eventDetails.eventUPICode?.trim();
-    if (upiCode == null || upiCode.isEmpty) {
+  Uri? get _upiUri {
+    final upiId = eventDetails.eventUPICode?.trim();
+
+    if (upiId == null || upiId.isEmpty) {
       return null;
     }
 
-    if (upiCode.startsWith('upi://') || upiCode.startsWith('tez://')) {
-      return Uri.tryParse(upiCode);
-    }
-
     return Uri(
-      scheme: 'tez',
-      host: 'upi',
-      path: 'pay',
+      scheme: 'upi',
+      host: 'pay',
       queryParameters: {
-        'pa': upiCode,
+        'pa': upiId,
         'pn': eventDetails.eventName?.trim().isNotEmpty == true
             ? eventDetails.eventName!.trim()
-            : 'Event Payment',
-        if (_totalPaymentAmount > 0) 'am': _totalPaymentAmount.toString(),
+            : 'MPM Event',
+        // 'am': _totalPaymentAmount.toString(),
         'cu': 'INR',
       },
     );
   }
 
-  Future<void> _openGPay(BuildContext context) async {
-    final uri = _gPayUri;
-    if (uri == null) {
+  Future<void> _openUpiApps(BuildContext context) async {
+    if (_apps.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('UPI code not available')),
+        const SnackBar(
+          content: Text("No UPI Apps Installed"),
+        ),
       );
       return;
     }
 
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open Google Pay')),
+    final ApplicationMeta? app =
+    await showModalBottomSheet<ApplicationMeta>(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: _apps.length,
+            itemBuilder: (context, index) {
+              final item = _apps[index];
+
+              return ListTile(
+                leading: item.iconImage(40),
+                title: Text(item.upiApplication.getAppName()),
+                onTap: () {
+                  Navigator.pop(context, item);
+                },
+              );
+            },
+          ),
+        );
+      },
+    );
+
+    if (app == null) return;
+
+    try {
+      final response = await UpiPay.initiateTransaction(
+        amount: _totalPaymentAmount.toStringAsFixed(2),
+        app: app.upiApplication,
+        receiverName: "MPM",
+        receiverUpiAddress: eventDetails.eventUPICode!.trim(),
+        transactionRef:
+        DateTime.now().millisecondsSinceEpoch.toString(),
+        transactionNote: "Event Payment",
       );
+
+      debugPrint("Status : ${response.status}");
+      debugPrint("TxnId  : ${response.txnId}");
+      debugPrint("Approval Ref : ${response.approvalRefNo}");
+      debugPrint("Response Code : ${response.responseCode}");
+    } catch (e) {
+      debugPrint("UPI Error : $e");
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
     }
   }
 
@@ -327,18 +388,43 @@ class _EventPaymentDetailPageState extends State<EventPaymentDetailPage> {
               ),
               clipBehavior: Clip.antiAlias,
               child: InkWell(
-                onTap: () => _openGPay(context),
+                onTap: () => _openUpiApps(context),
                 child: _hasQrImage
                     ? Image.network(
-                        eventDetails.eventAmountQrCode!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _buildQrPlaceholder(),
-                      )
+                  eventDetails.eventAmountQrCode!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _buildQrPlaceholder(),
+                )
                     : _buildQrPlaceholder(),
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
+
+          // SizedBox(
+          //   width: double.infinity,
+          //   child: ElevatedButton.icon(
+          //     onPressed: () => _openUpiApps(context),
+          //     icon: const Icon(Icons.account_balance_wallet),
+          //     label: const Text(
+          //       "Pay Now",
+          //       style: TextStyle(
+          //         fontSize: 16,
+          //         fontWeight: FontWeight.w600,
+          //       ),
+          //     ),
+          //     style: ElevatedButton.styleFrom(
+          //       backgroundColor: themeColor,
+          //       foregroundColor: Colors.white,
+          //       padding: const EdgeInsets.symmetric(vertical: 14),
+          //       shape: RoundedRectangleBorder(
+          //         borderRadius: BorderRadius.circular(12),
+          //       ),
+          //     ),
+          //   ),
+          // ),
+          //
+          // const SizedBox(height: 16),
           // Text(
           //   "Amount is calculated based on your selected family members also.",
           //   textAlign: TextAlign.center,
@@ -583,4 +669,7 @@ class _EventPaymentDetailPageState extends State<EventPaymentDetailPage> {
       ],
     );
   }
+}
+
+class UpiIntent {
 }
