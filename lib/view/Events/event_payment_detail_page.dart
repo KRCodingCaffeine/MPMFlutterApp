@@ -5,7 +5,8 @@ import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/Events/event_view.dart';
-import 'package:flutter_upi_india/flutter_upi_india.dart';
+import 'package:upi_intent/upi_intent.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class EventPaymentDetailPage extends StatefulWidget {
   final GetEventDetailsByIdData eventDetails;
@@ -27,7 +28,6 @@ class _EventPaymentDetailPageState extends State<EventPaymentDetailPage> {
   final TextEditingController transactionIdController = TextEditingController();
   final PaymentTransactionRepository _paymentTransactionRepository =
       PaymentTransactionRepository();
-  List<ApplicationMeta> _apps = [];
   bool _isSubmittingTransaction = false;
 
   GetEventDetailsByIdData get eventDetails => widget.eventDetails;
@@ -38,24 +38,6 @@ class _EventPaymentDetailPageState extends State<EventPaymentDetailPage> {
   void dispose() {
     transactionIdController.dispose();
     super.dispose();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUpiApps();
-  }
-
-  Future<void> _loadUpiApps() async {
-    final apps = await UpiPay.getInstalledUpiApplications(
-      statusType: UpiApplicationDiscoveryAppStatusType.all,
-    );
-
-    if (!mounted) return;
-
-    setState(() {
-      _apps = apps;
-    });
   }
 
   int get _eventEntryAmount {
@@ -107,78 +89,92 @@ class _EventPaymentDetailPageState extends State<EventPaymentDetailPage> {
     return qrCode.startsWith('http://') || qrCode.startsWith('https://');
   }
 
-  Uri? get _upiUri {
-    final upiId = eventDetails.eventUPICode?.trim();
+  Future<void> testUpi() async {
+    final uri = Uri.parse(
+      "upi://pay?"
+          "pa=darathyjohnjoseph@okaxis"
+          "&pn=Darathy%20John%20Joseph"
+          "&am=5"
+          "&cu=INR",
+    );
 
-    if (upiId == null || upiId.isEmpty) {
-      return null;
-    }
-
-    return Uri(
-      scheme: 'upi',
-      host: 'pay',
-      queryParameters: {
-        'pa': upiId,
-        'pn': eventDetails.eventName?.trim().isNotEmpty == true
-            ? eventDetails.eventName!.trim()
-            : 'MPM Event',
-        // 'am': _totalPaymentAmount.toString(),
-        'cu': 'INR',
-      },
+    await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
     );
   }
 
   Future<void> _openUpiApps(BuildContext context) async {
-    if (_apps.isEmpty) {
+    final upiCode = eventDetails.eventUPICode?.trim();
+
+    if (upiCode == null || upiCode.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("No UPI Apps Installed"),
+          content: Text("UPI code not available"),
         ),
       );
       return;
     }
 
-    final ApplicationMeta? app =
-    await showModalBottomSheet<ApplicationMeta>(
-      context: context,
-      builder: (context) {
-        return SafeArea(
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: _apps.length,
-            itemBuilder: (context, index) {
-              final item = _apps[index];
-
-              return ListTile(
-                leading: item.iconImage(40),
-                title: Text(item.upiApplication.getAppName()),
-                onTap: () {
-                  Navigator.pop(context, item);
-                },
-              );
-            },
-          ),
-        );
-      },
-    );
-
-    if (app == null) return;
-
     try {
-      final response = await UpiPay.initiateTransaction(
-        amount: _totalPaymentAmount.toStringAsFixed(2),
-        app: app.upiApplication,
-        receiverName: "MPM",
-        receiverUpiAddress: eventDetails.eventUPICode!.trim(),
-        transactionRef:
-        DateTime.now().millisecondsSinceEpoch.toString(),
-        transactionNote: "Event Payment",
+
+      final upiCode = eventDetails.eventUPICode!.trim();
+      final txnRef = DateTime.now().millisecondsSinceEpoch.toString();
+
+      final uri =
+          "upi://pay?"
+          "pa=${Uri.encodeComponent(upiCode)}"
+          "&pn=${Uri.encodeComponent("Darathy John Joseph")}"
+          "&am=$_totalPaymentAmount"
+          "&cu=INR"
+          "&tr=$txnRef"
+          "&tn=${Uri.encodeComponent("Event Payment")}"
+          "&mc=0000";
+
+      debugPrint(uri);
+
+      debugPrint("=========== UPI REQUEST ===========");
+      debugPrint("UPI ID        : $upiCode");
+      debugPrint("Payee Name    : Darathy John Joseph");
+      debugPrint("Amount        : ${_totalPaymentAmount.toDouble()}");
+      debugPrint("Txn Ref       : $txnRef");
+      debugPrint("Note          : Event Payment");
+      debugPrint("==================================");
+
+      final response = await UpiIntent.pay(
+        context: context,
+        payment: UpiPayment(
+          payeeVpa: upiCode,
+          payeeName: "Darathy John Joseph",
+          amount: _totalPaymentAmount.toDouble(),
+          transactionRefId: DateTime.now().millisecondsSinceEpoch.toString(),
+          transactionNote: "Event Payment",
+          merchantCode: "0000",
+        ),
       );
 
-      debugPrint("Status : ${response.status}");
-      debugPrint("TxnId  : ${response.txnId}");
-      debugPrint("Approval Ref : ${response.approvalRefNo}");
-      debugPrint("Response Code : ${response.responseCode}");
+      if (response == null) return;
+
+      debugPrint("Status      : ${response.status}");
+      debugPrint("Txn Id      : ${response.transactionId}");
+      debugPrint("ApprovalRef : ${response.approvalRefNo}");
+      debugPrint("Response    : ${response.responseCode}");
+
+      if (response.status == UpiTransactionStatus.success) {
+        // Payment Successful
+      } else if (response.status == UpiTransactionStatus.submitted) {
+        // Submitted
+      } else {
+        // Failed / Cancelled
+      }
+    } on UpiException catch (e) {
+      debugPrint("UPI Error : $e");
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message)),
+        );
+      }
     } catch (e) {
       debugPrint("UPI Error : $e");
 
@@ -388,13 +384,16 @@ class _EventPaymentDetailPageState extends State<EventPaymentDetailPage> {
               ),
               clipBehavior: Clip.antiAlias,
               child: InkWell(
-                onTap: () => _openUpiApps(context),
+                // onTap: () => _openUpiApps(context),
+                onTap: () async {
+                  await testUpi();
+                },
                 child: _hasQrImage
                     ? Image.network(
-                  eventDetails.eventAmountQrCode!,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _buildQrPlaceholder(),
-                )
+                        eventDetails.eventAmountQrCode!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _buildQrPlaceholder(),
+                      )
                     : _buildQrPlaceholder(),
               ),
             ),
@@ -669,7 +668,4 @@ class _EventPaymentDetailPageState extends State<EventPaymentDetailPage> {
       ],
     );
   }
-}
-
-class UpiIntent {
 }
