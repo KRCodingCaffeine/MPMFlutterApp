@@ -4,6 +4,7 @@ class FamilyHeadMemberData {
   var firstName;
   var lastName;
   var middleName;
+  var mobile;
   var profileImage;
   var pincode;
 
@@ -13,6 +14,7 @@ class FamilyHeadMemberData {
         this.firstName,
         this.lastName,
         this.middleName,
+        this.mobile,
         this.profileImage,
       this.pincode});
 
@@ -22,6 +24,7 @@ class FamilyHeadMemberData {
     firstName = json['first_name'];
     lastName = json['last_name'];
     middleName = json['middle_name'];
+    mobile = json['mobile'];
     profileImage = json['profile_image'];
     pincode = json['pincode'];
   }
@@ -33,6 +36,7 @@ class FamilyHeadMemberData {
     data['first_name'] = this.firstName;
     data['last_name'] = this.lastName;
     data['middle_name'] = this.middleName;
+    data['mobile'] = this.mobile;
     data['profile_image'] = this.profileImage;
     data['pincode'] = this.pincode;
     return data;

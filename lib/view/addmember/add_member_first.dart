@@ -123,7 +123,7 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
         regiController.emailController.value.text.trim().isNotEmpty &&
         regiController.dateController.text.trim().isNotEmpty &&
         regiController.selectedGender.value.isNotEmpty &&
-        regiController.selectBloodGroup.value.isNotEmpty &&
+        // regiController.selectBloodGroup.value.isNotEmpty &&
         regiController.selectMarital.value.isNotEmpty;
   }
 
@@ -274,11 +274,11 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                                     showErrorSnackbar("Select Gender");
                                     return;
                                   }
-                                  if (regiController.selectBloodGroup.value ==
-                                      '') {
-                                    showErrorSnackbar("Select Blood Group");
-                                    return;
-                                  }
+                                  // if (regiController.selectBloodGroup.value ==
+                                  //     '') {
+                                  //   showErrorSnackbar("Select Blood Group");
+                                  //   return;
+                                  // }
 
                                   if (regiController.selectMarital.value ==
                                       '') {
@@ -1074,7 +1074,7 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                                       child: InputDecorator(
                                         decoration: InputDecoration(
                                           labelText: selectedValue.isNotEmpty
-                                              ? 'Blood Group *'
+                                              ? 'Blood Group'
                                               : null,
                                           border: const OutlineInputBorder(
                                             borderSide:
@@ -1104,7 +1104,7 @@ class _AddNewMemberFirstState extends State<AddNewMemberFirst> {
                                           isExpanded: true,
                                           underline: Container(),
                                           hint: const Text(
-                                            'Select Blood Group *',
+                                            'Select Blood Group',
                                             style: TextStyle(
                                                 fontWeight: FontWeight.bold),
                                           ),

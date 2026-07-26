@@ -7,6 +7,7 @@ class GetEventAttendeesDetailByIdData {
   final String? eventRegisteredData;
   final String? registrationDate;
   String? cancelledDate;
+  final String? confirmationStatus;
   final String? eventQrCode;
   final String? noOfFoodContainer;
   final EventData? event;
@@ -21,6 +22,7 @@ class GetEventAttendeesDetailByIdData {
     this.eventRegisteredData,
     this.registrationDate,
     this.cancelledDate,
+    this.confirmationStatus,
     this.eventQrCode,
     this.noOfFoodContainer,
     this.event,
@@ -37,6 +39,7 @@ class GetEventAttendeesDetailByIdData {
       eventRegisteredData: json['event_registered_data'] as String?,
       registrationDate: json['registration_date'] as String?,
       cancelledDate: json['cancelled_date'] as String?,
+      confirmationStatus: json['confirmation_status'] as String?,
       eventQrCode: json['event_qr_code'] as String?,
       noOfFoodContainer: json['no_of_food_container'] as String?,
       event: json['event'] != null ? EventData.fromJson(json['event']) : null,
@@ -59,6 +62,7 @@ class GetEventAttendeesDetailByIdData {
     'event_registered_data': eventRegisteredData,
     'registration_date': registrationDate,
     'cancelled_date': cancelledDate,
+    'confirmation_status': confirmationStatus,
     'event_qr_code': eventQrCode,
     'no_of_food_container': noOfFoodContainer,
     'event': event?.toJson(),

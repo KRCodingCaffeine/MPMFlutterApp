@@ -6,6 +6,7 @@ class EventAttendeesData {
   String? confirmationStatus;
   String? eventQrCode;
   String? eventCancelledOn;
+  String? paymentTransactionId;
   String? hasAttendEvent;
   String? hasPaidForFood;
   String? hasReceivedFood;
@@ -44,6 +45,7 @@ class EventAttendeesData {
     this.confirmationStatus,
     this.eventQrCode,
     this.eventCancelledOn,
+    this.paymentTransactionId,
     this.hasAttendEvent,
     this.hasPaidForFood,
     this.hasReceivedFood,
@@ -84,6 +86,7 @@ class EventAttendeesData {
       confirmationStatus: json['confirmation_status']?.toString(),
       eventQrCode: json['event_qr_code']?.toString(),
       eventCancelledOn: json['event_cancelled_on']?.toString(),
+      paymentTransactionId: json['payment_transaction_id']?.toString(),
       hasAttendEvent: json['has_attend_event']?.toString(),
       hasPaidForFood: json['has_paid_for_food']?.toString(),
       hasReceivedFood: json['has_received_food']?.toString(),
@@ -126,6 +129,7 @@ class EventAttendeesData {
       'confirmation_status': confirmationStatus,
       'event_qr_code': eventQrCode,
       'event_cancelled_on': eventCancelledOn,
+      'payment_transaction_id': paymentTransactionId,
       'has_attend_event': hasAttendEvent,
       'has_paid_for_food': hasPaidForFood,
       'has_received_food': hasReceivedFood,

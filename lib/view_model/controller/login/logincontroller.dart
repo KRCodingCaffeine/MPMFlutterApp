@@ -48,9 +48,7 @@ class LoginController {
     loadinng.value = true;
 
     var request = http.MultipartRequest('POST', Uri.parse(Urls.check_url));
-    request.fields.addAll({
-      'LM_code_or_mobile': mobile
-    });
+    request.fields.addAll({'LM_code_or_mobile': mobile});
     http.StreamedResponse response = await request.send();
 
     if (response.statusCode == 200) {
@@ -63,7 +61,8 @@ class LoginController {
         print("" + registerResponse.message.toString());
         if (registerResponse.message.toString() == "Sorry! Data Not Found") {
           mobilecon.value = mobile;
-          Navigator.pushNamed(context!, RouteNames.registration_screen);
+          // Navigator.pushNamed(context!, RouteNames.registration_screen);
+          _showInvalidDetailsDialog(context);
         }
       } else {
         // ✅ ADD MEMBERSHIP APPROVAL STATUS CHECK
@@ -72,7 +71,8 @@ class LoginController {
             'Pending Approval',
             'Your membership is still pending approval. Please contact administrator.',
             snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+            backgroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
             colorText: Colors.white,
             duration: Duration(seconds: 4),
           );
@@ -146,7 +146,8 @@ class LoginController {
             });
           } else {
             lmCodeVisible.value = false;
-            Navigator.pushNamed(context!, RouteNames.registration_screen);
+            // Navigator.pushNamed(context!, RouteNames.registration_screen);
+            _showInvalidDetailsDialog(context);
           }
         }
       }
@@ -155,10 +156,8 @@ class LoginController {
 
   void updatemobileno(String mobile) async {
     var request = http.MultipartRequest('POST', Uri.parse(Urls.updatemobileno));
-    request.fields.addAll({
-      'mobile_number': mobile,
-      'member_id': memberId.value
-    });
+    request.fields
+        .addAll({'mobile_number': mobile, 'member_id': memberId.value});
     print("ghhjhhj" + memberId.value);
 
     http.StreamedResponse response = await request.send();
@@ -171,7 +170,13 @@ class LoginController {
         print("" + registerResponse.message.toString());
         if (registerResponse.message.toString() == "Sorry! Data Not Found") {
           mobilecon.value = mobile;
-          Navigator.pushNamed(context!, RouteNames.registration_screen);
+          // Navigator.pushNamed(context!, RouteNames.registration_screen);
+          if (Get.isSnackbarOpen != true && Get.overlayContext != null) {
+            Get.snackbar(
+              "Invalid Details",
+              "The Mobile Number and Membership Code you entered are not available in our Maheshwari Pragati Mandal records. Please visit the Mandal office for assistance.",
+            );
+          }
         }
       } else {
         Navigator.pushNamed(context!, RouteNames.otp_screen, arguments: {
@@ -188,9 +193,7 @@ class LoginController {
   void sendOtp(var mobile) async {
     print("mobi" + mobile);
     try {
-      Map<String, String> map = {
-        "mobile_number": mobile
-      };
+      Map<String, String> map = {"mobile_number": mobile};
       api.sendOTP(map).then((_value) async {
         if (_value.status == true) {
           // OTP sent successfully
@@ -202,7 +205,8 @@ class LoginController {
           'Error', // Title
           "Something went wrong", // Message
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+          backgroundColor:
+              ColorHelperClass.getColorFromHex(ColorResources.red_color),
           colorText: Colors.white,
           duration: Duration(seconds: 3),
         );
@@ -232,7 +236,8 @@ class LoginController {
               'Pending Approval',
               'Your membership is still pending approval. Please contact administrator.',
               snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+              backgroundColor:
+                  ColorHelperClass.getColorFromHex(ColorResources.red_color),
               colorText: Colors.white,
               duration: Duration(seconds: 4),
             );
@@ -248,21 +253,21 @@ class LoginController {
               Navigator.pushNamedAndRemoveUntil(
                 context!,
                 RouteNames.dashboard,
-                    (Route<dynamic> route) => false,
+                (Route<dynamic> route) => false,
               );
             }).onError((error, strack) async {
               print("Session saved successfully!");
               Navigator.pushNamedAndRemoveUntil(
                 context!,
                 RouteNames.dashboard,
-                    (Route<dynamic> route) => false,
+                (Route<dynamic> route) => false,
               );
             });
           } else {
             Navigator.pushNamedAndRemoveUntil(
               context!,
               RouteNames.dashboard,
-                  (Route<dynamic> route) => false,
+              (Route<dynamic> route) => false,
             );
           }
         }
@@ -274,7 +279,8 @@ class LoginController {
             'Error',
             "Sorry! OTP doesn't match",
             snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+            backgroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
             colorText: Colors.white,
             duration: Duration(seconds: 3),
           );
@@ -283,7 +289,8 @@ class LoginController {
             'Error',
             "Something went wrong",
             snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+            backgroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
             colorText: Colors.white,
             duration: Duration(seconds: 3),
           );
@@ -321,9 +328,7 @@ class LoginController {
     loadinng.value = true;
 
     var request = http.MultipartRequest('POST', Uri.parse(Urls.check_url));
-    request.fields.addAll({
-      'LM_code_or_mobile': mobile
-    });
+    request.fields.addAll({'LM_code_or_mobile': mobile});
     http.StreamedResponse response = await request.send();
 
     if (response.statusCode == 200) {
@@ -340,7 +345,8 @@ class LoginController {
             'Pending Approval',
             'Your membership is still pending status under samiti approval. Please contact administrator.',
             snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+            backgroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
             colorText: Colors.white,
             duration: Duration(seconds: 4),
           );
@@ -350,21 +356,22 @@ class LoginController {
         mobilecon.value = mobile;
         memberId.value = registerResponse.data!.memberId.toString();
         await SessionManager.saveSessionUserData(registerResponse.data!);
-        await SessionManager.saveSessionToken(registerResponse.token.toString());
+        await SessionManager.saveSessionToken(
+            registerResponse.token.toString());
 
         api.userVerify(registerResponse.token.toString()).then((_value) async {
           print("Session saved successfully!");
           Navigator.pushNamedAndRemoveUntil(
             context!,
             RouteNames.dashboard,
-                (Route<dynamic> route) => false,
+            (Route<dynamic> route) => false,
           );
         }).onError((error, strack) async {
           print("Session saved successfully!");
           Navigator.pushNamedAndRemoveUntil(
             context!,
             RouteNames.dashboard,
-                (Route<dynamic> route) => false,
+            (Route<dynamic> route) => false,
           );
         });
       }
@@ -373,13 +380,17 @@ class LoginController {
       if (otherMobVisible == true) {
         var mobiles = mobilecon.value;
         Navigator.pushNamedAndRemoveUntil(
-          context!, RouteNames.dashboard, (Route<dynamic> route) => false,);
+          context!,
+          RouteNames.dashboard,
+          (Route<dynamic> route) => false,
+        );
       } else {
         Get.snackbar(
           'Error',
           "Something went wrong",
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+          backgroundColor:
+              ColorHelperClass.getColorFromHex(ColorResources.red_color),
           colorText: Colors.white,
           duration: Duration(seconds: 3),
         );
@@ -447,7 +458,8 @@ class LoginController {
                 Navigator.pushNamed(context, RouteNames.registration_screen);
               },
               style: OutlinedButton.styleFrom(
-                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: const BorderSide(color: Colors.redAccent),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -470,7 +482,8 @@ class LoginController {
                 showForgotButton.value = true;
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -541,7 +554,8 @@ class LoginController {
                 otherMobVisible.value = true;
               },
               style: OutlinedButton.styleFrom(
-                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: const BorderSide(color: Colors.redAccent),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -563,13 +577,73 @@ class LoginController {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
               child: const Text("Yes"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showInvalidDetailsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Invalid Details",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(
+                thickness: 1,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+          content: const Text(
+            "The Mobile Number and Membership Code you entered are not available in our Maheshwari Pragati Mandal records.\n\nPlease visit the Mandal office for assistance.",
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+              height: 1.4,
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("OK"),
             ),
           ],
         );

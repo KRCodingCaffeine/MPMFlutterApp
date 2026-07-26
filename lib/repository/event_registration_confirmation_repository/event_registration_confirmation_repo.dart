@@ -19,6 +19,8 @@ class EventRegistrationConfirmationRepository {
 
       request.fields.addAll({
         'event_attendees_id': confirmationData.attendeeId ?? '',
+        'confirmation_status':
+        confirmationData.confirmationStatus ?? 'confirmed',
       });
 
       _logRequestDetails(request);

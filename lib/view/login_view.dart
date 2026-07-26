@@ -318,24 +318,24 @@ class _LoginPageState extends State<LoginPage> {
                       const SizedBox(height: 8),
 
                       // "Forgot Mobile or Membership?" Button
-                      Obx(() => Visibility(
-                            visible: controller.showForgotButton.value,
-                            child: TextButton(
-                              onPressed: () {
-                                _showForgotBottomSheet(context);
-                              },
-                              child: const Text(
-                                "Forgot Mobile or Membership?",
-                                style: TextStyle(
-                                  color: Colors.black87,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
-                            ),
-                          )),
-                      const SizedBox(height: 30),
+                      // Obx(() => Visibility(
+                      //       visible: controller.showForgotButton.value,
+                      //       child: TextButton(
+                      //         onPressed: () {
+                      //           _showForgotBottomSheet(context);
+                      //         },
+                      //         child: const Text(
+                      //           "Forgot Mobile or Membership?",
+                      //           style: TextStyle(
+                      //             color: Colors.black87,
+                      //             fontSize: 14,
+                      //             fontWeight: FontWeight.w600,
+                      //             decoration: TextDecoration.underline,
+                      //           ),
+                      //         ),
+                      //       ),
+                      //     )),
+                      // const SizedBox(height: 30),
 
                       // OutSide Mumbai Login
                       // SizedBox(

@@ -21,7 +21,8 @@ class EventsPage extends StatefulWidget {
   _EventsPageState createState() => _EventsPageState();
 }
 
-class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateMixin {
+class _EventsPageState extends State<EventsPage>
+    with SingleTickerProviderStateMixin {
   final EventRepository _eventRepo = EventRepository();
   final ZoneRepository _zoneRepo = ZoneRepository();
   late NotificationApiController notificationController;
@@ -85,7 +86,7 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
 
       // Find the user's zone object from the list
       final userZone = allZones.firstWhere(
-            (zone) => zone.id == userZoneId,
+        (zone) => zone.id == userZoneId,
         orElse: () => ZoneData(id: userZoneId, zoneName: "Unknown Zone"),
       );
 
@@ -139,8 +140,10 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
     setState(() {
       List<EventData> filteredEvents = _allEvents;
 
-      List<ZoneData> selectedZones = _selectedTabIndex == 0 ? _selectedUpcomingZones : _selectedPastZones;
-      bool isAllSelected = _selectedTabIndex == 0 ? _isUpcomingAllSelected : _isPastAllSelected;
+      List<ZoneData> selectedZones =
+          _selectedTabIndex == 0 ? _selectedUpcomingZones : _selectedPastZones;
+      bool isAllSelected =
+          _selectedTabIndex == 0 ? _isUpcomingAllSelected : _isPastAllSelected;
 
       if (selectedZones.isNotEmpty || isAllSelected) {
         filteredEvents = filteredEvents.where((e) {
@@ -149,12 +152,14 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
           }
 
           return selectedZones.any((zone) =>
-          e.zones?.any((eventZone) => eventZone.id == zone.id) ?? false);
+              e.zones?.any((eventZone) => eventZone.id == zone.id) ?? false);
         }).toList();
       }
 
-      DateTime? startDate = _selectedTabIndex == 0 ? _upcomingStartDate : _pastStartDate;
-      DateTime? endDate = _selectedTabIndex == 0 ? _upcomingEndDate : _pastEndDate;
+      DateTime? startDate =
+          _selectedTabIndex == 0 ? _upcomingStartDate : _pastStartDate;
+      DateTime? endDate =
+          _selectedTabIndex == 0 ? _upcomingEndDate : _pastEndDate;
 
       if (startDate != null && endDate != null) {
         filteredEvents = filteredEvents.where((e) {
@@ -164,7 +169,7 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
           if (eventStartDate == null || eventEndDate == null) return false;
 
           return (eventStartDate.isBefore(endDate!) ||
-              eventStartDate.isAtSameMomentAs(endDate!)) &&
+                  eventStartDate.isAtSameMomentAs(endDate!)) &&
               (eventEndDate.isAfter(startDate!) ||
                   eventEndDate.isAtSameMomentAs(startDate!));
         }).toList();
@@ -189,25 +194,29 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
       }
 
       upcoming.sort((a, b) {
-        final aDate = DateTime.tryParse(a.dateStartsFrom ?? '') ?? DateTime.now();
-        final bDate = DateTime.tryParse(b.dateStartsFrom ?? '') ?? DateTime.now();
+        final aDate =
+            DateTime.tryParse(a.dateStartsFrom ?? '') ?? DateTime.now();
+        final bDate =
+            DateTime.tryParse(b.dateStartsFrom ?? '') ?? DateTime.now();
         return aDate.compareTo(bDate);
       });
 
       past.sort((a, b) {
-        final aDate = DateTime.tryParse(a.dateStartsFrom ?? '') ?? DateTime.now();
-        final bDate = DateTime.tryParse(b.dateStartsFrom ?? '') ?? DateTime.now();
+        final aDate =
+            DateTime.tryParse(a.dateStartsFrom ?? '') ?? DateTime.now();
+        final bDate =
+            DateTime.tryParse(b.dateStartsFrom ?? '') ?? DateTime.now();
         return bDate.compareTo(aDate);
       });
 
       _upcomingEvents = upcoming;
       _pastEvents = past;
-
     });
   }
 
   Widget _buildEventCard(EventData event) {
-    final parsedDate = DateTime.tryParse(event.dateStartsFrom ?? '') ?? DateTime.now();
+    final parsedDate =
+        DateTime.tryParse(event.dateStartsFrom ?? '') ?? DateTime.now();
     final day = DateFormat('d').format(parsedDate);
     final month = DateFormat('MMM').format(parsedDate);
     final isPastEvent = parsedDate.isBefore(DateTime.now());
@@ -216,7 +225,8 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
       onTap: () async {
         // Mark notifications as read for this specific event
         if (event.eventId != null) {
-          await notificationController.markNotificationsAsReadByEventOfferId(event.eventId!);
+          await notificationController
+              .markNotificationsAsReadByEventOfferId(event.eventId!);
         }
         Navigator.push(
           context,
@@ -226,11 +236,12 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
         );
       },
       child: FutureBuilder<bool>(
-        future: event.eventId != null 
-            ? notificationController.hasUnreadNotificationsByEventOfferId(event.eventId!)
+        future: (!isPastEvent && event.eventId != null)
+            ? notificationController
+                .hasUnreadNotificationsByEventOfferId(event.eventId!)
             : Future.value(false),
         builder: (context, snapshot) {
-          final hasUnread = snapshot.data ?? false;
+          final hasUnread = !isPastEvent && (snapshot.data ?? false);
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: AnimatedBuilder(
@@ -241,21 +252,25 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
                 final glowOpacity = hasUnread ? 0.4 + (pulseValue * 0.3) : 0.0;
                 final shadowBlur = hasUnread ? 8.0 + (pulseValue * 4.0) : 3.0;
                 final shadowSpread = hasUnread ? 2.0 + (pulseValue * 1.0) : 1.0;
-                
+
                 return Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
-                    border: hasUnread 
+                    border: hasUnread
                         ? Border.all(
-                            color: ColorHelperClass.getColorFromHex(ColorResources.logo_color).withOpacity(0.8 + pulseValue * 0.2),
+                            color: ColorHelperClass.getColorFromHex(
+                                    ColorResources.logo_color)
+                                .withOpacity(0.8 + pulseValue * 0.2),
                             width: borderWidth,
                           )
                         : null,
                     boxShadow: [
                       if (hasUnread)
                         BoxShadow(
-                          color: ColorHelperClass.getColorFromHex(ColorResources.logo_color).withOpacity(glowOpacity),
+                          color: ColorHelperClass.getColorFromHex(
+                                  ColorResources.logo_color)
+                              .withOpacity(glowOpacity),
                           spreadRadius: 0,
                           blurRadius: shadowBlur,
                           offset: const Offset(0, 0),
@@ -276,89 +291,110 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-              Container(
-                width: 60,
-                padding: const EdgeInsets.only(top: 4),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(day,
-                        style: const TextStyle(
-                            fontSize: 24, fontWeight: FontWeight.bold)),
-                    Text(month,
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w500)),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                height: 100,
-                width: 1,
-                color: Colors.grey[400],
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(event.eventName ?? '',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, color: Colors.black, fontSize: 18)),
-                    const SizedBox(height: 4),
-                    if (event.samitiOrganisers != null && event.samitiOrganisers!.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: RichText(
-                          text: TextSpan(
-                            style: const TextStyle(fontSize: 12),
-                            children: [
-                              const TextSpan(
-                                text: "By: ",
-                                style: TextStyle(color: Colors.black54, fontWeight: FontWeight.normal),
+                            Container(
+                              width: 60,
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(day,
+                                      style: const TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold)),
+                                  Text(month,
+                                      style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500)),
+                                ],
                               ),
-                              TextSpan(
-                                text: event.samitiOrganisers!
-                                    .map((organiser) => organiser.subCategory?.samitiSubCategoryName ?? 'Unknown')
-                                    .join(', '),
-                                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              height: 100,
+                              width: 1,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(event.eventName ?? '',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black,
+                                          fontSize: 18)),
+                                  const SizedBox(height: 4),
+                                  if (event.samitiOrganisers != null &&
+                                      event.samitiOrganisers!.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(bottom: 4),
+                                      child: RichText(
+                                        text: TextSpan(
+                                          style: const TextStyle(fontSize: 12),
+                                          children: [
+                                            const TextSpan(
+                                              text: "By: ",
+                                              style: TextStyle(
+                                                  color: Colors.black54,
+                                                  fontWeight:
+                                                      FontWeight.normal),
+                                            ),
+                                            TextSpan(
+                                              text: event.samitiOrganisers!
+                                                  .map((organiser) =>
+                                                      organiser.subCategory
+                                                          ?.samitiSubCategoryName ??
+                                                      'Unknown')
+                                                  .join(', '),
+                                              style: const TextStyle(
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  const SizedBox(height: 4),
+                                  Text.rich(
+                                    TextSpan(
+                                      children: [
+                                        const TextSpan(
+                                          text: 'Coordinator: ',
+                                          style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 14),
+                                        ),
+                                        TextSpan(
+                                          text: event.eventOrganiserName
+                                                  ?.split(',')
+                                                  .join(', ') ??
+                                              'Unknown',
+                                          style: TextStyle(
+                                              color: Colors.grey[700],
+                                              fontSize: 14),
+                                        ),
+                                      ],
+                                    ),
+                                    // maxLines: 2,
+                                    // overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: Text(
+                                      event.eventDescription ?? '',
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                ],
                               ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    const SizedBox(height: 4),
-                    Text.rich(
-                      TextSpan(
-                        children: [
-                          const TextSpan(
-                            text: 'Coordinator: ',
-                            style: TextStyle(color: Colors.black, fontSize: 14),
-                          ),
-                          TextSpan(
-                            text: event.eventOrganiserName?.split(',').join(', ') ?? 'Unknown',
-                            style: TextStyle(color: Colors.grey[700], fontSize: 14),
-                          ),
-                        ],
-                      ),
-                      // maxLines: 2,
-                      // overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    SizedBox(
-                      width: double.infinity,
-                      child: Text(
-                        event.eventDescription ?? '',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                  ],
-                ),
-              ),
-            ],
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -426,8 +462,10 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
 
   Widget _buildFilterButton() {
     final isUpcomingTab = _selectedTabIndex == 0;
-    final selectedZones = isUpcomingTab ? _selectedUpcomingZones : _selectedPastZones;
-    final isAllSelected = isUpcomingTab ? _isUpcomingAllSelected : _isPastAllSelected;
+    final selectedZones =
+        isUpcomingTab ? _selectedUpcomingZones : _selectedPastZones;
+    final isAllSelected =
+        isUpcomingTab ? _isUpcomingAllSelected : _isPastAllSelected;
     final startDate = isUpcomingTab ? _upcomingStartDate : _pastStartDate;
     final endDate = isUpcomingTab ? _upcomingEndDate : _pastEndDate;
 
@@ -459,7 +497,10 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
                     Text("${isUpcomingTab ? 'Upcoming' : 'Past'} Events",
                         style: TextStyle(fontSize: 16)),
                     const SizedBox(height: 4),
-                    if (isAllSelected || selectedZones.isNotEmpty || startDate != null || endDate != null)
+                    if (isAllSelected ||
+                        selectedZones.isNotEmpty ||
+                        startDate != null ||
+                        endDate != null)
                       Wrap(
                         spacing: 6,
                         runSpacing: 4,
@@ -486,25 +527,25 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
                             ),
                           ...selectedZones
                               .map((zone) => Chip(
-                            label: Text(zone.zoneName ?? ''),
-                            labelStyle: const TextStyle(
-                                fontSize: 12, color: Colors.white),
-                            backgroundColor:
-                            ColorHelperClass.getColorFromHex(
-                                ColorResources.red_color),
-                            deleteIcon: const Icon(Icons.close,
-                                color: Colors.white, size: 18),
-                            onDeleted: () {
-                              setState(() {
-                                if (isUpcomingTab) {
-                                  _selectedUpcomingZones.remove(zone);
-                                } else {
-                                  _selectedPastZones.remove(zone);
-                                }
-                                _applyFilters();
-                              });
-                            },
-                          ))
+                                    label: Text(zone.zoneName ?? ''),
+                                    labelStyle: const TextStyle(
+                                        fontSize: 12, color: Colors.white),
+                                    backgroundColor:
+                                        ColorHelperClass.getColorFromHex(
+                                            ColorResources.red_color),
+                                    deleteIcon: const Icon(Icons.close,
+                                        color: Colors.white, size: 18),
+                                    onDeleted: () {
+                                      setState(() {
+                                        if (isUpcomingTab) {
+                                          _selectedUpcomingZones.remove(zone);
+                                        } else {
+                                          _selectedPastZones.remove(zone);
+                                        }
+                                        _applyFilters();
+                                      });
+                                    },
+                                  ))
                               .toList(),
                           if (startDate != null)
                             Chip(
@@ -562,8 +603,10 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
   }
 
   Widget _buildFilterDrawer(bool isUpcoming) {
-    final selectedZones = isUpcoming ? _selectedUpcomingZones : _selectedPastZones;
-    final isAllSelected = isUpcoming ? _isUpcomingAllSelected : _isPastAllSelected;
+    final selectedZones =
+        isUpcoming ? _selectedUpcomingZones : _selectedPastZones;
+    final isAllSelected =
+        isUpcoming ? _isUpcomingAllSelected : _isPastAllSelected;
     final startDate = isUpcoming ? _upcomingStartDate : _pastStartDate;
     final endDate = isUpcoming ? _upcomingEndDate : _pastEndDate;
 
@@ -583,7 +626,8 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
                 Row(
                   children: [
                     Text("${isUpcoming ? 'Upcoming' : 'Past'} Events",
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
                     const Spacer(),
                     IconButton(
                       icon: const Icon(Icons.close),
@@ -603,7 +647,9 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text("Zones", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const Text("Zones",
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
                         CheckboxListTile(
                           title: const Text("All Zones"),
                           value: isAllSelected,
@@ -626,32 +672,33 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
                         ..._zoneList
                             .where((zone) => zone.id != '1')
                             .map((zone) => CheckboxListTile(
-                          title: Text(zone.zoneName ?? ''),
-                          value: selectedZones.contains(zone),
-                          onChanged: (bool? value) {
-                            setState(() {
-                              if (value == true) {
-                                if (isUpcoming) {
-                                  _selectedUpcomingZones.add(zone);
-                                  _isUpcomingAllSelected = false;
-                                } else {
-                                  _selectedPastZones.add(zone);
-                                  _isPastAllSelected = false;
-                                }
-                              } else {
-                                if (isUpcoming) {
-                                  _selectedUpcomingZones.remove(zone);
-                                } else {
-                                  _selectedPastZones.remove(zone);
-                                }
-                              }
-                            });
-                          },
-                        ))
+                                  title: Text(zone.zoneName ?? ''),
+                                  value: selectedZones.contains(zone),
+                                  onChanged: (bool? value) {
+                                    setState(() {
+                                      if (value == true) {
+                                        if (isUpcoming) {
+                                          _selectedUpcomingZones.add(zone);
+                                          _isUpcomingAllSelected = false;
+                                        } else {
+                                          _selectedPastZones.add(zone);
+                                          _isPastAllSelected = false;
+                                        }
+                                      } else {
+                                        if (isUpcoming) {
+                                          _selectedUpcomingZones.remove(zone);
+                                        } else {
+                                          _selectedPastZones.remove(zone);
+                                        }
+                                      }
+                                    });
+                                  },
+                                ))
                             .toList(),
                         const SizedBox(height: 20),
                         const Text("Date Range",
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         _buildDateField(
                             label: 'Start Date *',
@@ -661,7 +708,8 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
                                 if (isUpcoming) {
                                   _upcomingStartDate = pickedDate;
                                   if (_upcomingEndDate != null &&
-                                      _upcomingStartDate!.isAfter(_upcomingEndDate!)) {
+                                      _upcomingStartDate!
+                                          .isAfter(_upcomingEndDate!)) {
                                     _upcomingEndDate = _upcomingStartDate;
                                   }
                                 } else {
@@ -682,7 +730,8 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
                                 if (isUpcoming) {
                                   _upcomingEndDate = pickedDate;
                                   if (_upcomingStartDate != null &&
-                                      _upcomingEndDate!.isBefore(_upcomingStartDate!)) {
+                                      _upcomingEndDate!
+                                          .isBefore(_upcomingStartDate!)) {
                                     _upcomingStartDate = _upcomingEndDate;
                                   }
                                 } else {
@@ -704,8 +753,8 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
                     Expanded(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                          ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                          backgroundColor: ColorHelperClass.getColorFromHex(
+                              ColorResources.red_color),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
@@ -748,10 +797,12 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
       decoration: InputDecoration(
         labelText: label,
         hintText: 'Select $label',
-        border: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
-        enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
-        focusedBorder:
-        const OutlineInputBorder(borderSide: BorderSide(color: Colors.black26, width: 1.5)),
+        border: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black26)),
+        enabledBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black26)),
+        focusedBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.black26, width: 1.5)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20),
         labelStyle: const TextStyle(color: Colors.black45),
       ),
@@ -765,14 +816,15 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
             return Theme(
               data: Theme.of(context).copyWith(
                 colorScheme: ColorScheme.light(
-                  primary: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                  primary: ColorHelperClass.getColorFromHex(
+                      ColorResources.red_color),
                   onPrimary: Colors.white,
                   onSurface: Colors.black,
                 ),
                 textButtonTheme: TextButtonThemeData(
                   style: TextButton.styleFrom(
-                    foregroundColor:
-                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    foregroundColor: ColorHelperClass.getColorFromHex(
+                        ColorResources.red_color),
                   ),
                 ),
               ),
@@ -793,13 +845,16 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor:
-        ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Builder(
           builder: (context) {
             double fontSize = MediaQuery.of(context).size.width * 0.045;
             return Text(
               'Events',
-              style: TextStyle(color: Colors.white, fontSize: fontSize, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w500),
             );
           },
         ),
@@ -811,12 +866,14 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => RegisteredEventsListPage()),
+                  MaterialPageRoute(
+                      builder: (context) => RegisteredEventsListPage()),
                 );
               },
               child: const Text(
                 'Registered',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                style:
+                    TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
               ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.white,
@@ -839,21 +896,21 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : _error != null
-                    ? Center(child: Text(_error!))
-                    : RefreshIndicator(
-                  color: Colors.redAccent,
-                  onRefresh: () => _fetchEvents(),
-                  child: ListView.builder(
-                    padding: const EdgeInsets.only(top: 10),
-                    itemCount: _selectedTabIndex == 0
-                        ? _upcomingEvents.length
-                        : _pastEvents.length,
-                    itemBuilder: (context, index) => _buildEventCard(
-                        _selectedTabIndex == 0
-                            ? _upcomingEvents[index]
-                            : _pastEvents[index]),
-                  ),
-                ),
+                        ? Center(child: Text(_error!))
+                        : RefreshIndicator(
+                            color: Colors.redAccent,
+                            onRefresh: () => _fetchEvents(),
+                            child: ListView.builder(
+                              padding: const EdgeInsets.only(top: 10),
+                              itemCount: _selectedTabIndex == 0
+                                  ? _upcomingEvents.length
+                                  : _pastEvents.length,
+                              itemBuilder: (context, index) => _buildEventCard(
+                                  _selectedTabIndex == 0
+                                      ? _upcomingEvents[index]
+                                      : _pastEvents[index]),
+                            ),
+                          ),
               ),
               const SizedBox(height: 30),
             ],

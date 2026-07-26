@@ -5,10 +5,13 @@ import 'package:mpm/model/EventAttendees/EventAttendeesData.dart';
 import 'package:mpm/model/EventAttendees/EventAttendeesModelClass.dart';
 import 'package:mpm/model/EventRegistrationConfirmation/EventRegistrationConfirmationData.dart';
 import 'package:mpm/model/EventRegistrationConfirmation/EventRegistrationConfirmationModelClass.dart';
+import 'package:mpm/model/GetEventsByCoordinator/GetEventsByCoordinatorData.dart';
+import 'package:mpm/model/GetEventsByCoordinator/GetEventsByCoordinatorModelClass.dart';
 import 'package:mpm/model/GetEventsList/GetEventsListData.dart';
 import 'package:mpm/model/GetEventsList/GetEventsListModelClass.dart';
 import 'package:mpm/repository/event_attendees_repository/event_attendees_repo.dart';
 import 'package:mpm/repository/event_registration_confirmation_repository/event_registration_confirmation_repo.dart';
+import 'package:mpm/repository/get_events_by_coordinator_repository/get_events_by_coordinator_repo.dart';
 import 'package:mpm/repository/get_events_list_repository/get_events_list_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
@@ -24,21 +27,27 @@ class EventAttendeesView extends StatefulWidget {
 }
 
 class _EventAttendeesViewState extends State<EventAttendeesView> {
-  final EventRepository _eventRepository = EventRepository();
+  // final EventRepository _eventRepository = EventRepository();
+  final GetEventsByCoordinatorRepository _eventRepository =
+  GetEventsByCoordinatorRepository();
   final EventAttendeesRepository _attendeesRepository =
       EventAttendeesRepository();
   final EventRegistrationConfirmationRepository _confirmationRepository =
       EventRegistrationConfirmationRepository();
   final Set<String> _approvedAttendeeIds = {};
   final Set<String> _approvingAttendeeIds = {};
+  final Set<String> _rejectingAttendeeIds = {};
 
   Future<EventAttendeesModelClass>? _attendeesFuture;
   Future<void>? _eventsFuture;
-  final List<EventData> _upcomingEvents = [];
-  final List<EventData> _pastEvents = [];
+  // final List<EventData> _upcomingEvents = [];
+  // final List<EventData> _pastEvents = [];
+  final List<GetEventsByCoordinatorData> _upcomingEvents = [];
+  final List<GetEventsByCoordinatorData> _pastEvents = [];
 
+  GetEventsByCoordinatorData? _selectedEvent;
   String? _eventId;
-  EventData? _selectedEvent;
+  // EventData? _selectedEvent;
   String? _eventsError;
   int _selectedTabIndex = 0;
   bool _routeArgumentsLoaded = false;
@@ -82,11 +91,11 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
     return null;
   }
 
-  EventData? _getEventFromArguments() {
+  GetEventsByCoordinatorData? _getEventFromArguments() {
     final args = ModalRoute.of(context)?.settings.arguments;
 
-    if (args is Map && args['event'] is EventData) {
-      return args['event'] as EventData;
+    if (args is Map && args['event'] is GetEventsByCoordinatorData) {
+      return args['event'] as GetEventsByCoordinatorData;
     }
 
     return null;
@@ -98,78 +107,90 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
     });
 
     try {
-      String zoneId = '1';
+      String memberId = '';
+      String zoneId = '';
+
       if (Get.isRegistered<UdateProfileController>()) {
-        final userData = Get.find<UdateProfileController>().getUserData.value;
-        final profileZoneId = userData.address?.zoneId;
-        if (profileZoneId != null && profileZoneId.isNotEmpty) {
-          zoneId = profileZoneId;
-        }
+        final user =
+            Get.find<UdateProfileController>().getUserData.value;
+
+        memberId = user.memberId.toString();
+        zoneId = user.address?.zoneId ?? '';
       }
 
-      final response = await _eventRepository.fetchEvents(zoneId);
-      final eventModel = EventModelClass.fromJson(response);
+      final response = await _eventRepository.fetchCoordinatorEvents(
+        memberId: memberId,
+        zoneId: zoneId,
+      );
 
-      if (eventModel.status == true && eventModel.data != null) {
-        _setEvents(eventModel.data!);
+      final model =
+      GetEventsByCoordinatorModelClass.fromJson(response);
+
+      if (model.status == true && model.data != null) {
+        _setEvents(model.data!);
       } else {
         setState(() {
           _upcomingEvents.clear();
           _pastEvents.clear();
-          _eventsError = eventModel.message ?? 'Failed to load events';
+          _eventsError = model.message ?? 'No Events';
         });
       }
     } catch (e) {
       setState(() {
-        _upcomingEvents.clear();
-        _pastEvents.clear();
-        _eventsError = 'Error: $e';
+        _eventsError = e.toString();
       });
     }
   }
 
-  void _setEvents(List<EventData> events) {
+  void _setEvents(List<GetEventsByCoordinatorData> events) {
     final today = DateTime.now();
     final currentDate = DateTime(today.year, today.month, today.day);
-    final upcomingEvents = <EventData>[];
-    final pastEvents = <EventData>[];
+
+    final upcoming = <GetEventsByCoordinatorData>[];
+    final past = <GetEventsByCoordinatorData>[];
 
     for (final event in events) {
-      final startDate = DateTime.tryParse(event.dateStartsFrom ?? '');
-      final endDate = DateTime.tryParse(event.dateEndTo ?? '');
+      final endDate =
+      DateTime.tryParse(event.dateEndTo ?? '');
 
-      if (startDate == null || endDate == null) continue;
+      if (endDate == null) continue;
 
       if (endDate.isBefore(currentDate)) {
-        pastEvents.add(event);
+        past.add(event);
       } else {
-        upcomingEvents.add(event);
+        upcoming.add(event);
       }
     }
 
-    upcomingEvents.sort((a, b) {
-      final firstDate = DateTime.tryParse(a.dateStartsFrom ?? '') ??
-          DateTime.fromMillisecondsSinceEpoch(0);
-      final secondDate = DateTime.tryParse(b.dateStartsFrom ?? '') ??
-          DateTime.fromMillisecondsSinceEpoch(0);
-      return firstDate.compareTo(secondDate);
+    upcoming.sort((a, b) {
+      final d1 =
+          DateTime.tryParse(a.dateStartsFrom ?? '') ?? DateTime.now();
+
+      final d2 =
+          DateTime.tryParse(b.dateStartsFrom ?? '') ?? DateTime.now();
+
+      return d1.compareTo(d2);
     });
 
-    pastEvents.sort((a, b) {
-      final firstDate = DateTime.tryParse(b.dateStartsFrom ?? '') ??
-          DateTime.fromMillisecondsSinceEpoch(0);
-      final secondDate = DateTime.tryParse(a.dateStartsFrom ?? '') ??
-          DateTime.fromMillisecondsSinceEpoch(0);
-      return firstDate.compareTo(secondDate);
+    past.sort((a, b) {
+      final d1 =
+          DateTime.tryParse(b.dateStartsFrom ?? '') ?? DateTime.now();
+
+      final d2 =
+          DateTime.tryParse(a.dateStartsFrom ?? '') ?? DateTime.now();
+
+      return d1.compareTo(d2);
     });
 
     setState(() {
       _upcomingEvents
         ..clear()
-        ..addAll(upcomingEvents);
+        ..addAll(upcoming);
+
       _pastEvents
         ..clear()
-        ..addAll(pastEvents);
+        ..addAll(past);
+
       _eventsError = null;
     });
   }
@@ -211,14 +232,17 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
 
     try {
       final response = await _confirmationRepository.confirmEventRegistration(
-        EventRegistrationConfirmationData(attendeeId: attendeeId),
+        EventRegistrationConfirmationData(
+          attendeeId: attendeeId,
+          confirmationStatus: 'confirmed',
+        ),
       );
       final confirmation =
           EventRegistrationConfirmationModelClass.fromJson(response);
 
       if (confirmation.status == true) {
         setState(() {
-          attendee.confirmationStatus = '1';
+          attendee.confirmationStatus = 'confirmed';
           _approvedAttendeeIds.add(
             confirmation.data?.attendeeId ?? attendeeId,
           );
@@ -240,6 +264,62 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
     }
   }
 
+  Future<void> _rejectAttendee(EventAttendeesData attendee) async {
+    final attendeeId = attendee.eventAttendeesId;
+
+    if (attendeeId == null || attendeeId.isEmpty) {
+      _showSnackBar(
+        'Attendee ID not available',
+        isSuccess: false,
+      );
+      return;
+    }
+
+    setState(() {
+      _rejectingAttendeeIds.add(attendeeId);
+    });
+
+    try {
+      final response = await _confirmationRepository.confirmEventRegistration(
+        EventRegistrationConfirmationData(
+          attendeeId: attendeeId,
+          confirmationStatus: 'rejected',
+        ),
+      );
+
+      final confirmation =
+          EventRegistrationConfirmationModelClass.fromJson(response);
+
+      if (confirmation.status == true) {
+        setState(() {
+          attendee.confirmationStatus = 'rejected';
+        });
+
+        _showSnackBar(
+          'The member registration has been rejected.',
+        );
+
+        await _refreshAttendees();
+      } else {
+        _showSnackBar(
+          confirmation.message ?? 'Failed to reject registration.',
+          isSuccess: false,
+        );
+      }
+    } catch (e) {
+      _showSnackBar(
+        'Error rejecting registration: $e',
+        isSuccess: false,
+      );
+    } finally {
+      if (!mounted) return;
+
+      setState(() {
+        _rejectingAttendeeIds.remove(attendeeId);
+      });
+    }
+  }
+
   void _showSnackBar(String message, {bool isSuccess = true}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -249,15 +329,17 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
     );
   }
 
-  void _openAttendees(EventData event) {
-    final eventId = event.eventId;
-    if (eventId == null || eventId.isEmpty) return;
+  void _openAttendees(GetEventsByCoordinatorData event) {
+    if (event.eventId == null) return;
 
     setState(() {
-      _eventId = eventId;
+      _eventId = event.eventId;
       _selectedEvent = event;
+
       _approvedAttendeeIds.clear();
       _approvingAttendeeIds.clear();
+      _rejectingAttendeeIds.clear();
+
       _attendeesFuture = _fetchEventAttendees();
     });
   }
@@ -269,6 +351,9 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
       _attendeesFuture = null;
       _approvedAttendeeIds.clear();
       _approvingAttendeeIds.clear();
+      _rejectingAttendeeIds.clear();
+
+      _eventsFuture = _fetchEvents();
     });
   }
 
@@ -457,7 +542,7 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
     );
   }
 
-  Widget _buildEventCard(EventData event) {
+  Widget _buildEventCard(GetEventsByCoordinatorData event) {
     final parsedDate =
         DateTime.tryParse(event.dateStartsFrom ?? '') ?? DateTime.now();
     final day = DateFormat('d').format(parsedDate);
@@ -605,6 +690,8 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
     final attendeeId = attendee.eventAttendeesId;
     final isApproving =
         attendeeId != null && _approvingAttendeeIds.contains(attendeeId);
+    final isRejecting =
+        attendeeId != null && _rejectingAttendeeIds.contains(attendeeId);
 
     return Container(
       decoration: BoxDecoration(
@@ -680,23 +767,33 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
           const SizedBox(height: 8),
           _buildInfoRow(Icons.email_outlined, 'Email', email),
           const SizedBox(height: 8),
-
           _buildInfoRow(
             Icons.calendar_today_outlined,
             'Registered On',
             attendee.registrationDate != null &&
-                attendee.registrationDate!.isNotEmpty
+                    attendee.registrationDate!.isNotEmpty
                 ? DateFormat('dd MMM yyyy').format(
-              DateTime.parse(attendee.registrationDate!),
-            )
+                    DateTime.parse(attendee.registrationDate!),
+                  )
                 : '-',
           ),
+          if (!_isFreeEvent(attendee)) ...[
+            const SizedBox(height: 8),
+            _buildInfoRow(
+              Icons.payment_outlined,
+              'Payment Transaction Id',
+              attendee.paymentTransactionId != null &&
+                      attendee.paymentTransactionId!.isNotEmpty
+                  ? attendee.paymentTransactionId!
+                  : '-',
+            ),
+          ],
           const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
             height: 42,
             child: ElevatedButton.icon(
-              onPressed: isApproved || isApproving
+              onPressed: isApproved || isApproving || isRejecting
                   ? null
                   : () => _approveAttendee(attendee),
               icon: isApproving
@@ -716,21 +813,51 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
                     ),
               label: Text(isApproved ? 'Approved' : 'Approve'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: isApproved ? Colors.green : _brandColor,
-                disabledBackgroundColor:
-                    isApproved ? Colors.green : _brandColor,
+                backgroundColor: isApproved ? Colors.green : Colors.green,
                 foregroundColor: Colors.white,
+                disabledBackgroundColor: Colors.green,
                 disabledForegroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                textStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
               ),
             ),
           ),
+          if (!isApproved) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              height: 42,
+              child: ElevatedButton.icon(
+                onPressed: isApproving || isRejecting
+                    ? null
+                    : () => _rejectAttendee(attendee),
+                icon: isRejecting
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.cancel_outlined,
+                        size: 18,
+                      ),
+                label: const Text("Reject"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: Colors.red,
+                  disabledForegroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -742,12 +869,14 @@ class _EventAttendeesViewState extends State<EventAttendeesView> {
     }
 
     final attendeeId = attendee.eventAttendeesId ?? attendee.eventAttendeesCode;
+
     if (attendeeId != null && _approvedAttendeeIds.contains(attendeeId)) {
       return true;
     }
 
-    return attendee.confirmationStatus == '1' ||
-        attendee.confirmationStatus?.toLowerCase() == 'approved';
+    final status = (attendee.confirmationStatus ?? '').trim().toLowerCase();
+
+    return status == 'confirmed';
   }
 
   bool _isFreeEvent(EventAttendeesData attendee) {

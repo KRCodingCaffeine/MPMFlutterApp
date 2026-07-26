@@ -77,31 +77,128 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
 
   void showImagePickerOptions(BuildContext context) {
     showModalBottomSheet(
-      backgroundColor: Colors.white,
       context: context,
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(16),
+        ),
       ),
-      builder: (BuildContext context) {
-        return Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.redAccent),
-              title: const Text('Take a Picture'),
-              onTap: () {
-                Navigator.of(context).pop();
-                pickImage(ImageSource.camera);
-              },
+      builder: (_) {
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewPadding.bottom + 10,
             ),
-            ListTile(
-              leading: const Icon(Icons.photo, color: Colors.redAccent),
-              title: const Text('Choose from Gallery'),
-              onTap: () {
-                Navigator.of(context).pop();
-                pickImage(ImageSource.gallery);
-              },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                /// Title + Close Button
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          "Select Prescription",
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () => Navigator.pop(context),
+                        borderRadius: BorderRadius.circular(20),
+                        child: const Padding(
+                          padding: EdgeInsets.all(4),
+                          child: Icon(
+                            Icons.close,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Divider(height: 1),
+
+                /// Camera
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 4,
+                  ),
+                  leading: const CircleAvatar(
+                    radius: 22,
+                    backgroundColor: Color(0xFFFFEBEE),
+                    child: Icon(
+                      Icons.camera_alt,
+                      color: Colors.redAccent,
+                    ),
+                  ),
+                  title: const Text(
+                    "Take a Picture",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: const Text(
+                    "Capture using camera",
+                  ),
+                  trailing: const Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: Colors.grey,
+                  ),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await pickImage(ImageSource.camera);
+                  },
+                ),
+
+                /// Gallery
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 4,
+                  ),
+                  leading: const CircleAvatar(
+                    radius: 22,
+                    backgroundColor: Color(0xFFFFF3E0),
+                    child: Icon(
+                      Icons.photo_library,
+                      color: Colors.orange,
+                    ),
+                  ),
+                  title: const Text(
+                    "Choose from Gallery",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: const Text(
+                    "Select an existing image",
+                  ),
+                  trailing: const Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: Colors.grey,
+                  ),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await pickImage(ImageSource.gallery);
+                  },
+                ),
+
+                const SizedBox(height: 12),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
@@ -128,7 +225,13 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
     String medicineName = '';
     String? selectedContainer;
     String offerQuantity = '';
-    final List<String> containerOptions = ['Strips', 'Tube', 'Bottle', 'Box', 'Pouch'];
+    final List<String> containerOptions = [
+      'Strips',
+      'Tube',
+      'Bottle',
+      'Box',
+      'Pouch'
+    ];
 
     showDialog(
       context: context,
@@ -136,7 +239,8 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -212,7 +316,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
               onPressed: () => Navigator.of(context).pop(),
               style: OutlinedButton.styleFrom(
                 foregroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: const BorderSide(color: Colors.red),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -229,7 +333,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
                     offerList.add({
                       'medicine_name': medicineName.trim(),
                       'medicine_container_id':
-                      getContainerId(selectedContainer!).toString(),
+                          getContainerId(selectedContainer!).toString(),
                       'medicine_container_name': selectedContainer,
                       'quantity': int.tryParse(offerQuantity.trim()) ?? 0,
                     });
@@ -246,7 +350,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -283,21 +387,27 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
       }
 
       // Prepare medicines list
-      final medicines = offerList.map((e) => Medicine(
-        organisationOfferDiscountId: int.tryParse(organisationOfferDiscountId) ?? 0,
-        orgDetailsID: int.tryParse(orgDetailsID) ?? 0,
-        medicineName: e['medicine_name']?.toString() ?? '',
-        medicineContainerId: int.tryParse(e['medicine_container_id']?.toString() ?? '0') ?? 0,
-        medicineContainerName: e['medicine_container_name']?.toString(),
-        quantity: (e['quantity'] as int?) ?? 1,
-      )).toList();
+      final medicines = offerList
+          .map((e) => Medicine(
+                organisationOfferDiscountId:
+                    int.tryParse(organisationOfferDiscountId) ?? 0,
+                orgDetailsID: int.tryParse(orgDetailsID) ?? 0,
+                medicineName: e['medicine_name']?.toString() ?? '',
+                medicineContainerId: int.tryParse(
+                        e['medicine_container_id']?.toString() ?? '0') ??
+                    0,
+                medicineContainerName: e['medicine_container_name']?.toString(),
+                quantity: (e['quantity'] as int?) ?? 1,
+              ))
+          .toList();
 
       // Prepare offer model
       final offerModel = AddOfferDiscountData(
         memberId: int.tryParse(memberId!) ?? 0,
         orgSubcategoryId: int.tryParse(orgSubcategoryId) ?? 0,
         orgDetailsID: int.tryParse(orgDetailsID) ?? 0,
-        organisationOfferDiscountId: int.tryParse(organisationOfferDiscountId) ?? 0,
+        organisationOfferDiscountId:
+            int.tryParse(organisationOfferDiscountId) ?? 0,
         createdBy: int.tryParse(memberId!) ?? 0,
         medicines: medicines,
       );
@@ -310,7 +420,8 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
       }
 
       // Submit the offer
-      final response = await _repository.submitOfferDiscount(offerModel, imageFile);
+      final response =
+          await _repository.submitOfferDiscount(offerModel, imageFile);
 
       // Handle response
       if (response != null && response is Map<String, dynamic>) {
@@ -356,7 +467,8 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -380,7 +492,8 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
             OutlinedButton(
               onPressed: () => Navigator.of(context).pop(false),
               style: OutlinedButton.styleFrom(
-                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: const BorderSide(color: Colors.red),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -391,7 +504,8 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
               style: ElevatedButton.styleFrom(
-                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -453,7 +567,8 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
             OutlinedButton(
               onPressed: () => Navigator.pop(context, false),
               style: OutlinedButton.styleFrom(
-                foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: const BorderSide(color: Colors.redAccent),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -474,9 +589,11 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
                 });
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
               ),
-              child: const Text("View Details", style: TextStyle(color: Colors.white)),
+              child: const Text("View Details",
+                  style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -599,7 +716,8 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
           ] else ...[
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                backgroundColor:
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(
@@ -620,6 +738,7 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isSmall = MediaQuery.of(context).size.width < 370;
     if (isLoading) {
       return const Scaffold(
         body: Center(
@@ -646,13 +765,17 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.logo_color),
+        backgroundColor:
+            ColorHelperClass.getColorFromHex(ColorResources.logo_color),
         title: Builder(
           builder: (context) {
             double fontSize = MediaQuery.of(context).size.width * 0.045;
             return Text(
               "Medicine Details",
-              style: TextStyle(color: Colors.white, fontSize: fontSize, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w500),
             );
           },
         ),
@@ -664,55 +787,120 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
           _buildUploadSection(),
           const SizedBox(height: 16),
           if (selectedImage != null) ...[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Left Side: Medicine List
-                const Text(
-                  'Medicine List',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+            isSmall
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Medicine List",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: offerList.isNotEmpty
+                                  ? _showConfirmDialog
+                                  : null,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    ColorHelperClass.getColorFromHex(
+                                        ColorResources.red_color),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 10),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: const Text(
+                                "Place Order",
+                                style: TextStyle(fontSize: 14),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextButton(
+                              onPressed: _showInputDialog,
+                              style: TextButton.styleFrom(
+                                foregroundColor:
+                                    ColorHelperClass.getColorFromHex(
+                                        ColorResources.red_color),
+                                backgroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                textStyle: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              child: const Text("Add Medicine"),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Medicine List",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          ElevatedButton(
+                            onPressed: offerList.isNotEmpty
+                                ? _showConfirmDialog
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: ColorHelperClass.getColorFromHex(
+                                  ColorResources.red_color),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text(
+                              "Place Order",
+                              style: TextStyle(fontSize: 14),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          TextButton(
+                            onPressed: _showInputDialog,
+                            style: TextButton.styleFrom(
+                              foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                              backgroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              textStyle: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            child: const Text("Add Medicine"),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                ),
-
-                // Middle: Place Order Button
-                ElevatedButton(
-                  onPressed: offerList.isNotEmpty ? _showConfirmDialog : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text(
-                    "Place Order",
-                    style: TextStyle(fontSize: 14),
-                  ),
-                ),
-
-                // Right: Add Medicine Button
-                TextButton(
-                  onPressed: _showInputDialog,
-                  style: TextButton.styleFrom(
-                    foregroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-                    backgroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  child: const Text("Add Medicine"),
-                ),
-              ],
-            ),
             const SizedBox(height: 12),
           ],
           if (offerList.isNotEmpty)
@@ -743,7 +931,6 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
                         ),
                         TextSpan(
                           text: '${offer['quantity']} ',
-
                         ),
                         TextSpan(
                           text: offer['medicine_container_name'],
@@ -752,7 +939,6 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
-
                 ],
               );
             }),
@@ -764,7 +950,6 @@ class _AvailOfferPageState extends State<AvailOfferPage> {
           const SizedBox(height: 80),
         ],
       ),
-
     );
   }
 }

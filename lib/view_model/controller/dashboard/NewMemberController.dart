@@ -467,7 +467,7 @@ class NewMemberController extends GetxController {
             if (zoneController.value.text.isEmpty) {
               _showLoginAlert(context!);
             } else {
-              _addMembershipIfMatches(_value.data!, "Non Member");
+              _addMembershipIfMatches(_value.data!, "Life Member");
 
               filteredSaraswaniOptionList.value = saraswaniOptionList
                   .where((option) =>
@@ -479,15 +479,15 @@ class NewMemberController extends GetxController {
             if (countryNotFound.value) {
               if (zoneController.value.text.isEmpty) {
                 _addMembershipIfMatches(_value.data!, "Saraswani Member");
-                _addMembershipIfMatches(_value.data!, "Guest Member");
+                // _addMembershipIfMatches(_value.data!, "Guest Member");
 
                 filteredSaraswaniOptionList.value = saraswaniOptionList;
               } else {
-                _addMembershipIfMatches(_value.data!, "Non Member");
+                // _addMembershipIfMatches(_value.data!, "Non Member");
                 _addMembershipIfMatches(_value.data!, "Life Member");
 
                 final hasNonMember = memberShipList.any((ms) =>
-                    (ms.membershipName?.toLowerCase() ?? '') == 'non member');
+                    (ms.membershipName?.toLowerCase() ?? '') == 'life member');
 
                 if (hasNonMember) {
                   filteredSaraswaniOptionList.value = saraswaniOptionList
