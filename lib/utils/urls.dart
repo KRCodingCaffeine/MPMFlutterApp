@@ -119,6 +119,14 @@ class Urls {
   static const String updateEventPaymentTransactionUrl = base_url+"api/update_event_payment_transaction";
   static const String get_events_by_coordinator = base_url+"api/get_events_by_coordinator";
 
+  // Sattu Vitran
+  static const String vitran_list_url = base_url+"api/vitran/list_vitran";
+  static const String vitran_details_url = base_url+"api/vitran/get_vitran_details";
+  static const String add_vitran_member_order_url = base_url+"api/vitran/add_vitran_member_order";
+  static const String update_vitran_member_order_url = base_url+"api/vitran/update_vitran_member_order";
+  static const String list_vitran_member_order_url = base_url+"api/vitran/list_vitran_member_order";
+  static const String get_vitran_member_order_details_url = base_url+"api/vitran/get_vitran_member_order_details";
+
   //Shiksha Sahayata
   static const String get_shiksha_application_by_id_url = base_url+"api/get_shiksha_application_by_id";
   static const String create_shiksha_application_url = base_url+"api/create_shiksha_application";
