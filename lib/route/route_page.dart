@@ -10,6 +10,7 @@ import 'package:mpm/view/OutsideMumbaiLogin/outside_mumbai_login.dart';
 import 'package:mpm/view/QRCodeScanner/qr_code.dart';
 import 'package:mpm/view/QRCodeScanner/select_qr_screen.dart';
 import 'package:mpm/view/Saraswanilabel/saraswani_label.dart';
+import 'package:mpm/view/SattuVitran/sattu_vitran_view.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/shiksha_sahayata_by_parenting_view.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByYourself/shiksha_sahayata_by_yourself.dart';
 import 'package:mpm/view/ShikshaSahayata/shiksha_sahayata_view.dart';
@@ -138,6 +139,10 @@ class RoutePages {
       // OutSide Mumbai Login
       case RouteNames.outside_mumbai_login:
         return _buildRoute(OutsideMumbaiLoginPage(), settings);
+
+      // Sattu Vitran
+      case RouteNames.sattu_vitran:
+        return _buildRoute(SattuVitranView(), settings);
 
       default:
         return MaterialPageRoute(builder: (context) {

@@ -82,11 +82,12 @@ class _HomeViewState extends State<HomeView>
       {'icon': Images.user, 'label': 'My Profile'},
       {'icon': Images.makenewmember, 'label': 'Make New Member'},
       {'icon': Images.discount, 'label': 'Discounts & Offers'},
-      {'icon': Images.events, 'label': 'Events'},
+      {'icon': Images.sattu_vitran, 'label': 'Sattu Vitran'},
       {'icon': Images.saraswani, 'label': 'Saraswani'},
-      {'icon': Images.event_trip, 'label': 'Trips'},
+      {'icon': Images.events, 'label': 'Events'},
       {'icon': Images.network, 'label': 'Networking'},
-      {'icon': Images.shiksha, 'label': 'Shiksha Sahayata'}
+      {'icon': Images.event_trip, 'label': 'Trips'},
+      {'icon': Images.shiksha, 'label': 'Shiksha Sahayata'},
     ];
 
     /* if (memberId == 1 || memberId == 2 || memberId == 2040) {
@@ -1308,6 +1309,9 @@ class _HomeViewState extends State<HomeView>
       // case "QR Code Scanner":
       //   _showAttendanceMarkedDialog(context);
       //   break;
+      case "Sattu Vitran":
+        Navigator.pushNamed(context, RouteNames.sattu_vitran);
+        break;
     }
   }
 
