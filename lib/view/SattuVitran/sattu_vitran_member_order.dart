@@ -164,7 +164,11 @@ class _VitranmemberorderState extends State<Vitranmemberorder> {
   }
 
   Widget _buildOrderCard(VitranMemberOrderListData order) {
-    final orderDate = _formatDate(order.orderedAt);
+    final distributionDate = _formatDate(order.distributionDate);
+    final distributionTime = _formatTimeRange(
+      order.distributionStartTime,
+      order.distributionEndTime,
+    );
 
     return Card(
       color: Colors.white,
@@ -179,18 +183,42 @@ class _VitranmemberorderState extends State<Vitranmemberorder> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header Row - Title and Status
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    order.vitranName ?? "",
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 17,
-                    ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _brandColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          order.vitranOrderCode ?? "N/A",
+                          style: TextStyle(
+                            color: _brandColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          order.vitranName ?? "",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 Container(
@@ -213,10 +241,8 @@ class _VitranmemberorderState extends State<Vitranmemberorder> {
                 ),
               ],
             ),
-
             const SizedBox(height: 8),
 
-            // Location
             Row(
               children: [
                 Icon(
@@ -235,10 +261,8 @@ class _VitranmemberorderState extends State<Vitranmemberorder> {
                 ),
               ],
             ),
-
             const SizedBox(height: 6),
 
-            // Date
             Row(
               children: [
                 Icon(
@@ -247,7 +271,35 @@ class _VitranmemberorderState extends State<Vitranmemberorder> {
                   color: Colors.grey.shade600,
                 ),
                 const SizedBox(width: 4),
-                Text(orderDate),
+                Expanded(
+                  child: Text(
+                    "Distribution Date: $distributionDate",
+                    style: TextStyle(
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 4),
+
+            Row(
+              children: [
+                Icon(
+                  Icons.access_time,
+                  size: 15,
+                  color: Colors.grey.shade600,
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    "Distribution Time: $distributionTime",
+                    style: TextStyle(
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                ),
               ],
             ),
 
@@ -322,11 +374,46 @@ class _VitranmemberorderState extends State<Vitranmemberorder> {
   String _formatDate(String? date) {
     if (date == null || date.isEmpty) return "-";
 
-    final parsed = DateTime.tryParse(date);
+    try {
+      final parsedDate = DateTime.tryParse(date);
+      if (parsedDate == null) return date;
+      return DateFormat("dd MMM yyyy").format(parsedDate);
+    } catch (e) {
+      return date;
+    }
+  }
 
-    if (parsed == null) return date;
+  String _formatTimeRange(String? startTime, String? endTime) {
+    final formattedStart = _formatTime(startTime);
+    final formattedEnd = _formatTime(endTime);
 
-    return DateFormat("dd MMM yyyy").format(parsed);
+    if (formattedStart == "-" && formattedEnd == "-") {
+      return "-";
+    } else if (formattedStart == "-") {
+      return "Ends at $formattedEnd";
+    } else if (formattedEnd == "-") {
+      return "Starts at $formattedStart";
+    } else {
+      return "$formattedStart - $formattedEnd";
+    }
+  }
+
+  String _formatTime(String? time) {
+    if (time == null || time.isEmpty) return "-";
+
+    try {
+      final timeParts = time.split(':');
+      if (timeParts.length >= 2) {
+        final hour = int.parse(timeParts[0]);
+        final minute = timeParts[1];
+        final period = hour >= 12 ? 'PM' : 'AM';
+        final hour12 = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+        return "$hour12:$minute $period";
+      }
+      return time;
+    } catch (e) {
+      return time;
+    }
   }
 
   Color _statusColor(String? status) {

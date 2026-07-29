@@ -474,7 +474,7 @@ class _SattuVitranDetailPageState extends State<SattuVitranDetailPage> {
                     ),
                   ),
                   Text(
-                    '$_selectedProductCount sattu churn • $_selectedItemCount qty',
+                    '$_selectedProductCount items • $_selectedItemCount qty',
                     style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                   ),
                 ],

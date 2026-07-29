@@ -7,8 +7,8 @@ class OrganizerSamitiData {
   String? vitranDistributionCenterId;
   String? organizerContactDetails;
   String? distributionDate;
-  String? distributionStartDate; // Added missing field
-  String? distributionEndDate; // Added missing field
+  String? distributionStartDate;
+  String? distributionEndDate;
   String? distributionStartTime;
   String? distributionEndTime;
   String? samitiZoneId;
@@ -16,22 +16,26 @@ class OrganizerSamitiData {
   String? createdAt;
   String? updatedBy;
   String? updatedAt;
+
+  // Organizer Samiti fields
   String? organizerSamitiName;
+  String? organizerSamitiSubCategoryName;
+  String? samitiId;
+
+  // Zone fields
   String? samitiZoneName;
+  String? distributionCenterZoneName;
+  String? distributionCenterZoneId;
+
+  // Distribution Center fields
   String? vitranDistributionCenterName;
   String? vitranDistributionCenterDetails;
-  String? distributionCenterZoneId;
   String? distributionCenterStatus;
-  String? distributionCenterZoneName;
 
-  // New fields from API response
-  String? organizerSamitiSubCategoryName; // Added
-  String? samitiId; // Added
-
-  // Sanyojak data
-  List<ListSanyojakData>? sanyojak; // Added
-  String? sanyojakName; // Added
-  String? sanyojakMobile; // Added
+  // Sanyojak fields
+  List<ListSanyojakData>? sanyojak;
+  String? sanyojakName;
+  String? sanyojakMobile;
 
   OrganizerSamitiData({
     this.vitranOrganizerSamitiId,
@@ -50,14 +54,14 @@ class OrganizerSamitiData {
     this.updatedBy,
     this.updatedAt,
     this.organizerSamitiName,
-    this.samitiZoneName,
-    this.vitranDistributionCenterName,
-    this.vitranDistributionCenterDetails,
-    this.distributionCenterZoneId,
-    this.distributionCenterStatus,
-    this.distributionCenterZoneName,
     this.organizerSamitiSubCategoryName,
     this.samitiId,
+    this.samitiZoneName,
+    this.distributionCenterZoneName,
+    this.distributionCenterZoneId,
+    this.vitranDistributionCenterName,
+    this.vitranDistributionCenterDetails,
+    this.distributionCenterStatus,
     this.sanyojak,
     this.sanyojakName,
     this.sanyojakMobile,
@@ -68,8 +72,7 @@ class OrganizerSamitiData {
       vitranOrganizerSamitiId: json['vitran_organizer_samiti_id']?.toString(),
       vitranId: json['vitran_id']?.toString(),
       organizerSamitiId: json['organizer_samiti_id']?.toString(),
-      vitranDistributionCenterId:
-          json['vitran_distribution_center_id']?.toString(),
+      vitranDistributionCenterId: json['vitran_distribution_center_id']?.toString(),
       organizerContactDetails: json['organizer_contact_details'],
       distributionDate: json['distribution_date'],
       distributionStartDate: json['distribution_start_date'],
@@ -82,20 +85,18 @@ class OrganizerSamitiData {
       updatedBy: json['updated_by']?.toString(),
       updatedAt: json['updated_at'],
       organizerSamitiName: json['organizer_samiti_name'],
-      samitiZoneName: json['samiti_zone_name'],
-      vitranDistributionCenterName: json['vitran_distribution_center_name'],
-      vitranDistributionCenterDetails:
-          json['vitran_distribution_center_details'],
-      distributionCenterZoneId: json['distribution_center_zone_id']?.toString(),
-      distributionCenterStatus: json['distribution_center_status']?.toString(),
-      distributionCenterZoneName: json['distribution_center_zone_name'],
-      organizerSamitiSubCategoryName:
-          json['organizer_samiti_sub_category_name'],
+      organizerSamitiSubCategoryName: json['organizer_samiti_sub_category_name'],
       samitiId: json['samiti_id']?.toString(),
+      samitiZoneName: json['samiti_zone_name'],
+      distributionCenterZoneName: json['distribution_center_zone_name'],
+      distributionCenterZoneId: json['distribution_center_zone_id']?.toString(),
+      vitranDistributionCenterName: json['vitran_distribution_center_name'],
+      vitranDistributionCenterDetails: json['vitran_distribution_center_details'],
+      distributionCenterStatus: json['distribution_center_status']?.toString(),
       sanyojak: json['sanyojak'] != null
           ? (json['sanyojak'] as List)
-              .map((e) => ListSanyojakData.fromJson(e))
-              .toList()
+          .map((e) => ListSanyojakData.fromJson(e))
+          .toList()
           : [],
       sanyojakName: json['sanyojak_name'],
       sanyojakMobile: json['sanyojak_mobile'],
@@ -120,14 +121,14 @@ class OrganizerSamitiData {
       'updated_by': updatedBy,
       'updated_at': updatedAt,
       'organizer_samiti_name': organizerSamitiName,
-      'samiti_zone_name': samitiZoneName,
-      'vitran_distribution_center_name': vitranDistributionCenterName,
-      'vitran_distribution_center_details': vitranDistributionCenterDetails,
-      'distribution_center_zone_id': distributionCenterZoneId,
-      'distribution_center_status': distributionCenterStatus,
-      'distribution_center_zone_name': distributionCenterZoneName,
       'organizer_samiti_sub_category_name': organizerSamitiSubCategoryName,
       'samiti_id': samitiId,
+      'samiti_zone_name': samitiZoneName,
+      'distribution_center_zone_name': distributionCenterZoneName,
+      'distribution_center_zone_id': distributionCenterZoneId,
+      'vitran_distribution_center_name': vitranDistributionCenterName,
+      'vitran_distribution_center_details': vitranDistributionCenterDetails,
+      'distribution_center_status': distributionCenterStatus,
       'sanyojak': sanyojak?.map((e) => e.toJson()).toList(),
       'sanyojak_name': sanyojakName,
       'sanyojak_mobile': sanyojakMobile,

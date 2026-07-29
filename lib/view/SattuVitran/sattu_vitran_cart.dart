@@ -113,28 +113,34 @@ class _SattuVitranCartPageState extends State<SattuVitranCartPage> {
                   isExpanded: true,
                   initialValue: _selectedDistributionCenterId,
                   dropdownColor: Colors.white,
-                  items: widget.organizerSamitiList
-                      .map((samiti) => DropdownMenuItem<String>(
-                    value: samiti.vitranDistributionCenterId,
-                    child: Text(
-                      _displayText(
-                        samiti.vitranDistributionCenterName,
-                        fallback: 'Distribution Center',
+                  // ✅ 1. Dropdown items with Sr. No.
+                  items: widget.organizerSamitiList.asMap().entries.map((entry) {
+                    int index = entry.key + 1; // Serial Number starts at 1
+                    OrganizerSamitiData samiti = entry.value;
+                    return DropdownMenuItem<String>(
+                      value: samiti.vitranDistributionCenterId,
+                      child: Text(
+                        '$index. ${_displayText(
+                          samiti.vitranDistributionCenterName,
+                          fallback: 'Distribution Center',
+                        )}',
                       ),
-                    ),
-                  ))
-                      .toList(),
+                    );
+                  }).toList(),
+                  // ✅ 2. Selected item display with Sr. No.
                   selectedItemBuilder: (context) {
-                    return widget.organizerSamitiList.map((samiti) {
+                    return widget.organizerSamitiList.asMap().entries.map((entry) {
+                      int index = entry.key + 1; // Serial Number starts at 1
+                      OrganizerSamitiData samiti = entry.value;
                       return Align(
                         alignment: Alignment.centerLeft,
                         child: Padding(
                           padding: const EdgeInsets.only(right: 8),
                           child: Text(
-                            _displayText(
+                            '$index. ${_displayText(
                               samiti.vitranDistributionCenterName,
                               fallback: 'Distribution Center',
-                            ),
+                            )}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -333,7 +339,7 @@ class _SattuVitranCartPageState extends State<SattuVitranCartPage> {
           ),
           const SizedBox(height: 8),
           _buildDetailText(
-            title: 'Sanyojak',
+            title: 'Sanyojika',
             value: sanyojakDisplay,
           ),
           const SizedBox(height: 8),
@@ -376,15 +382,15 @@ class _SattuVitranCartPageState extends State<SattuVitranCartPage> {
             text: '$title: ',
             style: const TextStyle(
               color: Colors.black,
-              fontSize: 13,
+              fontSize: 15,
               fontWeight: FontWeight.w600,
             ),
           ),
           TextSpan(
             text: value,
             style: TextStyle(
-              color: Colors.grey[700],
-              fontSize: 13,
+              color: Colors.black87,
+              fontSize: 14,
             ),
           ),
         ],
@@ -582,7 +588,6 @@ class _SattuVitranCartPageState extends State<SattuVitranCartPage> {
       final model = VitranMemberOrderModelClass.fromJson(response);
 
       if (model.status == true) {
-        // Show success SnackBar for 2 minutes
         final snackBar = SnackBar(
           content: Text(model.message ?? "Order updated successfully!"),
           backgroundColor: Colors.green,
@@ -593,10 +598,9 @@ class _SattuVitranCartPageState extends State<SattuVitranCartPage> {
         // Navigate to SattuVitranView after a short delay
         Future.delayed(const Duration(milliseconds: 500), () {
           if (mounted) {
-            Navigator.pushAndRemoveUntil(
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const SattuVitranView()),
-                  (route) => false,
             );
           }
         });
