@@ -32,7 +32,7 @@ class SattuVitranMemberOrderDetail extends StatefulWidget {
 class _SattuVitranMemberOrderDetailState
     extends State<SattuVitranMemberOrderDetail> {
   final Color _brandColor =
-  ColorHelperClass.getColorFromHex(ColorResources.logo_color);
+      ColorHelperClass.getColorFromHex(ColorResources.logo_color);
 
   late Future<VitranMemberOrderDetailsModelClass> _futureOrder;
   VitranMemberOrderDetailsData? _currentOrder;
@@ -108,10 +108,8 @@ class _SattuVitranMemberOrderDetailState
     await _futureOrder;
   }
 
-// Method to update order
   Future<void> _updateOrder(BuildContext context) async {
     try {
-      // Show loading dialog
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -120,19 +118,15 @@ class _SattuVitranMemberOrderDetailState
         ),
       );
 
-      // Build products list with quantities and IDs - FILTER OUT QUANTITY 0
-      final products = _editProducts.asMap().entries
-          .where((entry) {
+      final products = _editProducts.asMap().entries.where((entry) {
         final index = entry.key;
         final quantity = _editQuantities[index];
-        return quantity > 0; // Only include products with quantity > 0
-      })
-          .map((entry) {
+        return quantity > 0;
+      }).map((entry) {
         final index = entry.key;
         final product = entry.value;
         final quantity = _editQuantities[index];
 
-        // Build product map with all required fields
         final productMap = {
           "product_id": product['vitranProductId'] ?? '',
           "product_qty": quantity,
@@ -140,19 +134,17 @@ class _SattuVitranMemberOrderDetailState
           "product_total_cost": (product['productCost'] ?? 0) * quantity,
         };
 
-        // If product has an existing order product ID, include it for update
         if (product['vitranMemberOrderProductId'] != null &&
             product['vitranMemberOrderProductId'].toString().isNotEmpty) {
           productMap['vitran_member_order_product_id'] =
-          product['vitranMemberOrderProductId'];
+              product['vitranMemberOrderProductId'];
         }
 
         return productMap;
       }).toList();
 
-      // Check if there are any products
       if (products.isEmpty) {
-        Navigator.pop(context); // Close loading dialog
+        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Please add at least one product with quantity > 0'),
@@ -163,29 +155,24 @@ class _SattuVitranMemberOrderDetailState
         return;
       }
 
-      // Create data model for update
       final updateData = UpdateVitranMemberOrderData(
         vitranMemberOrderId: _currentOrder!.vitranMemberOrderId,
         orderStatus: _currentOrder?.orderStatus ?? "ordered",
         vitranDistributionCenterId: _selectedDistributionCenterId,
       );
 
-      // Call update API
       final response = await UpdateVitranMemberOrderRepository().updateOrder(
         updateData,
         jsonEncode(products),
       );
 
-      // Close loading dialog
       Navigator.pop(context);
 
       final model = UpdateVitranMemberOrderModelClass.fromJson(response);
 
       if (model.status == true) {
-        // Close bottom sheet
         Navigator.pop(context);
 
-        // Show success SnackBar for 2 minutes (no action button)
         final snackBar = SnackBar(
           content: Text(model.message ?? "Order updated successfully!"),
           backgroundColor: Colors.green,
@@ -193,7 +180,6 @@ class _SattuVitranMemberOrderDetailState
         );
         ScaffoldMessenger.of(context).showSnackBar(snackBar);
 
-        // Refresh order details
         _refresh();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -205,7 +191,6 @@ class _SattuVitranMemberOrderDetailState
         );
       }
     } catch (e) {
-      // Close loading dialog if open
       if (Navigator.canPop(context)) {
         Navigator.pop(context);
       }
@@ -297,10 +282,7 @@ class _SattuVitranMemberOrderDetailState
     );
   }
 
-  Widget _buildSectionTitle(
-      String title,
-      IconData icon,
-      ) {
+  Widget _buildSectionTitle(String title, IconData icon) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -407,7 +389,7 @@ class _SattuVitranMemberOrderDetailState
     if (centers == null || _selectedDistributionCenterId == null) return null;
     try {
       return centers.firstWhere(
-            (c) => c.vitranDistributionCenterId == _selectedDistributionCenterId,
+        (c) => c.vitranDistributionCenterId == _selectedDistributionCenterId,
       );
     } catch (_) {
       return null;
@@ -415,15 +397,12 @@ class _SattuVitranMemberOrderDetailState
   }
 
   void _showEditBottomSheet(VitranMemberOrderDetailsData order) async {
-    // Fetch vitran details if not already fetched
     if (_vitranDetails == null && order.vitranId != null) {
       await _fetchVitranDetails(order.vitranId!);
     }
 
-    // Initialize edit data
     _selectedDistributionCenterId = order.vitranDistributionCenterId;
 
-    // Get products from vitran details or use existing order products
     final List<ProductData>? vitranProducts = _vitranDetails?.data?.products;
     if (vitranProducts != null && vitranProducts.isNotEmpty) {
       _editProducts = vitranProducts.map((product) {
@@ -431,7 +410,7 @@ class _SattuVitranMemberOrderDetailState
         if (order.products != null) {
           try {
             orderProduct = order.products!.firstWhere(
-                  (p) => p.productName == product.productName,
+              (p) => p.productName == product.productName,
             );
           } catch (_) {
             orderProduct = null;
@@ -440,29 +419,31 @@ class _SattuVitranMemberOrderDetailState
 
         return {
           'productName': product.productName ?? '-',
-          'productDescription': product.productDescription ?? '', // Added description
+          'productDescription': product.productDescription ?? '',
           'productCost': double.tryParse(product.productCost ?? '0') ?? 0,
           'productUnitDisplayName': product.productUnitDisplayName ?? '',
           'productQty': orderProduct?.productQty ?? 0,
           'productTotalCost': orderProduct?.productTotalCost ?? 0,
           'vitranProductId': product.vitranProductId,
           'productUnitId': product.vitranProductUnitId,
-          'vitranMemberOrderProductId': orderProduct?.vitranMemberOrderProductId,
+          'vitranMemberOrderProductId':
+              orderProduct?.vitranMemberOrderProductId,
         };
       }).toList();
     } else {
       _editProducts = order.products?.map((product) {
-        return {
-          'productName': product.productName ?? '-',
-          'productDescription': product.productDescription ?? '', // Added description
-          'productCost': product.productCost ?? 0,
-          'productUnitDisplayName': product.productUnitDisplayName ?? '',
-          'productQty': product.productQty ?? 0,
-          'productTotalCost': product.productTotalCost ?? 0,
-          'vitranMemberOrderProductId': product.vitranMemberOrderProductId,
-          'productUnitId': product.productUnitId ?? "1",
-        };
-      }).toList() ?? [];
+            return {
+              'productName': product.productName ?? '-',
+              'productDescription': product.productDescription ?? '',
+              'productCost': product.productCost ?? 0,
+              'productUnitDisplayName': product.productUnitDisplayName ?? '',
+              'productQty': product.productQty ?? 0,
+              'productTotalCost': product.productTotalCost ?? 0,
+              'vitranMemberOrderProductId': product.vitranMemberOrderProductId,
+              'productUnitId': product.productUnitId ?? "1",
+            };
+          }).toList() ??
+          [];
     }
     _editQuantities = _editProducts.map((p) => p['productQty'] as int).toList();
 
@@ -486,7 +467,6 @@ class _SattuVitranMemberOrderDetailState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Handle Bar
               Center(
                 child: Container(
                   margin: const EdgeInsets.only(top: 12),
@@ -499,8 +479,6 @@ class _SattuVitranMemberOrderDetailState
                 ),
               ),
               const SizedBox(height: 20),
-
-              // Title
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
@@ -530,10 +508,7 @@ class _SattuVitranMemberOrderDetailState
                   ],
                 ),
               ),
-
               const Divider(height: 30),
-
-              // Scrollable Content
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -541,8 +516,6 @@ class _SattuVitranMemberOrderDetailState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 8),
-
-                      // Distribution Place Dropdown
                       const Text(
                         'Distribution Place',
                         style: TextStyle(
@@ -551,7 +524,6 @@ class _SattuVitranMemberOrderDetailState
                         ),
                       ),
                       const SizedBox(height: 8),
-
                       if (_isLoadingVitranDetails)
                         const Center(
                           child: Padding(
@@ -572,19 +544,26 @@ class _SattuVitranMemberOrderDetailState
                               isExpanded: true,
                               dropdownColor: Colors.white,
                               hint: const Text('Select distribution center'),
-                              items: distributionCenters?.map((center) {
-                                return DropdownMenuItem<String>(
-                                  value: center.vitranDistributionCenterId,
-                                  child: Text(
-                                    center.vitranDistributionCenterName ?? 'Unknown Center',
-                                  ),
-                                );
-                              }).toList() ?? [
-                                const DropdownMenuItem(
-                                  value: null,
-                                  child: Text('No centers available'),
-                                ),
-                              ],
+                              // ✅ UPDATED: Added index to show Sr. No.
+                              items: distributionCenters
+                                      ?.asMap()
+                                      .entries
+                                      .map((entry) {
+                                    int index = entry.key + 1;
+                                    OrganizerSamitiData center = entry.value;
+                                    return DropdownMenuItem<String>(
+                                      value: center.vitranDistributionCenterId,
+                                      child: Text(
+                                        '$index. ${center.vitranDistributionCenterName ?? 'Unknown Center'}',
+                                      ),
+                                    );
+                                  }).toList() ??
+                                  [
+                                    const DropdownMenuItem(
+                                      value: null,
+                                      child: Text('No centers available'),
+                                    ),
+                                  ],
                               onChanged: (value) {
                                 setState(() {
                                   _selectedDistributionCenterId = value;
@@ -597,18 +576,13 @@ class _SattuVitranMemberOrderDetailState
                             ),
                           ),
                         ),
-
                       const SizedBox(height: 14),
-
-                      // Distribution Center Details
-                      if (_selectedDistributionCenterId != null && distributionCenters != null)
+                      if (_selectedDistributionCenterId != null &&
+                          distributionCenters != null)
                         _buildDistributionDetails(
                           _getSelectedCenter(distributionCenters),
                         ),
-
                       const SizedBox(height: 20),
-
-                      // Products Section
                       const Text(
                         'Products',
                         style: TextStyle(
@@ -617,7 +591,6 @@ class _SattuVitranMemberOrderDetailState
                         ),
                       ),
                       const SizedBox(height: 10),
-
                       if (_isLoadingVitranDetails)
                         const Center(
                           child: Padding(
@@ -674,7 +647,8 @@ class _SattuVitranMemberOrderDetailState
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         product['productName'] ?? 'Product',
@@ -686,7 +660,7 @@ class _SattuVitranMemberOrderDetailState
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        '₹ ${product['productCost']} / ${product['productDescription']}',
+                                        '₹ ${product['productCost']} (${product['productDescription']})',
                                         style: TextStyle(
                                           color: Colors.grey[700],
                                           fontSize: 12,
@@ -721,10 +695,12 @@ class _SattuVitranMemberOrderDetailState
                                             icon: Icons.remove,
                                             onTap: () {
                                               setState(() {
-                                                if (_editQuantities[index] > 0) {
+                                                if (_editQuantities[index] >
+                                                    0) {
                                                   _editQuantities[index]--;
-                                                  _editProducts[index]['productQty'] =
-                                                  _editQuantities[index];
+                                                  _editProducts[index]
+                                                          ['productQty'] =
+                                                      _editQuantities[index];
                                                 }
                                               });
                                             },
@@ -745,8 +721,9 @@ class _SattuVitranMemberOrderDetailState
                                             onTap: () {
                                               setState(() {
                                                 _editQuantities[index]++;
-                                                _editProducts[index]['productQty'] =
-                                                _editQuantities[index];
+                                                _editProducts[index]
+                                                        ['productQty'] =
+                                                    _editQuantities[index];
                                               });
                                             },
                                           ),
@@ -759,14 +736,11 @@ class _SattuVitranMemberOrderDetailState
                             ),
                           );
                         }),
-
                       const SizedBox(height: 30),
                     ],
                   ),
                 ),
               ),
-
-              // Action Buttons - Fixed at bottom
               Container(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
                 decoration: BoxDecoration(
@@ -861,7 +835,7 @@ class _SattuVitranMemberOrderDetailState
           ),
           const SizedBox(height: 8),
           _buildDetailText(
-            title: 'Sanyojak',
+            title: 'Sanyojika',
             value: _getSanyojakDisplay(samiti),
           ),
           const SizedBox(height: 8),
@@ -882,7 +856,8 @@ class _SattuVitranMemberOrderDetailState
           const SizedBox(height: 8),
           _buildDetailText(
             title: 'Distribution Time',
-            value: '${_formatTimeText(samiti.distributionStartTime)} - ${_formatTimeText(samiti.distributionEndTime)}',
+            value:
+                '${_formatTimeText(samiti.distributionStartTime)} - ${_formatTimeText(samiti.distributionEndTime)}',
           ),
         ],
       ),
@@ -900,15 +875,15 @@ class _SattuVitranMemberOrderDetailState
             text: '$title: ',
             style: const TextStyle(
               color: Colors.black,
-              fontSize: 13,
+              fontSize: 15,
               fontWeight: FontWeight.w600,
             ),
           ),
           TextSpan(
             text: value,
             style: TextStyle(
-              color: Colors.grey[700],
-              fontSize: 13,
+              color: Colors.black54,
+              fontSize: 14,
             ),
           ),
         ],
@@ -968,7 +943,8 @@ class _SattuVitranMemberOrderDetailState
 
       if (name.isNotEmpty) {
         String display = name;
-        if (firstSanyojak.memberMobile != null && firstSanyojak.memberMobile!.isNotEmpty) {
+        if (firstSanyojak.memberMobile != null &&
+            firstSanyojak.memberMobile!.isNotEmpty) {
           display += ' - ${firstSanyojak.memberMobile}';
         }
         return display;
@@ -1178,6 +1154,21 @@ class _SattuVitranMemberOrderDetailState
                             title: "Address",
                             value: order.vitranDistributionCenterDetails ?? "-",
                           ),
+                          const Divider(),
+                          _buildInfoTile(
+                            icon: Icons.calendar_today,
+                            title: "Distribution Date",
+                            value: _formatDate(order.distributionDate),
+                          ),
+                          const Divider(),
+                          _buildInfoTile(
+                            icon: Icons.access_time,
+                            title: "Distribution Time",
+                            value: _formatTimeRange(
+                              order.distributionStartTime,
+                              order.distributionEndTime,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -1237,7 +1228,7 @@ class _SattuVitranMemberOrderDetailState
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             product.productName ?? "-",
@@ -1248,7 +1239,7 @@ class _SattuVitranMemberOrderDetailState
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            "₹ ${product.productCost?.toStringAsFixed(2) ?? "0"} / ${product.productDescription ?? ""}",
+                                            "₹ ${product.productCost?.toStringAsFixed(2) ?? "0"} (${product.productDescription ?? ""})",
                                             style: TextStyle(
                                               color: Colors.grey.shade700,
                                             ),
@@ -1272,7 +1263,7 @@ class _SattuVitranMemberOrderDetailState
                                           ),
                                           const SizedBox(height: 5),
                                           Text(
-                                            "${product.productQty}",
+                                            "${product.productQty} pks",
                                             style: const TextStyle(
                                               fontWeight: FontWeight.bold,
                                               fontSize: 16,
@@ -1318,5 +1309,20 @@ class _SattuVitranMemberOrderDetailState
         },
       ),
     );
+  }
+
+  String _formatTimeRange(String? startTime, String? endTime) {
+    final formattedStart = _formatTimeText(startTime);
+    final formattedEnd = _formatTimeText(endTime);
+
+    if (formattedStart == "Not available" && formattedEnd == "Not available") {
+      return "-";
+    } else if (formattedStart == "Not available") {
+      return "Ends at $formattedEnd";
+    } else if (formattedEnd == "Not available") {
+      return "Starts at $formattedStart";
+    } else {
+      return "$formattedStart - $formattedEnd";
+    }
   }
 }

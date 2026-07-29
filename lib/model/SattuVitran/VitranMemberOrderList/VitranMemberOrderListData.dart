@@ -2,20 +2,22 @@ import 'package:mpm/model/SattuVitran/VitranMemberOrderList/VitranMemberOrderPro
 
 class VitranMemberOrderListData {
   String? vitranMemberOrderId;
+  String? vitranOrderCode;
   String? vitranId;
   String? memberId;
   String? vitranDistributionCenterId;
-
   String? vitranName;
   String? vitranStatus;
-
   String? vitranDistributionCenterName;
   String? vitranDistributionCenterDetails;
   String? distributionCenterZoneId;
   String? distributionCenterStatus;
-
+  String? distributionDate;
+  String? distributionStartDate;
+  String? distributionEndDate;
+  String? distributionStartTime;
+  String? distributionEndTime;
   double? totalCost;
-
   String? orderStatus;
   String? orderedBy;
   String? orderedAt;
@@ -26,21 +28,28 @@ class VitranMemberOrderListData {
 
   VitranMemberOrderListData({
     this.vitranMemberOrderId,
+    this.vitranOrderCode,
     this.vitranId,
     this.memberId,
     this.vitranDistributionCenterId,
-    this.vitranName,
-    this.vitranStatus,
-    this.vitranDistributionCenterName,
-    this.vitranDistributionCenterDetails,
-    this.distributionCenterZoneId,
-    this.distributionCenterStatus,
     this.totalCost,
     this.orderStatus,
     this.orderedBy,
     this.orderedAt,
     this.updatedBy,
     this.updatedAt,
+    this.vitranName,
+    this.vitranStatus,
+    this.vitranDistributionCenterName,
+    this.vitranDistributionCenterDetails,
+    this.distributionCenterZoneId,
+    this.distributionCenterStatus,
+    this.distributionDate,
+    this.distributionStartDate,
+    this.distributionEndDate,
+    this.distributionStartTime,
+    this.distributionEndTime,
+
     this.products,
   });
 
@@ -49,14 +58,13 @@ class VitranMemberOrderListData {
     return VitranMemberOrderListData(
       vitranMemberOrderId:
       json["vitran_member_order_id"]?.toString(),
+      vitranOrderCode: json['vitran_order_code']?.toString(),
       vitranId: json["vitran_id"]?.toString(),
       memberId: json["member_id"]?.toString(),
       vitranDistributionCenterId:
       json["vitran_distribution_center_id"]?.toString(),
-
       vitranName: json["vitran_name"],
       vitranStatus: json["vitran_status"],
-
       vitranDistributionCenterName:
       json["vitran_distribution_center_name"],
       vitranDistributionCenterDetails:
@@ -65,7 +73,11 @@ class VitranMemberOrderListData {
       json["distribution_center_zone_id"]?.toString(),
       distributionCenterStatus:
       json["distribution_center_status"]?.toString(),
-
+      distributionDate: json['distribution_date'],
+      distributionStartDate: json['distribution_start_date'],
+      distributionEndDate: json['distribution_end_date'],
+      distributionStartTime: json['distribution_start_time'],
+      distributionEndTime: json['distribution_end_time'],
       totalCost:
       double.tryParse(json["total_cost"].toString()),
 
@@ -87,6 +99,7 @@ class VitranMemberOrderListData {
   Map<String, dynamic> toJson() {
     return {
       "vitran_member_order_id": vitranMemberOrderId,
+      "vitran_order_code": vitranOrderCode,
       "vitran_id": vitranId,
       "member_id": memberId,
       "vitran_distribution_center_id":
@@ -101,6 +114,11 @@ class VitranMemberOrderListData {
       distributionCenterZoneId,
       "distribution_center_status":
       distributionCenterStatus,
+      'distribution_date': distributionDate,
+      'distribution_start_date': distributionStartDate,
+      'distribution_end_date': distributionEndDate,
+      'distribution_start_time': distributionStartTime,
+      'distribution_end_time': distributionEndTime,
       "total_cost": totalCost,
       "order_status": orderStatus,
       "ordered_by": orderedBy,
