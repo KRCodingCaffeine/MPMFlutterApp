@@ -111,7 +111,7 @@ class _SattuVitranCartPageState extends State<SattuVitranCartPage> {
                 const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
                   isExpanded: true,
-                  initialValue: _selectedDistributionCenterId,
+                  value: _selectedDistributionCenterId,
                   dropdownColor: Colors.white,
                   // ✅ 1. Dropdown items with Sr. No.
                   items: widget.organizerSamitiList.asMap().entries.map((entry) {
