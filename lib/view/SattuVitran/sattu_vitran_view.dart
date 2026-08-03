@@ -311,7 +311,7 @@ class _SattuVitranViewState extends State<SattuVitranView> {
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
-                    'Order #${order.vitranOrderCode ?? 'N/A'}',
+                    'Order No: ${order.vitranOrderCode ?? 'N/A'}',
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       color: Colors.black87,
@@ -332,7 +332,7 @@ class _SattuVitranViewState extends State<SattuVitranView> {
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
-                    order.vitranDistributionCenterName ?? 'N/A',
+                    'Distribution Centre : ${order.vitranDistributionCenterName ?? 'N/A'}',
                     style: TextStyle(
                       color: Colors.grey.shade700,
                       fontSize: 13,
@@ -351,7 +351,7 @@ class _SattuVitranViewState extends State<SattuVitranView> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  'Date: $formattedDate',
+                  'Distribution Date: $formattedDate',
                   style: TextStyle(
                     color: Colors.grey.shade700,
                     fontSize: 13,
@@ -370,7 +370,7 @@ class _SattuVitranViewState extends State<SattuVitranView> {
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
-                    'Time: $timeRange',
+                    'Distribution Time: $timeRange',
                     style: TextStyle(
                       color: Colors.grey.shade700,
                       fontSize: 13,
