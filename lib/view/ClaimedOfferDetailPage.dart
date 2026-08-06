@@ -740,9 +740,9 @@ class _ClaimedOfferDetailPageState extends State<ClaimedOfferDetailPage> {
 
             return DraggableScrollableSheet(
               expand: false,
-              initialChildSize: 0.65,
-              minChildSize: 0.65,
-              maxChildSize: 0.65,
+              initialChildSize: 0.90,
+              minChildSize: 0.90,
+              maxChildSize: 0.90,
               builder: (context, scrollController) {
                 return Container(
                   decoration: const BoxDecoration(
@@ -755,6 +755,7 @@ class _ClaimedOfferDetailPageState extends State<ClaimedOfferDetailPage> {
                     children: [
                       // Fixed Header
                       _buildHeader(),
+                      const SizedBox(height: 10),
 
                       // Scrollable Body
                       Expanded(

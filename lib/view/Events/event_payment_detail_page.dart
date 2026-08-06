@@ -5,6 +5,7 @@ import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/Events/event_view.dart';
+import 'package:upi_intent/upi_intent.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class EventPaymentDetailPage extends StatefulWidget {
@@ -88,44 +89,100 @@ class _EventPaymentDetailPageState extends State<EventPaymentDetailPage> {
     return qrCode.startsWith('http://') || qrCode.startsWith('https://');
   }
 
-  Uri? get _gPayUri {
-    final upiCode = eventDetails.eventUPICode?.trim();
-    if (upiCode == null || upiCode.isEmpty) {
-      return null;
-    }
+  Future<void> testUpi() async {
+    final uri = Uri.parse(
+      "upi://pay?"
+          "pa=darathyjohnjoseph@okaxis"
+          "&pn=Darathy%20John%20Joseph"
+          "&am=5"
+          "&cu=INR",
+    );
 
-    if (upiCode.startsWith('upi://') || upiCode.startsWith('tez://')) {
-      return Uri.tryParse(upiCode);
-    }
-
-    return Uri(
-      scheme: 'tez',
-      host: 'upi',
-      path: 'pay',
-      queryParameters: {
-        'pa': upiCode,
-        'pn': eventDetails.eventName?.trim().isNotEmpty == true
-            ? eventDetails.eventName!.trim()
-            : 'Event Payment',
-        if (_totalPaymentAmount > 0) 'am': _totalPaymentAmount.toString(),
-        'cu': 'INR',
-      },
+    await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
     );
   }
 
-  Future<void> _openGPay(BuildContext context) async {
-    final uri = _gPayUri;
-    if (uri == null) {
+  Future<void> _openUpiApps(BuildContext context) async {
+    final upiCode = eventDetails.eventUPICode?.trim();
+
+    if (upiCode == null || upiCode.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('UPI code not available')),
+        const SnackBar(
+          content: Text("UPI code not available"),
+        ),
       );
       return;
     }
 
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open Google Pay')),
+    try {
+
+      final upiCode = eventDetails.eventUPICode!.trim();
+      final txnRef = DateTime.now().millisecondsSinceEpoch.toString();
+
+      final uri =
+          "upi://pay?"
+          "pa=${Uri.encodeComponent(upiCode)}"
+          "&pn=${Uri.encodeComponent("Darathy John Joseph")}"
+          "&am=$_totalPaymentAmount"
+          "&cu=INR"
+          "&tr=$txnRef"
+          "&tn=${Uri.encodeComponent("Event Payment")}"
+          "&mc=0000";
+
+      debugPrint(uri);
+
+      debugPrint("=========== UPI REQUEST ===========");
+      debugPrint("UPI ID        : $upiCode");
+      debugPrint("Payee Name    : Darathy John Joseph");
+      debugPrint("Amount        : ${_totalPaymentAmount.toDouble()}");
+      debugPrint("Txn Ref       : $txnRef");
+      debugPrint("Note          : Event Payment");
+      debugPrint("==================================");
+
+      final response = await UpiIntent.pay(
+        context: context,
+        payment: UpiPayment(
+          payeeVpa: upiCode,
+          payeeName: "Darathy John Joseph",
+          amount: _totalPaymentAmount.toDouble(),
+          transactionRefId: DateTime.now().millisecondsSinceEpoch.toString(),
+          transactionNote: "Event Payment",
+          merchantCode: "0000",
+        ),
       );
+
+      if (response == null) return;
+
+      debugPrint("Status      : ${response.status}");
+      debugPrint("Txn Id      : ${response.transactionId}");
+      debugPrint("ApprovalRef : ${response.approvalRefNo}");
+      debugPrint("Response    : ${response.responseCode}");
+
+      if (response.status == UpiTransactionStatus.success) {
+        // Payment Successful
+      } else if (response.status == UpiTransactionStatus.submitted) {
+        // Submitted
+      } else {
+        // Failed / Cancelled
+      }
+    } on UpiException catch (e) {
+      debugPrint("UPI Error : $e");
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message)),
+        );
+      }
+    } catch (e) {
+      debugPrint("UPI Error : $e");
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
     }
   }
 
@@ -327,7 +384,10 @@ class _EventPaymentDetailPageState extends State<EventPaymentDetailPage> {
               ),
               clipBehavior: Clip.antiAlias,
               child: InkWell(
-                onTap: () => _openGPay(context),
+                // onTap: () => _openUpiApps(context),
+                onTap: () async {
+                  await testUpi();
+                },
                 child: _hasQrImage
                     ? Image.network(
                         eventDetails.eventAmountQrCode!,
@@ -338,7 +398,32 @@ class _EventPaymentDetailPageState extends State<EventPaymentDetailPage> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
+
+          // SizedBox(
+          //   width: double.infinity,
+          //   child: ElevatedButton.icon(
+          //     onPressed: () => _openUpiApps(context),
+          //     icon: const Icon(Icons.account_balance_wallet),
+          //     label: const Text(
+          //       "Pay Now",
+          //       style: TextStyle(
+          //         fontSize: 16,
+          //         fontWeight: FontWeight.w600,
+          //       ),
+          //     ),
+          //     style: ElevatedButton.styleFrom(
+          //       backgroundColor: themeColor,
+          //       foregroundColor: Colors.white,
+          //       padding: const EdgeInsets.symmetric(vertical: 14),
+          //       shape: RoundedRectangleBorder(
+          //         borderRadius: BorderRadius.circular(12),
+          //       ),
+          //     ),
+          //   ),
+          // ),
+          //
+          // const SizedBox(height: 16),
           // Text(
           //   "Amount is calculated based on your selected family members also.",
           //   textAlign: TextAlign.center,

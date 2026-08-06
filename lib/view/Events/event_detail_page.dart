@@ -1740,80 +1740,137 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 border: Border.all(color: Colors.orange.shade200),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: RichText(
-                text: TextSpan(
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black87,
-                    height: 1.5,
-                  ),
-                  children: [
-                    const TextSpan(
-                      text:
-                          'If you decide not to attend this program, please click ',
-                    ),
-                    TextSpan(
-                      text: 'Unregister Here',
+              child: isPaidEvent
+                  ? const Text(
+                      "If you decide not to attend this program, please contact organiser. This will help Mandal in better resource planning.",
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: ColorHelperClass.getColorFromHex(
-                          ColorResources.red_color,
+                        fontSize: 14,
+                        color: Colors.black87,
+                        height: 1.5,
+                      ),
+                    )
+                  : RichText(
+                      text: TextSpan(
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black87,
+                          height: 1.5,
                         ),
+                        children: [
+                          const TextSpan(
+                            text:
+                                "If you decide not to attend this program, please click ",
+                          ),
+                          TextSpan(
+                            text: "Unregister Here",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: ColorHelperClass.getColorFromHex(
+                                ColorResources.red_color,
+                              ),
+                            ),
+                            // Optional: make clickable
+                            // recognizer: TapGestureRecognizer()
+                            //   ..onTap = () {
+                            //     _showUnregisterConfirmationDialog();
+                            //   },
+                          ),
+                          const TextSpan(
+                            text:
+                                ". This will help Mandal in better resource planning.",
+                          ),
+                        ],
                       ),
                     ),
-                    const TextSpan(
-                      text:
-                          '. This will help Mandal in better resource planning.',
-                    ),
-                  ],
-                ),
-              ),
             ),
           ],
 
           // REGISTERED BUTTON
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: ColorHelperClass.getColorFromHex(
-                  ColorResources.red_color,
+          // SizedBox(
+          //   width: double.infinity,
+          //   child: ElevatedButton(
+          //     style: ElevatedButton.styleFrom(
+          //       backgroundColor: ColorHelperClass.getColorFromHex(
+          //         ColorResources.red_color,
+          //       ),
+          //       foregroundColor: Colors.white,
+          //       padding: const EdgeInsets.symmetric(vertical: 14),
+          //       shape: RoundedRectangleBorder(
+          //         borderRadius: BorderRadius.circular(8),
+          //       ),
+          //     ),
+          //     onPressed: _isRegistering
+          //         ? null
+          //         : () async {
+          //             if (_isRegistered) {
+          //               // Directly unregister without showing confirmation dialog
+          //               await _cancelEventRegistration();
+          //             } else {
+          //               final confirmed = await _showFinalConfirmationDialog();
+          //
+          //               if (confirmed) {
+          //                 await _showRegistrationConfirmationDialog();
+          //               }
+          //             }
+          //           },
+          //     child: _isRegistering
+          //         ? const SizedBox(
+          //             width: 20,
+          //             height: 20,
+          //             child: CircularProgressIndicator(
+          //               strokeWidth: 2,
+          //               valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          //             ),
+          //           )
+          //         : Text(
+          //             _isRegistered ? "Unregister Here" : "Register Here",
+          //             style: const TextStyle(fontSize: 16),
+          //           ),
+          //   ),
+          // ),
+          if (!(_isRegistered && isPaidEvent))
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColorHelperClass.getColorFromHex(
+                    ColorResources.red_color,
+                  ),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                onPressed: _isRegistering
+                    ? null
+                    : () async {
+                  if (_isRegistered) {
+                    // Directly unregister without showing confirmation dialog
+                    await _cancelEventRegistration();
+                  } else {
+                    final confirmed = await _showFinalConfirmationDialog();
+
+                    if (confirmed) {
+                      await _showRegistrationConfirmationDialog();
+                    }
+                  }
+                },
+                child: _isRegistering
+                    ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+                    : Text(
+                  _isRegistered ? "Unregister Here" : "Register Here",
+                  style: const TextStyle(fontSize: 16),
                 ),
               ),
-              onPressed: _isRegistering
-                  ? null
-                  : () async {
-                      if (_isRegistered) {
-                        // Directly unregister without showing confirmation dialog
-                        await _cancelEventRegistration();
-                      } else {
-                        final confirmed = await _showFinalConfirmationDialog();
-
-                        if (confirmed) {
-                          await _showRegistrationConfirmationDialog();
-                        }
-                      }
-                    },
-              child: _isRegistering
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : Text(
-                      _isRegistered ? "Unregister Here" : "Register Here",
-                      style: const TextStyle(fontSize: 16),
-                    ),
             ),
-          ),
         ],
       ),
     );
