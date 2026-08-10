@@ -86,7 +86,7 @@ class _HomeViewState extends State<HomeView>
       {'icon': Images.saraswani, 'label': 'Saraswani'},
       {'icon': Images.events, 'label': 'Events'},
       {'icon': Images.network, 'label': 'Networking'},
-      {'icon': Images.job_portal, 'label': 'Jobs'}
+      {'icon': Images.job_portal, 'label': 'Jobs'},
       {'icon': Images.event_trip, 'label': 'Trips'},
       {'icon': Images.shiksha, 'label': 'Shiksha Sahayata'},
     ];
