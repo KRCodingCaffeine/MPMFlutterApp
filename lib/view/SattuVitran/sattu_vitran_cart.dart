@@ -63,6 +63,23 @@ class _SattuVitranCartPageState extends State<SattuVitranCartPage> {
     }
   }
 
+  bool get _isOrderCollectionStopped {
+    if (_selectedOrganizerSamiti == null) return false;
+
+    final endDate = _selectedOrganizerSamiti!.distributionEndDate;
+    if (endDate == null || endDate.isEmpty) return false;
+
+    final date = DateTime.tryParse(endDate);
+    if (date == null) return false;
+
+    // Compare only dates (without time)
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final endDateOnly = DateTime(date.year, date.month, date.day);
+
+    return endDateOnly.isBefore(today);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -265,6 +282,9 @@ class _SattuVitranCartPageState extends State<SattuVitranCartPage> {
   }
 
   Widget _buildConfirmBar() {
+    // Check if order collection is stopped
+    final isOrderCollectionStopped = _isOrderCollectionStopped;
+
     return SafeArea(
       child: Container(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
@@ -278,7 +298,31 @@ class _SattuVitranCartPageState extends State<SattuVitranCartPage> {
             ),
           ],
         ),
-        child: ElevatedButton(
+        child: isOrderCollectionStopped
+            ? Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(
+            vertical: 14,
+            horizontal: 16,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.red.shade50,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: Colors.red.shade300,
+            ),
+          ),
+          child: const Text(
+            "Order Booking has been stopped",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.red,
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        )
+            : ElevatedButton(
           onPressed: _selectedOrganizerSamiti == null || _loggedInMemberId == null
               ? null
               : _confirmOrder,
@@ -310,6 +354,9 @@ class _SattuVitranCartPageState extends State<SattuVitranCartPage> {
         sanyojakDisplay += ' - ${samiti.sanyojakMobile}';
       }
     }
+
+    // Check if order collection is stopped for this center
+    final isOrderCollectionStopped = _isOrderCollectionStopped;
 
     return Container(
       width: double.infinity,
