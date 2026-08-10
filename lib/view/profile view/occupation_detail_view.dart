@@ -1745,6 +1745,7 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
             icon,
@@ -1752,27 +1753,33 @@ class _OccupationDetailViewPageState extends State<OccupationDetailViewPage> {
             color: ColorHelperClass.getColorFromHex(ColorResources.red_color),
           ),
           const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w500,
+
+          Expanded( // ⭐ prevents overflow
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.black87,
-                  fontWeight: FontWeight.w600,
+                const SizedBox(height: 2),
+
+                Text(
+                  value,
+                  maxLines: 2, // ⭐ allow only 2 lines
+                  overflow: TextOverflow.ellipsis, // ⭐ add ...
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
