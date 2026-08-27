@@ -86,15 +86,15 @@ class _HomeViewState extends State<HomeView>
       {'icon': Images.saraswani, 'label': 'Saraswani'},
       {'icon': Images.events, 'label': 'Events'},
       {'icon': Images.network, 'label': 'Networking'},
-
       {'icon': Images.event_trip, 'label': 'Trips'},
       {'icon': Images.shiksha, 'label': 'Shiksha Sahayata'},
+      {'icon': Images.utility, 'label': 'Doctors'},
     ];
 
-     if (memberId == 1 || memberId == 2 || memberId == 2040) {
+    if (memberId == 1 || memberId == 2 || memberId == 2040) {
       items.add({'icon': Images.job_portal, 'label': 'Jobs'});
     }
-   // {'icon': Images.job_portal, 'label': 'Jobs'},
+    // {'icon': Images.job_portal, 'label': 'Jobs'},
     // if (memberId == 1 || memberId == 2 || memberId == 2040) {
     //   items.add({'icon': Images.shiksha, 'label': 'Shiksha Sahayata'});
     // }
@@ -267,7 +267,6 @@ class _HomeViewState extends State<HomeView>
 
       if (adminAccess.status == true) {
         for (final access in adminAccess.data ?? []) {
-
           final isActive = access.status == null ||
               access.status == '1' ||
               access.status?.toLowerCase() == 'active';
@@ -1314,6 +1313,10 @@ class _HomeViewState extends State<HomeView>
       //   break;
       case "Sattu Churn":
         Navigator.pushNamed(context, RouteNames.sattu_vitran);
+        break;
+
+      case "Doctors":
+        Navigator.pushNamed(context, RouteNames.utility);
         break;
     }
   }

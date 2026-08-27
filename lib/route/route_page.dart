@@ -15,6 +15,7 @@ import 'package:mpm/view/SattuVitran/sattu_vitran_view.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/shiksha_sahayata_by_parenting_view.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByYourself/shiksha_sahayata_by_yourself.dart';
 import 'package:mpm/view/ShikshaSahayata/shiksha_sahayata_view.dart';
+import 'package:mpm/view/Utility/utility_view.dart';
 import 'package:mpm/view/addmember/add_member_first.dart';
 import 'package:mpm/view/addmember/add_member_second.dart';
 import 'package:mpm/view/condition_about/about_view.dart';
@@ -148,6 +149,10 @@ class RoutePages {
       // Sattu Vitran
       case RouteNames.sattu_vitran:
         return _buildRoute(SattuVitranView(), settings);
+
+        // Utility
+      case RouteNames.utility:
+        return _buildRoute(UtilityView(), settings);
 
       default:
         return MaterialPageRoute(builder: (context) {
