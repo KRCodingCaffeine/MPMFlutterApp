@@ -127,6 +127,15 @@ class Urls {
   static const String list_vitran_member_order_url = base_url+"api/vitran/list_vitran_member_order";
   static const String get_vitran_member_order_details_url = base_url+"api/vitran/get_vitran_member_order_details";
 
+  // Samiti Election
+  static const String election_list_url = base_url+"api/election/list";
+  static const String get_samiti_types_url = base_url+"api/get_samiti_types";
+  static const String add_lm_election_url = base_url+"api/election/add";
+  static const String add_non_member_election_url = base_url+"api/election/add";
+  static const String samiti_convert_to_lm_url = base_url+"api/election/samiti_convert_to_lm";
+  static const String samiti_verify_otp_lm_conversion_url = base_url+"api/election/samiti_verify_otp_lm_conversion";
+
+
   //Shiksha Sahayata
   static const String get_shiksha_application_by_id_url = base_url+"api/get_shiksha_application_by_id";
   static const String create_shiksha_application_url = base_url+"api/create_shiksha_application";

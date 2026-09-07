@@ -10,6 +10,7 @@ import 'package:mpm/view/Networking/network_view.dart';
 import 'package:mpm/view/OutsideMumbaiLogin/outside_mumbai_login.dart';
 import 'package:mpm/view/QRCodeScanner/qr_code.dart';
 import 'package:mpm/view/QRCodeScanner/select_qr_screen.dart';
+import 'package:mpm/view/SamitiElection/samiti_election_view.dart';
 import 'package:mpm/view/Saraswanilabel/saraswani_label.dart';
 import 'package:mpm/view/SattuVitran/sattu_vitran_view.dart';
 import 'package:mpm/view/ShikshaSahayata/ShikshaSahayataByParenting/shiksha_sahayata_by_parenting_view.dart';
@@ -148,6 +149,10 @@ class RoutePages {
       // Sattu Vitran
       case RouteNames.sattu_vitran:
         return _buildRoute(SattuVitranView(), settings);
+
+        // Samiti Election
+      case RouteNames.samiti_election:
+        return _buildRoute(SamitiElectionView(), settings);
 
       default:
         return MaterialPageRoute(builder: (context) {

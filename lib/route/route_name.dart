@@ -36,6 +36,9 @@ class RouteNames {
   static const String notification_detail = "notification_detail";
   static const String sattu_vitran = 'sattu_vitran';
 
+  // Samiti Election
+  static const String samiti_election = 'samiti_election';
+
   // Networking
   static const String networking = "networking";
 

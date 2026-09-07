@@ -86,7 +86,7 @@ class _HomeViewState extends State<HomeView>
       {'icon': Images.saraswani, 'label': 'Saraswani'},
       {'icon': Images.events, 'label': 'Events'},
       {'icon': Images.network, 'label': 'Networking'},
-
+      {'icon': Images.samiti_election, 'label': 'Samiti Election'},
       {'icon': Images.event_trip, 'label': 'Trips'},
       {'icon': Images.shiksha, 'label': 'Shiksha Sahayata'},
     ];
@@ -1314,6 +1314,11 @@ class _HomeViewState extends State<HomeView>
       //   break;
       case "Sattu Churn":
         Navigator.pushNamed(context, RouteNames.sattu_vitran);
+        break;
+
+        // Samiti Election
+      case "Samiti Election":
+        Navigator.pushNamed(context, RouteNames.samiti_election);
         break;
     }
   }
