@@ -298,7 +298,7 @@ class _HomeViewState extends State<HomeView>
           }
 
           // Admin Access ID 27 = Samiti Election
-          if (access.adminAccessId == '27') {
+          if (access.adminAccessId == '28') {
             canViewSamitiElection = true;
           }
         }
