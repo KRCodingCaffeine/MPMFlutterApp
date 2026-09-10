@@ -49,6 +49,19 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
   final UdateProfileController dashBoardController = Get.find();
   final TextEditingController _lmSearchController = TextEditingController();
   final TextEditingController _nmSearchController = TextEditingController();
+  final GlobalKey<FormState> _newMemberFormKey = GlobalKey<FormState>();
+  final TextEditingController _newMemberFirstNameController =
+      TextEditingController();
+  final TextEditingController _newMemberMiddleNameController =
+      TextEditingController();
+  final TextEditingController _newMemberLastNameController =
+      TextEditingController();
+  final TextEditingController _newMemberMobileController =
+      TextEditingController();
+  final TextEditingController _newMemberWhatsappController =
+      TextEditingController();
+  final TextEditingController _newMemberEmailController =
+      TextEditingController();
   final String defaultProfile = "assets/images/user.png";
 
   // Observable for search text
@@ -56,6 +69,12 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
   final RxString _nmSearchText = ''.obs;
   File? _profileImage; // Add this for profile image in convert dialog
   final ImagePicker _picker = ImagePicker();
+
+  // Loading states
+  final RxBool _isLoading = false.obs;
+  final RxBool _isConverting = false.obs;
+  final RxBool _isVerifying = false.obs;
+  final RxBool _isNewMemberFormValid = false.obs;
 
   @override
   void initState() {
@@ -78,6 +97,15 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
     _nmSearchController.addListener(() {
       _nmSearchText.value = _nmSearchController.text;
     });
+    for (final textController in [
+      _newMemberFirstNameController,
+      _newMemberLastNameController,
+      _newMemberMobileController,
+      _newMemberWhatsappController,
+      _newMemberEmailController,
+    ]) {
+      textController.addListener(_updateNewMemberFormValidity);
+    }
   }
 
   @override
@@ -85,8 +113,15 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
     _tabController.dispose();
     _lmSearchController.dispose();
     _nmSearchController.dispose();
+    _newMemberFirstNameController.dispose();
+    _newMemberMiddleNameController.dispose();
+    _newMemberLastNameController.dispose();
+    _newMemberMobileController.dispose();
+    _newMemberWhatsappController.dispose();
+    _newMemberEmailController.dispose();
     _lmSearchText.close();
     _nmSearchText.close();
+    _isNewMemberFormValid.close();
     controller.dispose();
     super.dispose();
   }
@@ -105,6 +140,58 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
     } else {
       controller.searchDataList.clear();
     }
+  }
+
+  void _updateNewMemberFormValidity() {
+    final email = _newMemberEmailController.text.trim();
+    _isNewMemberFormValid.value = _newMemberFirstNameController.text
+            .trim()
+            .isNotEmpty &&
+        _newMemberLastNameController.text.trim().isNotEmpty &&
+        RegExp(r'^\d{10}$').hasMatch(_newMemberMobileController.text.trim()) &&
+        RegExp(r'^\d{10}$')
+            .hasMatch(_newMemberWhatsappController.text.trim()) &&
+        RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+  }
+
+  void _clearLMMemberSearch() {
+    _lmSearchController.clear();
+    _lmSearchText.value = '';
+    controller.searchDataList.clear();
+  }
+
+  void _clearNMMemberSearch() {
+    _nmSearchController.clear();
+    _nmSearchText.value = '';
+    controller.searchDataList.clear();
+  }
+
+  void _clearNewMemberForm() {
+    _newMemberFormKey.currentState?.reset();
+    _newMemberFirstNameController.clear();
+    _newMemberMiddleNameController.clear();
+    _newMemberLastNameController.clear();
+    _newMemberMobileController.clear();
+    _newMemberWhatsappController.clear();
+    _newMemberEmailController.clear();
+    _isNewMemberFormValid.value = false;
+  }
+
+  void _showSuccessSnackbar(String message) {
+    if (!mounted) return;
+
+    final scaffoldMessenger = ScaffoldMessenger.of(this.context);
+    scaffoldMessenger.hideCurrentSnackBar();
+    scaffoldMessenger.showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(minutes: 1),
+      ),
+    );
   }
 
   @override
@@ -131,66 +218,89 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: Column(
+      body: Stack(
         children: [
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.2),
-                  spreadRadius: 2,
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+          Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 2,
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: TabBar(
-              controller: _tabController,
-              indicator: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: const Color(0xFFe61428),
+                child: TabBar(
+                  controller: _tabController,
+                  indicator: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: const Color(0xFFe61428),
+                  ),
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Colors.grey[700],
+                  labelStyle: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  unselectedLabelStyle: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  tabs: const [
+                    Tab(
+                      icon: Icon(Icons.people, size: 20),
+                      text: "LM Members",
+                    ),
+                    Tab(
+                      icon: Icon(Icons.group, size: 20),
+                      text: "NM Members",
+                    ),
+                    Tab(
+                      icon: Icon(Icons.person_add, size: 20),
+                      text: "New Member",
+                    ),
+                  ],
+                ),
               ),
-              labelColor: Colors.white,
-              unselectedLabelColor: Colors.grey[700],
-              labelStyle: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildLMMembersTab(),
+                    _buildNMMembersTab(),
+                    _buildAddMemberTab(),
+                  ],
+                ),
               ),
-              unselectedLabelStyle: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
-              indicatorSize: TabBarIndicatorSize.tab,
-              tabs: const [
-                Tab(
-                  icon: Icon(Icons.people, size: 20),
-                  text: "LM Members",
-                ),
-                Tab(
-                  icon: Icon(Icons.group, size: 20),
-                  text: "NM Members",
-                ),
-                Tab(
-                  icon: Icon(Icons.person_add, size: 20),
-                  text: "New Member",
-                ),
-              ],
-            ),
+            ],
           ),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildLMMembersTab(),
-                _buildNMMembersTab(),
-                _buildAddMemberTab(),
-              ],
-            ),
-          ),
+          // Centered Loading Indicator
+          Obx(() {
+            if (_isLoading.value || _isConverting.value || _isVerifying.value) {
+              return Container(
+                color: Colors.black.withOpacity(0.4),
+                child: const Center(
+                  child: Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: CircularProgressIndicator(
+                        color: Color(0xFFe61428),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          }),
         ],
       ),
     );
@@ -402,23 +512,14 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
 
   // ==================== ADD MEMBER TAB ====================
   Widget _buildAddMemberTab() {
-    final TextEditingController firstNameController = TextEditingController();
-    final TextEditingController middleNameController = TextEditingController();
-    final TextEditingController lastNameController = TextEditingController();
-    final TextEditingController mobileController = TextEditingController();
-    final TextEditingController whatsappController = TextEditingController();
-    final TextEditingController emailController = TextEditingController();
-
-    final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Form(
-        key: formKey,
+        key: _newMemberFormKey,
         child: Column(
           children: [
             TextFormField(
-              controller: firstNameController,
+              controller: _newMemberFirstNameController,
               decoration: InputDecoration(
                 labelText: "First Name *",
                 hintText: "Enter first name",
@@ -438,7 +539,7 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
             ),
             const SizedBox(height: 14),
             TextFormField(
-              controller: middleNameController,
+              controller: _newMemberMiddleNameController,
               decoration: InputDecoration(
                 labelText: "Middle Name",
                 hintText: "Enter middle name (optional)",
@@ -452,7 +553,7 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
             ),
             const SizedBox(height: 14),
             TextFormField(
-              controller: lastNameController,
+              controller: _newMemberLastNameController,
               decoration: InputDecoration(
                 labelText: "Last Name *",
                 hintText: "Enter last name",
@@ -472,7 +573,7 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
             ),
             const SizedBox(height: 14),
             TextFormField(
-              controller: mobileController,
+              controller: _newMemberMobileController,
               keyboardType: TextInputType.phone,
               maxLength: 10,
               decoration: InputDecoration(
@@ -501,7 +602,7 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
             ),
             const SizedBox(height: 14),
             TextFormField(
-              controller: whatsappController,
+              controller: _newMemberWhatsappController,
               keyboardType: TextInputType.phone,
               maxLength: 10,
               decoration: InputDecoration(
@@ -531,7 +632,7 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
             ),
             const SizedBox(height: 14),
             TextFormField(
-              controller: emailController,
+              controller: _newMemberEmailController,
               keyboardType: TextInputType.emailAddress,
               decoration: InputDecoration(
                 labelText: "Email Address *",
@@ -555,47 +656,59 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
               },
             ),
             const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: ElevatedButton(
-                onPressed: () {
-                  if (formKey.currentState!.validate()) {
-                    _submitNewMember(
-                      context,
-                      firstName: firstNameController.text.trim(),
-                      middleName: middleNameController.text.trim(),
-                      lastName: lastNameController.text.trim(),
-                      mobile: mobileController.text.trim(),
-                      whatsapp: whatsappController.text.trim(),
-                      email: emailController.text.trim(),
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFe61428),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  elevation: 4,
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.save, size: 22),
-                    SizedBox(width: 10),
-                    Text(
-                      "Add New Member",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+            Obx(() {
+              final isEnabled =
+                  _isNewMemberFormValid.value && !_isLoading.value;
+              return SizedBox(
+                width: double.infinity,
+                height: 55,
+                child: ElevatedButton(
+                  onPressed: isEnabled
+                      ? () {
+                          if (_newMemberFormKey.currentState!.validate()) {
+                            _submitNewMember(
+                              context,
+                              firstName:
+                                  _newMemberFirstNameController.text.trim(),
+                              middleName:
+                                  _newMemberMiddleNameController.text.trim(),
+                              lastName:
+                                  _newMemberLastNameController.text.trim(),
+                              mobile: _newMemberMobileController.text.trim(),
+                              whatsapp:
+                                  _newMemberWhatsappController.text.trim(),
+                              email: _newMemberEmailController.text.trim(),
+                            );
+                          }
+                        }
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFe61428),
+                    disabledBackgroundColor: Colors.grey.shade400,
+                    foregroundColor: Colors.white,
+                    disabledForegroundColor: Colors.white70,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                  ],
+                    elevation: 4,
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.save, size: 22),
+                      SizedBox(width: 10),
+                      Text(
+                        "Add New Member",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ),
+              );
+            }),
             const SizedBox(height: 16),
             Text(
               "All fields marked with * are required",
@@ -627,36 +740,9 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
     required String whatsapp,
     required String email,
   }) {
-    // Show loading dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return const Center(
-          child: Card(
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(color: Color(0xFFe61428)),
-                  SizedBox(height: 16),
-                  Text(
-                    "Adding new member...",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
+    // Show loading
+    _isLoading.value = true;
 
-    // Call the API
     _addNMElection(
       context: context,
       firstName: firstName,
@@ -696,7 +782,6 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
       debugPrint("Created By: $userId");
       debugPrint("================================");
 
-      // Call the API
       final result = await repository.addNMElection(
         firstName: firstName,
         middleName: middleName.isNotEmpty ? middleName : null,
@@ -706,97 +791,33 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
         whatsappNumber: whatsapp,
         samitiId: widget.samitiTypeKey ?? "",
         samitiSubCategoryId: widget.samitiSubCategoryId ?? "",
-        samitiRoleId: null, // Optional
+        samitiRoleId: null,
         startYear: widget.startYear,
         endYear: widget.endYear,
         createdBy: userId.toString(),
       );
 
-      // Close loading dialog
-      if (Navigator.canPop(context)) {
-        Navigator.of(context).pop();
-      }
+      // Hide loading
+      _isLoading.value = false;
 
       if (result.status == true) {
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              result.message ?? "New member added successfully!",
-            ),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            margin: const EdgeInsets.all(16),
-            duration: const Duration(seconds: 3),
-          ),
-        );
-
-        // Clear form fields or navigate back
-        Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) {
-            Navigator.of(context).pop(); // Close the form or navigate back
-          }
-        });
+        _clearNewMemberForm();
+        _showSuccessSnackbar(result.message ??
+            "New member added and consent form sent successfully!");
       } else {
-        // Show error message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result.message ?? "Failed to add new member"),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            margin: const EdgeInsets.all(16),
-            duration: const Duration(seconds: 3),
-          ),
+        // Show error dialog
+        _showErrorDialog(
+          context,
+          message: result.message ?? "Failed to add new member",
         );
       }
     } catch (e) {
-      // Close loading dialog if still open
-      if (Navigator.canPop(context)) {
-        Navigator.of(context).pop();
-      }
-
-      // Show error
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Error: $e"),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          margin: const EdgeInsets.all(16),
-          duration: const Duration(seconds: 3),
-        ),
+      _isLoading.value = false;
+      _showErrorDialog(
+        context,
+        message: "Error: $e",
       );
     }
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Row(
-      children: [
-        Text(
-          "$label: ",
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 13,
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(
-              fontSize: 13,
-            ),
-          ),
-        ),
-      ],
-    );
   }
 
   // ==================== HELPER WIDGETS ====================
@@ -973,17 +994,14 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
               ],
             ),
 
-            // Action Buttons
             if (showConsentButton || showConvertButton) ...[
               const Divider(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  // Only show Send Consent button for LM members
                   if (showConsentButton && !showConvertButton)
                     OutlinedButton.icon(
                       onPressed: () {
-                        // Convert SearchData to Map before passing
                         Map<String, dynamic>? memberMap;
                         if (memberData != null) {
                           if (memberData is SearchData) {
@@ -1017,7 +1035,6 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
                       ),
                     ),
 
-                  // Only show Convert button for NM members
                   if (showConvertButton && !showConsentButton)
                     ElevatedButton.icon(
                       onPressed: () {
@@ -1044,7 +1061,6 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
   }
 
   // ==================== DIALOGS ====================
-
   void _showConsentFormDialog(BuildContext context, String memberName,
       {Map<String, dynamic>? memberData}) {
     showDialog(
@@ -1137,98 +1153,32 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
             ),
             ElevatedButton(
               onPressed: () async {
-                // Close the consent dialog
                 Navigator.of(context).pop();
 
-                // Show loading indicator
-                showDialog(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (BuildContext context) {
-                    return const Center(
-                      child: Card(
-                        child: Padding(
-                          padding: EdgeInsets.all(24),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              CircularProgressIndicator(
-                                  color: Color(0xFFe61428)),
-                              SizedBox(height: 16),
-                              Text(
-                                "Adding LM member...",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                );
+                _isLoading.value = true;
 
                 try {
-                  // Call the add election API
                   final result = await _addLMElection(
                     memberData: memberData,
                   );
 
-                  // Close loading dialog
-                  if (Navigator.canPop(context)) {
-                    Navigator.of(context).pop();
-                  }
+                  _isLoading.value = false;
 
                   if (result.status == true) {
-                    // Show success message
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text("Consent form sent to successfully!"),
-                        backgroundColor: Colors.green,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        margin: const EdgeInsets.all(16),
-                        duration: const Duration(seconds: 3),
-                      ),
-                    );
-
-                    // Refresh the list
-                    _refreshMemberList();
+                    _clearLMMemberSearch();
+                    _showSuccessSnackbar(
+                        result.message ?? "Consent form sent successfully!");
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content:
-                            Text(result.message ?? "Failed to add LM member"),
-                        backgroundColor: Colors.red,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        margin: const EdgeInsets.all(16),
-                        duration: const Duration(seconds: 3),
-                      ),
+                    _showErrorDialog(
+                      context,
+                      message: result.message ?? "Failed to add LM member",
                     );
                   }
                 } catch (e) {
-                  if (Navigator.canPop(context)) {
-                    Navigator.of(context).pop();
-                  }
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text("Error: $e"),
-                      backgroundColor: Colors.red,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      margin: const EdgeInsets.all(16),
-                      duration: const Duration(seconds: 3),
-                    ),
+                  _isLoading.value = false;
+                  _showErrorDialog(
+                    context,
+                    message: "Error: $e",
                   );
                 }
               },
@@ -1245,16 +1195,6 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
         );
       },
     );
-  }
-
-  // Refresh the search results displayed in the active member tab.
-  void _refreshMemberList() {
-    if (_tabController.index == 1 && _nmSearchController.text.isNotEmpty) {
-      _filterNMMembers(_nmSearchController.text);
-    } else if (_tabController.index == 0 &&
-        _lmSearchController.text.isNotEmpty) {
-      _filterLMMembers(_lmSearchController.text);
-    }
   }
 
   // Method to add LM election
@@ -1310,9 +1250,104 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
     }
   }
 
+  Widget _buildDetailRow(String label, String value) {
+    return Row(
+      children: [
+        Text(
+          "$label: ",
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ==================== ERROR DIALOG ====================
+  void _showErrorDialog(BuildContext context, {required String message}) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.error,
+                    color: Colors.red.shade700,
+                    size: 28,
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    "Error",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Divider(
+                thickness: 1,
+                color: Colors.grey.shade300,
+              ),
+            ],
+          ),
+          content: Text(
+            message,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFe61428),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 10,
+                ),
+              ),
+              child: const Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // ==================== CONVERT DIALOG ====================
   Future<void> _showConvertDialog(BuildContext context, String memberName,
       {dynamic memberData}) async {
-    // Controllers for form fields
     final TextEditingController mobileController = TextEditingController();
     final TextEditingController whatsappController = TextEditingController();
     final TextEditingController emailController = TextEditingController();
@@ -1338,18 +1373,15 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
       fallbackProfileImage = memberData['profile_image']?.toString() ?? '';
     }
 
-    // Load the selected NM member's complete profile for conversion fields.
     final memberProfile = memberId == null || memberId.isEmpty
         ? null
         : await dashBoardController.getMemberProfile(memberId);
     if (!mounted) return;
 
-    // Reset profile image when dialog opens
     _profileImage = null;
     final existingProfileImage =
         memberProfile?.profileImage ?? fallbackProfileImage;
 
-    // Form key for validation
     final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
     mobileController.text = memberProfile?.mobile ?? fallbackMobile;
@@ -1359,13 +1391,11 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
     marriageAnniversaryController.text =
         memberProfile?.marriageAnniversaryDate ?? '';
 
-    // Use GetX controller for dropdown data
     final NewMemberController memberController = Get.put(NewMemberController());
     memberController.setSelectedGender(memberProfile?.genderId ?? '');
     memberController.setSelectedBloodGroup(memberProfile?.bloodGroupId ?? '');
     memberController.setSelectedMarital(memberProfile?.maritalStatusId ?? '');
 
-    // Load dropdown data if not already loaded
     if (memberController.genderList.isEmpty) {
       memberController.getGender();
     }
@@ -1456,7 +1486,6 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
                         ),
                         const SizedBox(height: 16),
 
-                        // Profile Image Upload
                         Center(
                           child: GestureDetector(
                             onTap: () {
@@ -1484,7 +1513,6 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
                         ),
                         const SizedBox(height: 16),
 
-                        // Mobile Number
                         TextFormField(
                           controller: mobileController,
                           keyboardType: TextInputType.phone,
@@ -1515,7 +1543,6 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
                         ),
                         const SizedBox(height: 14),
 
-                        // WhatsApp Number
                         TextFormField(
                           controller: whatsappController,
                           keyboardType: TextInputType.phone,
@@ -1547,7 +1574,6 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
                         ),
                         const SizedBox(height: 14),
 
-                        // Email
                         TextFormField(
                           controller: emailController,
                           keyboardType: TextInputType.emailAddress,
@@ -1574,7 +1600,6 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
                         ),
                         const SizedBox(height: 14),
 
-                        // Gender Dropdown
                         Obx(() {
                           if (memberController.rxStatusLoading2.value ==
                               Status.LOADING) {
@@ -1639,7 +1664,6 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
                         }),
                         const SizedBox(height: 14),
 
-                        // Blood Group Dropdown
                         Obx(() {
                           if (memberController.rxStatusLoading.value ==
                               Status.LOADING) {
@@ -1699,7 +1723,6 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
                         }),
                         const SizedBox(height: 14),
 
-                        // Marital Status Dropdown
                         Obx(() {
                           if (memberController.rxStatusmarried.value ==
                               Status.LOADING) {
@@ -1764,7 +1787,6 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
                         }),
                         const SizedBox(height: 14),
 
-                        // Marriage Anniversary (conditional)
                         Obx(() {
                           final bool isMarried = memberController
                                   .selectMarital.value.isNotEmpty &&
@@ -1858,11 +1880,8 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
                 ElevatedButton(
                   onPressed: () {
                     if (formKey.currentState!.validate()) {
-                      // Close the dialog and proceed with conversion
                       Navigator.of(context).pop();
                       _processNMConversion(
-                        // The conversion dialog's context is disposed above.
-                        // Keep subsequent dialogs attached to the form screen.
                         context: this.context,
                         memberName: memberName,
                         memberData: memberData,
@@ -1898,7 +1917,7 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
     );
   }
 
-// Image picker method - Updated to use class-level _profileImage
+  // Image picker method - Updated to use class-level _profileImage
   void _showImagePicker(BuildContext context, StateSetter setState) {
     showModalBottomSheet(
       context: context,
@@ -1928,7 +1947,7 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
     );
   }
 
-// Get image method - Updated to use class-level _profileImage
+  // Get image method - Updated to use class-level _profileImage
   Future<void> _getImage(ImageSource img, StateSetter setState) async {
     if (_picker.supportsImageSource(img) == true) {
       try {
@@ -1945,7 +1964,7 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
     }
   }
 
-// Process NM to LM Conversion with OTP
+  // Process NM to LM Conversion with OTP
   void _processNMConversion({
     required BuildContext context,
     required String memberName,
@@ -1960,7 +1979,6 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
     required String marriageAnniversary,
     File? profileImage,
   }) {
-    // Get member ID from memberData
     String? memberId;
     if (memberData != null) {
       if (memberData is SearchData) {
@@ -1973,51 +1991,15 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
     }
 
     if (memberId == null || memberId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Member ID not found"),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          margin: const EdgeInsets.all(16),
-          duration: const Duration(seconds: 3),
-        ),
+      _showErrorDialog(
+        context,
+        message: "Member ID not found",
       );
       return;
     }
 
-    // Show loading indicator
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return const Center(
-          child: Card(
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(color: Color(0xFFe61428)),
-                  SizedBox(height: 16),
-                  Text(
-                    "Converting NM to LM...",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
+    _isConverting.value = true;
 
-    // Call the API
     _convertNMToLM(
       context: context,
       memberId: memberId,
@@ -2065,7 +2047,6 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
       debugPrint("End Year: ${widget.endYear}");
       debugPrint("================================");
 
-      // Call the API with all required fields
       final result = await repository.convertToLM(
         memberId: memberId,
         mobile: mobile,
@@ -2083,61 +2064,30 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
         endYear: widget.endYear ?? "",
       );
 
-      // Close loading dialog
-      if (context.mounted) {
-        Navigator.of(context).pop();
-      }
+      _isConverting.value = false;
 
       if (result.status == true) {
-        // Show OTP dialog directly - no snackbar
         if (mounted) {
           _showOTPDialog(context, memberId, memberName);
         }
       } else {
-        // Show error message only on failure
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result.msg ?? "Failed to convert NM to LM"),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              margin: const EdgeInsets.all(16),
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      // Close loading dialog
-      if (context.mounted) {
-        Navigator.of(context).pop();
-      }
-
-      // Show error
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error: $e"),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            margin: const EdgeInsets.all(16),
-            duration: const Duration(seconds: 3),
-          ),
+        _showErrorDialog(
+          context,
+          message: result.msg ?? "Failed to convert NM to LM",
         );
       }
+    } catch (e) {
+      _isConverting.value = false;
+      _showErrorDialog(
+        context,
+        message: "Error: $e",
+      );
     }
   }
 
 // Show OTP Dialog
   void _showOTPDialog(
       BuildContext context, String memberId, String memberName) {
-    // Check if context is still valid
     if (!mounted) {
       debugPrint("Widget not mounted, cannot show OTP dialog");
       return;
@@ -2146,11 +2096,9 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
     final TextEditingController otpController = TextEditingController();
     final GlobalKey<FormState> otpFormKey = GlobalKey<FormState>();
 
-    // Timer for resend
     int _resendTimer = 30;
     bool _canResend = false;
 
-    // Use showDialog with proper context
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -2308,7 +2256,6 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
                 ElevatedButton(
                   onPressed: () {
                     if (otpFormKey.currentState!.validate()) {
-                      // Keep this dialog open while its loading overlay is shown.
                       _verifyOTP(
                         dialogContext,
                         memberId,
@@ -2336,43 +2283,15 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
     );
   }
 
-// Verify OTP
+  // Verify OTP
   void _verifyOTP(
       BuildContext context, String memberId, String otp, String memberName) {
-    // Check if mounted before showing dialog
     if (!mounted) {
       debugPrint("Widget not mounted, cannot verify OTP");
       return;
     }
 
-    // Show loading
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return const Center(
-          child: Card(
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(color: Color(0xFFe61428)),
-                  SizedBox(height: 16),
-                  Text(
-                    "Verifying OTP...",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
+    _isVerifying.value = true;
 
     _verifyOTPAPI(
       context: context,
@@ -2382,7 +2301,7 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
     );
   }
 
-// Verify OTP API call
+  // Verify OTP API call
   Future<void> _verifyOTPAPI({
     required BuildContext context,
     required String memberId,
@@ -2411,85 +2330,35 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
         endYear: widget.endYear ?? "",
       );
 
-      // The loading overlay is the top-most route.
-      final navigator = Navigator.of(this.context, rootNavigator: true);
-      if (mounted && navigator.canPop()) {
-        navigator.pop();
+      _isVerifying.value = false;
+
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.of(context).pop();
       }
 
       if (result.status == true) {
-        // The OTP dialog remains beneath the loading overlay until success.
-        if (mounted && navigator.canPop()) {
-          navigator.pop();
-        }
+        String message = "OTP verified successfully and Consent letter sent via email and Whatsapp.";
 
-        // Show success message
-        String message = "OTP verified successfully.";
-        if (result.emailSent == true) {
-          message += " Consent letter sent via email.";
-        }
-        if (result.whatsappSent == true) {
-          message += " Consent letter sent via WhatsApp.";
-        }
-
-        if (mounted) {
-          ScaffoldMessenger.of(this.context).showSnackBar(
-            SnackBar(
-              content: Text(message),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              margin: const EdgeInsets.all(16),
-              duration: const Duration(seconds: 4),
-            ),
-          );
-        }
-
-        // Refresh the list
-        _refreshMemberList();
+        _clearNMMemberSearch();
+        _showSuccessSnackbar(message);
       } else {
-        // Show error message
-        if (mounted) {
-          ScaffoldMessenger.of(this.context).showSnackBar(
-            SnackBar(
-              content: Text(result.data?.toString() ??
-                  "Invalid OTP or samiti details missing. Please try again."),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              margin: const EdgeInsets.all(16),
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        final navigator = Navigator.of(this.context, rootNavigator: true);
-        if (navigator.canPop()) {
-          navigator.pop();
-        }
-      }
-
-      // Show error
-      if (mounted) {
-        ScaffoldMessenger.of(this.context).showSnackBar(
-          SnackBar(
-            content: Text("Error: $e"),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            margin: const EdgeInsets.all(16),
-            duration: const Duration(seconds: 3),
-          ),
+        _showErrorDialog(
+          this.context,
+          message: result.data?.toString() ??
+              "Invalid OTP or samiti details missing. Please try again.",
         );
       }
+    } catch (e) {
+      _isVerifying.value = false;
+
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.of(context).pop();
+      }
+
+      _showErrorDialog(
+        this.context,
+        message: "Error: $e",
+      );
     }
   }
 }

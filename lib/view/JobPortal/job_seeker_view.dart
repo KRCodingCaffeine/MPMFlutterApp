@@ -21,6 +21,7 @@ import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/JobPortal/job_detail.dart';
+import 'package:mpm/view/profile%20view/Education_page_info.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
@@ -30,6 +31,7 @@ class JobSeekerView extends StatefulWidget {
   final List<BusinessOccupationProfileData>? initialBusinessProfiles;
   final GetSeekerProfileData? initialSeekerProfileData;
   final bool? initialHasSeekerProfile;
+  final bool showEducationBanner; // 👈 New parameter
 
   const JobSeekerView({
     super.key,
@@ -38,6 +40,7 @@ class JobSeekerView extends StatefulWidget {
     this.initialBusinessProfiles,
     this.initialSeekerProfileData,
     this.initialHasSeekerProfile,
+    this.showEducationBanner = false, // 👈 Default false
   });
 
   @override
@@ -125,6 +128,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
 
   List<BusinessOccupationProfileData> businessProfiles = [];
   List<Map<String, dynamic>> jobs = [];
+  late bool showEducationBanner;
 
   @override
   void initState() {
@@ -133,6 +137,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     if (regiController.cityList.isEmpty) {
       regiController.getCity();
     }
+    showEducationBanner = widget.showEducationBanner;
 
     if (_hasInitialJobData) {
       businessProfiles = widget.initialBusinessProfiles ?? [];
@@ -414,7 +419,8 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                       ? "Job saved successfully"
                       : "Job removed from saved jobs"),
             ),
-            backgroundColor: response.code == 409 ? Colors.orange : Colors.green,
+            backgroundColor:
+                response.code == 409 ? Colors.orange : Colors.green,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -744,6 +750,53 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       ),
       body: Column(
         children: [
+          if (showEducationBanner)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: GestureDetector(
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const EducationPageInfo(
+                        autoOpenAddSheet: true,
+                      ),
+                    ),
+                  );
+
+                  // Hide banner after returning
+                  setState(() {
+                    showEducationBanner = false;
+                  });
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade700,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: const [
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        color: Colors.white,
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          "Click here to update your Education details",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           Container(
             padding: const EdgeInsets.all(16),
             color: Colors.white,
@@ -963,11 +1016,10 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                                       ? Icons.bookmark
                                                       : Icons.bookmark_border,
                                                   size: 24,
-                                                  color:
-                                                      (job["isBookmarked"] ??
-                                                              false)
-                                                          ? Colors.orange
-                                                          : Colors.grey,
+                                                  color: (job["isBookmarked"] ??
+                                                          false)
+                                                      ? Colors.orange
+                                                      : Colors.grey,
                                                 ),
                                         ),
                                       ),

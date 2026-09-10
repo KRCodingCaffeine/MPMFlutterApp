@@ -77,28 +77,36 @@ class _HomeViewState extends State<HomeView>
   List<DashboardEventData> dashboardEvents = [];
   int? memberId;
   bool _canViewEventAttendees = false;
+  bool _canViewSamitiElection = false;
   List<Map<String, dynamic>> get gridItems {
-    final items = [
-      {'icon': Images.user, 'label': 'My Profile'},
-      {'icon': Images.makenewmember, 'label': 'Make New Member'},
-      {'icon': Images.discount, 'label': 'Discounts & Offers'},
-      {'icon': Images.sattu_vitran, 'label': 'Sattu Churn'},
+    final items = <Map<String, dynamic>>[];
+
+    // Item 1: My Profile (always visible)
+    items.add({'icon': Images.user, 'label': 'My Profile'});
+
+    // Item 2: Jobs (conditional)
+    if (memberId == 1 || memberId == 2 || memberId == 2040) {
+      items.add({'icon': Images.job_portal, 'label': 'Jobs'});
+    }
+
+    // Item 3: Discounts & Offers (always visible)
+    items.add({'icon': Images.discount, 'label': 'Discounts & Offers'});
+
+    if (_canViewSamitiElection) {
+      items.add({'icon': Images.samiti_election, 'label': 'Samiti Election'});
+    }
+
+    // Items 5-10: Always visible
+    items.addAll([
+      {'icon': Images.sattu_vitran, 'label': 'Vitran'},
       {'icon': Images.saraswani, 'label': 'Saraswani'},
       {'icon': Images.events, 'label': 'Events'},
       {'icon': Images.network, 'label': 'Networking'},
-      {'icon': Images.samiti_election, 'label': 'Samiti Election'},
       {'icon': Images.event_trip, 'label': 'Trips'},
       {'icon': Images.shiksha, 'label': 'Shiksha Sahayata'},
-    ];
+    ]);
 
-     if (memberId == 1 || memberId == 2 || memberId == 2040) {
-      items.add({'icon': Images.job_portal, 'label': 'Jobs'});
-    }
-   // {'icon': Images.job_portal, 'label': 'Jobs'},
-    // if (memberId == 1 || memberId == 2 || memberId == 2040) {
-    //   items.add({'icon': Images.shiksha, 'label': 'Shiksha Sahayata'});
-    // }
-
+    // Additional items at the end (conditional)
     if (memberId == 1 || memberId == 2) {
       items.add({'icon': Images.qr_code, 'label': 'QR Scanner'});
     }
@@ -264,10 +272,10 @@ class _HomeViewState extends State<HomeView>
 
       bool canViewEventAttendees = false;
       bool isAllZoneAdmin = false;
+      bool canViewSamitiElection = false; // Add this
 
       if (adminAccess.status == true) {
         for (final access in adminAccess.data ?? []) {
-
           final isActive = access.status == null ||
               access.status == '1' ||
               access.status?.toLowerCase() == 'active';
@@ -288,12 +296,18 @@ class _HomeViewState extends State<HomeView>
           if (access.adminAccessId == '15') {
             isAllZoneAdmin = true;
           }
+
+          // Admin Access ID 27 = Samiti Election
+          if (access.adminAccessId == '27') {
+            canViewSamitiElection = true;
+          }
         }
       }
 
       setState(() {
         _canViewEventAttendees = canViewEventAttendees;
         _isAllZoneAdmin = isAllZoneAdmin;
+        _canViewSamitiElection = canViewSamitiElection;
       });
     } catch (e) {
       debugPrint("Admin access fetch error: $e");
@@ -1271,10 +1285,10 @@ class _HomeViewState extends State<HomeView>
       case "Saraswani":
         Navigator.pushNamed(context, RouteNames.saraswani_label);
         break;
-      case "Make New Member":
-        regiController.isRelation.value = false;
-        Navigator.pushNamed(context, RouteNames.newMember);
-        break;
+      // case "Make New Member":
+      //   regiController.isRelation.value = false;
+      //   Navigator.pushNamed(context, RouteNames.newMember);
+      //   break;
       case "My Profile":
         regiController.isRelation.value = false;
         Navigator.pushNamed(context, RouteNames.profile);
@@ -1312,11 +1326,11 @@ class _HomeViewState extends State<HomeView>
       // case "QR Code Scanner":
       //   _showAttendanceMarkedDialog(context);
       //   break;
-      case "Sattu Churn":
+      case "Vitran":
         Navigator.pushNamed(context, RouteNames.sattu_vitran);
         break;
 
-        // Samiti Election
+      // Samiti Election
       case "Samiti Election":
         Navigator.pushNamed(context, RouteNames.samiti_election);
         break;

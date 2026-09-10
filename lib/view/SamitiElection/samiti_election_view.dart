@@ -23,7 +23,7 @@ class _SamitiElectionViewState extends State<SamitiElectionView> {
   final SamitiTypeRepository _samitiTypeRepository = SamitiTypeRepository();
 
   final Color _brandColor =
-  ColorHelperClass.getColorFromHex(ColorResources.logo_color);
+      ColorHelperClass.getColorFromHex(ColorResources.logo_color);
 
   // Dropdown values
   String? _selectedYearRange;
@@ -102,7 +102,7 @@ class _SamitiElectionViewState extends State<SamitiElectionView> {
           _samitiList = response.data![typeKey] ?? [];
           if (_selectedSamitiSubCategoryId != null) {
             final exists = _samitiList.any(
-                  (s) => s.samitiSubCategoryId == _selectedSamitiSubCategoryId,
+              (s) => s.samitiSubCategoryId == _selectedSamitiSubCategoryId,
             );
             if (!exists) {
               _selectedSamitiSubCategoryId = null;
@@ -122,10 +122,9 @@ class _SamitiElectionViewState extends State<SamitiElectionView> {
 
   void _checkFiltersSelected() {
     setState(() {
-      _hasSelectedFilters =
-          _selectedYearRange != null &&
-              _selectedSamitiTypeKey != null &&
-              _selectedSamitiSubCategoryId != null;
+      _hasSelectedFilters = _selectedYearRange != null &&
+          _selectedSamitiTypeKey != null &&
+          _selectedSamitiSubCategoryId != null;
     });
   }
 
@@ -145,7 +144,7 @@ class _SamitiElectionViewState extends State<SamitiElectionView> {
 
     // Find the selected samiti in the list
     final selectedSamiti = _samitiList.firstWhere(
-          (samiti) => samiti.samitiSubCategoryId == _selectedSamitiSubCategoryId,
+      (samiti) => samiti.samitiSubCategoryId == _selectedSamitiSubCategoryId,
       orElse: () => SamitiTypeData(),
     );
 
@@ -195,12 +194,12 @@ class _SamitiElectionViewState extends State<SamitiElectionView> {
 
   // Button builder for action buttons
   Widget _buildActionButton(
-      BuildContext context,
-      String title,
-      IconData icon,
-      Color color,
-      VoidCallback onTap,
-      ) {
+    BuildContext context,
+    String title,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -283,7 +282,7 @@ class _SamitiElectionViewState extends State<SamitiElectionView> {
               ),
             ] else ...[
               // Empty state when filters not selected
-              _buildEmptyState(),
+              // _buildEmptyState(),
             ],
           ],
         ),
@@ -340,8 +339,7 @@ class _SamitiElectionViewState extends State<SamitiElectionView> {
   Widget _buildYearRangeDropdown() {
     return DropdownButtonFormField<String>(
       dropdownColor: Colors.white,
-      borderRadius:
-      BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(10),
       isExpanded: true,
       value: _selectedYearRange,
       hint: const Text('Select Year Range'),
@@ -384,7 +382,8 @@ class _SamitiElectionViewState extends State<SamitiElectionView> {
   }
 
   Widget _buildSamitiTypeDropdown() {
-    final List<DropdownMenuItem<String>> items = _samitiTypeKeys.map((String key) {
+    final List<DropdownMenuItem<String>> items =
+        _samitiTypeKeys.map((String key) {
       return DropdownMenuItem<String>(
         value: key,
         child: Text(key),
@@ -393,8 +392,7 @@ class _SamitiElectionViewState extends State<SamitiElectionView> {
 
     return DropdownButtonFormField<String>(
       dropdownColor: Colors.white,
-      borderRadius:
-      BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(10),
       value: _selectedSamitiTypeKey,
       hint: _samitiTypeKeys.isEmpty && !_isLoadingSamitiTypes
           ? const Text('No Types Available')
@@ -423,36 +421,39 @@ class _SamitiElectionViewState extends State<SamitiElectionView> {
         ),
         suffixIcon: _isLoadingSamitiTypes
             ? const SizedBox(
-          width: 20,
-          height: 20,
-          child: Padding(
-            padding: EdgeInsets.all(8.0),
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-            ),
-          ),
-        )
+                width: 20,
+                height: 20,
+                child: Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                  ),
+                ),
+              )
             : null,
       ),
       items: items,
-      onChanged: _isLoadingSamitiTypes ? null : (String? newValue) {
-        setState(() {
-          _selectedSamitiTypeKey = newValue;
-          _selectedSamitiSubCategoryId = null;
-          _samitiList = [];
-          _hasSelectedFilters = false;
+      onChanged: _isLoadingSamitiTypes
+          ? null
+          : (String? newValue) {
+              setState(() {
+                _selectedSamitiTypeKey = newValue;
+                _selectedSamitiSubCategoryId = null;
+                _samitiList = [];
+                _hasSelectedFilters = false;
 
-          if (newValue != null) {
-            _loadSamitisForType(newValue);
-          }
-        });
-      },
+                if (newValue != null) {
+                  _loadSamitisForType(newValue);
+                }
+              });
+            },
       isExpanded: true,
     );
   }
 
   Widget _buildSamitiDropdown() {
-    final List<DropdownMenuItem<String>> items = _samitiList.map((SamitiTypeData samiti) {
+    final List<DropdownMenuItem<String>> items =
+        _samitiList.map((SamitiTypeData samiti) {
       return DropdownMenuItem<String>(
         value: samiti.samitiSubCategoryId,
         child: Text(
@@ -467,10 +468,13 @@ class _SamitiElectionViewState extends State<SamitiElectionView> {
     final bool hasValidValue = _selectedSamitiSubCategoryId != null &&
         items.any((item) => item.value == _selectedSamitiSubCategoryId);
 
-    if (_selectedSamitiSubCategoryId != null && !hasValidValue && items.isNotEmpty) {
+    if (_selectedSamitiSubCategoryId != null &&
+        !hasValidValue &&
+        items.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && _selectedSamitiSubCategoryId != null) {
-          final exists = items.any((item) => item.value == _selectedSamitiSubCategoryId);
+          final exists =
+              items.any((item) => item.value == _selectedSamitiSubCategoryId);
           if (!exists) {
             setState(() {
               _selectedSamitiSubCategoryId = null;
@@ -482,8 +486,7 @@ class _SamitiElectionViewState extends State<SamitiElectionView> {
 
     return DropdownButtonFormField<String>(
       dropdownColor: Colors.white,
-      borderRadius:
-      BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(10),
       value: hasValidValue ? _selectedSamitiSubCategoryId : null,
       hint: _samitiList.isEmpty && !isLoading
           ? const Text('No Samitis Available')
@@ -512,26 +515,26 @@ class _SamitiElectionViewState extends State<SamitiElectionView> {
         ),
         suffixIcon: isLoading
             ? const SizedBox(
-          width: 20,
-          height: 20,
-          child: Padding(
-            padding: EdgeInsets.all(8.0),
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-            ),
-          ),
-        )
+                width: 20,
+                height: 20,
+                child: Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                  ),
+                ),
+              )
             : null,
       ),
       items: items,
       onChanged: (isLoading || _selectedSamitiTypeKey == null)
           ? null
           : (String? newValue) {
-        setState(() {
-          _selectedSamitiSubCategoryId = newValue;
-          _checkFiltersSelected();
-        });
-      },
+              setState(() {
+                _selectedSamitiSubCategoryId = newValue;
+                _checkFiltersSelected();
+              });
+            },
       isExpanded: true,
     );
   }
