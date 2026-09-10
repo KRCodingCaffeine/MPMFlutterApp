@@ -160,6 +160,18 @@ class AppDrawer extends StatelessWidget {
         ),
         _drawerTile(
           context,
+          icon: Icons.person_add,
+          title: 'Make New Member',
+          iconSize: iconSize,
+          titleFontSize: titleFontSize,
+          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, RouteNames.newMember);
+          },
+        ),
+        _drawerTile(
+          context,
           icon: Icons.share,
           title: 'Share App',
           iconSize: iconSize,

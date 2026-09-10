@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/model/BusinessProfile/BusinessOccupationProfile/BusinessOccupationProfileData.dart';
 import 'package:mpm/model/JobPortal/GetJobByMemberId/GetJobByMemberIdData.dart';
+import 'package:mpm/model/JobPortal/GetSeekerProfile/GetSeekerProfileData.dart';
 import 'package:mpm/model/JobPortal/JobsForSeekerJob/JobsForSeekerJobData.dart';
 import 'package:mpm/repository/BusinessProfileRepo/business_occupation_profile_repository/business_occupation_profile_repo.dart';
 import 'package:mpm/repository/JobPortal/GetJobAppliedMembersRepo/get_job_applied_members_repository.dart';
@@ -132,13 +133,11 @@ class _JobViewState extends State<JobView> {
       }
 
       final eduResponse =
-          await qualificationRepository.getQualificationsByMemberId(memberId);
+      await qualificationRepository.getQualificationsByMemberId(memberId);
 
       bool hasEducation = (eduResponse.totalCount ?? 0) > 0;
 
-      /// 🔹 Check institute name also
       bool hasInstitute = false;
-
       if (eduResponse.data != null && eduResponse.data!.isNotEmpty) {
         for (var edu in eduResponse.data!) {
           if (edu.instituteName != null &&
@@ -149,45 +148,69 @@ class _JobViewState extends State<JobView> {
         }
       }
 
-      /// 🔹 If education OR institute missing → show banner
-      if (!hasEducation || !hasInstitute) {
-        setState(() {
-          showEducationBanner = true;
-        });
-        return;
-      }
+      // Flag for banner in JobSeekerView
+      final bool showEducationBannerInSeekerView = !hasEducation || !hasInstitute;
 
       await updateRole("job_seeker");
 
-      final seekerProfileResponse =
-          await seekerProfileRepository.getSeekerProfile(memberId);
-      final seekerProfileData = seekerProfileResponse.data;
-      final hasSeekerProfile = seekerProfileResponse.status == true &&
-          seekerProfileData != null &&
-          ((seekerProfileData.seekerProfileId ?? "").trim().isNotEmpty ||
-              (seekerProfileData.memberId ?? "").trim().isNotEmpty);
+      // 👇 SAFE fetch — wrap in try/catch to handle 404
+      GetSeekerProfileData? seekerProfileData;
+      bool hasSeekerProfile = false;
 
-      final businessResponse =
-          await businessProfileRepository.fetchBusinessOccupationProfiles(
-        memberId: memberId,
-      );
-      final businessProfiles =
-          businessResponse.data ?? <BusinessOccupationProfileData>[];
+      try {
+        final seekerProfileResponse =
+        await seekerProfileRepository.getSeekerProfile(memberId);
+        seekerProfileData = seekerProfileResponse.data;
+        hasSeekerProfile = seekerProfileResponse.status == true &&
+            seekerProfileData != null &&
+            ((seekerProfileData.seekerProfileId ?? "").trim().isNotEmpty ||
+                (seekerProfileData.memberId ?? "").trim().isNotEmpty);
+      } catch (e) {
+        // 404 or any error -> no profile
+        debugPrint("Seeker profile not found (expected for new users): $e");
+        hasSeekerProfile = false;
+        seekerProfileData = null;
+      }
 
-      final jobsForSeekerResponse =
-          await jobsForSeekerRepository.getJobsForSeeker(memberId);
-      final jobsForSeeker =
-          jobsForSeekerResponse.data?.jobs ?? <JobsForSeekerJobData>[];
+      // 👇 SAFE fetch — business profiles
+      List<BusinessOccupationProfileData> businessProfiles = [];
+      try {
+        final businessResponse =
+        await businessProfileRepository.fetchBusinessOccupationProfiles(
+          memberId: memberId,
+        );
+        businessProfiles =
+            businessResponse.data ?? <BusinessOccupationProfileData>[];
+      } catch (e) {
+        debugPrint("Business profiles fetch error: $e");
+      }
 
-      final getJobsMemberId =
-          (hasSeekerProfile && (seekerProfileData.memberId ?? "").isNotEmpty)
-              ? seekerProfileData.memberId!.trim()
-              : memberId;
-      final getJobsResponse = await jobRepository.getJobs(
-        getJobsMemberId,
-        status: "published",
-      );
-      final getJobs = getJobsResponse.data ?? <GetJobByMemberIdData>[];
+      // 👇 SAFE fetch — jobs for seeker
+      List<JobsForSeekerJobData> jobsForSeeker = [];
+      try {
+        final jobsForSeekerResponse =
+        await jobsForSeekerRepository.getJobsForSeeker(memberId);
+        jobsForSeeker =
+            jobsForSeekerResponse.data?.jobs ?? <JobsForSeekerJobData>[];
+      } catch (e) {
+        debugPrint("Jobs for seeker fetch error: $e");
+      }
+
+      // 👇 SAFE fetch — published jobs
+      List<GetJobByMemberIdData> getJobs = [];
+      try {
+        final getJobsMemberId =
+        (hasSeekerProfile && (seekerProfileData?.memberId ?? "").isNotEmpty)
+            ? seekerProfileData!.memberId!.trim()
+            : memberId;
+        final getJobsResponse = await jobRepository.getJobs(
+          getJobsMemberId,
+          status: "published",
+        );
+        getJobs = getJobsResponse.data ?? <GetJobByMemberIdData>[];
+      } catch (e) {
+        debugPrint("Get jobs fetch error: $e");
+      }
 
       if (!mounted) return;
 
@@ -199,13 +222,25 @@ class _JobViewState extends State<JobView> {
             initialGetJobs: getJobs,
             initialBusinessProfiles: businessProfiles,
             initialSeekerProfileData:
-                hasSeekerProfile ? seekerProfileData : null,
+            hasSeekerProfile ? seekerProfileData : null,
             initialHasSeekerProfile: hasSeekerProfile,
+            showEducationBanner: showEducationBannerInSeekerView,
           ),
         ),
       );
     } catch (e) {
       debugPrint("Education Check Error: $e");
+      // 👇 Even if something else fails, still go to JobSeekerView
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const JobSeekerView(
+              showEducationBanner: true,
+            ),
+          ),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {
