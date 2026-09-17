@@ -1,6 +1,5 @@
 class AddSeekerProfileData {
   String? memberId;
-  String? resumePath;
   String? headline;
   String? summary;
   String? expectedSalaryMin;
@@ -15,7 +14,6 @@ class AddSeekerProfileData {
 
   AddSeekerProfileData({
     this.memberId,
-    this.resumePath,
     this.headline,
     this.summary,
     this.expectedSalaryMin,
@@ -31,7 +29,6 @@ class AddSeekerProfileData {
 
   AddSeekerProfileData.fromJson(Map<String, dynamic> json) {
     memberId = json['member_id']?.toString();
-    resumePath = json['resume_path']?.toString();
     headline = json['headline']?.toString();
     summary = json['summary']?.toString();
     expectedSalaryMin = json['expected_salary_min']?.toString();
@@ -48,7 +45,6 @@ class AddSeekerProfileData {
   Map<String, dynamic> toJson() {
     return {
       'member_id': memberId,
-      'resume_path': resumePath,
       'headline': headline,
       'summary': summary,
       'expected_salary_min': expectedSalaryMin,

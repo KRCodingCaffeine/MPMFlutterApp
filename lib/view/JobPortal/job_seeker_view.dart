@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mpm/model/BusinessProfile/BusinessOccupationProfile/BusinessOccupationProfileData.dart';
 import 'package:mpm/model/JobPortal/GetAppliedJobsByMemberId/GetAppliedJobsByMemberIdData.dart';
 import 'package:mpm/model/JobPortal/GetJobByMemberId/GetJobByMemberIdData.dart';
@@ -31,7 +32,6 @@ class JobSeekerView extends StatefulWidget {
   final List<BusinessOccupationProfileData>? initialBusinessProfiles;
   final GetSeekerProfileData? initialSeekerProfileData;
   final bool? initialHasSeekerProfile;
-  final bool showEducationBanner; // 👈 New parameter
 
   const JobSeekerView({
     super.key,
@@ -40,7 +40,6 @@ class JobSeekerView extends StatefulWidget {
     this.initialBusinessProfiles,
     this.initialSeekerProfileData,
     this.initialHasSeekerProfile,
-    this.showEducationBanner = false, // 👈 Default false
   });
 
   @override
@@ -67,6 +66,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       GetAppliedJobsByMemberIdRepository();
   final MemberSaveJobRepository memberSaveJobRepository =
       MemberSaveJobRepository();
+  final ImagePicker _imagePicker = ImagePicker();
 
   String selectedCategory = "All";
   String selectedLocation = "All";
@@ -128,7 +128,6 @@ class _JobSeekerViewState extends State<JobSeekerView> {
 
   List<BusinessOccupationProfileData> businessProfiles = [];
   List<Map<String, dynamic>> jobs = [];
-  late bool showEducationBanner;
 
   @override
   void initState() {
@@ -137,7 +136,6 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     if (regiController.cityList.isEmpty) {
       regiController.getCity();
     }
-    showEducationBanner = widget.showEducationBanner;
 
     if (_hasInitialJobData) {
       businessProfiles = widget.initialBusinessProfiles ?? [];
@@ -150,10 +148,6 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     } else {
       loadJobs();
     }
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkAndOpenPreferredDetails();
-    });
   }
 
   bool get _hasInitialJobData {
@@ -750,53 +744,6 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       ),
       body: Column(
         children: [
-          if (showEducationBanner)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: GestureDetector(
-                onTap: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const EducationPageInfo(
-                        autoOpenAddSheet: true,
-                      ),
-                    ),
-                  );
-
-                  // Hide banner after returning
-                  setState(() {
-                    showEducationBanner = false;
-                  });
-                },
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.shade700,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    children: const [
-                      Icon(
-                        Icons.warning_amber_rounded,
-                        color: Colors.white,
-                      ),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          "Click here to update your Education details",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
           Container(
             padding: const EdgeInsets.all(16),
             color: Colors.white,
@@ -944,7 +891,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                       ),
                                       const SizedBox(height: 6),
                                       Text(
-                                        job["company"],
+                                        job["company_name"],
                                         style: const TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w500,
@@ -1136,8 +1083,8 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       title = "No Applied Jobs";
       message = "Jobs you apply for will appear here.";
     } else {
-      title = "No Jobs Found";
-      message = "Try changing filters or search keywords.";
+      title = "No Jobs Posted Yet";
+      // message = "Try changing filters or search keywords.";
     }
 
     return Center(
@@ -1347,294 +1294,210 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                           ElevatedButton(
                             onPressed: isFormValid()
                                 ? () async {
-                                    try {
-                                      String resumePath =
-                                          seekerProfileData?.resumePath ?? "";
+                              try {
+                                final workMode = selectedPreferredWorkMode == "On-site"
+                                    ? "onsite"
+                                    : selectedPreferredWorkMode == "Work From Home"
+                                    ? "remote"
+                                    : "hybrid";
+                                final workType = selectedPreferredJobType == "Full-time"
+                                    ? "full_time"
+                                    : selectedPreferredJobType == "Part-time"
+                                    ? "part_time"
+                                    : "internship";
 
-                                      if (selectedResume != null) {
-                                        final uploadResponse =
-                                            await uploadResumeRepository
-                                                .uploadResume(
-                                          memberId: loggedInMemberId,
-                                          filePath: selectedResume!.path,
-                                        );
+                                String resolvedProfileId = existingSeekerProfileId;
+                                String resumePath = seekerProfileData?.resumePath ?? "";
 
-                                        if (uploadResponse.status != true) {
-                                          ScaffoldMessenger.of(this.context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                uploadResponse
-                                                        .message.isNotEmpty
-                                                    ? uploadResponse.message
-                                                    : "Unable to upload resume",
-                                              ),
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          );
-                                          return;
-                                        }
-
-                                        resumePath =
-                                            uploadResponse.data?.resumePath ??
-                                                resumePath;
-                                      }
-
-                                      final workMode =
-                                          selectedPreferredWorkMode == "On-site"
-                                              ? "onsite"
-                                              : selectedPreferredWorkMode ==
-                                                      "Work From Home"
-                                                  ? "remote"
-                                                  : "hybrid";
-                                      final workType =
-                                          selectedPreferredJobType ==
-                                                  "Full-time"
-                                              ? "full_time"
-                                              : selectedPreferredJobType ==
-                                                      "Part-time"
-                                                  ? "part_time"
-                                                  : "internship";
-                                      final body = {
-                                        "member_id": loggedInMemberId,
-                                        "headline":
-                                            fieldToWorkController.text.trim(),
-                                        "summary": "",
-                                        "expected_salary_max":
-                                            expectedSalaryController.text
-                                                .trim(),
-                                        "expected_salary_min": "",
-                                        "work_mode": workMode,
-                                        "work_type": workType,
-                                        "no_of_internship_month":
-                                            selectedPreferredJobType ==
-                                                    "Internship"
-                                                ? internshipMonthController.text
-                                                    .trim()
-                                                : "",
-                                        "city_id": selectedPreferredCityId,
-                                        "area_name":
-                                            preferredAreaController.text.trim(),
-                                        "is_visible": "1",
-                                      };
-
-                                      if (shouldUpdateProfile) {
-                                        final updateBody = {
-                                          ...body,
-                                          "seeker_profile_id":
-                                              existingSeekerProfileId,
-                                          "updated_by": loggedInMemberId,
-                                        };
-
-                                        final response =
-                                            await updateSeekerProfileRepository
-                                                .updateSeekerProfile(
-                                                    updateBody);
-
-                                        if (response.status == true) {
-                                          hasSeekerProfile = true;
-                                          seekerProfileData =
-                                              GetSeekerProfileData(
-                                            seekerProfileId: response
-                                                    .data?.seekerProfileId ??
-                                                existingSeekerProfileId,
-                                            memberId: response.data?.memberId ??
-                                                loggedInMemberId,
-                                            resumePath: resumePath,
-                                            headline: response.data?.headline ??
-                                                fieldToWorkController.text
-                                                    .trim(),
-                                            summary:
-                                                response.data?.summary ?? "",
-                                            expectedSalaryMin: response
-                                                    .data?.expectedSalaryMin ??
-                                                "",
-                                            expectedSalaryMax: response
-                                                    .data?.expectedSalaryMax ??
-                                                expectedSalaryController.text
-                                                    .trim(),
-                                            workMode: response.data?.workMode ??
-                                                workMode,
-                                            workType: response.data?.workType ??
-                                                workType,
-                                            noOfInternshipMonth: response.data
-                                                    ?.noOFInternshipMonth ??
-                                                (selectedPreferredJobType ==
-                                                        "Internship"
-                                                    ? internshipMonthController
-                                                        .text
-                                                        .trim()
-                                                    : ""),
-                                            cityId: response.data?.cityId ??
-                                                selectedPreferredCityId,
-                                            areaName: response.data?.areaName ??
-                                                preferredAreaController.text
-                                                    .trim(),
-                                            isVisible:
-                                                response.data?.isVisible ?? "1",
-                                            updatedBy:
-                                                response.data?.updatedBy ??
-                                                    loggedInMemberId,
-                                          );
-
-                                          if (mounted) {
-                                            Navigator.pop(context);
-
-                                            ScaffoldMessenger.of(this.context)
-                                                .showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  response.message ??
-                                                      "Preferred details updated successfully",
-                                                ),
-                                                backgroundColor: Colors.green,
-                                              ),
-                                            );
-                                          }
-                                        } else {
-                                          ScaffoldMessenger.of(this.context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                response.message ??
-                                                    "Unable to update details",
-                                              ),
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          );
-                                        }
-                                        return;
-                                      }
-
-                                      final createBody = {
-                                        ...body,
-                                        "created_by": loggedInMemberId,
-                                        "resume_path": resumePath,
-                                      };
-
-                                      final response = await seekerRepository
-                                          .addSeekerProfile(createBody);
-
-                                      /// SUCCESS
-                                      if (response.status == true) {
-                                        hasSeekerProfile = true;
-                                        seekerProfileData =
-                                            GetSeekerProfileData(
-                                          seekerProfileId: seekerProfileData
-                                              ?.seekerProfileId,
-                                          memberId: response.data?.memberId ??
-                                              loggedInMemberId,
-                                          resumePath:
-                                              response.data?.resumePath ??
-                                                  resumePath,
-                                          headline: response.data?.headline ??
-                                              fieldToWorkController.text.trim(),
-                                          summary: response.data?.summary ?? "",
-                                          expectedSalaryMin: response
-                                                  .data?.expectedSalaryMin ??
-                                              "",
-                                          expectedSalaryMax: response
-                                                  .data?.expectedSalaryMax ??
-                                              expectedSalaryController.text
-                                                  .trim(),
-                                          workMode: response.data?.workMode ??
-                                              workMode,
-                                          workType: response.data?.workType ??
-                                              workType,
-                                          noOfInternshipMonth: response
-                                                  .data?.noOfInternshipMonth ??
-                                              (selectedPreferredJobType ==
-                                                      "Internship"
-                                                  ? internshipMonthController
-                                                      .text
-                                                      .trim()
-                                                  : ""),
-                                          cityId: response.data?.cityId ??
-                                              selectedPreferredCityId,
-                                          areaName: response.data?.areaName ??
-                                              preferredAreaController.text
-                                                  .trim(),
-                                          isVisible:
-                                              response.data?.isVisible ?? "1",
-                                          createdBy: response.data?.createdBy ??
-                                              loggedInMemberId,
-                                        );
-                                        if (mounted) {
-                                          Navigator.pop(context);
-
-                                          ScaffoldMessenger.of(this.context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                response.message ??
-                                                    "Preferred details saved successfully",
-                                              ),
-                                              backgroundColor: Colors.green,
-                                            ),
-                                          );
-                                        }
-                                      }
-
-                                      /// PROFILE ALREADY EXISTS
-                                      else if (response.code == 409) {
-                                        hasSeekerProfile = true;
-                                        if (mounted) {
-                                          Navigator.pop(context);
-
-                                          ScaffoldMessenger.of(this.context)
-                                              .showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                "Preferred detail already exists for this member",
-                                              ),
-                                              backgroundColor: Colors.green,
-                                            ),
-                                          );
-                                        }
-                                      }
-
-                                      /// OTHER FAILURE
-                                      else {
-                                        ScaffoldMessenger.of(this.context)
-                                            .showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              response.message ??
-                                                  "Unable to save details",
-                                            ),
-                                            backgroundColor: Colors.red,
-                                          ),
-                                        );
-                                      }
-                                    } catch (e) {
-                                      final errorText = e.toString();
-                                      if (!shouldUpdateProfile &&
-                                          errorText.contains('"code":409')) {
-                                        hasSeekerProfile = true;
-                                        if (mounted) {
-                                          Navigator.pop(context);
-
-                                          ScaffoldMessenger.of(this.context)
-                                              .showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                "Preferred detail already exists for this member",
-                                              ),
-                                              backgroundColor: Colors.green,
-                                            ),
-                                          );
-                                        }
-                                      } else {
-                                        ScaffoldMessenger.of(this.context)
-                                            .showSnackBar(
-                                          SnackBar(
-                                            content: Text(errorText),
-                                            backgroundColor: Colors.red,
-                                          ),
-                                        );
-                                      }
-                                    }
+                                // ---------- STEP 1: Create profile FIRST (if not exists) ----------
+                                // No resume_path here — omit it to avoid the 500 error.
+                                if (!shouldUpdateProfile) {
+                                  String? nonEmpty(String? v) {
+                                    final s = v?.trim() ?? "";
+                                    return s.isEmpty ? null : s;
                                   }
+
+                                  final createBody = <String, dynamic>{
+                                    "member_id": loggedInMemberId,
+                                    "headline": fieldToWorkController.text.trim(),
+                                    "expected_salary_max": expectedSalaryController.text.trim(),
+                                    "work_mode": workMode,
+                                    "work_type": workType,
+                                    "city_id": selectedPreferredCityId,
+                                    "area_name": preferredAreaController.text.trim(),
+                                    "is_visible": "1",
+                                    "created_by": loggedInMemberId,
+                                  };
+
+                                  debugPrint("📤 add_seeker_profile createBody: $createBody");
+
+                                  final createResponse =
+                                  await seekerRepository.addSeekerProfile(createBody);
+
+                                  if (createResponse.status != true &&
+                                      createResponse.code != 409) {
+                                    ScaffoldMessenger.of(this.context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(createResponse.message ??
+                                            "Unable to save preferred details"),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                    return;
+                                  }
+
+                                  hasSeekerProfile = true;
+                                  seekerProfileData = GetSeekerProfileData(
+                                    memberId: createResponse.data?.memberId ?? loggedInMemberId,
+                                    resumePath: "",
+                                    headline: fieldToWorkController.text.trim(),
+                                    summary: "",
+                                    expectedSalaryMin: "",
+                                    expectedSalaryMax: expectedSalaryController.text.trim(),
+                                    workMode: workMode,
+                                    workType: workType,
+                                    noOfInternshipMonth:
+                                    selectedPreferredJobType == "Internship"
+                                        ? internshipMonthController.text.trim()
+                                        : "",
+                                    cityId: selectedPreferredCityId,
+                                    areaName: preferredAreaController.text.trim(),
+                                    isVisible: "1",
+                                    createdBy: loggedInMemberId,
+                                  );
+                                }
+
+                                // ---------- STEP 2: Upload resume using member_id ----------
+                                // Now the profile exists, so upload_resume will succeed.
+                                if (selectedResume != null) {
+                                  final uploadResponse =
+                                  await uploadResumeRepository.uploadResume(
+                                    memberId: loggedInMemberId,
+                                    filePath: selectedResume!.path,
+                                  );
+
+                                  if (uploadResponse.status != true) {
+                                    ScaffoldMessenger.of(this.context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(uploadResponse.message.isNotEmpty
+                                            ? uploadResponse.message
+                                            : "Unable to upload resume"),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                    return;
+                                  }
+
+                                  resumePath = uploadResponse.data?.resumePath ?? resumePath;
+                                }
+
+                                // ---------- STEP 3: Update profile with resume_path ----------
+                                final finalProfileId =
+                                    seekerProfileData?.seekerProfileId?.trim() ?? "";
+                                if (finalProfileId.isEmpty) {
+                                  // Backend may return member_id as the identifier — fall back
+                                  // to using member_id as the profile locator via update.
+                                  ScaffoldMessenger.of(this.context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text("Unable to resolve seeker profile id"),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                final updateBody = {
+                                  "seeker_profile_id": finalProfileId,
+                                  "member_id": loggedInMemberId,
+                                  "headline": fieldToWorkController.text.trim(),
+                                  "summary": "",
+                                  "expected_salary_max": expectedSalaryController.text.trim(),
+                                  "expected_salary_min": "",
+                                  "work_mode": workMode,
+                                  "work_type": workType,
+                                  "no_of_internship_month":
+                                  selectedPreferredJobType == "Internship"
+                                      ? internshipMonthController.text.trim()
+                                      : "",
+                                  "city_id": selectedPreferredCityId,
+                                  "area_name": preferredAreaController.text.trim(),
+                                  "is_visible": "1",
+                                  "resume_path": resumePath,
+                                  "updated_by": loggedInMemberId,
+                                };
+
+                                final response = await updateSeekerProfileRepository
+                                    .updateSeekerProfile(updateBody);
+
+                                if (!mounted) return;
+
+                                if (response.status == true) {
+                                  hasSeekerProfile = true;
+                                  seekerProfileData = GetSeekerProfileData(
+                                    seekerProfileId:
+                                    response.data?.seekerProfileId ?? finalProfileId,
+                                    memberId: response.data?.memberId ?? loggedInMemberId,
+                                    resumePath: resumePath,
+                                    headline: response.data?.headline ??
+                                        fieldToWorkController.text.trim(),
+                                    summary: response.data?.summary ?? "",
+                                    expectedSalaryMin: response.data?.expectedSalaryMin ?? "",
+                                    expectedSalaryMax: response.data?.expectedSalaryMax ??
+                                        expectedSalaryController.text.trim(),
+                                    workMode: response.data?.workMode ?? workMode,
+                                    workType: response.data?.workType ?? workType,
+                                    noOfInternshipMonth: response.data?.noOFInternshipMonth ??
+                                        (selectedPreferredJobType == "Internship"
+                                            ? internshipMonthController.text.trim()
+                                            : ""),
+                                    cityId: response.data?.cityId ?? selectedPreferredCityId,
+                                    areaName:
+                                    response.data?.areaName ?? preferredAreaController.text.trim(),
+                                    isVisible: response.data?.isVisible ?? "1",
+                                    updatedBy: response.data?.updatedBy ?? loggedInMemberId,
+                                  );
+
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(this.context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(response.message ??
+                                          "Preferred details saved successfully"),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(this.context).showSnackBar(
+                                    SnackBar(
+                                      content:
+                                      Text(response.message ?? "Unable to save details"),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                final errorText = e.toString();
+                                if (!shouldUpdateProfile && errorText.contains('"code":409')) {
+                                  hasSeekerProfile = true;
+                                  if (mounted) {
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(this.context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            "Preferred detail already exists for this member"),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  }
+                                } else {
+                                  ScaffoldMessenger.of(this.context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(errorText),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              }
+                            }
                                 : null,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: ColorHelperClass.getColorFromHex(
@@ -1894,15 +1757,22 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      selectedResumeName?.toLowerCase().endsWith(".pdf") == true
-                          ? Icons.picture_as_pdf
-                          : Icons.description,
-                      color:
-                          selectedResumeName?.toLowerCase().endsWith(".pdf") ==
-                                  true
-                              ? Colors.red
-                              : Colors.blue,
+                    Builder(
+                      builder: (_) {
+                        final name = (selectedResumeName ?? "").toLowerCase();
+                        if (name.endsWith(".pdf")) {
+                          return const Icon(Icons.picture_as_pdf,
+                              color: Colors.red);
+                        }
+                        if (name.endsWith(".jpg") ||
+                            name.endsWith(".jpeg") ||
+                            name.endsWith(".png") ||
+                            name.endsWith(".gif")) {
+                          return const Icon(Icons.image, color: Colors.green);
+                        }
+                        return const Icon(Icons.description,
+                            color: Colors.blue);
+                      },
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -1975,9 +1845,9 @@ class _JobSeekerViewState extends State<JobSeekerView> {
   }
 
   void _showResumePicker(
-    BuildContext context,
-    StateSetter modalSetState,
-  ) {
+      BuildContext context,
+      StateSetter modalSetState,
+      ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -2019,7 +1889,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                     Navigator.pop(context);
 
                     FilePickerResult? result =
-                        await FilePicker.platform.pickFiles(
+                    await FilePicker.platform.pickFiles(
                       type: FileType.custom,
                       allowedExtensions: ['pdf'],
                     );
@@ -2027,11 +1897,8 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                     if (result != null && result.files.single.path != null) {
                       modalSetState(() {
                         selectedResume = File(result.files.single.path!);
-
                         selectedResumeName = result.files.single.name;
                       });
-
-                      // await uploadResume(selectedResume!);
                     }
                   },
                 ),
@@ -2047,7 +1914,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                     Navigator.pop(context);
 
                     FilePickerResult? result =
-                        await FilePicker.platform.pickFiles(
+                    await FilePicker.platform.pickFiles(
                       type: FileType.custom,
                       allowedExtensions: ['doc', 'docx'],
                     );
@@ -2055,11 +1922,8 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                     if (result != null && result.files.single.path != null) {
                       modalSetState(() {
                         selectedResume = File(result.files.single.path!);
-
                         selectedResumeName = result.files.single.name;
                       });
-
-                      // await uploadResume(selectedResume!);
                     }
                   },
                 ),

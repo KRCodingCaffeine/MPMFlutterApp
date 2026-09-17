@@ -4,6 +4,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mpm/model/JobPortal/GetJobById/GetJobByIdData.dart';
 import 'package:mpm/repository/JobPortal/GetAppliedJobsByMemberIdRepo/get_applied_jobs_by_member_id_repository.dart';
 import 'package:mpm/repository/JobPortal/GetJobByIdRepo/get_job_by_id_repository.dart';
@@ -43,6 +44,7 @@ class _JobDetailViewState extends State<JobDetailView> {
       UploadResumeRepository();
   final MemberApplyJobRepository memberApplyJobRepository =
       MemberApplyJobRepository();
+  final ImagePicker _imagePicker = ImagePicker();
 
   File? cvFile;
   String? existingCvUrl;
@@ -56,6 +58,7 @@ class _JobDetailViewState extends State<JobDetailView> {
   String? jobDetailError;
   String? seekerResumeError;
   GetJobByIdData? jobDetailData;
+
 
   TextEditingController descriptionController = TextEditingController();
 
@@ -172,14 +175,14 @@ class _JobDetailViewState extends State<JobDetailView> {
         setState(() {
           existingCvUrl = null;
           existingCvName = null;
-          seekerResumeError = "Member id not found";
+          seekerResumeError = null; // 👈 don't show as error
         });
         refreshModal?.call();
         return;
       }
 
       final response =
-          await getSeekerResumeRepository.getSeekerResume(memberId);
+      await getSeekerResumeRepository.getSeekerResume(memberId);
       if (!mounted) return;
 
       final resumeUrl = _firstValue(
@@ -192,22 +195,27 @@ class _JobDetailViewState extends State<JobDetailView> {
         setState(() {
           existingCvUrl = resumeUrl;
           existingCvName = memberCvDisplayName;
+          seekerResumeError = null;
         });
         refreshModal?.call();
       } else {
+        // 👇 No resume yet — treat as normal "not uploaded" state,
+        //     not as an error. Just show the Upload button.
         setState(() {
           existingCvUrl = null;
           existingCvName = null;
-          seekerResumeError = response.message ?? "Resume not found";
+          seekerResumeError = null;
         });
         refreshModal?.call();
       }
     } catch (e) {
       if (!mounted) return;
+      // 👇 Same here — network failure or 404 shouldn't block applying.
+      //    Just fall back to "no existing CV" and let user upload.
       setState(() {
         existingCvUrl = null;
         existingCvName = null;
-        seekerResumeError = "Unable to fetch resume";
+        seekerResumeError = null;
       });
       refreshModal?.call();
       debugPrint("Get Seeker Resume Error: $e");
@@ -576,16 +584,14 @@ class _JobDetailViewState extends State<JobDetailView> {
   }
 
   void _showCvPickerOptions(
-    BuildContext context,
-    Function(File) onFilePicked,
-  ) {
+      BuildContext context,
+      Function(File) onFilePicked,
+      ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(16),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (_) {
         return SafeArea(
@@ -604,53 +610,38 @@ class _JobDetailViewState extends State<JobDetailView> {
                     ),
                   ),
                 ),
-
                 const Divider(),
 
                 /// PDF
                 ListTile(
-                  leading: const Icon(
-                    Icons.picture_as_pdf,
-                    color: Colors.red,
-                  ),
+                  leading: const Icon(Icons.picture_as_pdf, color: Colors.red),
                   title: const Text("Choose PDF"),
                   onTap: () async {
                     Navigator.pop(context);
-
                     FilePickerResult? result =
-                        await FilePicker.platform.pickFiles(
+                    await FilePicker.platform.pickFiles(
                       type: FileType.custom,
                       allowedExtensions: ['pdf'],
                     );
-
                     if (result != null && result.files.single.path != null) {
-                      onFilePicked(
-                        File(result.files.single.path!),
-                      );
+                      onFilePicked(File(result.files.single.path!));
                     }
                   },
                 ),
 
-                /// WORD DOCUMENT
+                /// DOC / DOCX
                 ListTile(
-                  leading: const Icon(
-                    Icons.description,
-                    color: Colors.blue,
-                  ),
+                  leading: const Icon(Icons.description, color: Colors.blue),
                   title: const Text("Choose Word Document"),
                   onTap: () async {
                     Navigator.pop(context);
-
                     FilePickerResult? result =
-                        await FilePicker.platform.pickFiles(
+                    await FilePicker.platform.pickFiles(
                       type: FileType.custom,
                       allowedExtensions: ['doc', 'docx'],
                     );
-
                     if (result != null && result.files.single.path != null) {
-                      onFilePicked(
-                        File(result.files.single.path!),
-                      );
+                      onFilePicked(File(result.files.single.path!));
                     }
                   },
                 ),
