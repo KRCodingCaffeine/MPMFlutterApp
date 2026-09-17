@@ -7,8 +7,6 @@ import 'package:mpm/model/JobPortal/JobsForSeekerJob/JobsForSeekerJobData.dart';
 import 'package:mpm/repository/BusinessProfileRepo/business_occupation_profile_repository/business_occupation_profile_repo.dart';
 import 'package:mpm/repository/JobPortal/GetJobAppliedMembersRepo/get_job_applied_members_repository.dart';
 import 'package:mpm/repository/JobPortal/GetJobByMemberIdRepo/get_job_by_member_id_repository.dart';
-import 'package:mpm/repository/JobPortal/GetOccupationByMemberIdRepo/get_occupation_by_member_id_repository.dart';
-import 'package:mpm/repository/JobPortal/GetQualificationByMemberIdRepo/get_qualification_by_member_id_repository.dart';
 import 'package:mpm/repository/JobPortal/GetSeekerProfileRepo/get_seeker_profile_repository.dart';
 import 'package:mpm/repository/JobPortal/JobPortalRoleRepo/update_job_portal_role_repository.dart';
 import 'package:mpm/repository/JobPortal/JobsForSeekerRepo/jobs_for_seeker_repository.dart';
@@ -17,7 +15,6 @@ import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/JobPortal/job_seeker_view.dart';
 import 'package:mpm/view/JobPortal/recruiter_job_view.dart';
-import 'package:mpm/view/profile%20view/Education_page_info.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
@@ -32,11 +29,6 @@ class _JobViewState extends State<JobView> {
   final UpdateJobPortalRoleRepository repository =
       UpdateJobPortalRoleRepository();
 
-  final GetOccupationByMemberIdRepository occupationRepository =
-      GetOccupationByMemberIdRepository();
-
-  final GetQualificationByMemberIdRepository qualificationRepository =
-      GetQualificationByMemberIdRepository();
   final BusinessOccupationProfileRepository businessProfileRepository =
       BusinessOccupationProfileRepository();
   final GetJobByMemberIdRepository jobRepository = GetJobByMemberIdRepository();
@@ -51,7 +43,6 @@ class _JobViewState extends State<JobView> {
       Get.find<UdateProfileController>();
 
   bool isLoading = false;
-  bool showEducationBanner = false;
   String selectedRole = "";
   UdateProfileController controller = Get.put(UdateProfileController());
   NewMemberController newMemberController = Get.put(NewMemberController());
@@ -61,7 +52,6 @@ class _JobViewState extends State<JobView> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     controller.getUserProfile();
     controller.getQualification();
@@ -123,7 +113,6 @@ class _JobViewState extends State<JobView> {
     try {
       setState(() {
         isLoading = true;
-        showEducationBanner = false;
       });
 
       String memberId = await _getLoggedInMemberId();
@@ -132,51 +121,31 @@ class _JobViewState extends State<JobView> {
         return;
       }
 
-      final eduResponse =
-      await qualificationRepository.getQualificationsByMemberId(memberId);
-
-      bool hasEducation = (eduResponse.totalCount ?? 0) > 0;
-
-      bool hasInstitute = false;
-      if (eduResponse.data != null && eduResponse.data!.isNotEmpty) {
-        for (var edu in eduResponse.data!) {
-          if (edu.instituteName != null &&
-              edu.instituteName.toString().trim().isNotEmpty) {
-            hasInstitute = true;
-            break;
-          }
-        }
-      }
-
-      // Flag for banner in JobSeekerView
-      final bool showEducationBannerInSeekerView = !hasEducation || !hasInstitute;
-
       await updateRole("job_seeker");
 
-      // 👇 SAFE fetch — wrap in try/catch to handle 404
+      // Fetch seeker profile
       GetSeekerProfileData? seekerProfileData;
       bool hasSeekerProfile = false;
 
       try {
         final seekerProfileResponse =
-        await seekerProfileRepository.getSeekerProfile(memberId);
+            await seekerProfileRepository.getSeekerProfile(memberId);
         seekerProfileData = seekerProfileResponse.data;
         hasSeekerProfile = seekerProfileResponse.status == true &&
             seekerProfileData != null &&
             ((seekerProfileData.seekerProfileId ?? "").trim().isNotEmpty ||
                 (seekerProfileData.memberId ?? "").trim().isNotEmpty);
       } catch (e) {
-        // 404 or any error -> no profile
         debugPrint("Seeker profile not found (expected for new users): $e");
         hasSeekerProfile = false;
         seekerProfileData = null;
       }
 
-      // 👇 SAFE fetch — business profiles
+      // Fetch business profiles
       List<BusinessOccupationProfileData> businessProfiles = [];
       try {
         final businessResponse =
-        await businessProfileRepository.fetchBusinessOccupationProfiles(
+            await businessProfileRepository.fetchBusinessOccupationProfiles(
           memberId: memberId,
         );
         businessProfiles =
@@ -185,24 +154,24 @@ class _JobViewState extends State<JobView> {
         debugPrint("Business profiles fetch error: $e");
       }
 
-      // 👇 SAFE fetch — jobs for seeker
+      // Fetch jobs for seeker
       List<JobsForSeekerJobData> jobsForSeeker = [];
       try {
         final jobsForSeekerResponse =
-        await jobsForSeekerRepository.getJobsForSeeker(memberId);
+            await jobsForSeekerRepository.getJobsForSeeker(memberId);
         jobsForSeeker =
             jobsForSeekerResponse.data?.jobs ?? <JobsForSeekerJobData>[];
       } catch (e) {
         debugPrint("Jobs for seeker fetch error: $e");
       }
 
-      // 👇 SAFE fetch — published jobs
+      // Fetch published jobs
       List<GetJobByMemberIdData> getJobs = [];
       try {
         final getJobsMemberId =
-        (hasSeekerProfile && (seekerProfileData?.memberId ?? "").isNotEmpty)
-            ? seekerProfileData!.memberId!.trim()
-            : memberId;
+            (hasSeekerProfile && (seekerProfileData?.memberId ?? "").isNotEmpty)
+                ? seekerProfileData!.memberId!.trim()
+                : memberId;
         final getJobsResponse = await jobRepository.getJobs(
           getJobsMemberId,
           status: "published",
@@ -222,22 +191,18 @@ class _JobViewState extends State<JobView> {
             initialGetJobs: getJobs,
             initialBusinessProfiles: businessProfiles,
             initialSeekerProfileData:
-            hasSeekerProfile ? seekerProfileData : null,
+                hasSeekerProfile ? seekerProfileData : null,
             initialHasSeekerProfile: hasSeekerProfile,
-            showEducationBanner: showEducationBannerInSeekerView,
           ),
         ),
       );
     } catch (e) {
       debugPrint("Education Check Error: $e");
-      // 👇 Even if something else fails, still go to JobSeekerView
       if (mounted) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => const JobSeekerView(
-              showEducationBanner: true,
-            ),
+            builder: (_) => const JobSeekerView(),
           ),
         );
       }
@@ -254,31 +219,12 @@ class _JobViewState extends State<JobView> {
     try {
       setState(() {
         isLoading = true;
-        showEducationBanner = false;
       });
 
       String memberId = await _getLoggedInMemberId();
       if (memberId.isEmpty) {
         _showSnackBar("Member ID is missing. Please login again", Colors.red);
         return;
-      }
-
-      final occResponse =
-          await occupationRepository.getOccupationsByMemberId(memberId);
-
-      bool hasOccupation = (occResponse.totalCount ?? 0) > 0;
-
-      /// 🔹 Check company name also
-      bool hasCompanyName = false;
-
-      if (occResponse.data != null && occResponse.data!.isNotEmpty) {
-        for (var occ in occResponse.data!) {
-          if (occ.companyName != null &&
-              occ.companyName.toString().trim().isNotEmpty) {
-            hasCompanyName = true;
-            break;
-          }
-        }
       }
 
       await updateRole("recruiter");
@@ -301,7 +247,6 @@ class _JobViewState extends State<JobView> {
         context,
         MaterialPageRoute(
           builder: (_) => RecruiterJobView(
-            showOccupationBanner: !hasOccupation || !hasCompanyName,
             initialBusinessProfiles: businessProfiles,
             initialPostedJobs: postedJobs,
             initialApplicantCountsByJobId: applicantCountsByJobId,
@@ -368,46 +313,6 @@ class _JobViewState extends State<JobView> {
                 height: MediaQuery.of(context).size.height * 0.8,
                 child: Column(
                   children: [
-                    if (showEducationBanner)
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: GestureDetector(
-                          onTap: () async {
-                            await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const EducationPageInfo(
-                                    autoOpenAddSheet: true),
-                              ),
-                            );
-
-                            checkEducationAndProceed();
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.orange.shade700,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
-                              children: const [
-                                Icon(Icons.warning_amber_rounded,
-                                    color: Colors.white),
-                                SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    "Click here to update your Education details",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
                     Expanded(
                       child: Center(
                         child: Padding(

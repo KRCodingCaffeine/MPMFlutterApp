@@ -27,7 +27,6 @@ import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.d
 import 'package:share_plus/share_plus.dart';
 
 class RecruiterJobView extends StatefulWidget {
-  final bool showOccupationBanner;
   final List<BusinessOccupationProfileData>? initialBusinessProfiles;
   final List<GetJobByMemberIdData>? initialPostedJobs;
   final Map<String, int>? initialApplicantCountsByJobId;
@@ -35,7 +34,6 @@ class RecruiterJobView extends StatefulWidget {
 
   const RecruiterJobView({
     super.key,
-    this.showOccupationBanner = false,
     this.initialBusinessProfiles,
     this.initialPostedJobs,
     this.initialApplicantCountsByJobId,
@@ -49,7 +47,6 @@ class RecruiterJobView extends StatefulWidget {
 class _RecruiterJobViewState extends State<RecruiterJobView> {
   String? selectedJobTitleForMembers;
   bool isRecruiter = false;
-  late bool showOccupationBanner;
   final GetJobAppliedMembersRepository jobAppliedMembersRepository =
       GetJobAppliedMembersRepository();
   final GetOccupationByMemberIdRepository occupationRepository =
@@ -100,6 +97,33 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
   final List<String> workModes = ['On-site', 'Work From Home', 'Hybrid'];
   final List<String> status = ['Publish', 'Draft'];
   List<GetJobByMemberIdData> postedJobs = [];
+
+  bool _isPostJobFormValid() {
+    // Company Name (either dropdown selection or manual text)
+    final hasCompany = _shouldShowCompanyNameInput()
+        ? companyController.text.trim().isNotEmpty
+        : (selectedBusinessId ?? "").trim().isNotEmpty;
+
+    // Job Title
+    final hasTitle = titleController.text.trim().isNotEmpty;
+
+    // Location (City)
+    final hasCity = regiController.city_id.value.trim().isNotEmpty;
+
+    // Number of Vacancies
+    final hasVacancy = vacancyController.text.trim().isNotEmpty;
+
+    // Job Type & Work Mode always have defaults, but check just in case
+    final hasJobType = selectedJobType.trim().isNotEmpty;
+    final hasWorkMode = selectedWorkMode.trim().isNotEmpty;
+
+    return hasCompany &&
+        hasTitle &&
+        hasCity &&
+        hasVacancy &&
+        hasJobType &&
+        hasWorkMode;
+  }
 
   String _getBackendJobStatus() {
     return selectedCategoryForPost == "Publish" ? "published" : "draft";
@@ -467,7 +491,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
   @override
   void initState() {
     super.initState();
-    showOccupationBanner = widget.showOccupationBanner;
 
     if (widget.initialBusinessProfiles != null) {
       businessProfiles = widget.initialBusinessProfiles!;
@@ -502,7 +525,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
   }
 
   bool _shouldShowCompanyNameInput() {
-    if (showOccupationBanner || businessProfiles.isEmpty) return true;
+    if (businessProfiles.isEmpty) return true;
 
     if (selectedBusinessId == null || selectedBusinessId!.isEmpty) {
       return !businessProfiles.any(
@@ -848,10 +871,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       }
 
       if (!mounted) return;
-
-      setState(() {
-        showOccupationBanner = !hasOccupation || !hasCompanyName;
-      });
     } catch (e) {
       debugPrint("Occupation Banner Check Error: $e");
     }
@@ -878,41 +897,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
     } catch (e) {
       return date;
     }
-  }
-
-  Widget _buildOccupationBanner() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: GestureDetector(
-        onTap: _openOccupationDetails,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.orange.shade700,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(
-            children: const [
-              Icon(
-                Icons.warning_amber_rounded,
-                color: Colors.white,
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  "Click here to update your Occupation and Business Profile",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   Widget _buildRecruiterBody() {
@@ -1308,7 +1292,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
     if (isLoadingJobs) {
       return Column(
         children: [
-          if (showOccupationBanner) _buildOccupationBanner(),
           Expanded(
             child: Center(
               child: CircularProgressIndicator(
@@ -1325,7 +1308,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
     if (postedJobs.isEmpty) {
       return Column(
         children: [
-          if (showOccupationBanner) _buildOccupationBanner(),
           Expanded(
             child: Center(
               child: Column(
@@ -1337,19 +1319,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                     color: Colors.grey,
                   ),
                   const SizedBox(height: 15),
-                  const Text(
-                    "No Jobs Posted Yet",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    "Start by posting your first job",
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                  const SizedBox(height: 25),
                   ElevatedButton(
                     onPressed: () {
                       _openPostJobBottomSheet();
@@ -1381,12 +1350,11 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
 
     return Column(
       children: [
-        if (showOccupationBanner) _buildOccupationBanner(),
         Expanded(
           child: ListView.builder(
             padding: EdgeInsets.fromLTRB(
               16,
-              showOccupationBanner ? 0 : 16,
+              16,
               16,
               20,
             ),
@@ -1510,12 +1478,13 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                     const SizedBox(height: 8),
                     _infoRow(
                       "Company",
-                      getBusinessName(job.memberBusinessOccupationProfileId),
+                      _getCompanyNameForJob(job),
                     ),
                     const SizedBox(height: 8),
                     _infoRow("Location", job.location ?? ""),
                     const SizedBox(height: 8),
-                    _infoRow("Salary", salary),
+                    if ((job.salaryVisible ?? "1") != "0")
+                      _infoRow("Salary", salary),
                     const SizedBox(height: 8),
                     _infoRow("Experience", experience),
                     const SizedBox(height: 8),
@@ -2128,19 +2097,22 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                             child: const Text("Cancel"),
                           ),
                           ElevatedButton(
-                            onPressed: isSubmittingJob
-                                ? null
-                                : () async {
-                                    if (editJob != null) {
-                                      await _updateJob(job: editJob);
-                                    } else {
-                                      await _submitJob();
-                                    }
-                                  },
+                            onPressed:
+                                (isSubmittingJob || !_isPostJobFormValid())
+                                    ? null
+                                    : () async {
+                                        if (editJob != null) {
+                                          await _updateJob(job: editJob);
+                                        } else {
+                                          await _submitJob();
+                                        }
+                                      },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: ColorHelperClass.getColorFromHex(
                                   ColorResources.red_color),
                               foregroundColor: Colors.white,
+                              disabledBackgroundColor: Colors.grey.shade300,
+                              disabledForegroundColor: Colors.grey.shade600,
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 16, vertical: 10),
                               shape: RoundedRectangleBorder(
@@ -2157,7 +2129,8 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                                     ),
                                   )
                                 : Text(
-                                    editJob != null ? "Update Job" : "Submit"),
+                                    editJob != null ? "Update Job" : "Submit",
+                                  ),
                           ),
                         ],
                       ),
@@ -2182,6 +2155,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                                 _buildTextField(
                                   "Company Name *",
                                   controller: companyController,
+                                  onChanged: (_) => modalSetState(() {}),
                                 )
                               else
                                 _buildBusinessDropdown(
@@ -2192,6 +2166,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                               _buildTextField(
                                 "Job Title *",
                                 controller: titleController,
+                                onChanged: (_) => modalSetState(() {}),
                               ),
                               _buildTextField(
                                 "Breif Job Description",
@@ -2237,6 +2212,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                               _buildTextField(
                                 "Number of Vacancies *",
                                 controller: vacancyController,
+                                onChanged: (_) => modalSetState(() {}),
                               ),
                               themedDatePickerField(
                                 context: context,
@@ -2320,15 +2296,17 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
   }
 
   Widget _buildTextField(
-    String label, {
-    int maxLines = 1,
-    TextEditingController? controller,
-  }) {
+      String label, {
+        int maxLines = 1,
+        TextEditingController? controller,
+        ValueChanged<String>? onChanged,
+      }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: TextField(
         controller: controller,
         maxLines: maxLines,
+        onChanged: onChanged,
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(
@@ -2805,7 +2783,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
               isUploaded ? Icons.check_circle : Icons.upload,
             ),
             label: Text(
-              isUploaded ? "$buttonText Uploaded" : "$buttonText *",
+              isUploaded ? "$buttonText Uploaded" : "$buttonText",
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: isUploaded
@@ -2926,6 +2904,24 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
         ],
       ),
     );
+  }
+
+  String _getCompanyNameForJob(GetJobByMemberIdData job) {
+    // 1) Prefer the company_name stored on the job itself
+    final directName = (job.companyName ?? "").trim();
+    if (directName.isNotEmpty) return directName;
+
+    // 2) Fallback to business profile lookup by id
+    final businessName = getBusinessName(job.memberBusinessOccupationProfileId);
+    if (businessName.trim().isNotEmpty) return businessName;
+
+    // 3) Last resort — show the id if nothing else is available
+    final businessId = (job.memberBusinessOccupationProfileId ?? "").trim();
+    if (businessId.isNotEmpty && businessId != "0") {
+      return businessId;
+    }
+
+    return "-";
   }
 
   void _showLocalDocumentPreviewDialog(

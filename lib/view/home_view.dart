@@ -86,7 +86,7 @@ class _HomeViewState extends State<HomeView>
 
     // Item 2: Jobs (conditional)
     if (memberId == 1 || memberId == 2 || memberId == 2040) {
-      items.add({'icon': Images.job_portal, 'label': 'Jobs'});
+      items.add({'icon': Images.job_portal, 'label': 'Job Portal'});
     }
 
     // Item 3: Discounts & Offers (always visible)
@@ -1305,7 +1305,7 @@ class _HomeViewState extends State<HomeView>
       case "Networking":
         Navigator.pushNamed(context, RouteNames.networking);
         break;
-      case "Jobs":
+      case "Job Portal":
         Navigator.pushNamed(context, RouteNames.job);
       case "Shiksha Sahayata":
         Navigator.pushNamed(context, RouteNames.shiksha_sahayata);
