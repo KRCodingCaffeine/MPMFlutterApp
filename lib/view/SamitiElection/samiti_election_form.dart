@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -64,6 +65,36 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
       TextEditingController();
   final String defaultProfile = "assets/images/user.png";
 
+  final RxBool _mobileExists = false.obs;
+  final RxBool _isCheckingMobile = false.obs;
+  bool _isCheckingMobileConvert = false;
+  bool _mobileExistsConvert = false;
+
+  bool _isCheckingMobileNew = false;
+  bool _mobileExistsNew = false;
+
+  /// Returns true if the exception represents a 400 "already added" case.
+  bool _isAlreadyAddedError(Object e) {
+    final text = e.toString().toLowerCase();
+    return text.contains('400') &&
+        (text.contains('already added') ||
+            text.contains('already exists') ||
+            text.contains('already registered'));
+  }
+
+  /// Extracts the human-readable message from a 400 response body if present.
+  String _extractServerMessage(Object e) {
+    final text = e.toString();
+
+    // Try to pull the "message": "..." field out of the body JSON
+    final match = RegExp(r'"message"\s*:\s*"([^"]+)"').firstMatch(text);
+    if (match != null && match.group(1) != null) {
+      return match.group(1)!.trim();
+    }
+
+    return 'This person is already added to this samiti category.';
+  }
+
   // Observable for search text
   final RxString _lmSearchText = ''.obs;
   final RxString _nmSearchText = ''.obs;
@@ -75,6 +106,9 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
   final RxBool _isConverting = false.obs;
   final RxBool _isVerifying = false.obs;
   final RxBool _isNewMemberFormValid = false.obs;
+
+  Timer? _convertMobileDebounce;
+  Timer? _newMemberMobileDebounce;
 
   @override
   void initState() {
@@ -123,6 +157,8 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
     _nmSearchText.close();
     _isNewMemberFormValid.close();
     controller.dispose();
+    _convertMobileDebounce?.cancel();
+    _newMemberMobileDebounce?.cancel();
     super.dispose();
   }
 
@@ -151,7 +187,9 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
         RegExp(r'^\d{10}$').hasMatch(_newMemberMobileController.text.trim()) &&
         RegExp(r'^\d{10}$')
             .hasMatch(_newMemberWhatsappController.text.trim()) &&
-        RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+        RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email) &&
+        !_mobileExistsNew &&
+        !_isCheckingMobileNew;
   }
 
   void _clearLMMemberSearch() {
@@ -572,33 +610,113 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
               },
             ),
             const SizedBox(height: 14),
-            TextFormField(
-              controller: _newMemberMobileController,
-              keyboardType: TextInputType.phone,
-              maxLength: 10,
-              decoration: InputDecoration(
-                labelText: "Mobile Number *",
-                hintText: "Enter 10-digit mobile number",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextFormField(
+                  controller: _newMemberMobileController,
+                  keyboardType: TextInputType.phone,
+                  maxLength: 10,
+                  decoration: InputDecoration(
+                    labelText: "Mobile Number *",
+                    hintText: "Enter 10-digit mobile number",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    prefixIcon: const Icon(Icons.phone),
+                    filled: true,
+                    fillColor: Colors.white,
+                    counterText: "",
+                    suffixIcon: _isCheckingMobileNew
+                        ? const Padding(
+                            padding: EdgeInsets.all(12.0),
+                            child: SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : (_mobileExistsNew
+                            ? const Icon(Icons.error, color: Colors.red)
+                            : null),
+                    enabledBorder: _mobileExistsNew
+                        ? OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide:
+                                const BorderSide(color: Colors.red, width: 1.5),
+                          )
+                        : null,
+                    focusedBorder: _mobileExistsNew
+                        ? OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide:
+                                const BorderSide(color: Colors.red, width: 2),
+                          )
+                        : null,
+                  ),
+                  onChanged: (value) {
+                    _newMemberMobileDebounce?.cancel();
+                    if (value.trim().length == 10) {
+                      setState(() {
+                        _isCheckingMobileNew = true;
+                        _mobileExistsNew = false;
+                      });
+                      _newMemberMobileDebounce = Timer(
+                        const Duration(milliseconds: 500),
+                        () async {
+                          final exists = await _checkMobileExists(value.trim());
+                          if (mounted) {
+                            setState(() {
+                              _isCheckingMobileNew = false;
+                              _mobileExistsNew = exists;
+                            });
+                            _updateNewMemberFormValidity();
+                          }
+                        },
+                      );
+                    } else {
+                      setState(() {
+                        _isCheckingMobileNew = false;
+                        _mobileExistsNew = false;
+                      });
+                      _updateNewMemberFormValidity();
+                    }
+                  },
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return "Please enter mobile number";
+                    }
+                    if (value.trim().length != 10) {
+                      return "Mobile number must be 10 digits";
+                    }
+                    if (!RegExp(r'^[0-9]+$').hasMatch(value.trim())) {
+                      return "Please enter valid mobile number";
+                    }
+                    return null;
+                  },
                 ),
-                prefixIcon: const Icon(Icons.phone),
-                filled: true,
-                fillColor: Colors.white,
-                counterText: "",
-              ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return "Please enter mobile number";
-                }
-                if (value.trim().length != 10) {
-                  return "Mobile number must be 10 digits";
-                }
-                if (!RegExp(r'^[0-9]+$').hasMatch(value.trim())) {
-                  return "Please enter valid mobile number";
-                }
-                return null;
-              },
+                if (_mobileExistsNew)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6, left: 4),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline,
+                            color: Colors.red, size: 16),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Mobile number already exists',
+                            style: TextStyle(
+                              color: Colors.red.shade700,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 14),
             TextFormField(
@@ -799,6 +917,7 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
 
       // Hide loading
       _isLoading.value = false;
+      if (!mounted || !context.mounted) return;
 
       if (result.status == true) {
         _clearNewMemberForm();
@@ -813,10 +932,22 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
       }
     } catch (e) {
       _isLoading.value = false;
-      _showErrorDialog(
-        context,
-        message: "Error: $e",
-      );
+      if (!mounted || !context.mounted) return;
+
+      if (_isAlreadyAddedError(e)) {
+        _showInfoDialog(
+          context,
+          title: "Already Added",
+          message: _extractServerMessage(e),
+          icon: Icons.info_outline,
+          color: Colors.orange,
+        );
+      } else {
+        _showErrorDialog(
+          context,
+          message: "Error: $e",
+        );
+      }
     }
   }
 
@@ -993,7 +1124,6 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
                 ),
               ],
             ),
-
             if (showConsentButton || showConvertButton) ...[
               const Divider(height: 24),
               Row(
@@ -1034,7 +1164,6 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
                         ),
                       ),
                     ),
-
                   if (showConvertButton && !showConsentButton)
                     ElevatedButton.icon(
                       onPressed: () {
@@ -1063,10 +1192,12 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
   // ==================== DIALOGS ====================
   void _showConsentFormDialog(BuildContext context, String memberName,
       {Map<String, dynamic>? memberData}) {
+    final parentContext = context;
+
     showDialog(
-      context: context,
+      context: parentContext,
       barrierDismissible: false,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
@@ -1115,32 +1246,12 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
                 ),
               ),
               const SizedBox(height: 12),
-              if (memberData != null) ...[
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildDetailRow("Member ID",
-                          memberData['memberId']?.toString() ?? 'N/A'),
-                      _buildDetailRow("Member Code",
-                          memberData['memberCode']?.toString() ?? 'N/A'),
-                      _buildDetailRow(
-                          "Mobile", memberData['mobile']?.toString() ?? 'N/A'),
-                    ],
-                  ),
-                ),
-              ],
             ],
           ),
           actions: [
             OutlinedButton(
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(dialogContext).pop();
               },
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.grey.shade700,
@@ -1153,7 +1264,7 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
             ),
             ElevatedButton(
               onPressed: () async {
-                Navigator.of(context).pop();
+                Navigator.of(dialogContext).pop();
 
                 _isLoading.value = true;
 
@@ -1163,6 +1274,7 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
                   );
 
                   _isLoading.value = false;
+                  if (!mounted || !parentContext.mounted) return;
 
                   if (result.status == true) {
                     _clearLMMemberSearch();
@@ -1170,16 +1282,28 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
                         result.message ?? "Consent form sent successfully!");
                   } else {
                     _showErrorDialog(
-                      context,
+                      parentContext,
                       message: result.message ?? "Failed to add LM member",
                     );
                   }
                 } catch (e) {
                   _isLoading.value = false;
-                  _showErrorDialog(
-                    context,
-                    message: "Error: $e",
-                  );
+                  if (!mounted || !parentContext.mounted) return;
+
+                  if (_isAlreadyAddedError(e)) {
+                    _showInfoDialog(
+                      parentContext,
+                      title: "Already Added",
+                      message: _extractServerMessage(e),
+                      icon: Icons.info_outline,
+                      color: Colors.orange,
+                    );
+                  } else {
+                    _showErrorDialog(
+                      parentContext,
+                      message: "Error: $e",
+                    );
+                  }
                 }
               },
               style: ElevatedButton.styleFrom(
@@ -1274,6 +1398,8 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
 
   // ==================== ERROR DIALOG ====================
   void _showErrorDialog(BuildContext context, {required String message}) {
+    if (!mounted || !context.mounted) return;
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -1328,6 +1454,80 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFe61428),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 10,
+                ),
+              ),
+              child: const Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showInfoDialog(
+    BuildContext context, {
+    required String title,
+    required String message,
+    IconData icon = Icons.info_outline,
+    Color color = Colors.orange,
+  }) {
+    if (!mounted || !context.mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, color: color, size: 28),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Divider(thickness: 1, color: Colors.grey.shade300),
+            ],
+          ),
+          content: Text(
+            message,
+            style: const TextStyle(
+              fontSize: 15,
+              color: Colors.black87,
+              height: 1.4,
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: color,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -1513,33 +1713,123 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
                         ),
                         const SizedBox(height: 16),
 
-                        TextFormField(
-                          controller: mobileController,
-                          keyboardType: TextInputType.phone,
-                          maxLength: 10,
-                          decoration: InputDecoration(
-                            labelText: 'Mobile Number *',
-                            hintText: 'Enter 10-digit mobile number',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
+                        // Mobile Number with existence check
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            TextFormField(
+                              controller: mobileController,
+                              keyboardType: TextInputType.phone,
+                              maxLength: 10,
+                              decoration: InputDecoration(
+                                labelText: 'Mobile Number *',
+                                hintText: 'Enter 10-digit mobile number',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                prefixIcon: const Icon(Icons.phone),
+                                filled: true,
+                                fillColor: Colors.white,
+                                counterText: '',
+                                // Show loading spinner while checking
+                                suffixIcon: _isCheckingMobileConvert
+                                    ? const Padding(
+                                        padding: EdgeInsets.all(12.0),
+                                        child: SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child: CircularProgressIndicator(
+                                              strokeWidth: 2),
+                                        ),
+                                      )
+                                    : (_mobileExistsConvert
+                                        ? const Icon(Icons.error,
+                                            color: Colors.red)
+                                        : null),
+                                // Red border if exists
+                                enabledBorder: _mobileExistsConvert
+                                    ? OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: const BorderSide(
+                                            color: Colors.red, width: 1.5),
+                                      )
+                                    : null,
+                                focusedBorder: _mobileExistsConvert
+                                    ? OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: const BorderSide(
+                                            color: Colors.red, width: 2),
+                                      )
+                                    : null,
+                              ),
+                              onChanged: (value) {
+                                // Debounce the check
+                                _convertMobileDebounce?.cancel();
+                                if (value.trim().length == 10) {
+                                  setState(() {
+                                    _isCheckingMobileConvert = true;
+                                    _mobileExistsConvert = false;
+                                  });
+                                  _convertMobileDebounce = Timer(
+                                    const Duration(milliseconds: 500),
+                                    () async {
+                                      final exists = await _checkMobileExists(
+                                          value.trim());
+                                      if (mounted) {
+                                        setState(() {
+                                          _isCheckingMobileConvert = false;
+                                          _mobileExistsConvert = exists;
+                                        });
+                                      }
+                                    },
+                                  );
+                                } else {
+                                  setState(() {
+                                    _isCheckingMobileConvert = false;
+                                    _mobileExistsConvert = false;
+                                  });
+                                }
+                              },
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Please enter mobile number';
+                                }
+                                if (value.trim().length != 10) {
+                                  return 'Mobile number must be 10 digits';
+                                }
+                                if (!RegExp(r'^[0-9]+$')
+                                    .hasMatch(value.trim())) {
+                                  return 'Please enter valid mobile number';
+                                }
+                                if (_mobileExistsConvert) {
+                                  return null; // Don't block; we show message below
+                                }
+                                return null;
+                              },
                             ),
-                            prefixIcon: const Icon(Icons.phone),
-                            filled: true,
-                            fillColor: Colors.white,
-                            counterText: '',
-                          ),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Please enter mobile number';
-                            }
-                            if (value.trim().length != 10) {
-                              return 'Mobile number must be 10 digits';
-                            }
-                            if (!RegExp(r'^[0-9]+$').hasMatch(value.trim())) {
-                              return 'Please enter valid mobile number';
-                            }
-                            return null;
-                          },
+                            // Message below the field
+                            if (_mobileExistsConvert)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 6, left: 4),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.info_outline,
+                                        color: Colors.red, size: 16),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        'Mobile number already exists',
+                                        style: TextStyle(
+                                          color: Colors.red.shade700,
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
                         ),
                         const SizedBox(height: 14),
 
@@ -1879,6 +2169,14 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
                 ),
                 ElevatedButton(
                   onPressed: () {
+                    if (_mobileExistsConvert) {
+                      _showErrorDialog(
+                        this.context,
+                        message:
+                            "This mobile number is already registered. Please use a different number.",
+                      );
+                      return;
+                    }
                     if (formKey.currentState!.validate()) {
                       Navigator.of(context).pop();
                       _processNMConversion(
@@ -2065,11 +2363,10 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
       );
 
       _isConverting.value = false;
+      if (!mounted || !context.mounted) return;
 
       if (result.status == true) {
-        if (mounted) {
-          _showOTPDialog(context, memberId, memberName);
-        }
+        _showOTPDialog(context, memberId, memberName);
       } else {
         _showErrorDialog(
           context,
@@ -2078,10 +2375,22 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
       }
     } catch (e) {
       _isConverting.value = false;
-      _showErrorDialog(
-        context,
-        message: "Error: $e",
-      );
+      if (!mounted || !context.mounted) return;
+
+      if (_isAlreadyAddedError(e)) {
+        _showInfoDialog(
+          context,
+          title: "Already Added",
+          message: _extractServerMessage(e),
+          icon: Icons.info_outline,
+          color: Colors.orange,
+        );
+      } else {
+        _showErrorDialog(
+          context,
+          message: "Error: $e",
+        );
+      }
     }
   }
 
@@ -2337,7 +2646,8 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
       }
 
       if (result.status == true) {
-        String message = "OTP verified successfully and Consent letter sent via email and Whatsapp.";
+        String message =
+            "OTP verified successfully and Consent letter sent via email and Whatsapp.";
 
         _clearNMMemberSearch();
         _showSuccessSnackbar(message);
@@ -2355,10 +2665,42 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
         Navigator.of(context).pop();
       }
 
-      _showErrorDialog(
-        this.context,
-        message: "Error: $e",
+      if (_isAlreadyAddedError(e)) {
+        _showInfoDialog(
+          this.context,
+          title: "Already Added",
+          message: _extractServerMessage(e),
+          icon: Icons.info_outline,
+          color: Colors.orange,
+        );
+      } else {
+        _showErrorDialog(
+          this.context,
+          message: "Error: $e",
+        );
+      }
+    }
+  }
+
+  Future<bool> _checkMobileExists(String mobile) async {
+    if (mobile.length != 10) return false;
+    try {
+      final NewMemberController memberController =
+          Get.put(NewMemberController());
+      await memberController.checkMobileExists(mobile);
+
+      // NewMemberController sets isMobileValid = true when the mobile is NOT registered.
+      // We want to return `true` only when the mobile ALREADY EXISTS, so invert:
+      final exists = !memberController.isMobileValid.value;
+
+      debugPrint(
+        "🔍 Mobile check → $mobile | exists=$exists | msg=${memberController.mobileExistsMessage.value}",
       );
+
+      return exists;
+    } catch (e) {
+      debugPrint("Mobile check error: $e");
+      return false;
     }
   }
 }

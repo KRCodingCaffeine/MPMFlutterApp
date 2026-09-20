@@ -2,6 +2,8 @@ class GetAppliedJobsByMemberIdData {
   String? memberJobAppliedId;
   String? memberId;
   String? jobId;
+  String? memberBusinessOccupationProfileId;
+  String? companyName;
   String? applicationStatus;
   String? appliedDate;
   String? remarks;
@@ -35,6 +37,8 @@ class GetAppliedJobsByMemberIdData {
     this.memberJobAppliedId,
     this.memberId,
     this.jobId,
+    this.memberBusinessOccupationProfileId,
+    this.companyName,
     this.applicationStatus,
     this.appliedDate,
     this.remarks,
@@ -63,6 +67,11 @@ class GetAppliedJobsByMemberIdData {
     memberJobAppliedId = json['member_job_applied_id']?.toString();
     memberId = json['member_id']?.toString();
     jobId = json['job_id']?.toString();
+    memberBusinessOccupationProfileId =
+        json['member_business_occupation_profile_id']?.toString();
+    companyName =
+        (json['company_name'] ?? json['business_name'] ?? json['company'])
+            ?.toString();
     applicationStatus = json['application_status']?.toString();
     appliedDate = json['applied_date']?.toString();
     remarks = json['remarks']?.toString();
@@ -98,6 +107,9 @@ class GetAppliedJobsByMemberIdData {
       'member_job_applied_id': memberJobAppliedId,
       'member_id': memberId,
       'job_id': jobId,
+      'member_business_occupation_profile_id':
+          memberBusinessOccupationProfileId,
+      'company_name': companyName,
       'application_status': applicationStatus,
       'applied_date': appliedDate,
       'remarks': remarks,

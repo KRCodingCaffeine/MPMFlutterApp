@@ -134,6 +134,7 @@ class Urls {
   static const String add_non_member_election_url = base_url+"api/election/add";
   static const String samiti_convert_to_lm_url = base_url+"api/election/samiti_convert_to_lm";
   static const String samiti_verify_otp_lm_conversion_url = base_url+"api/election/samiti_verify_otp_lm_conversion";
+  static const String delete_not_an_member_url = base_url+"api/election/delete_not_an_member";
 
 
   //Shiksha Sahayata
