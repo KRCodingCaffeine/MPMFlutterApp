@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -25,6 +26,7 @@ import 'package:mpm/view/profile%20view/business_info_page.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class RecruiterJobView extends StatefulWidget {
   final List<BusinessOccupationProfileData>? initialBusinessProfiles;
@@ -96,6 +98,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
   ];
   final List<String> workModes = ['On-site', 'Work From Home', 'Hybrid'];
   final List<String> status = ['Publish', 'Draft'];
+  final FocusNode vacancyFocusNode = FocusNode();
   List<GetJobByMemberIdData> postedJobs = [];
 
   bool _isPostJobFormValid() {
@@ -127,6 +130,13 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
 
   String _getBackendJobStatus() {
     return selectedCategoryForPost == "Publish" ? "published" : "draft";
+  }
+
+  String _getExistingStatus(GetJobByMemberIdData job) {
+    final s = (job.status ?? "").toLowerCase().trim();
+    if (s == "published" || s == "draft" || s == "closed") return s;
+    // Fallback — treat unknown as draft so we don't accidentally publish
+    return "draft";
   }
 
   String _getUiJobStatus(String? backendStatus) {
@@ -180,6 +190,116 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
         isLoadingBusiness = false;
       });
     }
+  }
+
+  Future<void> _openDialer(String phoneNumber) async {
+    final number = phoneNumber.trim();
+    if (number.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Phone number not available"),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final uri = Uri(scheme: 'tel', path: number);
+
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Unable to open dialer"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _changeJobStatus(
+    GetJobByMemberIdData job,
+    String newStatus, // "published" | "draft" | "closed"
+  ) async {
+    final loggedInMemberId = await _getLoggedInMemberId();
+    final now = DateTime.now();          // 👈 ADD THIS
+
+    // Build a minimal update body — just the fields required by the backend.
+    // update_job keeps existing values for anything not sent.
+    final body = {
+      "job_id": job.jobId ?? "",
+      "member_id": loggedInMemberId,
+      "status": newStatus,
+      "updated_by": loggedInMemberId,
+    };
+
+    if (newStatus == "published") {
+      body["published_at"] = _formatApiDateTime(now);
+      body["expired_at"] = _formatApiDate(
+        DateTime(now.year + 1, now.month, now.day),
+      );
+      // closed_at left unset → backend preserves existing (it sets to null anyway)
+    } else if (newStatus == "closed") {
+      body["closed_at"] = _formatApiDateTime(now);
+    } else if (newStatus == "draft") {
+      // Backend already clears all three when status=draft
+    }
+
+
+    try {
+      final response = await UpdateJobRepository().updateJob(body);
+
+      if (response.status == true) {
+        await loadPostedJobs();
+
+        if (!mounted) return;
+
+        final label = newStatus == "published"
+            ? "Job published successfully"
+            : newStatus == "draft"
+                ? "Job moved to draft"
+                : "Job closed successfully";
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.message ?? label),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else {
+        throw Exception(response.message ?? "Failed to update job status");
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Failed to update status: $e"),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  String _formatApiDate(DateTime dateTime) {
+    return [
+      dateTime.year.toString().padLeft(4, '0'),
+      dateTime.month.toString().padLeft(2, '0'),
+      dateTime.day.toString().padLeft(2, '0'),
+    ].join("-");
+  }
+
+  String _formatApiDateTime(DateTime dateTime) {
+    final d = _formatApiDate(dateTime);
+    final t = [
+      dateTime.hour.toString().padLeft(2, '0'),
+      dateTime.minute.toString().padLeft(2, '0'),
+      dateTime.second.toString().padLeft(2, '0'),
+    ].join(":");
+    return "$d $t";
   }
 
   List<GetJobByMemberIdData> get filteredJobs {
@@ -581,7 +701,9 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       "city_id": regiController.city_id.value,
 
       // FIXED
-      "area_name": areaController.text.trim(),
+      "area_name": areaController.text.trim().isEmpty
+          ? null
+          : areaController.text.trim(),
 
       "salary_min": salaryVisible == "1"
           ? _cleanNumberForApi(salaryMinController.text)
@@ -613,7 +735,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       // FIXED
       "work_mode": _getWorkMode(),
 
-      "status": _getBackendJobStatus(),
+      "status": "published",
 
       "created_by": loggedInMemberId,
     };
@@ -708,7 +830,9 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
           selectedSpecializationId.isEmpty ? "0" : selectedSpecializationId,
       "location": locationName,
       "city_id": regiController.city_id.value,
-      "area_name": areaController.text.trim(),
+      "area_name": areaController.text.trim().isEmpty
+          ? null
+          : areaController.text.trim(),
       "salary_min": salaryVisible == "1"
           ? _cleanNumberForApi(salaryMinController.text)
           : "0",
@@ -726,7 +850,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       "last_apply_date": _formatDateForApi(lastDateController.text),
       "work_type": _getWorkType(),
       "work_mode": _getWorkMode(),
-      "status": backendJobStatus,
+      "status": _getExistingStatus(job),
       "updated_by": loggedInMemberId,
     };
 
@@ -1276,9 +1400,27 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                               ),
                             ),
                           ),
+                          Expanded(
+                            child: TextButton.icon(
+                              onPressed: () {
+                                _openDialer(member["mobile"]?.toString() ?? "");
+                              },
+                              icon: const Icon(
+                                Icons.call_outlined,
+                                color: Colors.green,
+                                size: 20,
+                              ),
+                              label: const Text(
+                                "Call",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.green,
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
-                      )
-                    ],
+                      ),                    ],
                   ),
                 );
               },
@@ -1431,35 +1573,126 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               onSelected: (value) {
-                                if (value == "edit") {
-                                  _openPostJobBottomSheet(editJob: job);
-                                } else if (value == "close") {
-                                  _showDeleteDialog(index);
+                                switch (value) {
+                                  case "edit":
+                                    _openPostJobBottomSheet(editJob: job);
+                                    break;
+                                  case "draft":
+                                    _showDraftJobDialog(job);
+                                    break;
+                                  case "publish":
+                                    _showPublishJobDialog(job);
+                                    break;
+                                  case "close":
+                                    _showCloseJobDialog(job);
+                                    break;
                                 }
                               },
-                              itemBuilder: (context) => const [
-                                PopupMenuItem(
-                                  value: "edit",
-                                  child: Text(
-                                    "Edit Job",
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                                PopupMenuItem(
-                                  value: "close",
-                                  child: Text(
-                                    "Close Job",
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.red,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                              itemBuilder: (context) {
+                                switch (selectedTabIndex) {
+                                  // Published tab
+                                  case 0:
+                                    return const [
+                                      PopupMenuItem(
+                                        value: "edit",
+                                        child: Text(
+                                          "Edit Job",
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                      PopupMenuItem(
+                                        value: "draft",
+                                        child: Text(
+                                          "Draft Job",
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                      PopupMenuItem(
+                                        value: "close",
+                                        child: Text(
+                                          "Close Job",
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.red,
+                                          ),
+                                        ),
+                                      ),
+                                    ];
+
+                                  // Draft tab
+                                  case 1:
+                                    return const [
+                                      PopupMenuItem(
+                                        value: "edit",
+                                        child: Text(
+                                          "Edit Job",
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                      PopupMenuItem(
+                                        value: "publish",
+                                        child: Text(
+                                          "Publish Job",
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.green,
+                                          ),
+                                        ),
+                                      ),
+                                      PopupMenuItem(
+                                        value: "close",
+                                        child: Text(
+                                          "Close Job",
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.red,
+                                          ),
+                                        ),
+                                      ),
+                                    ];
+
+                                  // Closed tab
+                                  case 2:
+                                    return const [
+                                      PopupMenuItem(
+                                        value: "publish",
+                                        child: Text(
+                                          "Publish Job",
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.green,
+                                          ),
+                                        ),
+                                      ),
+                                      PopupMenuItem(
+                                        value: "draft",
+                                        child: Text(
+                                          "Draft Job",
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ];
+
+                                  default:
+                                    return const [];
+                                }
+                              },
                               child: const Padding(
                                 padding: EdgeInsets.only(left: 4),
                                 child: Icon(
@@ -1974,6 +2207,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
 
   @override
   void dispose() {
+    vacancyFocusNode.dispose();
     titleController.dispose();
     companyController.dispose();
     locationController.dispose();
@@ -1996,7 +2230,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       final job = editJob;
       titleController.text = job.title ?? "";
       locationController.text = job.location ?? "";
-      areaController.clear();
+      areaController.text = job.jobAreaName ?? "";
       salaryMinController.text = job.salaryMin ?? "";
       salaryMaxController.text = job.salaryMax ?? "";
       salaryVisible = job.salaryVisible ?? "1";
@@ -2212,7 +2446,24 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                               _buildTextField(
                                 "Number of Vacancies *",
                                 controller: vacancyController,
-                                onChanged: (_) => modalSetState(() {}),
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(
+                                      3), // allow 1, 2, or 3 digits max
+                                ],
+                                focusNode: vacancyFocusNode,
+                                onChanged: (value) {
+                                  modalSetState(() {});
+                                  // Auto-dismiss keyboard + unfocus after 1 or 2 digits
+                                  if (value.length == 1 || value.length == 2) {
+                                    // Do NOT dismiss for 1 digit — user may want to type 2 digits.
+                                    // Only dismiss after 2 digits.
+                                  }
+                                  if (value.length == 2) {
+                                    FocusScope.of(context).unfocus();
+                                  }
+                                },
                               ),
                               themedDatePickerField(
                                 context: context,
@@ -2252,16 +2503,16 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                                   });
                                 },
                               ),
-                              _buildDropdown(
-                                label: "Job Post Status",
-                                items: status,
-                                selectedValue: selectedCategoryForPost,
-                                onChanged: (val) {
-                                  modalSetState(() {
-                                    selectedCategoryForPost = val;
-                                  });
-                                },
-                              ),
+                              // _buildDropdown(
+                              //   label: "Job Post Status",
+                              //   items: status,
+                              //   selectedValue: selectedCategoryForPost,
+                              //   onChanged: (val) {
+                              //     modalSetState(() {
+                              //       selectedCategoryForPost = val;
+                              //     });
+                              //   },
+                              // ),
                               buildJobSummaryUploadField(
                                 context: context,
                                 file: jobSummaryFile,
@@ -2296,17 +2547,25 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
   }
 
   Widget _buildTextField(
-      String label, {
-        int maxLines = 1,
-        TextEditingController? controller,
-        ValueChanged<String>? onChanged,
-      }) {
+    String label, {
+    int maxLines = 1,
+    TextEditingController? controller,
+    ValueChanged<String>? onChanged,
+    TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
+    FocusNode? focusNode,
+    TextInputAction textInputAction = TextInputAction.next,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: TextField(
         controller: controller,
+        focusNode: focusNode,
         maxLines: maxLines,
         onChanged: onChanged,
+        keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
+        textInputAction: textInputAction,
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(
@@ -3049,10 +3308,149 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
     );
   }
 
-  void _showDeleteDialog(int index) {
+  void _showPublishJobDialog(GetJobByMemberIdData job) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Publish Job",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(thickness: 1, color: Colors.grey),
+            ],
+          ),
+          content: const Text(
+            "Are you sure you want to publish this job? It will be visible to all job seekers.",
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              style: OutlinedButton.styleFrom(
+                foregroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: BorderSide(
+                  color: ColorHelperClass.getColorFromHex(
+                      ColorResources.red_color),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("No"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                await _changeJobStatus(job, "published");
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Publish"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showDraftJobDialog(GetJobByMemberIdData job) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                "Move to Draft",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Divider(thickness: 1, color: Colors.grey),
+            ],
+          ),
+          content: const Text(
+            "Are you sure you want to move this job to draft? It will no longer be visible to job seekers.",
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              style: OutlinedButton.styleFrom(
+                foregroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                side: BorderSide(
+                  color: ColorHelperClass.getColorFromHex(
+                      ColorResources.red_color),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("No"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                await _changeJobStatus(job, "draft");
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Move to Draft"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showCloseJobDialog(GetJobByMemberIdData job) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
@@ -3072,10 +3470,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                 ),
               ),
               SizedBox(height: 8),
-              Divider(
-                thickness: 1,
-                color: Colors.grey,
-              ),
+              Divider(thickness: 1, color: Colors.grey),
             ],
           ),
           content: const Text(
@@ -3087,9 +3482,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
           ),
           actions: [
             OutlinedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
+              onPressed: () => Navigator.pop(dialogContext),
               style: OutlinedButton.styleFrom(
                 foregroundColor:
                     ColorHelperClass.getColorFromHex(ColorResources.red_color),
@@ -3104,19 +3497,9 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
               child: const Text("No"),
             ),
             ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  postedJobs.removeAt(index);
-                });
-
-                Navigator.pop(context);
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Job closed successfully"),
-                    backgroundColor: Colors.green,
-                  ),
-                );
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                await _changeJobStatus(job, "closed");
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
@@ -3126,7 +3509,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: const Text("close"),
+              child: const Text("Close"),
             ),
           ],
         );

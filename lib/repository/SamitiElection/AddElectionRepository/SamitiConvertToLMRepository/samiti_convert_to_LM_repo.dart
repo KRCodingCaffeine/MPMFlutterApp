@@ -140,4 +140,20 @@ class SamitiConvertToLMRepository {
       rethrow;
     }
   }
+
+  // In SamitiConvertToLMRepository
+  Future<bool> checkMobileExists(String mobileNumber) async {
+    try {
+      final response = await http.post(
+        Uri.parse(Urls.check_mobile_exists_url), // add this URL
+        body: {'mobile': mobileNumber},
+        headers: {'token': '2'},
+      );
+      final data = jsonDecode(response.body);
+      return data['status'] == true && data['exists'] == true;
+    } catch (e) {
+      debugPrint("Error checking mobile: $e");
+      return false;
+    }
+  }
 }

@@ -75,6 +75,10 @@ class _JobSeekerViewState extends State<JobSeekerView> {
   bool isLoadingJobs = false;
   bool isLoadingAppliedJobs = false;
   final Set<String> savingJobIds = {};
+
+  // ✅ track applied job ids so we can flip "Apply" -> "Applied" instantly
+  final Set<String> appliedJobIds = {};
+
   bool hasOpenedPreferredSheet = false;
   bool? hasSeekerProfile;
   bool isCheckingSeekerProfile = false;
@@ -145,8 +149,19 @@ class _JobSeekerViewState extends State<JobSeekerView> {
         widget.initialJobsForSeeker ?? <JobsForSeekerJobData>[],
         widget.initialGetJobs ?? <GetJobByMemberIdData>[],
       );
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _checkAndOpenPreferredDetails();
+        _loadAppliedJobIds();
+      });
     } else {
-      loadJobs();
+      loadJobs().then((_) {
+        _loadAppliedJobIds();
+      });
+
+      if (mounted) {
+        _checkAndOpenPreferredDetails();
+      }
     }
   }
 
@@ -166,6 +181,31 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     preferredAreaController.dispose();
     internshipMonthController.dispose();
     super.dispose();
+  }
+
+  // ✅ fetch applied job ids and store them
+  Future<void> _loadAppliedJobIds() async {
+    try {
+      final memberId = await _getLoggedInMemberId();
+      if (memberId.isEmpty) return;
+
+      final response = await appliedJobsRepository.getAppliedJobs(memberId);
+      if (!mounted) return;
+
+      if (response.status == true) {
+        setState(() {
+          appliedJobIds
+            ..clear()
+            ..addAll(
+              (response.data ?? <GetAppliedJobsByMemberIdData>[])
+                  .map((job) => (job.jobId ?? "").trim())
+                  .where((id) => id.isNotEmpty),
+            );
+        });
+      }
+    } catch (e) {
+      debugPrint("Load Applied Job Ids Error: $e");
+    }
   }
 
   Future<void> loadJobs() async {
@@ -287,10 +327,18 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       if (!mounted) return;
 
       if (response.status == true) {
+        final appliedList = response.data ?? <GetAppliedJobsByMemberIdData>[];
+
         setState(() {
-          appliedJobs = (response.data ?? <GetAppliedJobsByMemberIdData>[])
-              .map(_mapAppliedJobToViewData)
-              .toList();
+          appliedJobs = appliedList.map(_mapAppliedJobToViewData).toList();
+
+          appliedJobIds
+            ..clear()
+            ..addAll(
+              appliedList
+                  .map((job) => (job.jobId ?? "").trim())
+                  .where((id) => id.isNotEmpty),
+            );
         });
       } else {
         setState(() {
@@ -335,18 +383,28 @@ class _JobSeekerViewState extends State<JobSeekerView> {
 
     await Future.delayed(const Duration(milliseconds: 500));
 
+    if (!mounted) return;
+
     final seekerProfileExists = await _seekerProfileExists();
     if (seekerProfileExists || !mounted) return;
 
-    // First-time user check
-    bool isFirstTimeUser = preferredNameController.text.isEmpty &&
-        preferredEmailController.text.isEmpty &&
-        preferredMobileController.text.isEmpty &&
-        fieldToWorkController.text.isEmpty;
+    hasOpenedPreferredSheet = true;
 
-    if (isFirstTimeUser && mounted) {
-      hasOpenedPreferredSheet = true;
-      _openPreferredCitySheet();
+    final saved = await _openPreferredCitySheet();
+
+    if (saved && mounted) {
+      // ✅ Refresh profile state + jobs + applied ids
+      await _loadSeekerProfileForJobs(await _getLoggedInMemberId());
+      await loadJobs();
+      await _loadAppliedJobIds();
+      if (mounted) setState(() {});
+      return;
+    }
+
+    final profileStillMissing =
+        !(await _seekerProfileExists(forceRefresh: true));
+    if (profileStillMissing) {
+      hasOpenedPreferredSheet = false;
     }
   }
 
@@ -483,15 +541,25 @@ class _JobSeekerViewState extends State<JobSeekerView> {
   Future<void> _handlePreferredDetailsPressed() async {
     final seekerProfileExists = await _seekerProfileExists(forceRefresh: true);
 
+    bool saved;
     if (seekerProfileExists) {
       if (!mounted) return;
-
-      _openPreferredCitySheet(prefillExistingProfile: true);
-      return;
+      saved = await _openPreferredCitySheet(prefillExistingProfile: true);
+    } else {
+      if (!mounted) return;
+      saved = await _openPreferredCitySheet();
     }
 
-    if (mounted) {
-      _openPreferredCitySheet();
+    if (!mounted) return;
+
+    if (saved) {
+      await _loadSeekerProfileForJobs(await _getLoggedInMemberId());
+      await loadJobs();
+      await _loadAppliedJobIds();
+      if (mounted) setState(() {});
+    } else {
+      await _loadSeekerProfileForJobs(await _getLoggedInMemberId());
+      if (mounted) setState(() {});
     }
   }
 
@@ -523,19 +591,34 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     return business?.businessName ?? "";
   }
 
+  String _getCompanyNameForJob(GetJobByMemberIdData job) {
+    final directName = (job.companyName ?? "").trim();
+    if (directName.isNotEmpty) return directName;
+
+    final businessName = getBusinessName(job.memberBusinessOccupationProfileId);
+    if (businessName.trim().isNotEmpty) return businessName;
+
+    final businessId = (job.memberBusinessOccupationProfileId ?? "").trim();
+    if (businessId.isNotEmpty && businessId != "0") return businessId;
+
+    return "-";
+  }
+
   Map<String, dynamic> _mapJobToViewData(GetJobByMemberIdData job) {
     final companyName = (job.companyName ?? "").trim();
     final businessName =
         getBusinessName(job.memberBusinessOccupationProfileId).trim();
+    final displayCompanyName = companyName.isNotEmpty
+        ? companyName
+        : businessName.isNotEmpty
+            ? businessName
+            : "Company";
 
     return {
       "jobId": job.jobId ?? "",
       "title": job.title ?? "",
-      "company": companyName.isNotEmpty
-          ? companyName
-          : businessName.isNotEmpty
-              ? businessName
-              : "Company",
+      "company": displayCompanyName,
+      "company_name": displayCompanyName,
       "location": job.location ?? "",
       "salary": _formatSalaryFromValues(
         salaryVisible: job.salaryVisible,
@@ -555,13 +638,20 @@ class _JobSeekerViewState extends State<JobSeekerView> {
   }
 
   Map<String, dynamic> _mapSeekerJobToViewData(JobsForSeekerJobData job) {
+    final companyName = (job.companyName ?? "").trim();
     final businessName =
         getBusinessName(job.memberBusinessOccupationProfileId).trim();
+    final displayCompanyName = companyName.isNotEmpty
+        ? companyName
+        : businessName.isNotEmpty
+            ? businessName
+            : "Company";
 
     return {
       "jobId": job.jobId ?? "",
       "title": job.title ?? "",
-      "company": businessName.isNotEmpty ? businessName : "Company",
+      "company": displayCompanyName,
+      "company_name": displayCompanyName,
       "location": job.location ?? "",
       "salary": _formatSalaryFromValues(
         salaryVisible: job.salaryVisible,
@@ -576,7 +666,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       "postedDate": _formatDate(job.publishedAt ?? job.createdAt ?? ""),
       "category": "IT",
       "isBookmarked": false,
-      "isPreferredJob": true,
+      "isPreferredJob": false,
       "jobData": job,
     };
   }
@@ -584,10 +674,20 @@ class _JobSeekerViewState extends State<JobSeekerView> {
   Map<String, dynamic> _mapAppliedJobToViewData(
     GetAppliedJobsByMemberIdData job,
   ) {
+    final companyName = (job.companyName ?? "").trim();
+    final businessName =
+        getBusinessName(job.memberBusinessOccupationProfileId).trim();
+    final displayCompanyName = companyName.isNotEmpty
+        ? companyName
+        : businessName.isNotEmpty
+            ? businessName
+            : "Company";
+
     return {
       "jobId": job.jobId ?? "",
       "title": job.title ?? "",
-      "company": "Company",
+      "company": displayCompanyName,
+      "company_name": displayCompanyName,
       "location": job.location ?? "",
       "salary": _formatSalaryFromValues(
         salaryVisible: job.salaryVisible,
@@ -708,6 +808,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
           matchesLocation &&
           matchesSalary;
     }).toList();
+
     List<Map<String, dynamic>> displayJobs;
 
     if (selectedTab == 1) {
@@ -717,7 +818,10 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     } else {
       displayJobs = filteredJobs;
     }
+
+    final hasSeekerProfileLocal = hasSeekerProfile == true;
     final hasPreferredJobs = selectedTab == 0 &&
+        hasSeekerProfileLocal &&
         displayJobs.any((job) => job["isPreferredJob"] == true);
     final isLoadingCurrentTab =
         selectedTab == 2 ? isLoadingAppliedJobs : isLoadingJobs;
@@ -733,13 +837,14 @@ class _JobSeekerViewState extends State<JobSeekerView> {
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          TextButton(
-            onPressed: _handlePreferredDetailsPressed,
-            child: const Text(
-              "Preferrences",
-              style: TextStyle(color: Colors.white),
+          if (hasSeekerProfile == true)
+            TextButton(
+              onPressed: _handlePreferredDetailsPressed,
+              child: const Text(
+                "Preferrences",
+                style: TextStyle(color: Colors.white),
+              ),
             ),
-          ),
         ],
       ),
       body: Column(
@@ -780,34 +885,6 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                     ),
                   ),
                 ),
-
-                // const SizedBox(width: 12),
-                //
-                // /// FILTER BUTTON
-                // GestureDetector(
-                //   onTap: _openFilterSheet,
-                //   child: Container(
-                //     padding: const EdgeInsets.all(12),
-                //     decoration: BoxDecoration(
-                //       color: Colors.white,
-                //       borderRadius: BorderRadius.circular(12),
-                //       border: Border.all(color: Colors.grey[300]!),
-                //       boxShadow: [
-                //         BoxShadow(
-                //           color: Colors.grey.withOpacity(0.1),
-                //           blurRadius: 4,
-                //           offset: const Offset(0, 2),
-                //         ),
-                //       ],
-                //     ),
-                //     child: Icon(
-                //       Icons.filter_alt,
-                //       color: ColorHelperClass.getColorFromHex(
-                //           ColorResources.red_color),
-                //       size: 24,
-                //     ),
-                //   ),
-                // ),
               ],
             ),
           ),
@@ -826,7 +903,9 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                         itemCount:
                             displayJobs.length + (hasPreferredJobs ? 1 : 0),
                         itemBuilder: (context, index) {
-                          if (hasPreferredJobs && index == 0) {
+                          if (hasPreferredJobs &&
+                              index == 0 &&
+                              displayJobs.isNotEmpty) {
                             return Padding(
                               padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
                               child: Text(
@@ -841,13 +920,15 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                               ),
                             );
                           }
-
                           final jobIndex = hasPreferredJobs ? index - 1 : index;
                           final job = displayJobs[jobIndex];
                           final isPreferredJob = job["isPreferredJob"] == true;
                           final isAppliedJob = job["isAppliedJob"] == true;
                           final jobId = job["jobId"]?.toString() ?? "";
                           final isSavingJob = savingJobIds.contains(jobId);
+
+                          final isApplied =
+                              isAppliedJob || appliedJobIds.contains(jobId);
 
                           return Container(
                             margin: const EdgeInsets.symmetric(
@@ -891,7 +972,9 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                       ),
                                       const SizedBox(height: 6),
                                       Text(
-                                        job["company_name"],
+                                        job["company"] ??
+                                            job["company_name"] ??
+                                            "Company",
                                         style: const TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w500,
@@ -941,7 +1024,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                 /// RIGHT SIDE ACTIONS
                                 Column(
                                   children: [
-                                    if (!isAppliedJob) ...[
+                                    if (!isApplied) ...[
                                       /// SAVE BUTTON
                                       GestureDetector(
                                         onTap: isSavingJob
@@ -973,64 +1056,63 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                       const SizedBox(height: 50),
                                     ],
 
-                                    /// APPLY BUTTON
-                                    selectedTab != 2
-                                        ? SizedBox(
-                                            height: 36,
-                                            child: ElevatedButton(
-                                              onPressed: () {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (_) =>
-                                                        JobDetailView(
-                                                      job: job,
-                                                      jobId: job["jobId"]
-                                                              ?.toString() ??
-                                                          "",
-                                                    ),
-                                                  ),
-                                                ).then((_) {
-                                                  if (selectedTab == 2) {
-                                                    loadAppliedJobs();
-                                                  }
-                                                });
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: Colors.red,
-                                                foregroundColor: Colors.white,
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 16),
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(10),
+                                    /// APPLY / APPLIED
+                                    if (isApplied)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 8),
+                                        decoration: BoxDecoration(
+                                          color: Colors.green.withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: const Text(
+                                          "Applied",
+                                          style: TextStyle(
+                                            color: Colors.green,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      )
+                                    else
+                                      SizedBox(
+                                        height: 36,
+                                        child: ElevatedButton(
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) => JobDetailView(
+                                                  job: job,
+                                                  jobId: job["jobId"]
+                                                          ?.toString() ??
+                                                      "",
                                                 ),
                                               ),
-                                              child: const Text(
-                                                "Apply",
-                                                style: TextStyle(fontSize: 13),
-                                              ),
-                                            ),
-                                          )
-                                        : Container(
+                                            ).then((_) {
+                                              _loadAppliedJobIds();
+                                              if (selectedTab == 2) {
+                                                loadAppliedJobs();
+                                              }
+                                            });
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.red,
+                                            foregroundColor: Colors.white,
                                             padding: const EdgeInsets.symmetric(
-                                                horizontal: 12, vertical: 8),
-                                            decoration: BoxDecoration(
-                                              color:
-                                                  Colors.green.withOpacity(0.1),
+                                                horizontal: 16),
+                                            shape: RoundedRectangleBorder(
                                               borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            child: const Text(
-                                              "Applied",
-                                              style: TextStyle(
-                                                color: Colors.green,
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w600,
-                                              ),
+                                                  BorderRadius.circular(10),
                                             ),
                                           ),
+                                          child: const Text(
+                                            "Apply",
+                                            style: TextStyle(fontSize: 13),
+                                          ),
+                                        ),
+                                      ),
                                   ],
                                 ),
                               ],
@@ -1049,6 +1131,8 @@ class _JobSeekerViewState extends State<JobSeekerView> {
           });
           if (index == 2) {
             loadAppliedJobs();
+          } else {
+            _loadAppliedJobIds();
           }
         },
         selectedItemColor:
@@ -1084,7 +1168,6 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       message = "Jobs you apply for will appear here.";
     } else {
       title = "No Jobs Posted Yet";
-      // message = "Try changing filters or search keywords.";
     }
 
     return Center(
@@ -1150,10 +1233,8 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       profileController.whatsAppNumber.value,
     );
 
-    // Default Mumbai
     selectedPreferredCityId = "2";
 
-    // If profile city exists and is 2,3,4 use it
     final cityId = _cleanProfileValue(profileController.city_id.value);
 
     if (cityId == "2" || cityId == "3" || cityId == "4") {
@@ -1206,7 +1287,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     preferredAreaController.text = _cleanProfileValue(data.areaName ?? "");
   }
 
-  Future<void> _openPreferredCitySheet({
+  Future<bool> _openPreferredCitySheet({
     bool prefillExistingProfile = false,
   }) async {
     _prefillPreferredDetails();
@@ -1216,7 +1297,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     final loggedInMemberId = await _getLoggedInMemberId();
 
     if (loggedInMemberId.isEmpty) {
-      if (!mounted) return;
+      if (!mounted) return false;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -1224,7 +1305,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
           backgroundColor: Colors.red,
         ),
       );
-      return;
+      return false;
     }
 
     bool isFormValid() {
@@ -1247,14 +1328,48 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       await regiController.getCity();
     }
 
-    if (!mounted) return;
+    if (!mounted) return false;
 
     final existingSeekerProfileId =
         seekerProfileData?.seekerProfileId?.trim() ?? "";
     final shouldUpdateProfile =
         prefillExistingProfile && existingSeekerProfileId.isNotEmpty;
 
-    showModalBottomSheet(
+    bool didSave = false;
+
+    void closeSheetWithSnack(
+      BuildContext sheetContext, {
+      required String message,
+      required Color backgroundColor,
+    }) {
+      if (sheetContext.mounted && Navigator.of(sheetContext).canPop()) {
+        Navigator.of(sheetContext).pop();
+      }
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(this.context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(message),
+              backgroundColor: backgroundColor,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+      });
+    }
+
+    String errorMessageFrom(Object error) {
+      final text = error.toString();
+      final match = RegExp(r'"message"\s*:\s*"([^"]+)"').firstMatch(text);
+      if (match != null) {
+        return match.group(1)!.replaceAll(r'\"', '"');
+      }
+      return text.replaceFirst('Exception: ', '');
+    }
+
+    await showModalBottomSheet(
       backgroundColor: Colors.white,
       context: context,
       isScrollControlled: true,
@@ -1280,7 +1395,9 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           OutlinedButton(
-                            onPressed: () => Navigator.pop(context),
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
                             style: OutlinedButton.styleFrom(
                               foregroundColor: ColorHelperClass.getColorFromHex(
                                   ColorResources.red_color),
@@ -1294,210 +1411,265 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                           ElevatedButton(
                             onPressed: isFormValid()
                                 ? () async {
-                              try {
-                                final workMode = selectedPreferredWorkMode == "On-site"
-                                    ? "onsite"
-                                    : selectedPreferredWorkMode == "Work From Home"
-                                    ? "remote"
-                                    : "hybrid";
-                                final workType = selectedPreferredJobType == "Full-time"
-                                    ? "full_time"
-                                    : selectedPreferredJobType == "Part-time"
-                                    ? "part_time"
-                                    : "internship";
+                                    try {
+                                      final workMode =
+                                          selectedPreferredWorkMode == "On-site"
+                                              ? "onsite"
+                                              : selectedPreferredWorkMode ==
+                                                      "Work From Home"
+                                                  ? "remote"
+                                                  : "hybrid";
+                                      final workType =
+                                          selectedPreferredJobType ==
+                                                  "Full-time"
+                                              ? "full_time"
+                                              : selectedPreferredJobType ==
+                                                      "Part-time"
+                                                  ? "part_time"
+                                                  : "internship";
+                                      final isInternship =
+                                          selectedPreferredJobType ==
+                                              "Internship";
 
-                                String resolvedProfileId = existingSeekerProfileId;
-                                String resumePath = seekerProfileData?.resumePath ?? "";
+                                      String resolvedProfileId =
+                                          existingSeekerProfileId;
+                                      String resumePath =
+                                          seekerProfileData?.resumePath ?? "";
 
-                                // ---------- STEP 1: Create profile FIRST (if not exists) ----------
-                                // No resume_path here — omit it to avoid the 500 error.
-                                if (!shouldUpdateProfile) {
-                                  String? nonEmpty(String? v) {
-                                    final s = v?.trim() ?? "";
-                                    return s.isEmpty ? null : s;
+                                      if (!shouldUpdateProfile) {
+                                        final createBody = <String, dynamic>{
+                                          "member_id": loggedInMemberId,
+                                          "headline":
+                                              fieldToWorkController.text.trim(),
+                                          "expected_salary_max":
+                                              expectedSalaryController.text
+                                                  .trim(),
+                                          "work_mode": workMode,
+                                          "work_type": workType,
+                                          "city_id": selectedPreferredCityId,
+                                          "area_name": preferredAreaController
+                                              .text
+                                              .trim(),
+                                          "is_visible": "1",
+                                          "created_by": loggedInMemberId,
+                                        };
+                                        if (isInternship) {
+                                          createBody["no_of_internship_month"] =
+                                              internshipMonthController.text
+                                                  .trim();
+                                        }
+
+                                        debugPrint(
+                                            "📤 add_seeker_profile createBody: $createBody");
+
+                                        final createResponse =
+                                            await seekerRepository
+                                                .addSeekerProfile(createBody);
+
+                                        if (createResponse.status != true &&
+                                            createResponse.code != 409) {
+                                          closeSheetWithSnack(
+                                            context,
+                                            message: createResponse.message ??
+                                                "Unable to save preferred details",
+                                            backgroundColor: Colors.red,
+                                          );
+                                          return;
+                                        }
+
+                                        await _loadSeekerProfileForJobs(
+                                          loggedInMemberId,
+                                        );
+                                        resolvedProfileId = seekerProfileData
+                                                ?.seekerProfileId
+                                                ?.trim() ??
+                                            "";
+                                        resumePath =
+                                            seekerProfileData?.resumePath ??
+                                                resumePath;
+                                        hasSeekerProfile = true;
+                                        seekerProfileData ??=
+                                            GetSeekerProfileData(
+                                          seekerProfileId: resolvedProfileId,
+                                          memberId: loggedInMemberId,
+                                          resumePath: resumePath,
+                                          headline:
+                                              fieldToWorkController.text.trim(),
+                                          summary: "",
+                                          expectedSalaryMin: "",
+                                          expectedSalaryMax:
+                                              expectedSalaryController.text
+                                                  .trim(),
+                                          workMode: workMode,
+                                          workType: workType,
+                                          noOfInternshipMonth: isInternship
+                                              ? internshipMonthController.text
+                                                  .trim()
+                                              : "",
+                                          cityId: selectedPreferredCityId,
+                                          areaName: preferredAreaController.text
+                                              .trim(),
+                                          isVisible: "1",
+                                          createdBy: loggedInMemberId,
+                                        );
+                                      }
+
+                                      if (selectedResume != null) {
+                                        final uploadResponse =
+                                            await uploadResumeRepository
+                                                .uploadResume(
+                                          memberId: loggedInMemberId,
+                                          filePath: selectedResume!.path,
+                                        );
+
+                                        if (uploadResponse.status != true) {
+                                          closeSheetWithSnack(
+                                            context,
+                                            message: uploadResponse
+                                                    .message.isNotEmpty
+                                                ? uploadResponse.message
+                                                : "Unable to upload resume",
+                                            backgroundColor: Colors.red,
+                                          );
+                                          return;
+                                        }
+
+                                        resumePath =
+                                            uploadResponse.data?.resumePath ??
+                                                resumePath;
+                                      }
+
+                                      final finalProfileId =
+                                          (seekerProfileData?.seekerProfileId ??
+                                                  resolvedProfileId)
+                                              .trim();
+
+                                      if (selectedResume != null &&
+                                          finalProfileId.isEmpty) {
+                                        closeSheetWithSnack(
+                                          context,
+                                          message:
+                                              "Unable to resolve seeker profile id",
+                                          backgroundColor: Colors.red,
+                                        );
+                                        return;
+                                      }
+
+                                      final updateBody = {
+                                        "seeker_profile_id": finalProfileId,
+                                        "member_id": loggedInMemberId,
+                                        "headline":
+                                            fieldToWorkController.text.trim(),
+                                        "summary": "",
+                                        "expected_salary_max":
+                                            expectedSalaryController.text
+                                                .trim(),
+                                        "expected_salary_min": "",
+                                        "work_mode": workMode,
+                                        "work_type": workType,
+                                        "city_id": selectedPreferredCityId,
+                                        "area_name":
+                                            preferredAreaController.text.trim(),
+                                        "is_visible": "1",
+                                        "updated_by": loggedInMemberId,
+                                      };
+                                      if (isInternship) {
+                                        updateBody["no_of_internship_month"] =
+                                            internshipMonthController.text
+                                                .trim();
+                                      }
+                                      if (resumePath.trim().isNotEmpty) {
+                                        updateBody["resume_path"] =
+                                            resumePath.trim();
+                                      }
+
+                                      final response =
+                                          await updateSeekerProfileRepository
+                                              .updateSeekerProfile(updateBody);
+
+                                      if (!mounted) return;
+
+                                      if (response.status == true) {
+                                        hasSeekerProfile = true;
+                                        seekerProfileData =
+                                            GetSeekerProfileData(
+                                          seekerProfileId:
+                                              response.data?.seekerProfileId ??
+                                                  finalProfileId,
+                                          memberId: response.data?.memberId ??
+                                              loggedInMemberId,
+                                          headline: response.data?.headline ??
+                                              fieldToWorkController.text.trim(),
+                                          summary: response.data?.summary ?? "",
+                                          expectedSalaryMin: response
+                                                  .data?.expectedSalaryMin ??
+                                              "",
+                                          expectedSalaryMax: response
+                                                  .data?.expectedSalaryMax ??
+                                              expectedSalaryController.text
+                                                  .trim(),
+                                          workMode: response.data?.workMode ??
+                                              workMode,
+                                          workType: response.data?.workType ??
+                                              workType,
+                                          noOfInternshipMonth: response
+                                                  .data?.noOFInternshipMonth ??
+                                              (isInternship
+                                                  ? internshipMonthController
+                                                      .text
+                                                      .trim()
+                                                  : ""),
+                                          cityId: response.data?.cityId ??
+                                              selectedPreferredCityId,
+                                          areaName: response.data?.areaName ??
+                                              preferredAreaController.text
+                                                  .trim(),
+                                          isVisible:
+                                              response.data?.isVisible ?? "1",
+                                          updatedBy: response.data?.updatedBy ??
+                                              loggedInMemberId,
+                                        );
+
+                                        didSave = true;
+
+                                        closeSheetWithSnack(
+                                          context,
+                                          message: response.message ??
+                                              "Preferred details saved successfully",
+                                          backgroundColor: Colors.green,
+                                        );
+                                      } else {
+                                        closeSheetWithSnack(
+                                          context,
+                                          message: response.message ??
+                                              "Unable to save details",
+                                          backgroundColor: Colors.red,
+                                        );
+                                      }
+                                    } catch (e) {
+                                      final errorText = errorMessageFrom(e);
+                                      if (!shouldUpdateProfile &&
+                                          e.toString().contains('"code":409')) {
+                                        hasSeekerProfile = true;
+                                        didSave = true;
+
+                                        if (mounted) {
+                                          closeSheetWithSnack(
+                                            context,
+                                            message:
+                                                "Preferred detail already exists for this member",
+                                            backgroundColor: Colors.green,
+                                          );
+                                        }
+                                      } else {
+                                        closeSheetWithSnack(
+                                          context,
+                                          message: errorText,
+                                          backgroundColor: Colors.red,
+                                        );
+                                      }
+                                    }
                                   }
-
-                                  final createBody = <String, dynamic>{
-                                    "member_id": loggedInMemberId,
-                                    "headline": fieldToWorkController.text.trim(),
-                                    "expected_salary_max": expectedSalaryController.text.trim(),
-                                    "work_mode": workMode,
-                                    "work_type": workType,
-                                    "city_id": selectedPreferredCityId,
-                                    "area_name": preferredAreaController.text.trim(),
-                                    "is_visible": "1",
-                                    "created_by": loggedInMemberId,
-                                  };
-
-                                  debugPrint("📤 add_seeker_profile createBody: $createBody");
-
-                                  final createResponse =
-                                  await seekerRepository.addSeekerProfile(createBody);
-
-                                  if (createResponse.status != true &&
-                                      createResponse.code != 409) {
-                                    ScaffoldMessenger.of(this.context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(createResponse.message ??
-                                            "Unable to save preferred details"),
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    );
-                                    return;
-                                  }
-
-                                  hasSeekerProfile = true;
-                                  seekerProfileData = GetSeekerProfileData(
-                                    memberId: createResponse.data?.memberId ?? loggedInMemberId,
-                                    resumePath: "",
-                                    headline: fieldToWorkController.text.trim(),
-                                    summary: "",
-                                    expectedSalaryMin: "",
-                                    expectedSalaryMax: expectedSalaryController.text.trim(),
-                                    workMode: workMode,
-                                    workType: workType,
-                                    noOfInternshipMonth:
-                                    selectedPreferredJobType == "Internship"
-                                        ? internshipMonthController.text.trim()
-                                        : "",
-                                    cityId: selectedPreferredCityId,
-                                    areaName: preferredAreaController.text.trim(),
-                                    isVisible: "1",
-                                    createdBy: loggedInMemberId,
-                                  );
-                                }
-
-                                // ---------- STEP 2: Upload resume using member_id ----------
-                                // Now the profile exists, so upload_resume will succeed.
-                                if (selectedResume != null) {
-                                  final uploadResponse =
-                                  await uploadResumeRepository.uploadResume(
-                                    memberId: loggedInMemberId,
-                                    filePath: selectedResume!.path,
-                                  );
-
-                                  if (uploadResponse.status != true) {
-                                    ScaffoldMessenger.of(this.context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(uploadResponse.message.isNotEmpty
-                                            ? uploadResponse.message
-                                            : "Unable to upload resume"),
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    );
-                                    return;
-                                  }
-
-                                  resumePath = uploadResponse.data?.resumePath ?? resumePath;
-                                }
-
-                                // ---------- STEP 3: Update profile with resume_path ----------
-                                final finalProfileId =
-                                    seekerProfileData?.seekerProfileId?.trim() ?? "";
-                                if (finalProfileId.isEmpty) {
-                                  // Backend may return member_id as the identifier — fall back
-                                  // to using member_id as the profile locator via update.
-                                  ScaffoldMessenger.of(this.context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text("Unable to resolve seeker profile id"),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                final updateBody = {
-                                  "seeker_profile_id": finalProfileId,
-                                  "member_id": loggedInMemberId,
-                                  "headline": fieldToWorkController.text.trim(),
-                                  "summary": "",
-                                  "expected_salary_max": expectedSalaryController.text.trim(),
-                                  "expected_salary_min": "",
-                                  "work_mode": workMode,
-                                  "work_type": workType,
-                                  "no_of_internship_month":
-                                  selectedPreferredJobType == "Internship"
-                                      ? internshipMonthController.text.trim()
-                                      : "",
-                                  "city_id": selectedPreferredCityId,
-                                  "area_name": preferredAreaController.text.trim(),
-                                  "is_visible": "1",
-                                  "resume_path": resumePath,
-                                  "updated_by": loggedInMemberId,
-                                };
-
-                                final response = await updateSeekerProfileRepository
-                                    .updateSeekerProfile(updateBody);
-
-                                if (!mounted) return;
-
-                                if (response.status == true) {
-                                  hasSeekerProfile = true;
-                                  seekerProfileData = GetSeekerProfileData(
-                                    seekerProfileId:
-                                    response.data?.seekerProfileId ?? finalProfileId,
-                                    memberId: response.data?.memberId ?? loggedInMemberId,
-                                    resumePath: resumePath,
-                                    headline: response.data?.headline ??
-                                        fieldToWorkController.text.trim(),
-                                    summary: response.data?.summary ?? "",
-                                    expectedSalaryMin: response.data?.expectedSalaryMin ?? "",
-                                    expectedSalaryMax: response.data?.expectedSalaryMax ??
-                                        expectedSalaryController.text.trim(),
-                                    workMode: response.data?.workMode ?? workMode,
-                                    workType: response.data?.workType ?? workType,
-                                    noOfInternshipMonth: response.data?.noOFInternshipMonth ??
-                                        (selectedPreferredJobType == "Internship"
-                                            ? internshipMonthController.text.trim()
-                                            : ""),
-                                    cityId: response.data?.cityId ?? selectedPreferredCityId,
-                                    areaName:
-                                    response.data?.areaName ?? preferredAreaController.text.trim(),
-                                    isVisible: response.data?.isVisible ?? "1",
-                                    updatedBy: response.data?.updatedBy ?? loggedInMemberId,
-                                  );
-
-                                  Navigator.pop(context);
-                                  ScaffoldMessenger.of(this.context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(response.message ??
-                                          "Preferred details saved successfully"),
-                                      backgroundColor: Colors.green,
-                                    ),
-                                  );
-                                } else {
-                                  ScaffoldMessenger.of(this.context).showSnackBar(
-                                    SnackBar(
-                                      content:
-                                      Text(response.message ?? "Unable to save details"),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
-                              } catch (e) {
-                                final errorText = e.toString();
-                                if (!shouldUpdateProfile && errorText.contains('"code":409')) {
-                                  hasSeekerProfile = true;
-                                  if (mounted) {
-                                    Navigator.pop(context);
-                                    ScaffoldMessenger.of(this.context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                            "Preferred detail already exists for this member"),
-                                        backgroundColor: Colors.green,
-                                      ),
-                                    );
-                                  }
-                                } else {
-                                  ScaffoldMessenger.of(this.context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(errorText),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
-                              }
-                            }
                                 : null,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: ColorHelperClass.getColorFromHex(
@@ -1565,7 +1737,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                 onChanged: (_) => setModalState(() {}),
                               ),
                               _buildPreferredTextField(
-                                label: "Expected Annual Salary *",
+                                label: "Expected Annual Salary",
                                 controller: expectedSalaryController,
                                 keyboardType: TextInputType.number,
                                 showCurrency: true,
@@ -1597,6 +1769,8 @@ class _JobSeekerViewState extends State<JobSeekerView> {
         );
       },
     );
+
+    return didSave;
   }
 
   Widget _buildPreferredTextField({
@@ -1845,9 +2019,9 @@ class _JobSeekerViewState extends State<JobSeekerView> {
   }
 
   void _showResumePicker(
-      BuildContext context,
-      StateSetter modalSetState,
-      ) {
+    BuildContext context,
+    StateSetter modalSetState,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -1889,7 +2063,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                     Navigator.pop(context);
 
                     FilePickerResult? result =
-                    await FilePicker.platform.pickFiles(
+                        await FilePicker.platform.pickFiles(
                       type: FileType.custom,
                       allowedExtensions: ['pdf'],
                     );
@@ -1914,7 +2088,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                     Navigator.pop(context);
 
                     FilePickerResult? result =
-                    await FilePicker.platform.pickFiles(
+                        await FilePicker.platform.pickFiles(
                       type: FileType.custom,
                       allowedExtensions: ['doc', 'docx'],
                     );
@@ -1956,7 +2130,6 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
-                      /// HEADER (FIXED)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -1971,24 +2144,18 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                           )
                         ],
                       ),
-
                       const Divider(),
-
-                      /// SCROLLABLE CONTENT
                       Expanded(
                         child: SingleChildScrollView(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              /// LOCATION
                               const Text(
                                 "Location",
                                 style: TextStyle(
                                     fontSize: 16, fontWeight: FontWeight.w600),
                               ),
-
                               const SizedBox(height: 10),
-
                               Column(
                                 children: ["All", "Mumbai", "Ahmedabad"]
                                     .map((location) {
@@ -2007,18 +2174,13 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                   );
                                 }).toList(),
                               ),
-
                               const SizedBox(height: 20),
-
-                              /// SALARY RANGE
                               const Text(
                                 "Salary Range (LPA)",
                                 style: TextStyle(
                                     fontSize: 16, fontWeight: FontWeight.w600),
                               ),
-
                               const SizedBox(height: 10),
-
                               RangeSlider(
                                 values: tempSalary,
                                 min: 0,
@@ -2036,7 +2198,6 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                   });
                                 },
                               ),
-
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
@@ -2045,14 +2206,11 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                   Text("${tempSalary.end.round()} LPA"),
                                 ],
                               ),
-
                               const SizedBox(height: 30),
                             ],
                           ),
                         ),
                       ),
-
-                      /// BUTTONS (ALSO FIXED)
                       Row(
                         children: [
                           Expanded(

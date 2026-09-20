@@ -5,6 +5,7 @@ import 'package:mpm/repository/SamitiElection/SamitiTypeRepository/samiti_type_r
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/SamitiElection/consent_status.dart';
+import 'package:mpm/view/SamitiElection/not_a_member.dart';
 import 'package:mpm/view/SamitiElection/samiti_election_form.dart';
 
 import 'package:mpm/view_model/controller/samiti/SamitiController.dart';
@@ -192,6 +193,24 @@ class _SamitiElectionViewState extends State<SamitiElectionView> {
     );
   }
 
+  // Navigate to Not A Member (no filters required)
+  void _openNotAMember() {
+    final yearRange = _getYearRange();
+    final samitiId = _getSamitiId();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => NotAMemberView(
+          startYear: yearRange['startYear'],
+          endYear: yearRange['endYear'],
+          samitiTypeKey: samitiId,
+          samitiSubCategoryId: _selectedSamitiSubCategoryId,
+        ),
+      ),
+    );
+  }
+
   // Button builder for action buttons
   Widget _buildActionButton(
     BuildContext context,
@@ -264,7 +283,7 @@ class _SamitiElectionViewState extends State<SamitiElectionView> {
             _buildFilterCard(),
             const SizedBox(height: 16),
 
-            // Action Buttons (only show when filters are selected)
+            // ✅ Election Form & Consent Status — only after filters selected
             if (_hasSelectedFilters) ...[
               _buildActionButton(
                 context,
@@ -280,10 +299,17 @@ class _SamitiElectionViewState extends State<SamitiElectionView> {
                 Colors.green,
                 _openConsentStatus,
               ),
-            ] else ...[
-              // Empty state when filters not selected
-              // _buildEmptyState(),
             ],
+
+            // ✅ Not A Member — always visible (no filters required)
+            //    Now placed AFTER Election Form & Consent Status
+            _buildActionButton(
+              context,
+              "Not A Member",
+              Icons.person_off,
+              Colors.orange,
+              _openNotAMember,
+            ),
           ],
         ),
       ),
@@ -343,7 +369,11 @@ class _SamitiElectionViewState extends State<SamitiElectionView> {
       isExpanded: true,
       value: _selectedYearRange,
       hint: const Text('Select Year Range'),
+      // Disable the dropdown so it becomes readonly
+      onChanged: null,
       decoration: InputDecoration(
+        filled: true,
+        fillColor: Colors.grey.shade100, // greyed out to indicate disabled
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: Colors.grey.shade300),
@@ -352,9 +382,13 @@ class _SamitiElectionViewState extends State<SamitiElectionView> {
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: Colors.grey.shade300),
         ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: _brandColor, width: 2),
+          borderSide: BorderSide(color: Colors.grey.shade300),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,
@@ -365,6 +399,11 @@ class _SamitiElectionViewState extends State<SamitiElectionView> {
           color: Colors.grey.shade600,
           size: 20,
         ),
+        suffixIcon: Icon(
+          Icons.lock_outline, // lock icon to visually indicate readonly
+          color: Colors.grey.shade500,
+          size: 20,
+        ),
       ),
       items: _yearRanges.map((String yearRange) {
         return DropdownMenuItem<String>(
@@ -372,12 +411,6 @@ class _SamitiElectionViewState extends State<SamitiElectionView> {
           child: Text(yearRange),
         );
       }).toList(),
-      onChanged: (String? newValue) {
-        setState(() {
-          _selectedYearRange = newValue;
-          _checkFiltersSelected();
-        });
-      },
     );
   }
 

@@ -2,6 +2,7 @@ class JobsForSeekerJobData {
   String? jobId;
   String? memberId;
   String? memberBusinessOccupationProfileId;
+  String? companyName;
 
   String? title;
   String? description;
@@ -46,6 +47,7 @@ class JobsForSeekerJobData {
     this.jobId,
     this.memberId,
     this.memberBusinessOccupationProfileId,
+    this.companyName,
     this.title,
     this.description,
     this.occupationId,
@@ -81,13 +83,15 @@ class JobsForSeekerJobData {
     memberId = json['member_id']?.toString();
     memberBusinessOccupationProfileId =
         json['member_business_occupation_profile_id']?.toString();
+    companyName =
+        (json['company_name'] ?? json['business_name'] ?? json['company'])
+            ?.toString();
 
     title = json['title']?.toString();
     description = json['description']?.toString();
 
     occupationId = json['occupation_id']?.toString();
-    occupationProfessionId =
-        json['occupation_profession_id']?.toString();
+    occupationProfessionId = json['occupation_profession_id']?.toString();
     occupationSpecializationId =
         json['occupation_specialization_id']?.toString();
 
@@ -100,21 +104,17 @@ class JobsForSeekerJobData {
     salaryRange = json['salary_range']?.toString();
     salaryVisible = json['salary_visible']?.toString();
 
-    experienceMinYears =
-        json['experience_min_years']?.toString();
-    experienceMaxYears =
-        json['experience_max_years']?.toString();
+    experienceMinYears = json['experience_min_years']?.toString();
+    experienceMaxYears = json['experience_max_years']?.toString();
 
     workMode = json['work_mode']?.toString();
     workType = json['work_type']?.toString();
 
-    noOfMonthsInternship =
-        json['no_of_months_internship']?.toString();
+    noOfMonthsInternship = json['no_of_months_internship']?.toString();
 
     lastApplyDate = json['last_apply_date']?.toString();
 
-    profileSummaryDocument =
-        json['profile_summary_document']?.toString();
+    profileSummaryDocument = json['profile_summary_document']?.toString();
 
     noOfVacancy = json['no_of_vacancy']?.toString();
 
@@ -136,13 +136,13 @@ class JobsForSeekerJobData {
       'job_id': jobId,
       'member_id': memberId,
       'member_business_occupation_profile_id':
-      memberBusinessOccupationProfileId,
+          memberBusinessOccupationProfileId,
+      'company_name': companyName,
       'title': title,
       'description': description,
       'occupation_id': occupationId,
       'occupation_profession_id': occupationProfessionId,
-      'occupation_specialization_id':
-      occupationSpecializationId,
+      'occupation_specialization_id': occupationSpecializationId,
       'location': location,
       'city_id': cityId,
       'area_name': areaName,
