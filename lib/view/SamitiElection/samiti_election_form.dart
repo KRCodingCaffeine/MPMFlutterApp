@@ -370,16 +370,8 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Text(
-                  "LM Members Found",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey[800],
-                  ),
-                ),
                 Obx(() {
                   final hasText = _lmSearchText.value.isNotEmpty;
                   return hasText
@@ -472,16 +464,8 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Text(
-                  "NM Members Found",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey[800],
-                  ),
-                ),
                 Obx(() {
                   final hasText = _nmSearchText.value.isNotEmpty;
                   return hasText
