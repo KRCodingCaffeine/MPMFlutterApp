@@ -1108,7 +1108,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                             ),
                                           ),
                                           child: const Text(
-                                            "Apply",
+                                            "View Detail",
                                             style: TextStyle(fontSize: 13),
                                           ),
                                         ),

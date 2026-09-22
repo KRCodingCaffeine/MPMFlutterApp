@@ -27,30 +27,28 @@ class _ConsentStatusState extends State<ConsentStatus> {
   final ElectionRepository _electionRepository = ElectionRepository();
 
   final Color _brandColor =
-  ColorHelperClass.getColorFromHex(ColorResources.logo_color);
+      ColorHelperClass.getColorFromHex(ColorResources.logo_color);
 
   List<ElectionData> _electionList = [];
 
-  // Loading states
   bool _isLoadingElections = false;
 
-  // Error states
   String? _errorMessage;
 
-  // Track if elections have been loaded
   bool _hasLoadedElections = false;
 
   @override
   void initState() {
     super.initState();
-    // Auto-load elections when page opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadElections();
     });
   }
 
   Future<void> _loadElections() async {
-    if (widget.startYear == null || widget.endYear == null || widget.samitiSubCategoryId == null) {
+    if (widget.startYear == null ||
+        widget.endYear == null ||
+        widget.samitiSubCategoryId == null) {
       setState(() {
         _errorMessage = 'Missing required parameters';
         _hasLoadedElections = true;
@@ -76,9 +74,6 @@ class _ConsentStatusState extends State<ConsentStatus> {
 
       setState(() {
         _electionList = electionModel.data ?? [];
-        if (_electionList.isEmpty) {
-          _errorMessage = 'No elections found for the selected criteria';
-        }
       });
     } catch (e) {
       setState(() {
@@ -135,7 +130,7 @@ class _ConsentStatusState extends State<ConsentStatus> {
   }
 
   Widget _buildResultsSection() {
-    // Show loading state
+    // 1. Loading
     if (_isLoadingElections) {
       return Container(
         padding: const EdgeInsets.symmetric(vertical: 40),
@@ -158,7 +153,7 @@ class _ConsentStatusState extends State<ConsentStatus> {
       );
     }
 
-    // Show error state
+    // 2. Error (only when we have an actual error AND no data)
     if (_errorMessage != null && _electionList.isEmpty) {
       return Center(
         child: Container(
@@ -196,45 +191,12 @@ class _ConsentStatusState extends State<ConsentStatus> {
       );
     }
 
-    // Show no results state
+    // 3. No records — empty list after successful load
     if (_electionList.isEmpty && _hasLoadedElections) {
-      return Center(
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.assignment_outlined,
-                size: 64,
-                color: Colors.grey.shade400,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'No elections found',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade700,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'No election data available for the selected filters',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade500,
-                  height: 1.5,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
+      return _buildEmptyState();
     }
 
-    // Show election list
+    // 4. Election list
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -243,6 +205,52 @@ class _ConsentStatusState extends State<ConsentStatus> {
         final election = _electionList[index];
         return _buildElectionCard(election);
       },
+    );
+  }
+
+  /// Polished empty state UI
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 60),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              height: 90,
+              width: 90,
+              decoration: BoxDecoration(
+                color: _brandColor.withOpacity(0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.assignment_outlined,
+                size: 44,
+                color: _brandColor.withOpacity(0.7),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'No Record Found',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'No consent records are available for the selected Samiti.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade600,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -297,7 +305,6 @@ class _ConsentStatusState extends State<ConsentStatus> {
                         ),
                       ),
                       const SizedBox(height: 2),
-
                       if (election.memberCode != null &&
                           election.memberCode!.isNotEmpty)
                         Row(
@@ -324,8 +331,8 @@ class _ConsentStatusState extends State<ConsentStatus> {
                             ),
                           ],
                         ),
-
-                      if (election.mobile != null && election.mobile!.isNotEmpty)
+                      if (election.mobile != null &&
+                          election.mobile!.isNotEmpty)
                         Row(
                           children: [
                             Icon(
@@ -343,7 +350,6 @@ class _ConsentStatusState extends State<ConsentStatus> {
                             ),
                           ],
                         ),
-
                       if (election.email != null && election.email!.isNotEmpty)
                         Row(
                           children: [
@@ -366,7 +372,6 @@ class _ConsentStatusState extends State<ConsentStatus> {
                             ),
                           ],
                         ),
-
                       const SizedBox(height: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(

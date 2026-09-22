@@ -1154,8 +1154,7 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
                         _showConvertDialog(context, name ?? "",
                             memberData: memberData);
                       },
-                      icon: const Icon(Icons.swap_horiz, size: 16),
-                      label: const Text("Convert to LM"),
+                      label: const Text("Confirm Detail"),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFe61428),
                         foregroundColor: Colors.white,
@@ -1609,15 +1608,9 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
                 children: [
                   Row(
                     children: [
-                      Icon(
-                        Icons.swap_horiz,
-                        color: const Color(0xFFe61428),
-                        size: 24,
-                      ),
-                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Convert NM to LM',
+                          'Confirm Detail',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -2189,7 +2182,7 @@ class _SamitiElectionFormViewState extends State<SamitiElectionFormView>
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 10),
                   ),
-                  child: const Text("Convert"),
+                  child: const Text("Confirm"),
                 ),
               ],
             );
