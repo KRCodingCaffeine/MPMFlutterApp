@@ -14,6 +14,7 @@ import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/JobPortal/job_seeker_view.dart';
+import 'package:mpm/view/JobPortal/offer_jobs_view.dart';
 import 'package:mpm/view/JobPortal/recruiter_job_view.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
@@ -246,11 +247,10 @@ class _JobViewState extends State<JobView> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => RecruiterJobView(
+          builder: (_) => OfferJobsView(
             initialBusinessProfiles: businessProfiles,
             initialPostedJobs: postedJobs,
             initialApplicantCountsByJobId: applicantCountsByJobId,
-            skipInitialOccupationBannerRefresh: true,
           ),
         ),
       );
@@ -353,7 +353,15 @@ class _JobViewState extends State<JobView> {
                                     selectedRole = "recruiter";
                                   });
 
-                                  await checkOccupationAndProceed();
+                                  await updateRole("recruiter");
+
+                                  if (!mounted) return;
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const OfferJobsView(),
+                                    ),
+                                  );
                                 },
                                 child: Container(
                                   width: double.infinity,

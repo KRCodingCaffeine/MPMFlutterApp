@@ -102,21 +102,16 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
   List<GetJobByMemberIdData> postedJobs = [];
 
   bool _isPostJobFormValid() {
-    // Company Name (either dropdown selection or manual text)
     final hasCompany = _shouldShowCompanyNameInput()
         ? companyController.text.trim().isNotEmpty
         : (selectedBusinessId ?? "").trim().isNotEmpty;
 
-    // Job Title
     final hasTitle = titleController.text.trim().isNotEmpty;
 
-    // Location (City)
     final hasCity = regiController.city_id.value.trim().isNotEmpty;
 
-    // Number of Vacancies
     final hasVacancy = vacancyController.text.trim().isNotEmpty;
 
-    // Job Type & Work Mode always have defaults, but check just in case
     final hasJobType = selectedJobType.trim().isNotEmpty;
     final hasWorkMode = selectedWorkMode.trim().isNotEmpty;
 
@@ -135,7 +130,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
   String _getExistingStatus(GetJobByMemberIdData job) {
     final s = (job.status ?? "").toLowerCase().trim();
     if (s == "published" || s == "draft" || s == "closed") return s;
-    // Fallback — treat unknown as draft so we don't accidentally publish
     return "draft";
   }
 
@@ -221,13 +215,11 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
 
   Future<void> _changeJobStatus(
     GetJobByMemberIdData job,
-    String newStatus, // "published" | "draft" | "closed"
+    String newStatus,
   ) async {
     final loggedInMemberId = await _getLoggedInMemberId();
-    final now = DateTime.now();          // 👈 ADD THIS
+    final now = DateTime.now();
 
-    // Build a minimal update body — just the fields required by the backend.
-    // update_job keeps existing values for anything not sent.
     final body = {
       "job_id": job.jobId ?? "",
       "member_id": loggedInMemberId,
@@ -240,13 +232,10 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       body["expired_at"] = _formatApiDate(
         DateTime(now.year + 1, now.month, now.day),
       );
-      // closed_at left unset → backend preserves existing (it sets to null anyway)
     } else if (newStatus == "closed") {
       body["closed_at"] = _formatApiDateTime(now);
     } else if (newStatus == "draft") {
-      // Backend already clears all three when status=draft
     }
-
 
     try {
       final response = await UpdateJobRepository().updateJob(body);
@@ -700,7 +689,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       "location": locationName,
       "city_id": regiController.city_id.value,
 
-      // FIXED
       "area_name": areaController.text.trim().isEmpty
           ? null
           : areaController.text.trim(),
@@ -723,16 +711,12 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
         experienceMaxController.text,
       ),
 
-      // FIXED
       "no_of_vacancy": _cleanNumberForApi(vacancyController.text),
 
-      // FIXED
       "last_apply_date": _formatDateForApi(lastDateController.text),
 
-      // FIXED
       "work_type": _getWorkType(),
 
-      // FIXED
       "work_mode": _getWorkMode(),
 
       "status": "published",
@@ -1316,7 +1300,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
 
                                 const SizedBox(height: 6),
 
-                                /// Email
                                 Text(
                                   member["email"] ?? "",
                                   style: const TextStyle(
@@ -1327,7 +1310,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
 
                                 const SizedBox(height: 4),
 
-                                /// Mobile
                                 Text(
                                   member["mobile"] ?? "",
                                   style: const TextStyle(
@@ -1338,7 +1320,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
 
                                 const SizedBox(height: 6),
 
-                                /// Profile Summary
                                 Text(
                                   member["profile_summary"] ?? "",
                                   maxLines: 2,
@@ -1353,13 +1334,10 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 14),
 
-                      /// Divider
                       const Divider(height: 1),
 
-                      /// Bottom button section
                       Row(
                         children: [
                           Expanded(
@@ -1420,7 +1398,8 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                             ),
                           ),
                         ],
-                      ),                    ],
+                      ),
+                    ],
                   ),
                 );
               },
@@ -1590,7 +1569,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                               },
                               itemBuilder: (context) {
                                 switch (selectedTabIndex) {
-                                  // Published tab
                                   case 0:
                                     return const [
                                       PopupMenuItem(
@@ -1626,7 +1604,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                                       ),
                                     ];
 
-                                  // Draft tab
                                   case 1:
                                     return const [
                                       PopupMenuItem(
@@ -1663,7 +1640,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                                       ),
                                     ];
 
-                                  // Closed tab
                                   case 2:
                                     return const [
                                       PopupMenuItem(
@@ -1772,7 +1748,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /// Header
                   Row(
                     children: [
                       const Text(
@@ -1898,7 +1873,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
               contentPadding: const EdgeInsets.fromLTRB(24, 18, 24, 0),
               actionsPadding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
 
-              /// Title
               title: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1937,7 +1911,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                 ],
               ),
 
-              /// Content
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1978,7 +1951,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                 ],
               ),
 
-              /// Buttons
               actions: [
                 OutlinedButton(
                   onPressed: isUpdatingStatus
@@ -2314,7 +2286,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                     children: [
                       const SizedBox(height: 12),
 
-                      /// Header Buttons
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -2407,7 +2378,6 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                                 controller: descriptionController,
                                 maxLines: 3,
                               ),
-                              // _buildOccupationDropdown(),
                               _buildCityDropdown(label: "Location *"),
                               _buildAreaFieldForSelectedCity(),
                               _buildDropdown(
@@ -2450,15 +2420,12 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                                 inputFormatters: [
                                   FilteringTextInputFormatter.digitsOnly,
                                   LengthLimitingTextInputFormatter(
-                                      3), // allow 1, 2, or 3 digits max
+                                      3),
                                 ],
                                 focusNode: vacancyFocusNode,
                                 onChanged: (value) {
                                   modalSetState(() {});
-                                  // Auto-dismiss keyboard + unfocus after 1 or 2 digits
                                   if (value.length == 1 || value.length == 2) {
-                                    // Do NOT dismiss for 1 digit — user may want to type 2 digits.
-                                    // Only dismiss after 2 digits.
                                   }
                                   if (value.length == 2) {
                                     FocusScope.of(context).unfocus();
@@ -3166,15 +3133,12 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
   }
 
   String _getCompanyNameForJob(GetJobByMemberIdData job) {
-    // 1) Prefer the company_name stored on the job itself
     final directName = (job.companyName ?? "").trim();
     if (directName.isNotEmpty) return directName;
 
-    // 2) Fallback to business profile lookup by id
     final businessName = getBusinessName(job.memberBusinessOccupationProfileId);
     if (businessName.trim().isNotEmpty) return businessName;
 
-    // 3) Last resort — show the id if nothing else is available
     final businessId = (job.memberBusinessOccupationProfileId ?? "").trim();
     if (businessId.isNotEmpty && businessId != "0") {
       return businessId;
@@ -3346,7 +3310,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
               onPressed: () => Navigator.pop(dialogContext),
               style: OutlinedButton.styleFrom(
                 foregroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: BorderSide(
                   color: ColorHelperClass.getColorFromHex(
                       ColorResources.red_color),
@@ -3415,7 +3379,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
               onPressed: () => Navigator.pop(dialogContext),
               style: OutlinedButton.styleFrom(
                 foregroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 side: BorderSide(
                   color: ColorHelperClass.getColorFromHex(
                       ColorResources.red_color),
@@ -3433,7 +3397,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                ColorHelperClass.getColorFromHex(ColorResources.red_color),
+                    ColorHelperClass.getColorFromHex(ColorResources.red_color),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
