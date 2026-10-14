@@ -21,7 +21,7 @@ buildscript {
                         namespace project.group
                     }
 
-                    compileSdkVersion 35
+                    compileSdkVersion 36
                    // buildToolsVersion "8.3.2"
 
                 }
