@@ -74,9 +74,9 @@ class _JobSeekerViewState extends State<JobSeekerView> {
   String? selectedResumeName;
   bool isLoadingJobs = false;
   bool isLoadingAppliedJobs = false;
+  bool _autoOpenedPreferredSheet = false;
   final Set<String> savingJobIds = {};
 
-  // ✅ track applied job ids so we can flip "Apply" -> "Applied" instantly
   final Set<String> appliedJobIds = {};
 
   bool hasOpenedPreferredSheet = false;
@@ -183,7 +183,6 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     super.dispose();
   }
 
-  // ✅ fetch applied job ids and store them
   Future<void> _loadAppliedJobIds() async {
     try {
       final memberId = await _getLoggedInMemberId();
@@ -259,21 +258,123 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     final seenJobIds = <String>{};
 
     final mappedJobsForSeeker = jobsForSeeker
-        .where((job) => (job.status ?? "").toLowerCase() == "published")
+        .where((job) {
+          final status = (job.status ?? "").trim().toLowerCase();
+          return status.isEmpty || status == "published";
+        })
         .map(_mapSeekerJobToViewData)
-        .where((job) => seenJobIds.add(job["jobId"]?.toString() ?? ""))
+        .where((job) => _rememberJobId(seenJobIds, job))
         .toList();
 
     final mappedGetJobs = getJobs
         .where((job) => (job.status ?? "").toLowerCase() == "published")
         .map(_mapJobToViewData)
-        .where((job) => seenJobIds.add(job["jobId"]?.toString() ?? ""))
+        .where((job) => _rememberJobId(seenJobIds, job))
         .toList();
 
     jobs = [
       ...mappedJobsForSeeker,
       ...mappedGetJobs,
-    ];
+    ]..sort((a, b) {
+        final aPreferred = a["isPreferredJob"] == true ? 0 : 1;
+        final bPreferred = b["isPreferredJob"] == true ? 0 : 1;
+        return aPreferred.compareTo(bPreferred);
+      });
+  }
+
+  bool _rememberJobId(Set<String> seenJobIds, Map<String, dynamic> job) {
+    final jobId = job["jobId"]?.toString().trim() ?? "";
+    if (jobId.isEmpty) return false;
+    return seenJobIds.add(jobId);
+  }
+
+  String _normalizeWorkMode(String? value) {
+    final mode = (value ?? "").trim().toLowerCase();
+    if (mode == "on-site" || mode == "on site" || mode == "onsite") {
+      return "onsite";
+    }
+    if (mode == "work from home" || mode == "wfh" || mode == "remote") {
+      return "remote";
+    }
+    if (mode == "hybrid") return "hybrid";
+    return mode;
+  }
+
+  String _normalizeWorkType(String? value) {
+    final type = (value ?? "")
+        .trim()
+        .toLowerCase()
+        .replaceAll("-", "_")
+        .replaceAll(" ", "_");
+    if (type == "fulltime") return "full_time";
+    if (type == "parttime") return "part_time";
+    return type;
+  }
+
+  bool _matchesSeekerPreferences({
+    String? title,
+    String? description,
+    String? cityId,
+    String? location,
+    String? areaName,
+    String? workMode,
+    String? workType,
+  }) {
+    final profile = seekerProfileData;
+    if (hasSeekerProfile != true || profile == null) return false;
+
+    final preferredCity = (profile.cityId ?? "").trim();
+    final preferredArea = (profile.areaName ?? "").trim().toLowerCase();
+    final preferredHeadline = (profile.headline ?? "").trim().toLowerCase();
+    final preferredWorkMode = _normalizeWorkMode(profile.workMode);
+    final preferredWorkType = _normalizeWorkType(profile.workType);
+
+    final jobCity = (cityId ?? "").trim();
+    final jobLocation = (location ?? "").trim().toLowerCase();
+    final jobArea = (areaName ?? "").trim().toLowerCase();
+    final jobTitle = (title ?? "").trim().toLowerCase();
+    final jobDescription = (description ?? "").trim().toLowerCase();
+    final jobWorkMode = _normalizeWorkMode(workMode);
+    final jobWorkType = _normalizeWorkType(workType);
+    final isRemoteJob =
+        jobWorkMode == "remote" || preferredWorkMode == "remote";
+
+    final cityMatches = preferredCity.isEmpty ||
+        jobCity.isEmpty ||
+        jobCity == preferredCity ||
+        isRemoteJob;
+    final areaMatches = preferredArea.isEmpty ||
+        isRemoteJob ||
+        jobArea.contains(preferredArea) ||
+        jobLocation.contains(preferredArea);
+    final workModeMatches = preferredWorkMode.isEmpty ||
+        jobWorkMode.isEmpty ||
+        jobWorkMode == preferredWorkMode;
+    final workTypeMatches = preferredWorkType.isEmpty ||
+        jobWorkType.isEmpty ||
+        jobWorkType == preferredWorkType;
+
+    var fieldMatches = preferredHeadline.isEmpty;
+    if (!fieldMatches) {
+      if (jobTitle.contains(preferredHeadline) ||
+          jobDescription.contains(preferredHeadline) ||
+          (jobTitle.isNotEmpty && preferredHeadline.contains(jobTitle))) {
+        fieldMatches = true;
+      } else {
+        final tokens = preferredHeadline
+            .split(RegExp(r'[^a-z0-9]+'))
+            .where((token) => token.length > 2);
+        fieldMatches = tokens.any(
+          (token) => jobTitle.contains(token) || jobDescription.contains(token),
+        );
+      }
+    }
+
+    return cityMatches &&
+        areaMatches &&
+        workModeMatches &&
+        workTypeMatches &&
+        fieldMatches;
   }
 
   Future<List<JobsForSeekerJobData>> _loadJobsForSeeker(
@@ -389,11 +490,15 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     if (seekerProfileExists || !mounted) return;
 
     hasOpenedPreferredSheet = true;
+    _autoOpenedPreferredSheet = true;
 
     final saved = await _openPreferredCitySheet();
 
-    if (saved && mounted) {
-      // ✅ Refresh profile state + jobs + applied ids
+    if (!mounted) return;
+
+    if (saved) {
+      // Profile was created/updated → refresh and stay on JobSeekerView
+      _autoOpenedPreferredSheet = false;
       await _loadSeekerProfileForJobs(await _getLoggedInMemberId());
       await loadJobs();
       await _loadAppliedJobIds();
@@ -401,10 +506,11 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       return;
     }
 
-    final profileStillMissing =
-        !(await _seekerProfileExists(forceRefresh: true));
-    if (profileStillMissing) {
-      hasOpenedPreferredSheet = false;
+    // ❌ User cancelled without creating a profile → go back to JobView
+    hasOpenedPreferredSheet = false;
+    _autoOpenedPreferredSheet = false;
+    if (mounted) {
+      Navigator.of(context).pop(); // pops JobSeekerView → returns to JobView
     }
   }
 
@@ -632,7 +738,17 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       "postedDate": _formatDate(job.publishedAt ?? job.createdAt ?? ""),
       "category": "IT",
       "isBookmarked": false,
-      "isPreferredJob": false,
+      "isPreferredJob": _matchesSeekerPreferences(
+        title: job.title,
+        description: job.description,
+        cityId: job.cityId,
+        location: job.location,
+        areaName: job.jobAreaName,
+        workMode: job.workMode,
+        workType: job.jobType,
+      ),
+      "workMode": job.workMode ?? "",
+      "workType": job.jobType ?? "",
       "jobData": job,
     };
   }
@@ -666,7 +782,9 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       "postedDate": _formatDate(job.publishedAt ?? job.createdAt ?? ""),
       "category": "IT",
       "isBookmarked": false,
-      "isPreferredJob": false,
+      "isPreferredJob": hasSeekerProfile == true,
+      "workMode": job.workMode ?? "",
+      "workType": job.workType ?? "",
       "jobData": job,
     };
   }
@@ -807,7 +925,12 @@ class _JobSeekerViewState extends State<JobSeekerView> {
           matchesSearch &&
           matchesLocation &&
           matchesSalary;
-    }).toList();
+    }).toList()
+      ..sort((a, b) {
+        final aPreferred = a["isPreferredJob"] == true ? 0 : 1;
+        final bPreferred = b["isPreferredJob"] == true ? 0 : 1;
+        return aPreferred.compareTo(bPreferred);
+      });
 
     List<Map<String, dynamic>> displayJobs;
 
@@ -819,10 +942,14 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       displayJobs = filteredJobs;
     }
 
-    final hasSeekerProfileLocal = hasSeekerProfile == true;
-    final hasPreferredJobs = selectedTab == 0 &&
-        hasSeekerProfileLocal &&
-        displayJobs.any((job) => job["isPreferredJob"] == true);
+    final preferredJobs = selectedTab == 0
+        ? displayJobs.where((job) => job["isPreferredJob"] == true).toList()
+        : <Map<String, dynamic>>[];
+    final otherJobs = selectedTab == 0
+        ? displayJobs.where((job) => job["isPreferredJob"] != true).toList()
+        : displayJobs;
+    final hasPreferredJobs = preferredJobs.isNotEmpty;
+    final showOtherJobsHeader = hasPreferredJobs && otherJobs.isNotEmpty;
     final isLoadingCurrentTab =
         selectedTab == 2 ? isLoadingAppliedJobs : isLoadingJobs;
 
@@ -899,226 +1026,14 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                   )
                 : displayJobs.isEmpty
                     ? _buildEmptyState()
-                    : ListView.builder(
-                        itemCount:
-                            displayJobs.length + (hasPreferredJobs ? 1 : 0),
-                        itemBuilder: (context, index) {
-                          if (hasPreferredJobs &&
-                              index == 0 &&
-                              displayJobs.isNotEmpty) {
-                            return Padding(
-                              padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
-                              child: Text(
-                                "From Your Preferrences",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: ColorHelperClass.getColorFromHex(
-                                    ColorResources.red_color,
-                                  ),
-                                ),
-                              ),
-                            );
-                          }
-                          final jobIndex = hasPreferredJobs ? index - 1 : index;
-                          final job = displayJobs[jobIndex];
-                          final isPreferredJob = job["isPreferredJob"] == true;
-                          final isAppliedJob = job["isAppliedJob"] == true;
-                          final jobId = job["jobId"]?.toString() ?? "";
-                          final isSavingJob = savingJobIds.contains(jobId);
-
-                          final isApplied =
-                              isAppliedJob || appliedJobIds.contains(jobId);
-
-                          return Container(
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
-                            padding: const EdgeInsets.all(18),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              border: isPreferredJob
-                                  ? Border.all(
-                                      color: Colors.green,
-                                      width: 1.6,
-                                    )
-                                  : null,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: isPreferredJob
-                                      ? Colors.greenAccent.withOpacity(0.28)
-                                      : Colors.grey.shade200,
-                                  blurRadius: isPreferredJob ? 18 : 8,
-                                  spreadRadius: isPreferredJob ? 1.5 : 0,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                /// LEFT SIDE DETAILS
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        job["title"],
-                                        style: const TextStyle(
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        job["company"] ??
-                                            job["company_name"] ??
-                                            "Company",
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Row(
-                                        children: [
-                                          const Icon(Icons.location_on,
-                                              size: 13, color: Colors.grey),
-                                          Text(
-                                            job["location"],
-                                            style:
-                                                const TextStyle(fontSize: 13),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Text(
-                                            job["salary"],
-                                            style: const TextStyle(
-                                              fontSize: 13,
-                                              color: Colors.green,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        "Experience: ${job["experience"]}",
-                                        style: const TextStyle(fontSize: 13),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        "${isAppliedJob ? "Applied on" : "Posted on"}: "
-                                        "${job["postedDate"]}",
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                const SizedBox(width: 12),
-
-                                /// RIGHT SIDE ACTIONS
-                                Column(
-                                  children: [
-                                    if (!isApplied) ...[
-                                      /// SAVE BUTTON
-                                      GestureDetector(
-                                        onTap: isSavingJob
-                                            ? null
-                                            : () => _updateSavedJob(job),
-                                        child: SizedBox(
-                                          width: 24,
-                                          height: 24,
-                                          child: isSavingJob
-                                              ? const Padding(
-                                                  padding: EdgeInsets.all(3),
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                    strokeWidth: 2,
-                                                  ),
-                                                )
-                                              : Icon(
-                                                  (job["isBookmarked"] ?? false)
-                                                      ? Icons.bookmark
-                                                      : Icons.bookmark_border,
-                                                  size: 24,
-                                                  color: (job["isBookmarked"] ??
-                                                          false)
-                                                      ? Colors.orange
-                                                      : Colors.grey,
-                                                ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 50),
-                                    ],
-
-                                    /// APPLY / APPLIED
-                                    if (isApplied)
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 12, vertical: 8),
-                                        decoration: BoxDecoration(
-                                          color: Colors.green.withOpacity(0.1),
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                        ),
-                                        child: const Text(
-                                          "Applied",
-                                          style: TextStyle(
-                                            color: Colors.green,
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      )
-                                    else
-                                      SizedBox(
-                                        height: 36,
-                                        child: ElevatedButton(
-                                          onPressed: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (_) => JobDetailView(
-                                                  job: job,
-                                                  jobId: job["jobId"]
-                                                          ?.toString() ??
-                                                      "",
-                                                ),
-                                              ),
-                                            ).then((_) {
-                                              _loadAppliedJobIds();
-                                              if (selectedTab == 2) {
-                                                loadAppliedJobs();
-                                              }
-                                            });
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.red,
-                                            foregroundColor: Colors.white,
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 16),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                            ),
-                                          ),
-                                          child: const Text(
-                                            "View Detail",
-                                            style: TextStyle(fontSize: 13),
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          );
-                        },
+                    : ListView(
+                        children: [
+                          if (hasPreferredJobs)
+                            _buildJobSectionHeader("From Your Preferrences"),
+                          ...preferredJobs.map(_buildJobCard),
+                          if (showOtherJobsHeader)
+                            ...otherJobs.map(_buildJobCard),
+                        ],
                       ),
           )
         ],
@@ -1152,6 +1067,204 @@ class _JobSeekerViewState extends State<JobSeekerView> {
             label: "Applied",
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildJobCard(Map<String, dynamic> job) {
+    final isPreferredJob = job["isPreferredJob"] == true;
+    final isAppliedJob = job["isAppliedJob"] == true;
+    final jobId = job["jobId"]?.toString() ?? "";
+    final isSavingJob = savingJobIds.contains(jobId);
+    final isApplied = isAppliedJob || appliedJobIds.contains(jobId);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: isPreferredJob
+            ? Border.all(
+                color: Colors.green,
+                width: 1.6,
+              )
+            : null,
+        boxShadow: [
+          BoxShadow(
+            color: isPreferredJob
+                ? Colors.greenAccent.withOpacity(0.28)
+                : Colors.grey.shade200,
+            blurRadius: isPreferredJob ? 18 : 8,
+            spreadRadius: isPreferredJob ? 1.5 : 0,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          /// LEFT SIDE DETAILS
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  job["title"],
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  job["company"] ?? job["company_name"] ?? "Company",
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on, size: 13, color: Colors.grey),
+                    Text(
+                      job["location"],
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      job["salary"],
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.green,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  "Experience: ${job["experience"]}",
+                  style: const TextStyle(fontSize: 13),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "${isAppliedJob ? "Applied on" : "Posted on"}: "
+                  "${job["postedDate"]}",
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          /// RIGHT SIDE ACTIONS
+          Column(
+            children: [
+              if (!isApplied) ...[
+                /// SAVE BUTTON
+                GestureDetector(
+                  onTap: isSavingJob ? null : () => _updateSavedJob(job),
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: isSavingJob
+                        ? const Padding(
+                            padding: EdgeInsets.all(3),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Icon(
+                            (job["isBookmarked"] ?? false)
+                                ? Icons.bookmark
+                                : Icons.bookmark_border,
+                            size: 24,
+                            color: (job["isBookmarked"] ?? false)
+                                ? Colors.orange
+                                : Colors.grey,
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 50),
+              ],
+
+              /// APPLY / APPLIED
+              if (isApplied)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    "Applied",
+                    style: TextStyle(
+                      color: Colors.green,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                )
+              else
+                SizedBox(
+                  height: 36,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => JobDetailView(
+                            job: job,
+                            jobId: job["jobId"]?.toString() ?? "",
+                          ),
+                        ),
+                      ).then((_) {
+                        _loadAppliedJobIds();
+                        if (selectedTab == 2) {
+                          loadAppliedJobs();
+                        }
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text(
+                      "View Detail",
+                      style: TextStyle(fontSize: 13),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildJobSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: ColorHelperClass.getColorFromHex(
+            ColorResources.red_color,
+          ),
+        ),
       ),
     );
   }

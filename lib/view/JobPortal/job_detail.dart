@@ -286,6 +286,7 @@ class _JobDetailViewState extends State<JobDetailView> {
         "job_id": jobId,
         "application_status": "applied",
         "applied_date": _formatApiDate(now),
+        "applied_by": "0",
         "remarks": descriptionController.text.trim(),
         "created_by": memberId,
         "created_at": _formatApiDateTime(now),
