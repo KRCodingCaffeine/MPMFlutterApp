@@ -13,6 +13,7 @@ import 'package:mpm/repository/JobPortal/JobsForSeekerRepo/jobs_for_seeker_repos
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/view/JobPortal/instrution_offer_job.dart';
 import 'package:mpm/view/JobPortal/job_seeker_view.dart';
 import 'package:mpm/view/JobPortal/offer_jobs_view.dart';
 import 'package:mpm/view/JobPortal/recruiter_job_view.dart';
@@ -111,6 +112,8 @@ class _JobViewState extends State<JobView> {
   }
 
   Future<void> checkEducationAndProceed() async {
+    if (isLoading) return;
+
     try {
       setState(() {
         isLoading = true;
@@ -184,7 +187,7 @@ class _JobViewState extends State<JobView> {
 
       if (!mounted) return;
 
-      Navigator.push(
+      await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => JobSeekerView(
@@ -200,7 +203,7 @@ class _JobViewState extends State<JobView> {
     } catch (e) {
       debugPrint("Education Check Error: $e");
       if (mounted) {
-        Navigator.push(
+        await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => const JobSeekerView(),
@@ -217,6 +220,8 @@ class _JobViewState extends State<JobView> {
   }
 
   Future<void> checkOccupationAndProceed() async {
+    if (isLoading) return;
+
     try {
       setState(() {
         isLoading = true;
@@ -244,7 +249,7 @@ class _JobViewState extends State<JobView> {
 
       if (!mounted) return;
 
-      Navigator.push(
+      await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => OfferJobsView(
@@ -356,12 +361,23 @@ class _JobViewState extends State<JobView> {
                                   await updateRole("recruiter");
 
                                   if (!mounted) return;
-                                  Navigator.push(
+
+                                  final proceed = await Navigator.push<bool>(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => const OfferJobsView(),
+                                      builder: (_) =>
+                                          const InstrutionOfferJob(),
                                     ),
                                   );
+
+                                  if (proceed == true && mounted) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const OfferJobsView(),
+                                      ),
+                                    );
+                                  }
                                 },
                                 child: Container(
                                   width: double.infinity,
@@ -398,7 +414,7 @@ class _JobViewState extends State<JobView> {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              "Offer Jobs (Employer)",
+                                              "Employer (Offer Jobs)",
                                               style: TextStyle(
                                                 fontSize: 18,
                                                 fontWeight: FontWeight.bold,
@@ -410,7 +426,7 @@ class _JobViewState extends State<JobView> {
                                             ),
                                             const SizedBox(height: 5),
                                             Text(
-                                              "Hire talented candidates From Samaj Member",
+                                              "Hire talented candidates From Samaj Members",
                                               style: TextStyle(
                                                 color:
                                                     selectedRole == "recruiter"
@@ -471,7 +487,7 @@ class _JobViewState extends State<JobView> {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              "Looking for Job",
+                                              "Employee (Looking for Job)",
                                               style: TextStyle(
                                                 fontSize: 18,
                                                 fontWeight: FontWeight.bold,

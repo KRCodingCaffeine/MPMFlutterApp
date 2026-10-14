@@ -21,6 +21,8 @@ class UpdateJobData {
   String? workType;
   String? workMode;
   String? status;
+  String? hasRecruitedFromMpm;
+  String? closingComments;
   String? publishedAt;
   String? closedAt;
   String? updatedBy;
@@ -48,6 +50,8 @@ class UpdateJobData {
     this.workType,
     this.workMode,
     this.status,
+    this.hasRecruitedFromMpm,
+    this.closingComments,
     this.publishedAt,
     this.closedAt,
     this.updatedBy,
@@ -85,6 +89,8 @@ class UpdateJobData {
     workMode = json['work_mode']?.toString();
 
     status = json['status']?.toString();
+    hasRecruitedFromMpm = json['has_recruited_from_mpm']?.toString();
+    closingComments = json['closing_comments']?.toString();
     publishedAt = json['published_at']?.toString();
     closedAt = json['closed_at']?.toString();
 
@@ -117,6 +123,8 @@ class UpdateJobData {
     data['last_apply_date'] = lastApplyDate;
     data['no_of_vacancy'] = noOfVacancy;
     data['status'] = status;
+    data['has_recruited_from_mpm'] = hasRecruitedFromMpm;
+    data['closing_comments'] = closingComments;
     data['published_at'] = publishedAt;
     data['closed_at'] = closedAt;
     data['updated_by'] = updatedBy;

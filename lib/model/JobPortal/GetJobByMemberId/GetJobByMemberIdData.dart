@@ -23,6 +23,8 @@ class GetJobByMemberIdData {
   String? jobPostStatus;
   String? internshipTimePeriod;
   String? status;
+  String? hasRecruitedFromMpm;
+  String? closingComments;
   String? publishedAt;
   String? closedAt;
   String? createdAt;
@@ -55,6 +57,8 @@ class GetJobByMemberIdData {
     this.jobPostStatus,
     this.internshipTimePeriod,
     this.status,
+    this.hasRecruitedFromMpm,
+    this.closingComments,
     this.publishedAt,
     this.closedAt,
     this.createdAt,
@@ -94,6 +98,8 @@ class GetJobByMemberIdData {
         (json['internship_time_period'] ?? json['no_of_months_internship'])
             ?.toString();
     status = json['status'];
+    hasRecruitedFromMpm = json['has_recruited_from_mpm']?.toString();
+    closingComments = json['closing_comments']?.toString();
     publishedAt = json['published_at'];
     closedAt = json['closed_at'];
     createdAt = json['created_at'];
@@ -130,6 +136,8 @@ class GetJobByMemberIdData {
     data['job_post_status'] = jobPostStatus;
     data['internship_time_period'] = internshipTimePeriod;
     data['status'] = status;
+    data['has_recruited_from_mpm'] = hasRecruitedFromMpm;
+    data['closing_comments'] = closingComments;
     data['published_at'] = publishedAt;
     data['closed_at'] = closedAt;
     data['created_at'] = createdAt;

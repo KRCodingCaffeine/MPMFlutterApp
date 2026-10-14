@@ -3,6 +3,7 @@ class MemberApplyJobData {
   String? jobId;
   String? applicationStatus;
   String? appliedDate;
+  String? appliedBy;
   String? remarks;
   String? createdBy;
   String? createdAt;
@@ -12,6 +13,7 @@ class MemberApplyJobData {
     this.jobId,
     this.applicationStatus,
     this.appliedDate,
+    this.appliedBy,
     this.remarks,
     this.createdBy,
     this.createdAt,
@@ -22,6 +24,7 @@ class MemberApplyJobData {
     jobId = json['job_id']?.toString();
     applicationStatus = json['application_status']?.toString();
     appliedDate = json['applied_date']?.toString();
+    appliedBy = json['applied_by']?.toString();
     remarks = json['remarks']?.toString();
     createdBy = json['created_by']?.toString();
     createdAt = json['created_at']?.toString();
@@ -33,6 +36,7 @@ class MemberApplyJobData {
       'job_id': jobId,
       'application_status': applicationStatus,
       'applied_date': appliedDate,
+      'applied_by': appliedBy,
       'remarks': remarks,
       'created_by': createdBy,
       'created_at': createdAt,

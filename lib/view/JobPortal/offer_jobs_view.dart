@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/model/BusinessProfile/BusinessOccupationProfile/BusinessOccupationProfileData.dart';
 import 'package:mpm/model/JobPortal/GetJobByMemberId/GetJobByMemberIdData.dart';
+import 'package:mpm/repository/JobPortal/GetJobByMemberIdRepo/get_job_by_member_id_repository.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/view/JobPortal/job_seeker_profile.dart';
+import 'package:mpm/view/JobPortal/post_new_job.dart';
+import 'package:mpm/view/JobPortal/recruiter_job_view.dart';
+import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
 class OfferJobsView extends StatefulWidget {
   final List<BusinessOccupationProfileData>? initialBusinessProfiles;
@@ -12,9 +17,9 @@ class OfferJobsView extends StatefulWidget {
 
   const OfferJobsView({
     super.key,
-    this.initialBusinessProfiles,
-    this.initialPostedJobs,
-    this.initialApplicantCountsByJobId,
+    this.initialBusinessProfiles = const [],
+    this.initialPostedJobs = const [],
+    this.initialApplicantCountsByJobId = const {},
   });
 
   @override
@@ -23,41 +28,94 @@ class OfferJobsView extends StatefulWidget {
 
 class _OfferJobsViewState extends State<OfferJobsView> {
   final Color _brandColor =
-  ColorHelperClass.getColorFromHex(ColorResources.logo_color);
+      ColorHelperClass.getColorFromHex(ColorResources.logo_color);
 
-  // Navigation handlers
-  void _openPostNewJob() {
-    // TODO: Navigate to Post New Job screen
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(builder: (context) => PostNewJobView()),
-    // );
+  final GetJobByMemberIdRepository _jobRepo = GetJobByMemberIdRepository();
+  final UdateProfileController profileController =
+      Get.find<UdateProfileController>();
+
+  List<BusinessOccupationProfileData> get _businessProfiles =>
+      widget.initialBusinessProfiles ?? <BusinessOccupationProfileData>[];
+
+  List<GetJobByMemberIdData> _postedJobs = [];
+  bool _isLoadingJobs = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _postedJobs = widget.initialPostedJobs ?? [];
+
+    if (widget.initialPostedJobs == null || widget.initialPostedJobs!.isEmpty) {
+      _loadPostedJobs();
+    }
   }
 
-  void _openPostedJobs() {
-    // TODO: Navigate to Posted Jobs screen
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(builder: (context) => PostedJobsView()),
-    // );
+  Future<void> _loadPostedJobs() async {
+    try {
+      setState(() => _isLoadingJobs = true);
+      final memberId = profileController.memberId.value.trim();
+      if (memberId.isEmpty) return;
+
+      final response = await _jobRepo.getJobs(memberId);
+      if (!mounted) return;
+
+      if (response.status == true && response.data != null) {
+        setState(() => _postedJobs = response.data!);
+      }
+    } catch (e) {
+      debugPrint("Load Posted Jobs Error: $e");
+    } finally {
+      if (mounted) setState(() => _isLoadingJobs = false);
+    }
+  }
+
+  bool get _hasPostedJobs => _postedJobs.isNotEmpty;
+
+  Future<void> _openPostNewJob() async {
+    final shouldRefresh = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PostNewJob(
+          initialBusinessProfiles: _businessProfiles,
+        ),
+      ),
+    );
+
+    if (shouldRefresh == true && mounted) {
+      // Refresh posted jobs so the layout re-evaluates
+      await _loadPostedJobs();
+    }
+  }
+
+  Future<void> _openPostedJobs() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const RecruiterJobView(),
+      ),
+    );
+    // Refresh when returning in case jobs changed
+    if (mounted) {
+      await _loadPostedJobs();
+    }
   }
 
   void _openJobSeekers() {
-    // TODO: Navigate to Job Seekers screen
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(builder: (context) => JobSeekersView()),
-    // );
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const JobSeekerProfile(),
+      ),
+    );
   }
 
-  // Button builder for action buttons (same style as SamitiElectionView)
   Widget _buildActionButton(
-      BuildContext context,
-      String title,
-      IconData icon,
-      Color color,
-      VoidCallback onTap,
-      ) {
+    BuildContext context,
+    String title,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -82,7 +140,7 @@ class _OfferJobsViewState extends State<OfferJobsView> {
                   fontWeight: FontWeight.bold,
                   color: color,
                 ),
-                maxLines: 2,
+                maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -117,35 +175,54 @@ class _OfferJobsViewState extends State<OfferJobsView> {
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildActionButton(
-              context,
-              "Post New Jobs",
-              Icons.post_add,
-              Colors.blue,
-              _openPostNewJob,
+      body: _isLoadingJobs && _postedJobs.isEmpty
+          ? Center(
+              child: CircularProgressIndicator(
+                color: ColorHelperClass.getColorFromHex(
+                  ColorResources.red_color,
+                ),
+              ),
+            )
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ✅ Case 1: No jobs → only Post New Jobs
+                  if (!_hasPostedJobs) ...[
+                    _buildActionButton(
+                      context,
+                      "Post New Jobs",
+                      Icons.post_add,
+                      Colors.blue,
+                      _openPostNewJob,
+                    ),
+                  ] else ...[
+                    _buildActionButton(
+                      context,
+                      "Post New Jobs",
+                      Icons.post_add,
+                      Colors.blue,
+                      _openPostNewJob,
+                    ),
+                    _buildActionButton(
+                      context,
+                      "Posted Jobs",
+                      Icons.work_history,
+                      Colors.green,
+                      _openPostedJobs,
+                    ),
+                    _buildActionButton(
+                      context,
+                      "Canditates Looking For Jobs",
+                      Icons.people_alt,
+                      Colors.orange,
+                      _openJobSeekers,
+                    ),
+                  ],
+                ],
+              ),
             ),
-            _buildActionButton(
-              context,
-              "Posted Jobs",
-              Icons.work_history,
-              Colors.green,
-              _openPostedJobs,
-            ),
-            _buildActionButton(
-              context,
-              "Job Seekers",
-              Icons.people_alt,
-              Colors.orange,
-              _openJobSeekers,
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
