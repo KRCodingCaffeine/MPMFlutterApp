@@ -85,9 +85,12 @@ class _HomeViewState extends State<HomeView>
     items.add({'icon': Images.user, 'label': 'My Profile'});
 
     // Item 2: Jobs (conditional)
-    if (memberId == 1 || memberId == 2 || memberId == 2040) {
-      items.add({'icon': Images.job_portal, 'label': 'Job Portal'});
-    }
+    // if (memberId == 1 || memberId == 2 || memberId == 2040) {
+    //   items.add({'icon': Images.job_portal, 'label': 'Job Portal'});
+    // }
+
+    items.add({'icon': Images.job_portal, 'label': 'Job Portal'});
+
 
     // Item 3: Discounts & Offers (always visible)
     items.add({'icon': Images.discount, 'label': 'Discounts & Offers'});
