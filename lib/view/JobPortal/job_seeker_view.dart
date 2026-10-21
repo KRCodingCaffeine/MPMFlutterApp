@@ -726,6 +726,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       "company": displayCompanyName,
       "company_name": displayCompanyName,
       "location": job.location ?? "",
+      "areaName": job.jobAreaName ?? "",
       "salary": _formatSalaryFromValues(
         salaryVisible: job.salaryVisible,
         salaryMin: job.salaryMin,
@@ -769,6 +770,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       "company": displayCompanyName,
       "company_name": displayCompanyName,
       "location": job.location ?? "",
+      "areaName": job.areaName ?? "",
       "salary": _formatSalaryFromValues(
         salaryVisible: job.salaryVisible,
         salaryMin: job.salaryMin,
@@ -807,6 +809,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       "company": displayCompanyName,
       "company_name": displayCompanyName,
       "location": job.location ?? "",
+      "areaName": job.jobAreaName ?? "",
       "salary": _formatSalaryFromValues(
         salaryVisible: job.salaryVisible,
         salaryMin: job.salaryMin,
@@ -832,6 +835,21 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       "expiredAt": job.expiredAt ?? "",
       "jobData": job,
     };
+  }
+
+  String _locationWithArea(Map<String, dynamic> job) {
+    final city = (job["location"] ?? "").toString().trim();
+    final areaName = (job["areaName"] ?? "").toString().trim();
+    if (areaName.isEmpty || areaName.toLowerCase() == "null") {
+      return city;
+    }
+    if (city.isEmpty || city.toLowerCase() == "null") {
+      return areaName;
+    }
+    if (areaName.toLowerCase() == city.toLowerCase()) {
+      return city;
+    }
+    return "$areaName, $city";
   }
 
   String _formatSalaryFromValues({
@@ -1128,9 +1146,13 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                 Row(
                   children: [
                     const Icon(Icons.location_on, size: 13, color: Colors.grey),
-                    Text(
-                      job["location"],
-                      style: const TextStyle(fontSize: 13),
+                    Flexible(
+                      child: Text(
+                        _locationWithArea(job),
+                        style: const TextStyle(fontSize: 13),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Text(

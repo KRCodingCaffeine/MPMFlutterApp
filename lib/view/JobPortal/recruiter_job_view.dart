@@ -104,7 +104,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
         : (selectedBusinessId ?? "").trim().isNotEmpty;
 
     final hasTitle = titleController.text.trim().isNotEmpty;
-    final hasCity = regiController.city_id.value.trim().isNotEmpty;
+    final hasCity = _isAllowedJobCityId(regiController.city_id.value);
     final hasVacancy = vacancyController.text.trim().isNotEmpty;
     final hasJobType = selectedJobType.trim().isNotEmpty;
     final hasWorkMode = selectedWorkMode.trim().isNotEmpty;
@@ -114,7 +114,58 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
         hasCity &&
         hasVacancy &&
         hasJobType &&
-        hasWorkMode;
+        hasWorkMode &&
+        !_hasInvalidMinMax();
+  }
+
+  bool _isAllowedJobCityId(String? cityId) {
+    final id = cityId?.trim() ?? "";
+    return id == "2" || id == "3" || id == "4";
+  }
+
+  double? _parseRangeValue(String value) {
+    final cleaned = value.replaceAll(RegExp(r'[^0-9.]'), '').trim();
+    if (cleaned.isEmpty) return null;
+    return double.tryParse(cleaned);
+  }
+
+  String? _maximumLowerThanMinimumError(String minimum, String maximum) {
+    final minValue = _parseRangeValue(minimum);
+    final maxValue = _parseRangeValue(maximum);
+    if (minValue == null || maxValue == null) return null;
+    if (maxValue < minValue) {
+      return "Maximum cannot be lower than minimum";
+    }
+    return null;
+  }
+
+  bool _hasInvalidMinMax() {
+    final salaryError = salaryVisible == "1"
+        ? _maximumLowerThanMinimumError(
+            salaryMinController.text,
+            salaryMaxController.text,
+          )
+        : null;
+    final experienceError = _maximumLowerThanMinimumError(
+      experienceMinController.text,
+      experienceMaxController.text,
+    );
+    return salaryError != null || experienceError != null;
+  }
+
+  String _locationWithArea(String? location, String? area) {
+    final city = (location ?? "").trim();
+    final areaName = (area ?? "").trim();
+    if (areaName.isEmpty || areaName.toLowerCase() == "null") {
+      return city;
+    }
+    if (city.isEmpty || city.toLowerCase() == "null") {
+      return areaName;
+    }
+    if (areaName.toLowerCase() == city.toLowerCase()) {
+      return city;
+    }
+    return "$areaName, $city";
   }
 
   String _getExistingStatus(GetJobByMemberIdData job) {
@@ -600,6 +651,8 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
 
   // ---------- UPDATE ONLY ----------
   Future<void> _updateJob({required GetJobByMemberIdData job}) async {
+    if (!_isEditJobFormValid()) return;
+
     final loggedInMemberId = await _getLoggedInMemberId();
     final locationName = _getSelectedCityName();
 
@@ -1009,19 +1062,31 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                                 _buildTextField(
                                   "Salary Minimum",
                                   controller: salaryMinController,
+                                  onChanged: (_) => modalSetState(() {}),
                                 ),
                                 _buildTextField(
                                   "Salary Maximum",
                                   controller: salaryMaxController,
+                                  onChanged: (_) => modalSetState(() {}),
+                                  errorText: _maximumLowerThanMinimumError(
+                                    salaryMinController.text,
+                                    salaryMaxController.text,
+                                  ),
                                 ),
                               ],
                               _buildTextField(
                                 "Minimum Experience (Years)",
                                 controller: experienceMinController,
+                                onChanged: (_) => modalSetState(() {}),
                               ),
                               _buildTextField(
                                 "Maximum Experience (Years)",
                                 controller: experienceMaxController,
+                                onChanged: (_) => modalSetState(() {}),
+                                errorText: _maximumLowerThanMinimumError(
+                                  experienceMinController.text,
+                                  experienceMaxController.text,
+                                ),
                               ),
                               _buildTextField(
                                 "Number of Vacancies *",
@@ -1113,6 +1178,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
     List<TextInputFormatter>? inputFormatters,
     FocusNode? focusNode,
     TextInputAction textInputAction = TextInputAction.next,
+    String? errorText,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -1126,6 +1192,8 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
         textInputAction: textInputAction,
         decoration: InputDecoration(
           labelText: label,
+          errorText: errorText,
+          errorMaxLines: 2,
           border: const OutlineInputBorder(
             borderSide: BorderSide(color: Colors.black),
           ),
@@ -1253,7 +1321,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                             (c.cityName ?? "").toLowerCase() ==
                             businessCityName.toLowerCase(),
                       );
-                      if (city != null) {
+                      if (city != null && _isAllowedJobCityId(city.id)) {
                         regiController.setSelectedCity(city.id.toString());
                         areaController.clear();
                       }
@@ -1287,10 +1355,15 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
         if (regiController.rxStatusCityLoading.value == Status.ERROR) {
           return const Text("Failed to load city");
         }
-        if (regiController.cityList.isEmpty) {
+        final cities = regiController.cityList
+            .where((city) => _isAllowedJobCityId(city.id))
+            .toList();
+        if (cities.isEmpty) {
           return const Text("No city available");
         }
         final selectedCity = regiController.city_id.value;
+        final hasSelectedCity =
+            cities.any((city) => city.id.toString() == selectedCity);
         return InputDecorator(
           decoration: InputDecoration(
             labelText: label,
@@ -1306,14 +1379,14 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
             contentPadding: const EdgeInsets.symmetric(horizontal: 16),
             labelStyle: const TextStyle(color: Colors.black),
           ),
-          isEmpty: selectedCity.isEmpty,
+          isEmpty: !hasSelectedCity,
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               dropdownColor: Colors.white,
               borderRadius: BorderRadius.circular(10),
               isExpanded: true,
-              value: selectedCity.isEmpty ? null : selectedCity,
-              items: regiController.cityList.map((CityData city) {
+              value: hasSelectedCity ? selectedCity : null,
+              items: cities.map((CityData city) {
                 return DropdownMenuItem<String>(
                   value: city.id.toString(),
                   child: Text(city.cityName ?? "Unknown"),
@@ -1715,7 +1788,10 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                     ),
                     const Divider(),
                     _infoRow("Company", _getCompanyNameForJob(job)),
-                    _infoRow("Location", job.location ?? ""),
+                    _infoRow(
+                      "Location",
+                      _locationWithArea(job.location, job.jobAreaName),
+                    ),
                     if ((job.salaryVisible ?? "1") != "0")
                       _infoRow("Salary", salary),
                     _infoRow("Experience", experience),

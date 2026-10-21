@@ -15,6 +15,7 @@ import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/JobPortal/instrution_offer_job.dart';
 import 'package:mpm/view/JobPortal/job_seeker_view.dart';
+import 'package:mpm/view/JobPortal/seeker_instruction_view.dart';
 import 'package:mpm/view/JobPortal/offer_jobs_view.dart';
 import 'package:mpm/view/JobPortal/recruiter_job_view.dart';
 import 'package:mpm/view_model/controller/dashboard/NewMemberController.dart';
@@ -450,7 +451,19 @@ class _JobViewState extends State<JobView> {
                                     selectedRole = "job_seeker";
                                   });
 
-                                  await checkEducationAndProceed();
+                                  if (!mounted) return;
+
+                                  final proceed = await Navigator.push<bool>(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const SeekerInstructionView(),
+                                    ),
+                                  );
+
+                                  if (proceed == true && mounted) {
+                                    await checkEducationAndProceed();
+                                  }
                                 },
                                 child: Container(
                                   width: double.infinity,
