@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/route/route_name.dart';
-import 'package:mpm/utils/AppDrawer.dart';
-import 'package:mpm/utils/color_helper.dart';
-import 'package:mpm/utils/color_resources.dart';
-
 import 'package:mpm/view_model/controller/samiti/SamitiController.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 
@@ -20,7 +16,6 @@ class _SamitiMembersViewPageState extends State<SamitiMembersViewPage> {
   final UdateProfileController dashBoardController = Get.find();
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.getSamitiType();
@@ -57,7 +52,6 @@ class _SamitiMembersViewPageState extends State<SamitiMembersViewPage> {
         }));
   }
 
-  /// **Reusable method for ExpansionTile**
   Widget _buildExpansionTile(String title, List<dynamic> items) {
     return ExpansionTile(
       title: Text(
@@ -79,7 +73,6 @@ class _SamitiMembersViewPageState extends State<SamitiMembersViewPage> {
     );
   }
 
-  /// **Reusable method for creating a card with equal size and alignment**
   Widget _buildCard(Map<String, dynamic> item) {
     return Container(
       width: double.infinity,

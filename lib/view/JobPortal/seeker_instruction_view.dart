@@ -76,7 +76,7 @@ class _SeekerInstructionViewState extends State<SeekerInstructionView> {
       color: Colors.purple,
       title: "Update Your Preferences",
       description:
-          "Tap \"Preferences\" in the top bar any time to change job type, "
+          "Tap \"Upload CV\" in the top bar any time to change job type, "
           "work mode, field of work, expected salary, city, area, or resume. "
           "Updated preferences change which jobs are highlighted for you.",
     ),
@@ -166,7 +166,7 @@ class _SeekerInstructionViewState extends State<SeekerInstructionView> {
                   ),
                   const SizedBox(height: 14),
                   Text(
-                    "Follow the steps below to set your preferences, browse "
+                    "Follow the steps below to upload your CV, set your preferences, browse "
                     "openings from Samaj employers, save jobs, and apply. "
                     "Each step helps you find the right opportunity quickly.",
                     style: TextStyle(

@@ -1,11 +1,9 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/utils/urls.dart';
 import 'package:mpm/view_model/controller/samiti/SamitiController.dart';
-
-import '../../utils/urls.dart';
 
 class SamitiDetailPage extends StatefulWidget {
   SamitiDetailPage({super.key});
@@ -19,7 +17,6 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     controller.getSamitiTypeDeatils();
   }
@@ -64,7 +61,6 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
                 final member = controller.samitiDetailList.value[index];
                 print("member samiti ${member.memberCode}");
                 var firstname = "";
-                var middlename = "";
                 var lastname = "";
                 var mobile = "";
                 var memberCode = "";
@@ -75,11 +71,6 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
                   firstname = "";
                 } else {
                   firstname = member.firstName.toString();
-                }
-                if (member.middleName.toString() == "null") {
-                  middlename = "";
-                } else {
-                  middlename = member.middleName.toString();
                 }
                 if (member.lastName.toString() == "null") {
                   lastname = "";
@@ -114,6 +105,37 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
                   samitiRolesName = member.samitiRolesName.toString();
                 }
 
+                final isPresidentList =
+                    _cleanValue(member.samitiSubCategoryId) == "4" ||
+                        _cleanValue(controller.samitiId.value) == "4";
+                final isPresidentRecord = _cleanValue(member.memberId) == "0";
+
+                if (isPresidentList && isPresidentRecord) {
+                  return _buildMemberCard(
+                    samitiRoles: "",
+                    lmCode: "",
+                    name: _cleanValue(member.presidentName),
+                    mobile: "",
+                    profileImage: memberImage,
+                    memberId: memberId,
+                    satraYear: _cleanValue(member.presidentSatra),
+                    showMemberDetails: false,
+                  );
+                }
+
+                if (isPresidentList) {
+                  return _buildMemberCard(
+                    samitiRoles: "",
+                    lmCode: "",
+                    name: name,
+                    mobile: "",
+                    profileImage: memberImage,
+                    memberId: memberId,
+                    satraYear: _satraYear(member.startsFrom, member.endTo),
+                    showMemberDetails: false,
+                  );
+                }
+
                 return _buildMemberCard(
                     samitiRoles: samitiRolesName,
                     lmCode: memberCode,
@@ -127,6 +149,28 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
     );
   }
 
+  String _cleanValue(dynamic value) {
+    final text = value?.toString().trim() ?? "";
+    if (text.isEmpty || text.toLowerCase() == "null") return "";
+    return text;
+  }
+
+  String _yearFromDate(dynamic value) {
+    final text = _cleanValue(value);
+    if (text.length >= 4) return text.substring(0, 4);
+    return text;
+  }
+
+  String _satraYear(dynamic startsFrom, dynamic endTo) {
+    final startYear = _yearFromDate(startsFrom);
+    final endYear = _yearFromDate(endTo);
+    if (startYear.isEmpty && endYear.isEmpty) return "";
+    if (startYear.isNotEmpty && endYear.isNotEmpty) {
+      return "$startYear - $endYear";
+    }
+    return startYear.isNotEmpty ? startYear : endYear;
+  }
+
   /// **Reusable method to build a member card with profile image**
   Widget _buildMemberCard({
     required String samitiRoles,
@@ -135,6 +179,8 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
     required String mobile,
     required String profileImage,
     required String memberId,
+    String satraYear = "",
+    bool showMemberDetails = true,
   }) {
     return Center(
       child: Card(
@@ -184,31 +230,41 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 5),
-                    // Name and LM Code
-                    Text(
-                      "${samitiRoles ?? 'Unknown Role'}",
-                      style: const TextStyle(
-                        fontSize: 14,
+                    if (satraYear.isNotEmpty) ...[
+                      const SizedBox(height: 5),
+                      Text(
+                        "Satra: $satraYear",
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFFDC3545),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      "Membership Code : ${lmCode.isNotEmpty ? lmCode : memberId}",
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFFDC3545),
+                    ],
+                    if (showMemberDetails) ...[
+                      const SizedBox(height: 5),
+                      Text(
+                        samitiRoles.isNotEmpty ? samitiRoles : "Unknown Role",
+                        style: const TextStyle(
+                          fontSize: 14,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 5),
-                    // Mobile Number
-                    Text(
-                      "Mobile: ${mobile ?? 'No Mobile'}",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
+                      const SizedBox(height: 5),
+                      Text(
+                        "Membership Code : ${lmCode.isNotEmpty ? lmCode : memberId}",
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFFDC3545),
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 5),
+                      Text(
+                        "Mobile: ${mobile.isNotEmpty ? mobile : 'No Mobile'}",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 5),
                   ],
                 ),

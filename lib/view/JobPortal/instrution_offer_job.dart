@@ -22,7 +22,7 @@ class _InstrutionOfferJobState extends State<InstrutionOfferJob> {
           "Tap \"Post New Jobs\" on the Offer Jobs screen to create a new listing. "
           "Fill in company, job title, description, location, salary, experience, "
           "vacancies, last apply date, job type, and work mode. Upload a job "
-          "description document if required and tap Submit to publish.",
+          "description document and tap Submit to publish.",
     ),
     _InstructionStep(
       icon: Icons.work_history,
@@ -75,17 +75,15 @@ class _InstrutionOfferJobState extends State<InstrutionOfferJob> {
       title: "Contacted Candidates",
       description:
           "Candidates you have called or messaged appear with a teal CONTACTED "
-          "badge. Once contacted, the card shows a single \"Mark Recruited\" "
-          "button so you can confirm them as hired.",
+          "badge.",
     ),
     _InstructionStep(
       icon: Icons.check_circle,
       color: Colors.green,
       title: "Mark as Recruited",
       description:
-          "Tap \"Mark Recruited\" on a contacted candidate to confirm them. The "
-          "candidate moves into the \"Recruited\" tab, shows a green RECRUITED "
-          "badge, and their card locks the action with a Recruited indicator.",
+          "Tap \"Mark Recruited\" on a contacted candidate to confirm that you have recruited him. The "
+          "candidate moves into the \"Recruited\" category.",
     ),
     _InstructionStep(
       icon: Icons.swap_horiz,

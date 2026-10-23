@@ -20,6 +20,8 @@ class SamitiDetailData{
  var samitiRolesName;
  var profileImagePath;
  var encryptedMemberId;
+ var presidentName;
+ var presidentSatra;
 
   SamitiDetailData(
       {
@@ -42,7 +44,9 @@ class SamitiDetailData{
         this.email,
         this.samitiRolesName,
         this.profileImagePath,
-        this.encryptedMemberId});
+        this.encryptedMemberId,
+        this.presidentName,
+        this.presidentSatra});
 
   SamitiDetailData.fromJson(Map<String, dynamic> json) {
     memberSamitiRoleMappingId = json['member_samiti_role_mapping_id'];
@@ -65,6 +69,8 @@ class SamitiDetailData{
     samitiRolesName = json['samiti_roles_name'];
     profileImagePath = json['profile_image_path'];
     encryptedMemberId = json['encrypted_member_id'];
+    presidentName = json['president_name'];
+    presidentSatra = json['president_satra'];
   }
 
   Map<String, dynamic> toJson() {
@@ -89,6 +95,8 @@ class SamitiDetailData{
     data['samiti_roles_name'] = this.samitiRolesName;
     data['profile_image_path'] = this.profileImagePath;
     data['encrypted_member_id'] = this.encryptedMemberId;
+    data['president_name'] = this.presidentName;
+    data['president_satra'] = this.presidentSatra;
     return data;
   }
 }

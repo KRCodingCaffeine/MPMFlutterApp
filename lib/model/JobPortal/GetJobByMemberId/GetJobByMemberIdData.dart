@@ -31,6 +31,7 @@ class GetJobByMemberIdData {
   String? updatedAt;
   String? createdBy;
   String? updatedBy;
+  String? profileSummaryDocument;
 
   GetJobByMemberIdData({
     this.jobId,
@@ -65,6 +66,7 @@ class GetJobByMemberIdData {
     this.updatedAt,
     this.createdBy,
     this.updatedBy,
+    this.profileSummaryDocument,
   });
 
   GetJobByMemberIdData.fromJson(Map<String, dynamic> json) {
@@ -106,6 +108,7 @@ class GetJobByMemberIdData {
     updatedAt = json['updated_at'];
     createdBy = json['created_by']?.toString();
     updatedBy = json['updated_by']?.toString();
+    profileSummaryDocument = json['profile_summary_document']?.toString();
   }
 
   Map<String, dynamic> toJson() {
@@ -144,6 +147,7 @@ class GetJobByMemberIdData {
     data['updated_at'] = updatedAt;
     data['created_by'] = createdBy;
     data['updated_by'] = updatedBy;
+    data['profile_summary_document'] = profileSummaryDocument;
 
     return data;
   }

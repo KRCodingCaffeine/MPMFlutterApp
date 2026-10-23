@@ -8,8 +8,9 @@ import 'package:mpm/data/response/status.dart';
 import 'package:mpm/model/BusinessProfile/BusinessOccupationProfile/BusinessOccupationProfileData.dart';
 import 'package:mpm/model/JobPortal/GetJobAppliedMembers/GetJobAppliedMembersData.dart';
 import 'package:mpm/model/JobPortal/GetJobByMemberId/GetJobByMemberIdData.dart';
-import 'package:mpm/model/JobPortal/UpdateMemberApplicationStatus/UpdateMemberApplicationStatusData.dart';
+import 'package:mpm/model/State/StateData.dart';
 import 'package:mpm/model/city/CityData.dart';
+import 'package:mpm/model/JobPortal/UpdateMemberApplicationStatus/UpdateMemberApplicationStatusData.dart';
 import 'package:mpm/repository/BusinessProfileRepo/business_occupation_profile_repository/business_occupation_profile_repo.dart';
 import 'package:mpm/repository/JobPortal/GetJobAppliedMembersRepo/get_job_applied_members_repository.dart';
 import 'package:mpm/repository/JobPortal/GetJobByMemberIdRepo/get_job_by_member_id_repository.dart';
@@ -56,6 +57,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
       UploadJobProfileDocumentRepository();
   final ImagePicker _picker = ImagePicker();
   File? jobSummaryFile;
+  String existingJobSummaryPath = "";
   List<BusinessOccupationProfileData> businessProfiles = [];
   final UdateProfileController profileController =
       Get.find<UdateProfileController>();
@@ -104,23 +106,44 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
         : (selectedBusinessId ?? "").trim().isNotEmpty;
 
     final hasTitle = titleController.text.trim().isNotEmpty;
-    final hasCity = _isAllowedJobCityId(regiController.city_id.value);
-    final hasVacancy = vacancyController.text.trim().isNotEmpty;
+    final hasDescription = descriptionController.text.trim().isNotEmpty;
+    final hasJobSummary =
+        jobSummaryFile != null || existingJobSummaryPath.trim().isNotEmpty;
+    final hasState = regiController.state_id.value.trim().isNotEmpty;
+    final hasCity = regiController.city_id.value.trim().isNotEmpty;
     final hasJobType = selectedJobType.trim().isNotEmpty;
     final hasWorkMode = selectedWorkMode.trim().isNotEmpty;
 
     return hasCompany &&
         hasTitle &&
+        hasDescription &&
+        hasJobSummary &&
+        hasState &&
         hasCity &&
-        hasVacancy &&
+        _hasValidVacancyCount() &&
         hasJobType &&
         hasWorkMode &&
         !_hasInvalidMinMax();
   }
 
-  bool _isAllowedJobCityId(String? cityId) {
-    final id = cityId?.trim() ?? "";
-    return id == "2" || id == "3" || id == "4";
+  String? _vacancyCountError() {
+    final text = vacancyController.text.trim();
+    if (text.isEmpty) return null;
+
+    final count = int.tryParse(text);
+    if (count == null || count <= 0) {
+      return "Number of vacancies cannot be zero";
+    }
+    return null;
+  }
+
+  bool _hasValidVacancyCount() {
+    final count = int.tryParse(vacancyController.text.trim());
+    return count != null && count > 0;
+  }
+
+  bool get _hasJobSummaryDocument {
+    return jobSummaryFile != null || existingJobSummaryPath.trim().isNotEmpty;
   }
 
   double? _parseRangeValue(String value) {
@@ -696,6 +719,23 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
     try {
       final response = await UpdateJobRepository().updateJob(updateBody);
       if (response.status == true) {
+        if (jobSummaryFile != null &&
+            (job.jobId ?? "").trim().isNotEmpty &&
+            loggedInMemberId.isNotEmpty) {
+          final uploadResponse = await uploadJobProfileDocumentRepository
+              .uploadJobProfileDocument(
+            memberId: loggedInMemberId,
+            jobId: job.jobId!.trim(),
+            filePath: jobSummaryFile!.path,
+          );
+
+          if (uploadResponse.status != true) {
+            throw Exception(uploadResponse.message.isNotEmpty
+                ? uploadResponse.message
+                : "Job updated, but failed to upload job description");
+          }
+        }
+
         await loadPostedJobs();
         if (!mounted) return;
         Navigator.pop(context);
@@ -938,7 +978,9 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
     await profileController.getOccupationSpectData(selectedProfessionId);
 
     selectedSpecializationId = job.occupationSpecializationId ?? "";
-    regiController.setSelectedCity(job.cityId ?? "");
+    jobSummaryFile = null;
+    existingJobSummaryPath = (job.profileSummaryDocument ?? "").trim();
+    await _selectStateAndCityById(job.cityId);
 
     await showModalBottomSheet(
       context: context,
@@ -1037,11 +1079,19 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                                 onChanged: (_) => modalSetState(() {}),
                               ),
                               _buildTextField(
-                                "Brief Job Description",
+                                "Brief Job Description *",
                                 controller: descriptionController,
                                 maxLines: 3,
+                                onChanged: (_) => modalSetState(() {}),
                               ),
-                              _buildCityDropdown(label: "Location *"),
+                              _buildStateDropdown(
+                                label: "State *",
+                                onSelectionChanged: () => modalSetState(() {}),
+                              ),
+                              _buildCityDropdown(
+                                label: "Location *",
+                                onSelectionChanged: () => modalSetState(() {}),
+                              ),
                               _buildAreaFieldForSelectedCity(),
                               _buildDropdown(
                                 label: "Salary Visible *",
@@ -1103,6 +1153,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                                     FocusScope.of(context).unfocus();
                                   }
                                 },
+                                errorText: _vacancyCountError(),
                               ),
                               themedDatePickerField(
                                 context: context,
@@ -1141,7 +1192,13 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                               buildJobSummaryUploadField(
                                 context: context,
                                 file: jobSummaryFile,
-                                buttonText: "Upload Job Description",
+                                buttonText: "Upload Job Description *",
+                                markUploaded: existingJobSummaryPath
+                                    .trim()
+                                    .isNotEmpty,
+                                errorText: _hasJobSummaryDocument
+                                    ? null
+                                    : "Job description is required",
                                 onPick: () {
                                   _showImagePicker(context, (file) {
                                     modalSetState(() => jobSummaryFile = file);
@@ -1211,12 +1268,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
   }
 
   Widget _buildAreaFieldForSelectedCity() {
-    return Obx(() {
-      if (regiController.city_id.value != "2") {
-        return const SizedBox.shrink();
-      }
-      return _buildTextField("Area", controller: areaController);
-    });
+    return _buildTextField("Area", controller: areaController);
   }
 
   Widget _buildDropdown({
@@ -1303,32 +1355,27 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
               );
             }).toList(),
             onChanged: (val) {
-              if (val != null) {
-                modalSetState(() {
-                  selectedBusinessId = val;
-                  final business = businessProfiles.firstWhere(
-                    (b) => b.memberBusinessOccupationProfileId == val,
-                  );
-                  selectedBusinessName = business.businessName;
-                  companyController.text = business.businessName ?? "";
+              if (val == null) return;
 
-                  if (business.addresses != null &&
-                      business.addresses!.isNotEmpty) {
-                    final businessCityName = business.addresses!.first.cityName;
-                    if (businessCityName != null) {
-                      final city = regiController.cityList.firstWhereOrNull(
-                        (c) =>
-                            (c.cityName ?? "").toLowerCase() ==
-                            businessCityName.toLowerCase(),
-                      );
-                      if (city != null && _isAllowedJobCityId(city.id)) {
-                        regiController.setSelectedCity(city.id.toString());
-                        areaController.clear();
-                      }
-                    }
-                  }
-                });
-              }
+              String? businessCityName;
+              modalSetState(() {
+                selectedBusinessId = val;
+                final business = businessProfiles.firstWhere(
+                  (b) => b.memberBusinessOccupationProfileId == val,
+                );
+                selectedBusinessName = business.businessName;
+                companyController.text = business.businessName ?? "";
+                if (business.addresses != null &&
+                    business.addresses!.isNotEmpty) {
+                  businessCityName = business.addresses!.first.cityName;
+                }
+              });
+              _selectStateAndCityByName(
+                businessCityName,
+                onUpdated: () {
+                  if (mounted) modalSetState(() {});
+                },
+              );
             },
           ),
         ),
@@ -1336,11 +1383,66 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
     );
   }
 
-  Widget _buildCityDropdown({required String label}) {
+  Future<void> _selectStateAndCityById(String? cityId) async {
+    final id = cityId?.trim() ?? "";
+    if (regiController.stateList.isEmpty) {
+      await regiController.getState();
+    }
+    if (id.isEmpty) {
+      regiController.setSelectedState("");
+      regiController.setSelectedCity("");
+      regiController.setCity(<CityData>[]);
+      return;
+    }
+
+    await regiController.getCity();
+    final city = regiController.cityList.firstWhereOrNull(
+      (item) => item.id.toString() == id,
+    );
+    final stateId = city?.stateId?.toString().trim() ?? "";
+    if (stateId.isEmpty) {
+      regiController.setSelectedState("");
+      regiController.setSelectedCity("");
+      regiController.setCity(<CityData>[]);
+      return;
+    }
+
+    regiController.setSelectedState(stateId);
+    await regiController.getCityByState(stateId);
+    regiController.setSelectedCity(id);
+  }
+
+  Future<void> _selectStateAndCityByName(
+    String? cityName, {
+    VoidCallback? onUpdated,
+  }) async {
+    final name = cityName?.trim() ?? "";
+    if (name.isEmpty) return;
+
+    await regiController.getCity();
+    final city = regiController.cityList.firstWhereOrNull(
+      (item) => (item.cityName ?? "").trim().toLowerCase() == name.toLowerCase(),
+    );
+    final stateId = city?.stateId?.toString().trim() ?? "";
+    final cityId = city?.id?.toString().trim() ?? "";
+    if (stateId.isEmpty || cityId.isEmpty) return;
+
+    regiController.setSelectedState(stateId);
+    await regiController.getCityByState(stateId);
+    regiController.setSelectedCity(cityId);
+    areaController.clear();
+    onUpdated?.call();
+  }
+
+  Widget _buildStateDropdown({
+    required String label,
+    VoidCallback? onSelectionChanged,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Obx(() {
-        if (regiController.rxStatusCityLoading.value == Status.LOADING) {
+        if (regiController.rxStatusStateLoading.value == Status.LOADING &&
+            regiController.stateList.isEmpty) {
           return const Center(
             child: Padding(
               padding: EdgeInsets.symmetric(vertical: 12),
@@ -1352,18 +1454,19 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
             ),
           );
         }
-        if (regiController.rxStatusCityLoading.value == Status.ERROR) {
-          return const Text("Failed to load city");
+        if (regiController.rxStatusStateLoading.value == Status.ERROR &&
+            regiController.stateList.isEmpty) {
+          return const Text("Failed to load state");
         }
-        final cities = regiController.cityList
-            .where((city) => _isAllowedJobCityId(city.id))
-            .toList();
-        if (cities.isEmpty) {
-          return const Text("No city available");
+        if (regiController.stateList.isEmpty) {
+          return const Text("No state available");
         }
-        final selectedCity = regiController.city_id.value;
-        final hasSelectedCity =
-            cities.any((city) => city.id.toString() == selectedCity);
+
+        final selectedState = regiController.state_id.value;
+        final hasSelectedState = regiController.stateList.any(
+          (state) => state.id.toString() == selectedState,
+        );
+
         return InputDecorator(
           decoration: InputDecoration(
             labelText: label,
@@ -1379,12 +1482,99 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
             contentPadding: const EdgeInsets.symmetric(horizontal: 16),
             labelStyle: const TextStyle(color: Colors.black),
           ),
-          isEmpty: !hasSelectedCity,
+          isEmpty: !hasSelectedState,
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               dropdownColor: Colors.white,
               borderRadius: BorderRadius.circular(10),
               isExpanded: true,
+              value: hasSelectedState ? selectedState : null,
+              items: regiController.stateList.map((StateData state) {
+                return DropdownMenuItem<String>(
+                  value: state.id.toString(),
+                  child: Text(state.stateName ?? "Unknown"),
+                );
+              }).toList(),
+              onChanged: (val) async {
+                if (val == null) return;
+                regiController.setSelectedState(val);
+                regiController.setSelectedCity("");
+                areaController.clear();
+                onSelectionChanged?.call();
+                await regiController.getCityByState(val);
+                onSelectionChanged?.call();
+              },
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildCityDropdown({
+    required String label,
+    VoidCallback? onSelectionChanged,
+  }) {
+    return Obx(() {
+      final hasState = regiController.state_id.value.trim().isNotEmpty;
+      final isLoadingCities = hasState &&
+          regiController.rxStatusCityLoading.value == Status.LOADING;
+      final cities = hasState && !isLoadingCities
+          ? regiController.cityList.toList()
+          : <CityData>[];
+
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: _buildCityDropdownField(
+          label: label,
+          cities: cities,
+          hasState: hasState,
+          showLoadError: hasState &&
+              regiController.rxStatusCityLoading.value == Status.ERROR,
+          onSelectionChanged: onSelectionChanged,
+        ),
+      );
+    });
+  }
+
+  Widget _buildCityDropdownField({
+    required String label,
+    required List<CityData> cities,
+    required bool hasState,
+    required bool showLoadError,
+    VoidCallback? onSelectionChanged,
+  }) {
+    final selectedCity = regiController.city_id.value;
+    final hasSelectedCity =
+        cities.any((city) => city.id.toString() == selectedCity);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InputDecorator(
+          decoration: InputDecoration(
+            labelText: label,
+            border: const OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black),
+            ),
+            enabledBorder: const OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black),
+            ),
+            focusedBorder: const OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black38, width: 1),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+            labelStyle: const TextStyle(color: Colors.black),
+          ),
+          isEmpty: false,
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              dropdownColor: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              isExpanded: true,
+              hint: Text(
+                hasState ? "Select location" : "Select state first",
+                style: const TextStyle(fontSize: 14),
+              ),
               value: hasSelectedCity ? selectedCity : null,
               items: cities.map((CityData city) {
                 return DropdownMenuItem<String>(
@@ -1392,16 +1582,27 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                   child: Text(city.cityName ?? "Unknown"),
                 );
               }).toList(),
-              onChanged: (val) {
-                if (val != null) {
-                  regiController.setSelectedCity(val);
-                  areaController.clear();
-                }
-              },
+              onChanged: cities.isEmpty
+                  ? null
+                  : (val) {
+                      if (val != null) {
+                        regiController.setSelectedCity(val);
+                        areaController.clear();
+                        onSelectionChanged?.call();
+                      }
+                    },
             ),
           ),
-        );
-      }),
+        ),
+        if (showLoadError)
+          const Padding(
+            padding: EdgeInsets.only(top: 6, left: 4),
+            child: Text(
+              "Failed to load city",
+              style: TextStyle(color: Colors.red, fontSize: 12),
+            ),
+          ),
+      ],
     );
   }
 
@@ -1469,8 +1670,10 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
     required String buttonText,
     required VoidCallback onPick,
     required VoidCallback onRemove,
+    String? errorText,
+    bool markUploaded = false,
   }) {
-    bool isUploaded = file != null;
+    bool isUploaded = file != null || markUploaded;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1518,6 +1721,14 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
             ),
           ),
         ),
+        if (errorText != null && errorText.trim().isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 6, left: 4),
+            child: Text(
+              errorText,
+              style: const TextStyle(color: Colors.red, fontSize: 12),
+            ),
+          ),
       ],
     );
   }
