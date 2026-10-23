@@ -986,7 +986,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
             TextButton(
               onPressed: _handlePreferredDetailsPressed,
               child: const Text(
-                "Preferrences",
+                "Upload CV",
                 style: TextStyle(color: Colors.white),
               ),
             ),
@@ -1050,7 +1050,8 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                             _buildJobSectionHeader("From Your Preferrences"),
                           ...preferredJobs.map(_buildJobCard),
                           if (showOtherJobsHeader)
-                            ...otherJobs.map(_buildJobCard),
+                            _buildJobSectionHeader("Other Jobs"),
+                          ...otherJobs.map(_buildJobCard),
                         ],
                       ),
           )
@@ -2232,6 +2233,30 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                       modalSetState(() {
                         selectedResume = File(result.files.single.path!);
                         selectedResumeName = result.files.single.name;
+                      });
+                    }
+                  },
+                ),
+
+                /// CAMERA
+                ListTile(
+                  leading: const Icon(
+                    Icons.camera_alt,
+                    color: Colors.green,
+                  ),
+                  title: const Text("Take a Picture"),
+                  onTap: () async {
+                    Navigator.pop(context);
+
+                    final XFile? photo = await _imagePicker.pickImage(
+                      source: ImageSource.camera,
+                      imageQuality: 80,
+                    );
+
+                    if (photo != null) {
+                      modalSetState(() {
+                        selectedResume = File(photo.path);
+                        selectedResumeName = photo.name;
                       });
                     }
                   },

@@ -656,11 +656,8 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
 
   bool _shouldShowCompanyNameInput() {
     if (businessProfiles.isEmpty) return true;
-    if (selectedBusinessId == null || selectedBusinessId!.isEmpty) {
-      return !businessProfiles.any(
-        (b) => (b.businessName ?? "").trim().isNotEmpty,
-      );
-    }
+    // Job not linked to a business occupation profile -> free-text company name
+    if (selectedBusinessId == null || selectedBusinessId!.isEmpty) return true;
     final selectedBusiness = businessProfiles.firstWhereOrNull(
       (b) => b.memberBusinessOccupationProfileId == selectedBusinessId,
     );
@@ -963,13 +960,17 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
     internshipPeriodController.text = job.internshipTimePeriod ?? "";
     selectedJobType = _getUiJobType(job.jobType);
     selectedWorkMode = _getUiWorkMode(job.workMode);
-    selectedBusinessId = job.memberBusinessOccupationProfileId ?? "";
+    final jobBusinessId = (job.memberBusinessOccupationProfileId ?? "").trim();
+    selectedBusinessId =
+        (jobBusinessId.isEmpty || jobBusinessId == "0") ? "" : jobBusinessId;
 
     final business = businessProfiles.firstWhereOrNull(
       (b) => b.memberBusinessOccupationProfileId == selectedBusinessId,
     );
     selectedBusinessName = business?.businessName;
-    companyController.text = selectedBusinessName ?? "";
+    companyController.text = selectedBusinessId!.isEmpty
+        ? (job.companyName ?? "").trim()
+        : (selectedBusinessName ?? "");
 
     selectedOccupationId = job.occupationId ?? "";
     await profileController.getOccupationProData(selectedOccupationId);
