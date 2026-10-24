@@ -6,12 +6,14 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mpm/model/BusinessProfile/BusinessOccupationProfile/BusinessOccupationProfileData.dart';
 import 'package:mpm/model/JobPortal/GetAppliedJobsByMemberId/GetAppliedJobsByMemberIdData.dart';
 import 'package:mpm/model/JobPortal/GetJobByMemberId/GetJobByMemberIdData.dart';
+import 'package:mpm/model/JobPortal/GetSavedJobs/GetSavedJobsData.dart';
 import 'package:mpm/model/JobPortal/GetSeekerProfile/GetSeekerProfileData.dart';
 import 'package:mpm/model/JobPortal/JobsForSeekerJob/JobsForSeekerJobData.dart';
 import 'package:mpm/model/city/CityData.dart';
 import 'package:mpm/repository/BusinessProfileRepo/business_occupation_profile_repository/business_occupation_profile_repo.dart';
 import 'package:mpm/repository/JobPortal/AddSeekerProfileRepo/add_seeker_profile_repository.dart';
 import 'package:mpm/repository/JobPortal/GetAppliedJobsByMemberIdRepo/get_applied_jobs_by_member_id_repository.dart';
+import 'package:mpm/repository/JobPortal/GetSavedJobsRepo/get_saved_jobs_repository.dart';
 import 'package:mpm/repository/JobPortal/GetSeekerProfileRepo/get_seeker_profile_repository.dart';
 import 'package:mpm/repository/JobPortal/GetJobByMemberIdRepo/get_job_by_member_id_repository.dart';
 import 'package:mpm/repository/JobPortal/JobsForSeekerRepo/jobs_for_seeker_repository.dart';
@@ -19,6 +21,7 @@ import 'package:mpm/repository/JobPortal/MemberSaveJobRepo/member_save_job_repos
 import 'package:mpm/repository/JobPortal/UpdateSeekerProfileRepo/update_seeker_profile_repository.dart';
 import 'package:mpm/repository/JobPortal/UploadResumeRepo/upload_resume_repository.dart';
 import 'package:mpm/utils/Session.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/JobPortal/job_detail.dart';
@@ -66,6 +69,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       GetAppliedJobsByMemberIdRepository();
   final MemberSaveJobRepository memberSaveJobRepository =
       MemberSaveJobRepository();
+  final GetSavedJobsRepository savedJobsRepository = GetSavedJobsRepository();
   final ImagePicker _imagePicker = ImagePicker();
 
   String selectedCategory = "All";
@@ -74,8 +78,11 @@ class _JobSeekerViewState extends State<JobSeekerView> {
   String? selectedResumeName;
   bool isLoadingJobs = false;
   bool isLoadingAppliedJobs = false;
+  bool isLoadingSavedJobs = false;
   bool _autoOpenedPreferredSheet = false;
   final Set<String> savingJobIds = {};
+  final Set<String> savedJobIds = {};
+  List<Map<String, dynamic>> savedJobs = [];
 
   final Set<String> appliedJobIds = {};
 
@@ -153,10 +160,12 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _checkAndOpenPreferredDetails();
         _loadAppliedJobIds();
+        loadSavedJobs();
       });
     } else {
       loadJobs().then((_) {
         _loadAppliedJobIds();
+        loadSavedJobs();
       });
 
       if (mounted) {
@@ -280,6 +289,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
         final bPreferred = b["isPreferredJob"] == true ? 0 : 1;
         return aPreferred.compareTo(bPreferred);
       });
+    _syncBookmarkFlags();
   }
 
   bool _rememberJobId(Set<String> seenJobIds, Map<String, dynamic> job) {
@@ -462,6 +472,100 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     }
   }
 
+  Future<void> loadSavedJobs({bool showLoader = true}) async {
+    try {
+      if (showLoader) {
+        setState(() {
+          isLoadingSavedJobs = true;
+        });
+      }
+
+      final memberId = await _getLoggedInMemberId();
+      if (memberId.isEmpty) return;
+
+      final cachedIds = await _readCachedSavedJobIds(memberId);
+      final response = await savedJobsRepository.getSavedJobs(memberId);
+      if (!mounted) return;
+
+      final savedList = (response.data ?? <GetSavedJobsData>[])
+          .where((job) => (job.isSaved ?? "1").trim() != "0")
+          .where((job) => (job.jobId ?? "").trim().isNotEmpty)
+          .toList();
+
+      // get_saved_jobs can return 404 even after a successful save,
+      // so fall back to the locally cached ids when the server list is empty
+      if (savedList.isEmpty && cachedIds.isNotEmpty) {
+        setState(() {
+          savedJobIds
+            ..clear()
+            ..addAll(cachedIds);
+          savedJobs = jobs
+              .where((job) =>
+                  cachedIds.contains(job["jobId"]?.toString().trim() ?? ""))
+              .map((job) => {
+                    ...job,
+                    "isBookmarked": true,
+                    "isPreferredJob": false,
+                  })
+              .toList();
+          _syncBookmarkFlags();
+        });
+        return;
+      }
+
+      setState(() {
+        savedJobs = savedList.map(_mapSavedJobToViewData).toList();
+        savedJobIds
+          ..clear()
+          ..addAll(savedList.map((job) => job.jobId!.trim()));
+        _syncBookmarkFlags();
+      });
+      await _writeCachedSavedJobIds(memberId);
+    } catch (e) {
+      debugPrint("Get Saved Jobs Fetch Error: $e");
+    } finally {
+      if (mounted && showLoader) {
+        setState(() {
+          isLoadingSavedJobs = false;
+        });
+      }
+    }
+  }
+
+  String _savedJobIdsCacheKey(String memberId) => "saved_job_ids_$memberId";
+
+  Future<Set<String>> _readCachedSavedJobIds(String memberId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return (prefs.getStringList(_savedJobIdsCacheKey(memberId)) ?? [])
+          .map((id) => id.trim())
+          .where((id) => id.isNotEmpty)
+          .toSet();
+    } catch (e) {
+      debugPrint("Read Saved Job Cache Error: $e");
+      return {};
+    }
+  }
+
+  Future<void> _writeCachedSavedJobIds(String memberId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(
+        _savedJobIdsCacheKey(memberId),
+        savedJobIds.toList(),
+      );
+    } catch (e) {
+      debugPrint("Write Saved Job Cache Error: $e");
+    }
+  }
+
+  void _syncBookmarkFlags() {
+    for (final job in jobs) {
+      job["isBookmarked"] =
+          savedJobIds.contains(job["jobId"]?.toString().trim() ?? "");
+    }
+  }
+
   Future<void> _loadSeekerProfileForJobs(String memberId) async {
     try {
       final response =
@@ -562,12 +666,36 @@ class _JobSeekerViewState extends State<JobSeekerView> {
 
       if (!mounted) return;
 
-      if (response.status == true || response.code == 409) {
-        if (response.code == 409) {
-          setState(() {
-            job["isBookmarked"] = true;
-          });
-        }
+      // API answers HTTP 200 with status false when the job is already saved
+      final isAlreadySaved = response.code == 409 ||
+          (response.message ?? "").toLowerCase().contains("already saved");
+
+      if (response.status == true || isAlreadySaved) {
+        final isNowSaved = isAlreadySaved ? true : shouldSave;
+        setState(() {
+          job["isBookmarked"] = isNowSaved;
+          if (isNowSaved) {
+            savedJobIds.add(jobId);
+            final alreadyListed = savedJobs.any(
+              (saved) => saved["jobId"]?.toString().trim() == jobId,
+            );
+            if (!alreadyListed) {
+              savedJobs.insert(0, {
+                ...job,
+                "isBookmarked": true,
+                "isPreferredJob": false,
+              });
+            }
+          } else {
+            savedJobIds.remove(jobId);
+            savedJobs.removeWhere(
+              (saved) => saved["jobId"]?.toString().trim() == jobId,
+            );
+          }
+          _syncBookmarkFlags();
+        });
+        await _writeCachedSavedJobIds(memberId);
+        if (!mounted) return;
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -577,8 +705,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                       ? "Job saved successfully"
                       : "Job removed from saved jobs"),
             ),
-            backgroundColor:
-                response.code == 409 ? Colors.orange : Colors.green,
+            backgroundColor: isAlreadySaved ? Colors.orange : Colors.green,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -726,6 +853,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       "company": displayCompanyName,
       "company_name": displayCompanyName,
       "location": job.location ?? "",
+      "areaName": job.jobAreaName ?? "",
       "salary": _formatSalaryFromValues(
         salaryVisible: job.salaryVisible,
         salaryMin: job.salaryMin,
@@ -769,6 +897,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       "company": displayCompanyName,
       "company_name": displayCompanyName,
       "location": job.location ?? "",
+      "areaName": job.areaName ?? "",
       "salary": _formatSalaryFromValues(
         salaryVisible: job.salaryVisible,
         salaryMin: job.salaryMin,
@@ -807,6 +936,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       "company": displayCompanyName,
       "company_name": displayCompanyName,
       "location": job.location ?? "",
+      "areaName": job.jobAreaName ?? "",
       "salary": _formatSalaryFromValues(
         salaryVisible: job.salaryVisible,
         salaryMin: job.salaryMin,
@@ -832,6 +962,73 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       "expiredAt": job.expiredAt ?? "",
       "jobData": job,
     };
+  }
+
+  Map<String, dynamic> _mapSavedJobToViewData(GetSavedJobsData job) {
+    final jobId = (job.jobId ?? "").trim();
+    final companyName = (job.companyName ?? "").trim();
+    final businessName =
+        getBusinessName(job.memberBusinessOccupationProfileId).trim();
+
+    // Fall back to the already-loaded job list for details the API omits
+    final loadedJob = jobs.firstWhereOrNull(
+      (j) => j["jobId"]?.toString().trim() == jobId,
+    );
+    final title = (job.title ?? "").trim();
+
+    if (title.isEmpty && loadedJob != null) {
+      return {...loadedJob, "isBookmarked": true, "isPreferredJob": false};
+    }
+
+    final displayCompanyName = companyName.isNotEmpty
+        ? companyName
+        : businessName.isNotEmpty
+            ? businessName
+            : (loadedJob?["company"] ?? "Company");
+
+    return {
+      "jobId": jobId,
+      "title": title,
+      "company": displayCompanyName,
+      "company_name": displayCompanyName,
+      "location": job.location ?? "",
+      "areaName": job.jobAreaName ?? "",
+      "salary": _formatSalaryFromValues(
+        salaryVisible: job.salaryVisible,
+        salaryMin: job.salaryMin,
+        salaryMax: job.salaryMax,
+      ),
+      "experience": _formatExperienceFromValues(
+        job.experienceMinYears,
+        job.experienceMaxYears,
+      ),
+      "postedDate": _formatDate(job.publishedAt ?? job.createdAt ?? ""),
+      "category": "IT",
+      "isBookmarked": true,
+      "isPreferredJob": false,
+      "description": job.description ?? "",
+      "workMode": job.workMode ?? "",
+      "workType": job.workType ?? "",
+      "noOfVacancy": job.noOfVacancy ?? "",
+      "lastApplyDate": job.lastApplyDate ?? "",
+      "expiredAt": job.expiredAt ?? "",
+      "jobData": loadedJob?["jobData"] ?? job,
+    };
+  }
+
+  String _locationWithArea(Map<String, dynamic> job) {
+    final city = (job["location"] ?? "").toString().trim();
+    final areaName = (job["areaName"] ?? "").toString().trim();
+    if (areaName.isEmpty || areaName.toLowerCase() == "null") {
+      return city;
+    }
+    if (city.isEmpty || city.toLowerCase() == "null") {
+      return areaName;
+    }
+    if (areaName.toLowerCase() == city.toLowerCase()) {
+      return city;
+    }
+    return "$areaName, $city";
   }
 
   String _formatSalaryFromValues({
@@ -935,7 +1132,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     List<Map<String, dynamic>> displayJobs;
 
     if (selectedTab == 1) {
-      displayJobs = jobs.where((job) => job["isBookmarked"] == true).toList();
+      displayJobs = savedJobs;
     } else if (selectedTab == 2) {
       displayJobs = appliedJobs;
     } else {
@@ -950,8 +1147,11 @@ class _JobSeekerViewState extends State<JobSeekerView> {
         : displayJobs;
     final hasPreferredJobs = preferredJobs.isNotEmpty;
     final showOtherJobsHeader = hasPreferredJobs && otherJobs.isNotEmpty;
-    final isLoadingCurrentTab =
-        selectedTab == 2 ? isLoadingAppliedJobs : isLoadingJobs;
+    final isLoadingCurrentTab = selectedTab == 2
+        ? isLoadingAppliedJobs
+        : selectedTab == 1
+            ? isLoadingSavedJobs
+            : isLoadingJobs;
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -968,7 +1168,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
             TextButton(
               onPressed: _handlePreferredDetailsPressed,
               child: const Text(
-                "Preferrences",
+                "Upload CV",
                 style: TextStyle(color: Colors.white),
               ),
             ),
@@ -1031,8 +1231,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                           if (hasPreferredJobs)
                             _buildJobSectionHeader("From Your Preferrences"),
                           ...preferredJobs.map(_buildJobCard),
-                          if (showOtherJobsHeader)
-                            ...otherJobs.map(_buildJobCard),
+                          ...otherJobs.map(_buildJobCard),
                         ],
                       ),
           )
@@ -1048,6 +1247,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
             loadAppliedJobs();
           } else {
             _loadAppliedJobIds();
+            if (index == 1) loadSavedJobs();
           }
         },
         selectedItemColor:
@@ -1128,9 +1328,13 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                 Row(
                   children: [
                     const Icon(Icons.location_on, size: 13, color: Colors.grey),
-                    Text(
-                      job["location"],
-                      style: const TextStyle(fontSize: 13),
+                    Flexible(
+                      child: Text(
+                        _locationWithArea(job),
+                        style: const TextStyle(fontSize: 13),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Text(
@@ -2210,6 +2414,30 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                       modalSetState(() {
                         selectedResume = File(result.files.single.path!);
                         selectedResumeName = result.files.single.name;
+                      });
+                    }
+                  },
+                ),
+
+                /// CAMERA
+                ListTile(
+                  leading: const Icon(
+                    Icons.camera_alt,
+                    color: Colors.green,
+                  ),
+                  title: const Text("Take a Picture"),
+                  onTap: () async {
+                    Navigator.pop(context);
+
+                    final XFile? photo = await _imagePicker.pickImage(
+                      source: ImageSource.camera,
+                      imageQuality: 80,
+                    );
+
+                    if (photo != null) {
+                      modalSetState(() {
+                        selectedResume = File(photo.path);
+                        selectedResumeName = photo.name;
                       });
                     }
                   },

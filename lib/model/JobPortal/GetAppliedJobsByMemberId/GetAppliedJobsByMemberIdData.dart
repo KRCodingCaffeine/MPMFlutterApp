@@ -13,6 +13,7 @@ class GetAppliedJobsByMemberIdData {
   String? description;
   String? location;
   String? cityId;
+  String? jobAreaName;
 
   String? salaryMin;
   String? salaryMax;
@@ -47,6 +48,7 @@ class GetAppliedJobsByMemberIdData {
     this.description,
     this.location,
     this.cityId,
+    this.jobAreaName,
     this.salaryMin,
     this.salaryMax,
     this.salaryVisible,
@@ -81,6 +83,7 @@ class GetAppliedJobsByMemberIdData {
     description = json['description']?.toString();
     location = json['location']?.toString();
     cityId = json['city_id']?.toString();
+    jobAreaName = (json['area_name'] ?? json['job_area_name'])?.toString();
 
     salaryMin = json['salary_min']?.toString();
     salaryMax = json['salary_max']?.toString();
@@ -118,6 +121,7 @@ class GetAppliedJobsByMemberIdData {
       'description': description,
       'location': location,
       'city_id': cityId,
+      'area_name': jobAreaName,
       'salary_min': salaryMin,
       'salary_max': salaryMax,
       'salary_visible': salaryVisible,

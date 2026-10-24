@@ -20,6 +20,11 @@ class SamitiDetailData{
  var samitiRolesName;
  var profileImagePath;
  var encryptedMemberId;
+ var presidentName;
+ var presidentSatra;
+ var genderId;
+ var maritalStatusId;
+ var salutation;
 
   SamitiDetailData(
       {
@@ -42,7 +47,12 @@ class SamitiDetailData{
         this.email,
         this.samitiRolesName,
         this.profileImagePath,
-        this.encryptedMemberId});
+        this.encryptedMemberId,
+        this.presidentName,
+        this.presidentSatra,
+        this.genderId,
+        this.maritalStatusId,
+        this.salutation});
 
   SamitiDetailData.fromJson(Map<String, dynamic> json) {
     memberSamitiRoleMappingId = json['member_samiti_role_mapping_id'];
@@ -65,6 +75,11 @@ class SamitiDetailData{
     samitiRolesName = json['samiti_roles_name'];
     profileImagePath = json['profile_image_path'];
     encryptedMemberId = json['encrypted_member_id'];
+    presidentName = json['president_name'];
+    presidentSatra = json['president_satra'];
+    genderId = json['gender_id'];
+    maritalStatusId = json['marital_status_id'];
+    salutation = json['salutation'];
   }
 
   Map<String, dynamic> toJson() {
@@ -89,7 +104,22 @@ class SamitiDetailData{
     data['samiti_roles_name'] = this.samitiRolesName;
     data['profile_image_path'] = this.profileImagePath;
     data['encrypted_member_id'] = this.encryptedMemberId;
+    data['president_name'] = this.presidentName;
+    data['president_satra'] = this.presidentSatra;
+    data['gender_id'] = this.genderId;
+    data['marital_status_id'] = this.maritalStatusId;
+    data['salutation'] = this.salutation;
     return data;
+  }
+
+  /// Shri for male, Smt for female, Ms for unmarried female (marital status 2)
+  String get displaySalutation {
+    final gender = genderId?.toString().trim() ?? "";
+    final maritalStatus = maritalStatusId?.toString().trim() ?? "";
+    if (gender == "1") return "Shri";
+    if (gender == "2") return maritalStatus == "2" ? "Ms" : "Smt";
+    final apiSalutation = salutation?.toString().trim() ?? "";
+    return apiSalutation.toLowerCase() == "null" ? "" : apiSalutation;
   }
 }
 
