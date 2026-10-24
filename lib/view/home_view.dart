@@ -107,6 +107,16 @@ class _HomeViewState extends State<HomeView>
       {'icon': Images.network, 'label': 'Networking'},
       {'icon': Images.event_trip, 'label': 'Trips'},
       {'icon': Images.shiksha, 'label': 'Shiksha Sahayata'},
+      {'icon': Images.utility, 'label': 'Doctors'},
+    ];
+
+    if (memberId == 1 || memberId == 2 || memberId == 2040) {
+      items.add({'icon': Images.job_portal, 'label': 'Jobs'});
+    }
+    // {'icon': Images.job_portal, 'label': 'Jobs'},
+    // if (memberId == 1 || memberId == 2 || memberId == 2040) {
+    //   items.add({'icon': Images.shiksha, 'label': 'Shiksha Sahayata'});
+    // }
     ]);
 
     // Additional items at the end (conditional)
@@ -1333,6 +1343,10 @@ class _HomeViewState extends State<HomeView>
         Navigator.pushNamed(context, RouteNames.sattu_vitran);
         break;
 
+      case "Doctors":
+        Navigator.pushNamed(context, RouteNames.utility);
+        break;
+        
       // Samiti Election
       case "Samiti Election":
         Navigator.pushNamed(context, RouteNames.samiti_election);
