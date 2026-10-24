@@ -49,6 +49,11 @@ post_install do |installer|
     target.build_configurations.each do |config|
       config.build_settings['SWIFT_VERSION'] = '5.0'
       config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'NO'
+      # Current Xcode only accepts iOS deployment targets from 15.0 upward.
+      deployment_target = config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
+      if deployment_target.nil? || deployment_target.to_f < 15.0
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+      end
     end
   end
 

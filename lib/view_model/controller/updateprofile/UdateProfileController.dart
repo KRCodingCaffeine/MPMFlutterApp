@@ -316,6 +316,18 @@ class UdateProfileController extends GetxController {
     selectRelationShipType(value);
   }
 
+  Future<GetProfileData?> getMemberProfile(String memberId) async {
+    if (memberId.isEmpty) return null;
+
+    try {
+      final response = await api.getUserData(memberId);
+      return response.data;
+    } catch (error) {
+      debugPrint('Unable to load member profile for conversion: $error');
+      return null;
+    }
+  }
+
   Future<void> getUserProfile() async {
     try {
       CheckUserData2? userData = await SessionManager.getSession();
@@ -811,14 +823,18 @@ class UdateProfileController extends GetxController {
       String occupationId = selectedOccupation.value;
       String professionId =
           (selectedProfession.value == "Other") ? "" : selectedProfession.value;
-      String specializationId =
-          (selectedSpecialization.value == "Other") ? "" : selectedSpecialization.value;
-      String subCategoryId =
-          (selectedSubCategory.value == "Other") ? "" : selectedSubCategory.value;
-      String subSubCategoryId =
-          (selectedSubSubCategory.value == "Other") ? "" : selectedSubSubCategory.value;
+      String specializationId = (selectedSpecialization.value == "Other")
+          ? ""
+          : selectedSpecialization.value;
+      String subCategoryId = (selectedSubCategory.value == "Other")
+          ? ""
+          : selectedSubCategory.value;
+      String subSubCategoryId = (selectedSubSubCategory.value == "Other")
+          ? ""
+          : selectedSubSubCategory.value;
 
-      String otherName = showDetailsField.value ? detailsController.value.text : "";
+      String otherName =
+          showDetailsField.value ? detailsController.value.text : "";
 
       final Map<String, dynamic> data = {
         "member_id": userData.memberId.toString(),
@@ -840,7 +856,8 @@ class UdateProfileController extends GetxController {
       if (response.status == true) {
         final memberOccupationId = response.data?.memberOccupationId;
 
-        if (memberOccupationId == null || memberOccupationId.toString().isEmpty) {
+        if (memberOccupationId == null ||
+            memberOccupationId.toString().isEmpty) {
           throw Exception("Occupation ID not returned from API");
         }
 
@@ -856,11 +873,12 @@ class UdateProfileController extends GetxController {
           "created_by": userData.memberId.toString(),
         };
 
-        _putIfNotEmpty(moreOccupationPayload, "designation", designationController.text);
+        _putIfNotEmpty(
+            moreOccupationPayload, "designation", designationController.text);
         _putIfNotEmpty(moreOccupationPayload, "start_date", startDateForApi);
         _putIfNotEmpty(moreOccupationPayload, "end_date", endDateForApi);
-        _putIfNotEmpty(
-            moreOccupationPayload, "role_description", detailsController.value.text);
+        _putIfNotEmpty(moreOccupationPayload, "role_description",
+            detailsController.value.text);
 
         debugPrint("ADD -> MORE OCCUPATION PAYLOAD: $moreOccupationPayload");
 
@@ -870,7 +888,8 @@ class UdateProfileController extends GetxController {
         debugPrint("ADD -> MORE OCCUPATION RESPONSE: ${moreResponse.toJson()}");
 
         if (moreResponse.status != true) {
-          throw Exception(moreResponse.message ?? "Failed to update more details");
+          throw Exception(
+              moreResponse.message ?? "Failed to update more details");
         }
 
         /// REFRESH PROFILE
@@ -971,14 +990,14 @@ class UdateProfileController extends GetxController {
       }
     });
   }
+
   final updateOccupationRepo = UpdateOccupationRepository();
   final updateMoreOccupationRepository = UpdateMoreOccupationRepository();
 
   Future<void> updateFullOccupation(
-      Occupation oldData,
-      BuildContext context,
-      ) async {
-
+    Occupation oldData,
+    BuildContext context,
+  ) async {
     if (selectedOccupation.value.isEmpty) {
       _showOccupationSnackBar(
         context,
@@ -996,13 +1015,12 @@ class UdateProfileController extends GetxController {
       final nextSpecializationId =
           _selectedIdOrEmpty(selectedSpecialization.value);
       final nextOtherName = detailsController.value.text.trim();
-      final hasOccupationChanges =
-          nextOccupationId != _valueOrEmpty(oldData.occupationId) ||
-              nextProfessionId !=
-                  _valueOrEmpty(oldData.occupationProfessionId) ||
-              nextSpecializationId !=
-                  _valueOrEmpty(oldData.occupationSpecializationId) ||
-              nextOtherName != _valueOrEmpty(oldData.occupationOtherName);
+      final hasOccupationChanges = nextOccupationId !=
+              _valueOrEmpty(oldData.occupationId) ||
+          nextProfessionId != _valueOrEmpty(oldData.occupationProfessionId) ||
+          nextSpecializationId !=
+              _valueOrEmpty(oldData.occupationSpecializationId) ||
+          nextOtherName != _valueOrEmpty(oldData.occupationOtherName);
 
       /// STEP 1: UPDATE OCCUPATION
       if (hasOccupationChanges) {
@@ -1040,6 +1058,7 @@ class UdateProfileController extends GetxController {
       } else {
         debugPrint("UPLOAD OCCUPATION UPDATE: skipped, no Level 1/2/3 changes");
       }
+
       /// STEP 2: UPDATE MORE OCCUPATION
       final startDateForApi = _dateForApi(startDateController.text);
       final endDateForApi = _dateForApi(endDateController.text);
@@ -1059,9 +1078,8 @@ class UdateProfileController extends GetxController {
 
       debugPrint("MORE OCCUPATION DETAIL PAYLOAD: $moreOccupationPayload");
 
-      final moreOccupationResponse =
-          await updateMoreOccupationRepository.updateMoreOccupation(
-              moreOccupationPayload);
+      final moreOccupationResponse = await updateMoreOccupationRepository
+          .updateMoreOccupation(moreOccupationPayload);
 
       debugPrint(
           "MORE OCCUPATION DETAIL RESPONSE: ${moreOccupationResponse.toJson()}");
@@ -1116,8 +1134,7 @@ class UdateProfileController extends GetxController {
 
   String _valueOrEmpty(String? value) => value?.trim() ?? "";
 
-  void _putIfNotEmpty(
-      Map<String, dynamic> payload, String key, String? value) {
+  void _putIfNotEmpty(Map<String, dynamic> payload, String key, String? value) {
     final trimmedValue = value?.trim() ?? "";
     if (trimmedValue.isNotEmpty) {
       payload[key] = trimmedValue;
@@ -1136,7 +1153,8 @@ class UdateProfileController extends GetxController {
       DateFormat('yyyy-MM-dd'),
     ]) {
       try {
-        return DateFormat('yyyy-MM-dd').format(format.parseStrict(trimmedValue));
+        return DateFormat('yyyy-MM-dd')
+            .format(format.parseStrict(trimmedValue));
       } catch (_) {}
     }
 
@@ -1377,7 +1395,7 @@ class UdateProfileController extends GetxController {
   TextEditingController boardUniversityController = TextEditingController();
   TextEditingController percentageController = TextEditingController();
   final UpdateProfileEducationRepository updateProfileEducationRepository =
-  UpdateProfileEducationRepository();
+      UpdateProfileEducationRepository();
   RxString pursuingStatus = "0".obs;
   var qulicationList = <QualificationData>[].obs;
   var qulicationMainList = <QualicationMainData>[].obs;
@@ -1601,15 +1619,13 @@ class UdateProfileController extends GetxController {
   }
 
   Future<void> updateFullEducation(
-      String memberQualificationId,
-      String memberId,
-      BuildContext context,
-      ) async {
-
+    String memberQualificationId,
+    String memberId,
+    BuildContext context,
+  ) async {
     addloading.value = true;
 
     try {
-
       /// STEP 1️⃣ UPDATE QUALIFICATION
       Map<String, String> qualificationPayload = {
         'member_id': memberId,
@@ -1617,10 +1633,10 @@ class UdateProfileController extends GetxController {
         'member_qualification_id': memberQualificationId,
         'qualification_main_id': selectQualicationMain.value,
         'qualification_category_id':
-        (selectQualicationCat.value == "other_category" ||
-            selectQualicationCat.value.isEmpty)
-            ? "0"
-            : selectQualicationCat.value,
+            (selectQualicationCat.value == "other_category" ||
+                    selectQualicationCat.value.isEmpty)
+                ? "0"
+                : selectQualicationCat.value,
         'qualification_other_name': educationdetailController.value.text,
         'updated_by': memberId,
       };
@@ -1628,7 +1644,7 @@ class UdateProfileController extends GetxController {
       print("📤 Qualification Payload: $qualificationPayload");
 
       final qualificationResponse =
-      await api.updateQualification(qualificationPayload);
+          await api.updateQualification(qualificationPayload);
 
       if (qualificationResponse['status'] != true) {
         addloading.value = false;
@@ -1658,14 +1674,12 @@ class UdateProfileController extends GetxController {
 
       print("📤 Education Payload: $educationPayload");
 
-      final educationResponse =
-      await updateProfileEducationRepository.updateprofileEducation(
-          educationPayload);
+      final educationResponse = await updateProfileEducationRepository
+          .updateprofileEducation(educationPayload);
 
       addloading.value = false;
 
       if (educationResponse.status == true) {
-
         await getUserProfile();
 
         if (Navigator.canPop(context)) {
@@ -1677,18 +1691,14 @@ class UdateProfileController extends GetxController {
           "Education updated successfully",
           isSuccess: true,
         );
-
       } else {
-
         _showEducationSnackBar(
           context,
           educationResponse.message ?? "Failed to update education",
           isSuccess: false,
         );
       }
-
     } catch (e) {
-
       addloading.value = false;
 
       print("❌ Update Error: $e");
@@ -2327,21 +2337,20 @@ class UdateProfileController extends GetxController {
 
         Navigator.of(context).pop();
 
-          Get.snackbar(
-            "Success",
-            "Family member added successfully",
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-            snackPosition: SnackPosition.TOP,
-            duration: const Duration(seconds: 3),
-          );
+        Get.snackbar(
+          "Success",
+          "Family member added successfully",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 3),
+        );
 
         // Only OTP depends on mobile
         // if (mobile.isNotEmpty) {
         //   // sendOtp(mobile);
         //   // showOtpBottomSheet(context, mobile);
         // }
-
       } else {
         Get.snackbar(
           "Error",

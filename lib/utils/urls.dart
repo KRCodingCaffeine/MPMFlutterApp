@@ -127,6 +127,16 @@ class Urls {
   static const String list_vitran_member_order_url = base_url+"api/vitran/list_vitran_member_order";
   static const String get_vitran_member_order_details_url = base_url+"api/vitran/get_vitran_member_order_details";
 
+  // Samiti Election
+  static const String election_list_url = base_url+"api/election/list";
+  static const String get_samiti_types_url = base_url+"api/get_samiti_types";
+  static const String add_lm_election_url = base_url+"api/election/add";
+  static const String add_non_member_election_url = base_url+"api/election/add";
+  static const String samiti_convert_to_lm_url = base_url+"api/election/samiti_convert_to_lm";
+  static const String samiti_verify_otp_lm_conversion_url = base_url+"api/election/samiti_verify_otp_lm_conversion";
+  static const String delete_not_an_member_url = base_url+"api/election/delete_not_an_member";
+
+
   //Shiksha Sahayata
   static const String get_shiksha_application_by_id_url = base_url+"api/get_shiksha_application_by_id";
   static const String create_shiksha_application_url = base_url+"api/create_shiksha_application";
@@ -182,6 +192,9 @@ class Urls {
   static const String get_job_applied_members_url = base_url+"api/member_job/get_job_applied_members";
   static const String update_member_application_status_url = base_url+"api/member_job/update_member_application_status";
   static const String member_save_job_url = base_url+"api/member_job/member_save_job";
+  static const String get_saved_jobs_url = base_url+"api/member_job/get_saved_jobs";
+  static const String list_seeker_profiles_url = base_url+"api/member_job/list_seeker_profiles";
+  static String get_posted_jobs_applied_members_url = base_url+ "api/member_job/get_posted_jobs_applied_members";
 
   // Notification API URLs - Following same pattern as device_mapping
   static const String get_all_notifications_url = base_url+"api/notifications/get_all";

@@ -50,6 +50,32 @@ class _SattuVitranDetailPageState extends State<SattuVitranDetailPage> {
 
   bool get _hasSelectedProducts => _quantities.any((quantity) => quantity > 0);
 
+  bool get _isOrderBookingClosed {
+    final endDate = _vitranData?.vitranEndDate;
+
+    // If vitran end date is null or empty, treat as NOT closed
+    if (endDate == null || endDate.trim().isEmpty) return false;
+
+    try {
+      final parsedEndDate = DateTime.parse(endDate);
+      final today = DateTime.now();
+
+      // Compare only dates (ignore time)
+      final todayDate = DateTime(today.year, today.month, today.day);
+      final endDateOnly = DateTime(
+        parsedEndDate.year,
+        parsedEndDate.month,
+        parsedEndDate.day,
+      );
+
+      // Closed if today is on or after the vitran end date
+      return !todayDate.isBefore(endDateOnly);
+    } catch (e) {
+      // If date parsing fails, treat as NOT closed
+      return false;
+    }
+  }
+
   int get _selectedProductCount =>
       _quantities.where((quantity) => quantity > 0).length;
 
@@ -137,6 +163,25 @@ class _SattuVitranDetailPageState extends State<SattuVitranDetailPage> {
 
           _setProducts(vitranData);
 
+          // If order booking is closed, show ONLY the closed banner centered
+          if (_isOrderBookingClosed) {
+            return RefreshIndicator(
+              color: _brandColor,
+              onRefresh: _refreshVitranDetails,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.65,
+                    child: Center(
+                      child: _buildOrderClosedBanner(),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
           return RefreshIndicator(
             color: _brandColor,
             onRefresh: _refreshVitranDetails,
@@ -148,8 +193,6 @@ class _SattuVitranDetailPageState extends State<SattuVitranDetailPage> {
                 _hasSelectedProducts ? 104 : 24,
               ),
               children: [
-                // _buildEventHeader(vitranData),
-                // const SizedBox(height: 14),
                 const Text(
                   'Sattu Churn Order',
                   style: TextStyle(
@@ -170,8 +213,9 @@ class _SattuVitranDetailPageState extends State<SattuVitranDetailPage> {
           );
         },
       ),
-      bottomNavigationBar:
-          _hasSelectedProducts ? _buildPlaceOrderBar(context) : null,
+      bottomNavigationBar: _hasSelectedProducts && !_isOrderBookingClosed
+          ? _buildPlaceOrderBar(context)
+          : null,
     );
   }
 
@@ -200,6 +244,105 @@ class _SattuVitranDetailPageState extends State<SattuVitranDetailPage> {
               ),
               child: Text(actionLabel),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrderClosedBanner() {
+    final vitranName = _displayText(
+      _vitranData?.vitranName,
+      fallback: widget.event.name,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.red.withValues(alpha: 0.08),
+              blurRadius: 20,
+              spreadRadius: 2,
+              offset: const Offset(0, 8),
+            ),
+          ],
+          border: Border.all(
+            color: Colors.red.withValues(alpha: 0.15),
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Icon Circle
+            Container(
+              width: 90,
+              height: 90,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.red.withValues(alpha: 0.15),
+                    Colors.red.withValues(alpha: 0.05),
+                  ],
+                ),
+                border: Border.all(
+                  color: Colors.red.withValues(alpha: 0.25),
+                  width: 2,
+                ),
+              ),
+              child: Icon(
+                Icons.event_busy_rounded,
+                color: Colors.red[600],
+                size: 44,
+              ),
+            ),
+            const SizedBox(height: 22),
+
+            // Title
+            Text(
+              'Order Booking Closed',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.red[700],
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.2,
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // Subtitle
+            Text(
+              'The last date to place an order has passed.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.grey[700],
+                fontSize: 14,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 6),
+
+            // Additional Info
+            Text(
+              'You can no longer place orders for this $vitranName.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.grey[500],
+                fontSize: 13,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -377,19 +520,19 @@ class _SattuVitranDetailPageState extends State<SattuVitranDetailPage> {
               const SizedBox(height: 6),
               quantity == 0
                   ? OutlinedButton(
-                      onPressed: () => _updateQuantity(index, 1),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: _brandColor,
-                        side: BorderSide(color: _brandColor),
-                        visualDensity: VisualDensity.compact,
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        textStyle: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      child: const Text('Add Quantity'),
-                    )
+                onPressed: () => _updateQuantity(index, 1),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _brandColor,
+                  side: BorderSide(color: _brandColor),
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  textStyle: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                child: const Text('Add Quantity'),
+              )
                   : _buildQuantityControl(index, quantity),
             ],
           ),
@@ -539,7 +682,8 @@ class _SattuVitranDetailPageState extends State<SattuVitranDetailPage> {
             vitranId: widget.event.vitranId,
             memberId: "2", // Replace with actual member ID from session
             productId: product.vitranProductId ?? "",
-            productUnitId: product.vitranProductUnitId ?? "1", // Make sure this is provided
+            productUnitId: product.vitranProductUnitId ??
+                "1", // Make sure this is provided
             name: _displayText(
               product.productName,
               fallback: 'Product',

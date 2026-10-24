@@ -10,6 +10,7 @@ class GetJobByMemberIdData {
   String? occupationSpecializationId;
   String? location;
   String? cityId;
+  String? jobAreaName;
   String? salaryMin;
   String? salaryMax;
   String? salaryVisible;
@@ -22,12 +23,15 @@ class GetJobByMemberIdData {
   String? jobPostStatus;
   String? internshipTimePeriod;
   String? status;
+  String? hasRecruitedFromMpm;
+  String? closingComments;
   String? publishedAt;
   String? closedAt;
   String? createdAt;
   String? updatedAt;
   String? createdBy;
   String? updatedBy;
+  String? profileSummaryDocument;
 
   GetJobByMemberIdData({
     this.jobId,
@@ -41,6 +45,7 @@ class GetJobByMemberIdData {
     this.occupationSpecializationId,
     this.location,
     this.cityId,
+    this.jobAreaName,
     this.salaryMin,
     this.salaryMax,
     this.salaryVisible,
@@ -53,12 +58,15 @@ class GetJobByMemberIdData {
     this.jobPostStatus,
     this.internshipTimePeriod,
     this.status,
+    this.hasRecruitedFromMpm,
+    this.closingComments,
     this.publishedAt,
     this.closedAt,
     this.createdAt,
     this.updatedAt,
     this.createdBy,
     this.updatedBy,
+    this.profileSummaryDocument,
   });
 
   GetJobByMemberIdData.fromJson(Map<String, dynamic> json) {
@@ -75,6 +83,7 @@ class GetJobByMemberIdData {
         json['occupation_specialization_id']?.toString();
     location = json['location'];
     cityId = json['city_id']?.toString();
+    jobAreaName = (json['area_name'] ?? json['job_area_name'])?.toString();
     salaryMin = json['salary_min'];
     salaryMax = json['salary_max'];
     salaryVisible = json['salary_visible'];
@@ -91,12 +100,15 @@ class GetJobByMemberIdData {
         (json['internship_time_period'] ?? json['no_of_months_internship'])
             ?.toString();
     status = json['status'];
+    hasRecruitedFromMpm = json['has_recruited_from_mpm']?.toString();
+    closingComments = json['closing_comments']?.toString();
     publishedAt = json['published_at'];
     closedAt = json['closed_at'];
     createdAt = json['created_at'];
     updatedAt = json['updated_at'];
     createdBy = json['created_by']?.toString();
     updatedBy = json['updated_by']?.toString();
+    profileSummaryDocument = json['profile_summary_document']?.toString();
   }
 
   Map<String, dynamic> toJson() {
@@ -114,6 +126,7 @@ class GetJobByMemberIdData {
     data['occupation_specialization_id'] = occupationSpecializationId;
     data['location'] = location;
     data['city_id'] = cityId;
+    data['job_area_name'] = jobAreaName;
     data['salary_min'] = salaryMin;
     data['salary_max'] = salaryMax;
     data['salary_visible'] = salaryVisible;
@@ -126,12 +139,15 @@ class GetJobByMemberIdData {
     data['job_post_status'] = jobPostStatus;
     data['internship_time_period'] = internshipTimePeriod;
     data['status'] = status;
+    data['has_recruited_from_mpm'] = hasRecruitedFromMpm;
+    data['closing_comments'] = closingComments;
     data['published_at'] = publishedAt;
     data['closed_at'] = closedAt;
     data['created_at'] = createdAt;
     data['updated_at'] = updatedAt;
     data['created_by'] = createdBy;
     data['updated_by'] = updatedBy;
+    data['profile_summary_document'] = profileSummaryDocument;
 
     return data;
   }

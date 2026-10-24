@@ -7,6 +7,8 @@ class VitranData {
   String? vitranName;
   String? vitranDescription;
   String? vitranDocument;
+  String? vitranStartDate;
+  String? vitranEndDate;
   String? status;
   String? startDateOfOrder;
   String? lastDateToOrder;
@@ -25,6 +27,8 @@ class VitranData {
     this.vitranName,
     this.vitranDescription,
     this.vitranDocument,
+    this.vitranStartDate,
+    this.vitranEndDate,
     this.status,
     this.startDateOfOrder,
     this.lastDateToOrder,
@@ -46,6 +50,8 @@ class VitranData {
       vitranDocument: json['vitran_document'] != null
           ? Urls.imagePathUrl + json['vitran_document']
           : null,
+      vitranStartDate: json['vitran_start_date'],
+      vitranEndDate: json['vitran_end_date'],
       status: json['status'],
       startDateOfOrder: json['start_date_of_order'],
       lastDateToOrder: json['last_date_to_order'],
@@ -78,6 +84,8 @@ class VitranData {
       'vitran_name': vitranName,
       'vitran_description': vitranDescription,
       'vitran_document': vitranDocument,
+      'vitran_start_date': vitranStartDate,
+      'vitran_end_date': vitranEndDate,
       'status': status,
       'start_date_of_order': startDateOfOrder,
       'last_date_to_order': lastDateToOrder,

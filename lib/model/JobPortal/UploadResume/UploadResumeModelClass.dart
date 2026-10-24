@@ -18,9 +18,8 @@ class UploadResumeModelClass {
       status: json['status'] ?? false,
       code: json['code'] ?? 0,
       message: json['message'] ?? '',
-      data: json['data'] != null
-          ? UploadResumeData.fromJson(json['data'])
-          : null,
+      data:
+          json['data'] != null ? UploadResumeData.fromJson(json['data']) : null,
     );
   }
 
