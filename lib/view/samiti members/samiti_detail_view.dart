@@ -82,7 +82,10 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
                 } else {
                   mobile = member.mobile.toString();
                 }
-                var name = firstname + " " + lastname;
+                final salutation = member.displaySalutation;
+                var name = [salutation, firstname, lastname]
+                    .where((part) => part.trim().isNotEmpty)
+                    .join(" ");
 
                 if (member.memberCode.toString() == "null") {
                   memberCode = "";
@@ -108,7 +111,10 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
                 final isPresidentList =
                     _cleanValue(member.samitiSubCategoryId) == "4" ||
                         _cleanValue(controller.samitiId.value) == "4";
-                final isPresidentRecord = _cleanValue(member.memberId) == "0";
+                // Past presidents without a member account come with a null/0 member_id
+                final presidentMemberId = _cleanValue(member.memberId);
+                final isPresidentRecord =
+                    presidentMemberId.isEmpty || presidentMemberId == "0";
 
                 if (isPresidentList && isPresidentRecord) {
                   return _buildMemberCard(
