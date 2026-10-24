@@ -8,6 +8,7 @@ class SearchData {
   String? mobile;
   String? email;
   String? pincode;
+  String? memberStatusId;
   int? membershipTypeId;
 
   SearchData(
@@ -20,6 +21,7 @@ class SearchData {
       this.mobile,
       this.email,
       this.pincode,
+      this.memberStatusId,
       this.membershipTypeId});
 
   SearchData.fromJson(Map<String, dynamic> json) {
@@ -32,9 +34,11 @@ class SearchData {
     mobile = json['mobile'];
     email = json['email'];
     pincode = json['pincode'];
+    memberStatusId = json['member_status_id']?.toString();
     membershipTypeId = json['membership_type_id'] != null
         ? int.tryParse(json['membership_type_id'].toString())
-        : null;  }
+        : null;
+  }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
@@ -47,6 +51,7 @@ class SearchData {
     data['mobile'] = this.mobile;
     data['email'] = this.email;
     data['pincode'] = this.pincode;
+    data['member_status_id'] = this.memberStatusId;
     data['membership_type_id'] = this.membershipTypeId;
     return data;
   }

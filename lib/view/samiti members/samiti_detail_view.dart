@@ -132,13 +132,13 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
                 if (isPresidentList) {
                   return _buildMemberCard(
                     samitiRoles: "",
-                    lmCode: "",
+                    lmCode: memberCode,
                     name: name,
-                    mobile: "",
+                    mobile: mobile,
                     profileImage: memberImage,
                     memberId: memberId,
                     satraYear: _satraYear(member.startsFrom, member.endTo),
-                    showMemberDetails: false,
+                    showRole: false,
                   );
                 }
 
@@ -187,6 +187,7 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
     required String memberId,
     String satraYear = "",
     bool showMemberDetails = true,
+    bool showRole = true,
   }) {
     return Center(
       child: Card(
@@ -247,13 +248,15 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
                       ),
                     ],
                     if (showMemberDetails) ...[
-                      const SizedBox(height: 5),
-                      Text(
-                        samitiRoles.isNotEmpty ? samitiRoles : "Unknown Role",
-                        style: const TextStyle(
-                          fontSize: 14,
+                      if (showRole) ...[
+                        const SizedBox(height: 5),
+                        Text(
+                          samitiRoles.isNotEmpty ? samitiRoles : "Unknown Role",
+                          style: const TextStyle(
+                            fontSize: 14,
+                          ),
                         ),
-                      ),
+                      ],
                       const SizedBox(height: 5),
                       Text(
                         "Membership Code : ${lmCode.isNotEmpty ? lmCode : memberId}",
