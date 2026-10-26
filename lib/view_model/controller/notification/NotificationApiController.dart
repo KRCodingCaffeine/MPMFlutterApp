@@ -114,7 +114,8 @@ class NotificationApiController extends GetxController with WidgetsBindingObserv
   Future<void> loadLocalNotifications() async {
     try {
       debugPrint('📱 Loading local notifications...');
-      
+      await NotificationDatabase.instance.markPastEventOrTripNotificationsAsRead();
+
       final notifications = await NotificationDatabase.instance.getAllNotifications();
       
       // Ensure notifications are sorted by timestamp (latest first)
@@ -128,20 +129,20 @@ class NotificationApiController extends GetxController with WidgetsBindingObserv
           return 0;
         }
       });
-      
+
       notificationList.value = notifications;
       
       final unreadCountValue = await NotificationDatabase.instance.getUnreadNotificationCount();
       unreadCount.value = unreadCountValue;
       
-      // Update type-specific unread counts
+      // Update type-specific unread counts. Event/trip past items are excluded.
       unreadEventCount.value = await NotificationDatabase.instance.getUnreadNotificationCountByType('event');
       unreadOfferCount.value = await NotificationDatabase.instance.getUnreadNotificationCountByType('offer');
       unreadDefaultCount.value = await NotificationDatabase.instance.getUnreadNotificationCountByType('default');
       unreadSaraswaniCount.value = await NotificationDatabase.instance.getUnreadNotificationCountByType('saraswani');
       unreadTripsCount.value = await NotificationDatabase.instance.getUnreadNotificationCountByType('trips');
       
-      // Update badge count (use default count for bottom navigation badge)
+      // App icon + bottom-nav badge only reflect default notifications shown in the list.
       await NotificationService.updateBadgeCount(unreadDefaultCount.value);
       
       debugPrint('📊 Local notifications loaded: ${notificationList.length}, unread: $unreadCount, events: $unreadEventCount, offers: $unreadOfferCount, default: $unreadDefaultCount');
@@ -170,6 +171,23 @@ class NotificationApiController extends GetxController with WidgetsBindingObserv
       unreadDefaultCount.value = 0;
       unreadSaraswaniCount.value = 0;
       unreadTripsCount.value = 0;
+      await NotificationService.updateBadgeCount(0);
+    }
+  }
+
+  /// Drop unread for events/trips that have moved to the past tab.
+  Future<void> ignoreUnreadForPastEventOfferIds(List<String> eventOfferIds) async {
+    final ids = eventOfferIds.where((id) => id.trim().isNotEmpty).toSet();
+    if (ids.isEmpty) {
+      return;
+    }
+
+    var updated = 0;
+    for (final id in ids) {
+      updated += await NotificationDatabase.instance.markNotificationsAsReadByEventOfferId(id);
+    }
+    if (updated > 0) {
+      await loadLocalNotifications();
     }
   }
 
@@ -187,50 +205,65 @@ class NotificationApiController extends GetxController with WidgetsBindingObserv
         },
       );
 
-      if (response.status && response.notifications.isNotEmpty) {
-        debugPrint('📡 Server has ${response.notifications.length} notifications');
-
-        // ALWAYS clear local database and replace with server data
-        debugPrint('🗑️ Clearing local database...');
-        await NotificationDatabase.instance.deleteAllNotifications();
-
-        // Sort server notifications by timestamp (latest first) before inserting
-        final sortedNotifications = response.notifications.toList();
-        sortedNotifications.sort((a, b) {
-          try {
-            final aTime = DateTime.parse(a.timestamp);
-            final bTime = DateTime.parse(b.timestamp);
-            return bTime.compareTo(aTime); // Latest first (DESC)
-          } catch (e) {
-            debugPrint('❌ Error parsing server notification timestamp: $e');
-            return 0;
-          }
-        });
-
-        // Insert server notifications in sorted order
-        for (final serverNotification in sortedNotifications) {
-          final localNotification = serverNotification.toLocalModel();
-          debugPrint('📝 Inserting notification: ${localNotification.title} (ID: ${localNotification.id}, ServerID: ${localNotification.serverId}, Type: ${localNotification.type}, Read: ${localNotification.isRead}, Time: ${localNotification.timestamp})');
-          await NotificationDatabase.instance.insertNotification(localNotification);
-        }
-        
-        // Debug: Count event notifications after insert
-        final allAfterInsert = await NotificationDatabase.instance.getAllNotifications();
-        final eventAfterInsert = allAfterInsert.where((n) => n.type == 'event').toList();
-        final unreadEventAfterInsert = eventAfterInsert.where((n) => !n.isRead).toList();
-        debugPrint('📊 After insert - Event notifications: Total=${eventAfterInsert.length}, Unread=${unreadEventAfterInsert.length}');
-
-        // Reload local notifications
+      if (!response.status) {
+        debugPrint('📡 Server sync failed, keeping local notifications: ${response.message}');
         await loadLocalNotifications();
-        debugPrint('✅ Local database force synced with server data');
-      } else {
-        debugPrint('📡 Server has no notifications or error: ${response.message}');
-        // If server has no notifications, clear local too
-        await NotificationDatabase.instance.deleteAllNotifications();
-        await loadLocalNotifications();
+        return;
       }
+
+      debugPrint('📡 Server has ${response.notifications.length} notifications');
+
+      final sortedNotifications = response.notifications.toList();
+      sortedNotifications.sort((a, b) {
+        try {
+          final aTime = DateTime.parse(a.timestamp);
+          final bTime = DateTime.parse(b.timestamp);
+          return bTime.compareTo(aTime);
+        } catch (e) {
+          debugPrint('❌ Error parsing server notification timestamp: $e');
+          return 0;
+        }
+      });
+
+      final serverIds = sortedNotifications
+          .map((notification) => notification.notificationQueueId)
+          .whereType<String>()
+          .where((id) => id.trim().isNotEmpty)
+          .toSet();
+
+      final localNotifications =
+          await NotificationDatabase.instance.getAllNotifications();
+      for (final local in localNotifications) {
+        final serverId = local.serverId;
+        final shouldRemove = local.id != null &&
+            (serverId == null ||
+                serverId.trim().isEmpty ||
+                !serverIds.contains(serverId));
+        if (shouldRemove) {
+          await NotificationDatabase.instance.deleteNotificationById(local.id!);
+        }
+      }
+
+      for (final serverNotification in sortedNotifications) {
+        final localNotification = serverNotification.toLocalModel();
+        final serverId = localNotification.serverId;
+        if (serverId != null && serverId.trim().isNotEmpty) {
+          final existing = await NotificationDatabase.instance
+              .getNotificationByServerId(serverId);
+          if (existing?.id != null) {
+            await NotificationDatabase.instance
+                .deleteNotificationById(existing!.id!);
+          }
+        }
+        debugPrint('📝 Inserting notification: ${localNotification.title} (ServerID: ${localNotification.serverId}, Type: ${localNotification.type}, Read: ${localNotification.isRead}, Time: ${localNotification.timestamp})');
+        await NotificationDatabase.instance.insertNotification(localNotification);
+      }
+
+      await loadLocalNotifications();
+      debugPrint('✅ Local database force synced with server data');
     } catch (e) {
       debugPrint('❌ Error syncing with server: $e');
+      await loadLocalNotifications();
     }
   }
 

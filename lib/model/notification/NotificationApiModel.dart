@@ -13,6 +13,7 @@ class NotificationApiModel {
   final String? actionUrl;
   final String? notificationQueueId; // Store the server's notification_queue_id
   final String? eventOfferId; // Store the event_offer_id for linking to events/offers
+  final String? relatedEndDate;
 
   NotificationApiModel({
     this.id,
@@ -26,6 +27,7 @@ class NotificationApiModel {
     this.actionUrl,
     this.notificationQueueId,
     this.eventOfferId,
+    this.relatedEndDate,
   });
 
   // Helper method to safely parse integer values
@@ -67,6 +69,7 @@ class NotificationApiModel {
       actionUrl: json['action_url'],
       notificationQueueId: json['notification_queue_id']?.toString(), // Capture the server's notification_queue_id
       eventOfferId: json['event_offer_id']?.toString(), // Capture the event_offer_id for linking to events/offers
+      relatedEndDate: json['related_end_date']?.toString(),
     );
   }
 
@@ -87,7 +90,6 @@ class NotificationApiModel {
   // Convert to local database model
   NotificationDataModel toLocalModel() {
     return NotificationDataModel(
-      id: id,
       title: title,
       body: body,
       image: image ?? '',
@@ -96,6 +98,7 @@ class NotificationApiModel {
       type: type, // Include notification type (event, offer, default)
       serverId: notificationQueueId, // Store the server's notification_queue_id
       eventOfferId: eventOfferId, // Store the event_offer_id for linking to events/offers
+      relatedEndDate: relatedEndDate,
     );
   }
 }

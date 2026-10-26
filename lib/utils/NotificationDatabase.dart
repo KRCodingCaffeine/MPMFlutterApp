@@ -1,4 +1,5 @@
 import 'package:mpm/model/notification/NotificationDataModel.dart';
+import 'package:mpm/utils/notification_visibility.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 class NotificationDatabase {
@@ -16,7 +17,7 @@ class NotificationDatabase {
       final path = join(dbPath, filePath);
       return await openDatabase(
         path, 
-        version: 3, // Increment version to trigger migration for eventOfferId
+        version: 4,
         onCreate: _createDB,
         onUpgrade: _onUpgrade,
       );
@@ -38,7 +39,8 @@ class NotificationDatabase {
         type TEXT,
         actionUrl TEXT,
         serverId TEXT,
-        eventOfferId TEXT
+        eventOfferId TEXT,
+        relatedEndDate TEXT
       )
     ''');
   }
@@ -59,10 +61,38 @@ class NotificationDatabase {
         print('Note: eventOfferId column may already exist: $e');
       }
     }
+    if (oldVersion < 4) {
+      try {
+        await db.execute('ALTER TABLE notifications ADD COLUMN relatedEndDate TEXT');
+      } catch (e) {
+        print('Note: relatedEndDate column may already exist: $e');
+      }
+    }
   }
-  Future<void> insertNotification(NotificationDataModel notification) async {
+  Future<int> insertNotification(NotificationDataModel notification) async {
     final db = await instance.database;
-    await db.insert('notifications', notification.toMap());
+    return await db.insert(
+      'notifications',
+      notification.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<NotificationDataModel?> getNotificationByServerId(String serverId) async {
+    if (serverId.trim().isEmpty) {
+      return null;
+    }
+    final db = await instance.database;
+    final result = await db.query(
+      'notifications',
+      where: 'serverId = ?',
+      whereArgs: [serverId],
+      limit: 1,
+    );
+    if (result.isEmpty) {
+      return null;
+    }
+    return NotificationDataModel.fromMap(result.first);
   }
 
   Future<List<NotificationDataModel>> getAllNotifications() async {
@@ -109,13 +139,20 @@ class NotificationDatabase {
     );
   }
 
+  bool _countsAsUnread(NotificationDataModel notification) {
+    if (notification.isRead) {
+      return false;
+    }
+    return !NotificationVisibility.isPastEventOrTrip(
+      type: notification.type,
+      relatedEndDate: notification.relatedEndDate,
+    );
+  }
+
   Future<int> getUnreadNotificationCount() async {
     try {
-      final db = await database;
-      final result = await db.rawQuery(
-        'SELECT COUNT(*) as count FROM notifications WHERE isRead = 0'
-      );
-      return Sqflite.firstIntValue(result) ?? 0;
+      final notifications = await getAllNotifications();
+      return notifications.where(_countsAsUnread).length;
     } catch (e) {
       print('Get unread count error: $e');
       return 0;
@@ -125,30 +162,19 @@ class NotificationDatabase {
   /// Get unread notification count by type (e.g., "event", "offer", "default")
   Future<int> getUnreadNotificationCountByType(String type) async {
     try {
-      final db = await database;
-      final result = await db.rawQuery(
-        'SELECT COUNT(*) as count FROM notifications WHERE isRead = 0 AND type = ?',
-        [type]
-      );
-      final count = Sqflite.firstIntValue(result) ?? 0;
+      final notifications = await getAllNotifications();
+      final normalizedType = NotificationVisibility.normalizeType(type);
+      final count = notifications.where((notification) {
+        if (!_countsAsUnread(notification)) {
+          return false;
+        }
+        final itemType = NotificationVisibility.normalizeType(notification.type);
+        if (normalizedType == 'default') {
+          return itemType == 'default';
+        }
+        return itemType == normalizedType;
+      }).length;
       print('📊 Unread count for type "$type": $count');
-      
-      // Debug: List all notifications of this type
-      final allOfType = await db.query(
-        'notifications',
-        where: 'type = ?',
-        whereArgs: [type],
-      );
-      final unreadOfType = await db.query(
-        'notifications',
-        where: 'isRead = 0 AND type = ?',
-        whereArgs: [type],
-      );
-      print('📊 Type "$type": Total=${allOfType.length}, Unread=${unreadOfType.length}');
-      for (final notif in unreadOfType) {
-        print('  - Unread: ${notif['title']} (ID: ${notif['id']}, ServerID: ${notif['serverId']}, Read: ${notif['isRead']})');
-      }
-      
       return count;
     } catch (e) {
       print('Get unread count by type error: $e');
@@ -188,16 +214,41 @@ class NotificationDatabase {
   /// Check if a specific event_offer_id has unread notifications
   Future<bool> hasUnreadNotificationsByEventOfferId(String eventOfferId) async {
     try {
-      final db = await database;
-      final result = await db.rawQuery(
-        'SELECT COUNT(*) as count FROM notifications WHERE isRead = 0 AND eventOfferId = ?',
-        [eventOfferId]
-      );
-      final count = Sqflite.firstIntValue(result) ?? 0;
-      return count > 0;
+      final notifications = await getAllNotifications();
+      return notifications.any((notification) {
+        if (notification.eventOfferId != eventOfferId) {
+          return false;
+        }
+        return _countsAsUnread(notification);
+      });
     } catch (e) {
       print('Error checking unread notifications by eventOfferId: $e');
       return false;
+    }
+  }
+
+  Future<int> markPastEventOrTripNotificationsAsRead() async {
+    try {
+      final notifications = await getAllNotifications();
+      var updated = 0;
+      for (final notification in notifications) {
+        if (notification.id == null || notification.isRead) {
+          continue;
+        }
+        if (!NotificationVisibility.isPastEventOrTrip(
+          type: notification.type,
+          relatedEndDate: notification.relatedEndDate,
+        )) {
+          continue;
+        }
+        await markNotificationAsRead(notification.id!);
+        updated++;
+      }
+      print('✅ Marked $updated past event/trip notifications as read');
+      return updated;
+    } catch (e) {
+      print('❌ Error marking past event/trip notifications as read: $e');
+      return 0;
     }
   }
 

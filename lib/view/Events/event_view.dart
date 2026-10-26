@@ -13,6 +13,7 @@ import 'package:mpm/view/Events/event_detail_page.dart';
 import 'package:mpm/view/Events/member_registered_event.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 import 'package:mpm/view_model/controller/notification/NotificationApiController.dart';
+import 'package:mpm/utils/notification_visibility.dart';
 
 class EventsPage extends StatefulWidget {
   const EventsPage({Key? key}) : super(key: key);
@@ -121,6 +122,7 @@ class _EventsPageState extends State<EventsPage>
           _isLoading = false;
           _error = null;
         });
+        _dismissPastEventNotifications();
         _applyFilters();
       } else {
         setState(() {
@@ -214,12 +216,21 @@ class _EventsPageState extends State<EventsPage>
     });
   }
 
+  void _dismissPastEventNotifications() {
+    final pastIds = _allEvents
+        .where((event) => NotificationVisibility.isPastDate(event.dateEndTo))
+        .map((event) => event.eventId ?? '')
+        .where((id) => id.isNotEmpty)
+        .toList();
+    notificationController.ignoreUnreadForPastEventOfferIds(pastIds);
+  }
+
   Widget _buildEventCard(EventData event) {
     final parsedDate =
         DateTime.tryParse(event.dateStartsFrom ?? '') ?? DateTime.now();
     final day = DateFormat('d').format(parsedDate);
     final month = DateFormat('MMM').format(parsedDate);
-    final isPastEvent = parsedDate.isBefore(DateTime.now());
+    final isPastEvent = NotificationVisibility.isPastDate(event.dateEndTo);
 
     return GestureDetector(
       onTap: () async {

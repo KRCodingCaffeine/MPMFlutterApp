@@ -6,6 +6,7 @@ import 'package:mpm/model/notification/NotificationDataModel.dart';
 import 'package:mpm/view_model/controller/notification/NotificationApiController.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/utils/notification_visibility.dart';
 
 class NotificationListView extends StatefulWidget {
   const NotificationListView({super.key});
@@ -51,7 +52,7 @@ class _NotificationListViewState extends State<NotificationListView> {
 
         // Filter to show only default type notifications
         final defaultNotifications = controller.notificationList
-            .where((notification) => notification.type == 'default' || notification.type == null)
+            .where((notification) => NotificationVisibility.isDefaultType(notification.type))
             .toList();
         
         // Show empty state if no default notifications

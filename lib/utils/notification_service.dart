@@ -8,6 +8,7 @@ import 'dart:io' show Platform;
 import 'dart:convert';
 import 'package:mpm/model/notification/NotificationDataModel.dart';
 import 'package:mpm/utils/NotificationDatabase.dart';
+import 'package:mpm/utils/notification_visibility.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 import 'package:mpm/route/route_name.dart';
@@ -174,7 +175,7 @@ class NotificationService {
           ledColor: Colors.white,
           importance: NotificationImportance.Max,
           playSound: true,
-          channelShowBadge: true,
+          channelShowBadge: false,
           enableVibration: true,
           enableLights: true,
           criticalAlerts: true,
@@ -187,7 +188,7 @@ class NotificationService {
           ledColor: Colors.white,
           importance: NotificationImportance.High,
           playSound: true,
-          channelShowBadge: true,
+          channelShowBadge: false,
           enableVibration: true,
           enableLights: true,
         ),
@@ -222,7 +223,7 @@ class NotificationService {
     // iOS: ensure notifications appear while app is in foreground
     await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
       alert: false,
-      badge: true,
+      badge: false,
       sound: true,
     );
 
@@ -379,16 +380,12 @@ class NotificationService {
       
       debugPrint("📺 Creating notification with channel: $channelKey");
       
-      // iOS-specific notification content
       final notificationContent = NotificationContent(
         id: id,
         channelKey: channelKey,
         title: title,
         body: body,
-        // 👇 ADD THIS (your logo inside notification)
-        largeIcon: 'resource://drawable/mpm_logo.png',
-
-        // 👇 Keep existing big picture logic
+        largeIcon: Platform.isAndroid ? 'resource://drawable/mpm_logo.png' : null,
         bigPicture: (image.isNotEmpty) ? image : null,
         notificationLayout: (image.isNotEmpty)
             ? NotificationLayout.BigPicture
@@ -418,7 +415,24 @@ class NotificationService {
     }
   }
 
-  // Persists notification, increments and syncs badge; returns new badge count
+  String _notificationTypeFromMessage(RemoteMessage message) {
+    return NotificationVisibility.normalizeType(
+      message.data['notification_type']?.toString() ??
+          message.data['type']?.toString(),
+    );
+  }
+
+  String _dataValue(RemoteMessage message, List<String> keys) {
+    for (final key in keys) {
+      final value = message.data[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) {
+        return value;
+      }
+    }
+    return '';
+  }
+
+  // Persists notification, then syncs the in-app list badge from SQLite.
   Future<int> _persistNotificationAndUpdateBadge(
     RemoteMessage message, {
     String? overrideTitle,
@@ -431,6 +445,38 @@ class NotificationService {
         (message.notification?.body ?? message.data['body'] ?? 'You have a new message');
     final String image = overrideImage ??
         (message.notification?.android?.imageUrl ?? message.data['image'] ?? '');
+    final type = _notificationTypeFromMessage(message);
+    final serverId = _dataValue(message, [
+      'serverId',
+      'notification_queue_id',
+      'server_id',
+    ]);
+    final eventOfferId = _dataValue(message, [
+      'event_offer_id',
+      'eventOfferId',
+      'event_offerId',
+    ]);
+    final relatedEndDate = _dataValue(message, [
+      'related_end_date',
+      'relatedEndDate',
+    ]);
+
+    if (NotificationVisibility.isPastEventOrTrip(
+      type: type,
+      relatedEndDate: relatedEndDate,
+    )) {
+      debugPrint("⏭️ Skipping persist for past $type notification");
+      return await _syncVisibleBadgeFromDatabase();
+    }
+
+    if (serverId.isNotEmpty) {
+      final existing =
+          await NotificationDatabase.instance.getNotificationByServerId(serverId);
+      if (existing != null) {
+        debugPrint("⏭️ Notification $serverId already stored locally");
+        return await _syncVisibleBadgeFromDatabase();
+      }
+    }
 
     final notificationModel = NotificationDataModel(
       title: title,
@@ -438,22 +484,26 @@ class NotificationService {
       image: image,
       timestamp: DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
       isRead: false,
+      type: type,
+      serverId: serverId.isEmpty ? null : serverId,
+      eventOfferId: eventOfferId.isEmpty ? null : eventOfferId,
+      relatedEndDate: relatedEndDate.isEmpty ? null : relatedEndDate,
     );
 
     await NotificationDatabase.instance.insertNotification(notificationModel);
-    debugPrint("💾 Notification saved to database");
+    debugPrint("💾 Notification saved to database (type: $type, serverId: $serverId)");
 
-    int badgeCount = await _getSavedBadgeCount();
-    badgeCount++;
+    return await _syncVisibleBadgeFromDatabase();
+  }
+
+  Future<int> _syncVisibleBadgeFromDatabase() async {
+    await NotificationDatabase.instance.markPastEventOrTripNotificationsAsRead();
+    final badgeCount =
+        await NotificationDatabase.instance.getUnreadNotificationCountByType('default');
     await _saveBadgeCount(badgeCount);
-    debugPrint("🔢 Badge count updated to: $badgeCount");
-
-    // Update badge count using multiple methods for iOS compatibility
     await _updateBadgeCount(badgeCount);
-
-    // Update notification controller unread count
     await updateNotificationController();
-
+    debugPrint("🔢 Visible notification badge synced to: $badgeCount");
     return badgeCount;
   }
 
@@ -492,28 +542,53 @@ class NotificationService {
 
   void handleNotificationTap(RemoteMessage message) {
     debugPrint("Notification tapped: ${message.data}");
-    
+    _openNotificationTarget(
+      type: _notificationTypeFromMessage(message),
+      eventOfferId: _dataValue(message, [
+        'event_offer_id',
+        'eventOfferId',
+        'event_offerId',
+      ]),
+    );
+  }
+
+  void _openNotificationTarget({
+    required String type,
+    String eventOfferId = '',
+  }) {
     try {
-      // Navigate to dashboard first
       Get.offAllNamed(RouteNames.dashboard);
-      
-      // Wait for dashboard to load, then switch to notification tab
-      Future.delayed(Duration(milliseconds: 1000), () {
+
+      Future.delayed(const Duration(milliseconds: 1000), () {
         try {
+          if (type == 'event') {
+            Get.toNamed(RouteNames.event_view);
+            return;
+          }
+          if (type == 'trips') {
+            Get.toNamed(RouteNames.event_trip);
+            return;
+          }
+          if (type == 'offer') {
+            Get.toNamed(RouteNames.discount_offer_view);
+            return;
+          }
+          if (type == 'saraswani') {
+            Get.toNamed(RouteNames.saraswani_label);
+            return;
+          }
           if (Get.isRegistered<UdateProfileController>()) {
             final dashboardController = Get.find<UdateProfileController>();
-            dashboardController.changeTab(3); // Switch to notification tab (index 3)
+            dashboardController.changeTab(3);
             debugPrint("✅ Switched to notification tab");
           }
         } catch (e) {
-          debugPrint("❌ Error switching to notification tab: $e");
+          debugPrint("❌ Error opening notification target: $e");
         }
       });
-      
-      // Refresh list and sync badge
+
       refreshNotificationList();
-      
-      debugPrint("✅ Notification tap handled - navigated to dashboard");
+      debugPrint("✅ Notification tap handled for type: $type, eventOfferId: $eventOfferId");
     } catch (e) {
       debugPrint("❌ Error handling notification tap: $e");
     }
@@ -752,9 +827,8 @@ class NotificationService {
     try {
       if (Get.isRegistered<NotificationApiController>()) {
         final controller = Get.find<NotificationApiController>();
-        // Update the unread count directly
-        controller.unreadCount.value = await NotificationDatabase.instance.getUnreadNotificationCount();
-        debugPrint("✅ Notification controller unread count updated to: ${controller.unreadCount.value}");
+        await controller.loadLocalNotifications();
+        debugPrint("✅ Notification controller refreshed from local database");
       }
     } catch (e) {
       debugPrint("❌ Error updating notification controller: $e");
@@ -1079,9 +1153,8 @@ class NotificationService {
                    message.data['image'] ?? 
                    "";
 
-      // Get current badge count
-      final badgeCount = await getCurrentBadgeCount();
-      final newBadgeCount = badgeCount + 1;
+      final newBadgeCount =
+          await NotificationDatabase.instance.getUnreadNotificationCountByType('default');
 
       // Create notification
       await AwesomeNotifications().createNotification(
@@ -1161,40 +1234,25 @@ class NotificationService {
   // Awesome callbacks
   static Future<void> onActionReceived(ReceivedAction action) async {
     debugPrint("User tapped notification: ${action.payload}");
-    
-    try {
-      // Navigate to dashboard first
-      Get.offAllNamed(RouteNames.dashboard);
-      
-      // Wait for dashboard to load, then switch to notification tab
-      Future.delayed(Duration(milliseconds: 1000), () {
-        try {
-          if (Get.isRegistered<UdateProfileController>()) {
-            final dashboardController = Get.find<UdateProfileController>();
-            dashboardController.changeTab(3); // Switch to notification tab (index 3)
-            debugPrint("✅ Switched to notification tab");
-          }
-        } catch (e) {
-          debugPrint("❌ Error switching to notification tab: $e");
-        }
-      });
-      
-      // Refresh notification list and sync badge
-      await refreshNotificationList();
-      
-      debugPrint("✅ Navigated to dashboard and refreshed list");
-    } catch (e) {
-      debugPrint("❌ Error handling notification tap: $e");
-    }
+    final payload = action.payload ?? <String, String?>{};
+    final type = NotificationVisibility.normalizeType(
+      payload['notification_type'] ?? payload['type'],
+    );
+    final eventOfferId = payload['event_offer_id'] ??
+        payload['eventOfferId'] ??
+        payload['event_offerId'] ??
+        '';
+    NotificationService()._openNotificationTarget(
+      type: type,
+      eventOfferId: eventOfferId,
+    );
   }
 
   static Future<void> onNotificationCreated(ReceivedNotification notification) async {}
   static Future<void> onNotificationDisplayed(ReceivedNotification notification) async {}
   static Future<void> onDismissActionReceived(ReceivedAction action) async {
-    int count = await _getSavedBadgeCount();
-    count = (count > 0) ? count - 1 : 0;
-    await _saveBadgeCount(count);
-    await AwesomeNotifications().setGlobalBadgeCounter(count);
+    final service = NotificationService();
+    await service._syncVisibleBadgeFromDatabase();
   }
 }
 
@@ -1227,7 +1285,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
           ledColor: Colors.white,
           importance: NotificationImportance.Max,
           playSound: true,
-          channelShowBadge: true,
+          channelShowBadge: false,
           enableVibration: true,
           enableLights: true,
           criticalAlerts: true,
@@ -1240,7 +1298,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
           ledColor: Colors.white,
           importance: NotificationImportance.High,
           playSound: true,
-          channelShowBadge: true,
+          channelShowBadge: false,
           enableVibration: true,
           enableLights: true,
         ),

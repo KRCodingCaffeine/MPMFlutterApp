@@ -12,6 +12,7 @@ import 'package:mpm/view/EventTrip/member_registered_trip.dart';
 import 'package:mpm/view/EventTrip/member_registered_trip_detail.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 import 'package:mpm/view_model/controller/notification/NotificationApiController.dart';
+import 'package:mpm/utils/notification_visibility.dart';
 import 'dart:math' as math;
 
 class EventTripPage extends StatefulWidget {
@@ -123,6 +124,7 @@ class _EventTripPageState extends State<EventTripPage>
           _isLoading = false;
           _error = null;
         });
+        _dismissPastTripNotifications();
         _applyFilters();
       } else {
         setState(() {
@@ -213,10 +215,19 @@ class _EventTripPageState extends State<EventTripPage>
     });
   }
 
+  void _dismissPastTripNotifications() {
+    final pastIds = _allTrips
+        .where((trip) => NotificationVisibility.isPastDate(trip.tripEndDate))
+        .map((trip) => trip.tripId ?? '')
+        .where((id) => id.isNotEmpty)
+        .toList();
+    notificationController.ignoreUnreadForPastEventOfferIds(pastIds);
+  }
+
   Widget _buildTripCard(GetEventTripData trip) {
     final parsedDate =
         DateTime.tryParse(trip.tripStartDate ?? '') ?? DateTime.now();
-    final isPastTrip = parsedDate.isBefore(DateTime.now());
+    final isPastTrip = NotificationVisibility.isPastDate(trip.tripEndDate);
     final day = DateFormat('d').format(parsedDate);
     final month = DateFormat('MMM').format(parsedDate);
 
