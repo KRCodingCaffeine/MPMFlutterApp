@@ -520,7 +520,7 @@ class _UtilityViewState extends State<UtilityView> {
       appBar: AppBar(
         backgroundColor: logoColor,
         title: const Text(
-          "Utility",
+          "Doctors",
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w500,
