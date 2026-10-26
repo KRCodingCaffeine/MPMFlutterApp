@@ -170,7 +170,8 @@ class AppDrawer extends StatelessWidget {
           title: 'Make New Member',
           iconSize: iconSize,
           titleFontSize: titleFontSize,
-          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          contentPadding: EdgeInsets.symmetric(
+              horizontal: listTilePaddingH, vertical: listTilePaddingV),
           onTap: () {
             Navigator.pop(context);
             Navigator.pushNamed(context, RouteNames.newMember);
@@ -353,28 +354,35 @@ class AppDrawer extends StatelessWidget {
         'https://apps.apple.com/in/app/mpm-mumbai/id6748281499';
 
     const String shareText = '''
-    🌟 *Maheshwari Pragati Mandal Mumbai*
-    
-    🙏 Jai Shri Krishna
-    
-    📱 Download the official MPM App and stay connected with our Mandal!
-    
-    ✨ Explore Mandal's Programs, Monthly Magazine and avail Discount Schemes and more.
-    
-    📲 *Download the MPM App:*
-    
-    🤖 Android:
-    $playStoreLink
-    
-    🍎 iPhone / iPad:
-    $appStoreLink
-    
-    *Maheshwari Pragati Mandal Mumbai*
-    ''';
+      *Maheshwari Pragati Mandal, Mumbai*
+      
+      Jai Shri Krishna!
+      
+      Stay connected with Maheshwari Pragati Mandal through our official mobile application.
+      
+      *Explore the MPM App*
+      
+      - Stay updated on Mandal activities and programs.
+      - Read the Monthly Saraswani magazine.
+      - Discover exclusive discount schemes.
+      - Access important Mandal updates and services.
+      
+      *Download the Official MPM App*
+      
+      *For Android:*
+      $playStoreLink
+      
+      *For iPhone and iPad:*
+      $appStoreLink
+      
+      Stay Connected. Stay Informed. Stay United.
+      
+      *Maheshwari Pragati Mandal, Mumbai*
+      ''';
 
     await Share.share(
       shareText,
-      subject: 'Download MPM App',
+      subject: 'Official MPM App | Maheshwari Pragati Mandal, Mumbai',
       sharePositionOrigin:
           box != null ? box.localToGlobal(Offset.zero) & box.size : null,
     );

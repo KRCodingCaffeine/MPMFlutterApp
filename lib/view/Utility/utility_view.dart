@@ -1,4 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:mpm/model/CountryModel/CountryData.dart';
+import 'package:mpm/model/CountryModel/CountryModelClass.dart';
+import 'package:mpm/model/State/StateData.dart';
+import 'package:mpm/model/State/StateModelClass.dart';
+import 'package:mpm/model/city/CityData.dart';
+import 'package:mpm/model/city/CityModelClass.dart';
+import 'package:mpm/repository/register_repository/register_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -527,6 +538,19 @@ class _UtilityViewState extends State<UtilityView> {
           ),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          TextButton.icon(
+            onPressed: _showAddDoctorInstructions,
+            icon: const Icon(Icons.person_add_alt_1, color: Colors.white, size: 20),
+            label: const Text(
+              'Add Doctors',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -1108,6 +1132,143 @@ class _UtilityViewState extends State<UtilityView> {
     );
   }
 
+  void _showAddDoctorInstructions() {
+    final themeColor = ColorHelperClass.getColorFromHex(ColorResources.red_color);
+
+    const instructions = [
+      'The doctor you propose to add must be from Maheshwari community.',
+      'He should be prepared to become member of the Mandal, if he is not at the moment.',
+      'Please fill up his details and submit.',
+    ];
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          insetPadding: const EdgeInsets.all(20),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 22, color: themeColor),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Instructions',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const Spacer(),
+                      InkWell(
+                        onTap: () => Navigator.pop(dialogContext),
+                        child: Icon(Icons.close, size: 26, color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Divider(color: Colors.grey[300]),
+                  const SizedBox(height: 12),
+                  ...List.generate(instructions.length, (index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${index + 1}. ',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: themeColor,
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              instructions[index],
+                              style: const TextStyle(
+                                fontSize: 14,
+                                height: 1.4,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 4),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red[50],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.red[200]!),
+                    ),
+                    child: Text(
+                      'Mandal office would go thru and then make this live.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.red[800],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(dialogContext);
+                        _showAddDoctorBottomSheet();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: themeColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text(
+                        'I understand, Confirm',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAddDoctorBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const _AddDoctorBottomSheet(),
+    );
+  }
+
   void _showFilterBottomSheet() {
     final themeColor = ColorHelperClass.getColorFromHex(ColorResources.red_color);
     final specialties = getAvailableSpecialties();
@@ -1215,6 +1376,708 @@ class _UtilityViewState extends State<UtilityView> {
           ),
         );
       },
+    );
+  }
+}
+
+class _AddDoctorBottomSheet extends StatefulWidget {
+  const _AddDoctorBottomSheet();
+
+  @override
+  State<_AddDoctorBottomSheet> createState() => _AddDoctorBottomSheetState();
+}
+
+class _AddDoctorBottomSheetState extends State<_AddDoctorBottomSheet> {
+  final _formKey = GlobalKey<FormState>();
+  final _registerRepo = RegisterRepository();
+  final ImagePicker _picker = ImagePicker();
+  File? _profileImage;
+
+  // Personal info
+  final _firstNameController = TextEditingController();
+  final _middleNameController = TextEditingController();
+  final _surnameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _mobileController = TextEditingController();
+  final _alternateMobileController = TextEditingController();
+  final _whatsappController = TextEditingController();
+
+  // Home address
+  final _homePincodeController = TextEditingController();
+  final _homeFlatNoController = TextEditingController();
+  final _homeAddressController = TextEditingController();
+  final _homeAreaController = TextEditingController();
+  String? _homeCityId;
+  String? _homeStateId;
+  String? _homeCountryId;
+
+  // Clinic address
+  final _clinicNameController = TextEditingController();
+  final _clinicPhoneController = TextEditingController();
+  final _clinicPincodeController = TextEditingController();
+  final _clinicFlatNoController = TextEditingController();
+  final _clinicAddressController = TextEditingController();
+  final _clinicAreaController = TextEditingController();
+  String? _clinicCityId;
+  String? _clinicStateId;
+  String? _clinicCountryId;
+
+  bool _isLocationLoading = true;
+  List<CountryData> _countries = [];
+  List<StateData> _states = [];
+  List<CityData> _cities = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLocations();
+  }
+
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _middleNameController.dispose();
+    _surnameController.dispose();
+    _emailController.dispose();
+    _mobileController.dispose();
+    _alternateMobileController.dispose();
+    _whatsappController.dispose();
+    _homePincodeController.dispose();
+    _homeFlatNoController.dispose();
+    _homeAddressController.dispose();
+    _homeAreaController.dispose();
+    _clinicNameController.dispose();
+    _clinicPhoneController.dispose();
+    _clinicPincodeController.dispose();
+    _clinicFlatNoController.dispose();
+    _clinicAddressController.dispose();
+    _clinicAreaController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadLocations() async {
+    try {
+      final results = await Future.wait([
+        _registerRepo.CountryApi(),
+        _registerRepo.StateApi(),
+        _registerRepo.CityApi(),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _countries = (results[0] as CountryModelClass).data ?? [];
+        _states = (results[1] as StateModelClass).data ?? [];
+        _cities = (results[2] as CityModelClass).data ?? [];
+        _isLocationLoading = false;
+      });
+    } catch (e) {
+      debugPrint('❌ Error loading locations: $e');
+      if (!mounted) return;
+      setState(() => _isLocationLoading = false);
+    }
+  }
+
+  // States filtered by the selected country
+  List<StateData> _statesFor(String? countryId) {
+    if (countryId == null) return _states;
+    return _states.where((s) => s.countryId == countryId).toList();
+  }
+
+  // Cities filtered by the selected state, or country when no state is selected
+  List<CityData> _citiesFor(String? stateId, String? countryId) {
+    if (stateId != null) {
+      return _cities.where((c) => c.stateId == stateId).toList();
+    }
+    if (countryId != null) {
+      return _cities.where((c) => c.countryId == countryId).toList();
+    }
+    return _cities;
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? picked = await _picker.pickImage(
+        source: source,
+        imageQuality: 70,
+        maxWidth: 1024,
+      );
+      if (picked != null && mounted) {
+        setState(() => _profileImage = File(picked.path));
+      }
+    } catch (e) {
+      debugPrint('❌ Error picking image: $e');
+    }
+  }
+
+  void _showImageSourcePicker() {
+    final themeColor = ColorHelperClass.getColorFromHex(ColorResources.red_color);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.camera_alt_outlined, color: themeColor),
+                title: const Text('Take Photo'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.photo_library_outlined, color: themeColor),
+                title: const Text('Choose from Gallery'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+              if (_profileImage != null)
+                ListTile(
+                  leading: const Icon(Icons.delete_outline, color: Colors.red),
+                  title: const Text('Remove Photo'),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    setState(() => _profileImage = null);
+                  },
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  String? _requiredValidator(String? value, String fieldName) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Please enter $fieldName';
+    }
+    return null;
+  }
+
+  String? _emailValidator(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+    final emailRegex = RegExp(r'^[\w.+-]+@[\w-]+\.[\w.-]+$');
+    if (!emailRegex.hasMatch(value.trim())) {
+      return 'Please enter a valid email address';
+    }
+    return null;
+  }
+
+  String? _mobileValidator(String? value, {bool required = false}) {
+    if (value == null || value.trim().isEmpty) {
+      return required ? 'Please enter mobile number' : null;
+    }
+    if (!RegExp(r'^[0-9]{10}$').hasMatch(value.trim())) {
+      return 'Please enter a valid 10 digit number';
+    }
+    return null;
+  }
+
+  String? _pincodeValidator(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+    if (!RegExp(r'^[0-9]{6}$').hasMatch(value.trim())) {
+      return 'Please enter a valid 6 digit pincode';
+    }
+    return null;
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+
+    // TODO: Submit doctor details to the API once it is available
+    final messenger = ScaffoldMessenger.of(context);
+    Navigator.pop(context);
+    messenger.showSnackBar(
+      SnackBar(
+        content: const Text(
+          'Doctor details submitted. Mandal office will review and make it live.',
+        ),
+        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    final themeColor = ColorHelperClass.getColorFromHex(ColorResources.red_color);
+
+    return InputDecoration(
+      labelText: label,
+      counterText: '',
+      prefixIcon: Icon(icon, color: Colors.grey[600], size: 20),
+      filled: true,
+      fillColor: Colors.grey[100],
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey[300]!),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey[300]!),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: themeColor),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+    String? Function(String?)? validator,
+    int? maxLength,
+    int maxLines = 1,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        validator: validator,
+        maxLength: maxLength,
+        maxLines: maxLines,
+        textCapitalization: keyboardType == TextInputType.text
+            ? TextCapitalization.words
+            : TextCapitalization.none,
+        decoration: _inputDecoration(label, icon),
+      ),
+    );
+  }
+
+  Widget _buildDropdown({
+    required String label,
+    required IconData icon,
+    required String? value,
+    required List<DropdownMenuItem<String>> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    // Drop the selection if it is not in the current (filtered) list
+    final selected =
+        items.any((item) => item.value == value) ? value : null;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: DropdownButtonFormField<String>(
+        key: ValueKey('$label-$selected-${items.length}'),
+        initialValue: selected,
+        isExpanded: true,
+        items: items,
+        onChanged: _isLocationLoading ? null : onChanged,
+        menuMaxHeight: 350,
+        decoration: _inputDecoration(label, icon).copyWith(
+          suffixIcon: _isLocationLoading
+              ? const Padding(
+                  padding: EdgeInsets.all(14),
+                  child: SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              : null,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, IconData icon) {
+    final themeColor = ColorHelperClass.getColorFromHex(ColorResources.red_color);
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 14),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: themeColor),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(child: Divider(color: Colors.grey[300])),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileImagePicker() {
+    final themeColor = ColorHelperClass.getColorFromHex(ColorResources.red_color);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Center(
+        child: GestureDetector(
+          onTap: _showImageSourcePicker,
+          child: Column(
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.grey[200],
+                    backgroundImage: _profileImage != null
+                        ? FileImage(_profileImage!)
+                        : const AssetImage('assets/images/user3.png')
+                            as ImageProvider,
+                  ),
+                  Positioned(
+                    right: -2,
+                    bottom: -2,
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: themeColor,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: const Icon(
+                        Icons.camera_alt,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _profileImage != null ? 'Change Profile Image' : 'Upload Profile Image',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: themeColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// City, State and Country dropdowns. Picking a city fills its state and
+  /// country; changing state or country clears selections that no longer match.
+  List<Widget> _buildLocationDropdowns({
+    required String? cityId,
+    required String? stateId,
+    required String? countryId,
+    required void Function(String? cityId, String? stateId, String? countryId) onChanged,
+  }) {
+    final cities = _citiesFor(stateId, countryId);
+    final states = _statesFor(countryId);
+
+    return [
+      _buildDropdown(
+        label: 'City',
+        icon: Icons.location_city_outlined,
+        value: cityId,
+        items: cities
+            .map((city) => DropdownMenuItem<String>(
+                  value: city.id,
+                  child: Text(city.cityName ?? '', overflow: TextOverflow.ellipsis),
+                ))
+            .toList(),
+        onChanged: (value) {
+          final city = _cities.firstWhereOrNull((c) => c.id == value);
+          onChanged(value, city?.stateId ?? stateId, city?.countryId ?? countryId);
+        },
+      ),
+      _buildDropdown(
+        label: 'State',
+        icon: Icons.map_outlined,
+        value: stateId,
+        items: states
+            .map((state) => DropdownMenuItem<String>(
+                  value: state.id,
+                  child: Text(state.stateName ?? '', overflow: TextOverflow.ellipsis),
+                ))
+            .toList(),
+        onChanged: (value) {
+          final state = _states.firstWhereOrNull((s) => s.id == value);
+          final city = _cities.firstWhereOrNull((c) => c.id == cityId);
+          onChanged(
+            city?.stateId == value ? cityId : null,
+            value,
+            state?.countryId ?? countryId,
+          );
+        },
+      ),
+      _buildDropdown(
+        label: 'Country',
+        icon: Icons.public,
+        value: countryId,
+        items: _countries
+            .map((country) => DropdownMenuItem<String>(
+                  value: country.id,
+                  child: Text(country.countryName ?? '', overflow: TextOverflow.ellipsis),
+                ))
+            .toList(),
+        onChanged: (value) {
+          final state = _states.firstWhereOrNull((s) => s.id == stateId);
+          final city = _cities.firstWhereOrNull((c) => c.id == cityId);
+          onChanged(
+            city?.countryId == value ? cityId : null,
+            state?.countryId == value ? stateId : null,
+            value,
+          );
+        },
+      ),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final themeColor = ColorHelperClass.getColorFromHex(ColorResources.red_color);
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.9,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              height: 4,
+              width: 40,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  Icon(Icons.person_add_alt_1, color: themeColor),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Add Doctor',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  InkWell(
+                    onTap: () => Navigator.pop(context),
+                    child: Icon(Icons.close, size: 26, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(),
+            // Form
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Personal Info
+                      _buildSectionTitle('Personal Info', Icons.person_outline),
+                      _buildProfileImagePicker(),
+                      _buildTextField(
+                        controller: _firstNameController,
+                        label: 'First Name *',
+                        icon: Icons.person_outline,
+                        validator: (value) => _requiredValidator(value, 'first name'),
+                      ),
+                      _buildTextField(
+                        controller: _middleNameController,
+                        label: 'Middle Name',
+                        icon: Icons.person_outline,
+                      ),
+                      _buildTextField(
+                        controller: _surnameController,
+                        label: 'Surname *',
+                        icon: Icons.person_outline,
+                        validator: (value) => _requiredValidator(value, 'surname'),
+                      ),
+                      _buildTextField(
+                        controller: _emailController,
+                        label: 'Email Address',
+                        icon: Icons.email_outlined,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: _emailValidator,
+                      ),
+                      _buildTextField(
+                        controller: _mobileController,
+                        label: 'Mobile Number *',
+                        icon: Icons.phone_outlined,
+                        keyboardType: TextInputType.phone,
+                        maxLength: 10,
+                        validator: (value) => _mobileValidator(value, required: true),
+                      ),
+                      _buildTextField(
+                        controller: _alternateMobileController,
+                        label: 'Alternate Mobile',
+                        icon: Icons.phone_android_outlined,
+                        keyboardType: TextInputType.phone,
+                        maxLength: 10,
+                        validator: _mobileValidator,
+                      ),
+                      _buildTextField(
+                        controller: _whatsappController,
+                        label: 'WhatsApp Number',
+                        icon: Icons.chat_outlined,
+                        keyboardType: TextInputType.phone,
+                        maxLength: 10,
+                        validator: _mobileValidator,
+                      ),
+
+                      // Home Address
+                      _buildSectionTitle('Home Address', Icons.home_outlined),
+                      _buildTextField(
+                        controller: _homePincodeController,
+                        label: 'Pincode',
+                        icon: Icons.pin_drop_outlined,
+                        keyboardType: TextInputType.number,
+                        maxLength: 6,
+                        validator: _pincodeValidator,
+                      ),
+                      _buildTextField(
+                        controller: _homeFlatNoController,
+                        label: 'Flat / House No',
+                        icon: Icons.home_work_outlined,
+                      ),
+                      _buildTextField(
+                        controller: _homeAddressController,
+                        label: 'Home Address',
+                        icon: Icons.location_on_outlined,
+                        maxLines: 2,
+                      ),
+                      _buildTextField(
+                        controller: _homeAreaController,
+                        label: 'Area / Locality',
+                        icon: Icons.signpost_outlined,
+                      ),
+                      ..._buildLocationDropdowns(
+                        cityId: _homeCityId,
+                        stateId: _homeStateId,
+                        countryId: _homeCountryId,
+                        onChanged: (cityId, stateId, countryId) {
+                          setState(() {
+                            _homeCityId = cityId;
+                            _homeStateId = stateId;
+                            _homeCountryId = countryId;
+                          });
+                        },
+                      ),
+
+                      // Clinic Address
+                      _buildSectionTitle('Clinic Address', Icons.local_hospital_outlined),
+                      _buildTextField(
+                        controller: _clinicNameController,
+                        label: 'Clinic / Hospital Name',
+                        icon: Icons.local_hospital_outlined,
+                      ),
+                      _buildTextField(
+                        controller: _clinicPhoneController,
+                        label: 'Clinic Phone',
+                        icon: Icons.phone_outlined,
+                        keyboardType: TextInputType.phone,
+                        maxLength: 12,
+                      ),
+                      _buildTextField(
+                        controller: _clinicPincodeController,
+                        label: 'Pincode',
+                        icon: Icons.pin_drop_outlined,
+                        keyboardType: TextInputType.number,
+                        maxLength: 6,
+                        validator: _pincodeValidator,
+                      ),
+                      _buildTextField(
+                        controller: _clinicFlatNoController,
+                        label: 'Flat / Office No',
+                        icon: Icons.business_outlined,
+                      ),
+                      _buildTextField(
+                        controller: _clinicAddressController,
+                        label: 'Clinic Address',
+                        icon: Icons.location_on_outlined,
+                        maxLines: 2,
+                      ),
+                      _buildTextField(
+                        controller: _clinicAreaController,
+                        label: 'Area / Locality',
+                        icon: Icons.signpost_outlined,
+                      ),
+                      ..._buildLocationDropdowns(
+                        cityId: _clinicCityId,
+                        stateId: _clinicStateId,
+                        countryId: _clinicCountryId,
+                        onChanged: (cityId, stateId, countryId) {
+                          setState(() {
+                            _clinicCityId = cityId;
+                            _clinicStateId = stateId;
+                            _clinicCountryId = countryId;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // Submit button
+            SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: themeColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      'Submit',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
