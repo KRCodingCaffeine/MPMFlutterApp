@@ -12,6 +12,8 @@ import 'package:mpm/model/city/CityModelClass.dart';
 import 'package:mpm/repository/register_repository/register_repo.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class UtilityView extends StatefulWidget {
@@ -22,14 +24,17 @@ class UtilityView extends StatefulWidget {
 }
 
 class _UtilityViewState extends State<UtilityView> {
+  static const String _recentContactsKey = 'utility_recent_doctor_contacts';
+
   final TextEditingController _searchController = TextEditingController();
-  bool _isLoading = false;
-  bool _hasSearched = false;
   List<Doctor> _allDoctors = [];
-  List<Doctor> _filteredDoctors = [];
+  List<String> _recentMobiles = [];
+  String _memberZone = '';
   String? _selectedSpecialty;
   Set<String> _savedDoctors = {};
   int _selectedTabIndex = 0;
+
+  bool get _hasSearch => _searchController.text.trim().isNotEmpty;
 
   // Sample doctor data
   final List<Doctor> sampleDoctors = [
@@ -42,6 +47,7 @@ class _UtilityViewState extends State<UtilityView> {
       experience: '15 years',
       clinicName: 'Heart Care Clinic',
       address: '123, Main Road, Mumbai',
+      zone: 'Dadar',
     ),
     Doctor(
       name: 'Dr. Priya Sharma',
@@ -52,6 +58,7 @@ class _UtilityViewState extends State<UtilityView> {
       experience: '10 years',
       clinicName: 'Skin Care Center',
       address: '456, Park Street, Delhi',
+      zone: 'Andheri',
     ),
     Doctor(
       name: 'Dr. Amit Patel',
@@ -62,6 +69,7 @@ class _UtilityViewState extends State<UtilityView> {
       experience: '18 years',
       clinicName: 'Neuro Wellness',
       address: '789, Lake Road, Bangalore',
+      zone: 'Borivali',
     ),
     Doctor(
       name: 'Dr. Sneha Reddy',
@@ -72,6 +80,7 @@ class _UtilityViewState extends State<UtilityView> {
       experience: '8 years',
       clinicName: 'Little Care Clinic',
       address: '321, Green Valley, Hyderabad',
+      zone: 'Ghatkopar',
     ),
     Doctor(
       name: 'Dr. Vikram Singh',
@@ -82,6 +91,7 @@ class _UtilityViewState extends State<UtilityView> {
       experience: '20 years',
       clinicName: 'Bone & Joint Center',
       address: '654, Hospital Road, Chennai',
+      zone: 'Mulund',
     ),
     Doctor(
       name: 'Dr. Meera Iyer',
@@ -92,6 +102,7 @@ class _UtilityViewState extends State<UtilityView> {
       experience: '12 years',
       clinicName: 'Women\'s Health Clinic',
       address: '987, Lake View, Pune',
+      zone: 'Chembur',
     ),
     Doctor(
       name: 'Dr. Anil Gupta',
@@ -102,6 +113,7 @@ class _UtilityViewState extends State<UtilityView> {
       experience: '14 years',
       clinicName: 'Family Health Center',
       address: '147, Gandhi Nagar, Ahmedabad',
+      zone: 'Malad',
     ),
     Doctor(
       name: 'Dr. Sunita Verma',
@@ -112,6 +124,7 @@ class _UtilityViewState extends State<UtilityView> {
       experience: '9 years',
       clinicName: 'Eye Care Institute',
       address: '258, Ring Road, Jaipur',
+      zone: 'Kandivali',
     ),
   ];
 
@@ -125,7 +138,8 @@ class _UtilityViewState extends State<UtilityView> {
   void initState() {
     super.initState();
     _allDoctors = sampleDoctors;
-    _filteredDoctors = sampleDoctors;
+    _loadRecentContacts();
+    _loadMemberZone();
   }
 
   @override
@@ -134,61 +148,113 @@ class _UtilityViewState extends State<UtilityView> {
     super.dispose();
   }
 
-  void _performSearch(String query) {
+  Future<void> _loadRecentContacts() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getStringList(_recentContactsKey) ?? [];
+    if (!mounted) return;
+    setState(() => _recentMobiles = saved);
+  }
+
+  Future<void> _loadMemberZone() async {
+    final profile = Get.isRegistered<UdateProfileController>()
+        ? Get.find<UdateProfileController>()
+        : Get.put(UdateProfileController());
+    var zone = profile.getUserData.value.address?.zoneName?.toString().trim() ?? '';
+    if (zone.isEmpty || zone.toLowerCase() == 'null') {
+      try {
+        await profile.getUserProfile();
+        zone = profile.getUserData.value.address?.zoneName?.toString().trim() ?? '';
+      } catch (_) {
+        zone = '';
+      }
+    }
+    if (!mounted) return;
     setState(() {
-      _isLoading = true;
-      _hasSearched = true;
+      _memberZone = zone.toLowerCase() == 'null' ? '' : zone;
     });
+  }
 
-    // Simulate loading delay
-    Future.delayed(const Duration(milliseconds: 300), () {
-      setState(() {
-        if (query.isEmpty && _selectedSpecialty == null) {
-          _filteredDoctors = _allDoctors;
-        } else {
-          _filteredDoctors = _allDoctors.where((doctor) {
-            bool matchesSearch = true;
-            bool matchesSpecialty = true;
+  Future<void> _rememberContact(Doctor doctor) async {
+    final mobile = _digitsOnly(doctor.mobileNumber);
+    if (mobile.isEmpty) return;
+    _recentMobiles.remove(mobile);
+    _recentMobiles.insert(0, mobile);
+    if (_recentMobiles.length > 10) {
+      _recentMobiles = _recentMobiles.take(10).toList();
+    }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_recentContactsKey, _recentMobiles);
+    if (mounted) setState(() {});
+  }
 
-            if (query.isNotEmpty) {
-              final searchTerm = query.toLowerCase();
-              matchesSearch = doctor.name.toLowerCase().contains(searchTerm) ||
-                  doctor.specialty.toLowerCase().contains(searchTerm) ||
-                  doctor.clinicName.toLowerCase().contains(searchTerm);
-            }
+  String _digitsOnly(String value) => value.replaceAll(RegExp(r'[^0-9]'), '');
 
-            if (_selectedSpecialty != null && _selectedSpecialty!.isNotEmpty) {
-              matchesSpecialty =
-                  doctor.specialty == _selectedSpecialty;
-            }
+  bool _matchesSearch(Doctor doctor, String query) {
+    if (query.isEmpty) return true;
+    final name = doctor.name.toLowerCase();
+    final mobile = _digitsOnly(doctor.mobileNumber);
+    final queryDigits = _digitsOnly(query);
+    return name.contains(query) ||
+        (queryDigits.isNotEmpty && mobile.contains(queryDigits));
+  }
 
-            return matchesSearch && matchesSpecialty;
-          }).toList();
+  bool _sameZone(String doctorZone, String memberZone) {
+    final doctor = doctorZone.toLowerCase().trim();
+    final member = memberZone.toLowerCase().trim();
+    if (doctor.isEmpty || member.isEmpty) return false;
+    return doctor == member || doctor.contains(member) || member.contains(doctor);
+  }
+
+  List<Doctor> _recentDoctors() {
+    final doctors = <Doctor>[];
+    for (final mobile in _recentMobiles) {
+      for (final doctor in _allDoctors) {
+        if (_digitsOnly(doctor.mobileNumber) == mobile) {
+          doctors.add(doctor);
+          break;
         }
-        _isLoading = false;
-      });
-    });
+      }
+    }
+    return doctors;
+  }
+
+  List<Doctor> _zoneDoctors() {
+    if (_memberZone.isEmpty) return _allDoctors;
+    return _allDoctors.where((doctor) => _sameZone(doctor.zone, _memberZone)).toList();
+  }
+
+  bool get _showingRecent => _recentDoctors().isNotEmpty && !_hasSearch && _selectedSpecialty == null;
+
+  bool get _showingZoneDoctors => !_showingRecent && !_hasSearch && _selectedSpecialty == null;
+
+  List<Doctor> _visibleDoctors() {
+    final query = _searchController.text.trim().toLowerCase();
+    Iterable<Doctor> source = _allDoctors;
+
+    if (!_hasSearch && _selectedSpecialty == null) {
+      final recent = _recentDoctors();
+      source = recent.isNotEmpty ? recent : _zoneDoctors();
+    }
+
+    return source.where((doctor) {
+      final matchesSpecialty = _selectedSpecialty == null ||
+          doctor.specialty == _selectedSpecialty;
+      return _matchesSearch(doctor, query) && matchesSpecialty;
+    }).toList();
+  }
+
+  String get _listTitle {
+    if (_hasSearch) return 'Search results';
+    if (_selectedSpecialty != null) return _selectedSpecialty!;
+    if (_recentDoctors().isNotEmpty) return 'Recently contacted';
+    if (_memberZone.isNotEmpty) return '$_memberZone doctors';
+    return 'Doctors';
   }
 
   void _clearSearch() {
-    setState(() {
-      _searchController.clear();
-      _selectedSpecialty = null;
-      _filteredDoctors = _allDoctors;
-      _hasSearched = false;
-    });
-  }
-
-  void _clearFilters() {
-    setState(() {
-      _selectedSpecialty = null;
-      _filteredDoctors = _allDoctors;
-      if (_searchController.text.isNotEmpty) {
-        _performSearch(_searchController.text);
-      } else {
-        _filteredDoctors = _allDoctors;
-      }
-    });
+    _searchController.clear();
+    _selectedSpecialty = null;
+    setState(() {});
   }
 
   void _toggleSaveDoctor(Doctor doctor) {
@@ -213,8 +279,9 @@ class _UtilityViewState extends State<UtilityView> {
     });
   }
 
-  Future<void> _callDoctor(String mobileNumber) async {
-    final Uri callUri = Uri(scheme: 'tel', path: mobileNumber);
+  Future<void> _callDoctor(Doctor doctor) async {
+    await _rememberContact(doctor);
+    final Uri callUri = Uri(scheme: 'tel', path: doctor.mobileNumber);
     if (await canLaunchUrl(callUri)) {
       await launchUrl(callUri);
     } else {
@@ -231,6 +298,7 @@ class _UtilityViewState extends State<UtilityView> {
     final String shareText =
         '👨‍⚕️ Doctor: ${doctor.name}\n'
         '🏥 Specialty: ${doctor.specialty}\n'
+        '📍 Zone: ${doctor.zone}\n'
         '📞 Phone: ${doctor.mobileNumber}\n'
         '📧 Email: ${doctor.email}\n'
         '🏢 Clinic: ${doctor.clinicName}\n'
@@ -366,6 +434,21 @@ class _UtilityViewState extends State<UtilityView> {
                                 ),
                               ),
                             ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Icon(Icons.location_on_outlined, size: 16, color: themeColor),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    doctor.zone,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 14, color: Colors.black87),
+                                  ),
+                                ),
+                              ],
+                            ),
                             const SizedBox(height: 12),
                             Divider(color: Colors.grey[300]),
                             const SizedBox(height: 12),
@@ -463,7 +546,7 @@ class _UtilityViewState extends State<UtilityView> {
                                   child: ElevatedButton.icon(
                                     onPressed: () {
                                       Navigator.pop(context);
-                                      _callDoctor(doctor.mobileNumber);
+                                      _callDoctor(doctor);
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.green[600],
@@ -527,337 +610,397 @@ class _UtilityViewState extends State<UtilityView> {
         .toList();
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: const Color(0xFFF4F6F8),
       appBar: AppBar(
         backgroundColor: logoColor,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: const Text(
           "Doctors",
           style: TextStyle(
             color: Colors.white,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
           ),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           TextButton.icon(
             onPressed: _showAddDoctorInstructions,
-            icon: const Icon(Icons.person_add_alt_1, color: Colors.white, size: 20),
+            icon: const Icon(Icons.person_add_alt_1, color: Colors.white, size: 18),
             label: const Text(
-              'Add Doctors',
+              'Add',
               style: TextStyle(
                 color: Colors.white,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Search bar
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.white,
-            child: Row(
+      body: _selectedTabIndex == 0
+          ? _buildDiscoverPage(themeColor)
+          : Column(
               children: [
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey[300]!),
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (value) {
-                        if (value.isNotEmpty) {
-                          _performSearch(value);
-                        } else {
-                          setState(() {
-                            _hasSearched = false;
-                            _filteredDoctors = _allDoctors;
-                            if (_selectedSpecialty != null) {
-                              _performSearch('');
-                            }
-                          });
-                        }
-                      },
-                      decoration: InputDecoration(
-                        hintText: "Search by name, specialty, or clinic...",
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                        prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                        suffixIcon: _searchController.text.isNotEmpty
-                            ? IconButton(
-                          icon: const Icon(Icons.close, color: Colors.grey),
-                          onPressed: _clearSearch,
-                        )
-                            : null,
-                      ),
-                    ),
-                  ),
+                _buildSectionHeader(
+                  title: 'Saved',
+                  count:
+                      '${savedDoctors.length} ${savedDoctors.length == 1 ? 'doctor' : 'doctors'}',
                 ),
-                const SizedBox(width: 12),
-                // Filter button
-                GestureDetector(
-                  onTap: () {
-                    _showFilterBottomSheet();
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: _selectedSpecialty != null ? themeColor : Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: _selectedSpecialty != null ? themeColor : Colors.grey[300]!,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.filter_alt,
-                      color: _selectedSpecialty != null ? Colors.white : themeColor,
-                      size: 24,
-                    ),
-                  ),
-                ),
+                Expanded(child: _buildDoctorGrid(savedDoctors)),
               ],
             ),
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Color(0xFFE6E8EC))),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _selectedTabIndex,
+          onTap: (index) {
+            setState(() {
+              _selectedTabIndex = index;
+            });
+          },
+          backgroundColor: Colors.white,
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: themeColor,
+          unselectedItemColor: const Color(0xFF8A9099),
+          selectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 12,
           ),
-
-          // Active filter chip
-          if (_selectedSpecialty != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: Colors.white,
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.red[50],
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.red[200]!),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _selectedSpecialty!,
-                          style: TextStyle(
-                            color: themeColor,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        GestureDetector(
-                          onTap: _clearFilters,
-                          child: Icon(
-                            Icons.close,
-                            size: 16,
-                            color: themeColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '${_filteredDoctors.length} ${_filteredDoctors.length == 1 ? 'result' : 'results'} found',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          // Results header
-          if (_hasSearched && !_isLoading && _selectedSpecialty == null && _selectedTabIndex == 0)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: Colors.white,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "${_filteredDoctors.length} ${_filteredDoctors.length == 1 ? 'result' : 'results'} found",
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          // Saved header
-          if (_selectedTabIndex == 1 && savedDoctors.isNotEmpty)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: Colors.white,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "${savedDoctors.length} ${savedDoctors.length == 1 ? 'doctor' : 'doctors'} saved",
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          // Loading indicator
-          if (_isLoading && _filteredDoctors.isEmpty && _selectedTabIndex == 0)
-            const Expanded(
-              child: Center(
-                child: CircularProgressIndicator(),
-              ),
-            ),
-
-          // Content based on selected tab
-          Expanded(
-            child: _selectedTabIndex == 0
-                ? _buildDoctorGrid(_filteredDoctors)
-                : _buildDoctorGrid(savedDoctors),
+          unselectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.w500,
+            fontSize: 12,
           ),
-        ],
+          elevation: 0,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.medical_services_outlined),
+              activeIcon: Icon(Icons.medical_services),
+              label: 'Doctors',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.bookmark_border),
+              activeIcon: Icon(Icons.bookmark),
+              label: 'Saved',
+            ),
+          ],
+        ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedTabIndex,
-        onTap: (index) {
-          setState(() {
-            _selectedTabIndex = index;
-          });
-        },
-        backgroundColor: Colors.white,
-        selectedItemColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-        unselectedItemColor: Colors.grey[600],
-        selectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 12,
-        ),
-        unselectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.normal,
-          fontSize: 12,
-        ),
-        elevation: 8,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list),
-            label: 'Utility',
+    );
+  }
+
+  Widget _buildSectionHeader({
+    required String title,
+    required String count,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+      child: Row(
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1F2430),
+            ),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bookmark),
-            label: 'Saved',
+          const Spacer(),
+          Text(
+            count,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF8A9099),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDoctorGrid(List<Doctor> doctors) {
-    if (doctors.isEmpty) {
-      if (_selectedTabIndex == 1) {
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildDiscoverPage(Color themeColor) {
+    final doctors = _visibleDoctors();
+    final countLabel =
+        '${doctors.length} ${doctors.length == 1 ? 'doctor' : 'doctors'}';
+
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(child: _buildSearchBar(themeColor)),
+        SliverToBoxAdapter(child: _buildSpecialtySection(themeColor)),
+        SliverToBoxAdapter(
+          child: _buildSectionHeader(title: _listTitle, count: countLabel),
+        ),
+        if (doctors.isEmpty)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: _buildEmptyState(
+              icon: Icons.search_off,
+              title: 'No doctors found',
+              message: _showingZoneDoctors && _memberZone.isNotEmpty
+                  ? 'No doctors are listed in $_memberZone yet.'
+                  : 'Try another name, mobile number, or speciality.',
+            ),
+          )
+        else
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+            sliver: SliverList.separated(
+              itemCount: doctors.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              itemBuilder: (context, index) => _buildDoctorCard(doctors[index]),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSearchBar(Color themeColor) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (_) => setState(() {}),
+        textInputAction: TextInputAction.search,
+        style: const TextStyle(fontSize: 14, color: Color(0xFF1F2430)),
+        decoration: InputDecoration(
+          hintText: 'Search by name or mobile number',
+          hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF9AA0A8)),
+          prefixIcon: const Icon(Icons.search, color: Color(0xFF8A9099)),
+          suffixIcon: _hasSearch
+              ? IconButton(
+                  icon: const Icon(Icons.close, color: Color(0xFF8A9099)),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() {});
+                  },
+                )
+              : null,
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(28),
+            borderSide: const BorderSide(color: Color(0xFFE6E8EC)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(28),
+            borderSide: const BorderSide(color: Color(0xFFE6E8EC)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(28),
+            borderSide: BorderSide(color: themeColor),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSpecialtySection(Color themeColor) {
+    final specialties = getAvailableSpecialties()..sort();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+          child: Row(
             children: [
-              Icon(
-                Icons.bookmark_border,
-                size: 80,
-                color: Colors.grey[300],
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'No saved doctors',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey[600],
+              const Expanded(
+                child: Text(
+                  'Speciality',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1F2430),
+                  ),
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Tap the save icon on any doctor to save them here',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[500],
+              if (_selectedSpecialty != null || _hasSearch)
+                GestureDetector(
+                  onTap: _clearSearch,
+                  child: Text(
+                    'Clear',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: themeColor,
+                    ),
+                  ),
                 ),
-              ),
             ],
           ),
-        );
-      }
+        ),
+        SizedBox(
+          height: 98,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: specialties.length + 1,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final isAll = index == 0;
+              final name = isAll ? 'All' : specialties[index - 1];
+              final selected =
+                  isAll ? _selectedSpecialty == null : _selectedSpecialty == name;
+              return _buildSpecialtyChip(
+                label: name,
+                selected: selected,
+                themeColor: themeColor,
+                onTap: () {
+                  setState(() {
+                    _selectedSpecialty = isAll ? null : name;
+                  });
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
 
-      return Center(
+  Widget _buildSpecialtyChip({
+    required String label,
+    required bool selected,
+    required Color themeColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 76,
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.search,
-              size: 80,
-              color: Colors.grey[300],
-            ),
-            const SizedBox(height: 20),
-            Text(
-              _hasSearched ? "No doctors found" : "Search for Doctors",
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey,
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: selected ? themeColor : const Color(0xFFFFF1F2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                _specialtyIcon(label),
+                color: selected ? Colors.white : themeColor,
+                size: 24,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
-              _hasSearched
-                  ? "Try different search terms or filters"
-                  : "Search by name, specialty, or clinic to find doctors",
+              label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[500],
+                fontSize: 11,
+                height: 1.15,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: selected ? themeColor : const Color(0xFF4B5160),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  IconData _specialtyIcon(String specialty) {
+    switch (specialty.toLowerCase()) {
+      case 'all':
+        return Icons.grid_view_rounded;
+      case 'cardiologist':
+        return Icons.favorite_border;
+      case 'dermatologist':
+        return Icons.face_retouching_natural;
+      case 'neurologist':
+        return Icons.psychology_outlined;
+      case 'pediatrician':
+        return Icons.child_care;
+      case 'orthopedic':
+        return Icons.accessibility_new;
+      case 'gynecologist':
+        return Icons.pregnant_woman;
+      case 'general physician':
+        return Icons.medical_services_outlined;
+      case 'ophthalmologist':
+        return Icons.visibility_outlined;
+      default:
+        return Icons.local_hospital_outlined;
+    }
+  }
+
+  Widget _buildDoctorGrid(List<Doctor> doctors) {
+    if (doctors.isEmpty) {
+      if (_selectedTabIndex == 1) {
+        return _buildEmptyState(
+          icon: Icons.bookmark_border,
+          title: 'No saved doctors',
+          message: 'Save a doctor from the list to keep them here.',
+        );
+      }
+
+      return _buildEmptyState(
+        icon: Icons.medical_services_outlined,
+        title: 'No doctors to show',
+        message: 'Doctors will appear here.',
       );
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
       physics: const BouncingScrollPhysics(),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final itemWidth = (constraints.maxWidth - 10) / 2;
+      itemCount: doctors.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      itemBuilder: (context, index) => _buildDoctorCard(doctors[index]),
+    );
+  }
 
-          return Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: List.generate(doctors.length, (index) {
-              return SizedBox(
-                width: itemWidth,
-                child: _buildDoctorCard(doctors[index]),
-              );
-            }),
-          );
-        },
+  Widget _buildEmptyState({
+    required IconData icon,
+    required String title,
+    required String message,
+  }) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: const BoxDecoration(
+                color: Color(0x14E61428),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 32, color: const Color(0xFFE61428)),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1F2430),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 13,
+                height: 1.4,
+                color: Color(0xFF8A9099),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -866,269 +1009,109 @@ class _UtilityViewState extends State<UtilityView> {
     final themeColor = ColorHelperClass.getColorFromHex(ColorResources.red_color);
     final isSaved = _savedDoctors.contains(doctor.name);
 
-    return Stack(
-      children: [
-        Container(
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _showDoctorDetails(doctor),
+        child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.black12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black12.withOpacity(0.07),
-                blurRadius: 6,
-                offset: const Offset(0, 3),
+            border: Border.all(color: const Color(0xFFE6E8EC)),
+          ),
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              _buildDoctorAvatar(doctor.imageUrl),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      doctor.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1F2430),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      doctor.specialty,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: themeColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${doctor.zone}  ·  ${doctor.mobileNumber}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF8A9099),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: () => _toggleSaveDoctor(doctor),
+                borderRadius: BorderRadius.circular(18),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    isSaved ? Icons.bookmark : Icons.bookmark_border,
+                    size: 20,
+                    color: isSaved ? themeColor : const Color(0xFF8A9099),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Material(
+                color: themeColor,
+                shape: const CircleBorder(),
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: () => _callDoctor(doctor),
+                  child: const SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Icon(Icons.call, color: Colors.white, size: 18),
+                  ),
+                ),
               ),
             ],
           ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.max,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 30),
-
-                // Profile image
-                Center(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(40),
-                    child: SizedBox(
-                      height: 80,
-                      width: 80,
-                      child: Image.network(
-                        doctor.imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Image.asset(
-                            "assets/images/user3.png",
-                            fit: BoxFit.cover,
-                          );
-                        },
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            color: Colors.red[50],
-                            child: const Center(
-                              child: SizedBox(
-                                width: 30,
-                                height: 30,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.red,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-
-                // Name
-                Text(
-                  doctor.name,
-                  maxLines: 2,
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    height: 1.2,
-                  ),
-                ),
-
-                const SizedBox(height: 6),
-
-                // Specialty pill
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.red[50],
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red[200]!, width: 1),
-                  ),
-                  child: Text(
-                    doctor.specialty,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.red[800],
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 6),
-
-                // Phone
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.phone,
-                      size: 12,
-                      color: Colors.grey[600],
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        doctor.mobileNumber,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey[700],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 4),
-
-                // Email
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.email_outlined,
-                      size: 12,
-                      color: Colors.grey[600],
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        doctor.email,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 12),
-
-                // Action Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => _callDoctor(doctor.mobileNumber),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green[600],
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          minimumSize: const Size(double.infinity, 36),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          elevation: 0,
-                        ),
-                        icon: const Icon(Icons.call, size: 14, color: Colors.white),
-                        label: const Text(
-                          'Call',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => _shareDoctor(doctor),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: themeColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          minimumSize: const Size(double.infinity, 36),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          elevation: 0,
-                        ),
-                        icon: const Icon(Icons.share, size: 14, color: Colors.white),
-                        label: const Text(
-                          'Share',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
         ),
+      ),
+    );
+  }
 
-        // Left: Save button
-        Positioned(
-          top: 8,
-          left: 8,
-          child: GestureDetector(
-            onTap: () => _toggleSaveDoctor(doctor),
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: isSaved ? Colors.red[50] : Colors.white,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSaved ? Colors.red : Colors.grey[300]!,
-                ),
+  Widget _buildDoctorAvatar(String imageUrl) {
+    return ClipOval(
+      child: SizedBox(
+        height: 56,
+        width: 56,
+        child: imageUrl.trim().isEmpty
+            ? Image.asset('assets/images/user3.png', fit: BoxFit.cover)
+            : Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Image.asset('assets/images/user3.png', fit: BoxFit.cover);
+                },
               ),
-              child: Icon(
-                isSaved ? Icons.bookmark : Icons.bookmark_border,
-                size: 20,
-                color: isSaved ? Colors.red : Colors.grey[600],
-              ),
-            ),
-          ),
-        ),
-
-        // Right: View Detail button
-        Positioned(
-          top: 8,
-          right: 8,
-          child: SizedBox(
-            height: 25,
-            child: OutlinedButton(
-              onPressed: () => _showDoctorDetails(doctor),
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: themeColor),
-                foregroundColor: themeColor,
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-              child: const Text(
-                "View Profile",
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -1266,116 +1249,6 @@ class _UtilityViewState extends State<UtilityView> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const _AddDoctorBottomSheet(),
-    );
-  }
-
-  void _showFilterBottomSheet() {
-    final themeColor = ColorHelperClass.getColorFromHex(ColorResources.red_color);
-    final specialties = getAvailableSpecialties();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.7,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            children: [
-              // Handle
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                height: 4,
-                width: 40,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Header
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Filter by Specialty',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _selectedSpecialty = null;
-                          _filteredDoctors = _allDoctors;
-                          if (_searchController.text.isNotEmpty) {
-                            _performSearch(_searchController.text);
-                          }
-                        });
-                        Navigator.pop(context);
-                      },
-                      child: const Text(
-                        'Clear All',
-                        style: TextStyle(color: Colors.red),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(),
-              // List
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: specialties.length,
-                  itemBuilder: (context, index) {
-                    final specialty = specialties[index];
-                    final isSelected = _selectedSpecialty == specialty;
-                    return ListTile(
-                      leading: Radio<String>(
-                        value: specialty,
-                        groupValue: _selectedSpecialty,
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedSpecialty = value;
-                            _performSearch(_searchController.text);
-                          });
-                          Navigator.pop(context);
-                        },
-                        activeColor: themeColor,
-                      ),
-                      title: Text(
-                        specialty,
-                        style: TextStyle(
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                          color: isSelected ? themeColor : Colors.black87,
-                        ),
-                      ),
-                      trailing: isSelected
-                          ? Icon(Icons.check_circle, color: themeColor)
-                          : null,
-                      onTap: () {
-                        setState(() {
-                          _selectedSpecialty = specialty;
-                          _performSearch(_searchController.text);
-                        });
-                        Navigator.pop(context);
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }
@@ -2091,6 +1964,7 @@ class Doctor {
   final String experience;
   final String clinicName;
   final String address;
+  final String zone;
 
   Doctor({
     required this.name,
@@ -2101,5 +1975,6 @@ class Doctor {
     required this.experience,
     required this.clinicName,
     required this.address,
+    required this.zone,
   });
 }
