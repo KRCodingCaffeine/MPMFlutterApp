@@ -28,7 +28,7 @@ class NotificationService {
   static const int _localDisplayDedupeWindowMs = 15000;
   static final Set<String> _processedMessageIds = <String>{};
   static final Map<String, int> _recentLocalDisplay = <String, int>{};
-  
+
   static String _messageFingerprint(RemoteMessage message) {
     if (message.messageId != null && message.messageId!.isNotEmpty) {
       return 'mid:${message.messageId}';
@@ -56,7 +56,9 @@ class NotificationService {
     final payload = <String, dynamic>{
       'title': message.notification?.title ?? message.data['title'] ?? '',
       'body': message.notification?.body ?? message.data['body'] ?? '',
-      'type': message.data['type']?.toString() ?? message.data['notification_type']?.toString() ?? '',
+      'type': message.data['type']?.toString() ??
+          message.data['notification_type']?.toString() ??
+          '',
       'from': message.from ?? '',
     };
     return 'fallback:${jsonEncode(payload)}';
@@ -98,15 +100,18 @@ class NotificationService {
     if (stableId.trim().isNotEmpty) {
       return 'sid:$stableId';
     }
-    final title = message.notification?.title ?? message.data['title']?.toString() ?? '';
-    final body = message.notification?.body ?? message.data['body']?.toString() ?? '';
+    final title =
+        message.notification?.title ?? message.data['title']?.toString() ?? '';
+    final body =
+        message.notification?.body ?? message.data['body']?.toString() ?? '';
     return 'tb:${title.trim()}|${body.trim()}';
   }
 
   static bool shouldDisplayLocalNotification(RemoteMessage message) {
     final now = DateTime.now().millisecondsSinceEpoch;
     final key = _localDisplayKey(message);
-    _recentLocalDisplay.removeWhere((_, ts) => now - ts > _localDisplayDedupeWindowMs);
+    _recentLocalDisplay
+        .removeWhere((_, ts) => now - ts > _localDisplayDedupeWindowMs);
     final previous = _recentLocalDisplay[key];
     if (previous != null && (now - previous) < _localDisplayDedupeWindowMs) {
       debugPrint("⚠️ Duplicate local notification suppressed: $key");
@@ -158,109 +163,167 @@ class NotificationService {
       _processedMessageIds.add(fingerprint);
     }
 
-    await prefs.setStringList(_dedupeStoreKey, _encodeStoredFingerprints(stored));
+    await prefs.setStringList(
+        _dedupeStoreKey, _encodeStoredFingerprints(stored));
     return true;
   }
 
   Future<void> init() async {
-    // Initialize Awesome Notifications
-    await AwesomeNotifications().initialize(
-      null,
-      [
-        NotificationChannel(
-          channelKey: 'mpm_app_channel',
-          channelName: 'General Notifications',
-          channelDescription: 'App messages',
-          defaultColor: const Color(0xFF9D50DD),
-          ledColor: Colors.white,
-          importance: NotificationImportance.Max,
-          playSound: true,
-          channelShowBadge: false,
-          enableVibration: true,
-          enableLights: true,
-          criticalAlerts: true,
-        ),
-        NotificationChannel(
-          channelKey: 'mpm_background_channel',
-          channelName: 'Background Notifications',
-          channelDescription: 'Background app messages',
-          defaultColor: const Color(0xFF9D50DD),
-          ledColor: Colors.white,
-          importance: NotificationImportance.High,
-          playSound: true,
-          channelShowBadge: false,
-          enableVibration: true,
-          enableLights: true,
-        ),
-      ],
-      channelGroups: [
-        NotificationChannelGroup(
-          channelGroupKey: 'mpm_group',
-          channelGroupName: 'MPM Notifications',
-        )
-      ],
-      debug: true,
-    );
+    debugPrint('🔔 NotificationService.init started');
 
-    // Enhanced permissions for iOS
-    final isAllowed = await AwesomeNotifications().isNotificationAllowed();
-    if (!isAllowed) {
-      final permission = await AwesomeNotifications().requestPermissionToSendNotifications();
-      debugPrint("📱 Notification permission result: $permission");
+    // Initialize Awesome Notifications first. If this fails, continue startup
+    // so notification setup cannot leave the app on a blank screen.
+    try {
+      await AwesomeNotifications().initialize(
+        null,
+        [
+          NotificationChannel(
+            channelKey: 'mpm_app_channel',
+            channelName: 'General Notifications',
+            channelDescription: 'App messages',
+            defaultColor: const Color(0xFF9D50DD),
+            ledColor: Colors.white,
+            importance: NotificationImportance.Max,
+            playSound: true,
+            channelShowBadge: false,
+            enableVibration: true,
+            enableLights: true,
+            criticalAlerts: true,
+          ),
+          NotificationChannel(
+            channelKey: 'mpm_background_channel',
+            channelName: 'Background Notifications',
+            channelDescription: 'Background app messages',
+            defaultColor: const Color(0xFF9D50DD),
+            ledColor: Colors.white,
+            importance: NotificationImportance.High,
+            playSound: true,
+            channelShowBadge: false,
+            enableVibration: true,
+            enableLights: true,
+          ),
+        ],
+        channelGroups: [
+          NotificationChannelGroup(
+            channelGroupKey: 'mpm_group',
+            channelGroupName: 'MPM Notifications',
+          ),
+        ],
+        debug: true,
+      ).timeout(const Duration(seconds: 10));
+      debugPrint('✅ Awesome Notifications initialized');
+    } catch (e) {
+      debugPrint('⚠️ Awesome Notifications initialization failed: $e');
     }
-    
-    // Request FCM permissions with more specific options for iOS
-    final authStatus = await _messaging.requestPermission(
-      alert: true,
-      announcement: false,
-      badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      sound: true,
-    );
-    debugPrint("🔥 FCM Permission status: $authStatus");
 
-    // iOS: ensure notifications appear while app is in foreground
-    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-      alert: false,
-      badge: false,
-      sound: true,
-    );
+    // Request Awesome Notifications permission without preventing app startup.
+    try {
+      final isAllowed = await AwesomeNotifications()
+          .isNotificationAllowed()
+          .timeout(const Duration(seconds: 5));
+      if (!isAllowed) {
+        final permission = await AwesomeNotifications()
+            .requestPermissionToSendNotifications()
+            .timeout(const Duration(seconds: 8));
+        debugPrint('📱 Awesome Notifications permission result: $permission');
+      }
+    } catch (e) {
+      debugPrint('⚠️ Awesome Notifications permission request failed: $e');
+    }
 
-    // Sync badge count with database
-    await syncBadgeWithDatabase();
+    // Request FCM permission, but treat it as optional during app startup.
+    try {
+      final authStatus = await _messaging
+          .requestPermission(
+        alert: true,
+        announcement: false,
+        badge: true,
+        carPlay: false,
+        criticalAlert: false,
+        sound: true,
+      )
+          .timeout(const Duration(seconds: 8));
+      debugPrint('🔥 FCM Permission status: $authStatus');
+    } catch (e) {
+      debugPrint('⚠️ FCM permission request failed: $e');
+    }
 
-    // Listeners
+    try {
+      await _messaging
+          .setForegroundNotificationPresentationOptions(
+        alert: false,
+        badge: false,
+        sound: true,
+      )
+          .timeout(const Duration(seconds: 5));
+    } catch (e) {
+      debugPrint('⚠️ Could not set foreground presentation options: $e');
+    }
+
+    // Register listeners only once per service instance.
     FirebaseMessaging.onMessage.listen(handleIncomingFCMForeground);
     FirebaseMessaging.onMessageOpenedApp.listen(handleNotificationTap);
 
-    // Handle cold-start (app launched by tapping a notification while terminated)
-    final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
-    if (initialMessage != null) {
-      handleNotificationTap(initialMessage);
+    // Register Awesome Notifications callbacks once.
+    try {
+      await AwesomeNotifications().setListeners(
+        onActionReceivedMethod: onActionReceived,
+        onNotificationCreatedMethod: onNotificationCreated,
+        onNotificationDisplayedMethod: onNotificationDisplayed,
+        onDismissActionReceivedMethod: onDismissActionReceived,
+      );
+    } catch (e) {
+      debugPrint('⚠️ Could not register Awesome Notifications listeners: $e');
     }
-    // Note: Background handler is registered in main.dart, don't register here to avoid duplicates
 
-    // Token
-    final token = await _messaging.getToken();
-    debugPrint("🔥 FCM Token: $token");
+    // A cold-start notification is optional; a timeout/error must not block runApp.
+    try {
+      debugPrint('🔎 Getting initial notification message');
+      final initialMessage = await _messaging
+          .getInitialMessage()
+          .timeout(const Duration(seconds: 5));
+      if (initialMessage != null) {
+        handleNotificationTap(initialMessage);
+      }
+      debugPrint('✅ Initial notification check completed');
+    } catch (e) {
+      debugPrint('⚠️ Initial notification check failed or timed out: $e');
+    }
+
+    // FCM token retrieval is not required to render the app. DeviceTokenService
+    // also manages token retrieval and server updates separately.
+    try {
+      final token = await _messaging
+          .getToken()
+          .timeout(const Duration(seconds: 8));
+      debugPrint('🔥 FCM token available: ${token != null && token.isNotEmpty}');
+    } catch (e) {
+      debugPrint('⚠️ FCM token retrieval failed or timed out: $e');
+    }
 
     _messaging.onTokenRefresh.listen((newToken) {
-      debugPrint("🔄 Token refreshed: $newToken");
+      debugPrint('🔄 Token refreshed: $newToken');
+    }, onError: (Object error) {
+      debugPrint('⚠️ FCM token refresh stream error: $error');
     });
 
-    // Check iOS notification settings
     if (Platform.isIOS) {
-      await _checkIOSNotificationSettings();
+      try {
+        await _checkIOSNotificationSettings()
+            .timeout(const Duration(seconds: 5));
+      } catch (e) {
+        debugPrint('⚠️ iOS notification settings check failed: $e');
+      }
     }
 
-    // Awesome notification events
-    AwesomeNotifications().setListeners(
-      onActionReceivedMethod: onActionReceived,
-      onNotificationCreatedMethod: onNotificationCreated,
-      onNotificationDisplayedMethod: onNotificationDisplayed,
-      onDismissActionReceivedMethod: onDismissActionReceived,
-    );
+    // Database/badge sync is useful but should never stop the app from launching.
+    try {
+      await syncBadgeWithDatabase().timeout(const Duration(seconds: 8));
+    } catch (e) {
+      debugPrint('⚠️ Initial badge sync failed or timed out: $e');
+    }
+
+    debugPrint('✅ NotificationService.init completed');
   }
 
   // Foreground handler: system does NOT show notification. We must show it.
@@ -273,22 +336,21 @@ class NotificationService {
     debugPrint("   Sent Time: ${message.sentTime}");
     debugPrint("   Platform: ${Platform.isIOS ? 'iOS' : 'Android'}");
     debugPrint("   Has notification payload: ${message.notification != null}");
-    
+
     if (!await shouldProcessMessage(message)) {
       debugPrint("⚠️ Duplicate foreground message detected, skipping");
       return;
     }
-    
+
     try {
       final service = NotificationService();
-      
+
       // Always persist to database and update badge first
       await service._persistNotificationAndUpdateBadge(message);
-      
+
       // Always create local notification in foreground (iOS doesn't show system notifications)
       debugPrint("📱 Creating local notification for foreground message");
       await service._showLocalNotification(message);
-      
     } catch (e) {
       debugPrint("❌ Error in handleIncomingFCM: $e");
       // Try to create a simple notification as fallback
@@ -307,7 +369,7 @@ class NotificationService {
     debugPrint("   Sent Time: ${message.sentTime}");
     debugPrint("   Platform: ${Platform.isIOS ? 'iOS' : 'Android'}");
     debugPrint("   Has notification payload: ${message.notification != null}");
-    
+
     try {
       // Always persist to DB and update badge first
       final service = NotificationService();
@@ -317,7 +379,6 @@ class NotificationService {
       // For background notifications, we don't create local notifications
       // The system will handle displaying them
       debugPrint("🛑 Background notification handled by system");
-      
     } catch (e) {
       debugPrint("❌ Error in background handling: $e");
     }
@@ -328,9 +389,13 @@ class NotificationService {
       if (!shouldDisplayLocalNotification(message)) {
         return;
       }
-      final title = message.notification?.title ?? message.data['title'] ?? "MPM Notification";
-      final body = message.notification?.body ?? message.data['body'] ?? "You have a new message";
-      
+      final title = message.notification?.title ??
+          message.data['title'] ??
+          "MPM Notification";
+      final body = message.notification?.body ??
+          message.data['body'] ??
+          "You have a new message";
+
       await AwesomeNotifications().createNotification(
         content: NotificationContent(
           id: DateTime.now().millisecondsSinceEpoch.remainder(100000),
@@ -355,17 +420,18 @@ class NotificationService {
         return;
       }
       // Handle both notification payload and data payload
-      final title = message.notification?.title ?? 
-                   message.data['title'] ?? 
-                   "MPM Notification";
-      final body = message.notification?.body ?? 
-                  message.data['body'] ?? 
-                  "You have a new message";
-      final image = message.notification?.android?.imageUrl ?? 
-                   message.data['image'] ?? 
-                   "";
+      final title = message.notification?.title ??
+          message.data['title'] ??
+          "MPM Notification";
+      final body = message.notification?.body ??
+          message.data['body'] ??
+          "You have a new message";
+      final image = message.notification?.android?.imageUrl ??
+          message.data['image'] ??
+          "";
 
-      debugPrint("📱 Creating notification - Title: $title, Body: $body, Image: $image");
+      debugPrint(
+          "📱 Creating notification - Title: $title, Body: $body, Image: $image");
       debugPrint("📱 Platform: ${Platform.isIOS ? 'iOS' : 'Android'}");
       debugPrint("📱 Message notification: ${message.notification}");
       debugPrint("📱 Message data: ${message.data}");
@@ -376,16 +442,18 @@ class NotificationService {
       final id = DateTime.now().millisecondsSinceEpoch.remainder(100000);
 
       // Use the channel key from payload or default to background channel
-      String channelKey = message.data['channelKey'] ?? 'mpm_background_channel';
-      
+      String channelKey =
+          message.data['channelKey'] ?? 'mpm_background_channel';
+
       debugPrint("📺 Creating notification with channel: $channelKey");
-      
+
       final notificationContent = NotificationContent(
         id: id,
         channelKey: channelKey,
         title: title,
         body: body,
-        largeIcon: Platform.isAndroid ? 'resource://drawable/mpm_logo.png' : null,
+        largeIcon:
+        Platform.isAndroid ? 'resource://drawable/mpm_logo.png' : null,
         bigPicture: (image.isNotEmpty) ? image : null,
         notificationLayout: (image.isNotEmpty)
             ? NotificationLayout.BigPicture
@@ -393,20 +461,20 @@ class NotificationService {
         autoDismissible: true,
         showWhen: true,
         badge: badgeCount,
-        payload: message.data.map((key, value) => MapEntry(key, value?.toString())),
+        payload:
+        message.data.map((key, value) => MapEntry(key, value?.toString())),
         wakeUpScreen: true,
-        fullScreenIntent: Platform.isIOS ? false : true, // Disable on iOS to avoid issues
+        fullScreenIntent:
+        Platform.isIOS ? false : true, // Disable on iOS to avoid issues
         displayOnBackground: true,
         displayOnForeground: true,
-        // iOS-specific settings
-        criticalAlert: false,
         locked: false,
       );
-      
+
       await AwesomeNotifications().createNotification(
         content: notificationContent,
       );
-      
+
       debugPrint("✅ Notification created successfully with badge: $badgeCount");
     } catch (e) {
       debugPrint("❌ Error creating notification: $e");
@@ -434,17 +502,23 @@ class NotificationService {
 
   // Persists notification, then syncs the in-app list badge from SQLite.
   Future<int> _persistNotificationAndUpdateBadge(
-    RemoteMessage message, {
-    String? overrideTitle,
-    String? overrideBody,
-    String? overrideImage,
-  }) async {
+      RemoteMessage message, {
+        String? overrideTitle,
+        String? overrideBody,
+        String? overrideImage,
+      }) async {
     final String title = overrideTitle ??
-        (message.notification?.title ?? message.data['title'] ?? 'MPM Notification');
+        (message.notification?.title ??
+            message.data['title'] ??
+            'MPM Notification');
     final String body = overrideBody ??
-        (message.notification?.body ?? message.data['body'] ?? 'You have a new message');
+        (message.notification?.body ??
+            message.data['body'] ??
+            'You have a new message');
     final String image = overrideImage ??
-        (message.notification?.android?.imageUrl ?? message.data['image'] ?? '');
+        (message.notification?.android?.imageUrl ??
+            message.data['image'] ??
+            '');
     final type = _notificationTypeFromMessage(message);
     final serverId = _dataValue(message, [
       'serverId',
@@ -470,8 +544,8 @@ class NotificationService {
     }
 
     if (serverId.isNotEmpty) {
-      final existing =
-          await NotificationDatabase.instance.getNotificationByServerId(serverId);
+      final existing = await NotificationDatabase.instance
+          .getNotificationByServerId(serverId);
       if (existing != null) {
         debugPrint("⏭️ Notification $serverId already stored locally");
         return await _syncVisibleBadgeFromDatabase();
@@ -491,15 +565,17 @@ class NotificationService {
     );
 
     await NotificationDatabase.instance.insertNotification(notificationModel);
-    debugPrint("💾 Notification saved to database (type: $type, serverId: $serverId)");
+    debugPrint(
+        "💾 Notification saved to database (type: $type, serverId: $serverId)");
 
     return await _syncVisibleBadgeFromDatabase();
   }
 
   Future<int> _syncVisibleBadgeFromDatabase() async {
-    await NotificationDatabase.instance.markPastEventOrTripNotificationsAsRead();
-    final badgeCount =
-        await NotificationDatabase.instance.getUnreadNotificationCountByType('default');
+    await NotificationDatabase.instance
+        .markPastEventOrTripNotificationsAsRead();
+    final badgeCount = await NotificationDatabase.instance
+        .getUnreadNotificationCountByType('default');
     await _saveBadgeCount(badgeCount);
     await _updateBadgeCount(badgeCount);
     await updateNotificationController();
@@ -511,7 +587,7 @@ class NotificationService {
   Future<void> _updateBadgeCount(int badgeCount) async {
     try {
       debugPrint("🔢 Updating badge count to: $badgeCount");
-      
+
       // Method 1: Awesome Notifications
       try {
         await AwesomeNotifications().setGlobalBadgeCounter(badgeCount);
@@ -519,7 +595,7 @@ class NotificationService {
       } catch (e) {
         debugPrint("❌ Awesome Notifications badge update failed: $e");
       }
-      
+
       // Method 2: Flutter App Badger (iOS specific)
       if (Platform.isIOS) {
         try {
@@ -534,7 +610,6 @@ class NotificationService {
           debugPrint("❌ Flutter App Badger update failed: $e");
         }
       }
-      
     } catch (e) {
       debugPrint("❌ Error updating badge count: $e");
     }
@@ -588,7 +663,8 @@ class NotificationService {
       });
 
       refreshNotificationList();
-      debugPrint("✅ Notification tap handled for type: $type, eventOfferId: $eventOfferId");
+      debugPrint(
+          "✅ Notification tap handled for type: $type, eventOfferId: $eventOfferId");
     } catch (e) {
       debugPrint("❌ Error handling notification tap: $e");
     }
@@ -618,17 +694,17 @@ class NotificationService {
   static Future<void> clearBadge() async {
     try {
       await _saveBadgeCount(0);
-      
+
       // Use the enhanced badge update method
       final service = NotificationService();
       await service._updateBadgeCount(0);
-      
+
       // Also mark all notifications as read in database
       await NotificationDatabase.instance.markAllNotificationsAsRead();
-      
+
       // Update notification controller
       await updateNotificationController();
-      
+
       debugPrint("✅ Badge cleared and all notifications marked as read");
     } catch (e) {
       debugPrint("❌ Error clearing badge: $e");
@@ -644,16 +720,17 @@ class NotificationService {
   static Future<void> syncBadgeWithDatabase() async {
     try {
       // Use default notification type count for bottom navigation badge
-      final dbCount = await NotificationDatabase.instance.getUnreadNotificationCountByType('default');
+      final dbCount = await NotificationDatabase.instance
+          .getUnreadNotificationCountByType('default');
       await _saveBadgeCount(dbCount);
-      
+
       // Use the enhanced badge update method
       final service = NotificationService();
       await service._updateBadgeCount(dbCount);
-      
+
       // Update notification controller
       await updateNotificationController();
-      
+
       debugPrint("✅ Badge synced with database (default count): $dbCount");
     } catch (e) {
       debugPrint("❌ Error syncing badge with database: $e");
@@ -683,14 +760,17 @@ class NotificationService {
       debugPrint("   Announcement Setting: ${settings.announcement}");
       debugPrint("   Car Play Setting: ${settings.carPlay}");
       debugPrint("   Critical Alert Setting: ${settings.criticalAlert}");
-      debugPrint("   Notification Center Setting: ${settings.notificationCenter}");
+      debugPrint(
+          "   Notification Center Setting: ${settings.notificationCenter}");
       debugPrint("   Lock Screen Setting: ${settings.lockScreen}");
-      
+
       if (settings.authorizationStatus == AuthorizationStatus.denied) {
         debugPrint("❌ iOS notifications are denied!");
-      } else if (settings.authorizationStatus == AuthorizationStatus.notDetermined) {
+      } else if (settings.authorizationStatus ==
+          AuthorizationStatus.notDetermined) {
         debugPrint("⚠️ iOS notification permission not determined!");
-      } else if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      } else if (settings.authorizationStatus ==
+          AuthorizationStatus.authorized) {
         debugPrint("✅ iOS notifications are authorized!");
       }
     } catch (e) {
@@ -731,17 +811,18 @@ class NotificationService {
   static Future<void> testIOSNotification() async {
     try {
       debugPrint("🍎 Testing iOS notification...");
-      
+
       // Check if notifications are allowed
       final isAllowed = await AwesomeNotifications().isNotificationAllowed();
       debugPrint("📱 Notifications allowed: $isAllowed");
-      
+
       if (!isAllowed) {
         debugPrint("❌ Notifications not allowed! Requesting permission...");
-        final permission = await AwesomeNotifications().requestPermissionToSendNotifications();
+        final permission =
+        await AwesomeNotifications().requestPermissionToSendNotifications();
         debugPrint("📱 Permission result: $permission");
       }
-      
+
       // Create a simple test notification
       await AwesomeNotifications().createNotification(
         content: NotificationContent(
@@ -757,7 +838,7 @@ class NotificationService {
           displayOnForeground: true,
         ),
       );
-      
+
       debugPrint("✅ iOS test notification created");
     } catch (e) {
       debugPrint("❌ iOS test notification failed: $e");
@@ -768,33 +849,36 @@ class NotificationService {
   static Future<void> debugNotificationSettings() async {
     try {
       debugPrint("🔍 === NOTIFICATION DEBUG INFO ===");
-      
+
       // Check Awesome Notifications permission
       final isAllowed = await AwesomeNotifications().isNotificationAllowed();
       debugPrint("📱 Awesome Notifications allowed: $isAllowed");
-      
+
       // Check FCM settings
-      final settings = await FirebaseMessaging.instance.getNotificationSettings();
-      debugPrint("🔥 FCM Authorization Status: ${settings.authorizationStatus}");
+      final settings =
+      await FirebaseMessaging.instance.getNotificationSettings();
+      debugPrint(
+          "🔥 FCM Authorization Status: ${settings.authorizationStatus}");
       debugPrint("🔥 FCM Alert Setting: ${settings.alert}");
       debugPrint("🔥 FCM Badge Setting: ${settings.badge}");
       debugPrint("🔥 FCM Sound Setting: ${settings.sound}");
-      
+
       // Get FCM token
       final token = await FirebaseMessaging.instance.getToken();
       debugPrint("🔥 FCM Token: $token");
-      
+
       // Check platform
       debugPrint("📱 Platform: ${Platform.isIOS ? 'iOS' : 'Android'}");
-      
+
       // Check current badge count
       final currentBadge = await getCurrentBadgeCount();
       debugPrint("🔢 Current badge count: $currentBadge");
-      
+
       // Check database count
-      final dbCount = await NotificationDatabase.instance.getUnreadNotificationCount();
+      final dbCount =
+      await NotificationDatabase.instance.getUnreadNotificationCount();
       debugPrint("💾 Database unread count: $dbCount");
-      
+
       debugPrint("🔍 === END DEBUG INFO ===");
     } catch (e) {
       debugPrint("❌ Error in debug settings: $e");
@@ -805,17 +889,17 @@ class NotificationService {
   static Future<void> refreshNotificationList() async {
     try {
       debugPrint("🔄 Refreshing notification list and badge...");
-      
+
       // Sync badge with database
       await syncBadgeWithDatabase();
-      
+
       // Refresh notification controller if it exists
       if (Get.isRegistered<NotificationApiController>()) {
         final controller = Get.find<NotificationApiController>();
         controller.loadLocalNotifications();
         debugPrint("✅ Notification controller refreshed");
       }
-      
+
       debugPrint("✅ Notification list and badge refreshed");
     } catch (e) {
       debugPrint("❌ Error refreshing notification list: $e");
@@ -839,7 +923,7 @@ class NotificationService {
   static Future<void> testForegroundNotification() async {
     try {
       debugPrint("🧪 Testing foreground notification...");
-      
+
       // Create a mock RemoteMessage for testing
       final mockMessage = RemoteMessage(
         data: {
@@ -856,10 +940,10 @@ class NotificationService {
         from: 'test',
         sentTime: DateTime.now(),
       );
-      
+
       // Test the foreground handler
       await handleIncomingFCMForeground(mockMessage);
-      
+
       debugPrint("✅ Foreground notification test completed");
     } catch (e) {
       debugPrint("❌ Foreground notification test failed: $e");
@@ -870,32 +954,32 @@ class NotificationService {
   static Future<void> testBadgeCount() async {
     try {
       debugPrint("🔢 Testing badge count...");
-      
+
       // Get current badge count
       final currentBadge = await getCurrentBadgeCount();
       debugPrint("📊 Current badge count: $currentBadge");
-      
+
       // Test incrementing badge
       final newBadge = currentBadge + 1;
       debugPrint("📊 Testing badge count: $newBadge");
-      
+
       // Update badge using the service
       final service = NotificationService();
       await service._updateBadgeCount(newBadge);
-      
+
       // Wait a moment
       await Future.delayed(Duration(seconds: 2));
-      
+
       // Check if badge was updated
       final updatedBadge = await getCurrentBadgeCount();
       debugPrint("📊 Updated badge count: $updatedBadge");
-      
+
       if (updatedBadge == newBadge) {
         debugPrint("✅ Badge count test successful");
       } else {
-        debugPrint("❌ Badge count test failed - expected: $newBadge, got: $updatedBadge");
+        debugPrint(
+            "❌ Badge count test failed - expected: $newBadge, got: $updatedBadge");
       }
-      
     } catch (e) {
       debugPrint("❌ Badge count test failed: $e");
     }
@@ -905,36 +989,38 @@ class NotificationService {
   static Future<void> checkIOSBadgeSettings() async {
     try {
       debugPrint("🍎 === iOS BADGE SETTINGS CHECK ===");
-      
+
       if (!Platform.isIOS) {
         debugPrint("⚠️ Not running on iOS");
         return;
       }
-      
+
       // Check FCM badge permission
-      final settings = await FirebaseMessaging.instance.getNotificationSettings();
+      final settings =
+      await FirebaseMessaging.instance.getNotificationSettings();
       debugPrint("🔥 FCM Badge Setting: ${settings.badge}");
-      
+
       // Check if badge is supported
       final isSupported = await FlutterAppBadger.isAppBadgeSupported();
       debugPrint("📱 Badge supported: $isSupported");
-      
+
       // Get current badge count
       final currentBadge = await getCurrentBadgeCount();
       debugPrint("🔢 Current badge count: $currentBadge");
-      
+
       // Check database count
-      final dbCount = await NotificationDatabase.instance.getUnreadNotificationCount();
+      final dbCount =
+      await NotificationDatabase.instance.getUnreadNotificationCount();
       debugPrint("💾 Database unread count: $dbCount");
-      
+
       // Check notification controller count
       if (Get.isRegistered<NotificationApiController>()) {
         final controller = Get.find<NotificationApiController>();
-        debugPrint("🎯 Notification controller unread count: ${controller.unreadCount.value}");
+        debugPrint(
+            "🎯 Notification controller unread count: ${controller.unreadCount.value}");
       }
-      
+
       debugPrint("🍎 === END BADGE SETTINGS CHECK ===");
-      
     } catch (e) {
       debugPrint("❌ Error checking iOS badge settings: $e");
     }
@@ -944,22 +1030,22 @@ class NotificationService {
   static Future<void> testNotificationControllerUpdate() async {
     try {
       debugPrint("🎯 Testing notification controller update...");
-      
+
       if (!Get.isRegistered<NotificationApiController>()) {
         debugPrint("❌ NotificationApiController not registered");
         return;
       }
-      
+
       final controller = Get.find<NotificationApiController>();
       final beforeCount = controller.unreadCount.value;
       debugPrint("📊 Before update - Controller count: $beforeCount");
-      
+
       // Update the controller
       await updateNotificationController();
-      
+
       final afterCount = controller.unreadCount.value;
       debugPrint("📊 After update - Controller count: $afterCount");
-      
+
       debugPrint("✅ Notification controller update test completed");
     } catch (e) {
       debugPrint("❌ Notification controller update test failed: $e");
@@ -970,13 +1056,13 @@ class NotificationService {
   static Future<void> handleAppStartup() async {
     try {
       debugPrint("🚀 Handling app startup - loading notifications...");
-      
+
       // Sync badge with database
       await syncBadgeWithDatabase();
-      
+
       // Update notification controller if it exists
       await updateNotificationController();
-      
+
       debugPrint("✅ App startup notification loading completed");
     } catch (e) {
       debugPrint("❌ Error handling app startup: $e");
@@ -987,7 +1073,7 @@ class NotificationService {
   static Future<void> testBackgroundNotification() async {
     try {
       debugPrint("🌙 Testing background notification simulation...");
-      
+
       // Create a mock RemoteMessage for testing
       final mockMessage = RemoteMessage(
         data: {
@@ -1004,13 +1090,13 @@ class NotificationService {
         from: 'test',
         sentTime: DateTime.now(),
       );
-      
+
       // Test the background handler
       await handleIncomingFCMBackground(mockMessage);
-      
+
       // Also test creating local notification
       await createLocalNotificationFromMessage(mockMessage);
-      
+
       debugPrint("✅ Background notification test completed");
     } catch (e) {
       debugPrint("❌ Background notification test failed: $e");
@@ -1020,8 +1106,9 @@ class NotificationService {
   // Method to test complete background/closed app notification flow
   static Future<void> testCompleteBackgroundFlow() async {
     try {
-      debugPrint("🔄 Testing complete background/closed app notification flow...");
-      
+      debugPrint(
+          "🔄 Testing complete background/closed app notification flow...");
+
       // Create a mock RemoteMessage for testing
       final mockMessage = RemoteMessage(
         data: {
@@ -1038,18 +1125,18 @@ class NotificationService {
         from: 'test',
         sentTime: DateTime.now(),
       );
-      
+
       // Simulate the complete background handler flow
       debugPrint("1. Simulating background handler...");
       await firebaseMessagingBackgroundHandler(mockMessage);
-      
+
       // Wait a moment
       await Future.delayed(Duration(seconds: 1));
-      
+
       // Check status
       debugPrint("2. Checking final status...");
       await checkDatabaseAndBadgeStatus();
-      
+
       debugPrint("✅ Complete background flow test completed");
     } catch (e) {
       debugPrint("❌ Complete background flow test failed: $e");
@@ -1096,7 +1183,8 @@ class NotificationService {
     """);
     debugPrint("📋 === END CORRECT FCM PAYLOAD ===");
     debugPrint("❌ ISSUES WITH YOUR CURRENT PAYLOAD:");
-    debugPrint("1. 'apns-priority': '5' should be '10' for regular notifications");
+    debugPrint(
+        "1. 'apns-priority': '5' should be '10' for regular notifications");
     debugPrint("2. 'content-available': 1 makes it silent - remove this");
     debugPrint("3. Missing 'alert' in APNs payload - iOS needs this");
     debugPrint("4. Add 'mutable-content': 1 for image notifications");
@@ -1106,28 +1194,30 @@ class NotificationService {
   static Future<void> checkDatabaseAndBadgeStatus() async {
     try {
       debugPrint("🔍 === DATABASE AND BADGE STATUS ===");
-      
+
       // Check database count
-      final dbCount = await NotificationDatabase.instance.getUnreadNotificationCount();
+      final dbCount =
+      await NotificationDatabase.instance.getUnreadNotificationCount();
       debugPrint("💾 Database unread count: $dbCount");
-      
+
       // Check saved badge count
       final savedBadge = await getCurrentBadgeCount();
       debugPrint("🔢 Saved badge count: $savedBadge");
-      
+
       // Check notification controller count
       if (Get.isRegistered<NotificationApiController>()) {
         final controller = Get.find<NotificationApiController>();
-        debugPrint("🎯 Controller unread count: ${controller.unreadCount.value}");
+        debugPrint(
+            "🎯 Controller unread count: ${controller.unreadCount.value}");
       }
-      
+
       // Check if counts match
       if (dbCount == savedBadge) {
         debugPrint("✅ Database and badge counts match");
       } else {
         debugPrint("❌ Database and badge counts don't match!");
       }
-      
+
       debugPrint("🔍 === END STATUS CHECK ===");
     } catch (e) {
       debugPrint("❌ Error checking status: $e");
@@ -1135,26 +1225,27 @@ class NotificationService {
   }
 
   // Method to create local notification from FCM message (for background/closed app)
-  static Future<void> createLocalNotificationFromMessage(RemoteMessage message) async {
+  static Future<void> createLocalNotificationFromMessage(
+      RemoteMessage message) async {
     try {
       if (!shouldDisplayLocalNotification(message)) {
         return;
       }
       debugPrint("📱 Creating local notification from FCM message...");
-      
-      // Get notification data
-      final title = message.notification?.title ?? 
-                   message.data['title'] ?? 
-                   "MPM Notification";
-      final body = message.notification?.body ?? 
-                  message.data['body'] ?? 
-                  "You have a new message";
-      final image = message.notification?.android?.imageUrl ?? 
-                   message.data['image'] ?? 
-                   "";
 
-      final newBadgeCount =
-          await NotificationDatabase.instance.getUnreadNotificationCountByType('default');
+      // Get notification data
+      final title = message.notification?.title ??
+          message.data['title'] ??
+          "MPM Notification";
+      final body = message.notification?.body ??
+          message.data['body'] ??
+          "You have a new message";
+      final image = message.notification?.android?.imageUrl ??
+          message.data['image'] ??
+          "";
+
+      final newBadgeCount = await NotificationDatabase.instance
+          .getUnreadNotificationCountByType('default');
 
       // Create notification
       await AwesomeNotifications().createNotification(
@@ -1170,7 +1261,8 @@ class NotificationService {
           autoDismissible: true,
           showWhen: true,
           badge: newBadgeCount,
-          payload: message.data.map((key, value) => MapEntry(key, value?.toString())),
+          payload: message.data
+              .map((key, value) => MapEntry(key, value?.toString())),
           wakeUpScreen: true,
           displayOnBackground: true,
           displayOnForeground: true,
@@ -1191,7 +1283,7 @@ class NotificationService {
   static Future<void> _updateBadgeCountStatic(int badgeCount) async {
     try {
       debugPrint("🔢 Updating badge count to: $badgeCount");
-      
+
       // Method 1: Awesome Notifications
       try {
         await AwesomeNotifications().setGlobalBadgeCounter(badgeCount);
@@ -1199,7 +1291,7 @@ class NotificationService {
       } catch (e) {
         debugPrint("❌ Awesome Notifications badge update failed: $e");
       }
-      
+
       // Method 2: Flutter App Badger (iOS specific)
       if (Platform.isIOS) {
         try {
@@ -1214,7 +1306,6 @@ class NotificationService {
           debugPrint("❌ Flutter App Badger update failed: $e");
         }
       }
-      
     } catch (e) {
       debugPrint("❌ Error updating badge count: $e");
     }
@@ -1248,8 +1339,10 @@ class NotificationService {
     );
   }
 
-  static Future<void> onNotificationCreated(ReceivedNotification notification) async {}
-  static Future<void> onNotificationDisplayed(ReceivedNotification notification) async {}
+  static Future<void> onNotificationCreated(
+      ReceivedNotification notification) async {}
+  static Future<void> onNotificationDisplayed(
+      ReceivedNotification notification) async {}
   static Future<void> onDismissActionReceived(ReceivedAction action) async {
     final service = NotificationService();
     await service._syncVisibleBadgeFromDatabase();
@@ -1260,19 +1353,19 @@ class NotificationService {
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   debugPrint("🔥 Background FCM received: ${message.data}");
-  
+
   if (!await NotificationService.shouldProcessMessage(message)) {
     debugPrint("⚠️ Duplicate background message detected, skipping");
     return;
   }
-  
+
   try {
     // Initialize Firebase for background context
     await Firebase.initializeApp();
-    
+
     // Initialize SharedPreferences for background context
     await SharedPreferences.getInstance();
-    
+
     // Initialize Awesome Notifications for background context
     await AwesomeNotifications().initialize(
       null,
@@ -1311,18 +1404,20 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       ],
       debug: true,
     );
-    
+
     // Handle the notification in background-safe way
     await NotificationService.handleIncomingFCMBackground(message);
-    
+
     // Strict duplicate prevention:
     // In background/terminated state we do NOT create any local notification.
     // System-level FCM/APNs delivery should own presentation here.
     // This avoids one system notification + one local notification duplicates.
-    debugPrint("📱 Background message processed without local notification display");
-    
+    debugPrint(
+        "📱 Background message processed without local notification display");
+
     debugPrint("✅ Background notification handled successfully");
   } catch (e) {
     debugPrint("❌ Error in background handler: $e");
   }
 }
+
