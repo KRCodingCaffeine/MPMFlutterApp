@@ -17,32 +17,76 @@ import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/utils/notification_service.dart';
 import 'package:mpm/utils/device_token_service.dart';
 
+// Future<void> main() async {
+//   WidgetsFlutterBinding.ensureInitialized();
+//
+//   // Register background handler BEFORE Firebase initialization
+//   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+//
+//   await Firebase.initializeApp();
+//   await NotificationService().init();
+//   await DeviceTokenService().initialize();
+//
+//   // Register NotificationApiController globally
+//   Get.put(NotificationApiController(), permanent: true);
+//
+//   // Lock screen orientation
+//   await SystemChrome.setPreferredOrientations([
+//     DeviceOrientation.portraitUp,
+//     DeviceOrientation.portraitDown,
+//   ]);
+//
+//   runApp(
+//     DevicePreview(
+//       enabled: !kReleaseMode, // Only enable in debug / dev mode
+//       builder: (context) => const MyApp(),
+//     ),
+//   );
+// }
+
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Register background handler BEFORE Firebase initialization
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  debugPrint('🚀 STARTUP 1: Flutter initialized');
 
+  FirebaseMessaging.onBackgroundMessage(
+    firebaseMessagingBackgroundHandler,
+  );
+
+  debugPrint('⏳ STARTUP 2: Initializing Firebase...');
   await Firebase.initializeApp();
+  debugPrint('✅ STARTUP 2: Firebase initialized');
+
+  debugPrint('⏳ STARTUP 3: Initializing notifications...');
   await NotificationService().init();
+  debugPrint('✅ STARTUP 3: Notifications initialized');
+
+  debugPrint('⏳ STARTUP 4: Initializing device token...');
   await DeviceTokenService().initialize();
+  debugPrint('✅ STARTUP 4: Device token initialized');
 
-  // Register NotificationApiController globally
+  debugPrint('⏳ STARTUP 5: Registering notification controller...');
   Get.put(NotificationApiController(), permanent: true);
+  debugPrint('✅ STARTUP 5: Controller registered');
 
-  // Lock screen orientation
+  debugPrint('⏳ STARTUP 6: Setting screen orientation...');
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+  debugPrint('✅ STARTUP 6: Orientation configured');
+
+  debugPrint('🚀 STARTUP 7: Calling runApp()');
 
   runApp(
     DevicePreview(
-      enabled: !kReleaseMode, // Only enable in debug / dev mode
+      enabled: !kReleaseMode,
       builder: (context) => const MyApp(),
     ),
   );
 }
+
 
 // Background handler is now in notification_service.dart
 
