@@ -29,16 +29,28 @@ class _UtilityViewState extends State<UtilityView> {
   List<Doctor> _allDoctors = [];
   String _memberZone = '';
   String? _selectedSpecialty;
-  String? _selectedArea;
-  String? _selectedCategory;
+  bool _allAreas = false;
+  final Set<String> _selectedAreas = {};
   List<String> _zones = [];
   Set<String> _savedDoctors = {};
   int _selectedTabIndex = 0;
 
   bool get _hasSearch => _searchController.text.trim().isNotEmpty;
 
-  // Doctors are listed only once the member searches or picks a speciality
-  bool get _hasActiveQuery => _hasSearch || _selectedSpecialty != null;
+  bool get _hasAreaSelection => _allAreas || _selectedAreas.isNotEmpty;
+
+  String get _areaLabel {
+    if (!_hasAreaSelection) return 'Select geographical area';
+    if (_allAreas) return 'All';
+    final names = _selectedAreas.toList()
+      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    if (names.length <= 2) return names.join(', ');
+    return '${names.length} areas';
+  }
+
+  // All shows every API-zone doctor. A specific area still needs a doctor type or a search.
+  bool get _hasActiveQuery =>
+      _allAreas || (_hasAreaSelection && (_hasSearch || _selectedSpecialty != null));
 
   // Sample doctor data
   final List<Doctor> sampleDoctors = buildSampleDoctors();
@@ -71,10 +83,10 @@ class _UtilityViewState extends State<UtilityView> {
     }
   }
 
-  // Zones from the API plus any zone a doctor is listed in, de-duplicated
+  // Only the zones returned by the zone API
   List<String> _availableAreas() {
     final areas = <String, String>{};
-    for (final zone in [..._zones, ..._allDoctors.map((d) => d.zone)]) {
+    for (final zone in _zones) {
       final name = zone.trim();
       if (name.isNotEmpty) areas.putIfAbsent(name.toLowerCase(), () => name);
     }
@@ -125,64 +137,81 @@ class _UtilityViewState extends State<UtilityView> {
     return doctor == member || doctor.contains(member) || member.contains(doctor);
   }
 
+  bool _matchesSelectedAreas(String zone) {
+    if (_allAreas) {
+      return _zones.any((area) => _sameZone(zone, area));
+    }
+    return _selectedAreas.any((area) => _sameZone(zone, area));
+  }
+
   List<Doctor> _visibleDoctors() {
-    if (!_hasActiveQuery) return [];
+    if (!_hasAreaSelection) return [];
     final query = _searchController.text.trim().toLowerCase();
 
     return _allDoctors.where((doctor) {
       final matchesSpecialty = _selectedSpecialty == null ||
           doctor.specialty == _selectedSpecialty;
-      final matchesArea =
-          _selectedArea == null || _sameZone(doctor.zone, _selectedArea!);
-      final matchesCategory = _selectedCategory == null ||
-          doctor.categoryName == _selectedCategory;
       return _matchesSearch(doctor, query) &&
           matchesSpecialty &&
-          matchesArea &&
-          matchesCategory;
+          _matchesSelectedAreas(doctor.zone);
     }).toList();
   }
 
   String get _listTitle {
-    if (_hasSearch) return 'Search results';
-    if (_selectedSpecialty != null) {
-      return _selectedCategory ?? _selectedSpecialty!;
-    }
-    return 'Doctors';
+    if (_hasSearch && _selectedSpecialty == null) return 'Search results';
+    if (_selectedSpecialty != null) return _selectedSpecialty!;
+    if (_allAreas) return 'All';
+    return 'Find a Doctor';
   }
 
-  void _clearSearch() {
+  void _clearDoctorType() {
     _searchController.clear();
     _selectedSpecialty = null;
-    _selectedArea = null;
-    _selectedCategory = null;
     setState(() {});
   }
 
-  Future<void> _openSpecialtyFinder(String specialty) async {
-    final sameSpecialty = _selectedSpecialty == specialty;
-    final result = await showModalBottomSheet<_SpecialtyFinderResult>(
+  void _selectSpecialty(String specialty) {
+    setState(() {
+      _selectedSpecialty = _selectedSpecialty == specialty ? null : specialty;
+    });
+  }
+
+  Future<void> _openAreaPicker() async {
+    final areas = _availableAreas();
+    final selected = await showModalBottomSheet<_AreaSelection>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _SpecialtyFinderSheet(
-        specialty: specialty,
-        icon: _specialtyIcon(specialty),
-        doctors: _allDoctors.where((d) => d.specialty == specialty).toList(),
-        areas: _availableAreas(),
-        memberZone: _memberZone,
-        categories: specialtyCategoriesFor(specialty),
-        initialArea: sameSpecialty ? _selectedArea : null,
-        initialCategory: sameSpecialty ? _selectedCategory : null,
-        isActive: sameSpecialty,
-        matchesArea: _sameZone,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      builder: (sheetContext) {
+        return _AreaPickerSheet(
+          areas: areas,
+          memberZone: _memberZone,
+          allSelected: _allAreas,
+          selectedAreas: Set<String>.from(_selectedAreas),
+          totalDoctors: _allDoctors
+              .where((doctor) => _zones.any((zone) => _sameZone(doctor.zone, zone)))
+              .length,
+          doctorCount: (area) => _allDoctors
+              .where((doctor) => _sameZone(doctor.zone, area))
+              .length,
+        );
+      },
     );
-    if (result == null || !mounted) return;
+    if (selected == null || !mounted) return;
+    final sameAll = selected.all == _allAreas;
+    final sameAreas = selected.all ||
+        (selected.areas.length == _selectedAreas.length &&
+            selected.areas.every(_selectedAreas.contains));
+    if (sameAll && sameAreas) return;
     setState(() {
-      _selectedSpecialty = specialty;
-      _selectedArea = result.area;
-      _selectedCategory = result.category;
+      _allAreas = selected.all;
+      _selectedAreas
+        ..clear()
+        ..addAll(selected.all ? const <String>{} : selected.areas);
+      _selectedSpecialty = null;
     });
   }
 
@@ -556,7 +585,7 @@ class _UtilityViewState extends State<UtilityView> {
             onPressed: _showAddDoctorInstructions,
             icon: const Icon(Icons.person_add_alt_1, color: Colors.white, size: 18),
             label: const Text(
-              'Add',
+              'Add Doctor',
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
@@ -649,264 +678,115 @@ class _UtilityViewState extends State<UtilityView> {
     );
   }
 
+  int _specialtyCount(String specialty) {
+    if (!_hasAreaSelection) return 0;
+    return _allDoctors
+        .where((doctor) =>
+            doctor.specialty == specialty && _matchesSelectedAreas(doctor.zone))
+        .length;
+  }
+
   Widget _buildDiscoverPage(Color themeColor) {
-    final doctors = _visibleDoctors();
-    final countLabel =
-        '${doctors.length} ${doctors.length == 1 ? 'doctor' : 'doctors'}';
+    final doctors = _hasActiveQuery ? _visibleDoctors() : const <Doctor>[];
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
-        SliverToBoxAdapter(child: _buildSearchBar(themeColor)),
-        SliverToBoxAdapter(child: _buildSpecialtySection(themeColor)),
-        if (!_hasActiveQuery)
-          SliverToBoxAdapter(child: _buildFinderInstructions(themeColor))
+        SliverToBoxAdapter(child: _buildTotalDoctors(themeColor)),
+        SliverToBoxAdapter(child: _buildAreaSelector(themeColor)),
+        if (!_hasAreaSelection)
+          SliverToBoxAdapter(child: _buildAreaPrompt(themeColor))
         else ...[
-          SliverToBoxAdapter(
-            child: _buildSectionHeader(title: _listTitle, count: countLabel),
-          ),
-          if (doctors.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: _buildEmptyState(
-                icon: Icons.search_off,
-                title: 'No doctors found',
-                message: _selectedSpecialty != null && !_hasSearch
-                    ? 'No $_listTitle is listed in ${_selectedArea ?? 'any area'} yet. Try another area or category.'
-                    : 'Try another name, mobile number, or speciality.',
+          SliverToBoxAdapter(child: _buildSpecialtySection(themeColor)),
+          SliverToBoxAdapter(child: _buildSearchBar(themeColor)),
+          if (!_hasActiveQuery)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                child: Text(
+                  'Choose Find a Doctor to see the doctors in $_areaLabel.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.4,
+                    color: Color(0xFF5B6270),
+                  ),
+                ),
               ),
             )
-          else
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
-            sliver: SliverList.separated(
-              itemCount: doctors.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (context, index) => _buildDoctorCard(doctors[index]),
+          else ...[
+            SliverToBoxAdapter(
+              child: _buildSectionHeader(
+                title: _listTitle,
+                count: '${doctors.length} ${doctors.length == 1 ? 'doctor' : 'doctors'}',
+              ),
             ),
-          ),
+            if (doctors.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: _buildEmptyState(
+                  icon: Icons.search_off,
+                  title: 'No doctors found',
+                  message: _selectedSpecialty != null && !_hasSearch
+                      ? 'No $_listTitle is listed in $_areaLabel yet.'
+                      : 'Try another name or mobile number in $_areaLabel.',
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+                sliver: SliverList.separated(
+                  itemCount: doctors.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) => _buildDoctorCard(doctors[index]),
+                ),
+              ),
+          ],
         ],
       ],
     );
   }
 
-  // Shown in place of the doctor list until the member searches or picks a speciality
-  Widget _buildFinderInstructions(Color themeColor) {
-    const steps = [
-      (
-        Icons.search,
-        'Search directly',
-        'Type a doctor\'s name or mobile number in the search bar above.',
-      ),
-      (
-        Icons.medical_services_outlined,
-        'Pick a speciality',
-        'Tap a speciality above, or "View more" to see the full list.',
-      ),
-      (
-        Icons.location_on_outlined,
-        'Select your area',
-        'Choose the geographical area you want to find a doctor in.',
-      ),
-      (
-        Icons.category_outlined,
-        'Choose a category',
-        'Narrow it down, e.g. Interventional or Pediatric Cardiologist.',
-      ),
-    ];
-
-    final stats = [
-      ('${_allDoctors.length}', 'Doctors'),
-      ('${_availableAreas().length}', 'Areas'),
-      ('${getAvailableSpecialties().length}', 'Specialities'),
-    ];
-
+  Widget _buildTotalDoctors(Color themeColor) {
+    final count = _allDoctors.length;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: const Color(0xFFE6E8EC)),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
             Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    themeColor.withValues(alpha: 0.10),
-                    themeColor.withValues(alpha: 0.02),
-                  ],
-                ),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: themeColor,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.local_hospital_outlined, color: Colors.white),
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Find a doctor',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1F2430),
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          'Doctors from our community, a call away.',
-                          style: TextStyle(fontSize: 12.5, color: Color(0xFF5B6270)),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
-              child: Row(
-                children: [
-                  for (var i = 0; i < stats.length; i++) ...[
-                    if (i > 0) const SizedBox(width: 8),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF7F8FA),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              stats[i].$1,
-                              style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w800,
-                                color: themeColor,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              stats[i].$2,
-                              style: const TextStyle(fontSize: 11, color: Color(0xFF8A9099)),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 14, 16, 4),
-              child: Text(
-                'HOW IT WORKS',
-                style: TextStyle(
-                  fontSize: 11,
-                  letterSpacing: 0.8,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF8A9099),
-                ),
-              ),
-            ),
-            for (var i = 0; i < steps.length; i++)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 28,
-                      height: 28,
-                      alignment: Alignment.center,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFFFF1F2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        '${i + 1}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: themeColor,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(steps[i].$1, size: 15, color: const Color(0xFF1F2430)),
-                              const SizedBox(width: 6),
-                              Text(
-                                steps[i].$2,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF1F2430),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            steps[i].$3,
-                            style: const TextStyle(
-                              fontSize: 12.5,
-                              height: 1.4,
-                              color: Color(0xFF5B6270),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            Container(
-              margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEFF7F1),
+                color: themeColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.call, size: 18, color: Color(0xFF2E7D4F)),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Tap Call on a doctor\'s card to ring them directly, or Share profile to send their details to family.',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        height: 1.4,
-                        color: Color(0xFF2E5A3E),
-                      ),
-                    ),
-                  ),
-                ],
+              child: Icon(Icons.groups_outlined, color: themeColor, size: 22),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Total Doctors',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1F2430),
+                ),
+              ),
+            ),
+            Text(
+              '$count',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: themeColor,
               ),
             ),
           ],
@@ -914,6 +794,100 @@ class _UtilityViewState extends State<UtilityView> {
       ),
     );
   }
+
+  Widget _buildAreaSelector(Color themeColor) {
+    final selected = _hasAreaSelection;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Geographical area',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1F2430),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: _openAreaPicker,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: selected ? themeColor : const Color(0xFFE6E8EC),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.location_on_outlined, color: themeColor, size: 22),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _areaLabel,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                          color: selected
+                              ? const Color(0xFF1F2430)
+                              : const Color(0xFF9AA0A8),
+                        ),
+                      ),
+                    ),
+                    const Icon(Icons.expand_more, color: Color(0xFF8A9099)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAreaPrompt(Color themeColor) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE6E8EC)),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.location_on_outlined, color: themeColor, size: 28),
+            const SizedBox(height: 8),
+            const Text(
+              'Select a geographical area first',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1F2430),
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'After the area, choose Find a Doctor to see the doctors listed there.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, height: 1.4, color: Color(0xFF5B6270)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
 
   Widget _buildSearchBar(Color themeColor) {
     return Padding(
@@ -978,7 +952,7 @@ class _UtilityViewState extends State<UtilityView> {
             children: [
               const Expanded(
                 child: Text(
-                  'Speciality',
+                  'Find a Doctor',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -988,7 +962,7 @@ class _UtilityViewState extends State<UtilityView> {
               ),
               if (_selectedSpecialty != null || _hasSearch) ...[
                 GestureDetector(
-                  onTap: _clearSearch,
+                  onTap: _clearDoctorType,
                   child: Text(
                     'Clear',
                     style: TextStyle(
@@ -1023,73 +997,17 @@ class _UtilityViewState extends State<UtilityView> {
                 .map((name) => Expanded(
                       child: _buildSpecialtyChip(
                         label: name,
+                        count: _specialtyCount(name),
                         selected: _selectedSpecialty == name,
                         themeColor: themeColor,
-                        onTap: () => _openSpecialtyFinder(name),
+                        onTap: () => _selectSpecialty(name),
                       ),
                     ))
                 .toList(),
           ),
         ),
-        if (_selectedSpecialty != null) _buildActiveFilters(themeColor),
         const SizedBox(height: 8),
       ],
-    );
-  }
-
-  // Area and category picked in the finder; tapping either reopens it
-  Widget _buildActiveFilters(Color themeColor) {
-    Widget filterChip(IconData icon, String label) {
-      return Flexible(
-        child: Material(
-          color: Colors.white,
-          shape: StadiumBorder(
-            side: BorderSide(color: themeColor.withValues(alpha: 0.35)),
-          ),
-          child: InkWell(
-            customBorder: const StadiumBorder(),
-            onTap: () => _openSpecialtyFinder(_selectedSpecialty!),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(icon, size: 15, color: themeColor),
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1F2430),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  const Icon(Icons.expand_more, size: 16, color: Color(0xFF8A9099)),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Row(
-        children: [
-          filterChip(Icons.location_on_outlined, _selectedArea ?? 'All areas'),
-          const SizedBox(width: 8),
-          filterChip(
-            Icons.category_outlined,
-            _selectedCategory ?? 'All categories',
-          ),
-        ],
-      ),
     );
   }
 
@@ -1124,7 +1042,7 @@ class _UtilityViewState extends State<UtilityView> {
                   child: Row(
                     children: [
                       const Text(
-                        'All Specialities',
+                        'Find a Doctor',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -1153,11 +1071,12 @@ class _UtilityViewState extends State<UtilityView> {
                       final name = specialties[index];
                       return _buildSpecialtyChip(
                         label: name,
+                        count: _specialtyCount(name),
                         selected: _selectedSpecialty == name,
                         themeColor: themeColor,
                         onTap: () {
                           Navigator.pop(sheetContext);
-                          _openSpecialtyFinder(name);
+                          _selectSpecialty(name);
                         },
                       );
                     },
@@ -1173,6 +1092,7 @@ class _UtilityViewState extends State<UtilityView> {
 
   Widget _buildSpecialtyChip({
     required String label,
+    required int count,
     required bool selected,
     required Color themeColor,
     required VoidCallback onTap,
@@ -1183,20 +1103,55 @@ class _UtilityViewState extends State<UtilityView> {
         width: 76,
         child: Column(
           children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: selected ? themeColor : const Color(0xFFFFF1F2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                _specialtyIcon(label),
-                color: selected ? Colors.white : themeColor,
-                size: 24,
+            SizedBox(
+              width: 64,
+              height: 64,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: selected ? themeColor : const Color(0xFFFFF1F2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        _specialtyIcon(label),
+                        color: selected ? Colors.white : themeColor,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: Container(
+                      constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: count == 0 ? const Color(0xFFB6BBC3) : themeColor,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.white, width: 1.5),
+                      ),
+                      child: Text(
+                        '$count',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          height: 1,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Text(
               label,
               maxLines: 2,
@@ -1369,6 +1324,31 @@ class _UtilityViewState extends State<UtilityView> {
                             ],
                           ),
                           const SizedBox(height: 8),
+                          GestureDetector(
+                            onTap: () => _callDoctor(doctor),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.phone_outlined,
+                                    size: 14, color: Color(0xFF2E9E5B)),
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    doctor.mobileNumber,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF2E9E5B),
+                                      decoration: TextDecoration.underline,
+                                      decorationColor: Color(0xFF2E9E5B),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 6),
                           Row(
                             children: [
                               const Icon(Icons.location_on_outlined,
@@ -1423,16 +1403,6 @@ class _UtilityViewState extends State<UtilityView> {
                         label: 'View profile',
                         color: const Color(0xFF4B5160),
                         onTap: () => _showDoctorDetails(doctor),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: _buildCardAction(
-                        icon: Icons.call,
-                        label: 'Call',
-                        color: Colors.white,
-                        background: const Color(0xFF2E9E5B),
-                        onTap: () => _callDoctor(doctor),
                       ),
                     ),
                   ],
@@ -2555,129 +2525,155 @@ List<Doctor> buildSampleDoctors() {
   return doctors;
 }
 
-class _SpecialtyFinderResult {
-  final String? area;
-  final String? category;
+class _AreaSelection {
+  final bool all;
+  final Set<String> areas;
 
-  const _SpecialtyFinderResult({this.area, this.category});
+  const _AreaSelection({required this.all, required this.areas});
 }
 
-/// Two-step picker shown when a specialty is tapped:
-/// 1. choose a geographical area, 2. choose a category within the specialty.
-class _SpecialtyFinderSheet extends StatefulWidget {
-  final String specialty;
-  final IconData icon;
-  final List<Doctor> doctors;
+class _AreaPickerSheet extends StatefulWidget {
   final List<String> areas;
   final String memberZone;
-  final List<SpecialtyCategory> categories;
-  final String? initialArea;
-  final String? initialCategory;
-  final bool isActive;
-  final bool Function(String doctorZone, String area) matchesArea;
+  final bool allSelected;
+  final Set<String> selectedAreas;
+  final int totalDoctors;
+  final int Function(String area) doctorCount;
 
-  const _SpecialtyFinderSheet({
-    required this.isActive,
-    required this.specialty,
-    required this.icon,
-    required this.doctors,
+  const _AreaPickerSheet({
     required this.areas,
     required this.memberZone,
-    required this.categories,
-    required this.initialArea,
-    required this.initialCategory,
-    required this.matchesArea,
+    required this.allSelected,
+    required this.selectedAreas,
+    required this.totalDoctors,
+    required this.doctorCount,
   });
 
   @override
-  State<_SpecialtyFinderSheet> createState() => _SpecialtyFinderSheetState();
+  State<_AreaPickerSheet> createState() => _AreaPickerSheetState();
 }
 
-class _SpecialtyFinderSheetState extends State<_SpecialtyFinderSheet> {
-  static const _textDark = Color(0xFF1F2430);
-  static const _textMuted = Color(0xFF8A9099);
-  static const _border = Color(0xFFE6E8EC);
-
-  final TextEditingController _areaSearchController = TextEditingController();
-  int _step = 0;
-  String? _area;
-
-  Color get _themeColor =>
-      ColorHelperClass.getColorFromHex(ColorResources.red_color);
+class _AreaPickerSheetState extends State<_AreaPickerSheet> {
+  late bool _all;
+  late final Set<String> _picked;
 
   @override
   void initState() {
     super.initState();
-    _area = widget.initialArea;
+    _all = widget.allSelected;
+    _picked = _all ? <String>{} : Set<String>.from(widget.selectedAreas);
   }
 
-  @override
-  void dispose() {
-    _areaSearchController.dispose();
-    super.dispose();
-  }
-
-  List<Doctor> _doctorsIn(String? area) {
-    if (area == null) return widget.doctors;
-    return widget.doctors.where((d) => widget.matchesArea(d.zone, area)).toList();
-  }
-
-  String _doctorCount(int count) =>
-      count == 0 ? 'No doctors yet' : '$count ${count == 1 ? 'doctor' : 'doctors'}';
-
-  String? get _memberArea {
-    if (widget.memberZone.isEmpty) return null;
-    for (final area in widget.areas) {
-      if (area.toLowerCase() == widget.memberZone.toLowerCase()) return area;
-    }
-    return widget.memberZone;
-  }
-
-  void _selectArea(String? area) {
+  void _toggleAll() {
     setState(() {
-      _area = area;
-      _step = 1;
+      _all = !_all;
+      if (_all) _picked.clear();
     });
   }
 
-  void _selectCategory(String? category) {
+  void _toggleArea(String area) {
+    setState(() {
+      _all = false;
+      if (_picked.contains(area)) {
+        _picked.remove(area);
+      } else {
+        _picked.add(area);
+      }
+    });
+  }
+
+  void _apply() {
     Navigator.pop(
       context,
-      _SpecialtyFinderResult(area: _area, category: category),
+      _AreaSelection(all: _all, areas: Set<String>.from(_picked)),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final media = MediaQuery.of(context);
+    final themeColor = ColorHelperClass.getColorFromHex(ColorResources.red_color);
+    final member = widget.memberZone.trim().toLowerCase();
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
-      child: Container(
-        height: media.size.height * 0.85,
-        decoration: const BoxDecoration(
-          color: Color(0xFFF7F8FA),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    return SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.75,
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            _buildHeader(),
-            Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                transitionBuilder: (child, animation) {
-                  final offset = Tween<Offset>(
-                    begin: Offset(child.key == const ValueKey(1) ? 0.15 : -0.15, 0),
-                    end: Offset.zero,
-                  ).animate(animation);
-                  return FadeTransition(
-                    opacity: animation,
-                    child: SlideTransition(position: offset, child: child),
-                  );
-                },
-                child: _step == 0
-                    ? KeyedSubtree(key: const ValueKey(0), child: _buildAreaStep())
-                    : KeyedSubtree(key: const ValueKey(1), child: _buildCategoryStep()),
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              height: 4,
+              width: 40,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Select geographical area',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1F2430),
+                  ),
+                ),
+              ),
+            ),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                children: [
+                  _areaTile(
+                    themeColor: themeColor,
+                    icon: Icons.public,
+                    title: 'All',
+                    subtitle: widget.totalDoctors == 1
+                        ? '1 doctor'
+                        : '${widget.totalDoctors} doctors',
+                    selected: _all,
+                    onTap: _toggleAll,
+                  ),
+                  ...widget.areas.map((area) {
+                    final isMember = member.isNotEmpty && area.toLowerCase() == member;
+                    final count = widget.doctorCount(area);
+                    return _areaTile(
+                      themeColor: themeColor,
+                      icon: isMember ? Icons.my_location : Icons.location_on_outlined,
+                      title: isMember ? '$area (Your zone)' : area,
+                      subtitle: count == 1 ? '1 doctor' : '$count doctors',
+                      selected: !_all && _picked.contains(area),
+                      onTap: () => _toggleArea(area),
+                    );
+                  }),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: _apply,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: themeColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Done',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                  ),
+                ),
               ),
             ),
           ],
@@ -2686,434 +2682,38 @@ class _SpecialtyFinderSheetState extends State<_SpecialtyFinderSheet> {
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        border: Border(bottom: BorderSide(color: _border)),
-      ),
-      padding: const EdgeInsets.fromLTRB(8, 10, 8, 14),
-      child: Column(
-        children: [
-          Container(
-            height: 4,
-            width: 40,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              SizedBox(
-                width: 44,
-                child: _step == 1
-                    ? IconButton(
-                        onPressed: () => setState(() => _step = 0),
-                        icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-                        color: _textDark,
-                      )
-                    : null,
-              ),
-              Expanded(
-                child: Column(
-                  children: [
-                    Text(
-                      _step == 0 ? 'Select geographical area' : 'Choose a category',
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        color: _textDark,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Step ${_step + 1} of 2  ·  ${widget.specialty}',
-                      style: const TextStyle(fontSize: 12, color: _textMuted),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(
-                width: 44,
-                child: IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close, size: 22),
-                  color: _textMuted,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: List.generate(2, (index) {
-                return Expanded(
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    margin: EdgeInsets.only(left: index == 0 ? 0 : 6),
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: index <= _step ? _themeColor : _border,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                );
-              }),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionLabel(String label) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 18, 4, 8),
-      child: Text(
-        label.toUpperCase(),
-        style: const TextStyle(
-          fontSize: 11,
-          letterSpacing: 0.8,
-          fontWeight: FontWeight.w700,
-          color: _textMuted,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAreaStep() {
-    final query = _areaSearchController.text.trim().toLowerCase();
-    final memberArea = _memberArea;
-    final otherAreas = widget.areas
-        .where((area) => area.toLowerCase() != memberArea?.toLowerCase())
-        .where((area) => query.isEmpty || area.toLowerCase().contains(query))
-        .toList();
-    final showMemberArea = memberArea != null &&
-        (query.isEmpty || memberArea.toLowerCase().contains(query));
-
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-      children: [
-        TextField(
-          controller: _areaSearchController,
-          onChanged: (_) => setState(() {}),
-          style: const TextStyle(fontSize: 14, color: _textDark),
-          decoration: InputDecoration(
-            hintText: 'Search area or zone',
-            hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF9AA0A8)),
-            prefixIcon: const Icon(Icons.search, color: _textMuted),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(vertical: 12),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _border),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _themeColor),
-            ),
-          ),
-        ),
-        if (query.isEmpty) ...[
-          const SizedBox(height: 14),
-          _buildOptionTile(
-            icon: Icons.public,
-            title: 'All areas',
-            subtitle: _doctorCount(widget.doctors.length),
-            selected: widget.isActive && _area == null,
-            onTap: () => _selectArea(null),
-          ),
-        ],
-        if (showMemberArea) ...[
-          _buildSectionLabel('Your area'),
-          _buildOptionTile(
-            icon: Icons.my_location,
-            title: memberArea,
-            subtitle: _doctorCount(_doctorsIn(memberArea).length),
-            badge: 'Your zone',
-            selected: _area == memberArea,
-            onTap: () => _selectArea(memberArea),
-          ),
-        ],
-        if (otherAreas.isNotEmpty) _buildSectionLabel('Areas'),
-        ...otherAreas.map((area) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _buildOptionTile(
-                icon: Icons.location_on_outlined,
-                title: area,
-                subtitle: _doctorCount(_doctorsIn(area).length),
-                selected: _area == area,
-                onTap: () => _selectArea(area),
-              ),
-            )),
-        if (otherAreas.isEmpty && !showMemberArea && query.isNotEmpty)
-          const Padding(
-            padding: EdgeInsets.only(top: 40),
-            child: Center(
-              child: Text(
-                'No matching area found',
-                style: TextStyle(fontSize: 13, color: _textMuted),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildCategoryStep() {
-    final areaDoctors = _doctorsIn(_area);
-
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-      children: [
-        // Summary of what was picked so far
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                _themeColor.withValues(alpha: 0.10),
-                _themeColor.withValues(alpha: 0.03),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: _themeColor.withValues(alpha: 0.15)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: _themeColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(widget.icon, color: Colors.white, size: 22),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.specialty,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: _textDark,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on, size: 13, color: _textMuted),
-                        const SizedBox(width: 3),
-                        Flexible(
-                          child: Text(
-                            '${_area ?? 'All areas'}  ·  ${_doctorCount(areaDoctors.length)}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 12, color: _textMuted),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              TextButton(
-                onPressed: () => setState(() => _step = 0),
-                style: TextButton.styleFrom(
-                  foregroundColor: _themeColor,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  minimumSize: const Size(0, 32),
-                ),
-                child: const Text(
-                  'Change',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
-        ),
-        _buildSectionLabel('Categories'),
-        _buildOptionTile(
-          icon: Icons.grid_view_rounded,
-          title: 'All ${widget.specialty} categories',
-          subtitle: _doctorCount(areaDoctors.length),
-          selected: widget.isActive &&
-              widget.initialCategory == null &&
-              widget.initialArea == _area,
-          onTap: () => _selectCategory(null),
-        ),
-        const SizedBox(height: 8),
-        ...widget.categories.map((category) {
-          final count =
-              areaDoctors.where((d) => d.categoryName == category.name).length;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: _buildOptionTile(
-              icon: category.isService
-                  ? Icons.support_agent_outlined
-                  : Icons.medical_services_outlined,
-              title: category.name,
-              typeLabel: category.isService ? 'Service' : 'Speciality',
-              isService: category.isService,
-              subtitle: _doctorCount(count),
-              count: count,
-              selected: widget.isActive &&
-                  widget.initialCategory == category.name &&
-                  widget.initialArea == _area,
-              onTap: () => _selectCategory(category.name),
-            ),
-          );
-        }),
-      ],
-    );
-  }
-
-  Widget _buildOptionTile({
+  Widget _areaTile({
+    required Color themeColor,
     required IconData icon,
     required String title,
     required String subtitle,
     required bool selected,
     required VoidCallback onTap,
-    String? badge,
-    String? typeLabel,
-    bool isService = false,
-    int? count,
   }) {
-    final dimmed = count == 0;
-
-    return Material(
-      color: selected ? _themeColor.withValues(alpha: 0.06) : Colors.white,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: selected ? _themeColor : _border,
-              width: selected ? 1.4 : 1,
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: dimmed ? const Color(0xFFF1F2F4) : const Color(0xFFFFF1F2),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  icon,
-                  size: 20,
-                  color: dimmed ? _textMuted : _themeColor,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        height: 1.25,
-                        fontWeight: FontWeight.w600,
-                        color: _textDark,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        if (typeLabel != null) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isService
-                                  ? const Color(0xFFE8F1FF)
-                                  : const Color(0xFFF1F2F4),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              typeLabel.toUpperCase(),
-                              style: TextStyle(
-                                fontSize: 9.5,
-                                letterSpacing: 0.6,
-                                fontWeight: FontWeight.w700,
-                                color: isService
-                                    ? const Color(0xFF2F6FDB)
-                                    : const Color(0xFF5B6270),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                        if (badge != null) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _themeColor,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              badge.toUpperCase(),
-                              style: const TextStyle(
-                                fontSize: 9.5,
-                                letterSpacing: 0.6,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                        Flexible(
-                          child: Text(
-                            subtitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 12, color: _textMuted),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Icon(
-                selected ? Icons.check_circle : Icons.chevron_right,
-                size: selected ? 22 : 20,
-                color: selected ? _themeColor : const Color(0xFFB6BBC3),
-              ),
-            ],
-          ),
+    return ListTile(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      selected: selected,
+      selectedTileColor: themeColor.withValues(alpha: 0.08),
+      leading: Icon(
+        icon,
+        color: selected ? themeColor : const Color(0xFF8A9099),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+          color: const Color(0xFF1F2430),
         ),
       ),
+      subtitle: Text(
+        subtitle,
+        style: const TextStyle(fontSize: 12, color: Color(0xFF8A9099)),
+      ),
+      trailing: Icon(
+        selected ? Icons.check_box : Icons.check_box_outline_blank,
+        color: selected ? themeColor : const Color(0xFFB6BBC3),
+      ),
+      onTap: onTap,
     );
   }
 }
