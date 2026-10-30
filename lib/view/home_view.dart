@@ -95,19 +95,28 @@ class _HomeViewState extends State<HomeView>
     // Item 3: Discounts & Offers (always visible)
     items.add({'icon': Images.discount, 'label': 'Discounts & Offers'});
 
+    // Item 3: Discounts & Offers (always visible)
+    items.add({'icon': Images.events, 'label': 'Events'});
+
+    // Items 5-10: Always visible
+    items.addAll([
+      {'icon': Images.event_trip, 'label': 'Trips'},
+      {'icon': Images.saraswani, 'label': 'Saraswani'},
+      {'icon': Images.utility, 'label': 'Doctors'},
+      {'icon': Images.shiksha, 'label': 'Shiksha Sahayata'},
+      {'icon': Images.network, 'label': 'Networking'},
+      {'icon': Images.sattu_vitran, 'label': 'Vitran'},
+    ]);
+
     if (_canViewSamitiElection) {
       items.add({'icon': Images.samiti_election, 'label': 'Samiti Election'});
     }
 
-    // Items 5-10: Always visible
-    items.addAll([
-      {'icon': Images.sattu_vitran, 'label': 'Vitran'},
-      {'icon': Images.saraswani, 'label': 'Saraswani'},
-      {'icon': Images.events, 'label': 'Events'},
-      {'icon': Images.network, 'label': 'Networking'},
-      {'icon': Images.event_trip, 'label': 'Trips'},
-      {'icon': Images.shiksha, 'label': 'Shiksha Sahayata'},
-    ]);
+    // {'icon': Images.job_portal, 'label': 'Jobs'},
+    // if (memberId == 1 || memberId == 2 || memberId == 2040) {
+    //   items.add({'icon': Images.shiksha, 'label': 'Shiksha Sahayata'});
+    // }
+    // ]);
 
     // Additional items at the end (conditional)
     if (memberId == 1 || memberId == 2) {
@@ -1333,6 +1342,10 @@ class _HomeViewState extends State<HomeView>
         Navigator.pushNamed(context, RouteNames.sattu_vitran);
         break;
 
+      case "Doctors":
+        Navigator.pushNamed(context, RouteNames.utility);
+        break;
+        
       // Samiti Election
       case "Samiti Election":
         Navigator.pushNamed(context, RouteNames.samiti_election);

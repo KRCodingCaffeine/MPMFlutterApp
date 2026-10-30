@@ -139,6 +139,9 @@ class _DashboardViewState extends State<DashboardView> {
         body: pages[controller.currentIndex.value],
         bottomNavigationBar: Obx(
               () => BottomNavigationBar(
+            type: BottomNavigationBarType.fixed,
+            showSelectedLabels: true,
+            showUnselectedLabels: true,
             backgroundColor: Colors.white,
             selectedItemColor:
             ColorHelperClass.getColorFromHex(ColorResources.red_color),

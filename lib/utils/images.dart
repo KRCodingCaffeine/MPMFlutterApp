@@ -36,6 +36,7 @@ class Images {
   static const String saraswani = 'assets/images/saraswani.svg';
   static const String event_attendees = 'assets/images/event_attendees.svg';
   static const String sattu_vitran = 'assets/images/sattu_vitran.svg';
+  static const String utility = 'assets/images/utility.svg';
   static const String samiti_election = 'assets/images/samiti_election.svg';
 
 }

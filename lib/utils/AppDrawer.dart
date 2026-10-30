@@ -28,7 +28,8 @@ class AppDrawer extends StatelessWidget {
     final double? drawerWidth = isTablet ? 400.0 : null;
     final theme = drawerWidth != null
         ? Theme.of(context).copyWith(
-            drawerTheme: Theme.of(context).drawerTheme.copyWith(width: drawerWidth),
+            drawerTheme:
+                Theme.of(context).drawerTheme.copyWith(width: drawerWidth),
           )
         : null;
 
@@ -60,12 +61,15 @@ class AppDrawer extends StatelessWidget {
                       radius: avatarRadius,
                       backgroundColor: Colors.grey[300],
                       child: ClipOval(
-                        child: (dashBoardController.profileImage.value.isNotEmpty)
+                        child: (dashBoardController
+                                .profileImage.value.isNotEmpty)
                             ? FadeInImage(
-                                placeholder: const AssetImage("assets/images/user3.png"),
+                                placeholder:
+                                    const AssetImage("assets/images/user3.png"),
                                 image: NetworkImage(Urls.imagePathUrl +
                                     dashBoardController.profileImage.value),
-                                imageErrorBuilder: (context, error, stackTrace) {
+                                imageErrorBuilder:
+                                    (context, error, stackTrace) {
                                   return Image.asset(
                                     "assets/images/male.png",
                                     fit: BoxFit.cover,
@@ -91,43 +95,43 @@ class AppDrawer extends StatelessWidget {
               SizedBox(width: isTablet ? 20 : 12),
               Expanded(
                 child: Obx(() => Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      dashBoardController.userName.value.isNotEmpty
-                          ? dashBoardController.userName.value
-                          : "Guest User",
-                      style: TextStyle(
-                        fontSize: nameFontSize,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 2,
-                    ),
-                    SizedBox(height: isTablet ? 6 : 4),
-                    Text(
-                      "Membership Code : ${(dashBoardController.memberCode.value.trim().isNotEmpty) ? dashBoardController.memberCode.value : " -- "}",
-                      style: TextStyle(
-                        fontSize: metaFontSize,
-                        color: Colors.white,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                    SizedBox(height: isTablet ? 6 : 4),
-                    Text(
-                      "Mobile: ${dashBoardController.mobileNumber.value.isNotEmpty ? dashBoardController.mobileNumber.value : "N/A"}",
-                      style: TextStyle(
-                        fontSize: metaFontSize,
-                        color: Colors.white70,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                  ],
-                )),
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          dashBoardController.userName.value.isNotEmpty
+                              ? dashBoardController.userName.value
+                              : "Guest User",
+                          style: TextStyle(
+                            fontSize: nameFontSize,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                        ),
+                        SizedBox(height: isTablet ? 6 : 4),
+                        Text(
+                          "Membership Code : ${(dashBoardController.memberCode.value.trim().isNotEmpty) ? dashBoardController.memberCode.value : " -- "}",
+                          style: TextStyle(
+                            fontSize: metaFontSize,
+                            color: Colors.white,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                        SizedBox(height: isTablet ? 6 : 4),
+                        Text(
+                          "Mobile: ${dashBoardController.mobileNumber.value.isNotEmpty ? dashBoardController.mobileNumber.value : "N/A"}",
+                          style: TextStyle(
+                            fontSize: metaFontSize,
+                            color: Colors.white70,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ],
+                    )),
               ),
             ],
           ),
@@ -138,7 +142,8 @@ class AppDrawer extends StatelessWidget {
           title: 'Home',
           iconSize: iconSize,
           titleFontSize: titleFontSize,
-          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          contentPadding: EdgeInsets.symmetric(
+              horizontal: listTilePaddingH, vertical: listTilePaddingV),
           onTap: () {
             Navigator.pop(context);
             if (Navigator.canPop(context)) {
@@ -152,7 +157,8 @@ class AppDrawer extends StatelessWidget {
           title: 'My Profile',
           iconSize: iconSize,
           titleFontSize: titleFontSize,
-          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          contentPadding: EdgeInsets.symmetric(
+              horizontal: listTilePaddingH, vertical: listTilePaddingV),
           onTap: () {
             Navigator.pop(context);
             Navigator.pushNamed(context, RouteNames.profile);
@@ -164,7 +170,8 @@ class AppDrawer extends StatelessWidget {
           title: 'Make New Member',
           iconSize: iconSize,
           titleFontSize: titleFontSize,
-          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          contentPadding: EdgeInsets.symmetric(
+              horizontal: listTilePaddingH, vertical: listTilePaddingV),
           onTap: () {
             Navigator.pop(context);
             Navigator.pushNamed(context, RouteNames.newMember);
@@ -176,7 +183,8 @@ class AppDrawer extends StatelessWidget {
           title: 'Share App',
           iconSize: iconSize,
           titleFontSize: titleFontSize,
-          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          contentPadding: EdgeInsets.symmetric(
+              horizontal: listTilePaddingH, vertical: listTilePaddingV),
           onTap: () {
             Navigator.pop(context);
             _onShare(context);
@@ -188,7 +196,8 @@ class AppDrawer extends StatelessWidget {
           title: 'Share Membership Form',
           iconSize: iconSize,
           titleFontSize: titleFontSize,
-          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          contentPadding: EdgeInsets.symmetric(
+              horizontal: listTilePaddingH, vertical: listTilePaddingV),
           onTap: () {
             Navigator.pop(context);
             _onSharememberForm(context);
@@ -200,7 +209,8 @@ class AppDrawer extends StatelessWidget {
           title: 'Forms',
           iconSize: iconSize,
           titleFontSize: titleFontSize,
-          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          contentPadding: EdgeInsets.symmetric(
+              horizontal: listTilePaddingH, vertical: listTilePaddingV),
           onTap: () {
             Navigator.pop(context);
             Navigator.pushNamed(context, RouteNames.forms);
@@ -212,7 +222,8 @@ class AppDrawer extends StatelessWidget {
           title: 'Bhavan Booking',
           iconSize: iconSize,
           titleFontSize: titleFontSize,
-          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          contentPadding: EdgeInsets.symmetric(
+              horizontal: listTilePaddingH, vertical: listTilePaddingV),
           onTap: () {
             Navigator.pop(context);
             Navigator.pushNamed(context, RouteNames.bhavan_booking);
@@ -224,7 +235,8 @@ class AppDrawer extends StatelessWidget {
           title: 'Enquiry Form',
           iconSize: iconSize,
           titleFontSize: titleFontSize,
-          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          contentPadding: EdgeInsets.symmetric(
+              horizontal: listTilePaddingH, vertical: listTilePaddingV),
           onTap: () {
             Navigator.pop(context);
             Navigator.pushNamed(context, RouteNames.add_enquiry_form);
@@ -236,7 +248,8 @@ class AppDrawer extends StatelessWidget {
           title: 'About Us',
           iconSize: iconSize,
           titleFontSize: titleFontSize,
-          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          contentPadding: EdgeInsets.symmetric(
+              horizontal: listTilePaddingH, vertical: listTilePaddingV),
           onTap: () {
             Navigator.pop(context);
             Navigator.pushNamed(context, RouteNames.aboutUs);
@@ -248,7 +261,8 @@ class AppDrawer extends StatelessWidget {
           title: 'Contact Us',
           iconSize: iconSize,
           titleFontSize: titleFontSize,
-          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          contentPadding: EdgeInsets.symmetric(
+              horizontal: listTilePaddingH, vertical: listTilePaddingV),
           onTap: () {
             Navigator.pop(context);
             Navigator.pushNamed(context, RouteNames.contactUs);
@@ -260,7 +274,8 @@ class AppDrawer extends StatelessWidget {
           title: 'Privacy Policy',
           iconSize: iconSize,
           titleFontSize: titleFontSize,
-          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          contentPadding: EdgeInsets.symmetric(
+              horizontal: listTilePaddingH, vertical: listTilePaddingV),
           onTap: () {
             Navigator.pop(context);
             Navigator.pushNamed(context, RouteNames.pravacypolicy);
@@ -272,7 +287,8 @@ class AppDrawer extends StatelessWidget {
           title: 'Terms & Condition',
           iconSize: iconSize,
           titleFontSize: titleFontSize,
-          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          contentPadding: EdgeInsets.symmetric(
+              horizontal: listTilePaddingH, vertical: listTilePaddingV),
           onTap: () {
             Navigator.pop(context);
             Navigator.pushNamed(context, RouteNames.termandcondition);
@@ -284,7 +300,8 @@ class AppDrawer extends StatelessWidget {
           title: 'Logout',
           iconSize: iconSize,
           titleFontSize: titleFontSize,
-          contentPadding: EdgeInsets.symmetric(horizontal: listTilePaddingH, vertical: listTilePaddingV),
+          contentPadding: EdgeInsets.symmetric(
+              horizontal: listTilePaddingH, vertical: listTilePaddingV),
           onTap: () {
             Navigator.pop(context);
             _showLogoutDialog(context);
@@ -332,23 +349,42 @@ class AppDrawer extends StatelessWidget {
 
     const String playStoreLink =
         'https://play.google.com/store/apps/details?id=com.mpm.member';
+
     const String appStoreLink =
         'https://apps.apple.com/in/app/mpm-mumbai/id6748281499';
 
-    String shareText = '''
-    🌟 Welcome to MPM App! 
-    
-    📲 🚀 Check out this amazing app! 
-    
-    📲 Download Now: 
-    👉 Android: $playStoreLink
-    👉 iOS: $appStoreLink
-    ''';
+    const String shareText = '''
+      *Maheshwari Pragati Mandal, Mumbai*
+      
+      Jai Shri Krishna!
+      
+      Stay connected with Maheshwari Pragati Mandal through our official mobile application.
+      
+      *Explore the MPM App*
+      
+      - Stay updated on Mandal activities and programs.
+      - Read the Monthly Saraswani magazine.
+      - Discover exclusive discount schemes.
+      - Access important Mandal updates and services.
+      
+      *Download the Official MPM App*
+      
+      *For Android:*
+      $playStoreLink
+      
+      *For iPhone and iPad:*
+      $appStoreLink
+      
+      Stay Connected. Stay Informed. Stay United.
+      
+      *Maheshwari Pragati Mandal, Mumbai*
+      ''';
 
     await Share.share(
       shareText,
-      subject: "Download Our App!",
-      sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
+      subject: 'Official MPM App | Maheshwari Pragati Mandal, Mumbai',
+      sharePositionOrigin:
+          box != null ? box.localToGlobal(Offset.zero) & box.size : null,
     );
   }
 
@@ -366,9 +402,8 @@ class AppDrawer extends StatelessWidget {
     await Share.share(
       shareText,
       subject: "Join Us - Membership Registration",
-      sharePositionOrigin: box != null
-          ? box.localToGlobal(Offset.zero) & box.size
-          : Rect.zero,
+      sharePositionOrigin:
+          box != null ? box.localToGlobal(Offset.zero) & box.size : Rect.zero,
     );
   }
 
@@ -427,8 +462,7 @@ class AppDrawer extends StatelessWidget {
               onPressed: () async {
                 await SessionManager.clearSession();
 
-                Get.delete<
-                    UdateProfileController>();
+                Get.delete<UdateProfileController>();
 
                 try {
                   final tempDir = await getTemporaryDirectory();
