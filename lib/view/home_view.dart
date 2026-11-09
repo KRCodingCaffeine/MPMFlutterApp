@@ -78,36 +78,47 @@ class _HomeViewState extends State<HomeView>
   int? memberId;
   bool _canViewEventAttendees = false;
   bool _canViewSamitiElection = false;
+  bool _canViewNewFeatures = false;
   List<Map<String, dynamic>> get gridItems {
     final items = <Map<String, dynamic>>[];
 
     // Item 1: My Profile (always visible)
     items.add({'icon': Images.user, 'label': 'My Profile'});
 
-    // Item 2: Jobs (conditional)
-    if (memberId == 1 || memberId == 2 || memberId == 2040) {
+    // Doctors and Jobs are visible only with the new_features right
+    if (_canViewNewFeatures) {
       items.add({'icon': Images.job_portal, 'label': 'Job Portal'});
     }
 
-    // items.add({'icon': Images.job_portal, 'label': 'Job Portal'});
-
-
     // Item 3: Discounts & Offers (always visible)
     items.add({'icon': Images.discount, 'label': 'Discounts & Offers'});
+
+    // Item 3: Discounts & Offers (always visible)
+    items.add({'icon': Images.events, 'label': 'Events'});
+
+    // if (_canViewNewFeatures) {
+    //   items.add({'icon': Images.utility, 'label': 'Doctors'});
+    //   items.add({'icon': Images.blood_donor, 'label': 'Blood Donor'});
+    // }
+
+    // Items 5-10: Always visible
+    items.addAll([
+      {'icon': Images.event_trip, 'label': 'Trips'},
+      {'icon': Images.saraswani, 'label': 'Saraswani'},
+      {'icon': Images.shiksha, 'label': 'Shiksha Sahayata'},
+      {'icon': Images.network, 'label': 'Networking'},
+      {'icon': Images.sattu_vitran, 'label': 'Vitran'},
+    ]);
 
     if (_canViewSamitiElection) {
       items.add({'icon': Images.samiti_election, 'label': 'Samiti Election'});
     }
 
-    // Items 5-10: Always visible
-    items.addAll([
-      {'icon': Images.sattu_vitran, 'label': 'Vitran'},
-      {'icon': Images.saraswani, 'label': 'Saraswani'},
-      {'icon': Images.events, 'label': 'Events'},
-      {'icon': Images.network, 'label': 'Networking'},
-      {'icon': Images.event_trip, 'label': 'Trips'},
-      {'icon': Images.shiksha, 'label': 'Shiksha Sahayata'},
-    ]);
+    // {'icon': Images.job_portal, 'label': 'Jobs'},
+    // if (memberId == 1 || memberId == 2 || memberId == 2040) {
+    //   items.add({'icon': Images.shiksha, 'label': 'Shiksha Sahayata'});
+    // }
+    // ]);
 
     // Additional items at the end (conditional)
     if (memberId == 1 || memberId == 2) {
@@ -275,7 +286,8 @@ class _HomeViewState extends State<HomeView>
 
       bool canViewEventAttendees = false;
       bool isAllZoneAdmin = false;
-      bool canViewSamitiElection = false; // Add this
+      bool canViewSamitiElection = false;
+      bool canViewNewFeatures = false;
 
       if (adminAccess.status == true) {
         for (final access in adminAccess.data ?? []) {
@@ -304,6 +316,10 @@ class _HomeViewState extends State<HomeView>
           if (access.adminAccessId == '28') {
             canViewSamitiElection = true;
           }
+
+          if (moduleKey == 'newfeatures' || moduleName == 'newfeatures') {
+            canViewNewFeatures = true;
+          }
         }
       }
 
@@ -311,6 +327,7 @@ class _HomeViewState extends State<HomeView>
         _canViewEventAttendees = canViewEventAttendees;
         _isAllZoneAdmin = isAllZoneAdmin;
         _canViewSamitiElection = canViewSamitiElection;
+        _canViewNewFeatures = canViewNewFeatures;
       });
     } catch (e) {
       debugPrint("Admin access fetch error: $e");
@@ -1310,6 +1327,7 @@ class _HomeViewState extends State<HomeView>
         break;
       case "Job Portal":
         Navigator.pushNamed(context, RouteNames.job);
+        break;
       case "Shiksha Sahayata":
         Navigator.pushNamed(context, RouteNames.shiksha_sahayata);
         break;
@@ -1331,6 +1349,13 @@ class _HomeViewState extends State<HomeView>
       //   break;
       case "Vitran":
         Navigator.pushNamed(context, RouteNames.sattu_vitran);
+        break;
+
+      case "Doctors":
+        Navigator.pushNamed(context, RouteNames.utility);
+        break;
+      case "Blood Donor":
+        Navigator.pushNamed(context, RouteNames.blood_donor);
         break;
 
       // Samiti Election

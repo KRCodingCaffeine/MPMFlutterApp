@@ -152,25 +152,28 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       businessProfiles = widget.initialBusinessProfiles ?? [];
       seekerProfileData = widget.initialSeekerProfileData;
       hasSeekerProfile = widget.initialHasSeekerProfile;
-      _applyLoadedJobs(
-        widget.initialJobsForSeeker ?? <JobsForSeekerJobData>[],
-        widget.initialGetJobs ?? <GetJobByMemberIdData>[],
-      );
 
+      if (hasSeekerProfile == true) {
+        _applyLoadedJobs(
+          widget.initialJobsForSeeker ?? <JobsForSeekerJobData>[],
+          widget.initialGetJobs ?? <GetJobByMemberIdData>[],
+        );
+        isLoadingJobs = false;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _loadAppliedJobIds();
+          loadSavedJobs();
+        });
+      } else {
+        isLoadingJobs = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _checkAndOpenPreferredDetails();
+        });
+      }
+    } else {
+      isLoadingJobs = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _checkAndOpenPreferredDetails();
-        _loadAppliedJobIds();
-        loadSavedJobs();
       });
-    } else {
-      loadJobs().then((_) {
-        _loadAppliedJobIds();
-        loadSavedJobs();
-      });
-
-      if (mounted) {
-        _checkAndOpenPreferredDetails();
-      }
     }
   }
 
@@ -585,13 +588,27 @@ class _JobSeekerViewState extends State<JobSeekerView> {
 
   Future<void> _checkAndOpenPreferredDetails() async {
     if (hasOpenedPreferredSheet) return;
-
-    await Future.delayed(const Duration(milliseconds: 500));
-
     if (!mounted) return;
 
+    setState(() {
+      isLoadingJobs = true;
+    });
+
     final seekerProfileExists = await _seekerProfileExists();
-    if (seekerProfileExists || !mounted) return;
+    if (!mounted) return;
+
+    if (seekerProfileExists) {
+      if (jobs.isEmpty) {
+        await loadJobs();
+      } else {
+        setState(() {
+          isLoadingJobs = false;
+        });
+      }
+      _loadAppliedJobIds();
+      loadSavedJobs();
+      return;
+    }
 
     hasOpenedPreferredSheet = true;
     _autoOpenedPreferredSheet = true;

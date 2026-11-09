@@ -176,7 +176,7 @@ class UpdateProfileRepository {
   userOccutionSpecializationSubSubCategoryApi(String subCategoryId) async {
 
     final url = "${Urls.occupation_specialization_sub_sub_category_url}"
-        "?occupation_specialization_sub_category_id=$subCategoryId";
+        "?occupation_specialization_sub_category_id=$subCategoryId&limit=500";
 
     print("🔎 Level-5 Sub-Sub-Category API URL: $url");
 
