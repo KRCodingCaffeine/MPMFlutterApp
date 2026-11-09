@@ -1,18 +1,29 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mpm/model/AddDoctor/AddDoctorModel.dart';
+import 'package:mpm/model/DoctorList/DoctorListModel.dart';
 import 'package:mpm/model/CountryModel/CountryData.dart';
 import 'package:mpm/model/CountryModel/CountryModelClass.dart';
 import 'package:mpm/model/State/StateData.dart';
 import 'package:mpm/model/State/StateModelClass.dart';
+import 'package:mpm/model/OccupationSpec/OccuptionSpecData.dart';
+import 'package:mpm/model/OccuptionSpecSubSubCategory/OccuptionSpecSubSubCategoryData.dart';
 import 'package:mpm/model/city/CityData.dart';
 import 'package:mpm/model/city/CityModelClass.dart';
+import 'package:mpm/model/search/SearchData.dart';
+import 'package:mpm/repository/add_doctor_repository/add_doctor_repo.dart';
+import 'package:mpm/repository/doctor_list_repository/doctor_list_repo.dart';
 import 'package:mpm/repository/register_repository/register_repo.dart';
+import 'package:mpm/repository/update_repository/UpdateProfileRepository.dart';
 import 'package:mpm/repository/zone_repository/zone_repo.dart';
+import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
+import 'package:mpm/view/Utility/add_doctor_choice_view.dart';
 import 'package:mpm/view/Utility/specialty_doctors_view.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -26,24 +37,117 @@ class UtilityView extends StatefulWidget {
 
 class _UtilityViewState extends State<UtilityView> {
   List<Doctor> _allDoctors = [];
+  List<Doctor> _recentDoctors = [];
   List<String> _zones = [];
   Set<String> _savedDoctors = {};
   int _selectedTabIndex = 0;
+  bool _isDoctorsLoading = true;
+  String? _doctorsError;
+  final DoctorListRepository _doctorListRepository = DoctorListRepository();
 
-  // Sample doctor data
-  final List<Doctor> sampleDoctors = buildSampleDoctors();
-
-  // Available specialties for filter
   List<String> getAvailableSpecialties() {
-    final specialties = sampleDoctors.map((d) => d.specialty).toSet().toList();
+    final specialties = _allDoctors
+        .map((doctor) => doctor.specialty.trim())
+        .where((name) => name.isNotEmpty)
+        .toSet()
+        .toList();
     return specialties;
   }
 
   @override
   void initState() {
     super.initState();
-    _allDoctors = sampleDoctors;
+    _loadDoctors();
     _loadZones();
+  }
+
+  Future<void> _loadDoctors() async {
+    try {
+      final rows = await _doctorListRepository.getAllDoctors();
+      final doctors = rows.expand(_doctorsFromApi).toList();
+      if (!mounted) return;
+      setState(() {
+        _allDoctors = doctors;
+        _isDoctorsLoading = false;
+        _doctorsError = doctors.isEmpty ? 'No doctors found' : null;
+      });
+    } catch (e) {
+      debugPrint('❌ Error loading doctors: $e');
+      if (!mounted) return;
+      setState(() {
+        _isDoctorsLoading = false;
+        _doctorsError = 'Unable to load doctors';
+      });
+    }
+  }
+
+  List<Doctor> _doctorsFromApi(DoctorListData item) {
+    final occupations = item.occupationList;
+    if (occupations.isEmpty) {
+      return [_mapDoctor(item, null)];
+    }
+    return occupations.map((occupation) => _mapDoctor(item, occupation)).toList();
+  }
+
+  Doctor _mapDoctor(DoctorListData item, DoctorListOccupation? occupation) {
+    final addresses = item.addresses ?? [];
+    final office = addresses.cast<DoctorListAddress?>().firstWhere(
+          (address) => (address?.addressType ?? '').toLowerCase() == 'office',
+          orElse: () => null,
+        );
+    final home = addresses.cast<DoctorListAddress?>().firstWhere(
+          (address) => (address?.addressType ?? '').toLowerCase() == 'home',
+          orElse: () => null,
+        );
+    final clinic = office ?? (addresses.isNotEmpty ? addresses.first : null);
+    final location = clinic ?? home;
+
+    final specialty = _cleanDoctorText(occupation?.specializationName);
+    final category = _cleanDoctorText(occupation?.specializationSubCategoryName);
+    final subCategory = _cleanDoctorText(occupation?.specializationSubSubCategoryName);
+    final categoryName = category.isNotEmpty
+        ? category
+        : (subCategory.isNotEmpty ? subCategory : '');
+
+    return Doctor(
+      name: _doctorName(item),
+      specialty: specialty,
+      category: categoryName.isEmpty || categoryName == specialty ? null : categoryName,
+      mobileNumber: _cleanDoctorText(item.mobile),
+      imageUrl: _cleanDoctorText(item.profileImage),
+      email: _cleanDoctorText(item.email),
+      experience: _cleanDoctorText(occupation?.occupationOtherName),
+      clinicName: _cleanDoctorText(office?.clinicName),
+      address: _doctorAddress(location),
+      zone: _cleanDoctorText(location?.zoneName),
+    );
+  }
+
+  String _doctorName(DoctorListData item) {
+    final fullName = _cleanDoctorText(item.fullName);
+    if (fullName.isNotEmpty) return fullName;
+    return [
+      item.firstName,
+      item.middleName,
+      item.lastName,
+    ].map(_cleanDoctorText).where((part) => part.isNotEmpty && part != '-').join(' ');
+  }
+
+  String _doctorAddress(DoctorListAddress? address) {
+    if (address == null) return '';
+    return [
+      address.flatNo,
+      address.address,
+      address.areaName,
+      address.cityName,
+      address.pincode,
+    ].map(_cleanDoctorText).where((part) => part.isNotEmpty).join(', ');
+  }
+
+  String _cleanDoctorText(String? value) {
+    final text = (value ?? '').trim();
+    if (text.isEmpty || text.toLowerCase() == 'null' || text == '-') return '';
+    return text;
   }
 
   Future<void> _loadZones() async {
@@ -534,8 +638,12 @@ class _UtilityViewState extends State<UtilityView> {
     );
   }
 
+  bool _sameSpecialty(String doctorSpecialty, String selectedSpecialty) {
+    return doctorSpecialty.trim().toLowerCase() == selectedSpecialty.trim().toLowerCase();
+  }
+
   int _specialtyCount(String specialty) {
-    return _allDoctors.where((doctor) => doctor.specialty == specialty).length;
+    return _allDoctors.where((doctor) => _sameSpecialty(doctor.specialty, specialty)).length;
   }
 
   void _openSpecialty(String specialty) {
@@ -544,11 +652,27 @@ class _UtilityViewState extends State<UtilityView> {
       MaterialPageRoute(
         builder: (_) => SpecialtyDoctorsView(
           specialty: specialty,
-          doctors: _allDoctors.where((doctor) => doctor.specialty == specialty).toList(),
+          doctors: _allDoctors
+              .where((doctor) => _sameSpecialty(doctor.specialty, specialty))
+              .toList(),
           zones: _availableAreas(),
+          onDoctorsFound: _rememberSearchedDoctors,
         ),
       ),
     );
+  }
+
+  void _rememberSearchedDoctors(List<Doctor> doctors) {
+    if (!mounted || doctors.isEmpty) return;
+    setState(() {
+      final next = <Doctor>[];
+      final seen = <String>{};
+      for (final doctor in [...doctors, ..._recentDoctors]) {
+        final key = '${doctor.name}|${doctor.mobileNumber}';
+        if (seen.add(key)) next.add(doctor);
+      }
+      _recentDoctors = next.take(15).toList();
+    });
   }
 
   Widget _buildDiscoverPage(Color themeColor) {
@@ -556,13 +680,58 @@ class _UtilityViewState extends State<UtilityView> {
       physics: const BouncingScrollPhysics(),
       slivers: [
         SliverToBoxAdapter(child: _buildSpecialtySection(themeColor)),
+        if (_recentDoctors.isNotEmpty)
+          SliverToBoxAdapter(child: _buildRecentDoctors()),
+      ],
+    );
+  }
+
+  Widget _buildRecentDoctors() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader(
+          title: 'Recently searched',
+          count: '${_recentDoctors.length}',
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+          child: Column(
+            children: [
+              for (var i = 0; i < _recentDoctors.length; i++) ...[
+                if (i > 0) const SizedBox(height: 10),
+                _buildDoctorCard(_recentDoctors[i]),
+              ],
+            ],
+          ),
+        ),
       ],
     );
   }
 
 
   Widget _buildSpecialtySection(Color themeColor) {
+    if (_isDoctorsLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 48),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     final specialties = getAvailableSpecialties()..sort();
+    if (specialties.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 24, 16, 20),
+        child: Text(
+          _doctorsError ?? 'No doctors found',
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF8A9099),
+          ),
+        ),
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -862,25 +1031,32 @@ class _UtilityViewState extends State<UtilityView> {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              const Icon(Icons.location_on_outlined,
-                                  size: 14, color: Color(0xFF8A9099)),
-                              const SizedBox(width: 3),
-                              Flexible(
-                                child: Text(
-                                  '${doctor.zone}  ·  ${doctor.experience} exp',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF8A9099),
+                          if (doctor.zone.trim().isNotEmpty ||
+                              doctor.experience.trim().isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                const Icon(Icons.location_on_outlined,
+                                    size: 14, color: Color(0xFF8A9099)),
+                                const SizedBox(width: 3),
+                                Flexible(
+                                  child: Text(
+                                    [
+                                      if (doctor.zone.trim().isNotEmpty) doctor.zone,
+                                      if (doctor.experience.trim().isNotEmpty)
+                                        doctor.experience,
+                                    ].join('  ·  '),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF8A9099),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -1121,7 +1297,14 @@ class _UtilityViewState extends State<UtilityView> {
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.pop(dialogContext);
-                        _showAddDoctorBottomSheet();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => AddDoctorChoiceView(
+                              onAddDoctor: _showAddDoctorBottomSheet,
+                            ),
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: themeColor,
@@ -1132,7 +1315,7 @@ class _UtilityViewState extends State<UtilityView> {
                         ),
                       ),
                       child: const Text(
-                        'I understand, Confirm',
+                        'I understand, Submit',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -1150,12 +1333,15 @@ class _UtilityViewState extends State<UtilityView> {
     );
   }
 
-  void _showAddDoctorBottomSheet() {
+  void _showAddDoctorBottomSheet(SearchData? member, AddDoctorRepository repository) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => const _AddDoctorBottomSheet(),
+      builder: (context) => AddDoctorBottomSheet(
+        member: member,
+        repository: repository,
+      ),
     );
   }
 }
@@ -1171,6 +1357,18 @@ class _ClinicAddressEntry {
   String? stateId;
   String? countryId;
 
+  void clearText() {
+    name.clear();
+    phone.clear();
+    pincode.clear();
+    flatNo.clear();
+    address.clear();
+    area.clear();
+    cityId = null;
+    stateId = null;
+    countryId = null;
+  }
+
   void dispose() {
     name.dispose();
     phone.dispose();
@@ -1181,16 +1379,30 @@ class _ClinicAddressEntry {
   }
 }
 
-class _AddDoctorBottomSheet extends StatefulWidget {
-  const _AddDoctorBottomSheet();
+class _AffiliationEntry {
+  final TextEditingController narration = TextEditingController();
 
-  @override
-  State<_AddDoctorBottomSheet> createState() => _AddDoctorBottomSheetState();
+  void dispose() => narration.dispose();
 }
 
-class _AddDoctorBottomSheetState extends State<_AddDoctorBottomSheet> {
+class AddDoctorBottomSheet extends StatefulWidget {
+  final SearchData? member;
+  final AddDoctorRepository repository;
+
+  const AddDoctorBottomSheet({
+    super.key,
+    this.member,
+    required this.repository,
+  });
+
+  @override
+  State<AddDoctorBottomSheet> createState() => _AddDoctorBottomSheetState();
+}
+
+class _AddDoctorBottomSheetState extends State<AddDoctorBottomSheet> {
   final _formKey = GlobalKey<FormState>();
   final _registerRepo = RegisterRepository();
+  final _profileRepo = UpdateProfileRepository();
   final ImagePicker _picker = ImagePicker();
   File? _profileImage;
 
@@ -1203,17 +1415,45 @@ class _AddDoctorBottomSheetState extends State<_AddDoctorBottomSheet> {
   final _alternateMobileController = TextEditingController();
   final _whatsappController = TextEditingController();
 
+  static const int _maxClinics = 5;
+
   final List<_ClinicAddressEntry> _clinics = [_ClinicAddressEntry()];
+  final List<_AffiliationEntry> _affiliations = [_AffiliationEntry()];
 
   bool _isLocationLoading = true;
   List<CountryData> _countries = [];
   List<StateData> _states = [];
   List<CityData> _cities = [];
 
+  bool _isSubmitting = false;
+  bool _isSpecLoading = true;
+  String? _specError;
+  List<OccuptionSpecData> _specializations = [];
+  String? _fieldId;
+  bool _isSubSubLoading = false;
+  String? _subSubError;
+  List<OccuptionSpecSubSubCategoryData> _subSubCategories = [];
+  String? _specialityId;
+
   @override
   void initState() {
     super.initState();
+    final member = widget.member;
+    if (member != null) {
+      _firstNameController.text = _memberText(member.firstName);
+      _middleNameController.text = _memberText(member.middleName);
+      _surnameController.text = _memberText(member.lastName);
+      _mobileController.text = _memberText(member.mobile);
+      _emailController.text = _memberText(member.email);
+    }
     _loadLocations();
+    _loadDoctorSpecializations();
+  }
+
+  String _memberText(String? value) {
+    final text = (value ?? '').trim();
+    if (text.isEmpty || text.toLowerCase() == 'null') return '';
+    return text;
   }
 
   @override
@@ -1228,7 +1468,120 @@ class _AddDoctorBottomSheetState extends State<_AddDoctorBottomSheet> {
     for (final clinic in _clinics) {
       clinic.dispose();
     }
+    for (final affiliation in _affiliations) {
+      affiliation.dispose();
+    }
     super.dispose();
+  }
+
+  Future<void> _loadDoctorSpecializations() async {
+    try {
+      final occupations = await _profileRepo.userOccupationDataApi();
+      String? professionId;
+
+      for (final occupation in occupations.data ?? []) {
+        final id = occupation.id?.toString() ?? '';
+        if (id.isEmpty) continue;
+        try {
+          final professions = await _profileRepo.userOccutionPreCodeApi({
+            'occupation_id': id,
+          });
+          final doctor = (professions.data ?? []).firstWhereOrNull(
+            (item) => (item.name ?? '').trim().toLowerCase() == 'doctor',
+          );
+          if (doctor != null && (doctor.id ?? '').toString().isNotEmpty) {
+            professionId = doctor.id.toString();
+            break;
+          }
+        } catch (e) {
+          debugPrint('Occupation $id has no doctor profession: $e');
+        }
+      }
+
+      List<OccuptionSpecData> specs = [];
+      if (professionId != null) {
+        final response = await _profileRepo.userOccutionSpectionCodeApi({
+          'occupation_profession_id': professionId,
+        });
+        specs = (response.data ?? [])
+            .where((item) => (item.id ?? '').toString().trim().isNotEmpty)
+            .toList();
+        specs.sort(
+          (a, b) => (a.name ?? '')
+              .toLowerCase()
+              .compareTo((b.name ?? '').toLowerCase()),
+        );
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _specializations = specs;
+        _isSpecLoading = false;
+        _specError = specs.isEmpty ? 'Field list is unavailable.' : null;
+      });
+    } catch (e) {
+      debugPrint('❌ Error loading doctor specialities: $e');
+      if (!mounted) return;
+      setState(() {
+        _isSpecLoading = false;
+        _specError = 'Unable to load field.';
+      });
+    }
+  }
+
+  Future<void> _loadSubSubCategories(String specializationId) async {
+    setState(() {
+      _isSubSubLoading = true;
+      _subSubError = null;
+      _subSubCategories = [];
+      _specialityId = null;
+    });
+
+    try {
+      final subCategories = await _profileRepo
+          .userOccutionSpectionSubCategoryApi(specializationId);
+      final subCategoryIds = (subCategories.data ?? [])
+          .map((item) => item.specializationSubCategoryId?.toString() ?? '')
+          .where((id) => id.isNotEmpty)
+          .toList();
+
+      final responses = await Future.wait(
+        subCategoryIds.map((subCategoryId) async {
+          try {
+            return await _profileRepo
+                .userOccutionSpecializationSubSubCategoryApi(subCategoryId);
+          } catch (e) {
+            debugPrint('No sub-sub category for $subCategoryId: $e');
+            return null;
+          }
+        }),
+      );
+
+      final items = <OccuptionSpecSubSubCategoryData>[];
+      for (final response in responses) {
+        items.addAll(response?.data ?? []);
+      }
+      items.sort(
+        (a, b) => (a.subSubCategoryName ?? '')
+            .toLowerCase()
+            .compareTo((b.subSubCategoryName ?? '').toLowerCase()),
+      );
+
+      if (!mounted || _fieldId != specializationId) return;
+      setState(() {
+        _subSubCategories = items;
+        _isSubSubLoading = false;
+        _subSubError = items.isEmpty ? 'No speciality for this field.' : null;
+      });
+    } catch (e) {
+      debugPrint('No sub category for specialization $specializationId: $e');
+      if (!mounted || _fieldId != specializationId) return;
+      setState(() {
+        _subSubCategories = [];
+        _isSubSubLoading = false;
+        _subSubError = 'No speciality for this field.';
+      });
+    }
   }
 
   Future<void> _loadLocations() async {
@@ -1244,11 +1597,30 @@ class _AddDoctorBottomSheetState extends State<_AddDoctorBottomSheet> {
         _states = (results[1] as StateModelClass).data ?? [];
         _cities = (results[2] as CityModelClass).data ?? [];
         _isLocationLoading = false;
+        for (final clinic in _clinics) {
+          _applyDefaultLocation(clinic);
+        }
       });
     } catch (e) {
       debugPrint('❌ Error loading locations: $e');
       if (!mounted) return;
       setState(() => _isLocationLoading = false);
+    }
+  }
+
+  void _applyDefaultLocation(_ClinicAddressEntry clinic) {
+    final india = _countries.firstWhereOrNull(
+      (country) => (country.countryName ?? '').trim().toLowerCase() == 'india',
+    );
+    final maharashtra = _states.firstWhereOrNull((state) {
+      final name = (state.stateName ?? '').trim().toLowerCase();
+      return name == 'maharashtra' || name == 'maharastra' || name == 'mahastra';
+    });
+    clinic.countryId ??= india?.id ?? maharashtra?.countryId;
+    if (maharashtra != null &&
+        (clinic.countryId == null || maharashtra.countryId == clinic.countryId)) {
+      clinic.stateId ??= maharashtra.id;
+      clinic.countryId ??= maharashtra.countryId;
     }
   }
 
@@ -1364,20 +1736,154 @@ class _AddDoctorBottomSheetState extends State<_AddDoctorBottomSheet> {
     return null;
   }
 
-  void _submit() {
-    if (!_formKey.currentState!.validate()) return;
+  Future<void> _submit() async {
+    if (_isSubmitting || !_formKey.currentState!.validate()) return;
 
-    // TODO: Submit doctor details to the API once it is available
-    final messenger = ScaffoldMessenger.of(context);
-    Navigator.pop(context);
-    messenger.showSnackBar(
-      SnackBar(
-        content: const Text(
-          'Doctor details submitted. Mandal office will review and make it live.',
+    final selectedField = _specializations.firstWhereOrNull(
+      (item) => item.id?.toString() == _fieldId,
+    );
+    final occupationId = AddDoctorRequest.parseId(selectedField?.occupationId);
+    final professionId = AddDoctorRequest.parseId(selectedField?.occupationProfessionId);
+    final specializationId = AddDoctorRequest.parseId(selectedField?.id);
+    if (occupationId == null || professionId == null || specializationId == null) {
+      _showMessage('Selected field is missing occupation details. Please choose it again.');
+      return;
+    }
+
+    final addresses = _clinicAddresses();
+    if (addresses.isEmpty) {
+      _showMessage('Please add a clinic address.');
+      return;
+    }
+    if (addresses.any((address) => address.countryId == null)) {
+      _showMessage('Please select a country for each clinic address.');
+      return;
+    }
+
+    final session = await SessionManager.getSession();
+    final createdBy = AddDoctorRequest.parseId(session?.memberId);
+    if (!mounted) return;
+    if (createdBy == null || createdBy <= 0) {
+      _showMessage('Login session expired. Please login again.');
+      return;
+    }
+
+    final speciality = _subSubCategories.firstWhereOrNull(
+      (item) => item.subSubCategoryId?.toString() == _specialityId,
+    );
+    final memberId = AddDoctorRequest.parseId(widget.member?.memberId);
+    final request = AddDoctorRequest(
+      firstName: _firstNameController.text.trim(),
+      middleName: AddDoctorRequest.emptyToNull(_middleNameController.text),
+      lastName: _surnameController.text.trim(),
+      mobile: AddDoctorRequest.emptyToNull(_mobileController.text),
+      email: AddDoctorRequest.emptyToNull(_emailController.text),
+      createdBy: createdBy,
+      memberId: memberId,
+      occupations: [
+        AddDoctorOccupation(
+          occupationId: occupationId,
+          occupationProfessionId: professionId,
+          occupationSpecializationId: specializationId,
+          occupationSpecializationSubCategoryId:
+              AddDoctorRequest.parseId(speciality?.subCategoryId),
+          occupationSpecializationSubSubCategoryId:
+              AddDoctorRequest.parseId(_specialityId),
         ),
+      ],
+      addresses: addresses,
+    );
+
+    setState(() => _isSubmitting = true);
+    try {
+      final response = await widget.repository.addDoctor(request);
+      if (!mounted) return;
+      if (response.status != true) {
+        setState(() => _isSubmitting = false);
+        _showMessage(response.message ?? 'Unable to add doctor.');
+        return;
+      }
+
+      final messenger = ScaffoldMessenger.of(context);
+      Navigator.pop(context);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            response.message ??
+                'Doctor details submitted. Mandal office will review and make it live.',
+          ),
+          backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      _showMessage(_errorMessage(e));
+    }
+  }
+
+  List<AddDoctorAddress> _clinicAddresses() {
+    final addresses = <AddDoctorAddress>[];
+    for (final clinic in _clinics) {
+      final clinicName = AddDoctorRequest.emptyToNull(clinic.name.text);
+      final clinicPhone = AddDoctorRequest.emptyToNull(clinic.phone.text);
+      final flatNo = AddDoctorRequest.emptyToNull(clinic.flatNo.text);
+      final address = AddDoctorRequest.emptyToNull(clinic.address.text);
+      final areaName = AddDoctorRequest.emptyToNull(clinic.area.text);
+      final pincode = AddDoctorRequest.parseId(clinic.pincode.text);
+      final hasDetails = clinicName != null ||
+          clinicPhone != null ||
+          flatNo != null ||
+          address != null ||
+          areaName != null ||
+          pincode != null;
+      if (!hasDetails) continue;
+
+      addresses.add(
+        AddDoctorAddress(
+          addressType: 'office',
+          clinicName: clinicName,
+          clinicPhone: clinicPhone,
+          flatNo: flatNo,
+          address: address,
+          areaName: areaName,
+          cityId: AddDoctorRequest.parseId(clinic.cityId),
+          stateId: AddDoctorRequest.parseId(clinic.stateId),
+          countryId: AddDoctorRequest.parseId(clinic.countryId),
+          pincode: pincode,
+        ),
+      );
+    }
+    return addresses;
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
         backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
       ),
     );
+  }
+
+  String _errorMessage(Object error) {
+    final text = error.toString();
+    final start = text.indexOf('{');
+    if (start >= 0) {
+      try {
+        final decoded = jsonDecode(text.substring(start));
+        if (decoded is Map) {
+          final errors = decoded['errors'];
+          if (errors is Map && errors.isNotEmpty) {
+            return errors.values.first.toString();
+          }
+          if (decoded['message'] != null) {
+            return decoded['message'].toString();
+          }
+        }
+      } catch (_) {}
+    }
+    return 'Unable to add doctor. Please try again.';
   }
 
   InputDecoration _inputDecoration(String label, IconData icon) {
@@ -1437,7 +1943,10 @@ class _AddDoctorBottomSheetState extends State<_AddDoctorBottomSheet> {
     required List<DropdownMenuItem<String>> items,
     required ValueChanged<String?> onChanged,
     String keyPrefix = '',
+    bool? loading,
+    String? Function(String?)? validator,
   }) {
+    final isLoading = loading ?? _isLocationLoading;
     // Drop the selection if it is not in the current (filtered) list
     final selected =
         items.any((item) => item.value == value) ? value : null;
@@ -1449,10 +1958,11 @@ class _AddDoctorBottomSheetState extends State<_AddDoctorBottomSheet> {
         initialValue: selected,
         isExpanded: true,
         items: items,
-        onChanged: _isLocationLoading ? null : onChanged,
+        onChanged: isLoading ? null : onChanged,
+        validator: validator,
         menuMaxHeight: 350,
         decoration: _inputDecoration(label, icon).copyWith(
-          suffixIcon: _isLocationLoading
+          suffixIcon: isLoading
               ? const Padding(
                   padding: EdgeInsets.all(14),
                   child: SizedBox(
@@ -1467,6 +1977,157 @@ class _AddDoctorBottomSheetState extends State<_AddDoctorBottomSheet> {
     );
   }
 
+  List<DropdownMenuItem<String>> _specializationItems() {
+    final seen = <String>{};
+    final items = <DropdownMenuItem<String>>[];
+    for (final spec in _specializations) {
+      final id = spec.id?.toString() ?? '';
+      final name = (spec.name ?? '').trim();
+      if (id.isEmpty || name.isEmpty || !seen.add(id)) continue;
+      items.add(
+        DropdownMenuItem<String>(
+          value: id,
+          child: Text(name, overflow: TextOverflow.ellipsis),
+        ),
+      );
+    }
+    return items;
+  }
+
+  List<DropdownMenuItem<String>> _subSubCategoryItems() {
+    final seen = <String>{};
+    final items = <DropdownMenuItem<String>>[];
+    for (final item in _subSubCategories) {
+      final id = item.subSubCategoryId?.toString() ?? '';
+      final name = (item.subSubCategoryName ?? '').trim();
+      if (id.isEmpty || name.isEmpty || !seen.add(id)) continue;
+      items.add(
+        DropdownMenuItem<String>(
+          value: id,
+          child: Text(name, overflow: TextOverflow.ellipsis),
+        ),
+      );
+    }
+    return items;
+  }
+
+  Widget _buildSubSubCategoryDropdown() {
+    const label = 'Speciality *';
+    const icon = Icons.local_hospital_outlined;
+
+    if (_fieldId == null) {
+      return const SizedBox.shrink();
+    }
+
+    if (_isSubSubLoading) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: InputDecorator(
+          decoration: _inputDecoration(label, icon).copyWith(
+            suffixIcon: const Padding(
+              padding: EdgeInsets.all(14),
+              child: SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          ),
+          child: Text(
+            'Loading...',
+            style: TextStyle(color: Colors.grey[600], fontSize: 14),
+          ),
+        ),
+      );
+    }
+
+    if (_subSubCategories.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: InputDecorator(
+          decoration: _inputDecoration(label, icon),
+          child: Text(
+            _subSubError ?? 'No speciality for this field.',
+            style: TextStyle(color: Colors.grey[600], fontSize: 14),
+          ),
+        ),
+      );
+    }
+
+    return _buildDropdown(
+      label: label,
+      icon: icon,
+      keyPrefix: 'sub-sub-$_fieldId',
+      value: _specialityId,
+      loading: false,
+      items: _subSubCategoryItems(),
+      validator: (selected) {
+        if (selected == null || selected.trim().isEmpty) {
+          return 'Please select speciality';
+        }
+        return null;
+      },
+      onChanged: (value) => setState(() => _specialityId = value),
+    );
+  }
+
+  Widget _buildSpecializationDropdown({
+    required String label,
+    required IconData icon,
+    required String? value,
+    required ValueChanged<String?> onChanged,
+    required String requiredMessage,
+  }) {
+    if (_isSpecLoading) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: InputDecorator(
+          decoration: _inputDecoration(label, icon).copyWith(
+            suffixIcon: const Padding(
+              padding: EdgeInsets.all(14),
+              child: SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          ),
+          child: Text(
+            'Loading...',
+            style: TextStyle(color: Colors.grey[600], fontSize: 14),
+          ),
+        ),
+      );
+    }
+
+    if (_specializations.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: InputDecorator(
+          decoration: _inputDecoration(label, icon),
+          child: Text(
+            _specError ?? 'No options available',
+            style: TextStyle(color: Colors.grey[600], fontSize: 14),
+          ),
+        ),
+      );
+    }
+
+    return _buildDropdown(
+      label: label,
+      icon: icon,
+      keyPrefix: 'spec',
+      value: value,
+      loading: false,
+      items: _specializationItems(),
+      validator: (selected) {
+        if (selected == null || selected.trim().isEmpty) return requiredMessage;
+        return null;
+      },
+      onChanged: onChanged,
+    );
+  }
+
   Widget _buildSectionTitle(String title, IconData icon, {VoidCallback? onRemove}) {
     final themeColor = ColorHelperClass.getColorFromHex(ColorResources.red_color);
 
@@ -1476,12 +2137,14 @@ class _AddDoctorBottomSheetState extends State<_AddDoctorBottomSheet> {
         children: [
           Icon(icon, size: 20, color: themeColor),
           const SizedBox(width: 8),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: Colors.black87,
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
+              ),
             ),
           ),
           if (onRemove != null)
@@ -1491,21 +2154,43 @@ class _AddDoctorBottomSheetState extends State<_AddDoctorBottomSheet> {
               tooltip: 'Remove',
               icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
             ),
-          const SizedBox(width: 10),
-          Expanded(child: Divider(color: Colors.grey[300])),
         ],
       ),
     );
   }
 
   void _addClinic() {
-    setState(() => _clinics.add(_ClinicAddressEntry()));
+    if (_clinics.length >= _maxClinics) return;
+    final clinic = _ClinicAddressEntry();
+    _applyDefaultLocation(clinic);
+    setState(() => _clinics.add(clinic));
   }
 
   void _removeClinic(int index) {
+    if (_clinics.length == 1) {
+      setState(() {
+        _clinics.first.clearText();
+        _applyDefaultLocation(_clinics.first);
+      });
+      return;
+    }
     final clinic = _clinics[index];
     setState(() => _clinics.removeAt(index));
     WidgetsBinding.instance.addPostFrameCallback((_) => clinic.dispose());
+  }
+
+  void _addAffiliation() {
+    setState(() => _affiliations.add(_AffiliationEntry()));
+  }
+
+  void _removeAffiliation(int index) {
+    if (_affiliations.length == 1) {
+      setState(() => _affiliations.first.narration.clear());
+      return;
+    }
+    final entry = _affiliations[index];
+    setState(() => _affiliations.removeAt(index));
+    WidgetsBinding.instance.addPostFrameCallback((_) => entry.dispose());
   }
 
   Widget _buildClinicAddress(int index) {
@@ -1520,7 +2205,7 @@ class _AddDoctorBottomSheetState extends State<_AddDoctorBottomSheet> {
         _buildSectionTitle(
           title,
           Icons.local_hospital_outlined,
-          onRemove: _clinics.length > 1 ? () => _removeClinic(index) : null,
+          onRemove: () => _removeClinic(index),
         ),
         _buildTextField(
           controller: clinic.name,
@@ -1817,14 +2502,59 @@ class _AddDoctorBottomSheetState extends State<_AddDoctorBottomSheet> {
                         validator: _mobileValidator,
                       ),
 
-                      for (var i = 0; i < _clinics.length; i++) _buildClinicAddress(i),
+                      _buildSectionTitle('Field & Speciality', Icons.medical_services_outlined),
+                      _buildSpecializationDropdown(
+                        label: 'Field *',
+                        icon: Icons.category_outlined,
+                        value: _fieldId,
+                        requiredMessage: 'Please select field',
+                        onChanged: (value) {
+                          if (value == null || value == _fieldId) return;
+                          setState(() => _fieldId = value);
+                          _loadSubSubCategories(value);
+                        },
+                      ),
+                      _buildSubSubCategoryDropdown(),
+
+                      _buildSectionTitle('Doctor affiliated with', Icons.account_balance_outlined),
+                      for (var i = 0; i < _affiliations.length; i++) ...[
+                        if (_affiliations.length > 1)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Row(
+                              children: [
+                                Text(
+                                  'Narration ${i + 1}',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF4B5160),
+                                  ),
+                                ),
+                                const Spacer(),
+                                IconButton(
+                                  onPressed: () => _removeAffiliation(i),
+                                  visualDensity: VisualDensity.compact,
+                                  tooltip: 'Remove',
+                                  icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                                ),
+                              ],
+                            ),
+                          ),
+                        _buildTextField(
+                          controller: _affiliations[i].narration,
+                          label: 'Narration',
+                          icon: Icons.notes_outlined,
+                          maxLines: 3,
+                        ),
+                      ],
                       Align(
                         alignment: Alignment.centerLeft,
                         child: TextButton.icon(
-                          onPressed: _addClinic,
+                          onPressed: _addAffiliation,
                           icon: Icon(Icons.add, color: themeColor),
                           label: Text(
-                            'Add clinic address',
+                            'Add affiliated with',
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               color: themeColor,
@@ -1832,6 +2562,23 @@ class _AddDoctorBottomSheetState extends State<_AddDoctorBottomSheet> {
                           ),
                         ),
                       ),
+
+                      for (var i = 0; i < _clinics.length; i++) _buildClinicAddress(i),
+                      if (_clinics.length < _maxClinics)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            onPressed: _addClinic,
+                            icon: Icon(Icons.add, color: themeColor),
+                            label: Text(
+                              'Add clinic address',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: themeColor,
+                              ),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -1845,7 +2592,7 @@ class _AddDoctorBottomSheetState extends State<_AddDoctorBottomSheet> {
                 child: SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _submit,
+                    onPressed: _isSubmitting ? null : _submit,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: themeColor,
                       foregroundColor: Colors.white,
@@ -1854,14 +2601,23 @@ class _AddDoctorBottomSheetState extends State<_AddDoctorBottomSheet> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text(
-                      'Submit',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Submit',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
                   ),
                 ),
               ),
@@ -1975,77 +2731,3 @@ const Map<String, List<SpecialtyCategory>> _specialtyCategories = {
 List<SpecialtyCategory> specialtyCategoriesFor(String specialty) =>
     _specialtyCategories[specialty] ?? [SpecialtyCategory(specialty)];
 
-const int _sampleDoctorsPerZone = 5;
-
-const List<String> _sampleZones = [
-  'Dadar',
-  'Andheri',
-  'Borivali',
-  'Ghatkopar',
-  'Mulund',
-  'Chembur',
-  'Malad',
-  'Kandivali',
-];
-
-const List<String> _sampleDoctorNames = [
-  'Rajesh Maheshwari', 'Priya Rathi', 'Amit Daga', 'Sneha Mundra', 'Vikram Somani',
-  'Meera Bang', 'Anil Lahoti', 'Sunita Kabra', 'Kiran Malpani', 'Nikhil Bhattad',
-  'Pooja Jajoo', 'Suresh Baheti', 'Kavita Biyani', 'Manish Toshniwal', 'Ritu Chandak',
-  'Ashok Sarda', 'Neha Karwa', 'Deepak Laddha', 'Swati Mantri', 'Gopal Taparia',
-  'Anjali Darak', 'Ramesh Bajaj', 'Shweta Mohta', 'Prakash Kalantri', 'Rekha Jhawar',
-  'Sanjay Malani', 'Divya Agiwal', 'Mahesh Dhoot', 'Komal Inani', 'Vinod Navandar',
-  'Aarti Zanwar', 'Harish Lohiya', 'Bhavna Randad', 'Sachin Totla', 'Nisha Pasari',
-  'Girish Kothari', 'Seema Chitlangia', 'Arvind Bhutada', 'Payal Soni', 'Naresh Bhangadia',
-];
-
-const List<String> _sampleRoads = [
-  'Station Road', 'MG Road', 'Link Road', 'LBS Marg', 'SV Road',
-  'Gokhale Road', 'Ranade Road', 'Linking Road',
-];
-
-const Map<String, String> _sampleClinicSuffix = {
-  'Cardiologist': 'Heart Care',
-  'Dermatologist': 'Skin Clinic',
-  'Neurologist': 'Neuro Centre',
-  'Pediatrician': 'Child Clinic',
-  'Orthopedic': 'Bone & Joint Centre',
-  'Gynecologist': 'Women\'s Clinic',
-  'General Physician': 'Family Clinic',
-  'Ophthalmologist': 'Eye Care',
-};
-
-/// Sample data until the doctors API is ready: [_sampleDoctorsPerZone] doctors
-/// in every zone, rotating through the specialties and their categories.
-List<Doctor> buildSampleDoctors() {
-  final specialties = _specialtyCategories.keys.toList();
-  final doctors = <Doctor>[];
-
-  for (var z = 0; z < _sampleZones.length; z++) {
-    final zone = _sampleZones[z];
-    for (var j = 0; j < _sampleDoctorsPerZone; j++) {
-      final i = z * _sampleDoctorsPerZone + j;
-      final specialty = specialties[i % specialties.length];
-      final categories = specialtyCategoriesFor(specialty);
-      final occurrence = i ~/ specialties.length;
-      final category = categories[(occurrence + z) % categories.length].name;
-      final fullName = _sampleDoctorNames[i % _sampleDoctorNames.length];
-      final surname = fullName.split(' ').last;
-      final digits = (9820010000 + i * 137913).toString();
-
-      doctors.add(Doctor(
-        name: 'Dr. $fullName',
-        specialty: specialty,
-        category: category == specialty ? null : category,
-        mobileNumber: '+91 ${digits.substring(0, 5)} ${digits.substring(5)}',
-        imageUrl: '',
-        email: '${fullName.toLowerCase().replaceAll(' ', '.')}@example.com',
-        experience: '${6 + (i * 7) % 20} years',
-        clinicName: '$surname ${_sampleClinicSuffix[specialty] ?? 'Clinic'}',
-        address: '${12 + i * 3}, ${_sampleRoads[i % _sampleRoads.length]}, $zone, Mumbai',
-        zone: zone,
-      ));
-    }
-  }
-  return doctors;
-}

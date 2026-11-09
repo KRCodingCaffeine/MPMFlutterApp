@@ -42,6 +42,8 @@ class NetWorkApiService extends BaseApiService{
         throw ServerExpection("Internal Server Error: ${response.body}");
       case 409:
         throw ServerExpection("Internal Server Error: ${response.body}");
+      case 422:
+        throw ServerExpection(response.body);
       case 404:
         throw InvalidExpection("Invalid Url Or Data :${response.body}");
       default: FetchDataExpection("Error communication Ouur: ${response.body}");

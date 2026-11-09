@@ -204,4 +204,8 @@ class Urls {
   static const String delete_all_notifications_url = base_url+"api/notifications/delete_all";
   static const String unread_notification_count_url = base_url+"api/notifications/unread_count";
 
+  // Doctors
+  static const String add_doctor_url = base_url+"api/add_doctor";
+  static const String doctor_list_url = base_url+"api/doctor_list";
+
 }
