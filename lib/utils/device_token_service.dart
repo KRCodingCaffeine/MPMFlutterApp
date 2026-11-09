@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:mpm/repository/login_respository.dart';
@@ -19,7 +21,7 @@ class DeviceTokenService {
   Future<void> initialize() async {
     try {
       // Get current token
-      _currentToken = await _messaging.getToken();
+      _currentToken = await _messaging.getToken().timeout(const Duration(seconds: 8));
       debugPrint("🔥 Initial FCM Token: $_currentToken");
 
       // Listen for token refresh

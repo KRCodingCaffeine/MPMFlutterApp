@@ -4,8 +4,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_app_badger/flutter_app_badger.dart';
-import 'dart:io' show Platform;
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show Platform;
 import 'package:mpm/model/notification/NotificationDataModel.dart';
 import 'package:mpm/utils/NotificationDatabase.dart';
 import 'package:mpm/utils/notification_visibility.dart';
@@ -234,16 +235,24 @@ class NotificationService {
     FirebaseMessaging.onMessage.listen(handleIncomingFCMForeground);
     FirebaseMessaging.onMessageOpenedApp.listen(handleNotificationTap);
 
-    // Handle cold-start (app launched by tapping a notification while terminated)
-    final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+    // Handle cold-start (app launched by tapping a notification while terminated).
+    // These calls wait on the APNs token. On iOS 27 that token arrives only
+    // after the scene is active, so they must not be able to block forever.
+    final initialMessage = await FirebaseMessaging.instance
+        .getInitialMessage()
+        .timeout(const Duration(seconds: 8), onTimeout: () => null);
     if (initialMessage != null) {
       handleNotificationTap(initialMessage);
     }
     // Note: Background handler is registered in main.dart, don't register here to avoid duplicates
 
     // Token
-    final token = await _messaging.getToken();
-    debugPrint("🔥 FCM Token: $token");
+    try {
+      final token = await _messaging.getToken().timeout(const Duration(seconds: 8));
+      debugPrint("🔥 FCM Token: $token");
+    } on TimeoutException {
+      debugPrint("🔥 FCM Token not ready yet");
+    }
 
     _messaging.onTokenRefresh.listen((newToken) {
       debugPrint("🔄 Token refreshed: $newToken");

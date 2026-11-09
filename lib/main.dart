@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -24,11 +26,6 @@ Future<void> main() async {
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
   await Firebase.initializeApp();
-  await NotificationService().init();
-  await DeviceTokenService().initialize();
-
-  // Register NotificationApiController globally
-  Get.put(NotificationApiController(), permanent: true);
 
   // Lock screen orientation
   await SystemChrome.setPreferredOrientations([
@@ -42,6 +39,12 @@ Future<void> main() async {
       builder: (context) => const MyApp(),
     ),
   );
+
+  // iOS 27 does not deliver the APNs token until the scene is active.
+  // Waiting for it here keeps runApp from running, so the UI never appears.
+  Get.put(NotificationApiController(), permanent: true);
+  unawaited(NotificationService().init());
+  unawaited(DeviceTokenService().initialize());
 }
 
 // Background handler is now in notification_service.dart

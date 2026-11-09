@@ -10,10 +10,11 @@ import FirebaseCore
   ) -> Bool {
       // Initialize Firebase
           FirebaseApp.configure()
-          
-          // Register generated Flutter plugins
-          GeneratedPluginRegistrant.register(with: self)
-          
+
+          // Plugins are registered from SceneDelegate after the Flutter view
+          // controller exists. UIScene startup creates that controller later
+          // than application:didFinishLaunchingWithOptions:.
+
           // Set the UNUserNotificationCenter delegate
           UNUserNotificationCenter.current().delegate = self
           
