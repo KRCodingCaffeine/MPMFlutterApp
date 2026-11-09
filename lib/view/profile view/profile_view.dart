@@ -837,7 +837,7 @@ class _ConvertNmToLmSheetState extends State<_ConvertNmToLmSheet> {
       padding: const EdgeInsets.only(bottom: 12),
       child: DropdownButtonFormField<String>(
         key: ValueKey('$label-$selected-${items.length}'),
-        initialValue: selected,
+        value: selected,
         isExpanded: true,
         items: items,
         onChanged: onChanged,

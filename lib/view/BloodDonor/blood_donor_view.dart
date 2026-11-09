@@ -373,7 +373,7 @@ class _DonorListState extends State<_DonorList> {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
           child: DropdownButtonFormField<String>(
-            initialValue: _zone,
+            value: _zone,
             decoration: InputDecoration(
               filled: true,
               fillColor: Colors.white,
@@ -595,7 +595,7 @@ class _AddDonorFormState extends State<_AddDonorForm> {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            initialValue: _bloodGroup,
+            value: _bloodGroup,
             decoration: _decoration('Blood group'),
             items: widget.bloodGroups
                 .map((group) => DropdownMenuItem(value: group, child: Text(group)))
@@ -605,7 +605,7 @@ class _AddDonorFormState extends State<_AddDonorForm> {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            initialValue: _zone,
+            value: _zone,
             decoration: _decoration('Zone'),
             items: widget.zones
                 .map((zone) => DropdownMenuItem(value: zone, child: Text(zone)))

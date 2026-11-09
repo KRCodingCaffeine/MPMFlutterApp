@@ -1955,7 +1955,7 @@ class _AddDoctorBottomSheetState extends State<AddDoctorBottomSheet> {
       padding: const EdgeInsets.only(bottom: 14),
       child: DropdownButtonFormField<String>(
         key: ValueKey('$keyPrefix-$label-$selected-${items.length}'),
-        initialValue: selected,
+        value: selected,
         isExpanded: true,
         items: items,
         onChanged: isLoading ? null : onChanged,
