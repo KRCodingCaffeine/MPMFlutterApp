@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mpm/data/network/network_api_service.dart';
-import 'package:mpm/model/Getofferclaimedbyofferid/GetofferclaimedbyofferidData.dart';
+import 'package:mpm/model/GetOfferClaimedByOfferId/getOfferClaimedByOfferIdData.dart';
 import 'package:mpm/utils/urls.dart';
 
 class MemberClaimOfferRepository {

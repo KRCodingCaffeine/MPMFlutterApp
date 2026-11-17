@@ -98,7 +98,6 @@ class _JobSeekerViewState extends State<JobSeekerView> {
   TextEditingController preferredWhatsappController = TextEditingController();
   TextEditingController fieldToWorkController = TextEditingController();
   TextEditingController expectedSalaryController = TextEditingController();
-  TextEditingController preferredAreaController = TextEditingController();
   TextEditingController internshipMonthController = TextEditingController();
   String selectedPreferredCityId = "";
   String selectedPreferredWorkMode = "On-site";
@@ -190,7 +189,6 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     preferredWhatsappController.dispose();
     fieldToWorkController.dispose();
     expectedSalaryController.dispose();
-    preferredAreaController.dispose();
     internshipMonthController.dispose();
     super.dispose();
   }
@@ -1185,7 +1183,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
             TextButton(
               onPressed: _handlePreferredDetailsPressed,
               child: const Text(
-                "Upload CV",
+                "Preference / CV",
                 style: TextStyle(color: Colors.white),
               ),
             ),
@@ -1415,8 +1413,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                 const SizedBox(height: 50),
               ],
 
-              /// APPLY / APPLIED
-              if (isApplied)
+              if (isApplied) ...[
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -1432,41 +1429,48 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                )
-              else
-                SizedBox(
-                  height: 36,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => JobDetailView(
-                            job: job,
-                            jobId: job["jobId"]?.toString() ?? "",
-                          ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              SizedBox(
+                height: 36,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final detailJob = Map<String, dynamic>.from(job);
+                    if (isApplied) {
+                      detailJob["isAppliedJob"] = true;
+                      detailJob["applicationStatus"] =
+                          job["applicationStatus"] ?? "applied";
+                    }
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => JobDetailView(
+                          job: detailJob,
+                          jobId: job["jobId"]?.toString() ?? "",
                         ),
-                      ).then((_) {
-                        _loadAppliedJobIds();
-                        if (selectedTab == 2) {
-                          loadAppliedJobs();
-                        }
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
                       ),
-                    ),
-                    child: const Text(
-                      "View Detail",
-                      style: TextStyle(fontSize: 13),
+                    ).then((_) {
+                      _loadAppliedJobIds();
+                      if (selectedTab == 2) {
+                        loadAppliedJobs();
+                      }
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
+                  child: const Text(
+                    "View Detail",
+                    style: TextStyle(fontSize: 13),
+                  ),
                 ),
+              ),
             ],
           ),
         ],
@@ -1548,9 +1552,6 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     fieldToWorkController.clear();
     expectedSalaryController.clear();
     internshipMonthController.clear();
-    preferredAreaController.text = _cleanProfileValue(
-      profileController.areaName.value,
-    );
     selectedPreferredWorkMode = "On-site";
     selectedPreferredJobType = "Full-time";
 
@@ -1567,11 +1568,10 @@ class _JobSeekerViewState extends State<JobSeekerView> {
       profileController.whatsAppNumber.value,
     );
 
-    selectedPreferredCityId = "2";
+    selectedPreferredCityId = "";
 
     final cityId = _cleanProfileValue(profileController.city_id.value);
-
-    if (cityId == "2" || cityId == "3" || cityId == "4") {
+    if (cityId.isNotEmpty) {
       selectedPreferredCityId = cityId;
     }
   }
@@ -1614,11 +1614,9 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     }
 
     final cityId = _cleanProfileValue(data.cityId ?? "");
-    if (cityId == "2" || cityId == "3" || cityId == "4") {
+    if (cityId.isNotEmpty) {
       selectedPreferredCityId = cityId;
     }
-
-    preferredAreaController.text = _cleanProfileValue(data.areaName ?? "");
   }
 
   Future<bool> _openPreferredCitySheet({
@@ -1654,13 +1652,10 @@ class _JobSeekerViewState extends State<JobSeekerView> {
           (selectedPreferredJobType != "Internship" ||
               internshipMonthController.text.trim().isNotEmpty) &&
           selectedPreferredCityId.isNotEmpty &&
-          preferredAreaController.text.trim().isNotEmpty &&
           hasResume;
     }
 
-    if (regiController.cityList.isEmpty) {
-      await regiController.getCity();
-    }
+    regiController.getCity();
 
     if (!mounted) return false;
 
@@ -1781,9 +1776,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                           "work_mode": workMode,
                                           "work_type": workType,
                                           "city_id": selectedPreferredCityId,
-                                          "area_name": preferredAreaController
-                                              .text
-                                              .trim(),
+                                          "area_name": "",
                                           "is_visible": "1",
                                           "created_by": loggedInMemberId,
                                         };
@@ -1841,8 +1834,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                                   .trim()
                                               : "",
                                           cityId: selectedPreferredCityId,
-                                          areaName: preferredAreaController.text
-                                              .trim(),
+                                          areaName: "",
                                           isVisible: "1",
                                           createdBy: loggedInMemberId,
                                         );
@@ -1902,8 +1894,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                         "work_mode": workMode,
                                         "work_type": workType,
                                         "city_id": selectedPreferredCityId,
-                                        "area_name":
-                                            preferredAreaController.text.trim(),
+                                        "area_name": "",
                                         "is_visible": "1",
                                         "updated_by": loggedInMemberId,
                                       };
@@ -1955,9 +1946,7 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                                                   : ""),
                                           cityId: response.data?.cityId ??
                                               selectedPreferredCityId,
-                                          areaName: response.data?.areaName ??
-                                              preferredAreaController.text
-                                                  .trim(),
+                                          areaName: response.data?.areaName ?? "",
                                           isVisible:
                                               response.data?.isVisible ?? "1",
                                           updatedBy: response.data?.updatedBy ??
@@ -2080,12 +2069,6 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                               _buildPreferredCityDropdown(
                                 modalSetState: setModalState,
                               ),
-                              if (selectedPreferredCityId.isNotEmpty)
-                                _buildPreferredTextField(
-                                  label: "Area Name *",
-                                  controller: preferredAreaController,
-                                  onChanged: (_) => setModalState(() {}),
-                                ),
                               const SizedBox(height: 10),
                               _buildResumeUploadField(
                                 modalSetState: setModalState,
@@ -2192,15 +2175,16 @@ class _JobSeekerViewState extends State<JobSeekerView> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Obx(() {
-        final filteredCities = regiController.cityList.where((city) {
-          return city.id == "2" || city.id == "3" || city.id == "4";
-        }).toList();
+        final cities = List<CityData>.from(regiController.cityList)
+          ..sort((a, b) => (a.cityName ?? "")
+              .toLowerCase()
+              .compareTo((b.cityName ?? "").toLowerCase()));
 
-        if (filteredCities.isEmpty) {
+        if (cities.isEmpty) {
           return const Text("No city available");
         }
 
-        final hasSelectedCity = filteredCities.any(
+        final hasSelectedCity = cities.any(
           (city) => city.id.toString() == selectedPreferredCityId,
         );
 
@@ -2220,8 +2204,9 @@ class _JobSeekerViewState extends State<JobSeekerView> {
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               isExpanded: true,
+              hint: const Text("Select city"),
               value: hasSelectedCity ? selectedPreferredCityId : null,
-              items: filteredCities.map((CityData city) {
+              items: cities.map((CityData city) {
                 return DropdownMenuItem<String>(
                   value: city.id.toString(),
                   child: Text(city.cityName ?? "Unknown"),
@@ -2231,7 +2216,6 @@ class _JobSeekerViewState extends State<JobSeekerView> {
                 if (value != null) {
                   modalSetState(() {
                     selectedPreferredCityId = value;
-                    preferredAreaController.clear();
                   });
                 }
               },

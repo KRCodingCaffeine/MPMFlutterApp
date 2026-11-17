@@ -19,12 +19,10 @@ import 'package:mpm/repository/add_doctor_repository/add_doctor_repo.dart';
 import 'package:mpm/repository/doctor_list_repository/doctor_list_repo.dart';
 import 'package:mpm/repository/register_repository/register_repo.dart';
 import 'package:mpm/repository/update_repository/UpdateProfileRepository.dart';
-import 'package:mpm/repository/zone_repository/zone_repo.dart';
 import 'package:mpm/utils/Session.dart';
 import 'package:mpm/utils/color_helper.dart';
 import 'package:mpm/utils/color_resources.dart';
 import 'package:mpm/view/Utility/add_doctor_choice_view.dart';
-import 'package:mpm/view/Utility/specialty_doctors_view.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -37,34 +35,44 @@ class UtilityView extends StatefulWidget {
 
 class _UtilityViewState extends State<UtilityView> {
   List<Doctor> _allDoctors = [];
-  List<Doctor> _recentDoctors = [];
-  List<String> _zones = [];
   Set<String> _savedDoctors = {};
   int _selectedTabIndex = 0;
+  int? _doctorTopTab;
+  String? _filterField;
+  String? _filterSpeciality;
+  final TextEditingController _doctorSearchController = TextEditingController();
   bool _isDoctorsLoading = true;
   String? _doctorsError;
   final DoctorListRepository _doctorListRepository = DoctorListRepository();
 
   List<String> getAvailableSpecialties() {
-    final specialties = _allDoctors
-        .map((doctor) => doctor.specialty.trim())
-        .where((name) => name.isNotEmpty)
-        .toSet()
-        .toList();
-    return specialties;
+    final specialties = <String>{};
+    for (final doctor in _allDoctors) {
+      final values = doctor.fields.isEmpty ? [doctor.specialty] : doctor.fields;
+      for (final name in values) {
+        final field = name.trim();
+        if (field.isNotEmpty) specialties.add(field);
+      }
+    }
+    return specialties.toList();
   }
 
   @override
   void initState() {
     super.initState();
     _loadDoctors();
-    _loadZones();
+  }
+
+  @override
+  void dispose() {
+    _doctorSearchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadDoctors() async {
     try {
       final rows = await _doctorListRepository.getAllDoctors();
-      final doctors = rows.expand(_doctorsFromApi).toList();
+      final doctors = rows.map(_mapDoctor).toList();
       if (!mounted) return;
       setState(() {
         _allDoctors = doctors;
@@ -81,15 +89,7 @@ class _UtilityViewState extends State<UtilityView> {
     }
   }
 
-  List<Doctor> _doctorsFromApi(DoctorListData item) {
-    final occupations = item.occupationList;
-    if (occupations.isEmpty) {
-      return [_mapDoctor(item, null)];
-    }
-    return occupations.map((occupation) => _mapDoctor(item, occupation)).toList();
-  }
-
-  Doctor _mapDoctor(DoctorListData item, DoctorListOccupation? occupation) {
+  Doctor _mapDoctor(DoctorListData item) {
     final addresses = item.addresses ?? [];
     final office = addresses.cast<DoctorListAddress?>().firstWhere(
           (address) => (address?.addressType ?? '').toLowerCase() == 'office',
@@ -102,21 +102,37 @@ class _UtilityViewState extends State<UtilityView> {
     final clinic = office ?? (addresses.isNotEmpty ? addresses.first : null);
     final location = clinic ?? home;
 
-    final specialty = _cleanDoctorText(occupation?.specializationName);
-    final category = _cleanDoctorText(occupation?.specializationSubCategoryName);
-    final subCategory = _cleanDoctorText(occupation?.specializationSubSubCategoryName);
-    final categoryName = category.isNotEmpty
-        ? category
-        : (subCategory.isNotEmpty ? subCategory : '');
+    final fields = <String>[];
+    final specialities = <String>[];
+    var experience = '';
+    for (final occupation in item.occupationList) {
+      final field = _cleanDoctorText(occupation.specializationName);
+      if (field.isNotEmpty && !fields.any((name) => _sameText(name, field))) {
+        fields.add(field);
+      }
+      final category = _cleanDoctorText(occupation.specializationSubCategoryName);
+      final subCategory = _cleanDoctorText(occupation.specializationSubSubCategoryName);
+      final speciality = category.isNotEmpty ? category : subCategory;
+      if (speciality.isNotEmpty &&
+          !specialities.any((name) => _sameText(name, speciality)) &&
+          !fields.any((name) => _sameText(name, speciality))) {
+        specialities.add(speciality);
+      }
+      if (experience.isEmpty) {
+        experience = _cleanDoctorText(occupation.occupationOtherName);
+      }
+    }
 
     return Doctor(
       name: _doctorName(item),
-      specialty: specialty,
-      category: categoryName.isEmpty || categoryName == specialty ? null : categoryName,
+      specialty: fields.join(', '),
+      category: specialities.isEmpty ? null : specialities.join(', '),
+      fields: fields,
+      specialities: specialities,
       mobileNumber: _cleanDoctorText(item.mobile),
       imageUrl: _cleanDoctorText(item.profileImage),
       email: _cleanDoctorText(item.email),
-      experience: _cleanDoctorText(occupation?.occupationOtherName),
+      experience: experience,
       clinicName: _cleanDoctorText(office?.clinicName),
       address: _doctorAddress(location),
       zone: _cleanDoctorText(location?.zoneName),
@@ -148,31 +164,6 @@ class _UtilityViewState extends State<UtilityView> {
     final text = (value ?? '').trim();
     if (text.isEmpty || text.toLowerCase() == 'null' || text == '-') return '';
     return text;
-  }
-
-  Future<void> _loadZones() async {
-    try {
-      final response = await ZoneRepository().ZoneApi();
-      final zones = (response.data ?? [])
-          .map((zone) => zone.zoneName?.trim() ?? '')
-          .where((name) => name.isNotEmpty && name.toLowerCase() != 'null')
-          .toList();
-      if (!mounted) return;
-      setState(() => _zones = zones);
-    } catch (e) {
-      debugPrint('❌ Error loading zones: $e');
-    }
-  }
-
-  // Only the zones returned by the zone API
-  List<String> _availableAreas() {
-    final areas = <String, String>{};
-    for (final zone in _zones) {
-      final name = zone.trim();
-      if (name.isNotEmpty) areas.putIfAbsent(name.toLowerCase(), () => name);
-    }
-    return areas.values.toList()
-      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
   }
 
   void _toggleSaveDoctor(Doctor doctor) {
@@ -638,218 +629,378 @@ class _UtilityViewState extends State<UtilityView> {
     );
   }
 
+  bool _sameText(String left, String right) {
+    return left.trim().toLowerCase() == right.trim().toLowerCase();
+  }
+
   bool _sameSpecialty(String doctorSpecialty, String selectedSpecialty) {
-    return doctorSpecialty.trim().toLowerCase() == selectedSpecialty.trim().toLowerCase();
+    return _sameText(doctorSpecialty, selectedSpecialty);
   }
 
-  int _specialtyCount(String specialty) {
-    return _allDoctors.where((doctor) => _sameSpecialty(doctor.specialty, specialty)).length;
+  bool _doctorHasField(Doctor doctor, String field) {
+    final values = doctor.fields.isEmpty ? [doctor.specialty] : doctor.fields;
+    return values.any((name) => _sameSpecialty(name, field));
   }
 
-  void _openSpecialty(String specialty) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => SpecialtyDoctorsView(
-          specialty: specialty,
-          doctors: _allDoctors
-              .where((doctor) => _sameSpecialty(doctor.specialty, specialty))
-              .toList(),
-          zones: _availableAreas(),
-          onDoctorsFound: _rememberSearchedDoctors,
+  bool _doctorHasSpeciality(Doctor doctor, String speciality) {
+    return doctor.specialities.any((name) => _sameText(name, speciality));
+  }
+
+  bool _matchesDoctorQuery(Doctor doctor, String query) {
+    if (query.isEmpty) return true;
+    final digits = doctor.mobileNumber.replaceAll(RegExp(r'[^0-9]'), '');
+    final queryDigits = query.replaceAll(RegExp(r'[^0-9]'), '');
+    return doctor.name.toLowerCase().contains(query) ||
+        doctor.specialty.toLowerCase().contains(query) ||
+        doctor.clinicName.toLowerCase().contains(query) ||
+        doctor.zone.toLowerCase().contains(query) ||
+        (queryDigits.isNotEmpty && digits.contains(queryDigits));
+  }
+
+  List<String> _specialitiesForField(String field) {
+    final names = <String>{};
+    for (final doctor in _allDoctors) {
+      if (!_doctorHasField(doctor, field)) continue;
+      for (final speciality in doctor.specialities) {
+        if (speciality.trim().isNotEmpty && !_sameSpecialty(speciality, field)) {
+          names.add(speciality.trim());
+        }
+      }
+    }
+    final list = names.toList()
+      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    return list;
+  }
+
+  String? get _selectedFilterName {
+    final field = _filterField?.trim();
+    final speciality = _filterSpeciality?.trim();
+    if (speciality != null && speciality.isNotEmpty) {
+      if (field != null && field.isNotEmpty && !_sameSpecialty(field, speciality)) {
+        return '$field · $speciality';
+      }
+      return speciality;
+    }
+    if (field == null || field.isEmpty) return null;
+    return field;
+  }
+
+  List<Doctor> _doctorsForCurrentTab() {
+    final query = _doctorSearchController.text.trim().toLowerCase();
+    final doctors = _allDoctors.where((doctor) {
+      if (!_matchesDoctorQuery(doctor, query)) return false;
+      if (_doctorTopTab != 0) return true;
+      if (_filterField != null && !_doctorHasField(doctor, _filterField!)) {
+        return false;
+      }
+      if (_filterSpeciality != null && !_doctorHasSpeciality(doctor, _filterSpeciality!)) {
+        return false;
+      }
+      return true;
+    }).toList();
+    doctors.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    return doctors;
+  }
+
+  String _hospitalName(Doctor doctor) {
+    final name = doctor.clinicName.trim();
+    return name.isEmpty ? 'Other' : name;
+  }
+
+  Widget _buildDiscoverPage(Color themeColor) {
+    if (_isDoctorsLoading) {
+      return Column(
+        children: [
+          _buildDoctorTopTabs(themeColor),
+          const Expanded(child: Center(child: CircularProgressIndicator())),
+        ],
+      );
+    }
+
+    if (_allDoctors.isEmpty) {
+      return Column(
+        children: [
+          _buildDoctorTopTabs(themeColor),
+          Expanded(
+            child: _buildEmptyState(
+              icon: Icons.medical_services_outlined,
+              title: _doctorsError ?? 'No doctors found',
+              message: 'Doctors will appear here.',
+            ),
+          ),
+        ],
+      );
+    }
+
+    final doctors = _doctorsForCurrentTab();
+    return Column(
+      children: [
+        _buildDoctorTopTabs(themeColor),
+        if (_doctorTopTab == 0) _buildSelectedFilterName(themeColor),
+        _buildDoctorSearch(themeColor),
+        Expanded(
+          child: _doctorTopTab == 1
+              ? _buildHospitalList(doctors, themeColor)
+              : _buildDoctorGrid(doctors),
         ),
+      ],
+    );
+  }
+
+  Widget _buildDoctorTopTabs(Color themeColor) {
+    return Container(
+      color: Colors.white,
+      child: Row(
+        children: [
+          _buildDoctorTopTab(
+            label: 'Filter',
+            icon: Icons.tune,
+            selected: _doctorTopTab == 0,
+            themeColor: themeColor,
+            onTap: () {
+              setState(() => _doctorTopTab = 0);
+              _openFieldFilterSheet(themeColor);
+            },
+          ),
+          _buildDoctorTopTab(
+            label: 'Hospital',
+            icon: Icons.local_hospital_outlined,
+            selected: _doctorTopTab == 1,
+            themeColor: themeColor,
+            onTap: () => setState(() => _doctorTopTab = 1),
+          ),
+        ],
       ),
     );
   }
 
-  void _rememberSearchedDoctors(List<Doctor> doctors) {
-    if (!mounted || doctors.isEmpty) return;
-    setState(() {
-      final next = <Doctor>[];
-      final seen = <String>{};
-      for (final doctor in [...doctors, ..._recentDoctors]) {
-        final key = '${doctor.name}|${doctor.mobileNumber}';
-        if (seen.add(key)) next.add(doctor);
-      }
-      _recentDoctors = next.take(15).toList();
-    });
-  }
-
-  Widget _buildDiscoverPage(Color themeColor) {
-    return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
-      slivers: [
-        SliverToBoxAdapter(child: _buildSpecialtySection(themeColor)),
-        if (_recentDoctors.isNotEmpty)
-          SliverToBoxAdapter(child: _buildRecentDoctors()),
-      ],
-    );
-  }
-
-  Widget _buildRecentDoctors() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader(
-          title: 'Recently searched',
-          count: '${_recentDoctors.length}',
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-          child: Column(
-            children: [
-              for (var i = 0; i < _recentDoctors.length; i++) ...[
-                if (i > 0) const SizedBox(height: 10),
-                _buildDoctorCard(_recentDoctors[i]),
-              ],
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-
-  Widget _buildSpecialtySection(Color themeColor) {
-    if (_isDoctorsLoading) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 48),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    final specialties = getAvailableSpecialties()..sort();
-    if (specialties.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 24, 16, 20),
-        child: Text(
-          _doctorsError ?? 'No doctors found',
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF8A9099),
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16, 16, 16, 12),
-          child: Text(
-            'Speciality',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1F2430),
-            ),
-          ),
-        ),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 8,
-            childAspectRatio: 0.72,
-          ),
-          itemCount: specialties.length,
-          itemBuilder: (context, index) {
-            final name = specialties[index];
-            return _buildSpecialtyChip(
-              label: name,
-              count: _specialtyCount(name),
-              selected: false,
-              themeColor: themeColor,
-              onTap: () => _openSpecialty(name),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSpecialtyChip({
+  Widget _buildDoctorTopTab({
     required String label,
-    required int count,
+    required IconData icon,
     required bool selected,
     required Color themeColor,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: SizedBox(
-        width: 76,
-        child: Column(
-          children: [
-            SizedBox(
-              width: 64,
-              height: 64,
-              child: Stack(
-                clipBehavior: Clip.none,
+    final color = selected ? themeColor : const Color(0xFF8A9099);
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: selected ? themeColor : Colors.transparent,
+                width: 2,
+              ),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 18, color: color),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDoctorSearch(Color themeColor) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: TextField(
+        controller: _doctorSearchController,
+        onChanged: (_) => setState(() {}),
+        textInputAction: TextInputAction.search,
+        style: const TextStyle(fontSize: 14, color: Color(0xFF1F2430)),
+        decoration: InputDecoration(
+          hintText: _doctorTopTab == 1
+              ? 'Search hospital, name or mobile'
+              : 'Search by name or mobile number',
+          hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF9AA0A8)),
+          prefixIcon: const Icon(Icons.search, color: Color(0xFF8A9099)),
+          suffixIcon: _doctorSearchController.text.isEmpty
+              ? null
+              : IconButton(
+                  icon: const Icon(Icons.close, color: Color(0xFF8A9099)),
+                  onPressed: () {
+                    _doctorSearchController.clear();
+                    setState(() {});
+                  },
+                ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(vertical: 0),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFE6E8EC)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFE6E8EC)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: themeColor),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSelectedFilterName(Color themeColor) {
+    final label = _selectedFilterName;
+    if (label == null) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Material(
+          color: themeColor.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(20),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: () => _openFieldFilterSheet(themeColor),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 6, 8, 6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: selected ? themeColor : const Color(0xFFFFF1F2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        _specialtyIcon(label),
-                        color: selected ? Colors.white : themeColor,
-                        size: 24,
+                  Flexible(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: themeColor,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
                       ),
                     ),
                   ),
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: Container(
-                      constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: count == 0 ? const Color(0xFFB6BBC3) : themeColor,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.white, width: 1.5),
-                      ),
-                      child: Text(
-                        '$count',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          height: 1,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
+                  const SizedBox(width: 4),
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _filterField = null;
+                        _filterSpeciality = null;
+                      });
+                    },
+                    child: Icon(Icons.close, size: 16, color: themeColor),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 11,
-                height: 1.15,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: selected ? themeColor : const Color(0xFF4B5160),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
+    );
+  }
+
+  Future<void> _openFieldFilterSheet(Color themeColor) async {
+    final fields = getAvailableSpecialties()..sort();
+    if (!mounted || fields.isEmpty) return;
+
+    final result = await showModalBottomSheet<_FieldFilterResult>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => _FieldSpecialityFilterSheet(
+        themeColor: themeColor,
+        fields: fields,
+        specialitiesFor: _specialitiesForField,
+        selectedField: _filterField,
+        selectedSpeciality: _filterSpeciality,
+      ),
+    );
+    if (!mounted || result == null) return;
+    setState(() {
+      _filterField = result.cleared ? null : result.field;
+      _filterSpeciality = result.cleared ? null : result.speciality;
+    });
+  }
+
+  Widget _buildHospitalList(List<Doctor> doctors, Color themeColor) {
+    if (doctors.isEmpty) {
+      return _buildEmptyState(
+        icon: Icons.local_hospital_outlined,
+        title: 'No hospitals found',
+        message: 'Try another hospital, name or mobile number.',
+      );
+    }
+
+    final groups = <String, List<Doctor>>{};
+    for (final doctor in doctors) {
+      groups.putIfAbsent(_hospitalName(doctor), () => []).add(doctor);
+    }
+    final names = groups.keys.toList()
+      ..sort((a, b) {
+        if (a == 'Other') return 1;
+        if (b == 'Other') return -1;
+        return a.toLowerCase().compareTo(b.toLowerCase());
+      });
+
+    final rows = <_HospitalListRow>[];
+    for (final name in names) {
+      final hospitalDoctors = groups[name]!;
+      rows.add(_HospitalListRow.header(name, hospitalDoctors.length));
+      rows.addAll(hospitalDoctors.map(_HospitalListRow.doctor));
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+      physics: const BouncingScrollPhysics(),
+      itemCount: rows.length,
+      itemBuilder: (context, index) {
+        final row = rows[index];
+        if (row.header != null) {
+          return Padding(
+            padding: EdgeInsets.only(top: index == 0 ? 4 : 16, bottom: 8),
+            child: Row(
+              children: [
+                Icon(Icons.local_hospital_outlined, size: 18, color: themeColor),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    row.header!,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1F2430),
+                    ),
+                  ),
+                ),
+                Text(
+                  '${row.count}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF8A9099),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: _buildDoctorCard(row.doctor!),
+        );
+      },
     );
   }
 
@@ -886,10 +1037,15 @@ class _UtilityViewState extends State<UtilityView> {
         );
       }
 
+      final hasFilter = _doctorSearchController.text.trim().isNotEmpty ||
+          _filterField != null ||
+          _filterSpeciality != null;
       return _buildEmptyState(
         icon: Icons.medical_services_outlined,
         title: 'No doctors to show',
-        message: 'Doctors will appear here.',
+        message: hasFilter
+            ? 'Try another field, speciality or search.'
+            : 'Doctors will appear here.',
       );
     }
 
@@ -987,6 +1143,31 @@ class _UtilityViewState extends State<UtilityView> {
                             ),
                           ),
                           const SizedBox(height: 6),
+                          if (doctor.clinicName.trim().isNotEmpty) ...[
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.local_hospital_outlined,
+                                  size: 14,
+                                  color: Color(0xFF8A9099),
+                                ),
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    doctor.clinicName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF4B5160),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                          ],
                           Wrap(
                             spacing: 6,
                             runSpacing: 6,
@@ -2629,6 +2810,283 @@ class _AddDoctorBottomSheetState extends State<AddDoctorBottomSheet> {
   }
 }
 
+class _FieldFilterResult {
+  final String? field;
+  final String? speciality;
+  final bool cleared;
+
+  const _FieldFilterResult.selected(this.field, this.speciality) : cleared = false;
+
+  const _FieldFilterResult.cleared()
+      : field = null,
+        speciality = null,
+        cleared = true;
+}
+
+class _FieldSpecialityFilterSheet extends StatefulWidget {
+  final Color themeColor;
+  final List<String> fields;
+  final List<String> Function(String field) specialitiesFor;
+  final String? selectedField;
+  final String? selectedSpeciality;
+
+  const _FieldSpecialityFilterSheet({
+    required this.themeColor,
+    required this.fields,
+    required this.specialitiesFor,
+    required this.selectedField,
+    required this.selectedSpeciality,
+  });
+
+  @override
+  State<_FieldSpecialityFilterSheet> createState() => _FieldSpecialityFilterSheetState();
+}
+
+class _FieldSpecialityFilterSheetState extends State<_FieldSpecialityFilterSheet> {
+  String? _field;
+
+  @override
+  void initState() {
+    super.initState();
+    _field = widget.selectedField;
+  }
+
+  bool _same(String? left, String? right) {
+    return (left ?? '').trim().toLowerCase() == (right ?? '').trim().toLowerCase();
+  }
+
+  List<String> get _specialities {
+    final field = _field;
+    if (field == null) return const [];
+    return widget.specialitiesFor(field);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final height = MediaQuery.sizeOf(context).height * 0.72;
+    final specialities = _specialities;
+
+    return SafeArea(
+      child: SizedBox(
+        height: height,
+        child: Column(
+          children: [
+            const SizedBox(height: 10),
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE0E0E0),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Filter',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1F2430),
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, const _FieldFilterResult.cleared()),
+                    child: Text(
+                      'Clear',
+                      style: TextStyle(
+                        color: widget.themeColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1, color: Color(0xFFE6E8EC)),
+            const Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(12, 10, 12, 8),
+                    child: Text(
+                      'Field',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF8A9099),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(16, 10, 16, 8),
+                    child: Text(
+                      'Speciality',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF8A9099),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 1, color: Color(0xFFE6E8EC)),
+            Expanded(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: ColoredBox(
+                      color: const Color(0xFFF4F6F8),
+                      child: ListView(
+                        children: [
+                          _fieldTile(null),
+                          for (final field in widget.fields) _fieldTile(field),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const VerticalDivider(width: 1, color: Color(0xFFE6E8EC)),
+                  Expanded(
+                    flex: 3,
+                    child: ListView(
+                      children: [
+                        if (_field == null)
+                          _specialityTile(
+                            label: 'All doctors',
+                            selected: widget.selectedField == null,
+                            onTap: () => Navigator.pop(
+                              context,
+                              const _FieldFilterResult.cleared(),
+                            ),
+                          )
+                        else ...[
+                          _specialityTile(
+                            label: 'All',
+                            selected: _same(widget.selectedField, _field) &&
+                                widget.selectedSpeciality == null,
+                            onTap: () => Navigator.pop(
+                              context,
+                              _FieldFilterResult.selected(_field, null),
+                            ),
+                          ),
+                          if (specialities.isEmpty)
+                            const Padding(
+                              padding: EdgeInsets.fromLTRB(16, 8, 16, 16),
+                              child: Text(
+                                'No speciality for this field',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF8A9099),
+                                ),
+                              ),
+                            )
+                          else
+                            for (final speciality in specialities)
+                              _specialityTile(
+                                label: speciality,
+                                selected: _same(widget.selectedField, _field) &&
+                                    _same(widget.selectedSpeciality, speciality),
+                                onTap: () => Navigator.pop(
+                                  context,
+                                  _FieldFilterResult.selected(_field, speciality),
+                                ),
+                              ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _fieldTile(String? field) {
+    final selected = field == null ? _field == null : _same(_field, field);
+    final label = field ?? 'All';
+    return Material(
+      color: selected ? Colors.white : Colors.transparent,
+      child: InkWell(
+        onTap: () => setState(() => _field = field),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(
+                color: selected ? widget.themeColor : Colors.transparent,
+                width: 3,
+              ),
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              color: selected ? widget.themeColor : const Color(0xFF1F2430),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _specialityTile({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  color: selected ? widget.themeColor : const Color(0xFF1F2430),
+                ),
+              ),
+            ),
+            if (selected) Icon(Icons.check, size: 18, color: widget.themeColor),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HospitalListRow {
+  final String? header;
+  final int count;
+  final Doctor? doctor;
+
+  _HospitalListRow.header(this.header, this.count) : doctor = null;
+
+  _HospitalListRow.doctor(this.doctor)
+      : header = null,
+        count = 0;
+}
+
 class Doctor {
   final String name;
   final String specialty;
@@ -2640,6 +3098,8 @@ class Doctor {
   final String address;
   final String zone;
   final String? category;
+  final List<String> fields;
+  final List<String> specialities;
 
   Doctor({
     required this.name,
@@ -2652,6 +3112,8 @@ class Doctor {
     required this.address,
     required this.zone,
     this.category,
+    this.fields = const [],
+    this.specialities = const [],
   });
 
   /// Category within the specialty; doctors without one sit under the specialty itself

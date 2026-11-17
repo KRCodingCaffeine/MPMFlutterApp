@@ -229,19 +229,19 @@ class AppDrawer extends StatelessWidget {
             Navigator.pushNamed(context, RouteNames.bhavan_booking);
           },
         ),
-        _drawerTile(
-          context,
-          icon: Icons.contact_page,
-          title: 'Enquiry Form',
-          iconSize: iconSize,
-          titleFontSize: titleFontSize,
-          contentPadding: EdgeInsets.symmetric(
-              horizontal: listTilePaddingH, vertical: listTilePaddingV),
-          onTap: () {
-            Navigator.pop(context);
-            Navigator.pushNamed(context, RouteNames.add_enquiry_form);
-          },
-        ),
+        // _drawerTile(
+        //   context,
+        //   icon: Icons.contact_page,
+        //   title: 'Enquiry Form',
+        //   iconSize: iconSize,
+        //   titleFontSize: titleFontSize,
+        //   contentPadding: EdgeInsets.symmetric(
+        //       horizontal: listTilePaddingH, vertical: listTilePaddingV),
+        //   onTap: () {
+        //     Navigator.pop(context);
+        //     Navigator.pushNamed(context, RouteNames.add_enquiry_form);
+        //   },
+        // ),
         _drawerTile(
           context,
           icon: Icons.info,

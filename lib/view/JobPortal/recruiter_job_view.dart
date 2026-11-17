@@ -1090,7 +1090,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                                 onSelectionChanged: () => modalSetState(() {}),
                               ),
                               _buildCityDropdown(
-                                label: "Location *",
+                                label: "City *",
                                 onSelectionChanged: () => modalSetState(() {}),
                               ),
                               _buildAreaFieldForSelectedCity(),
@@ -1573,7 +1573,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
               borderRadius: BorderRadius.circular(10),
               isExpanded: true,
               hint: Text(
-                hasState ? "Select location" : "Select state first",
+                hasState ? "Select city" : "Select state first",
                 style: const TextStyle(fontSize: 14),
               ),
               value: hasSelectedCity ? selectedCity : null,
@@ -2001,7 +2001,7 @@ class _RecruiterJobViewState extends State<RecruiterJobView> {
                     const Divider(),
                     _infoRow("Company", _getCompanyNameForJob(job)),
                     _infoRow(
-                      "Location",
+                      "City",
                       _locationWithArea(job.location, job.jobAreaName),
                     ),
                     if ((job.salaryVisible ?? "1") != "0")

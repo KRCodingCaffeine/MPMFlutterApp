@@ -35,13 +35,14 @@ class DoctorListRepository {
     var offset = 0;
     final doctors = <DoctorListData>[];
 
-    while (offset < 500) {
+    while (offset < 10000) {
       final page = await getDoctorList(source: source, limit: pageSize, offset: offset);
       final items = page.data ?? [];
+      if (items.isEmpty) break;
       doctors.addAll(items);
-      final total = page.totalResults ?? doctors.length;
-      offset += items.isEmpty ? pageSize : items.length;
-      if (items.isEmpty || offset >= total) break;
+      offset += items.length;
+      final total = page.totalResults;
+      if (items.length < pageSize || (total != null && offset >= total)) break;
     }
 
     return doctors;

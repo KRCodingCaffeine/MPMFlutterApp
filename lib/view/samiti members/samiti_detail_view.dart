@@ -118,6 +118,7 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
 
                 if (isPresidentList && isPresidentRecord) {
                   return _buildMemberCard(
+                    serialNo: index + 1,
                     samitiRoles: "",
                     lmCode: "",
                     name: _cleanValue(member.presidentName),
@@ -131,6 +132,7 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
 
                 if (isPresidentList) {
                   return _buildMemberCard(
+                    serialNo: index + 1,
                     samitiRoles: "",
                     lmCode: memberCode,
                     name: name,
@@ -143,6 +145,7 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
                 }
 
                 return _buildMemberCard(
+                    serialNo: index + 1,
                     samitiRoles: samitiRolesName,
                     lmCode: memberCode,
                     name: name,
@@ -179,6 +182,7 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
 
   /// **Reusable method to build a member card with profile image**
   Widget _buildMemberCard({
+    required int serialNo,
     required String samitiRoles,
     required String lmCode,
     required String name,
@@ -199,7 +203,18 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
           padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
-              // Profile Image with default fallback
+              SizedBox(
+                width: 28,
+                child: Text(
+                  "$serialNo",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFFDC3545),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
               CircleAvatar(
                 radius: 40,
                 backgroundColor: Colors.grey[300],
@@ -229,7 +244,6 @@ class _SamitiDetailPageState extends State<SamitiDetailPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Role Text (Super Admin)
                     Text(
                       name,
                       style: const TextStyle(

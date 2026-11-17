@@ -96,9 +96,14 @@ class _HomeViewState extends State<HomeView>
     // Item 3: Discounts & Offers (always visible)
     items.add({'icon': Images.events, 'label': 'Events'});
 
+    // Additional items at the end (conditional)
+    // if (memberId == 1 || memberId == 2 || memberId == 2040) {
+    //   items.add({'icon': Images.utility, 'label': 'Doctors'});
+    // }
+
     // if (_canViewNewFeatures) {
     //   items.add({'icon': Images.utility, 'label': 'Doctors'});
-    //   items.add({'icon': Images.blood_donor, 'label': 'Blood Donor'});
+    //   // items.add({'icon': Images.blood_donor, 'label': 'Blood Donor'});
     // }
 
     // Items 5-10: Always visible
@@ -107,12 +112,12 @@ class _HomeViewState extends State<HomeView>
       {'icon': Images.saraswani, 'label': 'Saraswani'},
       {'icon': Images.shiksha, 'label': 'Shiksha Sahayata'},
       {'icon': Images.network, 'label': 'Networking'},
-      {'icon': Images.sattu_vitran, 'label': 'Vitran'},
+      // {'icon': Images.sattu_vitran, 'label': 'Vitran'},
     ]);
 
-    if (_canViewSamitiElection) {
-      items.add({'icon': Images.samiti_election, 'label': 'Samiti Election'});
-    }
+    // if (_canViewSamitiElection) {
+    //   items.add({'icon': Images.samiti_election, 'label': 'Samiti Election'});
+    // }
 
     // {'icon': Images.job_portal, 'label': 'Jobs'},
     // if (memberId == 1 || memberId == 2 || memberId == 2040) {

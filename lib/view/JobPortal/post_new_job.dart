@@ -428,7 +428,7 @@ class _PostNewJobState extends State<PostNewJob> {
                       onSelectionChanged: () => setState(() {}),
                     ),
                     _buildCityDropdown(
-                      label: "Location *",
+                      label: "City *",
                       onSelectionChanged: () => setState(() {}),
                     ),
                     _buildAreaFieldForSelectedCity(),
@@ -905,7 +905,7 @@ class _PostNewJobState extends State<PostNewJob> {
                 borderRadius: BorderRadius.circular(10),
                 isExpanded: true,
                 hint: Text(
-                  hasState ? "Select location" : "Select state first",
+                  hasState ? "Select city" : "Select state first",
                   style: const TextStyle(fontSize: 14),
                 ),
                 value: hasSelectedCity ? selectedCity : null,
