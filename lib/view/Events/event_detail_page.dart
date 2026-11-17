@@ -1730,7 +1730,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             const SizedBox(height: 10),
           ],
 
-          if (_isRegistered) ...[
+          if (_isRegistered && isFreeEvent) ...[
             Container(
               width: double.infinity,
               margin: const EdgeInsets.only(bottom: 10),
@@ -1771,49 +1771,48 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ),
           ],
 
-          // REGISTERED BUTTON
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: ColorHelperClass.getColorFromHex(
-                  ColorResources.red_color,
+          if (!_isRegistered || isFreeEvent)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColorHelperClass.getColorFromHex(
+                    ColorResources.red_color,
+                  ),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              onPressed: _isRegistering
-                  ? null
-                  : () async {
-                      if (_isRegistered) {
-                        // Directly unregister without showing confirmation dialog
-                        await _cancelEventRegistration();
-                      } else {
-                        final confirmed = await _showFinalConfirmationDialog();
+                onPressed: _isRegistering
+                    ? null
+                    : () async {
+                        if (_isRegistered && isFreeEvent) {
+                          await _cancelEventRegistration();
+                        } else if (!_isRegistered) {
+                          final confirmed = await _showFinalConfirmationDialog();
 
-                        if (confirmed) {
-                          await _showRegistrationConfirmationDialog();
+                          if (confirmed) {
+                            await _showRegistrationConfirmationDialog();
+                          }
                         }
-                      }
-                    },
-              child: _isRegistering
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      },
+                child: _isRegistering
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : Text(
+                        _isRegistered ? "Unregister Here" : "Register Here",
+                        style: const TextStyle(fontSize: 16),
                       ),
-                    )
-                  : Text(
-                      _isRegistered ? "Unregister Here" : "Register Here",
-                      style: const TextStyle(fontSize: 16),
-                    ),
+              ),
             ),
-          ),
         ],
       ),
     );

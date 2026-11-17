@@ -76,8 +76,8 @@ class _SeekerInstructionViewState extends State<SeekerInstructionView> {
       color: Colors.purple,
       title: "Update Your Preferences",
       description:
-          "Tap \"Upload CV\" in the top bar any time to change job type, "
-          "work mode, field of work, expected salary, city, area, or resume. "
+          "Tap \"Preference / CV\" in the top bar any time to change job type, "
+          "work mode, field of work, expected salary, city, or resume. "
           "Updated preferences change which jobs are highlighted for you.",
     ),
     _InstructionStep(

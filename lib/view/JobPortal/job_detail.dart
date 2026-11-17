@@ -1070,6 +1070,25 @@ class _JobDetailViewState extends State<JobDetailView> {
               job["company"],
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
+            if (isApplied) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  "Applied",
+                  style: TextStyle(
+                    color: Colors.green,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 20),
             Container(
               padding: const EdgeInsets.all(16),

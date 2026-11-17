@@ -7,6 +7,7 @@ import 'package:flutter/cupertino.dart' show Page, TextStyle;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mpm/model/GetOfferClaimedByOfferId/getOfferClaimedByOfferIdData.dart';
+import 'package:mpm/repository/claimed_offer_by_id_repository/claimed_offer_by_id_repo.dart';
 import 'package:mpm/repository/get_offer_claimed_by_offfer_id_repository/get_offer_claimed_by_offer_id_repo.dart';
 import 'package:mpm/view_model/controller/updateprofile/UdateProfileController.dart';
 import 'package:open_filex/open_filex.dart';
@@ -772,19 +773,37 @@ class _DiscountOfferDetailPageState extends State<DiscountOfferDetailPage> {
 
   // ==================== REORDER FLOW ====================
 
-  /// Loads the latest claimed offer for this offer and opens the reorder sheet
+  bool _isMedicalOffer() {
+    return widget.offer.orgSubcategoryId?.toString() == '1';
+  }
+
+  void _closeReorderLoader() {
+    if (!mounted) return;
+    final navigator = Navigator.of(context, rootNavigator: true);
+    if (navigator.canPop()) {
+      navigator.pop();
+    }
+  }
+
+  /// Loads the latest claimed medical order for this offer and opens the reorder sheet.
+  /// Reorder is only available for subcategory id 1.
   Future<void> _handleReorder() async {
+    if (!_isMedicalOffer()) return;
+
+    var loaderOpen = false;
     try {
-      Get.dialog(
-        const Center(child: CircularProgressIndicator()),
+      showDialog(
+        context: context,
         barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
       );
+      loaderOpen = true;
 
       final userData = await SessionManager.getSession();
-      final memberId = userData?.memberId.toString() ?? '0';
+      final memberId = int.tryParse(userData?.memberId?.toString() ?? '') ?? 0;
 
-      if (memberId == '0') {
-        Get.back();
+      if (memberId == 0) {
+        if (loaderOpen) _closeReorderLoader();
         Get.snackbar(
           "Error",
           "Member session not found",
@@ -794,13 +813,38 @@ class _DiscountOfferDetailPageState extends State<DiscountOfferDetailPage> {
         return;
       }
 
-      final claimedOffer = await _memberClaimOfferRepo
-          .fetchClaimedOfferByOfferId(
-          widget.offer.organisationOfferDiscountId.toString());
+      final offerId =
+          int.tryParse(widget.offer.organisationOfferDiscountId.toString());
+      final claimsResponse =
+          await ClaimOfferRepository().fetchClaimedOffersByMemberId(memberId);
+      final previousClaims = (claimsResponse.data ?? []).where((claim) {
+        return claim.organisationSubcategoryId == 1 &&
+            claim.memberClaimOfferId != null &&
+            (offerId == null || claim.organisationOfferDiscountId == offerId);
+      }).toList()
+        ..sort((a, b) =>
+            (b.memberClaimOfferId ?? 0).compareTo(a.memberClaimOfferId ?? 0));
 
-      Get.back();
+      if (previousClaims.isEmpty) {
+        if (loaderOpen) _closeReorderLoader();
+        loaderOpen = false;
+        Get.snackbar(
+          "No Previous Order",
+          "You haven't ordered medicines for this offer yet.",
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+        return;
+      }
 
-      if (claimedOffer == null ||
+      final claimedOffer = await _memberClaimOfferRepo.fetchClaimedOfferByOfferId(
+        previousClaims.first.memberClaimOfferId.toString(),
+      );
+
+      if (loaderOpen) _closeReorderLoader();
+      loaderOpen = false;
+
+      if (claimedOffer.organisationSubcategoryId != '1' ||
           claimedOffer.medicines == null ||
           claimedOffer.medicines!.isEmpty) {
         Get.snackbar(
@@ -839,9 +883,9 @@ class _DiscountOfferDetailPageState extends State<DiscountOfferDetailPage> {
           .toList();
 
       _reorderSelectedImage = null;
-      _showReorderBottomSheet(claimedOffer as GetofferclaimedbyofferidData);
+      _showReorderBottomSheet(claimedOffer);
     } catch (e) {
-      if (Get.isDialogOpen ?? false) Get.back();
+      if (loaderOpen) _closeReorderLoader();
       debugPrint("Reorder Fetch Error: $e");
       Get.snackbar(
         "Error",
