@@ -202,27 +202,42 @@ class _ProfileViewState extends State<ProfileView> {
               ),
               const SizedBox(height: 30),
 
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => _showConvertNmToLmSheet(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorHelperClass.getColorFromHex(
-                      ColorResources.red_color,
+              Obx(() {
+                final membershipTypeId =
+                    controller.membershipTypeId.value.trim();
+                if (membershipTypeId != '2') {
+                  return const SizedBox.shrink();
+                }
+
+                return Column(
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => _showConvertNmToLmSheet(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorHelperClass.getColorFromHex(
+                            ColorResources.red_color,
+                          ),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          'Convert NM to LM',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text(
-                    'Convert NM to LM',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
+                    const SizedBox(height: 20),
+                  ],
+                );
+              }),
 
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
