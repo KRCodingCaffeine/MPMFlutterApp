@@ -86,14 +86,17 @@ class _HomeViewState extends State<HomeView>
     items.add({'icon': Images.user, 'label': 'My Profile'});
 
     // Doctors and Jobs are visible only with the new_features right
-    if (_canViewNewFeatures) {
-      items.add({'icon': Images.job_portal, 'label': 'Job Portal'});
-    }
+    // if (_canViewNewFeatures) {
+    //   items.add({'icon': Images.job_portal, 'label': 'Job Portal'});
+    // }
+
+    // Item 2: Job Portals (always visible)
+    items.add({'icon': Images.job_portal, 'label': 'Job Portal'});
 
     // Item 3: Discounts & Offers (always visible)
     items.add({'icon': Images.discount, 'label': 'Discounts & Offers'});
 
-    // Item 3: Discounts & Offers (always visible)
+    // Item 4: Events (always visible)
     items.add({'icon': Images.events, 'label': 'Events'});
 
     // Additional items at the end (conditional)
@@ -102,8 +105,8 @@ class _HomeViewState extends State<HomeView>
     // }
 
     // if (_canViewNewFeatures) {
-    //   items.add({'icon': Images.utility, 'label': 'Doctors'});
-    //   // items.add({'icon': Images.blood_donor, 'label': 'Blood Donor'});
+    //   // items.add({'icon': Images.utility, 'label': 'Doctors'});
+    //   items.add({'icon': Images.blood_donor, 'label': 'Blood Donor'});
     // }
 
     // Items 5-10: Always visible
