@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'dart:ui';
+import 'dart:typed_data';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -20,19 +20,25 @@ class FormsDownloadView extends StatefulWidget {
 
 class _FormsDownloadViewState extends State<FormsDownloadView> {
   final Dio dio = Dio();
+  late final List<double?> _progress;
+  late final List<String?> _filePaths;
+  late final List<String?> _downloadErrors;
+  late final List<VoidCallback?> _dialogRefresh;
+  final Map<int, Future<Uint8List>> _downloads = {};
+  final List<CancelToken> _cancelTokens = [];
 
   final List<Map<String, dynamic>> forms = [
-    {
-      'title': 'Karyakarta form 2022-24',
-      'fileName' : 'karyakarta_form',
-      'icon': Icons.picture_as_pdf,
-      'color': const Color(0xFFd6d6d6),
-      'url': 'https://members.mumbaimaheshwari.com/api/public/assets/forms/karyakartha_form.pdf',
-    },
+    // {
+    //   'title': 'Karyakarta form 2022-24',
+    //   'fileName' : 'karyakarta_form',
+    //   'icon': Icons.picture_as_pdf,
+    //   'color': const Color(0xFFd6d6d6),
+    //   'url': 'https://members.mumbaimaheshwari.com/api/public/assets/forms/karyakartha_form.pdf',
+    // },
     {
       'title': 'Scholarship Application Form',
       'fileName' : 'scholarship_form',
-      'icon': Icons.picture_as_pdf,
+      'thumbnail': 'assets/images/forms/scholarship_form.png',
       'color': const Color(0xFFd6d6d6),
       'url':
       'https://members.mumbaimaheshwari.com/api/public/assets/forms/application_for_loan_scholarship.pdf',
@@ -40,7 +46,7 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
     {
       'title': 'Radhakrishna Lahoti Sahayata Kosh Form',
       'fileName' : 'radhakrishna_lahoti_form',
-      'icon': Icons.picture_as_pdf,
+      'thumbnail': 'assets/images/forms/radhakrishna_lahoti_form.png',
       'color': const Color(0xFFd6d6d6),
       'url':
       'https://members.mumbaimaheshwari.com/api/public/assets/forms/radhakrishna_lahoti_sahayata_kosh_form.pdf',
@@ -48,7 +54,7 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
     {
       'title': 'Membership Form',
       'fileName' : 'membership_form',
-      'icon': Icons.picture_as_pdf,
+      'thumbnail': 'assets/images/forms/membership_form.png',
       'color': const Color(0xFFd6d6d6),
       'url':
       'https://members.mumbaimaheshwari.com/api/public/assets/forms/membership_form.pdf',
@@ -56,7 +62,7 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
     {
       'title': 'Shiksha Form',
       'fileName' : 'shiksha_form',
-      'icon': Icons.picture_as_pdf,
+      'thumbnail': 'assets/images/forms/shiksha_form.png',
       'color': const Color(0xFFd6d6d6),
       'url':
       'https://members.mumbaimaheshwari.com/api/public/assets/forms/shiksha_form.pdf',
@@ -64,7 +70,7 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
     {
       'title': 'Student Prize Application',
       'fileName' : 'student_prize_form',
-      'icon': Icons.picture_as_pdf,
+      'thumbnail': 'assets/images/forms/student_prize_form.png',
       'color': const Color(0xFFd6d6d6),
       'url': 'https://members.mumbaimaheshwari.com/api/public/assets/forms/student_price_application_form.pdf',
     },
@@ -73,83 +79,174 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
   @override
   void initState() {
     super.initState();
+    _progress = List<double?>.filled(forms.length, null);
+    _filePaths = List<String?>.filled(forms.length, null);
+    _downloadErrors = List<String?>.filled(forms.length, null);
+    _dialogRefresh = List<VoidCallback?>.filled(forms.length, null);
     _requestPermission();
   }
 
   @override
   void dispose() {
+    for (final token in _cancelTokens) {
+      if (!token.isCancelled) {
+        token.cancel();
+      }
+    }
     super.dispose();
   }
 
-  Future<void> _downloadFile(String? url, String? fileName) async {
-    if (url == null || fileName == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid file URL or file name')),
-      );
+  Future<Directory> _storageDirectory() async {
+    if (Platform.isAndroid) {
+      final directory = await getExternalStorageDirectory();
+      if (directory != null) {
+        return directory;
+      }
+    }
+    return getApplicationDocumentsDirectory();
+  }
+
+  Future<File> _pdfFile(int index) async {
+    final directory = await _storageDirectory();
+    final fileName = forms[index]['fileName'] as String;
+    return File('${directory.path}/$fileName.pdf');
+  }
+
+  void _refreshDownload(int index) {
+    if (mounted) setState(() {});
+    _dialogRefresh[index]?.call();
+  }
+
+  Future<void> _onFormTap(int index) async {
+    final pdf = await _pdfFile(index);
+    if (!mounted) return;
+
+    final alreadySaved = await pdf.exists() && await pdf.length() > 0;
+    _downloadErrors[index] = null;
+    _progress[index] = alreadySaved ? 0.04 : 0;
+    if (alreadySaved) {
+      _filePaths[index] = pdf.path;
+    }
+
+    var dialogAlive = true;
+    var allowAutoOpen = true;
+    var openingForm = false;
+    BuildContext? dialogContextRef;
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        dialogContextRef = dialogContext;
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            _dialogRefresh[index] = () {
+              if (!dialogAlive || !dialogContext.mounted) return;
+              setDialogState(() {});
+            };
+            return _buildDownloadDialog(dialogContext, index);
+          },
+        );
+      },
+    ).whenComplete(() {
+      dialogAlive = false;
+      _dialogRefresh[index] = null;
+      if (!openingForm) allowAutoOpen = false;
+    });
+
+    Future<void> openFinishedForm() async {
+      final path = _filePaths[index];
+      if (path == null) return;
+      await Future.delayed(const Duration(milliseconds: 400));
+      if (!allowAutoOpen || !mounted) return;
+      openingForm = true;
+      final dialog = dialogContextRef;
+      if (dialog != null && dialog.mounted) {
+        Navigator.of(dialog).pop();
+      }
+      await OpenFilex.open(path);
+    }
+
+    if (alreadySaved) {
+      await Future.delayed(const Duration(milliseconds: 50));
+      if (!mounted || !allowAutoOpen) return;
+      _progress[index] = 1;
+      _refreshDownload(index);
+      await openFinishedForm();
       return;
     }
 
+    try {
+      await _downloadForm(index, pdf);
+      if (_progress[index] == 1 && _filePaths[index] != null) {
+        await openFinishedForm();
+      }
+    } catch (e) {
+      if (!mounted) return;
+      _downloadErrors[index] = 'Download failed: $e';
+      _progress[index] = null;
+      _refreshDownload(index);
+    }
+  }
+
+  Future<Uint8List> _downloadForm(int index, File pdf) {
+    return _downloads[index] ??= _downloadFormImpl(index, pdf);
+  }
+
+  Future<Uint8List> _downloadFormImpl(int index, File pdf) async {
+    final url = forms[index]['url'] as String?;
+    if (url == null || url.isEmpty) {
+      throw Exception('Invalid file URL');
+    }
+
     final permissionStatus = await _requestPermission();
-    if (!permissionStatus) return;
+    if (!permissionStatus) {
+      throw Exception('Storage permission is required');
+    }
+
+    final cancelToken = CancelToken();
+    _cancelTokens.add(cancelToken);
 
     try {
-      // ✅ Use app-specific external storage
-      Directory directory = Platform.isAndroid
-          ? (await getExternalStorageDirectory())!
-          : await getApplicationDocumentsDirectory();
+      if (mounted) {
+        _progress[index] = 0;
+        _refreshDownload(index);
+      }
 
-      String filePath = "${directory!.path}/$fileName";
-      Dio dio = Dio();
-      int progress = 0;
-
-      final scaffoldMessenger = ScaffoldMessenger.of(context);
-      StateSetter? setSnackbarState;
-
-      final snackBarController = scaffoldMessenger.showSnackBar(
-        SnackBar(
-          content: StatefulBuilder(
-            builder: (context, setState) {
-              setSnackbarState = setState;
-              return Text("Downloading $fileName ... $progress%");
-            },
-          ),
-          duration: const Duration(days: 1),
-        ),
-      );
-
-      await dio.download(
+      final response = await dio.get<List<int>>(
         url,
-        filePath,
+        cancelToken: cancelToken,
+        options: Options(responseType: ResponseType.bytes),
         onReceiveProgress: (received, total) {
-          if (total > 0) {
-            int newProgress = ((received / total) * 100).toInt();
-            if (newProgress != progress) {
-              progress = newProgress;
-              if (setSnackbarState != null) {
-                setSnackbarState!(() {});
-              }
-            }
-          }
+          if (!mounted || total <= 0) return;
+          _progress[index] = received / total;
+          _refreshDownload(index);
         },
       );
 
-      snackBarController.close();
+      final bytes = Uint8List.fromList(response.data ?? []);
+      if (bytes.isEmpty) {
+        throw Exception('Downloaded file is empty');
+      }
 
-      scaffoldMessenger.showSnackBar(
-        SnackBar(
-          content: Text("$fileName - Downloaded successfully."),
-          action: SnackBarAction(
-            label: "View",
-            onPressed: () {
-              OpenFilex.open(filePath);
-            },
-          ),
-        ),
-      );
+      await pdf.writeAsBytes(bytes, flush: true);
+      if (mounted) {
+        _progress[index] = 1;
+        _filePaths[index] = pdf.path;
+        _downloadErrors[index] = null;
+        _refreshDownload(index);
+      }
+      return bytes;
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Download failed: $e")),
-      );
+      _downloads.remove(index);
+      if (e is DioException && CancelToken.isCancel(e)) {
+        return Uint8List(0);
+      }
+      if (mounted) {
+        _progress[index] = null;
+        _refreshDownload(index);
+      }
+      rethrow;
     }
   }
 
@@ -188,33 +285,157 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
     return true;
   }
 
-  Widget buildCard(String title, IconData icon, Color color, String url, String fileName) {
-    return GestureDetector(
-      onTap: () {
-        _downloadFile(url, "$fileName.pdf");
-      },
-      child: Card(
-        color: Colors.white,
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        child: AspectRatio(
-          aspectRatio: 1,
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
+  Widget _buildThumbnail(int index) {
+    final thumbnail = forms[index]['thumbnail'] as String;
+    return Image.asset(
+      thumbnail,
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) =>
+          const Icon(Icons.description_outlined, size: 48, color: Colors.grey),
+    );
+  }
+
+  Widget _buildDownloadProgressBar(double value, {required bool showLabel}) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          height: 28,
+          width: double.infinity,
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.black, width: 1.6),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: AnimatedFractionallySizedBox(
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeOut,
+              alignment: Alignment.centerLeft,
+              widthFactor: value.clamp(0.04, 1),
+              heightFactor: 1,
+              child: const ColoredBox(color: Color(0xFF2F6FE8)),
+            ),
+          ),
+        ),
+        if (showLabel) ...[
+          const SizedBox(height: 10),
+          const Text(
+            'Downloading...',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildDownloadDialog(BuildContext dialogContext, int index) {
+    final title = forms[index]['title'] as String;
+    final progress = _progress[index];
+    final filePath = _filePaths[index];
+    final error = _downloadErrors[index];
+    final ready = progress == 1 && filePath != null;
+    final percent = ready
+        ? 100
+        : (((progress ?? 0) * 100).round()).clamp(1, 99);
+    final accent = ColorHelperClass.getColorFromHex(ColorResources.logo_color);
+
+    return AlertDialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Text(
+        title,
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (error != null)
+            Text(error, textAlign: TextAlign.center)
+          else
+            _buildDownloadProgressBar(percent / 100, showLabel: !ready),
+          if (ready) ...[
+            const SizedBox(height: 20),
+            Row(
               children: [
-                Icon(icon, size: 50, color: color),
-                const SizedBox(height: 10),
-                Text(
-                  title,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 16, color: Colors.black),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: accent,
+                      side: BorderSide(color: accent),
+                      minimumSize: const Size(0, 42),
+                    ),
+                    child: const Text('Close'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: accent,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(0, 42),
+                    ),
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop();
+                      OpenFilex.open(filePath);
+                    },
+                    child: const Text('Open'),
+                  ),
                 ),
               ],
             ),
-          ),
+          ] else if (error != null) ...[
+            const SizedBox(height: 16),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Close'),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget buildCard(int index) {
+    final title = forms[index]['title'] as String;
+    return GestureDetector(
+      onTap: () => _onFormTap(index),
+      child: Card(
+        color: Colors.white,
+        elevation: 4,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        child: Column(
+          children: [
+            Expanded(
+              child: ColoredBox(
+                color: Colors.white,
+                child: _buildThumbnail(index),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 14, color: Colors.black),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -246,20 +467,11 @@ class _FormsDownloadViewState extends State<FormsDownloadView> {
             crossAxisCount: 2,
             crossAxisSpacing: 10,
             mainAxisSpacing: 10,
-            childAspectRatio: 1,
+            childAspectRatio: 0.72,
           ),
           itemCount: forms.length,
           itemBuilder: (context, index) {
-            final form = forms[index];
-            return Center(
-              child: buildCard(
-                  form['title'],
-                  form['icon'],
-                  form['color'],
-                  form['url'],
-                  form['fileName']
-              ),
-            );
+            return buildCard(index);
           },
         ),
       ),
