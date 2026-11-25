@@ -44,23 +44,56 @@ class _UtilityViewState extends State<UtilityView> {
   bool _isDoctorsLoading = true;
   String? _doctorsError;
   final DoctorListRepository _doctorListRepository = DoctorListRepository();
-
-  List<String> getAvailableSpecialties() {
-    final specialties = <String>{};
-    for (final doctor in _allDoctors) {
-      final values = doctor.fields.isEmpty ? [doctor.specialty] : doctor.fields;
-      for (final name in values) {
-        final field = name.trim();
-        if (field.isNotEmpty) specialties.add(field);
-      }
-    }
-    return specialties.toList();
-  }
+  final UpdateProfileRepository _filterCatalogRepo = UpdateProfileRepository();
+  List<_DoctorFilterField> _filterFields = [];
 
   @override
   void initState() {
     super.initState();
     _loadDoctors();
+    _loadFilterCatalog();
+  }
+
+  Future<void> _loadFilterCatalog() async {
+    try {
+      final response = await _filterCatalogRepo.userOccutionSpectionCodeApi({
+        'occupation_profession_id': '10',
+      });
+      final specs = (response.data ?? []).where((item) {
+        final name = (item.name ?? '').trim();
+        final occupationId = (item.occupationId ?? '').trim();
+        final professionId = (item.occupationProfessionId ?? '').trim();
+        return name.isNotEmpty && occupationId == '3' && professionId == '10';
+      }).toList()
+        ..sort(
+          (a, b) => (a.name ?? '').toLowerCase().compareTo((b.name ?? '').toLowerCase()),
+        );
+
+      final fields = await Future.wait(specs.map((spec) async {
+        final id = (spec.id ?? '').trim();
+        final name = (spec.name ?? '').trim();
+        var specialities = <String>[];
+        if (id.isNotEmpty) {
+          try {
+            final subs = await _filterCatalogRepo.userOccutionSpectionSubCategoryApi(id);
+            specialities = (subs.data ?? [])
+                .map((item) => (item.specializationSubCategoryName ?? '').trim())
+                .where((item) => item.isNotEmpty)
+                .toSet()
+                .toList()
+              ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+          } catch (e) {
+            debugPrint('No specialty for field $name: $e');
+          }
+        }
+        return _DoctorFilterField(name, specialities);
+      }));
+
+      if (!mounted) return;
+      setState(() => _filterFields = fields);
+    } catch (e) {
+      debugPrint('Unable to load doctor filter list: $e');
+    }
   }
 
   @override
@@ -136,6 +169,7 @@ class _UtilityViewState extends State<UtilityView> {
       clinicName: _cleanDoctorText(office?.clinicName),
       address: _doctorAddress(location),
       zone: _cleanDoctorText(location?.zoneName),
+      addedOrder: int.tryParse(item.memberDoctorId ?? '') ?? 0,
     );
   }
 
@@ -447,50 +481,26 @@ class _UtilityViewState extends State<UtilityView> {
                             const SizedBox(height: 12),
                             Divider(color: Colors.grey[300]),
                             const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: ElevatedButton.icon(
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                      _callDoctor(doctor);
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.green[600],
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 12,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                    icon: const Icon(Icons.call, color: Colors.white),
-                                    label: const Text('Call Now', style: TextStyle(color: Colors.white)),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  _shareDoctor(doctor);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: themeColor,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: ElevatedButton.icon(
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                      _shareDoctor(doctor);
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: themeColor,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 12,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                    icon: const Icon(Icons.share, color: Colors.white),
-                                    label: const Text('Share', style: TextStyle(color: Colors.white)),
-                                  ),
-                                ),
-                              ],
+                                icon: const Icon(Icons.share, color: Colors.white),
+                                label: const Text('Share', style: TextStyle(color: Colors.white)),
+                              ),
                             ),
                           ],
                         ),
@@ -658,18 +668,10 @@ class _UtilityViewState extends State<UtilityView> {
   }
 
   List<String> _specialitiesForField(String field) {
-    final names = <String>{};
-    for (final doctor in _allDoctors) {
-      if (!_doctorHasField(doctor, field)) continue;
-      for (final speciality in doctor.specialities) {
-        if (speciality.trim().isNotEmpty && !_sameSpecialty(speciality, field)) {
-          names.add(speciality.trim());
-        }
-      }
+    for (final item in _filterFields) {
+      if (_sameText(item.name, field)) return item.specialities;
     }
-    final list = names.toList()
-      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
-    return list;
+    return const [];
   }
 
   String? get _selectedFilterName {
@@ -698,7 +700,11 @@ class _UtilityViewState extends State<UtilityView> {
       }
       return true;
     }).toList();
-    doctors.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    doctors.sort((a, b) {
+      final byRecent = b.addedOrder.compareTo(a.addedOrder);
+      if (byRecent != 0) return byRecent;
+      return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+    });
     return doctors;
   }
 
@@ -909,7 +915,10 @@ class _UtilityViewState extends State<UtilityView> {
   }
 
   Future<void> _openFieldFilterSheet(Color themeColor) async {
-    final fields = getAvailableSpecialties()..sort();
+    if (_filterFields.isEmpty) {
+      await _loadFilterCatalog();
+    }
+    final fields = _filterFields.map((item) => item.name).toList();
     if (!mounted || fields.isEmpty) return;
 
     final result = await showModalBottomSheet<_FieldFilterResult>(
@@ -954,51 +963,58 @@ class _UtilityViewState extends State<UtilityView> {
         return a.toLowerCase().compareTo(b.toLowerCase());
       });
 
-    final rows = <_HospitalListRow>[];
-    for (final name in names) {
-      final hospitalDoctors = groups[name]!;
-      rows.add(_HospitalListRow.header(name, hospitalDoctors.length));
-      rows.addAll(hospitalDoctors.map(_HospitalListRow.doctor));
-    }
-
-    return ListView.builder(
+    return ListView.separated(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
       physics: const BouncingScrollPhysics(),
-      itemCount: rows.length,
+      itemCount: names.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
-        final row = rows[index];
-        if (row.header != null) {
-          return Padding(
-            padding: EdgeInsets.only(top: index == 0 ? 4 : 16, bottom: 8),
-            child: Row(
-              children: [
-                Icon(Icons.local_hospital_outlined, size: 18, color: themeColor),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    row.header!,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF1F2430),
+        final name = names[index];
+        final hospitalDoctors = groups[name]!;
+        return Material(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => _HospitalDoctorsPage(
+                    hospital: name,
+                    doctors: hospitalDoctors,
+                    doctorCard: _buildDoctorCard,
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE6E8EC)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.local_hospital_outlined, size: 20, color: themeColor),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1F2430),
+                      ),
                     ),
                   ),
-                ),
-                Text(
-                  '${row.count}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF8A9099),
-                  ),
-                ),
-              ],
+                  const Icon(Icons.chevron_right, color: Color(0xFF8A9099)),
+                ],
+              ),
             ),
-          );
-        }
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: _buildDoctorCard(row.doctor!),
+          ),
         );
       },
     );
@@ -1168,25 +1184,26 @@ class _UtilityViewState extends State<UtilityView> {
                             ),
                             const SizedBox(height: 6),
                           ],
-                          Wrap(
-                            spacing: 6,
-                            runSpacing: 6,
-                            children: [
-                              _buildCardTag(
-                                icon: _specialtyIcon(doctor.specialty),
-                                label: doctor.specialty,
-                                background: const Color(0xFFFFF1F2),
-                                foreground: themeColor,
+                          if (doctor.specialty.trim().isNotEmpty)
+                            _buildCardTag(
+                              icon: _specialtyIcon(doctor.specialty),
+                              label: doctor.specialty,
+                              background: const Color(0xFFFFF1F2),
+                              foreground: themeColor,
+                            ),
+                          if ((doctor.category ?? '').trim().isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              doctor.category!,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: themeColor,
                               ),
-                              if (doctor.category != null)
-                                _buildCardTag(
-                                  icon: Icons.category_outlined,
-                                  label: doctor.category!,
-                                  background: const Color(0xFFF1F2F4),
-                                  foreground: const Color(0xFF4B5160),
-                                ),
-                            ],
-                          ),
+                            ),
+                          ],
                           const SizedBox(height: 8),
                           GestureDetector(
                             onTap: () => _callDoctor(doctor),
@@ -1582,6 +1599,7 @@ class AddDoctorBottomSheet extends StatefulWidget {
 
 class _AddDoctorBottomSheetState extends State<AddDoctorBottomSheet> {
   final _formKey = GlobalKey<FormState>();
+  final _sheetMessengerKey = GlobalKey<ScaffoldMessengerState>();
   final _registerRepo = RegisterRepository();
   final _profileRepo = UpdateProfileRepository();
   final ImagePicker _picker = ImagePicker();
@@ -1985,17 +2003,15 @@ class _AddDoctorBottomSheetState extends State<AddDoctorBottomSheet> {
         return;
       }
 
-      final messenger = ScaffoldMessenger.of(context);
-      Navigator.pop(context);
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            response.message ??
-                'Doctor details submitted. Mandal office will review and make it live.',
-          ),
-          backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
-        ),
+      setState(() => _isSubmitting = false);
+      _showMessage(
+        response.message ??
+            'Doctor details submitted. Mandal office will review and make it live.',
+        success: true,
       );
+      await Future.delayed(const Duration(milliseconds: 1600));
+      if (!mounted) return;
+      Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
@@ -2038,11 +2054,17 @@ class _AddDoctorBottomSheetState extends State<AddDoctorBottomSheet> {
     return addresses;
   }
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
+  void _showMessage(String message, {bool success = false}) {
+    final messenger = _sheetMessengerKey.currentState ?? ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: ColorHelperClass.getColorFromHex(ColorResources.red_color),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        backgroundColor: success
+            ? const Color(0xFF2E9E5B)
+            : ColorHelperClass.getColorFromHex(ColorResources.red_color),
       ),
     );
   }
@@ -2575,9 +2597,16 @@ class _AddDoctorBottomSheetState extends State<AddDoctorBottomSheet> {
   Widget build(BuildContext context) {
     final themeColor = ColorHelperClass.getColorFromHex(ColorResources.red_color);
 
-    return Padding(
+    return ScaffoldMessenger(
+      key: _sheetMessengerKey,
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
+      resizeToAvoidBottomInset: false,
+      body: Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Container(
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: Container(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.9,
         ),
@@ -2805,6 +2834,9 @@ class _AddDoctorBottomSheetState extends State<AddDoctorBottomSheet> {
             ),
           ],
         ),
+        ),
+        ),
+      ),
       ),
     );
   }
@@ -3075,16 +3107,52 @@ class _FieldSpecialityFilterSheetState extends State<_FieldSpecialityFilterSheet
   }
 }
 
-class _HospitalListRow {
-  final String? header;
-  final int count;
-  final Doctor? doctor;
+class _DoctorFilterField {
+  final String name;
+  final List<String> specialities;
 
-  _HospitalListRow.header(this.header, this.count) : doctor = null;
+  const _DoctorFilterField(this.name, this.specialities);
+}
 
-  _HospitalListRow.doctor(this.doctor)
-      : header = null,
-        count = 0;
+class _HospitalDoctorsPage extends StatelessWidget {
+  final String hospital;
+  final List<Doctor> doctors;
+  final Widget Function(Doctor doctor) doctorCard;
+
+  const _HospitalDoctorsPage({
+    required this.hospital,
+    required this.doctors,
+    required this.doctorCard,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final logoColor = ColorHelperClass.getColorFromHex(ColorResources.logo_color);
+    return Scaffold(
+      backgroundColor: const Color(0xFFF4F6F8),
+      appBar: AppBar(
+        backgroundColor: logoColor,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text(
+          hospital,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+          ),
+        ),
+      ),
+      body: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+        physics: const BouncingScrollPhysics(),
+        itemCount: doctors.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        itemBuilder: (context, index) => doctorCard(doctors[index]),
+      ),
+    );
+  }
 }
 
 class Doctor {
@@ -3100,6 +3168,7 @@ class Doctor {
   final String? category;
   final List<String> fields;
   final List<String> specialities;
+  final int addedOrder;
 
   Doctor({
     required this.name,
@@ -3114,6 +3183,7 @@ class Doctor {
     this.category,
     this.fields = const [],
     this.specialities = const [],
+    this.addedOrder = 0,
   });
 
   /// Category within the specialty; doctors without one sit under the specialty itself

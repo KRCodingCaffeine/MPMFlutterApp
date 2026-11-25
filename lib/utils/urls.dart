@@ -208,4 +208,8 @@ class Urls {
   static const String add_doctor_url = base_url+"api/add_doctor";
   static const String doctor_list_url = base_url+"api/doctor_list";
 
+  // Convert NM to LM
+  static const String convert_to_lm_url = base_url+"api/convert_to_lm";
+  static const String verify_otp_lm_conversion_url = base_url+"api/verify_otp_lm_conversion";
+
 }
