@@ -6,6 +6,7 @@ import 'package:flutter/cupertino.dart' as pw;
 import 'package:flutter/cupertino.dart' show Page, TextStyle;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mpm/model/GetClaimedOfferByID/GetClaimedOfferData.dart';
 import 'package:mpm/model/GetOfferClaimedByOfferId/getOfferClaimedByOfferIdData.dart';
 import 'package:mpm/repository/claimed_offer_by_id_repository/claimed_offer_by_id_repo.dart';
 import 'package:mpm/repository/get_offer_claimed_by_offfer_id_repository/get_offer_claimed_by_offer_id_repo.dart';
@@ -51,7 +52,11 @@ class _DiscountOfferDetailPageState extends State<DiscountOfferDetailPage> {
 
   final ImagePicker _reorderPicker = ImagePicker();
   XFile? _reorderSelectedImage;
+  bool _reorderPrescriptionRemoved = false;
   List<Medicine> _reorderMedicines = [];
+  List<GetClaimedOfferData> _reorderOrders = [];
+  GetofferclaimedbyofferidData? _selectedReorderOffer;
+  bool _reorderOrderLoading = false;
   StateSetter? _reorderSheetSetState;
   final AddOfferDiscountRepository _reorderRepository =
       AddOfferDiscountRepository();
@@ -813,14 +818,20 @@ class _DiscountOfferDetailPageState extends State<DiscountOfferDetailPage> {
         return;
       }
 
-      final offerId =
-          int.tryParse(widget.offer.organisationOfferDiscountId.toString());
+      int? _toInt(dynamic v) {
+        if (v == null) return null;
+        if (v is int) return v;
+        return int.tryParse(v.toString());
+      }
+
+      final orgDetailsId = _toInt(widget.offer.orgDetailsID);
       final claimsResponse =
           await ClaimOfferRepository().fetchClaimedOffersByMemberId(memberId);
       final previousClaims = (claimsResponse.data ?? []).where((claim) {
         return claim.organisationSubcategoryId == 1 &&
             claim.memberClaimOfferId != null &&
-            (offerId == null || claim.organisationOfferDiscountId == offerId);
+            orgDetailsId != null &&
+            claim.orgDetailsId == orgDetailsId;
       }).toList()
         ..sort((a, b) =>
             (b.memberClaimOfferId ?? 0).compareTo(a.memberClaimOfferId ?? 0));
@@ -830,60 +841,23 @@ class _DiscountOfferDetailPageState extends State<DiscountOfferDetailPage> {
         loaderOpen = false;
         Get.snackbar(
           "No Previous Order",
-          "You haven't ordered medicines for this offer yet.",
+          "You haven't ordered medicines from this organisation yet.",
           backgroundColor: Colors.orange,
           colorText: Colors.white,
         );
         return;
       }
-
-      final claimedOffer = await _memberClaimOfferRepo.fetchClaimedOfferByOfferId(
-        previousClaims.first.memberClaimOfferId.toString(),
-      );
 
       if (loaderOpen) _closeReorderLoader();
       loaderOpen = false;
 
-      if (claimedOffer.organisationSubcategoryId != '1' ||
-          claimedOffer.medicines == null ||
-          claimedOffer.medicines!.isEmpty) {
-        Get.snackbar(
-          "No Previous Order",
-          "You haven't ordered medicines for this offer yet.",
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
-        );
-        return;
-      }
-
-      // 👇 Safe int converter
-      int? _toInt(dynamic v) {
-        if (v == null) return null;
-        if (v is int) return v;
-        return int.tryParse(v.toString());
-      }
-
-      _reorderMedicines = claimedOffer.medicines!
-          .map(
-            (e) => Medicine(
-          organisationOfferDiscountId: _toInt(
-              claimedOffer.organisationOfferDiscountId) ??
-              int.tryParse(
-                  widget.offer.organisationOfferDiscountId.toString()),
-          // 👇 Use the correct field name from GetofferclaimedbyofferidData
-          //    Check your model — it might be `orgDetailsId` or `orgDetailsID`
-          orgDetailsID: _toInt(claimedOffer.orgDetailsId) ??
-              int.tryParse(widget.offer.orgDetailsID.toString()),
-          medicineName: e.medicineName,
-          medicineContainerId: _toInt(e.medicineContainerId),
-          medicineContainerName: _getContainerName(e.medicineContainerId),
-          quantity: _toInt(e.quantity),
-        ),
-      )
-          .toList();
-
+      _reorderOrders = previousClaims;
+      _selectedReorderOffer = null;
+      _reorderOrderLoading = false;
+      _reorderMedicines = [];
       _reorderSelectedImage = null;
-      _showReorderBottomSheet(claimedOffer);
+      _reorderPrescriptionRemoved = false;
+      _showReorderBottomSheet();
     } catch (e) {
       if (loaderOpen) _closeReorderLoader();
       debugPrint("Reorder Fetch Error: $e");
@@ -896,8 +870,8 @@ class _DiscountOfferDetailPageState extends State<DiscountOfferDetailPage> {
     }
   }
 
-  /// Show the reorder bottom sheet pre-filled with previous medicines
-  void _showReorderBottomSheet(GetofferclaimedbyofferidData claimedOffer) {
+  /// Show the reorder bottom sheet. Orders are listed first.
+  void _showReorderBottomSheet() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -909,9 +883,9 @@ class _DiscountOfferDetailPageState extends State<DiscountOfferDetailPage> {
 
             return DraggableScrollableSheet(
               expand: false,
-              initialChildSize: 0.65,
-              minChildSize: 0.65,
-              maxChildSize: 0.65,
+              initialChildSize: 0.9,
+              minChildSize: 0.9,
+              maxChildSize: 0.9,
               builder: (context, scrollController) {
                 return Container(
                   decoration: const BoxDecoration(
@@ -924,17 +898,25 @@ class _DiscountOfferDetailPageState extends State<DiscountOfferDetailPage> {
                     children: [
                       _buildReorderHeader(),
                       Expanded(
-                        child: SingleChildScrollView(
-                          controller: scrollController,
-                          padding: const EdgeInsets.only(bottom: 20),
-                          child: Column(
-                            children: [
-                              _buildReorderPrescription(claimedOffer),
-                              _buildReorderMedicineList(),
-                            ],
-                          ),
-                        ),
+                        child: _reorderOrderLoading
+                            ? const Center(child: CircularProgressIndicator())
+                            : _selectedReorderOffer == null
+                                ? _buildReorderOrderList(scrollController)
+                                : SingleChildScrollView(
+                                    controller: scrollController,
+                                    padding: const EdgeInsets.only(bottom: 20),
+                                    child: Column(
+                                      children: [
+                                        _buildReorderPrescription(
+                                          _selectedReorderOffer!,
+                                        ),
+                                        _buildReorderMedicineList(),
+                                      ],
+                                    ),
+                                  ),
                       ),
+                      if (_selectedReorderOffer != null)
+                        _buildReorderConfirmBar(),
                     ],
                   ),
                 );
@@ -952,6 +934,182 @@ class _DiscountOfferDetailPageState extends State<DiscountOfferDetailPage> {
     if (!mounted) return;
     setState(update);
     _reorderSheetSetState?.call(() {});
+  }
+
+  void _clearSelectedReorderOrder() {
+    _updateReorderSheet(() {
+      _selectedReorderOffer = null;
+      _reorderOrderLoading = false;
+      _reorderMedicines = [];
+      _reorderSelectedImage = null;
+      _reorderPrescriptionRemoved = false;
+    });
+  }
+
+  List<Medicine> _medicinesFromReorderClaim(GetClaimedOfferData claim) {
+    final offerDiscountId =
+        int.tryParse(widget.offer.organisationOfferDiscountId.toString());
+    final orgDetailsId = int.tryParse(widget.offer.orgDetailsID.toString());
+
+    return (claim.medicines ?? [])
+        .where((medicine) => (medicine.medicineName ?? '').trim().isNotEmpty)
+        .map(
+          (medicine) => Medicine(
+            organisationOfferDiscountId: offerDiscountId,
+            orgDetailsID: orgDetailsId,
+            medicineName: medicine.medicineName!.trim(),
+            medicineContainerId: medicine.medicineContainerId,
+            medicineContainerName:
+                _getContainerName(medicine.medicineContainerId),
+            quantity: medicine.quantity ?? 1,
+          ),
+        )
+        .toList();
+  }
+
+  List<Medicine> _medicinesFromReorderDetail(
+    GetofferclaimedbyofferidData claimedOffer,
+  ) {
+    final offerDiscountId =
+        int.tryParse(widget.offer.organisationOfferDiscountId.toString());
+    final orgDetailsId = int.tryParse(widget.offer.orgDetailsID.toString());
+
+    return (claimedOffer.medicines ?? [])
+        .where((medicine) => (medicine.medicineName ?? '').trim().isNotEmpty)
+        .map(
+          (medicine) => Medicine(
+            organisationOfferDiscountId: offerDiscountId,
+            orgDetailsID: orgDetailsId,
+            medicineName: medicine.medicineName!.trim(),
+            medicineContainerId: int.tryParse(
+              medicine.medicineContainerId?.toString() ?? '',
+            ),
+            medicineContainerName:
+                _getContainerName(medicine.medicineContainerId),
+            quantity: int.tryParse(medicine.quantity?.toString() ?? '') ?? 1,
+          ),
+        )
+        .toList();
+  }
+
+  Future<void> _selectReorderOrder(GetClaimedOfferData claim) async {
+    final claimId = claim.memberClaimOfferId;
+    if (claimId == null) return;
+
+    _updateReorderSheet(() {
+      _reorderOrderLoading = true;
+    });
+
+    try {
+      final claimedOffer = await _memberClaimOfferRepo
+          .fetchClaimedOfferByOfferId(claimId.toString());
+      if (!mounted) return;
+
+      var medicines = _medicinesFromReorderClaim(claim);
+      if (medicines.isEmpty) {
+        medicines = _medicinesFromReorderDetail(claimedOffer);
+      }
+
+      _updateReorderSheet(() {
+        _selectedReorderOffer = claimedOffer;
+        _reorderMedicines = medicines;
+        _reorderSelectedImage = null;
+        _reorderPrescriptionRemoved = false;
+        _reorderOrderLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      _updateReorderSheet(() {
+        _reorderOrderLoading = false;
+      });
+      Get.snackbar(
+        "Error",
+        "Unable to open this order",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  String _formatReorderOrderDate(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return '';
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) return raw;
+    return DateFormat('dd MMM yyyy').format(parsed);
+  }
+
+  Widget _buildReorderOrderList(ScrollController scrollController) {
+    return ListView.separated(
+      controller: scrollController,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+      itemCount: _reorderOrders.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final order = _reorderOrders[index];
+        final medicines = (order.medicines ?? [])
+            .map((medicine) => (medicine.medicineName ?? '').trim())
+            .where((name) => name.isNotEmpty)
+            .toList();
+        final dateText = _formatReorderOrderDate(order.createdAt);
+        final orderLabel = (order.orderNo ?? '').trim().isNotEmpty
+            ? order.orderNo!
+            : 'Order ${order.memberClaimOfferId}';
+
+        return Card(
+          color: Colors.white,
+          elevation: 1,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => _selectReorderOrder(order),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          orderLabel,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (dateText.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            dateText,
+                            style: TextStyle(
+                              color: Colors.grey.shade700,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 6),
+                        Text(
+                          medicines.isEmpty
+                              ? 'No medicines'
+                              : '${medicines.length} medicine${medicines.length == 1 ? '' : 's'} · ${medicines.take(2).join(', ')}${medicines.length > 2 ? '...' : ''}',
+                          style: TextStyle(
+                            color: Colors.grey.shade800,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.chevron_right, color: Colors.grey.shade600),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildReorderHeader() {
@@ -980,54 +1138,43 @@ class _DiscountOfferDetailPageState extends State<DiscountOfferDetailPage> {
               borderRadius: BorderRadius.circular(20),
             ),
           ),
-          const SizedBox(height: 15),
-          const Text(
-            "Reorder Medicines",
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 8),
           Row(
             children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
-                  label: const Text("Cancel"),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: ColorHelperClass.getColorFromHex(
-                      ColorResources.red_color,
-                    ),
-                    side: BorderSide(
-                      color: ColorHelperClass.getColorFromHex(
-                        ColorResources.red_color,
+              SizedBox(
+                width: 40,
+                height: 40,
+                child: _selectedReorderOffer == null
+                    ? null
+                    : IconButton(
+                        padding: EdgeInsets.zero,
+                        onPressed: _clearSelectedReorderOrder,
+                        icon: const Icon(Icons.arrow_back),
                       ),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+              ),
+              Expanded(
+                child: Text(
+                  _selectedReorderOffer == null
+                      ? "Select Order"
+                      : "Reorder Medicines",
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: _submitReorder,
-                  icon: const Icon(Icons.shopping_cart_checkout),
-                  label: const Text("Confirm"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorHelperClass.getColorFromHex(
+              SizedBox(
+                width: 40,
+                height: 40,
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: () => Navigator.pop(context),
+                  icon: Icon(
+                    Icons.close,
+                    color: ColorHelperClass.getColorFromHex(
                       ColorResources.red_color,
-                    ),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                 ),
@@ -1035,6 +1182,47 @@ class _DiscountOfferDetailPageState extends State<DiscountOfferDetailPage> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildReorderConfirmBar() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(
+        16,
+        12,
+        16,
+        12 + MediaQuery.of(context).viewInsets.bottom,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: ElevatedButton.icon(
+          onPressed: _submitReorder,
+          icon: const Icon(Icons.shopping_cart_checkout),
+          label: const Text("Confirm"),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: ColorHelperClass.getColorFromHex(
+              ColorResources.red_color,
+            ),
+            foregroundColor: Colors.white,
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1053,24 +1241,45 @@ class _DiscountOfferDetailPageState extends State<DiscountOfferDetailPage> {
             ),
           ),
           const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: _reorderSelectedImage != null
-                ? Image.file(
-              File(_reorderSelectedImage!.path),
-              height: 180,
-              width: double.infinity,
-              fit: BoxFit.cover,
+          if (_hasReorderPrescription(claimedOffer))
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: _reorderSelectedImage != null
+                      ? Image.file(
+                          File(_reorderSelectedImage!.path),
+                          height: 180,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        )
+                      : Image.network(
+                          claimedOffer.medicinePrescriptionDocument!,
+                          height: 180,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Material(
+                    color: Colors.black54,
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: _removeReorderPrescription,
+                      child: const Padding(
+                        padding: EdgeInsets.all(6),
+                        child: Icon(Icons.close, color: Colors.white, size: 18),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             )
-                : (claimedOffer.medicinePrescriptionDocument != null &&
-                claimedOffer.medicinePrescriptionDocument!.isNotEmpty)
-                ? Image.network(
-              claimedOffer.medicinePrescriptionDocument!,
-              height: 180,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            )
-                : Container(
+          else ...[
+            Container(
               height: 180,
               width: double.infinity,
               decoration: BoxDecoration(
@@ -1081,30 +1290,30 @@ class _DiscountOfferDetailPageState extends State<DiscountOfferDetailPage> {
                 child: Text("No Prescription Uploaded"),
               ),
             ),
-          ),
-          const SizedBox(height: 15),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: _showReorderImagePickerOptions,
-              icon: const Icon(Icons.upload_file),
-              label: const Text("Upload New Prescription"),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: ColorHelperClass.getColorFromHex(
-                  ColorResources.red_color,
-                ),
-                side: BorderSide(
-                  color: ColorHelperClass.getColorFromHex(
+            const SizedBox(height: 15),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _showReorderImagePickerOptions,
+                icon: const Icon(Icons.upload_file),
+                label: const Text("Upload New Prescription"),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: ColorHelperClass.getColorFromHex(
                     ColorResources.red_color,
                   ),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  side: BorderSide(
+                    color: ColorHelperClass.getColorFromHex(
+                      ColorResources.red_color,
+                    ),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
             ),
-          ),
+          ],
           const SizedBox(height: 20),
           Divider(color: Colors.grey.shade300, thickness: 1),
           const SizedBox(height: 10),
@@ -1206,49 +1415,29 @@ class _DiscountOfferDetailPageState extends State<DiscountOfferDetailPage> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: 5),
+                            const SizedBox(height: 4),
                             Text(
-                              "Qty : ${medicine.quantity} ${_getContainerName(medicine.medicineContainerId)}",
+                              _getContainerName(medicine.medicineContainerId),
                               style: TextStyle(
                                 color: Colors.grey.shade700,
                                 fontSize: 13,
                               ),
                             ),
+                            const SizedBox(height: 8),
+                            _buildReorderQuantityStepper(index),
                           ],
                         ),
                       ),
-                      PopupMenuButton<String>(
-                        color: Colors.white,
-                        onSelected: (value) {
-                          if (value == 'edit') {
-                            _showReorderEditMedicineDialog(index);
-                          } else if (value == 'remove') {
-                            _showReorderRemoveMedicineDialog(index);
-                          }
-                        },
-                        itemBuilder: (context) => const [
-                          PopupMenuItem(
-                            value: 'edit',
-                            child: Row(
-                              children: [
-                                Icon(Icons.edit),
-                                SizedBox(width: 10),
-                                Text("Edit"),
-                              ],
-                            ),
+                      TextButton(
+                        onPressed: () =>
+                            _showReorderRemoveMedicineDialog(index),
+                        style: TextButton.styleFrom(
+                          foregroundColor: ColorHelperClass.getColorFromHex(
+                            ColorResources.red_color,
                           ),
-                          PopupMenuItem(
-                            value: 'remove',
-                            child: Row(
-                              children: [
-                                Icon(Icons.delete, color: Colors.red),
-                                SizedBox(width: 10),
-                                Text("Remove",
-                                    style: TextStyle(color: Colors.red)),
-                              ],
-                            ),
-                          ),
-                        ],
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        child: const Text("Remove"),
                       ),
                     ],
                   ),
@@ -1260,6 +1449,82 @@ class _DiscountOfferDetailPageState extends State<DiscountOfferDetailPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildReorderQuantityStepper(int index) {
+    final quantity = _reorderMedicines[index].quantity ?? 1;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildQuantityButton(
+          icon: Icons.remove,
+          enabled: quantity > 1,
+          onTap: () => _changeReorderQuantity(index, -1),
+        ),
+        SizedBox(
+          width: 36,
+          child: Text(
+            "$quantity",
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        _buildQuantityButton(
+          icon: Icons.add,
+          enabled: true,
+          onTap: () => _changeReorderQuantity(index, 1),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuantityButton({
+    required IconData icon,
+    required bool enabled,
+    required VoidCallback onTap,
+  }) {
+    final color = ColorHelperClass.getColorFromHex(ColorResources.red_color);
+
+    return InkWell(
+      onTap: enabled ? onTap : null,
+      customBorder: const CircleBorder(),
+      child: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: enabled ? color : Colors.grey.shade300,
+          ),
+        ),
+        child: Icon(
+          icon,
+          size: 16,
+          color: enabled ? color : Colors.grey.shade400,
+        ),
+      ),
+    );
+  }
+
+  void _changeReorderQuantity(int index, int delta) {
+    final medicine = _reorderMedicines[index];
+    final nextQuantity = (medicine.quantity ?? 1) + delta;
+    if (nextQuantity < 1) return;
+
+    _updateReorderSheet(() {
+      _reorderMedicines[index] = Medicine(
+        organisationOfferDiscountId: medicine.organisationOfferDiscountId,
+        orgDetailsID: medicine.orgDetailsID,
+        medicineName: medicine.medicineName,
+        medicineContainerId: medicine.medicineContainerId,
+        medicineContainerName: medicine.medicineContainerName,
+        quantity: nextQuantity,
+      );
+    });
   }
 
   Future<void> _submitReorder() async {
@@ -1335,6 +1600,20 @@ class _DiscountOfferDetailPageState extends State<DiscountOfferDetailPage> {
         e.toString().replaceAll("Exception:", "").trim(),
       );
     }
+  }
+
+  bool _hasReorderPrescription(GetofferclaimedbyofferidData claimedOffer) {
+    if (_reorderSelectedImage != null) return true;
+    if (_reorderPrescriptionRemoved) return false;
+    final document = claimedOffer.medicinePrescriptionDocument;
+    return document != null && document.isNotEmpty;
+  }
+
+  void _removeReorderPrescription() {
+    _updateReorderSheet(() {
+      _reorderSelectedImage = null;
+      _reorderPrescriptionRemoved = true;
+    });
   }
 
   Future<File?> _getReorderPrescriptionFile() async {
@@ -1460,6 +1739,7 @@ class _DiscountOfferDetailPageState extends State<DiscountOfferDetailPage> {
 
     _updateReorderSheet(() {
       _reorderSelectedImage = picked;
+      _reorderPrescriptionRemoved = false;
     });
   }
 
@@ -1583,133 +1863,6 @@ class _DiscountOfferDetailPageState extends State<DiscountOfferDetailPage> {
                 ),
               ),
               child: const Text("Add"),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showReorderEditMedicineDialog(int index) {
-    final medicine = _reorderMedicines[index];
-    final medicineController =
-    TextEditingController(text: medicine.medicineName ?? "");
-    final quantityController =
-    TextEditingController(text: medicine.quantity?.toString() ?? "");
-    String? selectedContainer =
-    _getContainerName(medicine.medicineContainerId);
-
-    final containerOptions = ['Strip', 'Tube', 'Bottle', 'Box', 'Pouch'];
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: Colors.white,
-          shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text("Edit Medicine",
-                  style: TextStyle(fontWeight: FontWeight.w600)),
-              SizedBox(height: 8),
-              Divider(),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              children: [
-                TextField(
-                  controller: medicineController,
-                  decoration: InputDecoration(
-                    labelText: "Medicine Name",
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 15),
-                DropdownButtonFormField<String>(
-                  value: selectedContainer,
-                  decoration: InputDecoration(
-                    labelText: "Pack Type",
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  items: containerOptions
-                      .map((item) =>
-                      DropdownMenuItem(value: item, child: Text(item)))
-                      .toList(),
-                  onChanged: (v) =>
-                      setDialogState(() => selectedContainer = v),
-                ),
-                const SizedBox(height: 15),
-                TextField(
-                  controller: quantityController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: "Quantity",
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            OutlinedButton(
-              onPressed: () => Navigator.pop(context),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: ColorHelperClass.getColorFromHex(
-                  ColorResources.red_color,
-                ),
-                side: BorderSide(
-                  color: ColorHelperClass.getColorFromHex(
-                    ColorResources.red_color,
-                  ),
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (medicineController.text.trim().isEmpty ||
-                    quantityController.text.trim().isEmpty ||
-                    selectedContainer == null) {
-                  Get.snackbar("Error", "Please fill all fields",
-                      backgroundColor: Colors.red, colorText: Colors.white);
-                  return;
-                }
-
-                _updateReorderSheet(() {
-                  _reorderMedicines[index] = Medicine(
-                    organisationOfferDiscountId: int.parse(
-                        widget.offer.organisationOfferDiscountId.toString()),
-                    orgDetailsID:
-                    int.parse(widget.offer.orgDetailsID.toString()),
-                    medicineName: medicineController.text.trim(),
-                    medicineContainerId:
-                    int.parse(_getContainerIdFromName(selectedContainer!)),
-                    medicineContainerName: selectedContainer,
-                    quantity: int.parse(quantityController.text),
-                  );
-                });
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: ColorHelperClass.getColorFromHex(
-                  ColorResources.red_color,
-                ),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Text("Update"),
             ),
           ],
         ),

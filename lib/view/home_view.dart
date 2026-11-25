@@ -85,11 +85,6 @@ class _HomeViewState extends State<HomeView>
     // Item 1: My Profile (always visible)
     items.add({'icon': Images.user, 'label': 'My Profile'});
 
-    // Doctors and Jobs are visible only with the new_features right
-    // if (_canViewNewFeatures) {
-    //   items.add({'icon': Images.job_portal, 'label': 'Job Portal'});
-    // }
-
     // Item 2: Job Portals (always visible)
     items.add({'icon': Images.job_portal, 'label': 'Job Portal'});
 
@@ -100,14 +95,14 @@ class _HomeViewState extends State<HomeView>
     items.add({'icon': Images.events, 'label': 'Events'});
 
     // Additional items at the end (conditional)
-    // if (memberId == 1 || memberId == 2 || memberId == 2040) {
-    //   items.add({'icon': Images.utility, 'label': 'Doctors'});
-    // }
+    if (memberId == 1 || memberId == 2 || memberId == 2040) {
+      items.add({'icon': Images.utility, 'label': 'Doctors'});
+    }
 
-    // if (_canViewNewFeatures) {
-    //   // items.add({'icon': Images.utility, 'label': 'Doctors'});
-    //   items.add({'icon': Images.blood_donor, 'label': 'Blood Donor'});
-    // }
+    if (_canViewNewFeatures) {
+      // items.add({'icon': Images.utility, 'label': 'Doctors'});
+      // items.add({'icon': Images.blood_donor, 'label': 'Blood Donor'});
+    }
 
     // Items 5-10: Always visible
     items.addAll([
